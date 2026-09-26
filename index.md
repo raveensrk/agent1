@@ -10,7 +10,7 @@ Index of documentation in this directory.
 - [Uninstall](./uninstall.py) - Removes the skills and commands install.py installed.
 - [Jobs](./jobs.md) - ETA rules for long-running jobs.
 - [Prompts](./prompts.md) - Personal paste-bin of chat prompts.
-- [Skills](./skills/index.md) - Installable agent skills: git-report, migrate-todo, privacy-scan.
+- [Skills](./skills/index.md) - Installable agent skills, including model-price-report.
 - [Todo Schema (Org)](./todo_schema.org) - The org task format, inbox and protocol the vault is moving to.
 - [Terminologies](./terminologies.md) - Personal prompt-vocab notes.
 

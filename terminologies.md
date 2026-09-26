@@ -38,6 +38,7 @@ Personal notes. Copy terms into prompts. Agents do not treat this file as rules.
 - variant
 - clipped, clip
 - collide, collision
+- debate
 - convention
 - bulletproof
 - calibrate

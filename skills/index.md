@@ -7,4 +7,5 @@ with [install.py](../install.py).
 - [git-report](./git-report/SKILL.md) - Your commits across all your repos, local and remote, for any time window.
 - [html-explainer](./html-explainer/SKILL.md) - Explain any concept, config or error as a self-contained dark-mode HTML page in ~/tmp with numbered sections and a feedback loop.
 - [migrate-todo](./migrate-todo/SKILL.md) - Converts line-schema todos to the lisp schema, one repo at a time.
+- [model-price-report](./model-price-report/SKILL.md) - Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis intelligence scores.
 - [privacy-scan](./privacy-scan/SKILL.md) - Scans files or a diff for PII, privacy and security issues.
