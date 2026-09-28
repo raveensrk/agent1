@@ -192,23 +192,36 @@
   });
 
   document.getElementById("fb-save").addEventListener("click", function () {
-    var json = JSON.stringify(collect(), null, 2).replace(/<\//g, "<\\/");
-    var doc = document.documentElement.cloneNode(true);
-    var old = doc.querySelector("script#feedback-data");
-    if (old) old.remove();
-    var s = doc.querySelector("#feedback");
-    var embed = doc.createElement("script");
-    embed.id = "feedback-data";
-    embed.type = "application/json";
-    embed.textContent = json;
-    s.parentNode.insertBefore(embed, s);
-    var html = "<!doctype html>\n" + doc.outerHTML;
-    var blob = new Blob([html], { type: "text/html" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = pageId + "-answered.html";
-    a.click();
-    document.getElementById("fb-status").textContent = "Downloaded " + a.download + " — give that path to pi.";
+    try {
+      // Sync live input state into the DOM so the clone carries it.
+      document.querySelectorAll("#feedback textarea").forEach(function (ta) { ta.textContent = ta.value; });
+      document.querySelectorAll("#feedback input[type=radio]").forEach(function (r) {
+        if (r.checked) r.setAttribute("checked", "checked"); else r.removeAttribute("checked");
+      });
+
+      var json = JSON.stringify(collect(), null, 2).replace(/<\//g, "<\\/");
+      var doc = document.documentElement.cloneNode(true);
+      var old = doc.querySelector("script#feedback-data");
+      if (old) old.remove();
+      var s = doc.querySelector("#feedback");
+      var embed = document.createElement("script");
+      embed.id = "feedback-data";
+      embed.type = "application/json";
+      embed.textContent = json;
+      s.parentNode.insertBefore(embed, s);
+      var html = "<!doctype html>\n" + doc.outerHTML;
+      var url = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+      var name = pageId + "-answered.html";
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      document.getElementById("fb-status").innerHTML = "Downloaded <b>" + name + "</b> — give that path to pi. Nothing saved? <a href=\"" + url + "\" download=\"" + name + "\">click here</a>.";
+    } catch (e) {
+      document.getElementById("fb-status").textContent = "Save failed: " + e.message;
+    }
   });
 })();
 </script>
