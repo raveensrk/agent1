@@ -26,7 +26,7 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 4. Numbered sections (`2.1`, `2.2`…): the detail. Each starts with one bold sentence, then expands. Wrap long detail in `<details class="more">` so the page reads compact but expands on demand.
 5. Glossary table for jargon, if any term might be unknown.
 6. Q&A block: predefined "you might ask" questions with answers.
-7. Feedback block (from template): text areas per section + one general box, "Copy feedback" and "Save & download updated page" buttons.
+7. Feedback block (from template): yes/no "Did you understand?" question above the buttons, text areas per section + one general box, "Copy feedback" and "Save & download updated page" buttons.
 
 ## Visual kit rules
 
@@ -39,7 +39,8 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 ## Feedback protocol
 
 - Page embeds `data-page-id="explain-<topic>-NN"`.
-- "Copy feedback" copies a plain-text block: page id, then `section: comment` lines and `Q:` lines. User pastes it into chat.
+- The "Did you understand?" yes/no answer is included in feedback (`understood: yes|no`). If the answer is "no" with no section comments, ask which section lost them.
+- "Copy feedback" copies a plain-text block: page id, then `understood:` line, then `section: comment` lines and `Q:` lines. User pastes it into chat.
 - "Save & download" embeds the same data as JSON into the downloaded file. When the user later hands you such a file, parse that block first, answer each item, and produce the next NN.
 - Always acknowledge feedback items explicitly ("2.2: fixed — X was wrong because…"). Never silently edit.
 

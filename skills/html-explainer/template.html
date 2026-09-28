@@ -57,6 +57,10 @@
   #feedback label { display: block; margin: 10px 0 4px; color: #aeb4bd; font-size: 13px; }
   #feedback textarea { width: 100%; min-height: 56px; background: #23262c; border: 1px solid #3a3f47; color: #d5d8dd; border-radius: 6px; padding: 8px; font: inherit; resize: vertical; }
   #feedback .btns { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+  #feedback .understand { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+  #feedback .understand span { color: #d5d8dd; font-weight: bold; }
+  #feedback .understand button { padding: 6px 14px; }
+  #feedback .understand button.no { background: none; border: 1px solid #3a3f47; color: #8b919b; }
   #feedback button { background: #2d77e0; border: none; color: #fff; padding: 9px 16px; border-radius: 6px; font: inherit; cursor: pointer; }
   #feedback button.alt { background: none; border: 1px solid #3a3f47; color: #8b919b; }
   #feedback .status { color: #89d281; margin-top: 8px; min-height: 18px; }
@@ -100,6 +104,11 @@
   <textarea id="fb-2-1" placeholder="still unclear? wrong? too shallow?"></textarea>
   <label for="fb-general">Anything else / questions</label>
   <textarea id="fb-general" placeholder="your questions, what to expand, what to remove"></textarea>
+  <div class="understand">
+    <span>Did you understand?</span>
+    <button type="button" id="fb-yes">Yes</button>
+    <button type="button" class="no" id="fb-no">Not yet</button>
+  </div>
   <div class="btns">
     <button type="button" id="fb-copy">Copy feedback</button>
     <button type="button" class="alt" id="fb-save">Save &amp; download updated page</button>
@@ -111,9 +120,20 @@
 // Feedback machinery. Do not modify when instantiating the template.
 (function () {
   var pageId = document.body.dataset.pageId;
+  var understood = null;
+
+  document.getElementById("fb-yes").addEventListener("click", function () {
+    understood = "yes";
+    document.getElementById("fb-status").textContent = "Noted — glad it landed.";
+  });
+  document.getElementById("fb-no").addEventListener("click", function () {
+    understood = "no";
+    document.getElementById("fb-status").textContent = "Noted — tell pi which section lost you (or just hit Copy feedback).";
+  });
 
   function collect() {
     var out = { page: pageId, items: [] };
+    if (understood) out.understood = understood;
     document.querySelectorAll("#feedback textarea").forEach(function (ta) {
       var v = ta.value.trim();
       if (v) out.items.push({ section: ta.id.replace(/^fb-/, "").replace(/-/g, "."), text: v });
@@ -124,6 +144,7 @@
   function text() {
     var d = collect();
     var lines = ["FEEDBACK " + d.page];
+    if (d.understood) lines.push("understood: " + d.understood);
     d.items.forEach(function (it) { lines.push(it.section + ": " + it.text); });
     return lines.join("\n");
   }
