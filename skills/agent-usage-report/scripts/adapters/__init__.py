@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import importlib
 
-_MODULES = ("pi", "claude_code", "codex", "opencode", "generic_jsonl")
+_MODULES = ("pi", "claude_code", "codex", "opencode", "opencode_zen", "generic_jsonl")
 
 
 def load(name, config=None):

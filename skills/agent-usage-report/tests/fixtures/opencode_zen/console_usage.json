@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "model": "glm-5.3-flash",
+      "provider": "opencode-go",
+      "totalRequests": "100",
+      "totalInputTokens": "1000",
+      "totalOutputTokens": "100",
+      "totalCacheReadTokens": "500",
+      "totalCacheWrite5mTokens": "0",
+      "totalCacheWrite1hTokens": "0",
+      "totalCostMicroCents": "400000000"
+    },
+    {
+      "model": "glm-5.3-flash",
+      "provider": "opencode",
+      "totalRequests": "10",
+      "totalInputTokens": "2000",
+      "totalOutputTokens": "50",
+      "totalCacheReadTokens": "250",
+      "totalCacheWrite5mTokens": "0",
+      "totalCacheWrite1hTokens": "0",
+      "totalCostMicroCents": "250000000"
+    }
+  ]
+}

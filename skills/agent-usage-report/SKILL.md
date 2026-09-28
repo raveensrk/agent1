@@ -28,6 +28,7 @@ reading and math; you choose the window and relay the result.
 | Claude Code | `~/.claude/projects/**/*.jsonl` | computed |
 | Codex | `~/.codex/sessions/**/rollout-*.jsonl`, `~/.codex/archived_sessions/` | computed |
 | opencode | `~/.local/share/opencode/opencode.db` (SQLite) | recorded |
+| OpenCode Zen/Go | opencode.ai console API (needs `~/.local/share/opencode_usage/zen_cookie`); lifetime aggregates only — all-time reports include them, windowed ones skip them | recorded |
 
 Missing harnesses are skipped, not an error. Add others with
 `extra_harnesses` in the config (see Setup).

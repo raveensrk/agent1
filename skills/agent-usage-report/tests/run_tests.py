@@ -70,6 +70,7 @@ class AdapterTests(unittest.TestCase):
         os.environ["AGENT_REPORT_CLAUDE_DIR"] = str(FIXTURES / "claude")
         os.environ["AGENT_REPORT_CODEX_DIR"] = str(FIXTURES / "codex")
         os.environ["AGENT_REPORT_OPENCODE_DB"] = str(db)
+        os.environ["AGENT_REPORT_OPENCODE_ZEN_JSON"] = str(FIXTURES / "opencode_zen" / "console_usage.json")
 
         import collect
         self.collect = collect
@@ -78,13 +79,14 @@ class AdapterTests(unittest.TestCase):
 
     def tearDown(self):
         for key in ("AGENT_REPORT_PI_DIR", "AGENT_REPORT_CLAUDE_DIR",
-                    "AGENT_REPORT_CODEX_DIR", "AGENT_REPORT_OPENCODE_DB"):
+                    "AGENT_REPORT_CODEX_DIR", "AGENT_REPORT_OPENCODE_DB",
+                    "AGENT_REPORT_OPENCODE_ZEN_JSON"):
             os.environ.pop(key, None)
         self.tmp.cleanup()
 
     def test_all_harnesses_detected(self):
         names = {item["name"] for item in self.detected}
-        self.assertEqual(names, {"pi", "claude_code", "codex", "opencode"})
+        self.assertEqual(names, {"pi", "claude_code", "codex", "opencode", "opencode_zen"})
 
     def test_pi_tokens(self):
         turn = self.turns["pi"]
@@ -113,12 +115,25 @@ class AdapterTests(unittest.TestCase):
                          (1000, 500, 100, 1600))
         self.assertEqual(turn["cost"], 0.004)
 
+    def test_opencode_zen_tokens(self):
+        turns = [r for r in self.records if r["harness"] == "opencode_zen"]
+        self.assertEqual(len(turns), 2)
+        self.assertEqual(sum(t["input"] for t in turns), 3000)
+        self.assertEqual(sum(t["cache_read"] for t in turns), 750)
+        self.assertEqual(sum(t["output"] for t in turns), 150)
+        self.assertEqual(sum(t["total"] for t in turns), 3900)
+        self.assertEqual(sum(t["cost"] for t in turns), 6.5)
+        for t in turns:
+            self.assertEqual(t["cost_source"], "recorded")
+            self.assertEqual(t["provider"], "opencode")
+            self.assertEqual(t["timestamp"], 0.0)
+
     def test_aggregate_totals(self):
         dataset = self.collect.aggregate(self.records)
-        self.assertEqual(dataset["turns"], 4)
+        self.assertEqual(dataset["turns"], 6)
         self.assertEqual(dataset["requests"], 4)
-        self.assertEqual(dataset["sessions"], 4)
-        self.assertEqual(sum(e["total"] for e in dataset["models"].values()), 4992)
+        self.assertEqual(dataset["sessions"], 5)
+        self.assertEqual(sum(e["total"] for e in dataset["models"].values()), 8892)
 
     def test_redact_projects(self):
         import report
