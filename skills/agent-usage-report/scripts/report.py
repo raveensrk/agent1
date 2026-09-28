@@ -124,7 +124,7 @@ def _parse_day(text, now, end_of_day):
 def run(args):
     config = load_config(args.config)
 
-    records, detected, missing = collect.load(config)
+    records, detected, missing = collect.load(config, local=args.local)
     if args.check:
         return check(records, detected, missing, config, args)
 
@@ -328,6 +328,9 @@ def build_parser():
     parser.add_argument("--no-open", action="store_true", help="do not open the browser")
     parser.add_argument("--offline", action="store_true", help="never touch the network")
     parser.add_argument("--refresh-pricing", action="store_true", help="re-fetch models.dev and AA now")
+    parser.add_argument("--local", action="store_true",
+                        help="also read local harness logs (pi, Claude Code, Codex, opencode db); "
+                             "default reads online sources only (OpenCode Zen/Go)")
     parser.add_argument("--project-name", action="store_true",
                         help="show real project names (default: redacted as Project N)")
     parser.add_argument("--check", action="store_true", help="detect harnesses, write nothing")

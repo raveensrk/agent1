@@ -24,14 +24,17 @@ reading and math; you choose the window and relay the result.
 
 | Harness | Default location | Cost |
 |---|---|---|
-| pi | `~/.pi/agent/sessions/**/*.jsonl` | recorded |
-| Claude Code | `~/.claude/projects/**/*.jsonl` | computed |
-| Codex | `~/.codex/sessions/**/rollout-*.jsonl`, `~/.codex/archived_sessions/` | computed |
-| opencode | `~/.local/share/opencode/opencode.db` (SQLite) | recorded |
-| OpenCode Zen/Go | opencode.ai console API (needs `~/.local/share/opencode_usage/zen_cookie`); lifetime aggregates only — all-time reports include them, windowed ones skip them | recorded |
+| OpenCode Zen/Go | opencode.ai console API (needs `~/.local/share/opencode_usage/zen_cookie`); lifetime aggregates only — all-time reports include them, windowed ones skip them | recorded — **default** |
+| pi — `--local` | `~/.pi/agent/sessions/**/*.jsonl` | recorded |
+| Claude Code — `--local` | `~/.claude/projects/**/*.jsonl` | computed |
+| Codex — `--local` | `~/.codex/sessions/**/rollout-*.jsonl`, `~/.codex/archived_sessions/` | computed |
+| opencode — `--local` | `~/.local/share/opencode/opencode.db` (SQLite) | recorded |
 
-Missing harnesses are skipped, not an error. Add others with
-`extra_harnesses` in the config (see Setup).
+Missing harnesses are skipped, not an error. Local harnesses (pi, Claude
+Code, Codex, opencode db, `extra_harnesses`) are **off by default** — the
+default report reads online sources only (OpenCode Zen/Go). Add `--local` to
+include local logs. Add others with `extra_harnesses` in the config (see
+Setup).
 
 ## What the report contains
 
@@ -141,6 +144,8 @@ Useful flags:
 
 - `--check` - detect harnesses, count records, resolve prices, write nothing.
 - `--check --check-pricing` - also report how many models were priced.
+- `--local` - also read local harness logs (pi, Claude Code, Codex, opencode
+  db, `extra_harnesses`). Without it, online sources (OpenCode Zen/Go) only.
 - `--no-open` - write the report without opening a browser.
 - `--project-name` - reveal real project names. Default hides them: projects
   and sessions are labelled `Project 1, Project 2, ...` so the report never

@@ -74,7 +74,7 @@ class AdapterTests(unittest.TestCase):
 
         import collect
         self.collect = collect
-        self.records, self.detected, self.missing = collect.load({})
+        self.records, self.detected, self.missing = collect.load({}, local=True)
         self.turns = {r["harness"]: r for r in self.records if r["kind"] == "assistant"}
 
     def tearDown(self):
@@ -87,6 +87,11 @@ class AdapterTests(unittest.TestCase):
     def test_all_harnesses_detected(self):
         names = {item["name"] for item in self.detected}
         self.assertEqual(names, {"pi", "claude_code", "codex", "opencode", "opencode_zen"})
+
+    def test_default_mode_is_cloud_only(self):
+        records, detected, missing = self.collect.load({}, local=False)
+        names = {item["name"] for item in detected}
+        self.assertEqual(names, {"opencode_zen"})
 
     def test_pi_tokens(self):
         turn = self.turns["pi"]

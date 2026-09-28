@@ -25,13 +25,20 @@ def normalize_model(raw):
     return text or "unknown"
 
 
-def load(config=None):
-    """Read every available adapter; return (records, detected, missing)."""
+def load(config=None, local=False):
+    """Read every available adapter; return (records, detected, missing).
+
+    Local adapters (log files on this machine) only load with local=True;
+    default runs read cloud adapters (OpenCode Zen/Go) only.
+    """
+    local_only = {"pi", "claude_code", "codex", "opencode", "generic_jsonl"}
     records = []
     detected = []
     missing = []
     for adapter in all_adapters(config):
         label = getattr(adapter, "LABEL", getattr(adapter, "NAME", "?"))
+        if not local and getattr(adapter, "NAME", "") in local_only:
+            continue
         if not adapter.available():
             if not getattr(adapter, "OPTIONAL", False):
                 missing.append(label)
