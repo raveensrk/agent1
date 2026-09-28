@@ -1,0 +1,161 @@
+<!doctype html>
+<!--
+  html-explainer template.
+  Replace {{TITLE}}, {{PAGE_ID}}, {{SECTION_N}} placeholders.
+  Keep the <style> block and the feedback <script> unchanged.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { font: 15px/1.65 ui-monospace, Menlo, monospace; background: #17181c; color: #d5d8dd; margin: 0; padding: 32px 20px 80px; max-width: 1100px; margin-inline: auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .subtitle { color: #8b919b; margin-bottom: 24px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; color: #aeb4bd; text-transform: uppercase; letter-spacing: 1px; }
+  h3 { font-size: 14px; margin: 18px 0 6px; }
+
+  .tldr { background: #1d2026; border: 1px solid #2d77e0; border-left: 4px solid #2d77e0; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  .callout { border-radius: 8px; padding: 10px 14px; margin: 12px 0; border: 1px solid; }
+  .callout.info { border-color: #2d77e0; background: #1d2430; }
+  .callout.warn { border-color: #febc38; background: #2a251b; }
+  .callout.error { border-color: #ff5b5b; background: #2a1d1d; }
+  .callout.ok { border-color: #89d281; background: #1c261c; }
+
+  details.more { margin: 8px 0; border: 1px solid #26292f; border-radius: 8px; background: #1d2026; }
+  details.more > summary { cursor: pointer; padding: 8px 14px; color: #8fb7f5; font-weight: bold; }
+  details.more > div { padding: 0 14px 12px; }
+
+  pre { background: #101114; border: 1px solid #26292f; border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: 13px; }
+  code { font-family: inherit; }
+  mark { background: #febc3833; color: inherit; border-radius: 3px; padding: 0 2px; }
+  .anno { color: #8fb7f5; }
+
+  table { border-collapse: collapse; margin: 10px 0; width: 100%; }
+  th, td { border: 1px solid #26292f; padding: 6px 10px; text-align: left; font-size: 13px; }
+  th { background: #1d2026; color: #aeb4bd; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .compare > div { min-width: 0; }
+  .compare .tag { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+  .compare .before .tag { color: #ff8f8f; }
+  .compare .after .tag { color: #89d281; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0; }
+  .box { background: #1d2026; border: 1px solid #3a3f47; border-radius: 8px; padding: 8px 14px; }
+  .box.hl { border-color: #2d77e0; }
+  .arrow { color: #5c626c; }
+
+  .sec { margin-top: 8px; }
+  .lead { font-weight: bold; }
+
+  /* feedback */
+  #feedback { margin-top: 40px; border-top: 2px solid #26292f; padding-top: 16px; }
+  #feedback label { display: block; margin: 10px 0 4px; color: #aeb4bd; font-size: 13px; }
+  #feedback textarea { width: 100%; min-height: 56px; background: #23262c; border: 1px solid #3a3f47; color: #d5d8dd; border-radius: 6px; padding: 8px; font: inherit; resize: vertical; }
+  #feedback .btns { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+  #feedback button { background: #2d77e0; border: none; color: #fff; padding: 9px 16px; border-radius: 6px; font: inherit; cursor: pointer; }
+  #feedback button.alt { background: none; border: 1px solid #3a3f47; color: #8b919b; }
+  #feedback .status { color: #89d281; margin-top: 8px; min-height: 18px; }
+</style>
+</head>
+<body data-page-id="{{PAGE_ID}}">
+
+<h1>{{TITLE}}</h1>
+<div class="subtitle">Page {{PAGE_ID}} · reply with section numbers, or use the feedback box at the bottom</div>
+
+<div class="tldr"><strong>TL;DR</strong><br>{{TLDR}}</div>
+
+<h2>1. The picture</h2>
+<div class="flow">
+  <div class="box hl">A</div><div class="arrow">→</div><div class="box">B</div><div class="arrow">→</div><div class="box">C</div>
+</div>
+
+<h2>2. Details</h2>
+<div class="sec" id="sec-2-1">
+  <h3>2.1 {{SECTION_TITLE}}</h3>
+  <p class="lead">{{ONE_BOLD_SENTENCE}}</p>
+  <p>{{EXPLANATION}}</p>
+  <details class="more"><summary>More detail</summary><div>{{EXPANDED_DETAIL}}</div></details>
+</div>
+
+<h2>3. Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td>{{TERM}}</td><td>{{MEANING}}</td></tr>
+</table>
+
+<h2>4. You might ask</h2>
+<div class="sec">
+  <h3>4.1 {{QUESTION}}</h3>
+  <p>{{ANSWER}}</p>
+</div>
+
+<div id="feedback">
+  <h2>Feedback</h2>
+  <label for="fb-2-1">2.1</label>
+  <textarea id="fb-2-1" placeholder="still unclear? wrong? too shallow?"></textarea>
+  <label for="fb-general">Anything else / questions</label>
+  <textarea id="fb-general" placeholder="your questions, what to expand, what to remove"></textarea>
+  <div class="btns">
+    <button type="button" id="fb-copy">Copy feedback</button>
+    <button type="button" class="alt" id="fb-save">Save &amp; download updated page</button>
+  </div>
+  <div class="status" id="fb-status"></div>
+</div>
+
+<script>
+// Feedback machinery. Do not modify when instantiating the template.
+(function () {
+  var pageId = document.body.dataset.pageId;
+
+  function collect() {
+    var out = { page: pageId, items: [] };
+    document.querySelectorAll("#feedback textarea").forEach(function (ta) {
+      var v = ta.value.trim();
+      if (v) out.items.push({ section: ta.id.replace(/^fb-/, "").replace(/-/g, "."), text: v });
+    });
+    return out;
+  }
+
+  function text() {
+    var d = collect();
+    var lines = ["FEEDBACK " + d.page];
+    d.items.forEach(function (it) { lines.push(it.section + ": " + it.text); });
+    return lines.join("\n");
+  }
+
+  document.getElementById("fb-copy").addEventListener("click", function () {
+    navigator.clipboard.writeText(text()).then(function () {
+      document.getElementById("fb-status").textContent = "Copied — paste it into pi.";
+    }, function () {
+      document.getElementById("fb-status").textContent = "Clipboard blocked. Select + copy manually below.";
+    });
+  });
+
+  document.getElementById("fb-save").addEventListener("click", function () {
+    var json = JSON.stringify(collect(), null, 2).replace(/<\//g, "<\\/");
+    var doc = document.documentElement.cloneNode(true);
+    var old = doc.querySelector("script#feedback-data");
+    if (old) old.remove();
+    var s = doc.querySelector("#feedback");
+    var embed = doc.createElement("script");
+    embed.id = "feedback-data";
+    embed.type = "application/json";
+    embed.textContent = json;
+    s.parentNode.insertBefore(embed, s);
+    var html = "<!doctype html>\n" + doc.outerHTML;
+    var blob = new Blob([html], { type: "text/html" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = pageId + "-answered.html";
+    a.click();
+    document.getElementById("fb-status").textContent = "Downloaded " + a.download + " — give that path to pi.";
+  });
+})();
+</script>
+</body>
+</html>
