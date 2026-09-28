@@ -61,6 +61,8 @@
   #feedback .understand span { color: #d5d8dd; font-weight: bold; }
   #feedback .understand button { padding: 6px 14px; }
   #feedback .understand button.no { background: none; border: 1px solid #3a3f47; color: #8b919b; }
+  #feedback .mcq { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 10px; }
+  #feedback .mcq-opt { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: #d5d8dd; font-size: 13px; }
   #feedback button { background: #2d77e0; border: none; color: #fff; padding: 9px 16px; border-radius: 6px; font: inherit; cursor: pointer; }
   #feedback button.alt { background: none; border: 1px solid #3a3f47; color: #8b919b; }
   #feedback .status { color: #89d281; margin-top: 8px; min-height: 18px; }
@@ -109,6 +111,7 @@
     <button type="button" id="fb-yes">Yes</button>
     <button type="button" class="no" id="fb-no">Not yet</button>
   </div>
+  <div id="fb-questions"></div>
   <div class="btns">
     <button type="button" id="fb-copy">Copy feedback</button>
     <button type="button" class="alt" id="fb-save">Save &amp; download updated page</button>
@@ -122,6 +125,30 @@
   var pageId = document.body.dataset.pageId;
   var understood = null;
 
+  // Optional multiple-choice questions. Author edits this array; empty = none.
+  // Each: { id: "q1", text: "...", options: ["a", "b", "c"] }
+  var QUESTIONS = [];
+
+  var qWrap = document.getElementById("fb-questions");
+  QUESTIONS.forEach(function (q) {
+    var label = document.createElement("label");
+    label.textContent = q.text;
+    qWrap.appendChild(label);
+    var opts = document.createElement("div");
+    opts.className = "mcq";
+    q.options.forEach(function (opt, i) {
+      var lab = document.createElement("label");
+      lab.className = "mcq-opt";
+      var radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = q.id;
+      radio.value = String(i);
+      lab.append(radio, document.createTextNode(" " + opt));
+      opts.appendChild(lab);
+    });
+    qWrap.appendChild(opts);
+  });
+
   document.getElementById("fb-yes").addEventListener("click", function () {
     understood = "yes";
     document.getElementById("fb-status").textContent = "Noted — glad it landed.";
@@ -134,6 +161,12 @@
   function collect() {
     var out = { page: pageId, items: [] };
     if (understood) out.understood = understood;
+    var answers = [];
+    QUESTIONS.forEach(function (q) {
+      var sel = qWrap.querySelector('input[name="' + q.id + '"]:checked');
+      if (sel) answers.push({ id: q.id, text: q.text, answer: q.options[Number(sel.value)] });
+    });
+    if (answers.length) out.answers = answers;
     document.querySelectorAll("#feedback textarea").forEach(function (ta) {
       var v = ta.value.trim();
       if (v) out.items.push({ section: ta.id.replace(/^fb-/, "").replace(/-/g, "."), text: v });
@@ -145,6 +178,7 @@
     var d = collect();
     var lines = ["FEEDBACK " + d.page];
     if (d.understood) lines.push("understood: " + d.understood);
+    (d.answers || []).forEach(function (a) { lines.push("q " + a.id + " (" + a.text + "): " + a.answer); });
     d.items.forEach(function (it) { lines.push(it.section + ": " + it.text); });
     return lines.join("\n");
   }
