@@ -127,8 +127,9 @@
 
   // Optional multiple-choice questions. Author edits this array; empty = none.
   // Each: { id: "q1", text: "...", options: ["a", "b", "c"] }
-  // The last question automatically gains a "None of the above" option, and
-  // every question renders an optional note/comment textarea under its choices.
+  // More than one choice can be selected per question. The last question
+  // automatically gains an exclusive "None of the above" option, and every
+  // question renders an optional note/comment textarea under its choices.
   var QUESTIONS = [];
 
   var qWrap = document.getElementById("fb-questions");
@@ -138,6 +139,7 @@
     if (qi === QUESTIONS.length - 1 && q.options.length && q.options.indexOf("None of the above") === -1) {
       q.options = q.options.concat("None of the above");
     }
+    var noneIndex = q.options.indexOf("None of the above");
     var label = document.createElement("label");
     label.textContent = q.text;
     qWrap.appendChild(label);
@@ -146,11 +148,19 @@
     q.options.forEach(function (opt, i) {
       var lab = document.createElement("label");
       lab.className = "mcq-opt";
-      var radio = document.createElement("input");
-      radio.type = "radio";
-      radio.name = q.id;
-      radio.value = String(i);
-      lab.append(radio, document.createTextNode(" " + opt));
+      var box = document.createElement("input");
+      box.type = "checkbox";
+      box.name = q.id;
+      box.value = String(i);
+      // "None of the above" is exclusive: picking it clears the other choices,
+      // and picking any other choice clears it.
+      box.addEventListener("change", function () {
+        if (!box.checked) return;
+        qWrap.querySelectorAll('input[name="' + q.id + '"]').forEach(function (other) {
+          if (other !== box && (Number(box.value) === noneIndex || Number(other.value) === noneIndex)) other.checked = false;
+        });
+      });
+      lab.append(box, document.createTextNode(" " + opt));
       opts.appendChild(lab);
     });
     qWrap.appendChild(opts);
@@ -176,12 +186,12 @@
     if (understood) out.understood = understood;
     var answers = [];
     QUESTIONS.forEach(function (q) {
-      var sel = qWrap.querySelector('input[name="' + q.id + '"]:checked');
+      var checked = qWrap.querySelectorAll('input[name="' + q.id + '"]:checked');
       var noteEl = qWrap.querySelector("#fb-note-" + q.id);
       var note = noteEl ? noteEl.value.trim() : "";
-      if (sel || note) {
+      if (checked.length || note) {
         var entry = { id: q.id, text: q.text };
-        if (sel) entry.answer = q.options[Number(sel.value)];
+        if (checked.length) entry.answer = Array.prototype.map.call(checked, function (b) { return q.options[Number(b.value)]; });
         if (note) entry.note = note;
         answers.push(entry);
       }
@@ -199,7 +209,7 @@
     var lines = ["FEEDBACK " + d.page];
     if (d.understood) lines.push("understood: " + d.understood);
     (d.answers || []).forEach(function (a) {
-      if (a.answer) lines.push("q " + a.id + " (" + a.text + "): " + a.answer);
+      if (a.answer && a.answer.length) lines.push("q " + a.id + " (" + a.text + "): " + a.answer.join(", "));
       if (a.note) lines.push("q " + a.id + " note: " + a.note);
     });
     d.items.forEach(function (it) { lines.push(it.section + ": " + it.text); });
@@ -218,7 +228,7 @@
     try {
       // Sync live input state into the DOM so the clone carries it.
       document.querySelectorAll("#feedback textarea").forEach(function (ta) { ta.textContent = ta.value; });
-      document.querySelectorAll("#feedback input[type=radio]").forEach(function (r) {
+      document.querySelectorAll("#feedback input[type=checkbox]").forEach(function (r) {
         if (r.checked) r.setAttribute("checked", "checked"); else r.removeAttribute("checked");
       });
 
