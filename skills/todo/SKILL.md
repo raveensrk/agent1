@@ -92,6 +92,8 @@ python3 scripts/todo_agent.py archive id:<uuid>
 python3 scripts/todo_agent.py obsolete id:<uuid>
 python3 scripts/todo_agent.py delete id:<uuid>
 python3 scripts/todo_agent.py complete id:<uuid> [--evidence "what changed"]
+python3 scripts/todo_agent.py status [--file F]      # lock + active claims
+python3 scripts/todo_agent.py edit [--file F]        # you edit, under the lock
 python3 scripts/todo_agent.py capture "Look into OpenRouter routing"
 ```
 
@@ -190,7 +192,26 @@ they are the two hand writes the skill makes. The plain verbs accept and
 ignore `--expected-revision`: a wrong hash is accepted. Read immediately before
 writing. The `task` verbs enforce it.
 
-## 6. Traps
+## 6. Synchronous access
+
+One writer at a time, enforced by the same lock `org` uses: `<file>.org-lock`,
+an exclusive flock. `org` takes it for every write and fails at once when it is
+busy; the helper takes it for its hand writes, and retries an `org` call that
+hits a busy lock.
+
+- **You edit** with `python3 scripts/todo_agent.py edit [--file F]`. It holds
+the lock, runs `$EDITOR` (default `mvim -f`) in the foreground, then releases
+it. Agent writes wait while your editor is open, so do not edit a board in a
+plain editor while an agent is working on it.
+- **Task work** is coordinated by a claim. `:TASK_CLAIM_OWNER:` names the actor;
+`complete` and `release` clear it. Do not hand-edit a claimed task.
+- `python3 scripts/todo_agent.py status` prints the board, whether the lock is
+held, and the active claims.
+- The lock covers `org`, the helper, and your `edit` session. A bare editor
+does not take it, so the helper re-reads the file under the lock and refuses
+if it changed underneath.
+
+## 7. Traps
 
 - A bare `org add` without `--under` lands at the root, and `--under Tasks`
   fails with `Headline not found: Tasks` when the container is missing.

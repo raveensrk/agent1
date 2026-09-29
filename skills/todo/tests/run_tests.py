@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -395,6 +396,78 @@ class TestLoop(Harness):
         )
         self.assertEqual(done.returncode, 1)
         self.assertIn("ORG_ACTOR", done.stderr)
+
+
+HOLDER = "import fcntl, sys, time; f = open(sys.argv[1], 'a+'); fcntl.flock(f, fcntl.LOCK_EX); time.sleep(float(sys.argv[2]))"
+
+PROBE_HELD = (
+    "import fcntl, sys\n"
+    "handle = open(sys.argv[1] + '.org-lock', 'a+')\n"
+    "try:\n"
+    "    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)\n"
+    "except OSError:\n"
+    "    raise SystemExit(0)\n"
+    "raise SystemExit(1)\n"
+)
+
+
+@unittest.skipUnless(ORG, "org CLI not found")
+class TestLocking(Harness):
+    """The board lock is the same flock org takes: <file>.org-lock."""
+
+    def hold(self, lock_path: Path, seconds: float) -> subprocess.Popen:
+        return subprocess.Popen([sys.executable, "-c", HOLDER, str(lock_path), str(seconds)])
+
+    def test_board_lock_waits_for_the_holder(self) -> None:
+        board_path = board(self.tmp)
+        holder = self.hold(board_path.with_name("todo.org.org-lock"), 0.5)
+        time.sleep(0.1)
+        started = time.monotonic()
+        with agent.board_lock(board_path, timeout=5):
+            waited = time.monotonic() - started
+        holder.wait()
+        self.assertGreater(waited, 0.2)
+
+    def test_board_lock_times_out_with_a_clear_error(self) -> None:
+        board_path = board(self.tmp)
+        holder = self.hold(board_path.with_name("todo.org.org-lock"), 3)
+        time.sleep(0.1)
+        try:
+            with self.assertRaises(agent.Fail) as caught:
+                with agent.board_lock(board_path, timeout=0.2):
+                    pass
+        finally:
+            holder.terminate()
+        self.assertIn("being written", str(caught.exception))
+
+    def test_create_waits_out_a_busy_lock(self) -> None:
+        board_path = board(self.tmp)
+        holder = self.hold(board_path.with_name("todo.org.org-lock"), 0.6)
+        time.sleep(0.1)
+        result = self.agent_json("create", "Waited")
+        holder.wait()
+        self.assertEqual(result["state"], "TODO")
+        self.assertIn("** TODO Waited", board_path.read_text())
+
+    def test_status_reports_lock_and_claims(self) -> None:
+        created = self.agent_json("create", "Claimed task")
+        self.agent_json("claim", f"id:{created['id']}")
+        status = self.agent_json("status", "--file", created["file"])
+        self.assertFalse(status["locked"])
+        self.assertEqual(status["claims"][0]["owner"], "tester")
+        holder = self.hold(Path(created["file"] + ".org-lock"), 2)
+        time.sleep(0.1)
+        try:
+            self.assertTrue(self.agent_json("status", "--file", created["file"])["locked"])
+        finally:
+            holder.terminate()
+
+    def test_edit_holds_the_lock_for_the_editor(self) -> None:
+        created = self.agent_json("create", "Edit target")
+        probe = self.tmp / "probe_held.py"
+        probe.write_text(PROBE_HELD)
+        done = self.agent("edit", "--file", created["file"], "--editor", f"{sys.executable} {probe}")
+        self.assertEqual(done.returncode, 0, done.stderr)
 
 
 @unittest.skipUnless(ORG, "org CLI not found")

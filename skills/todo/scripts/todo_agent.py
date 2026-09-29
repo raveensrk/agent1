@@ -16,15 +16,19 @@ Overrides, used by tests: TODO_SKILL_CONFIG, ORG_BIN.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import fnmatch
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 import uuid
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 
@@ -68,16 +72,54 @@ def load_config() -> dict:
     }
 
 
+LOCK_BUSY = "being used by another process"
+
+
+@contextmanager
+def board_lock(board: Path, timeout: float | None = None):
+    """The same exclusive lock org takes for a write: <board>.org-lock.
+    org fails at once when the file is busy, so writers should wait briefly and
+    then fail with a clear message. Everyone who writes takes this lock."""
+    if timeout is None:
+        timeout = float(os.environ.get("TODO_LOCK_TIMEOUT", "5"))
+    lock_path = board.with_name(board.name + ".org-lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    handle = lock_path.open("a+")
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except OSError:
+            if time.monotonic() >= deadline:
+                handle.close()
+                raise Fail(f"{board} is being written by someone else; retry in a moment")
+            time.sleep(0.05)
+    try:
+        yield
+    finally:
+        fcntl.flock(handle, fcntl.LOCK_UN)
+        handle.close()
+
+
 def org(directory: Path, *args: str):
-    """One org call. Every call takes -d and -f json."""
+    """One org call. Every call takes -d and -f json. A busy lock is retried,
+    so an agent and the human's locked edit can take turns instead of failing."""
     cmd = [org_bin(), "-d", str(directory), "-f", "json", *args]
-    done = subprocess.run(cmd, capture_output=True, text=True)
+    for attempt in range(5):
+        done = subprocess.run(cmd, capture_output=True, text=True)
+        if LOCK_BUSY not in done.stdout + done.stderr or attempt == 4:
+            break
+        time.sleep(0.2 * (attempt + 1))
     try:
         payload = json.loads(done.stdout)
     except json.JSONDecodeError:
         raise Fail(f"org returned no JSON: {' '.join(cmd)}\n{done.stderr.strip()}")
     if not payload.get("ok"):
-        raise Fail(payload.get("error", {}).get("message", "org call failed"))
+        message = payload.get("error", {}).get("message", "org call failed")
+        if LOCK_BUSY in message:
+            raise Fail(f"{args[1] if len(args) > 1 else directory} is being written by someone else; retry in a moment")
+        raise Fail(message)
     return payload.get("data")
 
 
@@ -220,15 +262,16 @@ def find_task(lines: list[str], states: list[str], item: dict) -> tuple[int, int
 def ensure_board(board: Path) -> None:
     """Create the scaffold, and the Tasks container, when they are missing.
     Both are file structure, not task entries, so a hand write is allowed."""
-    if not board.exists():
-        board.parent.mkdir(parents=True, exist_ok=True)
-        board.write_text(SCAFFOLD)
-        return
-    if not re.search(r"^\*+ Tasks\s*$", board.read_text(), re.M):
-        with board.open("a") as handle:
-            if not board.read_text().endswith("\n"):
-                handle.write("\n")
-            handle.write("* Tasks\n")
+    with board_lock(board):
+        if not board.exists():
+            board.parent.mkdir(parents=True, exist_ok=True)
+            board.write_text(SCAFFOLD)
+            return
+        if not re.search(r"^\*+ Tasks\s*$", board.read_text(), re.M):
+            with board.open("a") as handle:
+                if not board.read_text().endswith("\n"):
+                    handle.write("\n")
+                handle.write("* Tasks\n")
 
 
 # --------------------------------------------------------------------------
@@ -309,23 +352,23 @@ def cmd_rename(args) -> dict:
     if not args.title.strip():
         raise Fail("the title must not be empty")
     directory, board, task_id = board_and_id(args)
-    states = declared_states(board)
     item = next((i for i in board_tasks(directory, board) if i["id"] == task_id), None)
     if item is None:
         raise Fail(f"task {task_id} is not on {board}")
-    original = board.read_text(encoding="utf-8")
-    lines = original.splitlines(keepends=True)
-    start, _end = find_task(lines, states, item)
-    old_line = lines[start]
-    stars, state, priority, _title, line_tags = split_heading(old_line, states)
-    new_line = join_heading(stars, state, priority, args.title, line_tags)
-    if new_line == old_line.rstrip("\n"):
-        return {"id": task_id, "title": args.title, "unchanged": True}
-    if board.read_text(encoding="utf-8") != original:
-        raise Fail("the board changed while renaming; retry")
-    tmp = board.with_name(board.name + ".tmp")
-    tmp.write_text(original.replace(old_line, new_line + "\n", 1), encoding="utf-8")
-    os.replace(tmp, board)
+    with board_lock(board):
+        original = board.read_text(encoding="utf-8")
+        lines = original.splitlines(keepends=True)
+        start, _end = find_task(lines, declared_states(board), item)
+        old_line = lines[start]
+        stars, state, priority, _title, line_tags = split_heading(old_line, declared_states(board))
+        new_line = join_heading(stars, state, priority, args.title, line_tags)
+        if new_line == old_line.rstrip("\n"):
+            return {"id": task_id, "title": args.title, "unchanged": True}
+        if board.read_text(encoding="utf-8") != original:
+            raise Fail("the board changed while renaming; retry")
+        tmp = board.with_name(board.name + ".tmp")
+        tmp.write_text(original.replace(old_line, new_line + "\n", 1), encoding="utf-8")
+        os.replace(tmp, board)
     shown = org(directory, "read", str(board), f"id:{task_id}")
     first_line = shown.splitlines()[0] if isinstance(shown, str) and shown else ""
     if args.title not in first_line:
@@ -341,17 +384,63 @@ def cmd_delete(args) -> dict:
     item = next((i for i in board_tasks(directory, board) if i["id"] == task_id), None)
     if item is None:
         raise Fail(f"task {task_id} is not on {board}")
-    original = board.read_text(encoding="utf-8")
-    lines = original.splitlines(keepends=True)
-    index, end = find_task(lines, declared_states(board), item)
-    if board.read_text(encoding="utf-8") != original:
-        raise Fail("the board changed while deleting; retry")
-    tmp = board.with_name(board.name + ".tmp")
-    tmp.write_text("".join(lines[:index] + lines[end:]), encoding="utf-8")
-    os.replace(tmp, board)
+    with board_lock(board):
+        original = board.read_text(encoding="utf-8")
+        lines = original.splitlines(keepends=True)
+        index, end = find_task(lines, declared_states(board), item)
+        if board.read_text(encoding="utf-8") != original:
+            raise Fail("the board changed while deleting; retry")
+        tmp = board.with_name(board.name + ".tmp")
+        tmp.write_text("".join(lines[:index] + lines[end:]), encoding="utf-8")
+        os.replace(tmp, board)
     if any(i["id"] == task_id for i in board_tasks(directory, board)):
         raise Fail("verification failed: the task is still on the board")
     return {"id": task_id, "title": item["title"], "file": str(board), "removed_lines": end - index}
+
+
+def cmd_status(args) -> dict:
+    """Who holds the board lock, and which tasks are claimed."""
+    board = Path(args.file).expanduser().resolve() if args.file else board_for(Path.cwd())
+    locked = True
+    try:
+        with board_lock(board, timeout=0.01):
+            locked = False
+    except Fail:
+        pass
+    claims: list[dict] = []
+    tasks = None
+    if board.is_file():
+        title = ""
+        for line in board.read_text(encoding="utf-8", errors="replace").splitlines():
+            if HEADING.match(line):
+                title = line.lstrip("* ").strip()
+            if line.startswith(":TASK_CLAIM_OWNER:"):
+                claims.append({"title": title, "owner": line.split(":", 2)[2].strip()})
+        try:
+            tasks = len(board_tasks(board.parent, board))
+        except Fail:
+            tasks = None
+    return {
+        "file": str(board),
+        "exists": board.is_file(),
+        "locked": locked,
+        "tasks": tasks,
+        "claims": claims,
+    }
+
+
+def cmd_edit(args) -> dict:
+    """Hold the board lock while the human edits, so no agent writes in the
+    meantime. The editor must stay in the foreground, so mvim runs with -f."""
+    board = Path(args.file).expanduser().resolve() if args.file else board_for(Path.cwd())
+    if not board.is_file():
+        raise Fail(f"{board} does not exist yet; create a task first")
+    editor = args.editor or os.environ.get("EDITOR") or "mvim -f"
+    with board_lock(board):
+        done = subprocess.run([*shlex.split(editor), str(board)])
+    if done.returncode != 0:
+        raise Fail(f"{editor} exited {done.returncode}")
+    return {"file": str(board), "editor": editor}
 
 
 def cmd_complete(args) -> dict:
@@ -391,11 +480,12 @@ def cmd_complete(args) -> dict:
 
 def cmd_capture(args) -> dict:
     inbox = Path(args.inbox).expanduser().resolve() if args.inbox else inbox_for(Path.cwd())
-    if not inbox.exists():
-        inbox.parent.mkdir(parents=True, exist_ok=True)
-        inbox.write_text(INBOX_SCAFFOLD)
-    with inbox.open("a") as handle:
-        handle.write(f"* {args.text}\n")
+    with board_lock(inbox):
+        if not inbox.exists():
+            inbox.parent.mkdir(parents=True, exist_ok=True)
+            inbox.write_text(INBOX_SCAFFOLD)
+        with inbox.open("a") as handle:
+            handle.write(f"* {args.text}\n")
     return {"file": str(inbox), "title": args.text}
 
 
@@ -535,6 +625,13 @@ def build_parser() -> argparse.ArgumentParser:
     complete = add_ref("complete", "finish a task with no reviewer")
     complete.add_argument("--evidence", help="recorded in the subtree body")
 
+    status = sub.add_parser("status", help="who holds the lock, and active claims")
+    status.add_argument("--file")
+
+    edit = sub.add_parser("edit", help="edit the board under the lock (human)")
+    edit.add_argument("--file")
+    edit.add_argument("--editor", help="defaults to $EDITOR or 'mvim -f'")
+
     capture = sub.add_parser("capture", help="append a plain heading to inbox.org")
     capture.add_argument("text")
     capture.add_argument("--inbox")
@@ -584,6 +681,10 @@ def dispatch(args) -> object:
         return cmd_create(args)
     if args.command == "capture":
         return cmd_capture(args)
+    if args.command == "status":
+        return cmd_status(args)
+    if args.command == "edit":
+        return cmd_edit(args)
     if args.command == "rename":
         return cmd_rename(args)
     if args.command == "delete":
