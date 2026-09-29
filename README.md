@@ -6,10 +6,10 @@ copying and drifting.
 ## 1. Clone
 
 ```bash
-git clone https://github.com/raveensrk/agents.git ~/repos/agents
+git clone https://github.com/raveensrk/agents.git ~/repos/agent1
 ```
 
-Any path works. The rest of this file assumes `~/repos/agents`.
+Any path works. The rest of this file assumes `~/repos/agent1`.
 
 ## 2. Point your agent at it
 
@@ -27,7 +27,7 @@ Any path works. The rest of this file assumes `~/repos/agents`.
 Claude Code expands `@` imports, so one line pulls the whole file in:
 
 ```markdown
-@~/repos/agents/common.md
+@~/repos/agent1/common.md
 ```
 
 ### Codex
@@ -36,7 +36,7 @@ Codex has no import syntax - it reads `AGENTS.md` verbatim. Give it an
 instruction it can act on instead:
 
 ```markdown
-At session start, read `~/repos/agents/common.md` and follow it.
+At session start, read `~/repos/agent1/common.md` and follow it.
 ```
 
 ### Both in one project
@@ -55,7 +55,7 @@ two agents never drift apart:
 - Confirm it resolves before you rely on it:
 
   ```bash
-  ls ~/repos/agents/common.md
+  ls ~/repos/agent1/common.md
   ```
 
   A wrong path fails silently. The agent told to read a missing file just
@@ -107,11 +107,11 @@ installed on the machine. Each item is a link back to this clone, so a
 `git pull` updates every harness at once.
 
 ```bash
-~/repos/agents/install.py --dry-run
+~/repos/agent1/install.py --dry-run
 ```
 
 ```bash
-~/repos/agents/install.py
+~/repos/agent1/install.py
 ```
 
 | Item | Claude Code | Codex | pi |

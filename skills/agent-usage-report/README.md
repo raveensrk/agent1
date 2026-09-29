@@ -38,14 +38,14 @@ This skill lives in the [agents](https://github.com/raveensrk/agents) repo at
 uninstall):
 
 ```bash
-~/repos/agents/install.py
+~/repos/agent1/install.py
 ```
 
 Otherwise symlink this directory into each harness's skills directory by hand:
 
 ```bash
-ln -s ~/repos/agents/skills/agent-usage-report ~/.agents/skills/agent-usage-report   # pi, Codex
-ln -s ~/repos/agents/skills/agent-usage-report ~/.claude/skills/agent-usage-report   # Claude Code
+ln -s ~/repos/agent1/skills/agent-usage-report ~/.agents/skills/agent-usage-report   # pi, Codex
+ln -s ~/repos/agent1/skills/agent-usage-report ~/.claude/skills/agent-usage-report   # Claude Code
 ```
 
 Reload the harness (pi: `/reload`) after installing or editing.
