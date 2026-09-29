@@ -261,6 +261,34 @@ class TestVerbs(Harness):
         changed = [line for line in before.splitlines() if line not in after.splitlines()]
         self.assertEqual(changed, ["** TODO [#B] Second task :keep:"])
 
+    def test_delete_removes_only_the_subtree(self) -> None:
+        keep = self.agent_json("create", "Keep me")
+        drop = self.agent_json("create", "Delete me", "--note", "a body line")
+        board_path = Path(drop["file"])
+        before = board_path.read_text()
+        self.agent_json("delete", f"id:{drop['id']}")
+        after = board_path.read_text()
+        self.assertNotIn("Delete me", after)
+        self.assertNotIn("a body line", after)
+        self.assertNotIn(drop["id"], after)
+        self.assertIn("** TODO Keep me", after)
+        self.assertIn(f":ID: {keep['id']}", after)
+        removed = [line for line in before.splitlines() if line not in after.splitlines()]
+        self.assertEqual(removed, ["** TODO Delete me", f":ID: {drop['id']}", "a body line"])
+
+    def test_delete_rejects_an_unknown_task(self) -> None:
+        self.agent_json("create", "Real task")
+        done = self.agent("delete", "id:00000000-0000-4000-8000-000000000000")
+        self.assertEqual(done.returncode, 1)
+        self.assertIn("not on", done.stderr)
+
+    def test_delete_last_task_leaves_a_valid_board(self) -> None:
+        only = self.agent_json("create", "Only one")
+        self.agent_json("delete", f"id:{only['id']}")
+        text = Path(only["file"]).read_text()
+        self.assertIn("* Tasks", text)
+        self.assertNotIn("Only one", text)
+
     def test_rename_refuses_an_unknown_task(self) -> None:
         self.agent_json("create", "Real task")
         done = self.agent("rename", "id:00000000-0000-4000-8000-000000000000", "Nope")

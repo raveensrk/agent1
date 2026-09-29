@@ -52,10 +52,14 @@ deadline, `.+3w` from completion), but `org` cannot write one and
 `org deadline` **deletes** an existing one. Never run `deadline` on a recurring
 task; recurrence is the human's.
 
-**Title edits.** `org` has no rename verb. `rename` is the skill's one hand
-write: it rewrites only that heading line - stars, state, priority and tags
-kept - refuses if the board changed underneath, and verifies the task through
-`org` afterwards. Never hand-edit anything else in a task entry.
+**Hand writes.** `org` has no rename or delete verb, so `rename` and `delete`
+are the skill's two hand writes: each rewrites only what it must - one heading
+line, or one subtree - refuses if the board changed underneath, and verifies
+through `org` afterwards. Never hand-edit anything else in a task entry.
+
+**Delete is delete.** `delete` removes the subtree, body and all. Git keeps
+history when the board is tracked; outside git it is unrecoverable. Use
+`obsolete` only when the record is worth keeping.
 
 **Enforcement.** `org` validates almost nothing. The linter catches a missing
 `:ID:`, an empty title, and a malformed timestamp. It does **not** catch bad
@@ -86,6 +90,7 @@ python3 scripts/todo_agent.py rename id:<uuid> "New title"
 python3 scripts/todo_agent.py append id:<uuid> "extra context"
 python3 scripts/todo_agent.py archive id:<uuid>
 python3 scripts/todo_agent.py obsolete id:<uuid>
+python3 scripts/todo_agent.py delete id:<uuid>
 python3 scripts/todo_agent.py capture "Look into OpenRouter routing"
 ```
 
@@ -160,17 +165,18 @@ org -d "$D" tag add "$F" "$R" home
 org -d "$D" property set "$F" "$R" KEY value
 org -d "$D" append "$F" "$R" "extra context"
 
-# archive and delete
-org -d "$D" archive "$F" "$R"          # -> <file>.org_archive
-org -d "$D" todo set "$F" "$R" OBSOLETE
+# archive, obsolete, delete
+org -d "$D" archive "$F" "$R"              # -> <file>.org_archive
+org -d "$D" todo set "$F" "$R" OBSOLETE   # keeps the record
+# delete: helper only - org has no delete verb
 
 # loop
 org -d "$D" task ready|show|claim|renew|release|submit|review|approve ...
 ```
 
-`rename` has no org equivalent; the helper is the only path, and it is the one
-hand write the skill makes. The plain verbs accept and ignore
-`--expected-revision`: a wrong hash is accepted. Read immediately before
+`rename` and `delete` have no org equivalent; the helper is the only path, and
+they are the two hand writes the skill makes. The plain verbs accept and
+ignore `--expected-revision`: a wrong hash is accepted. Read immediately before
 writing. The `task` verbs enforce it.
 
 ## 6. Traps

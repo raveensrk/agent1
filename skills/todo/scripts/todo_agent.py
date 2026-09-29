@@ -311,6 +311,46 @@ def cmd_rename(args) -> dict:
     return {"id": task_id, "title": args.title, "file": str(board)}
 
 
+def cmd_delete(args) -> dict:
+    """Remove the task subtree. org has no delete verb, so this is a guarded
+    hand write: it removes exactly the heading and its body, refuses if the
+    board changed underneath, and verifies the task is gone afterwards."""
+    directory, board, task_id = board_and_id(args)
+    item = next((i for i in board_tasks(directory, board) if i["id"] == task_id), None)
+    if item is None:
+        raise Fail(f"task {task_id} is not on {board}")
+    states = declared_states(board)
+    original = board.read_text(encoding="utf-8")
+    lines = original.splitlines(keepends=True)
+    tags = f":{':'.join(item['tags'])}:" if item["tags"] else ""
+    index, level = None, 0
+    for position, line in enumerate(lines):
+        try:
+            stars, state, _priority, title, line_tags = split_heading(line, states)
+        except Fail:
+            continue
+        if (state, title, line_tags) == (item["todo"], item["title"], tags):
+            if index is not None:
+                raise Fail(f"more than one heading matches {item['title']!r}; refine the ref")
+            index, level = position, len(stars)
+    if index is None:
+        raise Fail(f"{item['title']!r} not found on {board}")
+    end = len(lines)
+    for position in range(index + 1, len(lines)):
+        match = HEADING.match(lines[position].rstrip("\n"))
+        if match and len(match.group(1)) <= level:
+            end = position
+            break
+    if board.read_text(encoding="utf-8") != original:
+        raise Fail("the board changed while deleting; retry")
+    tmp = board.with_name(board.name + ".tmp")
+    tmp.write_text("".join(lines[:index] + lines[end:]), encoding="utf-8")
+    os.replace(tmp, board)
+    if any(i["id"] == task_id for i in board_tasks(directory, board)):
+        raise Fail("verification failed: the task is still on the board")
+    return {"id": task_id, "title": item["title"], "file": str(board), "removed_lines": end - index}
+
+
 def cmd_capture(args) -> dict:
     inbox = Path(args.inbox).expanduser().resolve() if args.inbox else inbox_for(Path.cwd())
     if not inbox.exists():
@@ -449,8 +489,10 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--tag", action="append", default=[])
     create.add_argument("--note")
 
-    rename = add_ref("rename", "change a task title (the one hand write the skill makes)")
+    rename = add_ref("rename", "change a task title (a guarded hand write)")
     rename.add_argument("title")
+
+    add_ref("delete", "remove a task subtree (not recoverable outside git)")
 
     capture = sub.add_parser("capture", help="append a plain heading to inbox.org")
     capture.add_argument("text")
@@ -503,6 +545,8 @@ def dispatch(args) -> object:
         return cmd_capture(args)
     if args.command == "rename":
         return cmd_rename(args)
+    if args.command == "delete":
+        return cmd_delete(args)
     if args.command == "resolve":
         start = Path(args.dir).expanduser().resolve()
         board = board_for(start)
