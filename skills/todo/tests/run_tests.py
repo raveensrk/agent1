@@ -139,6 +139,23 @@ class TestPureHelpers(unittest.TestCase):
             start.mkdir()
             self.assertEqual(agent.board_for(start), start / "todo.org")
 
+    def test_split_and_join_heading(self) -> None:
+        states = ["TODO", "DONE"]
+        self.assertEqual(
+            agent.split_heading("** TODO [#A] Pay rent :finance:home:\n", states),
+            ("**", "TODO", "[#A]", "Pay rent", ":finance:home:"),
+        )
+        self.assertEqual(
+            agent.split_heading("*** DONE Ship it\n", states),
+            ("***", "DONE", "", "Ship it", ""),
+        )
+        self.assertEqual(
+            agent.join_heading("**", "TODO", "[#B]", "Pay rent", ":home:"),
+            "** TODO [#B] Pay rent :home:",
+        )
+        with self.assertRaises(agent.Fail):
+            agent.split_heading("* Tasks\n", states)
+
     def test_load_config_expands_dirs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config = make_config(Path(tmp))
@@ -229,6 +246,26 @@ class TestVerbs(Harness):
         self.assertNotIn("Old work", board_text)
         self.assertTrue(archive.is_file())
         self.assertIn("Old work", archive.read_text())
+
+    def test_rename_changes_only_the_title(self) -> None:
+        self.agent_json("create", "First task")
+        second = self.agent_json("create", "Second task", "--priority", "B", "--tag", "keep")
+        board_path = Path(second["file"])
+        before = board_path.read_text()
+        result = self.agent_json("rename", f"id:{second['id']}", "Second task renamed")
+        after = board_path.read_text()
+        self.assertEqual(result["title"], "Second task renamed")
+        self.assertIn("** TODO [#B] Second task renamed :keep:", after)
+        self.assertIn(f":ID: {second['id']}", after)
+        self.assertIn("** TODO First task", after)
+        changed = [line for line in before.splitlines() if line not in after.splitlines()]
+        self.assertEqual(changed, ["** TODO [#B] Second task :keep:"])
+
+    def test_rename_refuses_an_unknown_task(self) -> None:
+        self.agent_json("create", "Real task")
+        done = self.agent("rename", "id:00000000-0000-4000-8000-000000000000", "Nope")
+        self.assertEqual(done.returncode, 1)
+        self.assertIn("not on", done.stderr)
 
     def test_capture_appends_a_plain_heading(self) -> None:
         self.agent_json("capture", "Look into routing")

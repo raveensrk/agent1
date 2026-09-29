@@ -52,6 +52,11 @@ deadline, `.+3w` from completion), but `org` cannot write one and
 `org deadline` **deletes** an existing one. Never run `deadline` on a recurring
 task; recurrence is the human's.
 
+**Title edits.** `org` has no rename verb. `rename` is the skill's one hand
+write: it rewrites only that heading line - stars, state, priority and tags
+kept - refuses if the board changed underneath, and verifies the task through
+`org` afterwards. Never hand-edit anything else in a task entry.
+
 **Enforcement.** `org` validates almost nothing. The linter catches a missing
 `:ID:`, an empty title, and a malformed timestamp. It does **not** catch bad
 tags, a `TODO:` or near-miss container, a `:CREATD:`-style property, or an
@@ -77,6 +82,7 @@ python3 scripts/todo_agent.py set-state id:<uuid> IN_PROGRESS
 python3 scripts/todo_agent.py set-deadline id:<uuid> 2026-12-01
 python3 scripts/todo_agent.py add-tag id:<uuid> home
 python3 scripts/todo_agent.py remove-tag id:<uuid> home
+python3 scripts/todo_agent.py rename id:<uuid> "New title"
 python3 scripts/todo_agent.py append id:<uuid> "extra context"
 python3 scripts/todo_agent.py archive id:<uuid>
 python3 scripts/todo_agent.py obsolete id:<uuid>
@@ -162,8 +168,10 @@ org -d "$D" todo set "$F" "$R" OBSOLETE
 org -d "$D" task ready|show|claim|renew|release|submit|review|approve ...
 ```
 
-The plain verbs accept and ignore `--expected-revision`: a wrong hash is
-accepted. Read immediately before writing. The `task` verbs enforce it.
+`rename` has no org equivalent; the helper is the only path, and it is the one
+hand write the skill makes. The plain verbs accept and ignore
+`--expected-revision`: a wrong hash is accepted. Read immediately before
+writing. The `task` verbs enforce it.
 
 ## 6. Traps
 

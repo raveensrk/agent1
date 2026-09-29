@@ -142,6 +142,51 @@ def first_state(board: Path) -> str:
     raise Fail(f"no #+TODO: line in {board}")
 
 
+HEADING = re.compile(r"^(\*+)\s+(.*)$")
+PRIORITY = re.compile(r"\[#([A-C])\]\s+(.*)$")
+TAG_BLOCK = re.compile(r"\s+(:[^:\s]+(?::[^:\s]+)*:)\s*$")
+
+
+def declared_states(board: Path) -> list[str]:
+    for line in board.read_text(encoding="utf-8").splitlines():
+        if line.startswith("#+TODO:"):
+            open_states, _, done_states = line[len("#+TODO:") :].partition("|")
+            return open_states.split() + done_states.split()
+    return ["TODO", "DONE"]
+
+
+def split_heading(line: str, states: list[str]) -> tuple[str, str, str, str, str]:
+    """(stars, state, priority, title, tags) from one heading, or Fail when the
+    line is not a task."""
+    match = HEADING.match(line.rstrip("\n"))
+    if not match:
+        raise Fail(f"not a heading: {line!r}")
+    stars, rest = match.groups()
+    tags = ""
+    found = TAG_BLOCK.search(rest)
+    if found:
+        tags, rest = found.group(1), rest[: found.start()].rstrip()
+    state, _, rest = rest.partition(" ")
+    if state not in states:
+        raise Fail(f"not a task heading: {line!r}")
+    priority = ""
+    found = PRIORITY.match(rest)
+    if found:
+        priority, rest = f"[#{found.group(1)}]", found.group(2)
+    return stars, state, priority, rest, tags
+
+
+def join_heading(stars: str, state: str, priority: str, title: str, tags: str) -> str:
+    line = f"{stars} {state}"
+    if priority:
+        line += f" {priority}"
+    if title:
+        line += f" {title}"
+    if tags:
+        line += f" {tags}"
+    return line
+
+
 def ensure_board(board: Path) -> None:
     """Create the scaffold, and the Tasks container, when they are missing.
     Both are file structure, not task entries, so a hand write is allowed."""
@@ -160,15 +205,17 @@ def ensure_board(board: Path) -> None:
 # verbs
 
 
+def board_tasks(board_dir: Path, board: Path) -> list[dict]:
+    """Tasks from this one board. --files, not -d, so a home-directory board
+    never makes org walk ~/.Trash and the rest of the tree."""
+    return org(board_dir, "--files", str(board), "todo", "list")
+
+
 def resolve_id(board_dir: Path, board: Path, ref: str) -> str:
     """id:<uuid> passes through; a title is resolved through the board."""
     if ref.startswith("id:"):
         return ref[3:]
-    matches = [
-        item
-        for item in org(board_dir, "todo", "list")
-        if item["title"] == ref and item["file"] == str(board.relative_to(board_dir))
-    ]
+    matches = [item for item in board_tasks(board_dir, board) if item["title"] == ref]
     if len(matches) != 1:
         raise Fail(f"{ref!r} matches {len(matches)} tasks in {board}; use id:<uuid>")
     return matches[0]["id"]
@@ -222,6 +269,46 @@ def cmd_ref_verb(args, prefix: tuple[str, ...], *extra: str) -> dict:
     `todo set`, `tag add`, `deadline`, `append` or `archive`."""
     directory, board, task_id = board_and_id(args)
     return org(directory, *prefix, str(board), f"id:{task_id}", *extra)
+
+
+def cmd_rename(args) -> dict:
+    """Change a title. org has no rename verb, so this rewrites exactly one
+    heading line - stars, state, priority and tags preserved - refuses if the
+    board changed underneath, and verifies the task through org afterwards.
+    The one hand write the skill makes."""
+    if not args.title.strip():
+        raise Fail("the title must not be empty")
+    directory, board, task_id = board_and_id(args)
+    states = declared_states(board)
+    item = next((i for i in board_tasks(directory, board) if i["id"] == task_id), None)
+    if item is None:
+        raise Fail(f"task {task_id} is not on {board}")
+    original = board.read_text(encoding="utf-8")
+    tags = f":{':'.join(item['tags'])}:" if item["tags"] else ""
+    targets = []
+    for line in original.splitlines(keepends=True):
+        try:
+            stars, state, priority, title, line_tags = split_heading(line, states)
+        except Fail:
+            continue
+        if (state, title, line_tags) == (item["todo"], item["title"], tags):
+            targets.append((line, stars, state, priority, line_tags))
+    if len(targets) != 1:
+        raise Fail(f"{len(targets)} headings match {item['title']!r} on {board}; refine the ref")
+    old_line, stars, state, priority, line_tags = targets[0]
+    new_line = join_heading(stars, state, priority, args.title, line_tags)
+    if new_line == old_line.rstrip("\n"):
+        return {"id": task_id, "title": args.title, "unchanged": True}
+    if board.read_text(encoding="utf-8") != original:
+        raise Fail("the board changed while renaming; retry")
+    tmp = board.with_name(board.name + ".tmp")
+    tmp.write_text(original.replace(old_line, new_line + "\n", 1), encoding="utf-8")
+    os.replace(tmp, board)
+    shown = org(directory, "read", str(board), f"id:{task_id}")
+    first_line = shown.splitlines()[0] if isinstance(shown, str) and shown else ""
+    if args.title not in first_line:
+        raise Fail(f"verification failed after rename: {first_line!r}")
+    return {"id": task_id, "title": args.title, "file": str(board)}
 
 
 def cmd_capture(args) -> dict:
@@ -362,6 +449,9 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--tag", action="append", default=[])
     create.add_argument("--note")
 
+    rename = add_ref("rename", "change a task title (the one hand write the skill makes)")
+    rename.add_argument("title")
+
     capture = sub.add_parser("capture", help="append a plain heading to inbox.org")
     capture.add_argument("text")
     capture.add_argument("--inbox")
@@ -411,6 +501,8 @@ def dispatch(args) -> object:
         return cmd_create(args)
     if args.command == "capture":
         return cmd_capture(args)
+    if args.command == "rename":
+        return cmd_rename(args)
     if args.command == "resolve":
         start = Path(args.dir).expanduser().resolve()
         board = board_for(start)
