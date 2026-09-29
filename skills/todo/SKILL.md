@@ -2,7 +2,7 @@
 name: todo
 metadata:
   scope: global
-description: Create, read, update, archive and delete tasks in any repo's org board, capture to inbox, and run the agent claim/submit/approve loop. Carries the format rules and a tested helper for the org CLI. Use when the user asks to add, edit, finish, archive or list todos, or when an agent claims and completes board work.
+description: Create, read, update, rename, complete, archive and delete tasks in any repo's org board, capture to inbox, and optionally run the claim/submit/approve review loop. Carries the format rules and a tested helper for the org CLI. Use when the user asks to add, edit, finish, archive or list todos, or when an agent claims and completes board work.
 argument-hint: "[create|read|update|archive|delete|capture|claim] [repo or dir]"
 ---
 
@@ -91,6 +91,7 @@ python3 scripts/todo_agent.py append id:<uuid> "extra context"
 python3 scripts/todo_agent.py archive id:<uuid>
 python3 scripts/todo_agent.py obsolete id:<uuid>
 python3 scripts/todo_agent.py delete id:<uuid>
+python3 scripts/todo_agent.py complete id:<uuid> [--evidence "what changed"]
 python3 scripts/todo_agent.py capture "Look into OpenRouter routing"
 ```
 
@@ -114,10 +115,20 @@ state word (`Later`, `Done`, `todo:`), reword it or the reader reads it as a
 task. Durable knowledge goes to `docs/`; a single-command triviality just gets
 done. Shaped work with acceptance criteria goes to the board.
 
-## 4. The coordination loop
+## 4. Completing work
 
-Agents never set `DONE` directly. Claim, verify against the acceptance text,
-submit, and a different actor approves. With one agent, the human approves.
+`complete` finishes a task with no reviewer: it releases the agent's own claim
+first, records `--evidence` in the body, then sets `DONE`. `org` writes
+`CLOSED:` because the file declares `#+STARTUP: logdone`. It refuses a task
+claimed by another actor.
+
+```bash
+python3 scripts/todo_agent.py complete id:<uuid> [--evidence "what changed"]
+```
+
+**Optional review loop.** When the user wants a second actor to sign off,
+claim, submit, and approve instead. Claim keeps the keyword at `TODO` and
+stores the lock in `:TASK_CLAIM_*:`; approve writes `DONE` and `CLOSED:`.
 
 ```bash
 python3 scripts/todo_agent.py claim id:<uuid>          # prints claim_id; reuse it

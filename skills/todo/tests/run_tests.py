@@ -289,6 +289,38 @@ class TestVerbs(Harness):
         self.assertIn("* Tasks", text)
         self.assertNotIn("Only one", text)
 
+    def test_complete_finishes_without_a_reviewer(self) -> None:
+        self.config.write_text(f'default_dirs = ["{self.tmp}"]\nignore = []\n')
+        item = self.agent_json("create", "Self finished")
+        result = self.agent_json("complete", f"id:{item['id']}", "--evidence", "all done")
+        self.assertEqual(result["state"], "DONE")
+        text = Path(item["file"]).read_text()
+        self.assertIn("** DONE Self finished", text)
+        self.assertIn("CLOSED: [", text)
+        self.assertIn("all done", text)
+
+    def test_complete_releases_its_own_claim(self) -> None:
+        item = self.agent_json("create", "Claimed finish")
+        self.agent_json("claim", f"id:{item['id']}")
+        self.agent_json("complete", f"id:{item['id']}")
+        text = Path(item["file"]).read_text()
+        self.assertIn("** DONE Claimed finish", text)
+        self.assertNotIn(":TASK_CLAIM_ID:", text)
+        self.assertNotIn(":TASK_CLAIM_OWNER:", text)
+
+    def test_complete_refuses_another_actors_claim(self) -> None:
+        path = board(self.tmp)
+        created = self.agent_json("create", "Someone elses")
+        path.write_text(
+            path.read_text().replace(
+                f":ID: {created['id']}",
+                f":ID: {created['id']}\n:TASK_CLAIM_ID: 11111111-1111-4111-8111-111111111111\n:TASK_CLAIM_OWNER: other",
+            )
+        )
+        done = self.agent("complete", f"id:{created['id']}")
+        self.assertEqual(done.returncode, 1)
+        self.assertIn("not yours", done.stderr)
+
     def test_rename_refuses_an_unknown_task(self) -> None:
         self.agent_json("create", "Real task")
         done = self.agent("rename", "id:00000000-0000-4000-8000-000000000000", "Nope")

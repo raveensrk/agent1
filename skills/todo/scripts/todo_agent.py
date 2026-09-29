@@ -187,6 +187,36 @@ def join_heading(stars: str, state: str, priority: str, title: str, tags: str) -
     return line
 
 
+CLAIM_ID = re.compile(r":TASK_CLAIM_ID:\s*(\S+)")
+CLAIM_OWNER = re.compile(r":TASK_CLAIM_OWNER:\s*(\S+)")
+
+
+def find_task(lines: list[str], states: list[str], item: dict) -> tuple[int, int]:
+    """(start, end) line indexes of the task subtree. Fails when the task is
+    absent or several headings match, so a hand write can never touch the
+    wrong task."""
+    tags = f":{':'.join(item['tags'])}:" if item["tags"] else ""
+    start, level = None, 0
+    for position, line in enumerate(lines):
+        try:
+            stars, state, _priority, title, line_tags = split_heading(line, states)
+        except Fail:
+            continue
+        if (state, title, line_tags) == (item["todo"], item["title"], tags):
+            if start is not None:
+                raise Fail(f"more than one heading matches {item['title']!r}; refine the ref")
+            start, level = position, len(stars)
+    if start is None:
+        raise Fail(f"{item['title']!r} is not a task heading in this file")
+    end = len(lines)
+    for position in range(start + 1, len(lines)):
+        match = HEADING.match(lines[position].rstrip("\n"))
+        if match and len(match.group(1)) <= level:
+            end = position
+            break
+    return start, end
+
+
 def ensure_board(board: Path) -> None:
     """Create the scaffold, and the Tasks container, when they are missing.
     Both are file structure, not task entries, so a hand write is allowed."""
@@ -284,18 +314,10 @@ def cmd_rename(args) -> dict:
     if item is None:
         raise Fail(f"task {task_id} is not on {board}")
     original = board.read_text(encoding="utf-8")
-    tags = f":{':'.join(item['tags'])}:" if item["tags"] else ""
-    targets = []
-    for line in original.splitlines(keepends=True):
-        try:
-            stars, state, priority, title, line_tags = split_heading(line, states)
-        except Fail:
-            continue
-        if (state, title, line_tags) == (item["todo"], item["title"], tags):
-            targets.append((line, stars, state, priority, line_tags))
-    if len(targets) != 1:
-        raise Fail(f"{len(targets)} headings match {item['title']!r} on {board}; refine the ref")
-    old_line, stars, state, priority, line_tags = targets[0]
+    lines = original.splitlines(keepends=True)
+    start, _end = find_task(lines, states, item)
+    old_line = lines[start]
+    stars, state, priority, _title, line_tags = split_heading(old_line, states)
     new_line = join_heading(stars, state, priority, args.title, line_tags)
     if new_line == old_line.rstrip("\n"):
         return {"id": task_id, "title": args.title, "unchanged": True}
@@ -319,28 +341,9 @@ def cmd_delete(args) -> dict:
     item = next((i for i in board_tasks(directory, board) if i["id"] == task_id), None)
     if item is None:
         raise Fail(f"task {task_id} is not on {board}")
-    states = declared_states(board)
     original = board.read_text(encoding="utf-8")
     lines = original.splitlines(keepends=True)
-    tags = f":{':'.join(item['tags'])}:" if item["tags"] else ""
-    index, level = None, 0
-    for position, line in enumerate(lines):
-        try:
-            stars, state, _priority, title, line_tags = split_heading(line, states)
-        except Fail:
-            continue
-        if (state, title, line_tags) == (item["todo"], item["title"], tags):
-            if index is not None:
-                raise Fail(f"more than one heading matches {item['title']!r}; refine the ref")
-            index, level = position, len(stars)
-    if index is None:
-        raise Fail(f"{item['title']!r} not found on {board}")
-    end = len(lines)
-    for position in range(index + 1, len(lines)):
-        match = HEADING.match(lines[position].rstrip("\n"))
-        if match and len(match.group(1)) <= level:
-            end = position
-            break
+    index, end = find_task(lines, declared_states(board), item)
     if board.read_text(encoding="utf-8") != original:
         raise Fail("the board changed while deleting; retry")
     tmp = board.with_name(board.name + ".tmp")
@@ -349,6 +352,41 @@ def cmd_delete(args) -> dict:
     if any(i["id"] == task_id for i in board_tasks(directory, board)):
         raise Fail("verification failed: the task is still on the board")
     return {"id": task_id, "title": item["title"], "file": str(board), "removed_lines": end - index}
+
+
+def cmd_complete(args) -> dict:
+    """Finish a task with no reviewer: release the agent's own claim, record
+    evidence in the body, then set DONE. org writes CLOSED via logdone."""
+    directory, board, task_id = board_and_id(args)
+    item = next((i for i in board_tasks(directory, board) if i["id"] == task_id), None)
+    if item is None:
+        raise Fail(f"task {task_id} is not on {board}")
+    lines = board.read_text(encoding="utf-8").splitlines(keepends=True)
+    start, end = find_task(lines, declared_states(board), item)
+    claim = CLAIM_ID.search("".join(lines[start:end]))
+    if claim:
+        owner = CLAIM_OWNER.search("".join(lines[start:end]))
+        if owner and owner.group(1) != actor():
+            raise Fail(f"claimed by {owner.group(1)}; not yours to complete")
+        revision = org(directory, "task", "show", f"id:{task_id}")["revision"]
+        org(
+            directory,
+            "task",
+            "release",
+            f"id:{task_id}",
+            "--actor",
+            actor(),
+            "--claim-id",
+            claim.group(1),
+            "--expected-revision",
+            revision,
+            "--evidence",
+            args.evidence or "completed",
+        )
+    if args.evidence:
+        org(directory, "append", str(board), f"id:{task_id}", args.evidence)
+    org(directory, "todo", "set", str(board), f"id:{task_id}", "DONE")
+    return {"id": task_id, "state": "DONE", "file": str(board), "released": bool(claim)}
 
 
 def cmd_capture(args) -> dict:
@@ -494,6 +532,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     add_ref("delete", "remove a task subtree (not recoverable outside git)")
 
+    complete = add_ref("complete", "finish a task with no reviewer")
+    complete.add_argument("--evidence", help="recorded in the subtree body")
+
     capture = sub.add_parser("capture", help="append a plain heading to inbox.org")
     capture.add_argument("text")
     capture.add_argument("--inbox")
@@ -547,6 +588,8 @@ def dispatch(args) -> object:
         return cmd_rename(args)
     if args.command == "delete":
         return cmd_delete(args)
+    if args.command == "complete":
+        return cmd_complete(args)
     if args.command == "resolve":
         start = Path(args.dir).expanduser().resolve()
         board = board_for(start)
