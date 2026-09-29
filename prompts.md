@@ -77,11 +77,11 @@ Based on the current session update the documentation and training data.
 Based on this current session do the following,
 
 - Find dead code and remove it.
-- Add helper scripts if they reduce token usage or improve task quality.
-- Make performance improvements to the project.
 - Try to reduce bloat in the project.
+- Make performance improvements to the project.
 - Perform maintenance and clean up redundancies in this project.
 - Break large code blocks into smaller, focused components to improve usability and maintainability.
+- Add helper scripts if they reduce token usage or improve task quality.
 - Suggest an idea, improvement, tweak, or optimization for this project.
 - Finally, Critic this project.
 
