@@ -1,5 +1,7 @@
 ---
 name: git-report
+metadata:
+  scope: global
 description: Report the git commits a person made across all their repos, local and remote, all branches, for any time window (default the last 24 hours, configurable). Use when the user asks what they worked on, for a work log, standup notes, a daily or weekly report, or "my commits since X". Also sets up or edits its config (~/.local/git_report.toml), suggesting values from this machine.
 argument-hint: "[0d | -1d | -Nd | -N | -Nw]"
 ---

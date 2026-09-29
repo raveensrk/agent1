@@ -1,5 +1,7 @@
 ---
 name: cheap-model-research
+metadata:
+  scope: global
 description: Deep research on the currently available cheap and intelligent LLMs, restricted to models available in pi and/or opencode (availability marked), written as a self-contained HTML report in ~/Downloads. Use when the user asks for a cheap model comparison, model price/intelligence report, or "which cheap model should I use". Free models are included and marked.
 ---
 

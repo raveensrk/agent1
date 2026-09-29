@@ -1,5 +1,7 @@
 ---
 name: agent-usage-report
+metadata:
+  scope: global
 description: Build a self-contained interactive HTML report of every AI model used across agent harnesses (pi, Claude Code, Codex, opencode) with tokens, cost, cost per 1M, interactive charts, a session drilldown, and the market verdict - the world's three most-used frontier and three most-used flash-tier models (OpenRouter usage share, Artificial Analysis tiers), highlighted in the report. Use when the user asks what models they used, token or spend totals, a usage report, or "how much have I spent on AI".
 argument-hint: "[0d | -1d | -Nd | -N | -Nw | --since YYYY-MM-DD | --until YYYY-MM-DD]"
 ---

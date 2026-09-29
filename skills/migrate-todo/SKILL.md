@@ -1,5 +1,7 @@
 ---
 name: migrate-todo
+metadata:
+  scope: global
 description: 'Convert line-schema todos (- TODO: ...) to the org schema, one repo at a time. Dry run by default. Use when the user asks to migrate, convert or upgrade todos to the org format.'
 argument-hint: "[dir ...] [--apply]"
 allowed-tools: Read, Glob, Grep, Bash(python3:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git -C:*)

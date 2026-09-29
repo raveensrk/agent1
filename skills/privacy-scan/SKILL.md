@@ -1,5 +1,7 @@
 ---
 name: privacy-scan
+metadata:
+  scope: global
 description: Scan files, a git diff or staged changes for PII, privacy and security issues (secrets, personal data, prompt injection). Read-only report. Use when the user asks to check content for PII, secrets or privacy leaks, or before publishing or pushing to a public repo.
 argument-hint: "[path | glob | --staged | --diff]"
 allowed-tools: Read, Glob, Grep, Bash(git diff:*), Bash(git status:*), Bash(git ls-files:*)
