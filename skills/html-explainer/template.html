@@ -127,10 +127,17 @@
 
   // Optional multiple-choice questions. Author edits this array; empty = none.
   // Each: { id: "q1", text: "...", options: ["a", "b", "c"] }
+  // The last question automatically gains a "None of the above" option, and
+  // every question renders an optional note/comment textarea under its choices.
   var QUESTIONS = [];
 
   var qWrap = document.getElementById("fb-questions");
-  QUESTIONS.forEach(function (q) {
+  QUESTIONS.forEach(function (q, qi) {
+    q.options = q.options || [];
+    // Last question gets an escape hatch: "None of the above".
+    if (qi === QUESTIONS.length - 1 && q.options.length && q.options.indexOf("None of the above") === -1) {
+      q.options = q.options.concat("None of the above");
+    }
     var label = document.createElement("label");
     label.textContent = q.text;
     qWrap.appendChild(label);
@@ -147,6 +154,12 @@
       opts.appendChild(lab);
     });
     qWrap.appendChild(opts);
+    var note = document.createElement("textarea");
+    note.id = "fb-note-" + q.id;
+    note.className = "q-note";
+    note.placeholder = "Note or comment (optional)";
+    note.setAttribute("aria-label", "Note for: " + q.text);
+    qWrap.appendChild(note);
   });
 
   document.getElementById("fb-yes").addEventListener("click", function () {
@@ -164,10 +177,17 @@
     var answers = [];
     QUESTIONS.forEach(function (q) {
       var sel = qWrap.querySelector('input[name="' + q.id + '"]:checked');
-      if (sel) answers.push({ id: q.id, text: q.text, answer: q.options[Number(sel.value)] });
+      var noteEl = qWrap.querySelector("#fb-note-" + q.id);
+      var note = noteEl ? noteEl.value.trim() : "";
+      if (sel || note) {
+        var entry = { id: q.id, text: q.text };
+        if (sel) entry.answer = q.options[Number(sel.value)];
+        if (note) entry.note = note;
+        answers.push(entry);
+      }
     });
     if (answers.length) out.answers = answers;
-    document.querySelectorAll("#feedback textarea").forEach(function (ta) {
+    document.querySelectorAll("#feedback textarea:not(.q-note)").forEach(function (ta) {
       var v = ta.value.trim();
       if (v) out.items.push({ section: ta.id.replace(/^fb-/, "").replace(/-/g, "."), text: v });
     });
@@ -178,7 +198,10 @@
     var d = collect();
     var lines = ["FEEDBACK " + d.page];
     if (d.understood) lines.push("understood: " + d.understood);
-    (d.answers || []).forEach(function (a) { lines.push("q " + a.id + " (" + a.text + "): " + a.answer); });
+    (d.answers || []).forEach(function (a) {
+      if (a.answer) lines.push("q " + a.id + " (" + a.text + "): " + a.answer);
+      if (a.note) lines.push("q " + a.id + " note: " + a.note);
+    });
     d.items.forEach(function (it) { lines.push(it.section + ": " + it.text); });
     return lines.join("\n");
   }
