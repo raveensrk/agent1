@@ -305,6 +305,7 @@ Org's default, unmodified.
 
 - ~org-archive-subtree~ moves a subtree to ~<file>.org_archive~, beside the source file.
 - The archive gains ~#    -*- mode: org -*-~ as its first line. That line is required: ~.org_archive~ is not in ~auto-mode-alist~, so without it Emacs does not open the file as org.
+- Measured 2026-09-29: ~org archive~ (org CLI 2.0.0) creates the archive without that mode line. Add it once, by hand, after the first archive from a file.
 - Org writes no ~#+TODO:~ into a new archive. Add one once; org appends below it and never removes it.
 - The default ~org-archive-subtree~ adds **no** ~:ARCHIVE:~ tag. The tag belongs to ~org-archive-to-archive-sibling~, which this schema does not use.
 - An archived subtree gains a ~:PROPERTIES:~ drawer: ~:ARCHIVE_TIME:~, ~:ARCHIVE_CATEGORY:~, ~:ARCHIVE_TODO:~, and ~:ARCHIVE_FILE:~ unless the configuration above removes it.
@@ -327,13 +328,47 @@ A task's kind is a tag, not a state: ~:bug:~ when something behaves wrongly, ~:f
 
 * Protocol
 
-Plain-text kanban for AI coding agents. Any agent can pick up and complete a task. Every rule here is agent-agnostic: "the active agent" means whichever agent is running.
+Plain-text kanban. Agents work the board through the [[https://github.com/DCPRevere/org-cli][org CLI]] - measured on ~org~ 2.0.0, 2026-09-29. The file is the bus: agents do not message each other, and a parent agent does not spawn a subagent to coordinate. "The active agent" means whichever agent is running. The format is this file; this section is the operating rule, and it adds no states, tags, or second board.
 
-** Claiming a task
+** Verbs
 
-1. Pick a ~TODO~ or ~IN_PROGRESS~ task. Any agent may pick any task.
-2. If it is ~TODO~, change the keyword to ~IN_PROGRESS~ before starting work.
-3. ~IN_PROGRESS~ is a status, not a lock. Continue it.
+| Verb    | Command                                                                          |
+|---------+----------------------------------------------------------------------------------|
+| Create  | ~org -d <dir> add <file> "<title>" --todo <state> --under <container> [--deadline D] [--tag t]~, then ~org -d <dir> property set <file> "<title>" CREATED <today>~ |
+| Read    | ~org -d <dir> -f json todo list~, ~org read <file> <ref>~, ~org task show id:<uuid>~ |
+| Update  | ~org todo set~, ~org deadline~, ~org priority~, ~org tag add/remove~, ~org property set/remove~, ~org append~ |
+| Archive | ~org archive <file> <ref>~ moves the subtree to ~<file>.org_archive~               |
+| Delete  | No verb. The human deletes the subtree by hand; ~OBSOLETE~ keeps the record.       |
+
+- Create writes the state word from the file's own ~#+TODO:~ set, never a hardcoded one.
+- ~org~ writes ~:ID:~ itself and pads properties to column 0. Measured: the linter accepts that even when the rest of the file is indented by hand.
+- Never run ~org task create~ on a board. Measured 2026-09-29: it writes ~tasks.org~, ignores an existing ~todo.org~, and rejects ~--input {"file":"todo.org"}~.
+- ~org add~ never writes ~:CREATED:~, with or without ~--under~, and it never creates a file or a container. Without ~--under~ it also inserts at the root. The two-command recipe above is the create path.
+- A repository may ship a board linter; run it after a write when one exists.
+
+** Agent writer
+
+1. Set ~ORG_ACTOR~ to a stable name for this process. If it is unset, ask. Do not invent an actor.
+2. Pass ~-d <repo-root>~ and ~-f json~ on every call.
+3. Pass ~--expected-revision~ on every write, using the revision from the read just done. On ~conflict~, read again and retry once. Never retry with the old hash. Measured 2026-09-29: the ~task~ verbs enforce it; ~todo set~, ~deadline~, ~priority~, ~tag~ and ~property~ accept a wrong hash, so read immediately before a plain edit.
+4. Keep the claim UUID in this process. Do not put it in a message to another agent.
+5. ~org~ is the only writer of task entries. Do not edit ~*.org~ task files by hand.
+
+Do not pass ~--scheduled~, and do not run ~org schedule~; this schema has no ~SCHEDULED:~. Do not freehand stars, drawers, keywords, or logbook lines. Do not commit ~.org-index.db~, ~.org-tasks.lock~, or ~*.org-lock~.
+
+** Coordination loop
+
+The lock is ~org task claim~, not the keyword. Measured: a claim leaves the keyword at ~TODO~ and records the lock in ~:TASK_CLAIM_ID:~ and ~:TASK_CLAIM_OWNER:~. A human may still set ~IN_PROGRESS~ by hand; that keyword is a status, not a lock.
+
+1. ~org task ready -d <repo-root> -f json~ lists the candidates.
+2. Pick by [[*Picking which task][Picking which task]], then ~org task show id:<uuid> -d <repo-root> -f json~ and read the acceptance text in the subtree body.
+3. ~org task claim id:<uuid> -d <repo-root> --actor "$ORG_ACTOR" --claim-id <fresh-uuid> --expected-revision <hash>~
+4. Do the work. Renew before the lease ends - 30 minutes by default.
+5. If it cannot continue, release with a handoff. Do not submit, and do not message another agent.
+6. ~org task submit id:<uuid> -d <repo-root> --actor "$ORG_ACTOR" --claim-id <uuid> --expected-revision <hash> --evidence "<what changed>"~
+7. A different actor reviews: ~org task approve id:<uuid> -d <repo-root> --actor <other> --expected-revision <hash> --evidence "<review>"~. Same-actor approve is rejected, and a review decision needs evidence. Approve writes ~DONE~ and ~CLOSED:~ when the file declares ~#+STARTUP: logdone~.
+
+After a claim the task leaves ~org task ready~ (its status becomes ~working~); read it with ~org task show~.
 
 ** Picking which task
 
@@ -342,12 +377,13 @@ Priority first: ~[#A]~, then ~[#B]~, then ~[#C]~, then unprioritised. Within one
 ** Completing a task
 
 1. Verify against the acceptance criteria in the subtree body.
-2. Change the keyword to ~DONE~. Org records ~CLOSED:~ itself, because the file declares ~#+STARTUP: logdone~.
-3. Leave it where it is. Archiving is optional housekeeping; see [[*Archiving][Archiving]].
+2. Agents submit, then a different actor approves; see [[*Coordination loop][Coordination loop]].
+3. A human may change the keyword to ~DONE~ in place. Org records ~CLOSED:~ itself, because the file declares ~#+STARTUP: logdone~.
+4. Leave it where it is. Archiving is optional housekeeping; see [[*Archiving][Archiving]].
 
 ** Dropping a task
 
-1. Delete the subtree. Git keeps history.
+1. Delete the subtree. Git keeps history. Agents leave deletion to the human - the verb table has no delete.
 2. Use ~OBSOLETE~ instead when the record is worth keeping.
 
 ** When to create a task
@@ -478,3 +514,5 @@ None. Every question this document opened is answered in [[*Decisions][Decisions
 | 2026-09-24 | An example task is indented                                 | Measured: a column-0 ~*~ ends a block, so a code fence hides nothing. A ~COMMENT~ subtree passes ~org-lint~ but leaves examples visible to ~rg~ and to ~org-map-entries~ |
 | 2026-09-24 | Tags are lowercase, and a reader rejects an uppercase tag | Org tags are case-sensitive, so ~:AI:~ and ~:ai:~ would be two tags meaning one thing. The corpus holds four uppercase occurrences |
 | 2026-09-24 | ~org-tags-column~ is 0                                      | ~org-auto-align-tags~ is ~t~, so a title edit otherwise rewrites the line |
+| 2026-09-26 | Agents claim through ~org~, not by editing the keyword     | Measured on ~org~ 2.0.0: claim keeps ~TODO~, approve writes ~DONE~. Freehand edits race. ~org task create~ writes ~tasks.org~, so it is not the board writer |
+| 2026-09-29 | The agent protocol lives here, in one file                 | Two files drifted: ~orchestration.md~ was never merged, and both links to it dangle. The verbs, the writer rules and the loop are todo work, so they belong with the format |
