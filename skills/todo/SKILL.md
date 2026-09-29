@@ -82,6 +82,7 @@ directory.
 # ~/dot_local/config/todo_skill.toml
 default_dirs = ["~/dot", "~/repos"]
 ignore = ["node_modules", "repos/notes", ...]
+review_actor = "human"    # who approves; must differ from ORG_ACTOR
 ```
 
 `org` has no ignore flag, so drop any result whose file path matches an
@@ -232,13 +233,14 @@ step, and reuse `$CLAIM_ID`:
 "$ORG" -d "$D" -f json task release id:$ID --actor "$ORG_ACTOR" --claim-id "$CLAIM_ID" --expected-revision <fresh> --evidence "<handoff>"
 "$ORG" -d "$D" -f json task submit  id:$ID --actor "$ORG_ACTOR" --claim-id "$CLAIM_ID" --expected-revision <fresh> --evidence "<what changed>"
 "$ORG" -d "$D" -f json task review                # what awaits approval
-"$ORG" -d "$D" -f json task approve id:$ID --actor <other> --expected-revision <fresh> --evidence "<review>"
+"$ORG" -d "$D" -f json task approve id:$ID --actor "$REVIEW_ACTOR" --expected-revision <fresh> --evidence "<review>"
+# REVIEW_ACTOR is review_actor from the skill config; if the key is absent, ask the human
 ```
 
 - Pick order: `[#A]`, then `[#B]`, then `[#C]`, then unprioritised; oldest `:CREATED:` first, and a task without one sorts last.
 - Renew before the lease ends - 30 minutes by default.
 - Release when the work cannot continue. Do not submit.
-- `submit` and `approve` both require evidence. Self-approval is rejected; approve writes `DONE` and `CLOSED:`. Never fake the reviewer's actor name - ask the human.
+- `submit` and `approve` both require evidence. Self-approval is rejected; approve writes `DONE` and `CLOSED:`. The approving actor is `review_actor` from the skill config and must differ from `$ORG_ACTOR`; if the key is absent, ask the human. Never approve your own work.
 - A task with no `:ID:` cannot be claimed, and the reader rejects the file. `org add` always writes one; a hand-written task needs the human to add it.
 - After a claim the task leaves `task ready` (status `working`); read it with `task show`. Keep `$CLAIM_ID` in this process and never message it to another agent.
 - On a `conflict`, fetch again and retry once - never with the old hash.
