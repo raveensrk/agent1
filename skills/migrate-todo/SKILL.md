@@ -18,7 +18,7 @@ given.
 ## What this does
 
 Consolidates each repo's boards into repo-root org files per
-[Todo Schema (Org)](../../todo_schema.org):
+[Todo skill](../todo/SKILL.md):
 
 ```org
 #+TITLE: TODO

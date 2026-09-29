@@ -82,7 +82,6 @@ answer means the import did not load.
 | `jobs.md` | ETA rules for long-running jobs |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
-| `todo_schema.org` | Task format, inbox and protocol - org mode |
 | `terminologies.md` | Personal prompt-vocab notes |
 | `use_case.md` | Personal notes: what I use agents for |
 

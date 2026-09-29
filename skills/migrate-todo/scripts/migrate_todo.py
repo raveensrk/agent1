@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Migrate line-schema todo items to the org schema (todo_schema.org).
+"""Migrate line-schema todo items to the org schema (the todo skill).
 
 Consolidates every repo's boards into repo-root org files:
 
@@ -93,7 +93,7 @@ def sym(tok):
 
 def state_like(word):
     """True if a container heading starting with `word` would be misread as a
-    task state: exact state or the near-miss rules of todo_schema.org."""
+    task state: exact state or the near-miss rules of the todo skill."""
     w = word.rstrip(":").lower()
     states = [s.lower() for s in STATES]
     if w in states:
@@ -320,7 +320,7 @@ STAMP = re.compile(r"[<\[](\d{4})-(\d{2})-(\d{2}) (Mon|Tue|Wed|Thu|Fri|Sat|Sun)[
 
 
 def validate(text, name):
-    """Reparse generated org per the reader rules of todo_schema.org. Raises Bad."""
+    """Reparse generated org per the reader rules of the todo skill. Raises Bad."""
     stack = []  # (depth, is_task) of enclosing headings
     for n, line in enumerate(text.splitlines(), 1):
         if not line.startswith("*"):
@@ -491,7 +491,7 @@ def render_report(plan, skipped, loose, detail, out):
 <title>Todo → Org migration report</title><style>{CSS}</style></head><body>
 <h1>Todo → Org migration report</h1>
 <p>Dry run of <code>migrate_todo.py</code>. Nothing has been written to any repo
-yet. Schema: <code>docs/agents/todo_schema.org</code>.</p>
+yet. Schema: <code>docs/agents/skills/todo/SKILL.md</code>.</p>
 
 <div class="note"><b>What happens on apply</b> — every repo's boards
 (<code>todo.md</code>, <code>inbox.md</code>, <code>archive.md</code>)
