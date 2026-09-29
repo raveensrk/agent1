@@ -191,6 +191,19 @@ class TestVerbs(Harness):
         self.assertIn("Visible", titles)
         self.assertNotIn("Hidden", titles)
 
+    def test_read_sees_the_board_the_cwd_is_on(self) -> None:
+        elsewhere = self.tmp / "elsewhere"
+        elsewhere.mkdir()
+        self.config.write_text(f'default_dirs = ["{elsewhere}"]\nignore = []\n')
+        self.agent_json("create", "On my board")
+        titles = [item["title"] for item in self.agent_json("read")]
+        self.assertEqual(titles, ["On my board"])
+
+    def test_read_does_not_double_count_the_cwd_board(self) -> None:
+        self.agent_json("create", "Once only")
+        titles = [item["title"] for item in self.agent_json("read")]
+        self.assertEqual(titles.count("Once only"), 1)
+
     def test_update_by_id(self) -> None:
         created = self.agent_json("create", "Edit me")
         ref = f"id:{created['id']}"

@@ -64,12 +64,14 @@ else here is on you.
 
 ## 2. The helper
 
-`scripts/todo_agent.py` (stdlib only). It resolves the board from the cwd's git
-root, reads the config, and calls `org`. Run it with `python3`.
+`scripts/todo_agent.py` (stdlib only). It reads the config and calls `org`, and
+it resolves the board from the cwd: the git root's `<root>/todo.org`; outside a
+repo, the nearest `todo.org` above; else `<cwd>/todo.org` (scaffolded on the
+first create). Run it with `python3`.
 
 ```bash
 python3 scripts/todo_agent.py resolve                        # board file and dir
-python3 scripts/todo_agent.py read [--state TODO] [--tag x]  # configured dirs
+python3 scripts/todo_agent.py read [--state TODO] [--tag x]  # config dirs + this board
 python3 scripts/todo_agent.py create "Pay rent" --deadline 2026-11-05 --tag finance --priority A
 python3 scripts/todo_agent.py set-state id:<uuid> IN_PROGRESS
 python3 scripts/todo_agent.py set-deadline id:<uuid> 2026-12-01

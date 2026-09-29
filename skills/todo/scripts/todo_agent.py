@@ -234,19 +234,44 @@ def cmd_capture(args) -> dict:
     return {"file": str(inbox), "title": args.text}
 
 
+def scan_dir(directory: Path, ignore: list[str]) -> list[dict]:
+    items = []
+    for item in org(directory, "todo", "list"):
+        full = directory / item["file"]
+        if not is_ignored(full, ignore):
+            item["path"] = str(full)
+            items.append(item)
+    return items
+
+
+def scan_files(paths: list[Path]) -> list[dict]:
+    by_name = {path.name: path for path in paths}
+    items = org(Path.cwd(), "--files", *[str(p) for p in paths], "todo", "list")
+    for item in items:
+        item["path"] = str(by_name.get(item["file"], Path(item["file"])))
+    return items
+
+
 def cmd_read(args) -> list[dict]:
+    """Read the named dirs, or the configured dirs plus the board the cwd is
+    on - so a task just created here is also read here."""
     config = load_config()
-    dirs = [Path(d).expanduser() for d in args.dir] or config["default_dirs"] or [Path.cwd()]
     items: list[dict] = []
-    for directory in dirs:
-        if not directory.is_dir():
-            continue
-        found = org(directory, "todo", "list")
-        for item in found:
-            full = directory / item["file"]
-            if not is_ignored(full, config["ignore"]):
-                item["path"] = str(full)
-                items.append(item)
+    if args.dir:
+        for directory in (Path(d).expanduser() for d in args.dir):
+            if directory.is_dir():
+                items.extend(scan_dir(directory, config["ignore"]))
+    else:
+        for directory in config["default_dirs"]:
+            if directory.is_dir():
+                items.extend(scan_dir(directory, config["ignore"]))
+        cwd_board = board_for(Path.cwd()).resolve()
+        covered = any(
+            directory.is_dir() and cwd_board.is_relative_to(directory.resolve())
+            for directory in config["default_dirs"]
+        )
+        if cwd_board.is_file() and not covered and not is_ignored(cwd_board, config["ignore"]):
+            items.extend(scan_files([cwd_board]))
     if args.state:
         items = [i for i in items if i["todo"] == args.state]
     if args.tag:
