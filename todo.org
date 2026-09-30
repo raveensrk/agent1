@@ -1,2 +1,4 @@
 * TODO improve pi questioning with extension or prompt / skill / response
 * TODO Remove =.org_archive=. Merge into `.org` the content of archive must be at the end of file after 40 newline characters to have good seperation.
+
+* todo CLI: error on a column-0 * heading inside a #+BEGIN_* block instead of silently ignoring it - org-mode and the agenda treat it as a real task. Update SKILL.md traps and tests.
