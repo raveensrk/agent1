@@ -40,6 +40,10 @@ org's own drawers are fine when a file already has them.
 **Notes.** Everything between the heading and the next heading is the note.
 `- [ ]` checklists are steps, not tasks.
 
+**Archive.** Retired tasks stay at the end of the board under a `* Archive`
+container, after the live content and 40 blank lines. There is no separate
+`_archive` file. `read` and refs skip the container: it is history.
+
 **Dates.** The CLI takes a bare `2026-11-05` and org fills the day name itself.
 It rejects a time, angle brackets and a hand-written day name.
 

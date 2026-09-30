@@ -232,6 +232,20 @@
   (should (todo-ignored-p "/a/b.org" '("/a")))
   (should-not (todo-ignored-p "/a/b.org" '("node_modules"))))
 
+;;; archive
+
+(ert-deftest todo-read-and-refs-skip-the-archive-container ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO Live\n\n" (make-string 40 ?\n)
+                            "* Archive\n** DONE Old work\n\n** OBSOLETE Dropped\n"))
+  (let ((out (nth 1 (todo-test--ok "read"))))
+    (should (string-match-p "Live" out))
+    (should-not (string-match-p "Old work" out))
+    (should-not (string-match-p "Dropped" out)))
+  (let ((result (todo-test--cli "complete" "Old work")))
+    (should (eq 1 (nth 0 result)))
+    (should (string-match-p "not a task heading" (nth 2 result)))))
+
 ;;; concurrency
 
 (ert-deftest todo-concurrent-creates-both-land ()

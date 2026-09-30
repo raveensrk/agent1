@@ -123,8 +123,17 @@ slash matches that run of components, a glob is a glob, and an absolute or
       (and (not (string-prefix-p "." (file-name-nondirectory sub)))
            (not (todo-ignored-p sub ignore)))))))
 
+(defun todo--archived-p ()
+  "Non-nil when the heading at point sits inside a container titled Archive."
+  (save-excursion
+    (let (found)
+      (while (and (not found) (org-up-heading-safe))
+        (when (equal (org-get-heading t t t t) "Archive")
+          (setq found t)))
+      found)))
+
 (defun todo-tasks (file)
-  "Every task heading in FILE."
+  "Every live task heading in FILE; the Archive container is history."
   (with-temp-buffer
     (insert-file-contents file)
     (org-mode)
@@ -132,7 +141,7 @@ slash matches that run of components, a glob is a glob, and an absolute or
       (org-map-entries
        (lambda ()
          (let ((state (org-get-todo-state)))
-           (when (member state todo-states)
+           (when (and (member state todo-states) (not (todo--archived-p)))
              (push (list (cons 'file file)
                          (cons 'path file)
                          (cons 'todo state)
@@ -218,6 +227,7 @@ writers never clobber each other."
     (org-map-entries
      (lambda ()
        (when (and (member (org-get-todo-state) todo-states)
+                  (not (todo--archived-p))
                   (equal (org-get-heading t t t t) title))
          (cl-incf count)
          (unless marker (setq marker (point-marker))))))
