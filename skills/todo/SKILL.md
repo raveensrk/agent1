@@ -40,6 +40,10 @@ org's own drawers are fine when a file already has them.
 **Notes.** Everything between the heading and the next heading is the note.
 `- [ ]` checklists are steps, not tasks.
 
+**Examples.** A heading inside a `#+BEGIN_*` ... `#+END_*` block (src, example,
+quote, ...) is documentation, not a task. `read` and refs ignore it, even when
+the `*` sits at column 0.
+
 **Archive.** Retired tasks stay at the end of the board under a `* Archive`
 container, after the live content and 40 blank lines. There is no separate
 `_archive` file. `read` and refs skip the container: it is history.

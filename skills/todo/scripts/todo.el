@@ -123,6 +123,30 @@ slash matches that run of components, a glob is a glob, and an absolute or
       (and (not (string-prefix-p "." (file-name-nondirectory sub)))
            (not (todo-ignored-p sub ignore)))))))
 
+(defvar todo--blocks nil
+  "Character ranges of #+BEGIN_* ... #+END_* blocks in the current buffer.")
+
+(defun todo--mark-blocks ()
+  "Record the block ranges; a heading inside one is an example, not a task."
+  (setq todo--blocks nil)
+  (save-excursion
+    (goto-char (point-min))
+    (let (start)
+      (while (re-search-forward "^[ \t]*#\\+\\(BEGIN\\|END\\)_" nil t)
+        (if (equal (match-string 1) "BEGIN")
+            (unless start (setq start (line-beginning-position)))
+          (when start
+            (push (cons start (line-end-position)) todo--blocks)
+            (setq start nil))))
+      (when start
+        (push (cons start (point-max)) todo--blocks)))))
+
+(defun todo--in-block-p ()
+  "Non-nil when the line at point is inside a #+BEGIN_* block."
+  (let ((pos (line-beginning-position)))
+    (cl-some (lambda (range) (and (>= pos (car range)) (<= pos (cdr range))))
+             todo--blocks)))
+
 (defun todo--archived-p ()
   "Non-nil when the heading at point sits inside a container titled Archive."
   (save-excursion
@@ -137,11 +161,14 @@ slash matches that run of components, a glob is a glob, and an absolute or
   (with-temp-buffer
     (insert-file-contents file)
     (org-mode)
+    (todo--mark-blocks)
     (let (out)
       (org-map-entries
        (lambda ()
          (let ((state (org-get-todo-state)))
-           (when (and (member state todo-states) (not (todo--archived-p)))
+           (when (and (member state todo-states)
+                      (not (todo--in-block-p))
+                      (not (todo--archived-p)))
              (push (list (cons 'file file)
                          (cons 'path file)
                          (cons 'todo state)
@@ -223,10 +250,12 @@ writers never clobber each other."
 
 (defun todo--goto (title)
   "Move to the task named TITLE. Fail when it is absent or ambiguous."
+  (todo--mark-blocks)
   (let (marker (count 0))
     (org-map-entries
      (lambda ()
        (when (and (member (org-get-todo-state) todo-states)
+                  (not (todo--in-block-p))
                   (not (todo--archived-p))
                   (equal (org-get-heading t t t t) title))
          (cl-incf count)
@@ -238,10 +267,12 @@ writers never clobber each other."
 
 (defun todo--goto-heading (title)
   "Move to the heading named TITLE, task or container."
+  (todo--mark-blocks)
   (let (marker)
     (org-map-entries
      (lambda ()
-       (when (equal (org-get-heading t t t t) title)
+       (when (and (not (todo--in-block-p))
+                  (equal (org-get-heading t t t t) title))
          (unless marker (setq marker (point-marker))))))
     (unless marker (todo-fail (format "headline not found: %s" title)))
     (goto-char marker)

@@ -232,6 +232,21 @@
   (should (todo-ignored-p "/a/b.org" '("/a")))
   (should-not (todo-ignored-p "/a/b.org" '("node_modules"))))
 
+;;; blocks
+
+(ert-deftest todo-ignores-headings-inside-blocks ()
+  (todo-test--setup)
+  (todo-test--write (concat "#+BEGIN_SRC org\n* TODO Call mom\n** TODO Pick a good time\n#+END_SRC\n\n"
+                            "#+BEGIN_EXAMPLE\n* TODO Example\n#+END_EXAMPLE\n\n"
+                            "* TODO Real\n"))
+  (let ((out (nth 1 (todo-test--ok "read"))))
+    (should (string-match-p "Real" out))
+    (should-not (string-match-p "Call mom" out))
+    (should-not (string-match-p "Example" out)))
+  (let ((result (todo-test--cli "complete" "Call mom")))
+    (should (eq 1 (nth 0 result)))
+    (should (string-match-p "not a task heading" (nth 2 result)))))
+
 ;;; archive
 
 (ert-deftest todo-read-and-refs-skip-the-archive-container ()
