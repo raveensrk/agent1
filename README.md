@@ -116,7 +116,7 @@ installed on the machine. Each item is a link back to this clone, so a
 
 | Item | Claude Code | Codex | pi |
 |---|---|---|---|
-| `skills/*` | `~/.claude/skills/` | `~/.agents/skills/` | `~/.agents/skills/` (same link as Codex) |
+| `skills/*` | `~/.claude/skills/` | `~/.codex/skills/` | settings.json (global skills only, via `~/dot/script/,agent_config.py`) |
 | `commands/*.md` (none yet) | `~/.claude/commands/` | not supported | `~/.pi/agent/prompts/` |
 
 - Idempotent: run it again after every `git pull`. It adds new items and
@@ -127,6 +127,9 @@ installed on the machine. Each item is a link back to this clone, so a
   older clone). `--uninstall` removes every link into this clone.
 - A harness whose home directory (`~/.claude`, `~/.codex`, `~/.pi`) is
   missing is skipped.
+- Older versions linked skills into `~/.agents/skills/`. Pi now loads global
+  skills from its settings and Codex uses `~/.codex/skills/`, so `install.py`
+  prunes any links left there.
 - Needs Python 3.8+ on macOS or Linux.
 - Claude Code: use `install.py` or the plugin, not both, or each skill
   loads twice.
