@@ -20,7 +20,11 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Define the precise criteria for a great result up front.
 - Use a past example as the format to match.
 - Interview me and ask clarifying questions before starting a task.
-- Ask one question at a time.
+- Ask one question at a time. When a decision is needed, ask it as an MCQ and mark the option you recommend with "(recommended)".
+- When a task has two plausible architectures, ask one MCQ before writing any code.
+- Verify a library call in a scratch buffer or a one-liner before using it in code.
+- A bulk or destructive change prints a per-file plan first, then applies.
+- Back a recommendation with a number measured on this machine, not from memory.
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 
 ## Browser and computer use

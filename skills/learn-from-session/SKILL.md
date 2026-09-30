@@ -56,10 +56,10 @@ versions before proposing it, and cite the source link.
 
 ## 5. Report
 
-Confirm the location first: propose cwd. If the user declines, ask where. If
-the user declines a report, keep the findings in chat and skip the file.
+Always write the report to `~/tmp/`. If the user declines a report, keep the
+findings in chat and skip the file.
 
-File: `session_review_<YYYY-MM-DD>.md`, appending `_2`, `_3` when taken. A
+File: `~/tmp/session_review_<YYYY-MM-DD>.md`, appending `_2`, `_3` when taken. A
 prioritized list, highest impact first, one line per finding:
 
 ```
