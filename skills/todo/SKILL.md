@@ -15,6 +15,11 @@ of processes can CRUD at once.
 
 ## 1. The rules
 
+**Board first.** A board path (file or dir) in the request is the board: pass
+it as `--file` (writes) or `--dir` (reads). No path given: ask the user which
+repo or `todo.org` before writing - never guess the cwd or the config dirs. Do
+not write the same task to a board and move it later.
+
 **States.** `TODO`, `IN_PROGRESS`, `OPTIONAL`, `LATER`, `DONE`, `OBSOLETE`.
 They live in `scripts/todo.el`, not in the file. Life cycle: `TODO` ->
 `IN_PROGRESS` -> `DONE`; `OPTIONAL` and `LATER` are deferred; anything can become
@@ -86,7 +91,9 @@ scripts/todo config
 
 - A ref is an exact title. Two tasks with the same title make the ref ambiguous
   and the CLI refuses it.
-- The board is `todo.org` in the cwd; `--file F` overrides.
+- The board is `todo.org` in the cwd; `--file F` overrides. When the user names a
+board, always pass `--file`/`--dir` - the cwd default is a fallback for when the
+board is known, not a licence to pick one.
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
