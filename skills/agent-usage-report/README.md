@@ -33,7 +33,7 @@ tests/                                fixture-based tests
 
 ## Install
 
-This skill lives in the [agents](https://github.com/raveensrk/agents) repo at
+This skill lives in the [agent1](https://github.com/raveensrk/agent1) repo at
 `skills/agent-usage-report/`. Install it from there (and record it for a clean
 uninstall):
 

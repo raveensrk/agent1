@@ -1,4 +1,4 @@
-# agents
+# agent1
 
 Reusable AI agent instructions. Import them into your own project instead of
 copying and drifting.
@@ -6,7 +6,7 @@ copying and drifting.
 ## 1. Clone
 
 ```bash
-git clone https://github.com/raveensrk/agents.git ~/repos/agent1
+git clone https://github.com/raveensrk/agent1.git ~/repos/agent1
 ```
 
 Any path works. The rest of this file assumes `~/repos/agent1`.
