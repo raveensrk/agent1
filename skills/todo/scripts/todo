@@ -1,0 +1,4 @@
+#!/bin/sh
+# The todo skill's CLI: the elisp implementation, under Emacs.
+#   scripts/todo <verb> [args]
+exec emacs -Q --batch -l "$(dirname "$0")/todo.el" -- "$@"
