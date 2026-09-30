@@ -5,16 +5,13 @@
 At session start, Read these files
 
 - [Emoji Legend](emoji_legend.md) - in the same directory as this file
-- [Todo skill](skills/todo/SKILL.md) - task format, inbox and the agent protocol. The destination.
+- [Todo skill](skills/todo/SKILL.md) - task format and the agent protocol. The destination.
 - [Code Style](code_style.md) - how to write code
 - [Git](git.md) - commits and pull requests
 - [Jobs](jobs.md) - ETA rules for long-running jobs
+- [agent2 AGENTS.md](~/repos/agent2/AGENTS.md) - only if the file exists
 
 Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
-
-## Don't
-
-- Apple Reminders. Never create or update them. If I say "create a task", "remind me", or "remind me later", write a short note in this repo instead ([Todo skill](skills/todo/SKILL.md)). If there is no repo, ask what to do.
 
 ## Working style
 
