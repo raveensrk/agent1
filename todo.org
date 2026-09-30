@@ -1,0 +1,2 @@
+* TODO improve pi questioning with extension or prompt / skill / response
+* TODO Remove =.org_archive=. Merge into `.org` the content of archive must be at the end of file after 40 newline characters to have good seperation.
