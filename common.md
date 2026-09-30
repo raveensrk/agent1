@@ -26,6 +26,7 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - A bulk or destructive change prints a per-file plan first, then applies.
 - Back a recommendation with a number measured on this machine, not from memory.
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
+- When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
 
 ## Browser and computer use
 
@@ -90,6 +91,9 @@ Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. S
 
 For multi-step, ambiguous, or high-impact work, say how you could verify it before starting. Skip it for small, well-defined changes.
 
+- Verify a config change through the real entry point - the alias, the full startup - not a minimal load. A minimal load skips startup options and hides the failure until I hit it.
+- After editing Emacs Lisp, run `check-parens` or the test suite immediately; do not hand-roll a parse check.
+
 After installing or removing pi packages, verify with `timeout 90 pi -p "reply with just: ok"` and check stderr for warnings.
 
 ## Naming
@@ -117,6 +121,11 @@ Same goes for images and media. For images and media use links with preview `![]
 
 Use relative paths when writing documents. For `@` imports in agent startup instruction files (CLAUDE.md, AGENTS.md), use a `~/` path. Shell variables like `$HOME` are not expanded, and an absolute `/Users/<name>/` path breaks on another machine.
 
+## Org
+
+- A `*` at column 0 is a headline even inside a `#+BEGIN_*` block. Org's headline rule beats the block rule: the line becomes a real task in the agenda, and block folding can fail with `Not at a block`.
+- Always indent an example block by at least one space, markers included. Never rely on the block markers to hide a column-0 `*`, and do not use the comma escape (`,*`) - indentation is the convention here.
+
 ## Scripts
 
 Scripts meant to be run must always be executable. When creating or editing a runnable script:
@@ -125,6 +134,11 @@ Scripts meant to be run must always be executable. When creating or editing a ru
 2. `chmod +x` it.
 
 Exception: library files and files meant only to be imported or sourced.
+
+## macOS
+
+- iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies.
+- `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
 
 ## Confirmation
 
