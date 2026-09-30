@@ -50,10 +50,10 @@
 
 ;;; Config
 
-(defconst todo-config-file
+(defun todo-config-file ()
+  "The skill config path: default_dirs and ignore."
   (or (getenv "TODO_SKILL_CONFIG")
-      (expand-file-name "~/dot_local/config/todo_skill.toml"))
-  "The skill config: default_dirs and ignore.")
+      (expand-file-name "~/dot_local/config/todo_skill.toml")))
 
 (defun todo--strings (text)
   "The quoted strings in TEXT, in order."
@@ -65,9 +65,10 @@
 
 (defun todo-config ()
   "The loaded config as an alist: default_dirs and ignore."
-  (let (dirs ignore)
-    (when (file-exists-p todo-config-file)
-      (let ((text (with-temp-buffer (insert-file-contents todo-config-file) (buffer-string))))
+  (let ((file (todo-config-file))
+        dirs ignore)
+    (when (file-exists-p file)
+      (let ((text (with-temp-buffer (insert-file-contents file) (buffer-string))))
         (when (string-match "^[ \t]*default_dirs[ \t]*=[ \t]*\\[\\([^]]*\\)\\]" text)
           (setq dirs (mapcar #'expand-file-name (todo--strings (match-string 1 text)))))
         (when (string-match "^[ \t]*ignore[ \t]*=[ \t]*\\[\\([^]]*\\)\\]" text)
@@ -442,12 +443,11 @@ writers never clobber each other."
 
 ;;; CLI
 
-(defun todo-main ()
-  "Parse the command line and run one verb."
-  (let ((args command-line-args-left)
-        (flags nil)
+(defun todo--parse (args)
+  "Split ARGS into (POSITIONALS FLAGS). A leading -- is dropped."
+  (when (equal (car args) "--") (setq args (cdr args)))
+  (let ((flags nil)
         (pos nil))
-    (when (equal (car args) "--") (setq args (cdr args)))
     (while args
       (let ((arg (car args)))
         (if (member arg todo-value-flags)
@@ -457,9 +457,16 @@ writers never clobber each other."
               (setq args (cddr args)))
           (push arg pos)
           (setq args (cdr args)))))
+    (list (nreverse pos) (nreverse flags))))
+
+(defun todo-main ()
+  "Parse the command line and run one verb."
+  (let* ((parsed (todo--parse command-line-args-left))
+         (pos (car parsed))
+         (flags (cadr parsed)))
     (condition-case err
         (let ((inhibit-message t))     ; org's progress notes stay out of stderr
-          (todo-run (nreverse pos) (nreverse flags)))
+          (todo-run pos flags))
       (error (todo-fail (error-message-string err))))))
 
 (provide 'todo)

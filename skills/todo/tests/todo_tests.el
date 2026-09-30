@@ -28,8 +28,33 @@
   (with-temp-file todo-test--config
     (insert (format "default_dirs = [\"%s\"]\nignore = [\"node_modules\"]\n" todo-test--dir))))
 
+(define-error 'todo-test-fail "todo failed")
+
+(defun todo-test--fail (msg)
+  (signal 'todo-test-fail (list msg)))
+
 (defun todo-test--cli (&rest args)
-  "Run the CLI in the test dir with ARGS. Returns (code stdout stderr)."
+  "Run the CLI in-process in the test dir. Returns (code stdout stderr).
+Spawning a fresh Emacs per call made the suite take 35s; this is the same
+verbs, same parsing, a few milliseconds each."
+  (let* ((default-directory (file-name-as-directory todo-test--dir))
+         (process-environment (cons (concat "TODO_SKILL_CONFIG=" todo-test--config)
+                                    process-environment))
+         (out (generate-new-buffer "todo-out"))
+         (parsed (todo--parse args))
+         (code 0)
+         (stderr ""))
+    (condition-case err
+        (let ((inhibit-message t))
+          (cl-letf (((symbol-function 'todo-fail) #'todo-test--fail))
+            (let ((standard-output out))
+              (todo-run (car parsed) (cadr parsed)))))
+      (todo-test-fail (setq code 1 stderr (car (cdr err))))
+      (error (setq code 1 stderr (error-message-string err))))
+    (list code (with-current-buffer out (prog1 (buffer-string) (kill-buffer out))) stderr)))
+
+(defun todo-test--spawn (&rest args)
+  "Run the CLI in a fresh Emacs, as the wrapper does. Returns (code stdout stderr)."
   (let* ((out (generate-new-buffer "todo-out"))
          (err (make-temp-file "todo-err"))
          (default-directory (file-name-as-directory todo-test--dir))
@@ -231,6 +256,17 @@
   (should (todo-ignored-p "/a/x.org" '("*.org")))
   (should (todo-ignored-p "/a/b.org" '("/a")))
   (should-not (todo-ignored-p "/a/b.org" '("node_modules"))))
+
+;;; the real process boundary
+
+(ert-deftest todo-cli-runs-as-a-script ()
+  (todo-test--setup)
+  (let ((result (todo-test--spawn "create" "Spawned")))
+    (should (eq 0 (nth 0 result)))
+    (should (string-match-p "Spawned" (todo-test--text))))
+  (let ((result (todo-test--spawn "bogus")))
+    (should (eq 1 (nth 0 result)))
+    (should (string-match-p "unknown command" (nth 2 result)))))
 
 ;;; blocks
 
