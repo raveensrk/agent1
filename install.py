@@ -5,10 +5,9 @@ Every installed item is a symlink back to its source, so `git pull` in that
 source updates every harness at once. Skills go to each harness's own
 directory: ~/.claude/skills for Claude Code and ~/.codex/skills for Codex.
 
-Pi loads global skills from its own settings, written by
-`~/dot/script/,agent_config.py`. Older versions linked skills into
-~/.agents/skills, which both Pi and Codex read; those links are pruned so Pi
-ever sees a skill twice.
+Pi reads skills from ~/.agents/skills, so Pi gets symlinks there too. Links
+that older versions installed into ~/.agents/skills for Codex are pruned when
+they are no longer installed.
 
 Usage:
   ./install.py                          install or update this repo's items
@@ -54,6 +53,7 @@ HARNESSES = {
 TARGETS = [
     ("skills/*/SKILL.md", "~/.claude/skills", ["claude"]),
     ("skills/*/SKILL.md", "~/.codex/skills", ["codex"]),
+    ("skills/*/SKILL.md", "~/.agents/skills", ["pi"]),
     ("commands/*.md", "~/.claude/commands", ["claude"]),
     ("commands/*.md", "~/.pi/agent/prompts", ["pi"]),  # Codex has no custom commands
 ]
@@ -62,12 +62,8 @@ TARGETS = [
 SKILL_TARGETS = [
     ("~/.claude/skills", ["claude"]),
     ("~/.codex/skills", ["codex"]),
+    ("~/.agents/skills", ["pi"]),
 ]
-
-# Links older versions installed into the directory Pi and Codex shared. Pi now
-# registers global skills natively and Codex has its own directory above, so
-# anything left here is stale and is pruned.
-LEGACY_SKILL_DIRS = ["~/.agents/skills"]
 
 STORE_DIR = os.path.join(
     os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"),
@@ -358,8 +354,6 @@ def main(argv=None):
     managed = load_manifest()
     for dest_dir in dest_dirs:
         run.prune(dest_dir, wanted[dest_dir], managed)
-    for dest_dir in LEGACY_SKILL_DIRS:
-        run.prune(expand(dest_dir), set(), managed)
     reconcile_manifest(managed, dest_dirs, plan, run.dry)
 
     if run.conflicts or run.errors:
