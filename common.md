@@ -89,6 +89,8 @@ Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. S
 
 For multi-step, ambiguous, or high-impact work, say how you could verify it before starting. Skip it for small, well-defined changes.
 
+After installing or removing pi packages, verify with `timeout 90 pi -p "reply with just: ok"` and check stderr for warnings.
+
 ## Naming
 
 Files and directories use `snake_case` - lowercase words joined by underscores.
@@ -126,3 +128,13 @@ Exception: library files and files meant only to be imported or sourced.
 ## Confirmation
 
 If i ask a question, "Have you read the startup files?", you must answer "HAI!".
+
+When what is found does not match what was asked (count or scope), ask before removing. Never guess.
+
+## Pi packages
+
+- Manual npm commands in `~/.pi/agent/npm` need `--legacy-peer-deps`; without it npm fails with ERESOLVE. Pi's own package manager passes the same flag.
+- `pi uninstall npm:<pkg>` only removes sources listed in `settings.json`. For installed-but-not-enabled packages, run `npm uninstall --legacy-peer-deps <pkg>` in `~/.pi/agent/npm`.
+- Any `pi install` or `pi uninstall` reconciles the npm dir to `settings.json` and can silently prune other installed packages. Snapshot `~/.pi/agent/npm/package.json` first and expect collateral removals.
+- The host-dependency warning (host-provided packages in `dependencies`) fires only for enabled extensions. Before acting, scan every installed package that declares `pi.extensions` for host-provided deps in `dependencies`.
+- Host-provided packages (`@earendil-works/pi-ai`, `pi-agent-core`, `pi-coding-agent`, `pi-tui`, `typebox`) belong in `peerDependencies` with a `"*"` range, never in `dependencies`.
