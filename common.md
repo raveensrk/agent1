@@ -27,6 +27,8 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Back a recommendation with a number measured on this machine, not from memory.
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
+- `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
+- A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
 
 ## Browser and computer use
 
@@ -81,7 +83,7 @@ High effort is the default. Before executing **any** prompt:
 
 ## Repeatability
 
-Every session must reconstruct identical context from this repo alone, across Claude, Codex, and any other app. Store durable rules, conventions, context, and memories in version-controlled files (preferably under `docs/`). Never in agent-private memory. If it is worth remembering, commit it. Agent-private memory may hold only pointers back to the repo.
+Every session must reconstruct identical context from this repo alone, across pi and any future harness. Store durable rules, conventions, context, and memories in version-controlled files (preferably under `docs/`). Never in agent-private memory. If it is worth remembering, commit it. Agent-private memory may hold only pointers back to the repo.
 
 ## Documentation
 
@@ -93,6 +95,7 @@ For multi-step, ambiguous, or high-impact work, say how you could verify it befo
 
 - Verify a config change through the real entry point - the alias, the full startup - not a minimal load. A minimal load skips startup options and hides the failure until I hit it.
 - After editing Emacs Lisp, run `check-parens` or the test suite immediately; do not hand-roll a parse check.
+- Run a new checker or validator over the whole existing population, not only the target it was written for. Its first run must pass on every instance, or it is reporting its own bugs.
 
 After installing or removing pi packages, verify with `timeout 90 pi -p "reply with just: ok"` and check stderr for warnings.
 
@@ -139,6 +142,7 @@ Exception: library files and files meant only to be imported or sourced.
 
 - iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies.
 - `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
+- BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
 
 ## Confirmation
 
@@ -149,7 +153,8 @@ When what is found does not match what was asked (count or scope), ask before re
 ## Pi packages
 
 - Manual npm commands in `~/.pi/agent/npm` need `--legacy-peer-deps`; without it npm fails with ERESOLVE. Pi's own package manager passes the same flag.
-- `pi uninstall npm:<pkg>` only removes sources listed in `settings.json`. For installed-but-not-enabled packages, run `npm uninstall --legacy-peer-deps <pkg>` in `~/.pi/agent/npm`.
+- `pi uninstall npm:<pkg>` only removes sources listed in `settings.json`. For installed-but-not-enabled packages, `npm uninstall --legacy-peer-deps <pkg>` in `~/.pi/agent/npm`; a reconcile (`pi install`, `pi uninstall`, `pi update --extensions`) also prunes them, and `pi list` shows what is configured.
+- A `node_modules` entry absent from `settings.json` is not dead: an enabled package may depend on it. Check `grep -rl "<pkg>" node_modules/*/package.json` and `package-lock.json` before calling it an orphan.
 - Any `pi install` or `pi uninstall` reconciles the npm dir to `settings.json` and can silently prune other installed packages. Snapshot `~/.pi/agent/npm/package.json` first and expect collateral removals.
 - The host-dependency warning (host-provided packages in `dependencies`) fires only for enabled extensions. Before acting, scan every installed package that declares `pi.extensions` for host-provided deps in `dependencies`.
 - Host-provided packages (`@earendil-works/pi-ai`, `pi-agent-core`, `pi-coding-agent`, `pi-tui`, `typebox`) belong in `peerDependencies` with a `"*"` range, never in `dependencies`.
