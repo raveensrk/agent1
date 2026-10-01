@@ -153,3 +153,19 @@ When what is found does not match what was asked (count or scope), ask before re
 - Any `pi install` or `pi uninstall` reconciles the npm dir to `settings.json` and can silently prune other installed packages. Snapshot `~/.pi/agent/npm/package.json` first and expect collateral removals.
 - The host-dependency warning (host-provided packages in `dependencies`) fires only for enabled extensions. Before acting, scan every installed package that declares `pi.extensions` for host-provided deps in `dependencies`.
 - Host-provided packages (`@earendil-works/pi-ai`, `pi-agent-core`, `pi-coding-agent`, `pi-tui`, `typebox`) belong in `peerDependencies` with a `"*"` range, never in `dependencies`.
+
+## Removal and uninstall
+
+- Check `~/dot/script` for an existing tool before writing a scanner. [`,ai_data_scrub.py`](~/dot/script/,ai_data_scrub.py) catalogues AI harness data with keep/delete tiers and a `--be-gone` uninstall tier.
+- Print the numbered per-file plan first, then apply. Removals are destructive.
+- Move removals to Trash, never `rm`. Empty the Trash only on explicit request; report what it holds and print the one-line purge command.
+- Verify a removal by re-running the exact scan that found the items and diffing the result. A hand-picked check misses items.
+- Remove browser extensions through the browser UI (`chrome://extensions`), not by deleting profile directories; a direct delete is not recorded in sync and the extension can return at the next sign-in. Verify again after signing in.
+- After removing a harness, grep update, install and doctor scripts for its commands and drop the dead entries.
+- Uninstall casks one at a time: a multi-cask `brew uninstall --cask` stops at the first failure. Use `--force` per cask, then check `brew list --cask`.
+- `--zap` removes a directory only when it is empty. Re-list each top-level harness directory after the cask uninstall.
+- Expect TCC-protected leftovers (Containers, sharedfilelist, root-owned symlinks). Collect them into one sudo list and hand it to the user at the end.
+
+## Agent context files
+
+- Pi loads `CLAUDE.md` and `CLAUDE.MD` alongside `AGENTS.md`. Never rename or convert `CLAUDE.md` for pi.
