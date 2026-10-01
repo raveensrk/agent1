@@ -111,9 +111,10 @@ Overrides: `TODO_SKILL_CONFIG` (config path). Tests:
 
 ## 3. Capture vs board
 
-Use `capture` when the user says "remember", "remind me", "note this", "save it
-for later", or an unshaped "create a task": one plain heading at the end of the
-board, no state, no properties. Durable knowledge goes to `docs/`; a
+Use `create` when the user says "remind me" or "remind me later": a `TODO`,
+not a plain heading. Use `capture` when the user says "remember", "note this",
+"save it for later", or an unshaped "create a task": one plain heading at the
+end of the board, no state, no properties. Durable knowledge goes to `docs/`; a
 single-command triviality just gets done. Shaped work with acceptance criteria
 goes to the board with `create`.
 
