@@ -105,4 +105,5 @@ When the user names a skill to fix, optimize, or extend:
 ## 7. Report
 
 Show the path, the symlink, the trigger phrases, and the verification result.
-Skills are read at session start, so a new session is what picks it up.
+Skills are read at session start, so a new session is what picks it up; in a
+live session, `/reload` picks up an edit, and `/skill:<name> <idea>` forces one.
