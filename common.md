@@ -158,8 +158,8 @@ When what is found does not match what was asked (count or scope), ask before re
 
 - Check `~/dot/script` for an existing tool before writing a scanner. [`,ai_data_scrub.py`](~/dot/script/,ai_data_scrub.py) catalogues AI harness data with keep/delete tiers and a `--be-gone` uninstall tier.
 - Print the numbered per-file plan first, then apply. Removals are destructive.
-- Move removals to Trash, never `rm`. Empty the Trash only on explicit request; report what it holds and print the one-line purge command.
-- Verify a removal by re-running the exact scan that found the items and diffing the result. A hand-picked check misses items.
+- Removals go to Trash by default. The plan names anything that deletes permanently (the scrubber's `--delete` and `--be-gone`, `brew uninstall`, TCC paths that need `sudo rm`) and gets explicit confirmation for it. Empty the Trash only on explicit request; report what it holds and print the one-line purge command.
+- Verify a removal by re-running the same scan that found the items and diffing the result. If the scan was ad hoc, save it, or use [`,ai_data_scrub.py`](~/dot/script/,ai_data_scrub.py), before removing anything.
 - Remove browser extensions through the browser UI (`chrome://extensions`), not by deleting profile directories; a direct delete is not recorded in sync and the extension can return at the next sign-in. Verify again after signing in.
 - After removing a harness, grep update, install and doctor scripts for its commands and drop the dead entries.
 - Uninstall casks one at a time: a multi-cask `brew uninstall --cask` stops at the first failure. Use `--force` per cask, then check `brew list --cask`.
