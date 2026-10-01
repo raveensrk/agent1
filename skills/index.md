@@ -10,4 +10,5 @@ with [install.py](../install.py).
 - [migrate-todo](./migrate-todo/SKILL.md) - Converts line-schema todos to the lisp schema, one repo at a time.
 - [model-price-report](./model-price-report/SKILL.md) - Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis intelligence scores.
 - [privacy-scan](./privacy-scan/SKILL.md) - Scans files or a diff for PII, privacy and security issues.
+- [skill-creator](./skill-creator/SKILL.md) - Authors or improves an agent skill: interview, scaffold, write, validate, install, test.
 - [todo](./todo/SKILL.md) - Create, read, update, archive and delete org tasks in any repo, and run the claim/submit/approve loop.
