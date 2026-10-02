@@ -7,3 +7,18 @@
 
 * TODO Configure OpenRouter guardrails
 https://openrouter.ai/workspaces/default/guardrails
+
+* TODO Fix the warm-daemon test hang in the todo skill suite :todo_skill:
+  Found 2026-10-02 in a session review.
+  - Hang: emacs -Q --batch -l tests/todo_tests.el -f ert-run-tests-batch-and-exit exits 124. The two tests todo-warm-wrapper-reuses-the-daemon and todo-warm-write-does-not-kill-emacs never finish.
+  - Not caused by commit b906475, the todo-main change that clears command-line-args-left: the suite hangs the same way with the committed test file and the committed scripts/todo.el.
+  - A standalone ./scripts/todo --warm create --file ~/tmp/probe/todo.org finishes in 1.7 s, so the daemon start is fine. The hang is inside the test call to todo-warm-write.
+  - Each failing run leaves a live hung emacsclient ... (todo-warm-write ...) and leaked sockets at ${TMPDIR}/emacs<uid>/todo-skill-test-*.
+  - Done when the full suite exits 0 with 36 of 36 passed twice in a row and leaves no extra daemon, socket or emacsclient process.
+
+* TODO Reject a deadline with a time in the todo CLI :todo_skill:
+  Found 2026-10-02 in a session review.
+  - scripts/todo create "Bad" --deadline "2026-10-02 10:00" exits 0 and writes DEADLINE: <2026-10-02 Fri 10:00>.
+  - SKILL.md says the CLI rejects a time, angle brackets and a hand-written day name.
+  - Cause: the check around line 272 of scripts/todo.el is (and deadline (ignore-errors (org-time-string-to-absolute deadline))), which accepts far more than a bare YYYY-MM-DD.
+  - Done when a time, angle brackets and a day name each exit non-zero with a clear message, a bare 2026-11-05 still works, and a test covers each rejection.
