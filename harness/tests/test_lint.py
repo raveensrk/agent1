@@ -102,6 +102,23 @@ def test_exec_bit_check_flags_a_script_and_clears_after_chmod():
         assert after.stdout == "", after.stdout
 
 
+def test_python_compiles_check_flags_a_broken_edit_and_clears_after_repair():
+    check = os.path.join(CHECKS, "python_compiles.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        broken = os.path.join(tmp, "broken.py")
+        with open(broken, "w") as fh:
+            fh.write("# an edit dropped the comment marker\ndef broken(:\n    pass\n")
+        before = subprocess.run([sys.executable, check, broken], capture_output=True, text=True)
+        assert "does not compile: invalid syntax" in before.stdout, before.stdout
+        assert broken in before.stdout, before.stdout
+        good = os.path.join(tmp, "good.py")
+        with open(good, "w") as fh:
+            fh.write("# an edit that kept the comment marker\nx = 1\n")
+        after = subprocess.run([sys.executable, check, good, broken], capture_output=True, text=True)
+        assert good not in after.stdout, after.stdout
+        assert "broken.py:2" in after.stdout, after.stdout
+
+
 def test_interpreter_check_reads_a_rule_and_a_shebang():
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
