@@ -63,6 +63,20 @@ agent once, so the agent fixes its own output before you see it. It stops after
 three nudges, skips findings it already reported, and never looks at files the
 session did not touch - a repo full of old findings must not nag every run.
 
+## Guards
+
+`extensions/search_guard.ts` is the other half of the trigger: a guard refuses a
+tool call before it runs, where the lint reacts after the files are written. One
+recursive `grep -rn` over `~/repos` ran 111 s of a 137 s session (17 GB, 169,203
+files) and had to be aborted, while `rg -l` answered in 2.6 s, so the guard
+blocks the recursive form and prints the `rg` line with those numbers. Its check
+is `node --experimental-strip-types harness/tests/test_search_guard.ts`, seven
+blocked cases and seven allowed ones.
+
+A guard message always carries the replacement command. Blocking without
+steering sends the next attempt down the same dead end - the same rule applies
+to a check's message.
+
 ## Private checks
 
 Checks that encode machine-specific rules belong in `~/repos/agent2/harness/checks/`
