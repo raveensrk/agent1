@@ -216,12 +216,26 @@ whole transcript (32k tokens of state per request, $42 per billion input tokens)
 A probability near 0.5 makes the judgement an Open question - do not average it
 into a verdict.
 
-The batched client already exists at
-[jev.py](~/repos/agent2/fast-mac-use/scripts/jev.py) (private config). Once the
-question set stops changing, commit it as `scripts/jev_signals.py` beside this
-skill and call that instead of retyping questions. With no `TYPESAFE_API_KEY`,
-make the four judgements in prose and say in the report that they were not
-machine-labeled.
+The batched client lives beside this skill, so the questions are never retyped:
+
+```
+python3 scripts/jev_signals.py --session --rules ~/tmp/review/rules.json
+```
+
+It reads the transcript through `scripts/analyze_commands.py`, builds the state
+and asks all four families in one request: a label per user turn, a waste noul
+per slow, aborted, failed or waiting call, a quadrant and an impact per finding,
+and four nouls per candidate rule. `--rules` is a JSON file of
+`[{"id": "R1", "text": "..."}]`, one entry per rule the review proposes. Counts
+come out of the code, never asked of the model. Two-word turns label at 0.36
+confidence from bare text and 0.89 once annotated, so pass `--turns turns.json`
+when precision matters; every answer under 0.6 confidence goes to the report's
+Open questions. Answers below 0.6 are the ones to hold loosely.
+
+It posts to the same systemone endpoint as
+[jev.py](~/repos/agent2/fast-mac-use/scripts/jev.py) (private config). With no
+`TYPESAFE_API_KEY` it says so rather than guessing: make the four judgements in
+prose and record in the report that they were not machine-labeled.
 
 ## 6. Research
 
