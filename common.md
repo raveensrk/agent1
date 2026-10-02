@@ -29,6 +29,8 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
 - `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
 - A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
+- Search with `rg`, never `grep -r`: recursive grep walks `.git` and `node_modules`. Measured on this machine, one `grep -rn` over `~/repos` (17 GB, 169,203 files) ran 111 s of a 137 s session and had to be aborted; `rg -l` answered the same question in 2.6 s. `harness/extensions/search_guard.ts` blocks the recursive form and prints the `rg` replacement. Bound the path either way.
+- A path a command already named needs no machine-wide scan to confirm it. When that path turns out missing, ask one question instead of searching for an alternative: the sweep cost 111 s on a task whose whole ambiguity was one question.
 - When I say I unsubscribed or cancelled a service I control, record that and do not open mail, the site, or System Settings to check it.
 
 ## Browser and computer use
@@ -94,9 +96,9 @@ When I don't understand something, show it instead of repeating it in text.
 
 - Trigger: I ask about something you just said ("what prefix rule?"), say I don't follow, or ask the same thing twice. Otherwise plain text stays the default.
 - Build a small HTML page: mockup, worked example, drawing, diagram, flowchart, or report. Assume I know less than you. Use plain words and concrete examples.
-- Save it as `/tmp/explain/<topic>.html` (`snake_case`) and open it in the browser.
+- Save it as `~/tmp/explain/<topic>.html` (`snake_case`) and open it in the browser.
 - Goal: I fully understand before we go to the next step. Ask whether it landed.
-- Delete the files you created as soon as I confirm I understand, unless I ask to keep them. Leave other files in `/tmp/explain/` alone.
+- Delete the files you created as soon as I confirm I understand, unless I ask to keep them. Leave other files in `~/tmp/explain/` alone.
 
 ## Harness
 
