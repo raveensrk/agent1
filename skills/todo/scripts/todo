@@ -18,7 +18,7 @@ socket=${TODO_SKILL_SOCKET:-todo-skill}
 warm_up() {
   # These functions are the warm contract. A daemon from before either
   # exists is stale, so this check restarts it.
-  emacsclient -s "$socket" --eval '(and (fboundp (quote todo-print-json)) (fboundp (quote todo--task-line)))' 2>/dev/null | grep -q '^t$'
+  emacsclient -s "$socket" --eval '(fboundp (quote todo-doing-pick))' 2>/dev/null | grep -q '^t$'
 }
 
 if ! warm_up; then

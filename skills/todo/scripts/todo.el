@@ -243,10 +243,59 @@ slash matches that run of components, a glob is a glob, and an absolute or
   "Print ITEMS as one JSON array and a newline.
 json-serialize returns raw UTF-8 bytes. princ of those bytes into the
 warm process's multibyte buffer writes illegal \\342 escapes."
+  (todo--print-json (vconcat (mapcar #'todo--json-task items))))
+
+(defun todo-print-json-object (item)
+  "Print ITEM as one JSON object, or null."
+  (todo--print-json (if item (todo--json-task item) :null)))
+
+(defun todo--print-json (value)
   (princ (decode-coding-string
-          (json-serialize (vconcat (mapcar #'todo--json-task items)) :null-object :null)
+          (json-serialize value :null-object :null)
           'utf-8))
   (princ "\n"))
+
+(defconst todo-doing-states '("TODO" "IN_PROGRESS")
+  "States that can be the main quest.")
+
+(defun todo-ist-day (&optional time)
+  "Absolute day of TIME in IST. TIME defaults to now."
+  (let ((old (getenv "TZ"))
+        (time (or time (current-time))))
+    (setenv "TZ" "Asia/Kolkata")
+    (unwind-protect
+        (org-time-string-to-absolute (format-time-string "%Y-%m-%d" time))
+      (if old (setenv "TZ" old) (setenv "TZ" nil)))))
+
+(defun todo--due-day (deadline)
+  "Absolute day of DEADLINE, or nil. Org reads the stamp, including a repeater."
+  (and deadline (ignore-errors (org-time-string-to-absolute deadline))))
+
+(defun todo--priority-rank (priority)
+  "A is 0. A missing priority sorts after C."
+  (if (and priority (string-match "\\`[ABC]\\'" priority))
+      (- (aref priority 0) ?A)
+    3))
+
+(defun todo-doing-pick (items today)
+  "The main quest in ITEMS for absolute day TODAY, or nil."
+  (car (sort (cl-remove-if-not
+              (lambda (item)
+                (let ((due (todo--due-day (alist-get 'deadline item))))
+                  (and (member (alist-get 'todo item) todo-doing-states)
+                       due
+                       (<= due today))))
+              items)
+             (lambda (a b)
+               (let ((late-a (- today (todo--due-day (alist-get 'deadline a))))
+                     (late-b (- today (todo--due-day (alist-get 'deadline b))))
+                     (rank-a (todo--priority-rank (alist-get 'priority a)))
+                     (rank-b (todo--priority-rank (alist-get 'priority b))))
+                 (cond ((/= late-a late-b) (> late-a late-b))
+                       ((/= rank-a rank-b) (< rank-a rank-b))
+                       ((not (equal (alist-get 'title a) (alist-get 'title b)))
+                        (string< (alist-get 'title a) (alist-get 'title b)))
+                       (t (string< (alist-get 'path a) (alist-get 'path b)))))))))
 
 (defun todo--json-task (item)
   "ITEM as the read --json object. Missing deadline and priority are null."
@@ -450,6 +499,15 @@ writers never clobber each other."
          (todo-out (list (cons 'file board)
                          (cons 'dir (file-name-directory board))
                          (cons 'exists (file-exists-p board))))))
+
+      ("doing"
+       (let ((pick (todo-doing-pick (todo-read dirs nil nil) (todo-ist-day))))
+         (if (member "--json" rest)
+             (todo-print-json-object pick)
+           (if pick
+               (princ (format "%-12s %s  (%s)\n"
+                              (alist-get 'todo pick) (alist-get 'title pick) (alist-get 'path pick)))
+             (princ "none\n")))))
 
       ("read"
        (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")))))
