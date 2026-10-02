@@ -12,6 +12,7 @@ At session start, Read these files
 - [agent2 AGENTS.md](~/repos/agent2/AGENTS.md) - only if the file exists
 
 Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
+- Tool configs live in `~/dot/config`, stowed into place by `~/dot/script/install.py`. Read `~/dot/AGENTS.md` before searching for a tool's config.
 
 ## Working style
 
@@ -28,10 +29,13 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
 - `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
+- Read the exact region before an edit when this session has not shown that text - one guessed `oldText` aborts the whole batch and costs a retry.
 - A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
 - Machine-wide: search with `rg`, never `grep -r` - recursive grep walks `.git` and `node_modules`. Measured on this machine, one `grep -rn` over `~/repos` (17 GB, 169,203 files) ran 111 s of a 137 s session and had to be aborted; `rg -l` answered the same question in 2.6 s. `harness/extensions/command_guard.ts` blocks the recursive form, and a `curl` or `wget` with no timeout, printing the replacement either way. Bound the path either way.
 - Machine-wide: a path a command already named needs no second scan to confirm it. When that path turns out missing, ask one question instead of searching for an alternative: the sweep cost 111 s on a task whose whole ambiguity was one question.
 - When I say I unsubscribed or cancelled a service I control, record that and do not open mail, the site, or System Settings to check it.
+
+- An ambiguous request that follows unrelated work and could target either the harness or the project in cwd: confirm scope with one question before editing anything outside cwd (`~/.pi`, dotfiles, `~/repos`); default to the project in cwd.
 
 ## Browser and computer use
 
@@ -145,6 +149,7 @@ Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. S
 For multi-step, ambiguous, or high-impact work, say how you could verify it before starting. Skip it for small, well-defined changes.
 
 - Verify a config change through the real entry point - the alias, the full startup - not a minimal load. A minimal load skips startup options and hides the failure until I hit it.
+- When a value you display mirrors one the vendor's own UI shows, fetch the endpoint that reproduces that exact number and compare it before shipping the field. A plausible field name is not the number.
 - After editing Emacs Lisp, run `check-parens` or the test suite immediately; do not hand-roll a parse check.
 - Run a new checker or validator over the whole existing population, not only the target it was written for. Its first run must pass on every instance, or it is reporting its own bugs.
 
@@ -195,6 +200,7 @@ Exception: library files and files meant only to be imported or sourced.
 - iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies. While pi is open, address the bash window by `id`, never `current window`: `current window` is the pi TUI and the text becomes a user message. Do not `write text` into a tab that is waiting at a password prompt, and never redirect that prompt's stderr; the tab looks hung and the first characters are eaten as the answer.
 - `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
 - BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
+- BSD `cat` has no `-A`. Use `cat -v -e`, or `sed -n l` to show line ends and tabs.
 
 ## Confirmation
 
