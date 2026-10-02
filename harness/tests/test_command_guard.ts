@@ -1,0 +1,52 @@
+/**
+ * check for command_guard.ts. Run:
+ *   node --experimental-strip-types harness/tests/test_command_guard.ts
+ */
+import assert from "node:assert/strict";
+import { guardHit } from "../extensions/command_guard.ts";
+
+const BLOCKED = [
+	// the call that cost this session 111s
+	'grep -rn "bookmarks.txt" ~/dot ~/repos --include="*" -l',
+	"grep -R foo .",
+	"grep --recursive foo .",
+	"egrep -r foo /etc",
+	"/usr/bin/grep -rn foo .",
+	"cd ~/repos && grep -rln foo .",
+	"history | grep -r foo",
+	// the fetch that blocks forever on a dead host
+	"curl -fsSL https://herdr.dev/install.sh | sh",
+	"curl https://example.com",
+	"wget https://example.com",
+	"timeout 30 curl https://example.com",
+];
+
+const ALLOWED = [
+	'rg -n "bookmarks.txt" ~/repos',
+	"grep -n foo file.txt",
+	"grep -c foo file.txt",
+	'git grep -n "pattern"',
+	"xargs -r grep foo",
+	'echo "never run grep -rn over your home"',
+	"rg --files | grep -c test",
+	"curl --max-time 20 https://example.com",
+	"curl -fsSL --connect-timeout 5 https://example.com",
+	"curl -m 20 https://example.com",
+	"wget --timeout=60 https://example.com",
+];
+
+for (const command of BLOCKED) {
+	assert.notEqual(guardHit(command), null, `should block: ${command}`);
+}
+for (const command of ALLOWED) {
+	assert.equal(guardHit(command), null, `should allow: ${command}`);
+}
+const grep = guardHit(BLOCKED[0]);
+const curl = guardHit(BLOCKED[8]);
+assert.equal(grep?.name, "recursive grep", grep);
+assert.equal(curl?.name, "curl or wget with no maximum time", curl);
+assert.match(grep?.fix ?? "", /rg -n/);
+assert.match(curl?.fix ?? "", /--max-time 60/);
+console.log(
+	`command_guard ok: ${BLOCKED.length} blocked, ${ALLOWED.length} allowed, both fixes carry a command`,
+);

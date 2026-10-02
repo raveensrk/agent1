@@ -139,8 +139,8 @@ three shapes:
   stopped before it does. Build a guard in a pi extension and refuse with the
   replacement command, never a bare "no". Worked example: one `grep -rn` over
   `~/repos` ran 111s of a 137s session and had to be aborted, so
-  `harness/extensions/search_guard.ts` now refuses the recursive form and prints
-  the `rg` line, with `harness/tests/test_search_guard.ts` as its one runnable
+  `harness/extensions/command_guard.ts` now refuses the recursive form and prints
+  the `rg` line, with `harness/tests/test_command_guard.ts` as its one runnable
   check. The prose rule keeps only the pointer and the measurement.
 - **Generator-shaped**: the file has a fixed shape and the agent hand-rolled it.
   Build a generator or template.

@@ -35,7 +35,10 @@ LONG_COMMAND = 140
 WAIT_TOOLS = {"ask_user"}
 
 # (id, regex, fix). Hang-prone shapes, not style preferences: each one has cost
-# real minutes on this machine or blocks forever with no output.
+# real minutes on this machine or blocks forever with no output. The guard in
+# harness/extensions/command_guard.ts refuses the same two shapes the session
+# hits most (recursive grep, a fetch with no timeout) before they run; keep the
+# two lists in step when a shape moves from prose to a guard.
 PATTERNS = [
     (
         "recursive-grep",
