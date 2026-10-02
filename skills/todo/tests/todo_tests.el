@@ -155,14 +155,17 @@ verbs, same parsing, a few milliseconds each."
                             "paid \"cash\"\n"
                             "line two\n"
                             "* DONE Say \"hi\"\n"
+                            "* TODO Apr\u2013Jun\n"
                             "* Archive\n** DONE Old\n"))
   (let ((hidden (expand-file-name "node_modules/hidden.org" todo-test--dir)))
     (make-directory (file-name-directory hidden) t)
     (with-temp-file hidden (insert "* TODO Hidden\n")))
   (let* ((items (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
          (pay (cl-find "Pay rent" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
-         (other (cl-find "Say \"hi\"" items :key (lambda (i) (todo-test--field i "title")) :test #'equal)))
-    (should (eq 2 (length items)))
+         (other (cl-find "Say \"hi\"" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
+         (dash (cl-find "Apr\u2013Jun" items :key (lambda (i) (todo-test--field i "title")) :test #'equal)))
+    (should (eq 3 (length items)))
+    (should dash)
     (should (equal (todo-test--field pay "state") "TODO"))
     (should (equal (todo-test--field pay "deadline") "<2026-11-05 Thu>"))
     (should (equal (todo-test--field pay "priority") "A"))
@@ -335,12 +338,32 @@ verbs, same parsing, a few milliseconds each."
           (should (string-match-p "Warm" (todo-test--text)))
           (let ((pid (todo-test--emacs-pid socket)))
             (should (> pid 0))
+            (should (eq 0 (call-process script nil nil nil "--warm" "create" "Apr\u2013Jun")))
             (should (eq 0 (call-process script nil (list out nil) nil "--warm" "read" "--json")))
             (should (string-match-p "Warm" (with-current-buffer out (buffer-string))))
+            (should (string-match-p "Apr\u2013Jun" (with-current-buffer out (buffer-string))))
+            (should-not (string-match-p "\\\\342" (with-current-buffer out (buffer-string))))
             (should (eq 1 (call-process script nil nil nil "--warm" "bogus")))
             (should (eq pid (todo-test--emacs-pid socket)))))
       (ignore-errors (call-process "emacsclient" nil nil nil "-s" socket "--eval" "(kill-emacs)"))
       (kill-buffer out))))
+
+(ert-deftest todo-task-line-is-the-heading ()
+  (todo-test--setup)
+  (todo-test--write "* TODO First\nnote\n* TODO Second\n")
+  (should (eq 1 (todo--task-line (todo-test--file) "First")))
+  (should (eq 3 (todo--task-line (todo-test--file) "Second"))))
+
+(ert-deftest todo-editor-command-includes-the-line ()
+  (should (equal (todo--editor-command "mvim -f" "/tmp/a.org" 12)
+                 "mvim -f +12 /tmp/a.org")))
+
+(ert-deftest todo-editor-uses-mvim-without-a-tty ()
+  (should (equal (todo--editor-for "vim" nil "/m/mvim") "vim"))
+  (should (equal (todo--editor-for "vim" "todo-skill" "/m/mvim") "mvim -f"))
+  (should (equal (todo--editor-for "nvim" "todo-skill" nil) "nvim"))
+  (should (equal (todo--editor-for "mvim -f" "todo-skill" "/m/mvim") "mvim -f"))
+  (should (equal (todo--editor-for nil "todo-skill" "/m/mvim") "mvim -f")))
 
 (ert-deftest todo-cli-runs-as-a-script ()
   (todo-test--setup)

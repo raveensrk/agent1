@@ -174,6 +174,80 @@ slash matches that run of components, a glob is a glob, and an absolute or
         (goto-char (point-max)))
       (string-trim (buffer-substring-no-properties start (point))))))
 
+(defun todo--editor-for (editor daemon mvim)
+  "EDITOR to run. Terminal vim cannot run in the warm daemon."
+  (let* ((editor (or editor "mvim -f"))
+         (bin (file-name-nondirectory (car (split-string editor)))))
+    (if (or (not daemon) (not (member bin '("vim" "vi" "nvim"))))
+        editor
+      (if mvim "mvim -f" editor))))
+
+(defun todo--task-line (file title)
+  "Line number of the task heading TITLE in FILE."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (org-mode)
+    (todo--mark-blocks)
+    (todo--goto title)
+    (line-number-at-pos)))
+
+(defun todo--editor-command (editor file line)
+  "Shell command that opens FILE at LINE."
+  (format "%s +%d %s" editor line (shell-quote-argument file)))
+
+(defun todo--emacs-bin ()
+  "The GUI Emacs binary, or emacs on PATH."
+  (let ((app "/Applications/Emacs.app/Contents/MacOS/Emacs"))
+    (if (file-executable-p app) app (or (executable-find "emacs") "emacs"))))
+
+(defun todo--open-editor (editor file line)
+  "Run EDITOR on FILE at LINE. Wait until it exits."
+  (let* ((buf (generate-new-buffer " *editor*"))
+         (code (call-process-shell-command
+                (todo--editor-command editor file line)
+                nil (cons buf buf))))
+    (unwind-protect
+        (unless (eq code 0)
+          (todo-fail (format "%s exited %d%s" editor code
+                             (let ((err (string-trim (with-current-buffer buf (buffer-string)))))
+                               (if (string-empty-p err) "" (concat "\n" err))))))
+      (kill-buffer buf))))
+
+(defun todo--open-emacs (file line)
+  "Open FILE at LINE in GUI Emacs. Do not wait for that Emacs to quit."
+  (let* ((bin (todo--emacs-bin))
+         (proc (start-process "todo-edit-emacs" nil bin (format "+%d" line) file)))
+    (unless proc (todo-fail "emacs did not start"))
+    (sit-for 0.3)
+    (when (and (not (process-live-p proc))
+               (not (eq 0 (process-exit-status proc))))
+      (todo-fail (format "emacs exited %s" (process-exit-status proc))))))
+
+(defun todo-edit (title file kind)
+  "Open the heading TITLE in FILE with KIND, vim or emacs, at that line."
+  (unless title (todo-fail "edit needs a ref"))
+  (let* ((board (todo--existing file))
+         (line (todo--task-line board title))
+         (editor (if (equal kind "emacs")
+                     (todo--emacs-bin)
+                   (todo--editor-for "vim" (daemonp) (executable-find "mvim")))))
+    (if (equal kind "emacs")
+        (todo--open-emacs board line)
+      (todo--open-editor editor board line))
+    (todo-out (list (cons 'title title)
+                    (cons 'file board)
+                    (cons 'line line)
+                    (cons 'editor editor)))))
+
+(defun todo-print-json (items)
+  "Print ITEMS as one JSON array and a newline.
+json-serialize returns raw UTF-8 bytes. princ of those bytes into the
+warm process's multibyte buffer writes illegal \\342 escapes."
+  (princ (decode-coding-string
+          (json-serialize (vconcat (mapcar #'todo--json-task items)) :null-object :null)
+          'utf-8))
+  (princ "\n"))
+
 (defun todo--json-task (item)
   "ITEM as the read --json object. Missing deadline and priority are null."
   `((title . ,(alist-get 'title item))
@@ -380,9 +454,7 @@ writers never clobber each other."
       ("read"
        (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")))))
          (if (member "--json" rest)
-             (progn
-               (princ (json-serialize (vconcat (mapcar #'todo--json-task items)) :null-object :null))
-               (princ "\n"))
+             (todo-print-json items)
            (dolist (item items)
              (princ (format "%-12s %s  (%s)\n"
                             (alist-get 'todo item) (alist-get 'title item) (alist-get 'path item)))))))
@@ -459,13 +531,11 @@ writers never clobber each other."
                          (cons 'exists exists)
                          (cons 'tasks (if exists (length (todo-tasks board)) 0))))))
 
-      ("edit"
-       (let* ((board (todo--existing file))
-              (editor (or (todo--flag flags "--editor") (getenv "EDITOR") "mvim -f"))
-              (code (call-process-shell-command
-                     (concat editor " " (shell-quote-argument board)))))
-         (unless (eq code 0) (todo-fail (format "%s exited %d" editor code)))
-         (todo-out (list (cons 'file board) (cons 'editor editor)))))
+      ((or "edit" "edit-vim")
+       (todo-edit (car rest) file "vim"))
+
+      ("edit-emacs"
+       (todo-edit (car rest) file "emacs"))
 
       ("config"
        (let ((config (todo-config)))
@@ -529,8 +599,9 @@ until the editor exits. A second socket if that wait matters."
                   (todo-run (car parsed) (cadr parsed)))))
           (todo-warm-fail (setq code 1 stderr (concat (car (cdr err)) "\n")))
           (error (setq code 1 stderr (concat (error-message-string err) "\n"))))
-      (write-region (with-current-buffer out (buffer-string)) nil outfile nil 'silent)
-      (write-region stderr nil errfile nil 'silent)
+      (let ((coding-system-for-write 'utf-8-unix))
+        (write-region (with-current-buffer out (buffer-string)) nil outfile nil 'silent)
+        (write-region stderr nil errfile nil 'silent))
       (kill-buffer out))
     code))
 

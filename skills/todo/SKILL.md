@@ -86,7 +86,9 @@ scripts/todo obsolete "Pay rent"
 scripts/todo delete "Pay rent"
 scripts/todo capture "Look into OpenRouter routing"
 scripts/todo status
-scripts/todo edit [--editor "nvim"]
+scripts/todo edit "Pay rent" --file todo.org       # vim, at that heading line
+scripts/todo edit-vim "Pay rent" --file todo.org
+scripts/todo edit-emacs "Pay rent" --file todo.org   # Emacs, at that heading line
 scripts/todo config
 ```
 
@@ -99,7 +101,7 @@ board is known, not a licence to pick one.
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
 - Lists print `STATE  Title  (path)`; single results print `key: value`. `read --json` prints the same tasks as one JSON array: title, state, deadline, priority, tags, note, path. A missing deadline or priority is null.
-- `--warm` runs the same verb in one background Emacs named `todo-skill`. The plain command still starts a fresh Emacs and quits. The window uses `--warm` and starts the worker if it is down. Quit it with `emacsclient -s todo-skill --eval '(kill-emacs)'`.
+- `--warm` runs the same verb in one background Emacs named `todo-skill`. The plain command still starts a fresh Emacs and quits. The window uses `--warm` and starts the worker if it is down. Quit it with `emacsclient -s todo-skill --eval '(kill-emacs)'`. `edit` and `edit-vim` open vim at the heading line. With no terminal they open as `mvim -f`. `edit-emacs` opens Emacs at that same line.
 
 Config, `~/dot_local/config/todo_skill.toml`:
 
