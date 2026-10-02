@@ -24,6 +24,20 @@ python3 scripts/session_text.py
 It prints `[user]`, `[assistant]` and `[tool name]` lines. Read the whole
 output. `--path FILE` reads a different transcript.
 
+Then time every call in it, so the cost of the session is a number and not an
+impression:
+
+```
+python3 scripts/analyze_commands.py --session
+```
+
+The script pairs each tool call with its result and prints the wall clock, the
+tool time, every call over five seconds, the aborted and failed ones, repeated
+calls, and hang-prone command shapes with the fix. A call over five seconds is a
+finding; a call over sixty, or one the user aborted, is the first row of the
+report. It reads `$PI_SESSION_FILE` by default and exits 2 when a transcript
+carries no timestamps.
+
 ## 2. Interview, phase one - the goal
 
 Ask questions until all four are clear: the goal of the session, what success
@@ -43,7 +57,8 @@ Read the transcript for:
 - Patterns: repeated mistakes, repeated user corrections, repeated phrasing.
 - What failed: each failure, the root cause, and why it failed.
 - What passed: each success, and why it worked, so it can be repeated.
-- Inefficiencies: wasted steps, slow commands, redundant reads, retries.
+- Inefficiencies: wasted steps, slow commands, redundant reads, retries. Time
+  them with the script in section 1 rather than judging them by feel.
 - Gotchas: non-obvious environment, tool, or format traps.
 - Conversation: unclear questions, buried answers, wrong assumptions, missing
   confirmation before risky steps.
@@ -66,6 +81,31 @@ impression:
 
 Rank every finding by impact: time lost, error frequency, quality or speed
 gain. Impact decides the order of the report.
+
+### Mine the command history
+
+```
+python3 scripts/analyze_commands.py --history      # ~/.bash_history by default
+```
+
+This one reads what the user typed, which is where the speed and accuracy wins
+are. It ranks three things:
+
+- repeated prefixes and exact repeats: the alias, script or prompt template that
+  should exist. A prefix typed 181 times is a missing alias, not a habit. An
+  exact repeat is also a suspicion that the first run failed; the file has no
+  exit codes, so confirm it against the transcript before calling it a retry.
+- long one-liners: script candidates.
+- hang-prone shapes, each with its fix: recursive grep, an unbounded `find`,
+  `curl` without `--max-time`, `tail -f`, `ssh` without `ConnectTimeout`, an
+  interactive pager or editor, a server started in the foreground. The shape
+  matters when a session replays it, which is what a guard is for.
+
+History on this machine records no durations and no exit codes, so it ranks by
+frequency; durations come from the transcript. Two ways to instrument the shell
+for timing were probed and rejected: PS0 runs its command substitution in a
+subshell, so the start time never reaches the parent, and a DEBUG trap that sets
+it stops the prompt from being printed. A verified timing hook is its own task.
 
 ### Rule-quality gate
 
@@ -97,7 +137,11 @@ three shapes:
   a bare path, an interpreter that does not exist). Build a check.
 - **Guard-shaped**: it should not happen at all, and the tool call can be
   stopped before it does. Build a guard in a pi extension and refuse with the
-  replacement command, never a bare "no".
+  replacement command, never a bare "no". Worked example: one `grep -rn` over
+  `~/repos` ran 111s of a 137s session and had to be aborted, so
+  `harness/extensions/search_guard.ts` now refuses the recursive form and prints
+  the `rg` line, with `harness/tests/test_search_guard.ts` as its one runnable
+  check. The prose rule keeps only the pointer and the measurement.
 - **Generator-shaped**: the file has a fixed shape and the agent hand-rolled it.
   Build a generator or template.
 - **Judgement-shaped**: taste, structure, naming, prose quality. This stays a
