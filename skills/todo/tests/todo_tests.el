@@ -105,6 +105,18 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "create" "Nested" "--container" "hi")
   (should (string-match-p "\\* hi\n\\*\\* TODO Nested" (todo-test--text))))
 
+(ert-deftest todo-create-under-a-container-stays-a-sibling ()
+  (todo-test--setup)
+  (todo-test--write "* hi\n** TODO Old\n")
+  (todo-test--ok "create" "New" "--container" "hi")
+  (should (string-match-p "\\* hi\n\\*\\* TODO Old\n\\*\\* TODO New" (todo-test--text))))
+
+(ert-deftest todo-create-refuses-a-flag-title ()
+  (todo-test--setup)
+  (let ((result (todo-test--cli "create" "--help")))
+    (should (eq 1 (nth 0 result)))
+    (should (string-match-p "must not be a flag" (nth 2 result)))))
+
 (ert-deftest todo-create-refuses-a-missing-container ()
   (todo-test--setup)
   (let ((result (todo-test--cli "create" "X" "--container" "nope")))

@@ -468,6 +468,8 @@ writers never clobber each other."
          (note (todo--flag flags "--note"))
          (tags (todo--flags flags "--tag")))
     (unless title (todo-fail "create needs a title"))
+    (when (string-prefix-p "-" title)
+      (todo-fail "create title must not be a flag"))
     (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
     (todo-write
      board
@@ -475,9 +477,9 @@ writers never clobber each other."
        (if container
            (progn
              (todo--goto-heading container)
-             (org-end-of-subtree)
-             (org-insert-subheading nil)
-             (insert title))
+             (let ((level (org-current-level)))
+               (org-end-of-subtree t)
+               (insert "\n" (make-string (1+ level) ?*) " " title)))
          (todo--append-root title))
        (org-todo state)
        (when priority (org-priority (string-to-char priority)))
