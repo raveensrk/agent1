@@ -3,7 +3,11 @@
 """A file with a shebang is a script somebody runs, so it needs the exec bit.
 
 common.md: "Scripts meant to be run must always be executable. Add a shebang on
-line 1, then chmod +x it." This checks both halves of that rule.
+line 1, then chmod +x it." This checks both halves of that rule, and both halves
+have two remedies: a shebang is either made executable, or dropped when the file
+is never run directly - an imported module, a pasted fragment in ~/tmp, a file
+only ever passed to python3. The message names both, because a fragment with a
+copied shebang trips this twice a session and only the chmod remedy was offered.
 
     script_exec_bit.py FILE...      (or paths on stdin)
 """
@@ -35,7 +39,11 @@ def main() -> int:
         line = shebang(path)
         executable = bool(os.stat(path).st_mode & stat.S_IXUSR)
         if line and not executable:
-            print(f"{path}:1: shebang but no exec bit - fix: chmod +x {path}")
+            print(
+                f"{path}:1: shebang but no exec bit - fix: chmod +x {path}, "
+                "or drop the shebang line if the file is never run directly (a module, "
+                "an imported helper, a pasted fragment)"
+            )
         elif executable and not line:
             print(
                 f"{path}:1: exec bit but no shebang - fix: add a shebang line "

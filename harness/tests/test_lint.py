@@ -94,6 +94,9 @@ def test_exec_bit_check_flags_a_script_and_clears_after_chmod():
             fh.write("#!/usr/bin/env python3\nprint('hi')\n")
         before = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
         assert "shebang but no exec bit" in before.stdout, before.stdout
+        # both remedies, because a pasted fragment trips only the second one
+        assert "chmod +x" in before.stdout, before.stdout
+        assert "drop the shebang line" in before.stdout, before.stdout
         os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
         after = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
         assert after.stdout == "", after.stdout
