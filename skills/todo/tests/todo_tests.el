@@ -6,6 +6,7 @@
 
 (require 'ert)
 (require 'cl-lib)
+(require 'json)
 
 (defconst todo-test--root
   (file-name-directory
@@ -139,6 +140,45 @@ verbs, same parsing, a few milliseconds each."
   (let ((done (nth 1 (todo-test--ok "read" "--state" "DONE"))))
     (should (string-match-p "Plain" done))
     (should-not (string-match-p "Tagged" done))))
+
+(defun todo-test--json (stdout)
+  (json-parse-string stdout :object-type 'alist :array-type 'list :null-object nil))
+
+(defun todo-test--field (item key)
+  (alist-get (intern key) item))
+
+(ert-deftest todo-read-json-has-the-card-fields ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO [#A] Pay rent :finance:\n"
+                            "DEADLINE: <2026-11-05 Thu>\n"
+                            ":PROPERTIES:\n:ID: abc\n:END:\n"
+                            "paid \"cash\"\n"
+                            "line two\n"
+                            "* DONE Say \"hi\"\n"
+                            "* Archive\n** DONE Old\n"))
+  (let ((hidden (expand-file-name "node_modules/hidden.org" todo-test--dir)))
+    (make-directory (file-name-directory hidden) t)
+    (with-temp-file hidden (insert "* TODO Hidden\n")))
+  (let* ((items (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
+         (pay (cl-find "Pay rent" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
+         (other (cl-find "Say \"hi\"" items :key (lambda (i) (todo-test--field i "title")) :test #'equal)))
+    (should (eq 2 (length items)))
+    (should (equal (todo-test--field pay "state") "TODO"))
+    (should (equal (todo-test--field pay "deadline") "<2026-11-05 Thu>"))
+    (should (equal (todo-test--field pay "priority") "A"))
+    (should (equal (todo-test--field pay "tags") '("finance")))
+    (should (equal (todo-test--field pay "note") "paid \"cash\"\nline two"))
+    (should-not (string-match-p "DEADLINE\\|:ID:" (todo-test--field pay "note")))
+    (should (string-match-p "todo.org$" (todo-test--field pay "path")))
+    (should-not (todo-test--field other "deadline"))
+    (should-not (todo-test--field other "priority"))
+    (should (equal (todo-test--field other "state") "DONE"))
+    (should (equal (todo-test--field other "note") ""))
+    (should-not (cl-find "Old" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
+    (should-not (cl-find "Hidden" items :key (lambda (i) (todo-test--field i "title")) :test #'equal)))
+  (let ((done (todo-test--json (nth 1 (todo-test--ok "read" "--json" "--state" "DONE")))))
+    (should (equal (mapcar (lambda (i) (todo-test--field i "title")) done) '("Say \"hi\""))))
+  (should (equal (nth 1 (todo-test--ok "read" "--json" "--state" "OBSOLETE")) "[]\n")))
 
 ;;; update
 

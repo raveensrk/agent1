@@ -72,7 +72,7 @@ absolute path. Emacs is the only dependency.
 
 ```bash
 scripts/todo resolve                        # board file and dir
-scripts/todo read [--state TODO] [--tag x]  # config dirs + this board
+scripts/todo read [--state TODO] [--tag x] [--json]  # config dirs + this board
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A
 scripts/todo set-state "Pay rent" IN_PROGRESS
 scripts/todo set-deadline "Pay rent" 2026-12-01
@@ -97,7 +97,7 @@ board is known, not a licence to pick one.
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
-- Lists print `STATE  Title  (path)`; single results print `key: value`.
+- Lists print `STATE  Title  (path)`; single results print `key: value`. `read --json` prints the same tasks as one JSON array: title, state, deadline, priority, tags, note, path. A missing deadline or priority is null.
 
 Config, `~/dot_local/config/todo_skill.toml`:
 

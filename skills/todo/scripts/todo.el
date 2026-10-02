@@ -12,6 +12,7 @@
 
 (require 'org)
 (require 'cl-lib)
+(require 'json)
 
 ;;; Setup
 
@@ -157,6 +158,30 @@ slash matches that run of components, a glob is a glob, and an absolute or
           (setq found t)))
       found)))
 
+(defun todo--priority ()
+  "The [#A] cookie at point, or nil. Do not invent the default."
+  (let ((pri (org-element-property :priority (org-element-at-point))))
+    (and pri (char-to-string pri))))
+
+(defun todo--note ()
+  "Body after the planning line and drawers, up to the next heading."
+  (save-excursion
+    (let ((start (progn (org-end-of-meta-data t) (point))))
+      (if (re-search-forward "^\\*+ " nil t)
+          (goto-char (match-beginning 0))
+        (goto-char (point-max)))
+      (string-trim (buffer-substring-no-properties start (point))))))
+
+(defun todo--json-task (item)
+  "ITEM as the read --json object. Missing deadline and priority are null."
+  `((title . ,(alist-get 'title item))
+    (state . ,(alist-get 'todo item))
+    (deadline . ,(or (alist-get 'deadline item) :null))
+    (priority . ,(or (alist-get 'priority item) :null))
+    (tags . ,(vconcat (alist-get 'tags item)))
+    (note . ,(or (alist-get 'note item) ""))
+    (path . ,(alist-get 'path item))))
+
 (defun todo-tasks (file)
   "Every live task heading in FILE; the Archive container is history."
   (with-temp-buffer
@@ -174,7 +199,10 @@ slash matches that run of components, a glob is a glob, and an absolute or
                          (cons 'path file)
                          (cons 'todo state)
                          (cons 'title (org-get-heading t t t t))
-                         (cons 'tags (org-get-tags)))
+                         (cons 'tags (org-get-tags))
+                         (cons 'deadline (org-entry-get nil "DEADLINE"))
+                         (cons 'priority (todo--priority))
+                         (cons 'note (todo--note)))
                    out)))))
       (nreverse out))))
 
@@ -348,9 +376,14 @@ writers never clobber each other."
                          (cons 'exists (file-exists-p board))))))
 
       ("read"
-       (dolist (item (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag"))))
-         (princ (format "%-12s %s  (%s)\n"
-                        (alist-get 'todo item) (alist-get 'title item) (alist-get 'path item)))))
+       (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")))))
+         (if (member "--json" rest)
+             (progn
+               (princ (json-serialize (vconcat (mapcar #'todo--json-task items)) :null-object :null))
+               (princ "\n"))
+           (dolist (item items)
+             (princ (format "%-12s %s  (%s)\n"
+                            (alist-get 'todo item) (alist-get 'title item) (alist-get 'path item)))))))
 
       ("create"
        (todo-create rest flags))
