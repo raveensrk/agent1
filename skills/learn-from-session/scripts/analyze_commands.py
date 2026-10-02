@@ -17,7 +17,9 @@ and no exit code. `grep -c '^#[0-9]\\{10\\}' ~/.bash_history` returns 0, so
 history lines carry neither. Two ways to add them were probed and rejected -
 PS0 runs its command substitution in a subshell, so the start time never
 reaches the parent, and a DEBUG trap that sets it stops the prompt from being
-printed. Timing user-typed commands needs its own verified change.
+printed. Timing user-typed commands needs its own verified change. A multi-line
+paste still counts one line per command, and `set -o` state dumps are dropped
+by name.
 """
 from __future__ import annotations
 
@@ -297,6 +299,10 @@ def read_history(path: str) -> list[str]:
             line = line.strip()
             if not line or re.fullmatch(r"#\d{9,}", line):
                 continue
+            # `set -o` state dumps paste as dozens of lines; they are one act,
+            # not 32 commands (observed: 32 of them in ~/.bash_history)
+            if re.match(r"^set [+-]o\s", line):
+                continue
             lines.append(line)
     return lines
 
@@ -419,7 +425,7 @@ def selftest() -> int:
 
     assert read_history.__name__ == "read_history"
     with tempfile.NamedTemporaryFile("w", suffix=".hist", delete=False) as handle:
-        handle.write("#1790966367\nsleep 1\n\n  ls  \nsleep 1\n")
+        handle.write("#1790966367\nsleep 1\n\n  ls  \nsleep 1\nset +o keyword\n")
         hist = handle.name
     assert read_history(hist) == ["sleep 1", "ls", "sleep 1"], read_history(hist)
     os.unlink(hist)
