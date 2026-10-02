@@ -9,7 +9,7 @@ One current intelligence scale. First-party prices. Every published effort, not 
 
 ## Reuse
 
-Search `~/tmp` then `/tmp/explain` for `<snake_case_topic>*.html`. Use `stat` mtime. Pick the newest match.
+Search `~/tmp` then `~/tmp/explain` for `<snake_case_topic>*.html`. Use `stat` mtime. Pick the newest match.
 
 - `--overwrite`: rewrite the newest match in place, even if it is younger than 7 days. Tell the user the path you overwrote. If no match exists, write `~/tmp/<snake_case_topic>.html` and say it is new.
 - Younger than 7 days, no flag: `open` it and stop. Tell the user the path and the age in days. Do not write.

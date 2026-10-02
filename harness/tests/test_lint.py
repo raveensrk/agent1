@@ -30,9 +30,32 @@ def load_lint():
 def test_discovers_every_check_with_a_header():
     checks = load_lint().load_checks()
     ids = sorted(c["id"] for c in checks)
-    assert ids == ["interpreter_resolves", "markdown_bare_path", "script_exec_bit"], ids
+    # derived, not hardcoded: adding a check file must not fail this test
+    files = sorted(f[:-3] for f in os.listdir(CHECKS) if f.endswith(".py"))
+    assert ids == files, ids
     for check in checks:
         assert check["quadrant"] == "feedback/computational", check
+
+
+def test_stale_doc_path_check_ignores_relative_tmp():
+    check = os.path.join(CHECKS, "stale_doc_paths.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = os.path.join(tmp, "rules.md")
+        with open(doc, "w") as fh:
+            fh.write("--output ../tmp/out.json\n")
+            fh.write("Write it to `/tmp/definitely_absent_here.json`.\n")
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert ":1:" not in proc.stdout, proc.stdout
+        assert ":2:" in proc.stdout, proc.stdout
+
+
+def test_stale_doc_path_check_skips_historical_prose():
+    lint = load_lint()
+    check = next(c for c in lint.load_checks() if c["id"] == "stale_doc_paths")
+    assert lint.applies(check, "notes/archive/Study/Unix/unix.md") is False
+    assert lint.applies(check, "work/deck/unix/tmux.md") is False
+    assert lint.applies(check, "website/content/posts/tmux.md") is False
+    assert lint.applies(check, "docs/tasks/review.md") is True
 
 
 def test_applies_globs_and_negation():
