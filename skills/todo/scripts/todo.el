@@ -35,6 +35,8 @@
 
 ;;; Errors and output
 
+(define-error 'todo-warm-fail "todo warm failed")
+
 (defun todo-fail (msg)
   "Print MSG to stderr and exit non-zero."
   (princ (concat msg "\n") #'external-debugging-output)
@@ -501,6 +503,36 @@ writers never clobber each other."
         (let ((inhibit-message t))     ; org's progress notes stay out of stderr
           (todo-run pos flags))
       (error (todo-fail (error-message-string err))))))
+
+(defun todo-warm-write (argsfile outfile errfile dir)
+  "Run the null-delimited args in ARGSFILE as one CLI call.
+Write stdout to OUTFILE and stderr to ERRFILE. Return the exit code.
+DIR is the caller's cwd. Do not kill Emacs: the warm process stays up.
+ponytail: one Emacs serves every warm call. `edit` blocks the others
+until the editor exits. A second socket if that wait matters."
+  (let ((args (split-string
+               (with-temp-buffer
+                 (insert-file-contents-literally argsfile)
+                 (buffer-string))
+               "\0" t))
+        (default-directory (file-name-as-directory dir))
+        (out (generate-new-buffer " *todo-warm-out*"))
+        (code 0)
+        (stderr ""))
+    (unwind-protect
+        (condition-case err
+            (let ((standard-output out)
+                  (inhibit-message t))
+              (cl-letf (((symbol-function 'todo-fail)
+                         (lambda (msg) (signal 'todo-warm-fail (list msg)))))
+                (let ((parsed (todo--parse args)))
+                  (todo-run (car parsed) (cadr parsed)))))
+          (todo-warm-fail (setq code 1 stderr (concat (car (cdr err)) "\n")))
+          (error (setq code 1 stderr (concat (error-message-string err) "\n"))))
+      (write-region (with-current-buffer out (buffer-string)) nil outfile nil 'silent)
+      (write-region stderr nil errfile nil 'silent)
+      (kill-buffer out))
+    code))
 
 (provide 'todo)
 

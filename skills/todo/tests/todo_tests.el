@@ -299,6 +299,49 @@ verbs, same parsing, a few milliseconds each."
 
 ;;; the real process boundary
 
+(defun todo-test--emacs-pid (socket)
+  (with-temp-buffer
+    (call-process "emacsclient" nil t nil "-s" socket "--eval" "(emacs-pid)")
+    (string-to-number (buffer-string))))
+
+(ert-deftest todo-warm-write-does-not-kill-emacs ()
+  (todo-test--setup)
+  (let ((process-environment (cons (concat "TODO_SKILL_CONFIG=" todo-test--config)
+                                   process-environment))
+        (args (expand-file-name "args" todo-test--dir))
+        (out (expand-file-name "out" todo-test--dir))
+        (err (expand-file-name "err" todo-test--dir)))
+    (with-temp-file args (insert "create\0Warm\0"))
+    (should (eq 0 (todo-warm-write args out err todo-test--dir)))
+    (should (string-match-p "Warm" (todo-test--text)))
+    (with-temp-file args (insert "bogus\0"))
+    (should (eq 1 (todo-warm-write args out err todo-test--dir)))
+    (should (string-match-p "unknown command"
+                            (with-temp-buffer (insert-file-contents err) (buffer-string))))))
+
+(ert-deftest todo-warm-wrapper-reuses-the-daemon ()
+  (todo-test--setup)
+  (let* ((socket (format "todo-skill-test-%s" (emacs-pid)))
+         (process-environment
+          (append (list (concat "TODO_SKILL_SOCKET=" socket)
+                        (concat "TODO_SKILL_CONFIG=" todo-test--config))
+                  process-environment))
+         (default-directory (file-name-as-directory todo-test--dir))
+         (script (expand-file-name "scripts/todo" todo-test--root))
+         (out (generate-new-buffer "todo-warm")))
+    (unwind-protect
+        (progn
+          (should (eq 0 (call-process script nil nil nil "--warm" "create" "Warm")))
+          (should (string-match-p "Warm" (todo-test--text)))
+          (let ((pid (todo-test--emacs-pid socket)))
+            (should (> pid 0))
+            (should (eq 0 (call-process script nil (list out nil) nil "--warm" "read" "--json")))
+            (should (string-match-p "Warm" (with-current-buffer out (buffer-string))))
+            (should (eq 1 (call-process script nil nil nil "--warm" "bogus")))
+            (should (eq pid (todo-test--emacs-pid socket)))))
+      (ignore-errors (call-process "emacsclient" nil nil nil "-s" socket "--eval" "(kill-emacs)"))
+      (kill-buffer out))))
+
 (ert-deftest todo-cli-runs-as-a-script ()
   (todo-test--setup)
   (let ((result (todo-test--spawn "create" "Spawned")))

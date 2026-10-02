@@ -1,4 +1,68 @@
 #!/bin/sh
 # The todo skill's CLI: the elisp implementation, under Emacs.
 #   scripts/todo <verb> [args]
-exec emacs -Q --batch -l "$(dirname "$0")/todo.el" -- "$@"
+#   scripts/todo --warm <verb> [args]
+#
+# Plain calls start Emacs and quit. --warm keeps one Emacs up (socket
+# todo-skill, or TODO_SKILL_SOCKET) and sends the same verb to it.
+dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+el="$dir/todo.el"
+
+if [ "${1:-}" != "--warm" ]; then
+  exec emacs -Q --batch -l "$el" -- "$@"
+fi
+shift
+
+socket=${TODO_SKILL_SOCKET:-todo-skill}
+
+warm_up() {
+  emacsclient -s "$socket" --eval '(fboundp (quote todo-warm-write))' 2>/dev/null | grep -q '^t$'
+}
+
+if ! warm_up; then
+  if emacsclient -s "$socket" --eval t >/dev/null 2>&1; then
+    emacsclient -s "$socket" --eval '(kill-emacs)' >/dev/null 2>&1 || true
+    sock="${TMPDIR:-/tmp}/emacs$(id -u)/$socket"
+    i=0
+    while [ -e "$sock" ]; do
+      i=$((i + 1))
+      [ "$i" -gt 50 ] && break
+      sleep 0.1
+    done
+  fi
+  emacs -Q --daemon="$socket" -l "$el" >/dev/null 2>&1 || true
+  i=0
+  while ! warm_up; do
+    i=$((i + 1))
+    if [ "$i" -gt 50 ]; then
+      echo "todo: warm Emacs did not start" >&2
+      exit 1
+    fi
+    sleep 0.1
+  done
+fi
+
+tmp=${TODO_WARM_TMP:-$HOME/tmp}
+mkdir -p "$tmp"
+args=$(mktemp "$tmp/todo-warm-args.XXXXXX")
+out=$(mktemp "$tmp/todo-warm-out.XXXXXX")
+err=$(mktemp "$tmp/todo-warm-err.XXXXXX")
+if [ "$#" -gt 0 ]; then
+  printf '%s\0' "$@" > "$args"
+else
+  : > "$args"
+fi
+
+esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+here=$(pwd)
+code=$(emacsclient -s "$socket" --eval "(todo-warm-write \"$(esc "$args")\" \"$(esc "$out")\" \"$(esc "$err")\" \"$(esc "$here")\")")
+status=$?
+cat "$out"
+cat "$err" >&2
+rm -f "$args" "$out" "$err"
+if [ "$status" -ne 0 ]; then
+  echo "todo: warm Emacs rejected the call" >&2
+  exit 1
+fi
+code=$(printf '%s' "$code" | tr -cd '0-9')
+exit "${code:-1}"
