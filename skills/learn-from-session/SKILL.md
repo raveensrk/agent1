@@ -1,15 +1,16 @@
 ---
 name: learn-from-session
-description: Review the current Pi session as a coach - find patterns, errors, inefficiencies, gotchas, and improvements, research better approaches online, interview the user until the goal is clear, write a prioritized report, and merge durable rules into an AGENTS.md. Use when the user asks to learn from this session, review how the session went, improve the workflow, or update AGENTS.md. Asks before writing and shows diffs.
+description: Review the current Pi session as a coach - find patterns, errors, inefficiencies, gotchas and improvements; turn the repeatable ones into deterministic checks in the harness and build them; use Jev for the judgments code can threshold; research better approaches online; interview the user until the goal is clear; write a prioritized report and merge durable rules into an AGENTS.md. Use when the user asks to learn from this session, review how the session went, improve the workflow, update an AGENTS.md, or add a check for a mistake that keeps happening. Asks before writing and shows diffs.
 argument-hint: "[path to AGENTS.md]"
 ---
 
 # Learn from session
 
-A session review that trains future sessions. Read the transcript, interview
-the user, research better approaches, rank findings by impact, write a report,
-and merge the durable rules into an `AGENTS.md`. Nothing is written without
-approval.
+A session review that trains future sessions: read the transcript, interview the
+user, find the missing signals, research better approaches, rank findings by
+impact, write a report, and merge the durable rules into an `AGENTS.md`. The
+point is not a prettier rule, it is a session that cannot repeat the mistake.
+Nothing is written without approval.
 
 ## 1. Read the transcript
 
@@ -31,8 +32,9 @@ One question at a time. Stop when the transcript plus answers leave no
 ambiguity about what this session was supposed to achieve.
 
 Every confirmed answer is classified before the session ends: it becomes a rule
-(section 8), it is explicitly dropped, or it goes to the report's Open
-questions because it cannot be made operational. There is no third state.
+(section 10), it becomes a check (section 4), it is explicitly dropped, or it
+goes to the report's Open questions because it cannot be made operational. There
+is no third state.
 
 ## 3. Analyze
 
@@ -48,6 +50,19 @@ Read the transcript for:
 - Dev flow: manual steps that could be scripted, missing defaults, bad aliases.
 - Repetition: command sequences or manual steps that one small helper script
   would remove. Propose the script with its location, not just the idea.
+
+The talk behind this skill ("Harness Engineering on Rails", Joël Quenneville,
+[Rails World 2026](https://rubyonrails.org/world/2026/sessions/harness-engineering))
+asks these of every session. Answer each one with a transcript line, not an
+impression:
+
+- Where did I have to intervene?
+- What signals were missing?
+- Was there anything I had to copy back and forth by hand?
+- Is there anything in `AGENTS.md` that could be done deterministically instead?
+- Did the conversation degrade?
+- Could this have been split?
+- Are there any mistakes that happened multiple times?
 
 Rank every finding by impact: time lost, error frequency, quality or speed
 gain. Impact decides the order of the report.
@@ -65,13 +80,112 @@ that fails any check is reshaped or dropped, never written.
 - Supersede-aware: replacing an older rule updates that rule too, and the commit
   message names it.
 
-## 4. Research
+## 4. Find the missing signals
+
+A finding that ends up as prose is a finding the next session has to remember.
+Sort every finding into the talk's grid first, then act on that cell:
+
+| | computational | inferential |
+| --- | --- | --- |
+| **feedback** (after the work) | lint, test, check - build it | agentic review, this skill |
+| **feedforward** (before the work) | generator, template, guard | `AGENTS.md` prose, `SKILL.md` |
+
+Anything a check can decide belongs in a check. Most findings land in one of
+three shapes:
+
+- **Lint-shaped**: there is a right answer a machine can compute (an exec bit,
+  a bare path, an interpreter that does not exist). Build a check.
+- **Guard-shaped**: it should not happen at all, and the tool call can be
+  stopped before it does. Build a guard in a pi extension and refuse with the
+  replacement command, never a bare "no".
+- **Generator-shaped**: the file has a fixed shape and the agent hand-rolled it.
+  Build a generator or template.
+- **Judgement-shaped**: taste, structure, naming, prose quality. This stays a
+  rule or a review step. Say so in the report instead of pretending it is
+  checkable.
+
+Then:
+
+1. Look for the check or rule that already covers it. `python3 ~/repos/agent1/harness/lint.py --list`
+   names every check and its quadrant; read the target file before claiming a
+   rule is missing.
+2. Decide the scope, which decides the home:
+   - true for every repo here - [harness/checks](~/repos/agent1/harness/checks)
+     in agent1 (public), see [harness/README.md](~/repos/agent1/harness/README.md)
+   - true only on this machine or private - `~/repos/agent2/harness/checks/`
+     (private); the dispatcher picks it up when the directory exists
+   - true only inside one project - `<repo>/scripts/checks/`, which the
+     dispatcher reads from the repo it is run in, and which may override a
+     machine-wide check with the same id
+   - automatic trigger needed - a pi extension in
+     [harness/extensions](~/repos/agent1/harness/extensions), installed by
+     [install.py](~/repos/agent1/install.py)
+3. Write the check (header + `path:line: message`, see the README), make the
+   message carry the fix as a command, then run it over the whole population:
+   `python3 ~/repos/agent1/harness/lint.py --repos`. Its first full run must
+   pass on every instance or it is reporting its own bugs, and it must find the
+   case that motivated it. A check nobody has seen fire is a guess.
+4. Report the first-run count in the review. A check that finds 40 old
+   violations is a cleanup task, not a check to wire into a trigger; the trigger
+   only ever lints the files a session edited.
+
+### Audit the rules corpus
+
+Whole-file, once per target: walk every rule in the target file and ask the
+talk's question - could this be decided deterministically? Flag the ones that
+are a stale command, a styleguide, or an unverifiable adjective, and propose the
+check or generator that replaces them. Worked example, found by
+`interpreter_resolves` in this very file: `common.md` pinned a Python version in
+its shebang rule, that version is not installed here, and five observed runs died
+on `command not found`:
+
+```
+#!/usr/bin/env python3.11
+```
+
+The check was three lines and the rule is now correct.
+
+When a check takes over a rule, replace the prose with one pointer line naming
+the check - do not leave both.
+
+## 5. Signals from Jev
+
+Use Jev for the judgements in this review that are typed: a label, a route, a
+score. One batched request carries all four jobs; code owns the thresholds and
+the counts.
+
+- Label the transcript: choice per user turn (correction, praise, answer,
+  new_goal, off_topic), noul per tool call that looks wasted or retried. Turn
+  the talk's questions into numbers: how many interventions, which mistake
+  repeated, did it degrade.
+- Route each finding to its quadrant: choice over the four cells of the grid
+  above, which decides lint, guard, generator or prose.
+- Judge the proposed rules: nouls for falsifiable, scoped, evidence-backed, plus
+  one choice over the existing rules of the target file to catch a duplicate.
+- Score the findings for impact, so the report order comes from numbers.
+
+Constraints, from the model's own docs: it reads literally, so write the exact
+criterion in `instructions` and boundary cases in `criteria`; it cannot count,
+so count in code and ask one question per item; accuracy falls with a large
+state full of irrelevant detail, so send the turn or rule being judged, not the
+whole transcript (32k tokens of state per request, $42 per billion input tokens).
+A probability near 0.5 makes the judgement an Open question - do not average it
+into a verdict.
+
+The batched client already exists at
+[jev.py](~/repos/agent2/fast-mac-use/scripts/jev.py) (private config). Once the
+question set stops changing, commit it as `scripts/jev_signals.py` beside this
+skill and call that instead of retyping questions. With no `TYPESAFE_API_KEY`,
+make the four judgements in prose and say in the report that they were not
+machine-labeled.
+
+## 6. Research
 
 Proactively search when a better approach is suspected, even if the session
 succeeded. Prefer official docs. Verify the suggestion applies to the installed
 versions before proposing it, and cite the source link.
 
-## 5. Report
+## 7. Report
 
 Always write the report to `~/tmp/`. If the user declines a report, keep the
 findings in chat and skip the file.
@@ -80,18 +194,24 @@ File: `~/tmp/session_review_<YYYY-MM-DD>.md`, appending `_2`, `_3` when taken. A
 prioritized list, highest impact first, one line per finding:
 
 ```
-- [high] <finding> - evidence: <quote or line from transcript> - fix: <action> - source: <link>
+- [high] <finding> - quadrant: <feedback|feedforward>/<computational|inferential> - evidence: <quote or line from transcript> - fix: <action> - source: <link>
 ```
 
-Include what worked, not only what failed. End with `Open questions` for
-anything only the user can answer.
+Include what worked, not only what failed. Then a `Signals` section: the Jev
+labels with their probabilities and the counts they produce. Then a `Checks`
+section: every check this review built or proposed, its path, its first-run
+count over the full population, and whether its trigger is wired. End with
+`Open questions` for anything only the user can answer, including every
+low-confidence Jev judgement.
 
-## 6. Interview, phase two - improvements
+## 8. Interview, phase two - improvements
 
 Ask about each proposed improvement before writing it anywhere: keep, drop, or
-change. One question at a time. Keep only what the user confirms.
+change. One question at a time. Keep only what the user confirms. A proposed
+check is asked separately from a proposed rule, because the check is code and
+the rule is prose.
 
-## 7. Pick the AGENTS.md target
+## 9. Pick the AGENTS.md target
 
 If the user passed a path, use it. Otherwise list candidates and ask:
 
@@ -105,18 +225,19 @@ Show each candidate with a one-line summary of what it already covers. Read
 the chosen file fully before editing. The chosen file's git history is the
 decision log: the scope lives in the rule, the why lives in the commit message.
 
-## 8. Merge
+## 10. Merge
 
 - Fit each durable rule into an existing section. Match the file's voice,
   heading depth, and punctuation. Plain hyphens only.
 - Create a new section only when no existing section fits. Name it after the
   topic, not the session.
-- Add or minimally amend. Never reword, reorder, or delete existing content.
+- Add or minimally amend. Never reword, reorder, or delete existing content
+  unless a check has taken the rule over, and then leave the pointer line.
 - Durable rules only: corrections, conventions, commands, gotchas. Task-specific
   suggestions stay in the report.
 - If the session produced no durable rules, say so and write nothing.
 
-## 9. Approve, then write
+## 11. Approve, then write
 
 Produce the diff from a temp copy so the real file stays untouched until
 approval:
@@ -129,9 +250,11 @@ diff -u <target> ~/tmp/review/<name>.new  # 3. the approval artifact
 
 Show that diff and wait for an explicit yes. On approval, apply the same edits
 to the real file, re-read the changed sections, and report what changed with
-line numbers. Inside a git repo `git diff` is an acceptable fallback.
+line numbers. Inside a git repo `git diff` is an acceptable fallback. Checks are
+code: show them, run their tests, and run them over the full population before
+they count as approved.
 
-## 10. Close follow-ups
+## 12. Close follow-ups
 
 Every item found mid-session that is not the main task gets an outcome before
 the session ends: fix it now, record it in the report's Open questions, or drop

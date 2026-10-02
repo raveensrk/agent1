@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artificial Analysis report - GLM, DeepSeek, Grok</title>
+<style>
+  :root {
+    --bg: #07080c;
+    --card: #141821;
+    --text: #f3efe6;
+    --muted: #9b968c;
+    --gold: #e4b15a;
+    --line: #2a3142;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(900px 420px at 10% -10%, rgba(228, 177, 90, 0.18), transparent 60%),
+      radial-gradient(800px 480px at 100% 0%, rgba(70, 120, 220, 0.16), transparent 55%),
+      var(--bg);
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 20px 64px; }
+  .kicker { color: var(--gold); letter-spacing: 0.14em; text-transform: uppercase; font-size: 12px; font-weight: 650; }
+  h1 { font-size: 38px; line-height: 1.05; margin: 8px 0 10px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 16px; overflow: hidden; }
+  th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  th { color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  .bar { display: inline-block; height: 8px; border-radius: 99px; background: var(--gold); vertical-align: middle; margin-right: 8px; }
+  .note { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+  @media (max-width: 800px) {
+    h1 { font-size: 30px; }
+    table { display: block; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">Artificial Analysis Intelligence Index v{{VERSION}}</div>
+  <h1>Latest GLM, DeepSeek and Grok, every published effort</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Effort</th>
+        <th>Index</th>
+        <th>Input</th>
+        <th>Cached input</th>
+        <th>Output</th>
+        <th>AA $ / task</th>
+      </tr>
+    </thead>
+    <tbody>
+{{ROWS}}
+    </tbody>
+  </table>
+
+  <p class="note">Fetched {{DATE}} from the Artificial Analysis API and comparison pages. Only AA-published efforts are listed. Dash is not retrieved, not zero. Cached-input and cost-per-task are AA figures, not first-party list prices.</p>
+</main>
+</body>
+</html>

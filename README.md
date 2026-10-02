@@ -78,7 +78,8 @@ answer means the import did not load.
 | `common.md` | Session start, working style, output style |
 | `emoji_legend.md` | Status emoji vocabulary for agent reports |
 | `git.md` | Commits and pull requests |
-| `install.py` | Installs skills and commands into Claude Code, Codex and pi |
+| `harness/` | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
+| `install.py` | Installs skills, commands and extensions into Claude Code, Codex and pi |
 | `jobs.md` | ETA rules for long-running jobs |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
@@ -118,6 +119,7 @@ installed on the machine. Each item is a link back to this clone, so a
 |---|---|---|---|
 | `skills/*` | `~/.claude/skills/` | `~/.codex/skills/` | settings.json (global skills only, via `~/dot/script/,agent_config.py`) |
 | `commands/*.md` (none yet) | `~/.claude/commands/` | not supported | `~/.pi/agent/prompts/` |
+| `harness/extensions/*.ts` | not supported | not supported | `~/.pi/agent/extensions/` |
 
 - Idempotent: run it again after every `git pull`. It adds new items and
   removes links to items that were deleted or renamed here.

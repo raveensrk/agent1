@@ -87,7 +87,13 @@ def validate(skill_dir: Path) -> list[str]:
         relative = target.split("#", 1)[0]
         if not relative or "<" in relative:
             continue
-        if not (skill_dir / relative).resolve().exists():
+        # A `~` link is how this repo points at another repo's file (common.md's
+        # Markdown rule), so resolve it against home, not against the skill dir.
+        if relative.startswith("~"):
+            exists = Path(relative).expanduser().exists()
+        else:
+            exists = (skill_dir / relative).resolve().exists()
+        if not exists:
             errors.append(f"link: {target} does not resolve")
 
     return errors
@@ -107,6 +113,18 @@ def selftest() -> None:
             "# Demo\n\nSee [install.py](../install.py).\n"
         )
         assert validate(good) == [], validate(good)
+
+        homed = root / "homed-skill"
+        homed.mkdir()
+        (homed / "SKILL.md").write_text(
+            "---\n"
+            "name: homed-skill\n"
+            "description: Links home - one output. Use when the user says homed.\n"
+            "---\n\n"
+            "See [home](~/) and [gone](~/definitely-not-here-xyz.md).\n"
+        )
+        errors = validate(homed)
+        assert len(errors) == 1 and "definitely-not-here-xyz" in errors[0], errors
 
         bad = root / "bad-skill"
         bad.mkdir()

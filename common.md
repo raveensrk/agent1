@@ -98,6 +98,26 @@ When I don't understand something, show it instead of repeating it in text.
 - Goal: I fully understand before we go to the next step. Ask whether it landed.
 - Delete the files you created as soon as I confirm I understand, unless I ask to keep them. Leave other files in `/tmp/explain/` alone.
 
+## Harness
+
+The harness is everything around the model that turns a rule into a signal: checks,
+generators, hooks and guards. Prose is the fallback, not the default.
+
+- A rule a check can decide belongs in a check, not in prose. Write the check in
+  [harness/checks](~/repos/agent1/harness/checks) (see
+  [harness/README.md](~/repos/agent1/harness/README.md)) and keep the prose rule
+  only if it says something the check cannot.
+- A mistake that happened twice means a signal is missing, not that a rule was too
+  quiet. Ask "how could this be the last time?" and name the check, generator or
+  hook that will catch it next time, before you touch rule text.
+- A refusal, block or guard always prints the exact replacement command with its
+  syntax (`Creating files under db/migrate/ is blocked. Use bin/rails generate`
+  `migration AddPartNumberToProducts part_number:string`). Never block without
+  steering; the next attempt must be the right one.
+- When code needs a semantic decision (is this a refund request, is this line
+  relevant), call Jev for a typed, threshold-able answer instead of asking an LLM
+  for JSON. See [typesafe-ai](~/.agents/skills/typesafe-ai/SKILL.md).
+
 ## Plan mode and Brainstorming
 
 Remind me to brainstorm and plan depending on the prompt and task. Decide based on your best judgement - for multi-step, ambiguous, or high-impact work; skip it for small, well-defined changes.
@@ -162,7 +182,8 @@ In replies, the Output style rule wins: write the full URL and the full absolute
 
 Scripts meant to be run must always be executable. When creating or editing a runnable script:
 
-1. Add a `#!/usr/bin/env python3.11` (or matching interpreter) shebang on line 1.
+1. Add a `#!/usr/bin/env python3` shebang on line 1, naming an interpreter that
+   exists here (`python3` is 3.14; `python3.12` and `python3.14` are installed too).
 2. `chmod +x` it.
 
 Exception: library files and files meant only to be imported or sourced.

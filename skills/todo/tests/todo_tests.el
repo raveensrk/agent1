@@ -15,6 +15,7 @@
   "The skill directory.")
 
 (load (expand-file-name "scripts/todo.el" todo-test--root))
+(load (expand-file-name "emacs.el" todo-test--root))
 
 (defvar todo-test--dir nil)
 (defvar todo-test--config nil)
@@ -359,6 +360,33 @@ verbs, same parsing, a few milliseconds each."
             (should (eq pid (todo-test--emacs-pid socket)))))
       (ignore-errors (call-process "emacsclient" nil nil nil "-s" socket "--eval" "(kill-emacs)"))
       (kill-buffer out))))
+
+(ert-deftest todo-doing-item-is-one-agenda-line ()
+  (let* ((root (make-temp-file "doing-" t))
+         (file (expand-file-name "todo.org" root)))
+    (unwind-protect
+        (progn
+          (with-temp-file file
+            (insert "* TODO Pay rent\nDEADLINE: <2026-09-28 Mon>\n* TODO Other\nDEADLINE: <2026-09-28 Mon>\n* TODO Repeat\nDEADLINE: <2026-09-27 Sun +1w>\n"))
+          (let ((item (todo-doing-item `((title . "Pay rent")
+                                         (path . ,file)
+                                         (deadline . "<2026-09-28 Mon>"))))
+                (repeat (todo-doing-item `((title . "Repeat")
+                                           (path . ,file)
+                                           (deadline . "<2026-09-27 Sun +1w>")))))
+            (should (string-match-p "Pay rent" item))
+            (should-not (string-match-p "Other" item))
+            (should (equal "Pay rent"
+                           (org-with-point-at (get-text-property 0 'org-hd-marker item)
+                             (org-get-heading t t t t))))
+            (should (string-match-p "Repeat" repeat))
+            (should (commandp 'agenda2))))
+      (dolist (buffer (buffer-list))
+        (with-current-buffer buffer
+          (when (and buffer-file-name (file-in-directory-p buffer-file-name root))
+            (set-buffer-modified-p nil)
+            (kill-buffer buffer))))
+      (delete-directory root t))))
 
 (ert-deftest todo-doing-picks-the-most-late-open-task ()
   (let* ((today (org-time-string-to-absolute "2026-10-02"))
