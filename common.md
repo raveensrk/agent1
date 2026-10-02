@@ -29,6 +29,7 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
 - `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
 - A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
+- When I say I unsubscribed or cancelled a service I control, record that and do not open mail, the site, or System Settings to check it.
 
 ## Browser and computer use
 
@@ -49,6 +50,17 @@ macOS commands:
 - System default, only if both are missing: `open URL`
 
 Do not use `-new-window`, `open -na`, or `open -a Firefox URL`. Those can spawn a window.
+
+## Subscriptions
+
+On this machine, a request for what subscriptions I have starts with two reads:
+
+1. `~/repos/ledger/journals/transactions.ledger`
+2. `~/Library/Mail/V10/MailData/Envelope Index`
+
+Then open `https://apps.apple.com/account/subscriptions` for Apple subscriptions. Do not start at System Settings, StoreKit, or Chrome commerce databases.
+
+The keep list is `~/repos/ledger/data/subscriptions.json`. A subscription not in `current` must be unsubscribed.
 
 ## Output style
 
