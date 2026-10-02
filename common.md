@@ -53,6 +53,7 @@ Do not use `-new-window`, `open -na`, or `open -a Firefox URL`. Those can spawn 
 ## Output style
 
 - Always respond in active voice.
+- Always write the full URL and the full file path. Visible text must be the complete string, not a short label. A URL includes the scheme and host (`https://www.crunchyroll.com`, not `crunchyroll`). A file path is absolute (`/Users/raveen_kumar_personal/repos/agent1/common.md`, not `common.md`).
 - Lots of information to show? Split it into bullets.
 - Emoji meanings live in the canonical [emoji legend](emoji_legend.md).
 - Punctuation: use plain hyphens (`-`) only; never em dashes (`—`) or en dashes (`–`).
@@ -138,7 +139,7 @@ Don't   : `/path/to/file_name.md`
 
 Same goes for images and media. For images and media use links with preview `![]()`.
 
-Use relative paths when writing documents. For `@` imports in agent startup instruction files (CLAUDE.md, AGENTS.md), use a `~/` path. Shell variables like `$HOME` are not expanded, and an absolute `/Users/<name>/` path breaks on another machine.
+In replies, the Output style rule wins: write the full URL and the full absolute file path. Use relative paths only when writing documents inside a repo. For `@` imports in agent startup instruction files (CLAUDE.md, AGENTS.md), use a `~/` path. Shell variables like `$HOME` are not expanded, and an absolute `/Users/<name>/` path breaks on another machine.
 
 ## Org
 
