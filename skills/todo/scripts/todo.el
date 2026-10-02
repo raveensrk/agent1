@@ -629,6 +629,10 @@ writers never clobber each other."
   (let* ((parsed (todo--parse command-line-args-left))
          (pos (car parsed))
          (flags (cadr parsed)))
+    ;; Emacs batch mode visits whatever is left in `command-line-args-left'
+    ;; as files once this returns.  Clear it, or a long append or evidence
+    ;; string becomes a filename and the call exits 255 after writing.
+    (setq command-line-args-left nil)
     (condition-case err
         (let ((inhibit-message t))     ; org's progress notes stay out of stderr
           (todo-run pos flags))
