@@ -20,7 +20,8 @@
   "The state words the skill knows.")
 
 (defconst todo-value-flags '("--file" "--state" "--tag" "--container" "--deadline"
-                             "--priority" "--note" "--dir" "--editor" "--evidence")
+                             "--priority" "--note" "--dir" "--editor" "--evidence"
+                             "--effort")
   "Flags that take a value.")
 
 (setq org-todo-keywords '((sequence "TODO" "IN_PROGRESS" "OPTIONAL" "LATER"
@@ -199,6 +200,12 @@ slash matches that run of components, a glob is a glob, and an absolute or
         editor
       (if mvim "mvim -f" editor))))
 
+(defun todo--checked-effort (value)
+  "VALUE as H:MM, or fail. Org's own Effort format."
+  (unless (string-match-p "\\`[0-9]+:[0-5][0-9]\\'" value)
+    (todo-fail (format "effort takes H:MM, got %s" value)))
+  value)
+
 (defun todo--task-line (file title)
   "Line number of the task heading TITLE in FILE."
   (with-temp-buffer
@@ -332,6 +339,7 @@ then path: the priority-only pick."
     (state . ,(alist-get 'todo item))
     (deadline . ,(or (alist-get 'deadline item) :null))
     (priority . ,(or (alist-get 'priority item) :null))
+    (effort . ,(or (alist-get 'effort item) :null))
     (tags . ,(vconcat (alist-get 'tags item)))
     (note . ,(or (alist-get 'note item) ""))
     (path . ,(alist-get 'path item))))
@@ -356,6 +364,7 @@ then path: the priority-only pick."
                          (cons 'tags (org-get-tags))
                          (cons 'deadline (org-entry-get nil "DEADLINE"))
                          (cons 'priority (todo--priority))
+                         (cons 'effort (org-entry-get nil "Effort"))
                          (cons 'note (todo--note)))
                    out)))))
       (nreverse out))))
@@ -494,12 +503,14 @@ writers never clobber each other."
          (container (todo--flag flags "--container"))
          (deadline (todo--flag flags "--deadline"))
          (priority (todo--flag flags "--priority"))
+         (effort (todo--flag flags "--effort"))
          (note (todo--flag flags "--note"))
          (tags (todo--flags flags "--tag")))
     (unless title (todo-fail "create needs a title"))
     (when (string-prefix-p "-" title)
       (todo-fail "create title must not be a flag"))
     (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
+    (when effort (todo--checked-effort effort))
     (todo-write
      board
      (lambda ()
@@ -514,6 +525,7 @@ writers never clobber each other."
        (when priority (org-priority (string-to-char priority)))
        (when tags (org-set-tags tags))
        (when deadline (org-deadline nil deadline))
+       (when effort (org-set-property "Effort" effort))
        (when note (todo--append-body note))))
     (todo-out (list (cons 'title title) (cons 'file board) (cons 'state state)))))
 
@@ -582,8 +594,7 @@ writers never clobber each other."
       ("set-effort"
        (let ((effort (cadr rest)))
          (unless (and (car rest) effort) (todo-fail "set-effort needs a ref and an H:MM value"))
-         (unless (string-match-p "\\`[0-9]+:[0-5][0-9]\\'" effort)
-           (todo-fail (format "effort takes H:MM, got %s" effort)))
+         (todo--checked-effort effort)
          (let ((board (todo--existing file)))
            (todo-write board (lambda () (todo--goto (car rest)) (org-set-property "Effort" effort)))
            (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'effort effort))))))

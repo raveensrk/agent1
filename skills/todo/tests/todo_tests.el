@@ -93,7 +93,29 @@ verbs, same parsing, a few milliseconds each."
   (let ((text (todo-test--text)))
     (should (string-match-p "^\\* TODO \\[#A\\] Pay rent :finance:$" text))
     (should (string-match-p "^DEADLINE: <2026-11-05 Thu>$" text))
-    (should-not (string-match-p ":ID:\\|:CREATED:" text))))
+    (should-not (string-match-p ":PROPERTIES:\\|:ID:\\|:CREATED:" text))))
+
+(ert-deftest todo-create-records-an-effort-estimate ()
+  (todo-test--setup)
+  (todo-test--write (concat "* Tasks\n"
+                            "** TODO Existing\n"
+                            "   :PROPERTIES:\n"
+                            "   :ID: 11111111-1111-4111-8111-111111111111\n"
+                            "   :Effort:   2:00\n"
+                            "   :END:\n"))
+  (todo-test--ok "create" "Write the report" "--container" "Tasks" "--effort" "0:30")
+  (let ((text (todo-test--text)))
+    (should (string-match-p "^ *:Effort: +0:30$" text))
+    (should (string-match-p ":Effort:   2:00" text))
+    (should (string-match-p ":ID: 11111111-1111-4111-8111-111111111111" text)))
+  (should (equal "0:30"
+                 (todo-test--field
+                  (cl-find "Write the report"
+                           (todo-test--json (nth 1 (todo-test--ok "read" "--json")))
+                           :key (lambda (i) (todo-test--field i "title")) :test #'equal)
+                  "effort")))
+  (should (eq 1 (nth 0 (todo-test--cli "create" "Bad estimate" "--effort" "30"))))
+  (should-not (string-match-p "Bad estimate" (todo-test--text))))
 
 (ert-deftest todo-create-starts-a-plain-file ()
   (todo-test--setup)
@@ -164,7 +186,7 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--setup)
   (todo-test--write (concat "* TODO [#A] Pay rent :finance:\n"
                             "DEADLINE: <2026-11-05 Thu>\n"
-                            ":PROPERTIES:\n:ID: abc\n:END:\n"
+                            ":PROPERTIES:\n:ID: abc\n:Effort: 0:30\n:END:\n"
                             "paid \"cash\"\n"
                             "line two\n"
                             "* DONE Say \"hi\"\n"
@@ -182,12 +204,14 @@ verbs, same parsing, a few milliseconds each."
     (should (equal (todo-test--field pay "state") "TODO"))
     (should (equal (todo-test--field pay "deadline") "<2026-11-05 Thu>"))
     (should (equal (todo-test--field pay "priority") "A"))
+    (should (equal (todo-test--field pay "effort") "0:30"))
     (should (equal (todo-test--field pay "tags") '("finance")))
     (should (equal (todo-test--field pay "note") "paid \"cash\"\nline two"))
     (should-not (string-match-p "DEADLINE\\|:ID:" (todo-test--field pay "note")))
     (should (string-match-p "todo.org$" (todo-test--field pay "path")))
     (should-not (todo-test--field other "deadline"))
     (should-not (todo-test--field other "priority"))
+    (should-not (todo-test--field other "effort"))
     (should (equal (todo-test--field other "state") "DONE"))
     (should (equal (todo-test--field other "note") ""))
     (should-not (cl-find "Old" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
