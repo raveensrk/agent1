@@ -292,6 +292,20 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "remove-tag" "Edit me" "home")
   (should-not (string-match-p ":home:" (todo-test--text))))
 
+(ert-deftest todo-a-recurring-task-is-priority-b ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Water the plants" "--deadline" "<2026-11-05 Thu 08:00 +1w>")
+  (should (string-match-p "^\\* TODO \\[#B\\] Water the plants$" (todo-test--text)))
+  (should (eq 1 (nth 0 (todo-test--cli
+                        "create" "Bad routine" "--deadline" "<2026-11-05 Thu 08:00 +1w>"
+                        "--priority" "A"))))
+  (should-not (string-match-p "Bad routine" (todo-test--text)))
+  (todo-test--ok "create" "Plain task" "--deadline" "2026-11-05")
+  (should (string-match-p "^\\* TODO Plain task$" (todo-test--text)))
+  ;; A plain task that gains a repeater becomes a routine, so it gains B.
+  (todo-test--ok "set-deadline" "Plain task" "<2026-11-05 Thu 08:00 +1w>")
+  (should (string-match-p "^\\* TODO \\[#B\\] Plain task$" (todo-test--text))))
+
 (ert-deftest todo-set-priority-writes-the-cookie ()
   (todo-test--setup)
   (todo-test--write "* TODO Buy milk\n")

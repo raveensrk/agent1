@@ -204,6 +204,11 @@ slash matches that run of components, a glob is a glob, and an absolute or
         editor
       (if mvim "mvim -f" editor))))
 
+(defun todo--recurring (deadline)
+  "Non-nil when DEADLINE carries a repeater, so the task is a routine.
+Raveen's rule: a recurring task is always priority B."
+  (and deadline (string-match-p "\\+[0-9]+[dwmy]" deadline)))
+
 (defun todo--checked-effort (value)
   "VALUE as H:MM, or fail. Org's own Effort format."
   (unless (string-match-p "\\`[0-9]+:[0-5][0-9]\\'" value)
@@ -569,6 +574,10 @@ plain heading, so the Archive container is refused."
     (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
     (when effort (todo--checked-effort effort))
     (when deadline (todo--checked-deadline deadline))
+    (when (todo--recurring deadline)
+      (when (and priority (not (equal priority "B")))
+        (todo-fail (format "a recurring task is always priority B, not %s" priority)))
+      (setq priority "B"))
     (todo-write
      board
      (lambda ()
@@ -645,10 +654,15 @@ plain heading, so the Archive container is refused."
            (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state state))))))
 
       ("set-deadline"
-       (let ((board (todo--existing file))
-             (deadline (todo--checked-deadline (cadr rest))))
-         (todo-write board (lambda () (todo--goto (car rest)) (org-deadline nil deadline)))
-         (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'deadline deadline)))))
+       (let* ((board (todo--existing file))
+              (deadline (todo--checked-deadline (cadr rest)))
+              (routine (todo--recurring deadline)))
+         (todo-write board (lambda () (todo--goto (car rest))
+                               (org-deadline nil deadline)
+                               (when routine (org-priority ?B))))
+         (todo-out (append (list (cons 'title (car rest)) (cons 'file board)
+                                 (cons 'deadline deadline))
+                           (when routine (list (cons 'priority "B")))))))
 
       ("set-priority"
        (let ((priority (cadr rest)))

@@ -37,8 +37,13 @@ ever look for tasks there.
 `:tax-2026:`). Tags inherit from a container.
 
 **Priority.** `[#A]`, `[#B]` or `[#C]`, between the state and the title. Optional
-and never invented: `create --priority B` or `set-priority` writes it, anything
-else is refused. Raveen's rule: a recurring task is priority B.
+and never invented: ask Raveen which one before you assign it, and ask at create
+time rather than adding it later. `create --priority B` or `set-priority` writes
+it, anything else is refused.
+
+Raveen's rule: a recurring task is always priority B. A deadline with a repeater
+makes the task recurring, so `create` and `set-deadline` apply B themselves and
+refuse any other priority with a repeater.
 
 **Planning line.** Directly under the heading. `DEADLINE:` first, then `CLOSED:`
 when both appear. There is no `SCHEDULED:`.
