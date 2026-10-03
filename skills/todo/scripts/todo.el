@@ -594,6 +594,35 @@ plain heading, so the Archive container is refused."
     (insert "\n\n* " text "\n"))
   (forward-line -1))
 
+(defun todo--set-note (text)
+  "Replace the note at point with TEXT, keeping the planning line and drawers.
+Only the note is cut: the blank lines before the next heading stay, so the diff
+is the note alone."
+  (let* ((start (progn (org-end-of-meta-data t) (point)))
+         (end (save-excursion
+                (if (re-search-forward "^\\*+ " nil t)
+                    (goto-char (match-beginning 0))
+                  (goto-char (point-max)))
+                ;; Back to the end of the note's last line: the line terminator
+                ;; and any blank line after it belong to what follows.
+                (skip-chars-backward " \t\n" start)
+                (if (= (point) start) start (forward-line 1) (point)))))
+    (delete-region start end)
+    (goto-char start)
+    (insert (string-trim-right text) "\n")))
+
+(defun todo--checked-note-text (text)
+  "TEXT with no column-0 heading, or fail. A star at column 0 is a heading, so
+it would quietly become a task instead of a note line."
+  (let ((line (cl-position-if (lambda (l) (string-match-p "\\`\\*+ " l))
+                              (split-string text "\n"))))
+    (when line
+      (todo-fail (format (concat "note line %d starts with `*' at column 0 (org"
+                                 " counts it as a task). Indent it by one space,"
+                                 " then retry.")
+                         (1+ line)))))
+  text)
+
 ;;; Archiving
 
 ;; Archiving is org's own arrangement: a completed task leaves the board for
@@ -863,6 +892,12 @@ to, or nil when every container was already empty."
      :options (("--file F" "the board; default todo.org in the cwd"))
      :note "Indent TEXT that starts with `*': a star at column 0 is a heading."
      :example "todo append \"Pay rent\" \"receipt in mail\"")
+    ("set-note"
+     :summary "replace a heading's note"
+     :usage "todo set-note <ref> TEXT [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "Replaces the note of a task or a container; the planning line and drawers stay, and TEXT may run to several lines. An empty TEXT and a line starting with `*' at column 0 are refused: a star there is a heading, so indent it."
+     :example "todo set-note \"Inbox\" \"read this first\"")
     ("obsolete"
      :summary "OBSOLETE, keeping the record"
      :usage "todo obsolete <ref> [--file F]"
@@ -1155,6 +1190,15 @@ A help request is answered here, before any verb runs."
        (let ((board (todo--existing file)))
          (todo-write board (lambda () (todo--goto (car rest)) (todo--append-body (cadr rest))))
          (todo-out (list (cons 'title (car rest)) (cons 'file board)))))
+
+      ("set-note"
+       (let ((text (cadr rest)))
+         (unless (and (car rest) (cdr rest)) (todo-fail "set-note needs a ref and text"))
+         (when (string-empty-p (string-trim text)) (todo-fail "the note must not be empty"))
+         (todo--checked-note-text text)
+         (let ((board (todo--existing file)))
+           (todo-write board (lambda () (todo--goto (car rest) t) (todo--set-note text)))
+           (todo-out (list (cons 'title (car rest)) (cons 'file board))))))
 
       ("obsolete"
        (let ((board (todo--existing file)))

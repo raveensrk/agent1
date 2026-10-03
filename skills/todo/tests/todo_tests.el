@@ -375,6 +375,58 @@ verbs, same parsing, a few milliseconds each."
   (should (string-match-p "^ *:Effort: +0:15$" (todo-test--text)))
   (should (eq 1 (nth 0 (todo-test--cli "set-effort" "Buy milk" "15")))))
 
+;;; note
+
+(ert-deftest todo-set-note-replaces-the-note-and-keeps-the-meta-data ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO Pay rent :finance:\n"
+                            "DEADLINE: <2026-12-01 Tue>\n"
+                            "   :PROPERTIES:\n"
+                            "   :Effort:   0:30\n"
+                            "   :END:\n"
+                            "old note line\n"
+                            "old note line two\n"
+                            "\n"
+                            "** TODO Sibling\n"))
+  (todo-test--ok "set-note" "Pay rent" "paid, receipt in mail")
+  (let ((text (todo-test--text)))
+    (should (string-match-p "^DEADLINE: <2026-12-01 Tue>$" text))
+    (should (string-match-p ":Effort:   0:30" text))
+    (should (string-match-p "^paid, receipt in mail$" text))
+    (should-not (string-match-p "old note" text))
+    ;; The blank line before the child survives, so the diff is the note alone.
+    (should (string-match-p "^paid, receipt in mail\n\n\\*\\* TODO Sibling$" text))
+    (should (string-match-p "^\\* TODO Pay rent :finance:$" text)))
+  (should (string-match-p "paid, receipt in mail"
+                          (nth 1 (todo-test--ok "read" "--records")))))
+
+(ert-deftest todo-set-note-takes-a-container-and-a-multi-line-note ()
+  (todo-test--setup)
+  (todo-test--write (concat "* Inbox\n"
+                            "    > old triage rule\n"
+                            "** TODO Child\n"
+                            "* Archive\n"
+                            "** DONE Old task\n"))
+  (todo-test--ok "set-note" "Inbox" "    > new rule one\n    > new rule two")
+  (let ((text (todo-test--text)))
+    (should (string-match-p "^    > new rule one\n    > new rule two\n\\*\\* TODO Child$" text))
+    (should-not (string-match-p "old triage" text)))
+  ;; The Archive container is history, and a name with no heading is refused.
+  (should (eq 1 (nth 0 (todo-test--cli "set-note" "Archive" "nope"))))
+  (should (eq 1 (nth 0 (todo-test--cli "set-note" "Ghost" "nope"))))
+  (should-not (string-match-p "nope" (todo-test--text))))
+
+(ert-deftest todo-set-note-refuses-text-that-would-become-a-task ()
+  (todo-test--setup)
+  (todo-test--write "* TODO Pay rent\nold note\n")
+  (let ((result (todo-test--cli "set-note" "Pay rent" "new line\n* TODO Sneaky")))
+    (should (eq 1 (nth 0 result)))
+    (should (string-match-p "column 0" (nth 2 result))))
+  ;; An empty note and a missing TEXT are refused too.
+  (should (eq 1 (nth 0 (todo-test--cli "set-note" "Pay rent" ""))))
+  (should (eq 1 (nth 0 (todo-test--cli "set-note" "Pay rent"))))
+  (should (string-match-p "^old note$" (todo-test--text))))
+
 (ert-deftest todo-rename-changes-only-the-title ()
   (todo-test--setup)
   (todo-test--ok "create" "First task")
@@ -810,7 +862,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   (should (equal (mapcar #'car todo-help)
                  '("resolve" "doing" "read" "create" "rename" "delete"
                    "set-state" "set-deadline" "set-priority" "set-effort"
-                   "add-tag" "remove-tag" "append" "obsolete" "complete"
+                   "add-tag" "remove-tag" "append" "set-note" "obsolete" "complete"
                    "archive" "capture" "status" "edit" "edit-vim"
                    "edit-emacs" "config")))
   (dolist (spec todo-help)

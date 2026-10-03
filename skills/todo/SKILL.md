@@ -60,7 +60,9 @@ the CLI writes itself, H:MM, by `set-effort` or `create --effort 0:30`;
 org-columns, org-agenda and org-clock read it.
 
 **Notes.** Everything between the heading and the next heading is the note.
-`- [ ]` checklists are steps, not tasks.
+`- [ ]` checklists are steps, not tasks. `append` adds a line to it; `set-note`
+replaces it and keeps the planning line and drawers, so a `DEADLINE:`, an
+`:Effort:` or a `:LOGBOOK:` survives.
 
 **Examples.** A heading inside a `#+BEGIN_*` ... `#+END_*` block (src, example,
 quote, ...) is documentation, not a task. `read` and refs ignore it, even when
@@ -121,6 +123,7 @@ scripts/todo set-effort "Pay rent" 0:30
 scripts/todo add-tag "Pay rent" home
 scripts/todo remove-tag "Pay rent" home
 scripts/todo append "Pay rent" "extra context"
+scripts/todo set-note "Inbox" "$(cat triage.txt)"    # replace the note, meta data stays
 scripts/todo rename "Pay rent" "Pay the rent"
 scripts/todo complete "Pay rent" [--evidence "what changed"]   # DONE, then archived
 scripts/todo archive                           # inline `* Archive' -> <board>.org_archive
@@ -135,9 +138,9 @@ scripts/todo config
 ```
 
 - A ref is an exact title. Two tasks with the same title make the ref ambiguous
-  and the CLI refuses it. Every verb matches tasks; only `set-state` also matches
-a state-less heading (a container or a `capture` line), and it never matches the
-Archive container.
+  and the CLI refuses it. Every verb matches tasks; only `set-state` and
+`set-note` also match a state-less heading (a container or a `capture` line), and
+neither matches the Archive container.
 - `-h` or `--help` prints help and exits 0 without writing: on its own, the main
   help - every verb with a one-line summary; after a verb, that verb's usage,
   options, note and example. A bare `scripts/todo` prints the main help too. The
@@ -231,7 +234,8 @@ may write while you edit, and the last save wins.
 
 - Any line starting with `*` at column 0 is a heading, so indent `append` text
   that starts with a star - the write itself refuses a file whose block holds
-  such a line, naming the file and the line.
+  such a line, naming the file and the line. `set-note` refuses a star at column
+  0 in its TEXT outright, before the file is touched.
 - `set-deadline` on a `DONE` task drops `CLOSED:` (org behaviour). Reopen
   before setting a deadline if the closed time matters.
 - The CLI writes no frontmatter, no extra properties, and creates an archive
