@@ -44,3 +44,14 @@ Done 2026-10-03: create --effort H:MM writes the org built-in :Effort: property 
 * DONE read and doing must honor --file :todo_skill:
 CLOSED: [2026-10-03 Sat 17:21]
 Done 2026-10-03. read and doing ignored --file and read --dir plus the config default_dirs instead, so read --file ~/repos/agent1/todo.org silently answered for 12 boards - it misled two verifications in this session (a capture I thought was on agent1's board lives on agent2's). Fix: todo-read takes an optional file and reads exactly that board when given; read and doing pass it, --file wins over --dir, and a missing file fails with the path. Verified live: read --file agent1/todo.org returns 9 tasks from 1 path, read --file Main_Quest/todo.org returns 47 from that file only (recurring.org excluded), doing --file recurring.org picks from it, read with no --file still scans the config dirs (181 tasks, 12 boards), and a missing file exits 1 with 'Opening input file: No such file or directory'. Suite 44/44 in 5s. Docs: SKILL.md section 2.
+
+* TODO [#C] Add natural language input to the todo CLI :todo:
+Asked for 2026-10-03, deferred the same day: keep the CLI deterministic, exact and accurate first.
+
+Decisions already made, so a later attempt starts from them:
+  - the CLI parses the sentence itself: a deterministic grammar in Emacs Lisp, no model, no network, instant, testable in scripts/test
+  - a ref may be loose: case-insensitive, unique prefix or word match (bike -> Clean bike); an ambiguous match refuses and lists the candidates
+  - loose dates on the strict verbs too: tomorrow, next friday, in 3 days
+Open question: which verbs a sentence reaches - the 13 sayable ones, all 20, or the write verbs only.
+
+Shape wanted, for reference: todo say "postpone cut nails to tomorrow"
