@@ -5,6 +5,7 @@
 At session start, Read these files
 
 - [Emoji Legend](emoji_legend.md) - in the same directory as this file
+- [Experimental rules](experimental.md) - live trial rules; a keeper moves into common.md or another file, the rest are deleted
 - [Todo skill](skills/todo/SKILL.md) - task format and the agent protocol. The destination.
 - [Code Style](code_style.md) - how to write code
 - [Git](git.md) - commits and pull requests
@@ -68,6 +69,8 @@ macOS commands:
 
 Do not use `-new-window`, `open -na`, or `open -a Firefox URL`. Those can spawn a window.
 
+A window's frame is not the app's to set on this machine: AeroSpace and Rectangle manage windows, so an accessibility frame shows the tile, not what the code asked for. Verify geometry with `screencapture -o -l <windowid>` and check for a running tiler before blaming AppKit.
+
 ## Subscriptions
 
 On this machine, a request for what subscriptions I have starts with two reads:
@@ -129,11 +132,6 @@ generators, hooks and guards. Prose is the fallback, not the default.
   - Decidable after the work - a check in
     [harness/checks](~/repos/agent1/harness/checks), run by
     [lint.py](~/repos/agent1/harness/lint.py). The prose keeps one pointer line.
-  - A prohibition that must never happen - a guard in
-    [harness/guards](~/repos/agent1/harness/guards). It reads hook JSON on stdin,
-    exits 2 to block, and prints the reason and the replacement on stderr. Claude
-    Code, Codex, Cursor and Gemini CLI all speak that contract; pi and opencode
-    run a thin adapter over the same script.
   - Pin the tool. "Follow the CommonMark spec" has no falsifier, every string is
     valid CommonMark; `mdformat --check` does. A rule with no falsifier is prose.
   - Judgement stays prose. Never fake it with a regex, and reach for Jev only when
@@ -183,6 +181,9 @@ Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. S
 For multi-step, ambiguous, or high-impact work, say how you could verify it before starting. Skip it for small, well-defined changes.
 
 - Verify a config change through the real entry point - the alias, the full startup - not a minimal load. A minimal load skips startup options and hides the failure until I hit it.
+- A mechanism whose only real test is me pressing a key or looking at a window: ask for that one probe before building the rest of it. An Automator service passed `automator run`, then did nothing for three real key presses, and the route cost 25 minutes.
+- Never report a keybind, hotkey or shortcut as working from a log line that merely correlated with my press. The evidence is the press, or a mechanism that answers to a synthetic event in the same session - skhd fires on `osascript -e 'tell application "System Events" to key code 105'`, a service shortcut never does.
+- A poll loop that finds no process is not evidence that nothing fired. After a negative poll, read the target's own artifact (its log file) and say "not observed", not "did not fire".
 - When a value you display mirrors one the vendor's own UI shows, fetch the endpoint that reproduces that exact number and compare it before shipping the field. A plausible field name is not the number.
 - After editing Emacs Lisp, run `check-parens` or the test suite immediately; do not hand-roll a parse check.
 - Run a new checker or validator over the whole existing population, not only the target it was written for. Its first run must pass on every instance, or it is reporting its own bugs.
@@ -230,12 +231,41 @@ Scripts meant to be run must always be executable. When creating or editing a ru
 
 Exception: library files and files meant only to be imported or sourced.
 
+## CLI apps
+
+A CLI I write tells me how to use it - the author six months later is the
+caller. The worked example is `scripts/todo`, help table and all.
+
+- `-h` and `--help` are a hard rule: every CLI app has both, on the main command
+  and on every subcommand. Usage line, what the app does, every option, one
+  runnable example. Exit 0, and nothing else runs - a help call never writes,
+  never starts a daemon, never asks a question. argparse's default `add_help`
+  gives both, and gives them per subcommand; a script that parses options by
+  hand has to handle the pair itself.
+- A bare call prints the main help too, unless a bare call is itself a real
+  command (`bookmark` with no arguments lists).
+- Short flags are the optional half. The long flag is the default spelling, and
+  a short alias goes in when a free letter exists: `--due|-d`, `--priority|-p`.
+  A letter already taken in that app goes to the next free one; when none fits,
+  the long flag stands alone.
+- One table drives the main help and every subcommand's help, and a test asserts
+  every verb has an entry, so the two cannot drift (see `todo-help` in
+  [scripts/todo.el](skills/todo/scripts/todo.el)).
+
+`harness/checks/cli_help.py` decides the hard half: a file that parses options
+must mention both `-h` and `--help`, and the finding names the one that is
+missing. Which letter a short flag takes, and how a subcommand's help reads,
+stay prose: this file.
+
 ## macOS
 
 - iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies. While pi is open, address the bash window by `id`, never `current window`: `current window` is the pi TUI and the text becomes a user message. Do not `write text` into a tab that is waiting at a password prompt, and never redirect that prompt's stderr; the tab looks hung and the first characters are eaten as the answer.
 - `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
 - BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
 - BSD `cat` has no `-A`. Use `cat -v -e`, or `sed -n l` to show line ends and tabs.
+- `pgrep` on macOS has no `-c`. Count with `pgrep ... | wc -l`.
+- `defaults write` cannot take a preference key containing spaces or parentheses, which is every pbs.plist service entry. Use `/usr/libexec/PlistBuddy` for those.
+- A screenshot path under `/var/folders/.../TemporaryItems/NSIRD_screencaptureui_*` is deleted within minutes. Copy it into `~/tmp` before referring to it.
 
 - A hung process names its own wait: `sample <pid> 2` prints its stack. For an
   Emacs daemon that is normally `select-safe-coding-system-interactively` ->

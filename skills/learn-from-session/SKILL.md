@@ -265,7 +265,10 @@ low-confidence Jev judgement.
 ## 8. Interview, phase two - improvements
 
 Ask about each proposed improvement before writing it anywhere: keep, drop, or
-change. One question at a time. Keep only what the user confirms. A proposed
+change. One question at a time. Keep only what the user confirms. A call
+carries at most three questions, each option is one line, and anything low-stakes
+goes to the report's Open questions instead of a question - a review that asks ten
+questions costs more than its findings save. A proposed
 check is asked separately from a proposed rule, because the check is code and
 the rule is prose.
 
@@ -306,7 +309,10 @@ cp <target> ~/tmp/review/<name>.new       # 1. copy the target
 diff -u <target> ~/tmp/review/<name>.new  # 3. the approval artifact
 ```
 
-Show that diff and wait for an explicit yes. On approval, apply the same edits
+Show that diff and wait for an explicit yes. Write the copy once and assert the diff
+carries every intended hunk before showing it: a script that rewrites the same
+output file once per edit silently drops the earlier edits, and you then approve a
+diff that is missing them. On approval, apply the same edits
 to the real file, re-read the changed sections, and report what changed with
 line numbers. Inside a git repo `git diff` is an acceptable fallback. Checks are
 code: show them, run their tests, and run them over the full population before

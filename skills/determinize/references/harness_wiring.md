@@ -114,47 +114,13 @@ is in the command. Exit 2 blocks; any other nonzero code fails open.
 ## pi
 
 An extension in `~/.pi/agent/extensions/`, installed from
-`~/repos/agent1/harness/extensions/` by `install.py`. The handler shells out to
-the guard, so one decision serves every harness rather than a second copy in
-TypeScript that would drift.
-
-```ts
-import { execFileSync } from "node:child_process";
-
-export function guardHit(command: string): string | null {
-  try {
-    execFileSync("python3", [GUARD, "--check", command], { stdio: "pipe" });
-    return null;
-  } catch (error) {
-    const failed = error as { status?: number; stderr?: Buffer };
-    if (failed.status !== 2) return null;
-    return (failed.stderr ?? Buffer.from("")).toString().trim();
-  }
-}
-```
-
-`command_guard.ts` is the working version of this, with its test in
-`harness/tests/test_command_guard.ts`.
+`~/repos/agent1/harness/extensions/` by `install.py`. `command_guard.ts` is the
+working version, with its test in `harness/tests/test_command_guard.ts`.
 
 ## opencode
 
 A plugin in `.opencode/plugin/`. Throwing from `tool.execute.before` blocks the
 tool call.
-
-```js
-import { execFileSync } from "node:child_process";
-
-export const CommitGuard = async () => ({
-  "tool.execute.before": async (input, output) => {
-    if (input.tool !== "bash") return;
-    try {
-      execFileSync("python3", [GUARD, "--check", output.args.command], { stdio: "pipe" });
-    } catch (error) {
-      if (error.status === 2) throw new Error(error.stderr.toString());
-    }
-  },
-});
-```
 
 ## The reactive half
 

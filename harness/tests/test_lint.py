@@ -153,6 +153,37 @@ def test_stale_doc_path_check_ignores_relative_tmp():
         assert ":3:" not in proc.stdout, proc.stdout
 
 
+def test_harness_doc_path_check_flags_a_missing_spawned_file():
+    # The motivating case: a file the harness spawns, named in prose, then
+    # deleted, so the spawner keeps reaching for a path that is not there.
+    check = os.path.join(CHECKS, "harness_doc_paths.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        os.makedirs(os.path.join(tmp, "harness", "checks"))
+        doc = os.path.join(tmp, "rules.md")
+        with open(doc, "w") as fh:
+            fh.write("The check is `harness/checks/example_check.py`, run by lint.\n")
+            fh.write("lint:ignore harness/checks/gone.py is named but excused.\n")
+            fh.write("A skill path like scripts/todo.el is relative to the skill.\n")
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert ":1:" in proc.stdout, proc.stdout
+        assert "example_check.py" in proc.stdout, proc.stdout
+        assert ":2:" not in proc.stdout, proc.stdout
+        assert ":3:" not in proc.stdout, proc.stdout
+
+        # Restoring the file clears it, and a doc outside a repo with a
+        # harness/ directory is never in scope.
+        open(os.path.join(tmp, "harness", "checks", "example_check.py"), "w").close()
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert proc.stdout == "", proc.stdout
+        outside = os.path.join(tmp, "elsewhere")
+        os.makedirs(outside)
+        lonely = os.path.join(outside, "notes.md")
+        with open(lonely, "w") as fh:
+            fh.write("harness/checks/example_check.py\n")
+        proc = subprocess.run([sys.executable, check, lonely], capture_output=True, text=True)
+        assert proc.stdout == "", proc.stdout
+
+
 def test_stale_doc_path_check_skips_historical_prose():
     lint = load_lint()
     check = next(c for c in lint.load_checks() if c["id"] == "stale_doc_paths")
@@ -394,6 +425,98 @@ def test_dispatcher_end_to_end_in_a_temp_repo():
         proc = subprocess.run([sys.executable, LINT], capture_output=True, text=True, cwd=tmp)
         assert proc.returncode == 0, proc.stdout
         assert "0 findings" in proc.stdout, proc.stdout
+
+
+def test_cli_help_check_wants_both_flags_and_names_the_missing_one():
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        script = os.path.join(tmp, "tool.sh")
+
+        def run():
+            proc = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
+            assert proc.returncode == 0, proc.stderr
+            return proc.stdout
+
+        with open(script, "w") as fh:
+            fh.write('#!/bin/sh\nif [ "$#" -lt 1 ]; then exit 2; fi\necho "$1"\n')
+        os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
+        assert "mentions neither -h nor --help" in run(), run()
+        # -h alone is half the pair, and the finding says which half is missing.
+        # `${1:-}' is the safe-quoting idiom and must count as option parsing too.
+        with open(script, "w") as fh:
+            fh.write('#!/bin/sh\ncase "${1:-}" in\n  -h) echo "usage: tool.sh"; exit 0;;\nesac\n')
+        assert "mentions no --help" in run(), run()
+        with open(script, "w") as fh:
+            fh.write('#!/bin/sh\ncase "${1:-}" in\n  -h|--help) echo "usage: tool.sh"; exit 0;;\nesac\n')
+        assert run() == ""
+
+
+def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
+    """argparse binds -h and --help by default; a long-only flag is fine here,
+    because short aliases are the optional half of the rule."""
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        script = os.path.join(tmp, "app.py")
+        head = "#!/usr/bin/env python3\nimport argparse\n\np = argparse.ArgumentParser()\n"
+        with open(script, "w") as fh:
+            fh.write(head + 'p.add_argument("--only", action="append")\np.parse_args()\n')
+        os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
+
+        def run():
+            proc = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
+            return proc.stdout
+
+        assert run() == ""
+        with open(script, "w") as fh:
+            fh.write(head.replace("ArgumentParser()", "ArgumentParser(add_help=False)")
+                     + 'p.add_argument("--only", action="append")\np.parse_args()\n')
+        assert "mentions neither -h nor --help" in run(), run()
+        with open(script, "w") as fh:
+            fh.write(head.replace("ArgumentParser()", "ArgumentParser(add_help=False)")
+                     + 'p.add_argument("-h", "--help", action="help")\np.parse_args()\n')
+        assert run() == ""
+
+
+def test_cli_help_check_skips_non_executables_and_honours_the_allowlist():
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        script = os.path.join(tmp, "tool.sh")
+        with open(script, "w") as fh:
+            fh.write('#!/bin/sh\nif [ "$#" -eq 0 ]; then exit 2; fi\n')
+        # No exec bit yet: a file nobody runs is not a command.
+        proc = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
+        assert proc.stdout == "", proc.stdout
+        os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
+        # A harness check reads paths on stdin; it is not a command.
+        os.makedirs(os.path.join(tmp, "harness", "checks"))
+        inside = os.path.join(tmp, "harness", "checks", "tool.sh")
+        with open(inside, "w") as fh:
+            fh.write('#!/bin/sh\nif [ "$#" -eq 0 ]; then exit 2; fi\n')
+        os.chmod(inside, os.stat(inside).st_mode | stat.S_IXUSR)
+        # The allowlist lives in the private repo; this run points at a fixture.
+        spec = importlib.util.spec_from_file_location("cli_help", check)
+        module = importlib.util.module_from_spec(spec)
+        old_argv, cwd = sys.argv, os.getcwd()
+        sys.argv = ["cli_help.py", script, inside]
+        allow = os.path.join(tmp, "allow.txt")
+        try:
+            spec.loader.exec_module(module)
+            os.chdir(tmp)
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                module.main()
+            out = buf.getvalue()
+            assert "tool.sh:1: mentions" in out, out
+            assert "harness/checks" not in out, out
+            with open(allow, "w") as fh:
+                fh.write("# not a CLI app\n" + os.path.basename(script) + "\n")
+            module.ALLOW = allow
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                module.main()
+            assert buf.getvalue() == "", buf.getvalue()
+        finally:
+            sys.argv, _ = old_argv, os.chdir(cwd)
 
 
 if __name__ == "__main__":

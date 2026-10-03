@@ -7,7 +7,6 @@ ETA rules for long-running jobs. Loaded from [common.md](common.md) at session s
 - Max 60 seconds per bash tool call.
 - A command that needs longer (release builds, installs, big scans) runs in the background (`nohup ... &`), polled with short calls; or the agent asks the human first and states why.
 - Wide scans over `~/repos` exclude `target`, `node_modules` and `.git`; a bare grep there can exceed 60s.
-- A `git commit` whose pre-commit hook builds (raveenkumar.xyz) also runs in the background and is polled.
 
 - Anything that can hang carries its own bound: `timeout 180 <command>`. A test
   suite is the usual case - one unbounded `emacs ... ert-run-tests` run hung on a
