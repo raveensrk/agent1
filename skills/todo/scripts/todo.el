@@ -31,7 +31,10 @@
       create-lockfiles nil
       make-backup-files nil
       auto-save-default nil
-      org-element-use-cache nil)
+      org-element-use-cache nil
+      ;; en_IN.UTF-8 resolves to a non-UTF-8 coding system, and a daemon then
+      ;; asks which one to use and waits for a keypress. Force UTF-8: boards are.
+      coding-system-for-write 'utf-8-unix)
 
 ;;; Errors and output
 
@@ -546,6 +549,15 @@ writers never clobber each other."
        (let ((board (todo--existing file)))
          (todo-write board (lambda () (todo--goto (car rest)) (org-deadline nil (cadr rest))))
          (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'deadline (cadr rest))))))
+
+      ("set-effort"
+       (let ((effort (cadr rest)))
+         (unless (and (car rest) effort) (todo-fail "set-effort needs a ref and an H:MM value"))
+         (unless (string-match-p "\\`[0-9]+:[0-5][0-9]\\'" effort)
+           (todo-fail (format "effort takes H:MM, got %s" effort)))
+         (let ((board (todo--existing file)))
+           (todo-write board (lambda () (todo--goto (car rest)) (org-set-property "Effort" effort)))
+           (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'effort effort))))))
 
       ("add-tag"
        (let ((board (todo--existing file)))

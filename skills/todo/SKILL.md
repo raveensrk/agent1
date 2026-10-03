@@ -40,7 +40,9 @@ Optional, and never invented.
 when both appear. There is no `SCHEDULED:`.
 
 **Properties.** None are required. The schema has no `:ID:` and no `:CREATED:`;
-org's own drawers are fine when a file already has them.
+org's own drawers are fine when a file already has them. `:Effort:` is the one
+the CLI writes itself (`set-effort`, H:MM); org-columns, org-agenda and org-clock
+read it.
 
 **Notes.** Everything between the heading and the next heading is the note.
 `- [ ]` checklists are steps, not tasks.
@@ -53,8 +55,8 @@ the `*` sits at column 0.
 container, after the live content and 40 blank lines. There is no separate
 `_archive` file. `read` and refs skip the container: it is history.
 
-**Dates.** The CLI takes a bare `2026-11-05` and org fills the day name itself.
-It rejects a time, angle brackets and a hand-written day name.
+**Dates.** The CLI takes `2026-11-05` or `2026-11-05 20:30` and org fills the day
+name itself. It rejects angle brackets and a hand-written day name.
 
 **Delete is delete.** `delete` removes the subtree, body and all. Git keeps
 history; outside git it is unrecoverable. Use `obsolete` only when the record is
@@ -78,6 +80,8 @@ scripts/todo --warm read [--json]               # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A
 scripts/todo set-state "Pay rent" IN_PROGRESS
 scripts/todo set-deadline "Pay rent" 2026-12-01
+scripts/todo set-deadline "Pay rent" "2026-12-01 20:30"   # with a time of day
+scripts/todo set-effort "Pay rent" 0:30
 scripts/todo add-tag "Pay rent" home
 scripts/todo remove-tag "Pay rent" home
 scripts/todo append "Pay rent" "extra context"

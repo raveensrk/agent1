@@ -212,6 +212,13 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "remove-tag" "Edit me" "home")
   (should-not (string-match-p ":home:" (todo-test--text))))
 
+(ert-deftest todo-set-effort-writes-the-property ()
+  (todo-test--setup)
+  (todo-test--write "* TODO Buy milk\n")
+  (todo-test--ok "set-effort" "Buy milk" "0:15")
+  (should (string-match-p "^ *:Effort: +0:15$" (todo-test--text)))
+  (should (eq 1 (nth 0 (todo-test--cli "set-effort" "Buy milk" "15")))))
+
 (ert-deftest todo-rename-changes-only-the-title ()
   (todo-test--setup)
   (todo-test--ok "create" "First task")
