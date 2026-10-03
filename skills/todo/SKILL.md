@@ -97,8 +97,10 @@ container. Everything else here is on you.
 
 ## 2. The CLI
 
-`scripts/todo <verb> [args]` - run it from the skill directory, or give the
-absolute path. Emacs is the only dependency.
+`todo <verb> [args]` - the CLI is on `PATH` (the skill's `scripts/` dir is
+exported in `~/dot/config/bashrc`), so it runs from any directory;
+`scripts/todo <verb> [args]` also works from the skill directory. Emacs is the
+only dependency.
 
 ```bash
 scripts/todo --help                         # main help: every verb, one line each
