@@ -19,6 +19,10 @@
 (defconst todo-states '("TODO" "IN_PROGRESS" "OPTIONAL" "LATER" "DONE" "OBSOLETE")
   "The state words the skill knows.")
 
+(defconst todo-deadline-forms
+  "2026-11-05, 2026-11-05 20:30 or <2026-11-05 Thu 20:30 +1w>"
+  "The deadline forms the CLI accepts, as refusals and SKILL.md print them.")
+
 (defconst todo-value-flags '("--file" "--state" "--tag" "--container" "--deadline"
                              "--priority" "--note" "--dir" "--editor" "--evidence"
                              "--effort")
@@ -204,6 +208,24 @@ slash matches that run of components, a glob is a glob, and an absolute or
   "VALUE as H:MM, or fail. Org's own Effort format."
   (unless (string-match-p "\\`[0-9]+:[0-5][0-9]\\'" value)
     (todo-fail (format "effort takes H:MM, got %s" value)))
+  value)
+
+(defun todo--checked-deadline (value)
+  "VALUE in one of the three accepted deadline forms, or fail.
+A bare date, a date with a time, or a full org timestamp - the only form that
+keeps a repeater. Prose, an out-of-range date and an unwrapped repeater are
+refused: org would otherwise absorb them silently - garbage becomes today,
+2026-13-45 becomes 2027-02-14."
+  (let ((bare "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\( [0-9]\\{2\\}:[0-9]\\{2\\}\\)?\\'")
+        (stamp "\\`<[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [^>]+>\\'"))
+    (unless (or (string-match-p bare value) (string-match-p stamp value))
+      (todo-fail (format "deadline takes %s, got %s" todo-deadline-forms value)))
+    (let* ((date (substring value (if (eq (aref value 0) ?<) 1 0)
+                            (+ (if (eq (aref value 0) ?<) 1 0) 10)))
+           (parts (mapcar #'string-to-number (split-string date "-")))
+           (real (ignore-errors (apply #'encode-time 0 0 0 (nreverse parts)))))
+      (unless (and real (equal date (format-time-string "%Y-%m-%d" real)))
+        (todo-fail (format "%s is not a real date" date)))))
   value)
 
 (defun todo--task-line (file title)
@@ -511,6 +533,7 @@ writers never clobber each other."
       (todo-fail "create title must not be a flag"))
     (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
     (when effort (todo--checked-effort effort))
+    (when deadline (todo--checked-deadline deadline))
     (todo-write
      board
      (lambda ()
@@ -587,9 +610,10 @@ writers never clobber each other."
            (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state state))))))
 
       ("set-deadline"
-       (let ((board (todo--existing file)))
-         (todo-write board (lambda () (todo--goto (car rest)) (org-deadline nil (cadr rest))))
-         (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'deadline (cadr rest))))))
+       (let ((board (todo--existing file))
+             (deadline (todo--checked-deadline (cadr rest))))
+         (todo-write board (lambda () (todo--goto (car rest)) (org-deadline nil deadline)))
+         (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'deadline deadline)))))
 
       ("set-effort"
        (let ((effort (cadr rest)))

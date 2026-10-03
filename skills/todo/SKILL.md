@@ -55,8 +55,13 @@ the `*` sits at column 0.
 container, after the live content and 40 blank lines. There is no separate
 `_archive` file. `read` and refs skip the container: it is history.
 
-**Dates.** The CLI takes `2026-11-05` or `2026-11-05 20:30` and org fills the day
-name itself. It rejects angle brackets and a hand-written day name.
+**Dates.** A deadline is one of three forms: `2026-11-05`, `2026-11-05 20:30`,
+or a full org timestamp `<2026-11-05 Thu 20:30 +1w>` - the last is the only one
+that keeps a repeater. Org fills the day name itself for the first two. Anything
+else is refused: prose (`next friday`), an impossible date (`2026-13-45`) and an
+unwrapped repeater (`2026-11-05 +1w`) all exit non-zero, because org would
+otherwise absorb them silently (`garbage` becomes today, `2026-13-45` becomes
+`2027-02-14`).
 
 **Delete is delete.** `delete` removes the subtree, body and all. Git keeps
 history; outside git it is unrecoverable. Use `obsolete` only when the record is
