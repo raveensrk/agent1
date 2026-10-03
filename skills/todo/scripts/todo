@@ -3,6 +3,11 @@
 #   scripts/todo <verb> [args]
 #   scripts/todo --warm <verb> [args]
 #
+# -h and --help work here like everywhere else: the verb table in todo.el prints
+# the main help, and `scripts/todo <verb> --help' prints that verb's help. This
+# wrapper only resolves emacs and emacsclient and passes the arguments through,
+# plain or to the warm daemon, so the help text stays in one place.
+#
 # Plain calls start Emacs and quit. --warm keeps one Emacs up (socket
 # todo-skill, or TODO_SKILL_SOCKET) and sends the same verb to it.
 dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)

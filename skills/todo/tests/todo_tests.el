@@ -173,7 +173,7 @@ verbs, same parsing, a few milliseconds each."
 
 (ert-deftest todo-create-refuses-a-flag-title ()
   (todo-test--setup)
-  (let ((result (todo-test--cli "create" "--help")))
+  (let ((result (todo-test--cli "create" "--frobnicate")))
     (should (eq 1 (nth 0 result)))
     (should (string-match-p "must not be a flag" (nth 2 result)))))
 
@@ -766,6 +766,184 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   (let ((result (todo-test--cli "complete" "Call mom")))
     (should (eq 1 (nth 0 result)))
     (should (string-match-p "not a task heading" (nth 2 result)))))
+
+;;; help
+
+(ert-deftest todo-help-lists-every-verb ()
+  (todo-test--setup)
+  (let ((result (todo-test--cli)))
+    (should (eq 0 (nth 0 result)))
+    (let ((out (nth 1 result)))
+      (should (string-match-p "usage: todo <verb>" out))
+      (dolist (verb '("resolve" "doing" "read" "create" "complete" "config"))
+        (should (string-match-p (format "^  %s " verb) out))))))
+
+(ert-deftest todo-help-verb-prints-usage-options-and-example ()
+  (todo-test--setup)
+  (let ((result (todo-test--cli "create" "--help")))
+    (should (eq 0 (nth 0 result)))
+    (should (string-empty-p (nth 2 result)))
+    (let ((out (nth 1 result)))
+      (should (string-match-p "^usage: todo create <title>" out))
+      (should (string-match-p "^options:$" out))
+      (should (string-match-p "--deadline D" out))
+      (should (string-match-p "^example:$" out)))))
+
+(ert-deftest todo-help-takes-h-in-any-position ()
+  (todo-test--setup)
+  (should (eq 0 (nth 0 (todo-test--cli "-h"))))
+  (should (eq 0 (nth 0 (todo-test--cli "--help"))))
+  (should (string-match-p "usage: todo read" (nth 1 (todo-test--cli "read" "-h"))))
+  (should (string-match-p "usage: todo read" (nth 1 (todo-test--cli "--help" "read")))))
+
+(ert-deftest todo-help-does-not-touch-the-board ()
+  (todo-test--setup)
+  (todo-test--ok "create" "First")
+  (let ((before (todo-test--text)))
+    (todo-test--ok "create" "--help")
+    (todo-test--ok "delete" "First" "--help")
+    (should (equal before (todo-test--text)))))
+
+(ert-deftest todo-help-covers-every-verb ()
+  ;; A verb with no entry would be missing from the main help; this fails
+  ;; until the table above grows the same entry.
+  (should (equal (mapcar #'car todo-help)
+                 '("resolve" "doing" "read" "create" "rename" "delete"
+                   "set-state" "set-deadline" "set-priority" "set-effort"
+                   "add-tag" "remove-tag" "append" "obsolete" "complete"
+                   "archive" "capture" "status" "edit" "edit-vim"
+                   "edit-emacs" "config")))
+  (dolist (spec todo-help)
+    (should (plist-get (cdr spec) :summary))
+    (should (plist-get (cdr spec) :example))
+    (should (string-prefix-p "todo " (plist-get (cdr spec) :usage)))))
+
+(ert-deftest todo-help-through-the-wrapper ()
+  "The real entry point, `scripts/todo --help', as the user runs it."
+  (let* ((out (generate-new-buffer "todo-out"))
+         (code (call-process (expand-file-name "scripts/todo" todo-test--root)
+                             nil out nil "--help"))
+         (text (with-current-buffer out (prog1 (buffer-string) (kill-buffer out)))))
+    (should (eq 0 code))
+    (should (string-match-p "usage: todo <verb>" text))))
+
+;;; read filters
+
+(ert-deftest todo-read-due-sorts-most-urgent-first ()
+  (todo-test--setup)
+  ;; Dates far in the past, so the lateness gaps do not move with today.
+  (todo-test--write (concat "* TODO [#D] Sheets\nDEADLINE: <2020-01-01 Wed>\n"
+                            "* TODO [#A] Pay rent\nDEADLINE: <2020-02-01 Sat>\n"
+                            "* TODO [#A] Tax\nDEADLINE: <2020-01-15 Wed>\n"
+                            "* TODO Late but last\nDEADLINE: <2020-03-01 Sun>\n"
+                            "* TODO Future\nDEADLINE: <2099-01-01 Thu>\n"))
+  (let ((titles (lambda (out)
+                  (mapcar (lambda (item) (todo-test--field item "title"))
+                          (todo-test--records out)))))
+    ;; Most days late first, then A before D: Sheets (D, most late), Tax and
+    ;; Pay rent (both A, Tax later), then the task with no priority.
+    (let ((expected '("Sheets" "Tax" "Pay rent" "Late but last")))
+      (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "--due" "--records")))))
+      (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "-d" "--records")))))
+      (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "--overdue" "--records"))))))
+    ;; Without --due the listing stays board order, the future task and all.
+    (should (equal '("Sheets" "Pay rent" "Tax" "Late but last" "Future")
+                   (funcall titles (nth 1 (todo-test--ok "read" "--records")))))
+    ;; -n cuts the sorted head, the most urgent N.
+    (should (equal '("Sheets" "Tax")
+                   (funcall titles (nth 1 (todo-test--ok "read" "--due" "-n" "2" "--records")))))
+    ;; One comparator orders both, so `doing' picks that same head.
+    (should (equal "Sheets"
+                   (todo-test--field (car (todo-test--records
+                                           (nth 1 (todo-test--ok "doing"))))
+                                     "title")))))
+
+(ert-deftest todo-read-due-keeps-open-work-only ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO Open late\nDEADLINE: <2020-01-01 Wed>\n"
+                            "* IN_PROGRESS Working late\nDEADLINE: <2020-01-02 Thu>\n"
+                            "* LATER Deferred late\nDEADLINE: <2020-01-03 Fri>\n"
+                            "* OPTIONAL Optional late\nDEADLINE: <2020-01-04 Sat>\n"
+                            "* OBSOLETE Dropped late\nDEADLINE: <2020-01-05 Sun>\n"))
+  (let ((titles (lambda (out)
+                  (mapcar (lambda (item) (todo-test--field item "title"))
+                          (todo-test--records out)))))
+    ;; Open work only, most late first.
+    (let ((expected '("Open late" "Working late")))
+      (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "--due" "--records")))))
+      (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "-d" "--records")))))
+      (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "--overdue" "--records"))))))
+    ;; `--state' names a state and wins on its own.
+    (should (equal '("Deferred late")
+                   (funcall titles (nth 1 (todo-test--ok "read" "--due" "--state" "LATER" "--records")))))
+    (should (equal '("Dropped late")
+                   (funcall titles (nth 1 (todo-test--ok "read" "--due" "--state" "OBSOLETE" "--records")))))
+    (should (equal '("Open late")
+                   (funcall titles (nth 1 (todo-test--ok "read" "--due" "--state" "TODO" "--records")))))
+    ;; Plain read still shows every state.
+    (should (equal '("Open late" "Working late" "Deferred late" "Optional late" "Dropped late")
+                   (funcall titles (nth 1 (todo-test--ok "read" "--records")))))))
+
+(ert-deftest todo-read-filters-priority-and-takes-the-first-n ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Alpha" "-p" "A")
+  (todo-test--ok "create" "Bravo" "-p" "B")
+  (todo-test--ok "create" "Delta" "-p" "D")
+  (todo-test--ok "create" "Plain")
+  (let ((a (nth 1 (todo-test--ok "read" "-p" "A")))
+        (d (nth 1 (todo-test--ok "read" "--priority" "D"))))
+    (should (string-match-p "Alpha" a))
+    (should-not (string-match-p "Bravo\\|Delta\\|Plain" a))
+    (should (string-match-p "Delta" d))
+    (should-not (string-match-p "Alpha\\|Plain" d)))
+  ;; Board order, as a plain `read' prints; -n cuts that list.
+  (let* ((all (split-string (nth 1 (todo-test--ok "read")) "\n" t))
+         (one (split-string (nth 1 (todo-test--ok "read" "-n" "1")) "\n" t))
+         (two (split-string (nth 1 (todo-test--ok "read" "--number" "2")) "\n" t))
+         (counted (split-string (nth 1 (todo-test--ok "read" "-n" "9")) "\n" t)))
+    (should (equal 4 (length all)))
+    (should (equal (list (car all)) one))
+    (should (equal (cl-subseq all 0 2) two))
+    (should (equal all counted))))
+
+(ert-deftest todo-read-refuses-a-bad-number-and-priority ()
+  (todo-test--setup)
+  (let ((zero (todo-test--cli "read" "-n" "0"))
+        (word (todo-test--cli "read" "--number" "two"))
+        (bad (todo-test--cli "read" "-p" "Z")))
+    (should (eq 1 (nth 0 zero)))
+    (should (string-match-p "number takes a positive count" (nth 2 zero)))
+    (should (eq 1 (nth 0 word)))
+    (should (string-match-p "number takes a positive count" (nth 2 word)))
+    (should (eq 1 (nth 0 bad)))
+    (should (string-match-p "priority takes A, B, C or D" (nth 2 bad)))))
+
+(ert-deftest todo-read-due-is-overdue-including-today ()
+  (todo-test--setup)
+  (let ((today (format-time-string "%Y-%m-%d" nil "Asia/Kolkata")))
+    (todo-test--ok "create" "Due today" "--deadline" today)
+    (todo-test--ok "create" "Future" "--deadline" "2099-01-01")
+    (let ((due (nth 1 (todo-test--ok "read" "--due")))
+          (overdue (nth 1 (todo-test--ok "read" "--overdue")))
+          (short (nth 1 (todo-test--ok "read" "-d"))))
+      (should (string-match-p "Due today" due))
+      (should-not (string-match-p "Future" due))
+      (should (equal overdue due))
+      (should (equal short due)))))
+
+(ert-deftest todo-priority-d-is-a-fourth-level ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Low thing" "-p" "D")
+  (should (string-match-p "^\\* TODO \\[#D\\] Low thing$" (todo-test--text)))
+  (let ((pick (car (todo-test--records (nth 1 (todo-test--ok "doing" "-p" "D"))))))
+    (should (equal "Low thing" (todo-test--field pick "title"))))
+  (todo-test--ok "set-priority" "Low thing" "A")
+  (should (string-match-p "\\[#A\\] Low thing" (todo-test--text)))
+  (should (eq 1 (nth 0 (todo-test--cli "create" "Bad" "-p" "E"))))
+  (should (eq 1 (nth 0 (todo-test--cli "set-priority" "Low thing" "Z"))))
+  (should (eq 1 (nth 0 (todo-test--cli "doing" "--priority" "Z"))))
+  (should (eq 3 (todo--priority-rank "D")))
+  (should (eq 4 (todo--priority-rank nil))))
 
 ;;; archive
 

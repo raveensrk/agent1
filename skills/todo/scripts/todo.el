@@ -18,18 +18,31 @@
 (defconst todo-states '("TODO" "IN_PROGRESS" "OPTIONAL" "LATER" "DONE" "OBSOLETE")
   "The state words the skill knows.")
 
+(defconst todo-priorities '("A" "B" "C" "D")
+  "The priority cookies the CLI writes and filters on. D is the lowest level,
+and `org-lowest-priority' below is set to it: org's own default, C, refuses D.")
+
+(defconst todo-flag-aliases '(("-d" . "--due") ("-n" . "--number") ("-p" . "--priority"))
+  "Short flag -> long flag. The parser rewrites them, so every verb sees one
+spelling of each flag.")
+
+(defconst todo-due-flags '("--due" "--overdue")
+  "The two names of one window: the deadline day is today or earlier in IST.")
+
 (defconst todo-deadline-forms
   "2026-11-05, 2026-11-05 20:30 or <2026-11-05 Thu 20:30 +1w>"
   "The deadline forms the CLI accepts, as refusals and SKILL.md print them.")
 
 (defconst todo-value-flags '("--file" "--state" "--tag" "--container" "--deadline"
                              "--priority" "--note" "--dir" "--editor" "--evidence"
-                             "--effort")
+                             "--effort" "--number")
   "Flags that take a value.")
 
 (setq org-todo-keywords '((sequence "TODO" "IN_PROGRESS" "OPTIONAL" "LATER"
                                     "|" "DONE" "OBSOLETE"))
       org-log-done 'time                ; DONE writes CLOSED:
+      ;; The fourth level. Org's own lowest priority is C and refuses [#D].
+      org-lowest-priority ?D
       org-tags-column 0                 ; tags right after the title
       org-adapt-indentation nil
       create-lockfiles nil
@@ -227,6 +240,20 @@ Raveen's rule: a recurring task is always priority B."
     (todo-fail (format "effort takes H:MM, got %s" value)))
   value)
 
+(defun todo--checked-priority (value)
+  "VALUE as A, B, C or D, or fail. Nil passes: the flag is optional."
+  (when (and value (not (member value todo-priorities)))
+    (todo-fail (format "priority takes A, B, C or D, got %s" value)))
+  value)
+
+(defun todo--checked-number (value)
+  "VALUE as a positive integer, or fail. Nil passes: the flag is optional."
+  (if (null value)
+      nil
+    (unless (string-match-p "\\`[1-9][0-9]*\\'" value)
+      (todo-fail (format "number takes a positive count, got %s" value)))
+    (string-to-number value)))
+
 (defun todo--checked-deadline (value)
   "VALUE in one of the three accepted deadline forms, or fail.
 A bare date, a date with a time, or a full org timestamp - the only form that
@@ -344,10 +371,27 @@ layer: the CLI is Emacs reading org, and both consumers parse text."
   (and deadline (ignore-errors (org-time-string-to-absolute deadline))))
 
 (defun todo--priority-rank (priority)
-  "A is 0. A missing priority sorts after C."
-  (if (and priority (string-match "\\`[ABC]\\'" priority))
+  "A is 0, D is 3. A missing priority sorts after D."
+  (if (and priority (string-match "\\`[A-D]\\'" priority))
       (- (aref priority 0) ?A)
-    3))
+    4))
+
+(defun todo-late-sort (items today)
+  "ITEMS sorted the urgency way: most days late first, then A before D, then
+title, then path. `doing' picks the head of it and `read --due' prints the whole
+thing, so one definition orders both. Every item must carry a deadline - both
+callers filter first."
+  (sort items
+        (lambda (a b)
+          (let ((late-a (- today (todo--due-day (alist-get 'deadline a))))
+                (late-b (- today (todo--due-day (alist-get 'deadline b))))
+                (rank-a (todo--priority-rank (alist-get 'priority a)))
+                (rank-b (todo--priority-rank (alist-get 'priority b))))
+            (cond ((/= late-a late-b) (> late-a late-b))
+                  ((/= rank-a rank-b) (< rank-a rank-b))
+                  ((not (equal (alist-get 'title a) (alist-get 'title b)))
+                   (string< (alist-get 'title a) (alist-get 'title b)))
+                  (t (string< (alist-get 'path a) (alist-get 'path b))))))))
 
 (defun todo-doing-pick (items today &optional priority)
   "The main quest in ITEMS for absolute day TODAY, or nil.
@@ -363,23 +407,15 @@ then path: the priority-only pick."
                    (if (not (equal (alist-get 'title a) (alist-get 'title b)))
                        (string< (alist-get 'title a) (alist-get 'title b))
                      (string< (alist-get 'path a) (alist-get 'path b))))))
-    (car (sort (cl-remove-if-not
-                (lambda (item)
-                  (let ((due (todo--due-day (alist-get 'deadline item))))
-                    (and (member (alist-get 'todo item) todo-doing-states)
-                         due
-                         (<= due today))))
-                items)
-               (lambda (a b)
-                 (let ((late-a (- today (todo--due-day (alist-get 'deadline a))))
-                       (late-b (- today (todo--due-day (alist-get 'deadline b))))
-                       (rank-a (todo--priority-rank (alist-get 'priority a)))
-                       (rank-b (todo--priority-rank (alist-get 'priority b))))
-                   (cond ((/= late-a late-b) (> late-a late-b))
-                         ((/= rank-a rank-b) (< rank-a rank-b))
-                         ((not (equal (alist-get 'title a) (alist-get 'title b)))
-                          (string< (alist-get 'title a) (alist-get 'title b)))
-                         (t (string< (alist-get 'path a) (alist-get 'path b))))))))))
+    (car (todo-late-sort
+          (cl-remove-if-not
+           (lambda (item)
+             (let ((due (todo--due-day (alist-get 'deadline item))))
+               (and (member (alist-get 'todo item) todo-doing-states)
+                    due
+                    (<= due today))))
+           items)
+          today))))
 
 (defun todo-tasks (file)
   "Every live task heading in FILE; the Archive container is history."
@@ -725,6 +761,220 @@ to, or nil when every container was already empty."
     (let ((archive (todo--archive-file board)))
       (cons count (and (> count 0) (file-exists-p archive) archive)))))
 
+;;; Help
+
+;; One table, so the main help and every verb's help cannot disagree: the
+;; summary is the verb's line in the main help, and the same entry prints the
+;; usage, options, note and example of `todo <verb> --help'.
+
+(defconst todo-help-flags '("-h" "--help")
+  "The flags that ask for help: the main help, or a verb's.")
+
+(defconst todo-help
+  '(("resolve"
+     :summary "board file and dir"
+     :usage "todo resolve [--file F] [--dir D]"
+     :options (("--file F" "that board, as given")
+               ("--dir D" "the dir the board sits in; default the cwd"))
+     :example "todo resolve --dir ~/repos/agent1")
+    ("doing"
+     :summary "the one task to do now: one record, or none"
+     :usage "todo doing [-p A|B|C|D] [--file F] [--dir D]"
+     :options (("-p, --priority A|B|C|D" "any open task at that priority, due or not")
+               ("--file F" "that board, and nothing else")
+               ("--dir D" "scan D's *.org files instead of the configured dirs"))
+     :note "The default pick is the head of the same urgency order `read --due' prints: most days late, then A before D, then title, then path."
+     :example "todo doing -p A")
+    ("read"
+     :summary "list tasks: STATE  Title  (path)"
+     :usage "todo read [--state S] [--tag T] [-d|--due] [--recurring] [--records] [-p A|B|C|D] [-n N] [--file F] [--dir D]"
+     :options (("--state S" "only that state")
+               ("--tag T" "only that tag")
+               ("-d, --due" "today or earlier in IST, most urgent first, open work only")
+               ("--overdue" "the long name of the same window and order as --due")
+               ("--recurring" "routines: a deadline carrying a repeater")
+               ("-p, --priority A|B|C|D" "only tasks at that priority")
+               ("-n, --number N" "the first N: urgency order with --due, else board order")
+               ("--records" "one plain record per task, instead of a line")
+               ("--file F" "that board, and nothing else")
+               ("--dir D" "scan D's *.org files instead of the configured dirs"))
+     :note "--due and --overdue keep open work, TODO and IN_PROGRESS, unless --state names another one - which wins on its own. The list is one urgency order: most days late first, then A before D, then title, then path."
+     :example "todo read --due -p A -n 1")
+    ("create"
+     :summary "add a task"
+     :usage "todo create <title> [options]"
+     :options (("--state S" "TODO (default), IN_PROGRESS, OPTIONAL, LATER")
+               ("--tag T" "repeatable; :finance:home:")
+               ("-p, --priority A|B|C|D" "ask Raveen first; a repeater forces B")
+               ("--deadline D" "2026-11-05 | 2026-11-05 20:30 | <2026-11-05 Thu 20:30 +1w>")
+               ("--effort H:MM" "org's :Effort: property")
+               ("--note TEXT" "body under the heading")
+               ("--container NAME" "nest under an existing heading")
+               ("--file F" "the board; default todo.org in the cwd"))
+     :example "todo create \"Pay rent\" --deadline 2026-11-05 --tag finance --priority A")
+    ("rename"
+     :summary "change a task's title"
+     :usage "todo rename <ref> <title> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo rename \"Pay rent\" \"Pay the rent\"")
+    ("delete"
+     :summary "remove the subtree, body and all"
+     :usage "todo delete <ref> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "Git keeps history; outside git this is unrecoverable. `obsolete' keeps the record."
+     :example "todo delete \"Pay rent\"")
+    ("set-state"
+     :summary "move a task to a state; promotes a plain heading"
+     :usage "todo set-state <ref> STATE [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "STATE is one of TODO, IN_PROGRESS, OPTIONAL, LATER, DONE, OBSOLETE."
+     :example "todo set-state \"Pay rent\" IN_PROGRESS")
+    ("set-deadline"
+     :summary "set DEADLINE, with a time or a repeater"
+     :usage "todo set-deadline <ref> D [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "D is 2026-11-05, 2026-11-05 20:30 or <2026-11-05 Thu 20:30 +1w>. A repeater forces priority B."
+     :example "todo set-deadline \"Pay rent\" 2026-12-01")
+    ("set-priority"
+     :summary "set A, B, C or D"
+     :usage "todo set-priority <ref> A|B|C|D [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "Ask Raveen first. D is the lowest level, and a recurring task is always priority B."
+     :example "todo set-priority \"Pay rent\" B")
+    ("set-effort"
+     :summary "set :Effort: H:MM"
+     :usage "todo set-effort <ref> H:MM [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo set-effort \"Pay rent\" 0:30")
+    ("add-tag"
+     :summary "add one tag"
+     :usage "todo add-tag <ref> TAG [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "Tags are lowercase and colon-delimited, charset [[:alnum:]_@#%]: a hyphen is not a tag character."
+     :example "todo add-tag \"Pay rent\" home")
+    ("remove-tag"
+     :summary "remove one tag"
+     :usage "todo remove-tag <ref> TAG [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo remove-tag \"Pay rent\" home")
+    ("append"
+     :summary "add text to the note"
+     :usage "todo append <ref> TEXT [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "Indent TEXT that starts with `*': a star at column 0 is a heading."
+     :example "todo append \"Pay rent\" \"receipt in mail\"")
+    ("obsolete"
+     :summary "OBSOLETE, keeping the record"
+     :usage "todo obsolete <ref> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo obsolete \"Pay rent\"")
+    ("complete"
+     :summary "DONE + CLOSED, then archive; a routine stays"
+     :usage "todo complete <ref> [--evidence TEXT] [--file F]"
+     :options (("--evidence TEXT" "appended to the note before the state changes")
+               ("--file F" "the board; default todo.org in the cwd"))
+     :note "A task whose deadline carries a repeater stays on the board; everything else moves to <board>.org_archive."
+     :example "todo complete \"Pay rent\" --evidence \"paid from the joint account\"")
+    ("archive"
+     :summary "inline `* Archive' containers to <board>.org_archive"
+     :usage "todo archive [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo archive --file ~/repos/agent1/todo.org")
+    ("capture"
+     :summary "append a plain heading, no state"
+     :usage "todo capture <text> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo capture \"Look into OpenRouter routing\"")
+    ("status"
+     :summary "board path, existence, task count"
+     :usage "todo status [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo status")
+    ("edit"
+     :summary "open vim at the heading line"
+     :usage "todo edit <ref> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "With no terminal this opens as `mvim -f'."
+     :example "todo edit \"Pay rent\" --file ~/repos/agent1/todo.org")
+    ("edit-vim"
+     :summary "same as edit: vim at the heading line"
+     :usage "todo edit-vim <ref> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo edit-vim \"Pay rent\" --file ~/repos/agent1/todo.org")
+    ("edit-emacs"
+     :summary "open Emacs at the heading line"
+     :usage "todo edit-emacs <ref> [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :example "todo edit-emacs \"Pay rent\" --file ~/repos/agent1/todo.org")
+    ("config"
+     :summary "default_dirs and ignore"
+     :usage "todo config"
+     :note "The file is ~/dot_local/config/todo_skill.toml; TODO_SKILL_CONFIG overrides it."
+     :example "todo config"))
+  "Per-verb help: :summary, :usage, :options, :note and :example.")
+
+(defun todo--help-main ()
+  "Print the main help: usage, every verb and its summary, then the flags."
+  (princ "todo - the board CLI: Emacs org-mode, the only writer of a board\n\n")
+  (princ "usage: todo <verb> [args] [--file F] [--dir D]\n")
+  (princ "       todo --warm <verb> [args]\n")
+  (princ "       todo <verb> --help\n\nverbs:\n")
+  (dolist (spec todo-help)
+    (princ (format "  %-13s %s\n" (car spec) (plist-get (cdr spec) :summary))))
+  (princ "\noptions:\n")
+  (princ "  -h, --help      this help; after a verb, that verb's help\n")
+  (princ "  -p, --priority  A, B, C or D, where the verb takes a priority\n")
+  (princ "  -n, --number N  read: the first N of that list, urgency order with --due\n")
+  (princ "  -d, --due       read: the same window as --overdue\n")
+  (princ "  --warm          one background Emacs (socket todo-skill) serves the call\n")
+  (princ "  --file F        the board for this call; wins over --dir\n")
+  (princ "  --dir D         a read scans D's *.org files instead of the configured dirs\n")
+  (princ "\nconfig: ~/dot_local/config/todo_skill.toml (TODO_SKILL_CONFIG overrides it)\n")
+  (princ "see also: SKILL.md, next to scripts/\n"))
+
+(defun todo--help-verb (spec)
+  "Print SPEC as one verb's help: usage, summary, options, note, example."
+  (let* ((options (plist-get (cdr spec) :options))
+         (note (plist-get (cdr spec) :note))
+         (example (plist-get (cdr spec) :example))
+         ;; Wide enough for this verb's longest flag; never narrower than the
+         ;; common column, so short verbs do not breathe in.
+         (width (if options
+                    (apply #'max 17 (mapcar (lambda (option) (length (car option))) options))
+                  17)))
+    (princ (format "usage: %s\n\n  %s\n"
+                   (plist-get (cdr spec) :usage) (plist-get (cdr spec) :summary)))
+    (when options
+      (princ "\noptions:\n")
+      (dolist (option options)
+        (princ (format (format "  %%-%ds %%s\n" width) (car option) (cadr option)))))
+    (when note
+      ;; Filled at 78 columns, so a long note does not run off the screen.
+      ;; adaptive-fill off: it reads a note starting with `--' as a fill
+      ;; prefix and indents every line after the first.
+      (princ (format "\n%s\n"
+                     (with-temp-buffer
+                       (let ((fill-column 78)
+                             (adaptive-fill-mode nil))
+                         (insert note)
+                         (fill-region (point-min) (point-max)))
+                       (buffer-string)))))
+    (when example (princ (format "\nexample:\n  %s\n" example)))))
+
+(defun todo--help (verb)
+  "Print help for VERB, or the main help when VERB is nil or unknown."
+  (let ((spec (and verb (assoc verb todo-help))))
+    (if spec (todo--help-verb spec) (todo--help-main))))
+
+(defun todo--help-reply (pos)
+  "Print the help POS asks for, and return t. Nil when POS asks for none.
+A bare call is a help request too, so `todo' on its own prints the main help,
+and `todo --help read' is the same as `todo read --help'."
+  (when (or (null pos)
+            (cl-some (lambda (arg) (member arg todo-help-flags)) pos))
+    (todo--help (cl-find-if (lambda (arg) (assoc arg todo-help)) pos))
+    t))
+
 ;;; Verbs
 
 (defun todo--flag (flags name)
@@ -750,6 +1000,7 @@ to, or nil when every container was already empty."
       (todo-fail "create title must not be a flag"))
     (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
     (when effort (todo--checked-effort effort))
+    (when priority (todo--checked-priority priority))
     (when deadline (todo--checked-deadline deadline))
     (when (todo--recurring deadline)
       (when (and priority (not (equal priority "B")))
@@ -777,7 +1028,13 @@ to, or nil when every container was already empty."
                       (when priority (list (cons 'priority priority)))))))
 
 (defun todo-run (pos flags)
-  "Dispatch one CLI call: POS are the positionals, FLAGS the parsed options."
+  "Dispatch one CLI call: POS are the positionals, FLAGS the parsed options.
+A help request is answered here, before any verb runs."
+  (unless (todo--help-reply pos)
+    (todo-run-verb pos flags)))
+
+(defun todo-run-verb (pos flags)
+  "The verbs, without the help gate."
   (let* ((verb (car pos))
          (rest (cdr pos))
          (file (todo--flag flags "--file"))
@@ -791,26 +1048,41 @@ to, or nil when every container was already empty."
                          (cons 'exists (file-exists-p board))))))
 
       ("doing"
-       (let ((priority (todo--flag flags "--priority")))
-         (when (and priority (not (member priority '("A" "B" "C"))))
-           (todo-fail (format "priority takes A, B or C, got %s" priority)))
+       (let ((priority (todo--checked-priority (todo--flag flags "--priority"))))
          (let ((pick (todo-doing-pick (todo-read dirs nil nil file) (todo-ist-day) priority)))
            (if pick
                (todo-print-records (list pick))
              (princ "none\n")))))
 
       ("read"
-       (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")) file)))
+       (let* ((state (todo--flag flags "--state"))
+              (items (todo-read dirs state (car (todo--flags flags "--tag")) file))
+              (priority (todo--checked-priority (todo--flag flags "--priority")))
+              (number (todo--checked-number (todo--flag flags "--number"))))
+         (when priority
+           (setq items (cl-remove-if-not
+                        (lambda (i) (equal (alist-get 'priority i) priority)) items)))
          (when (member "--recurring" rest)
            (setq items (cl-remove-if-not
                         (lambda (i) (todo--recurring (alist-get 'deadline i))) items)))
-         (when (member "--overdue" rest)
+         (when (cl-some (lambda (flag) (member flag rest)) todo-due-flags)
            (let ((today (todo-ist-day)))
-             (setq items (cl-remove-if-not
-                          (lambda (i)
-                            (let ((due (todo--due-day (alist-get 'deadline i))))
-                              (and due (<= due today))))
-                          items))))
+             ;; The window's own default: open work only, unless --state named a
+             ;; state, which wins outright. The order is the flag's default too:
+             ;; most urgent first, the same comparator `doing' picks with.
+             (setq items (todo-late-sort
+                          (cl-remove-if-not
+                           (lambda (i)
+                             (let ((due (todo--due-day (alist-get 'deadline i))))
+                               (and due (<= due today)
+                                    (or state
+                                        (member (alist-get 'todo i) todo-doing-states)))))
+                           items)
+                          today))))
+         ;; Filter first, then cut the list to the first N: with --due those
+         ;; are the N most urgent, without it board order.
+         (when number
+           (setq items (cl-subseq items 0 (min number (length items)))))
          (if (member "--records" rest)
              (todo-print-records items)
            (dolist (item items)
@@ -853,9 +1125,8 @@ to, or nil when every container was already empty."
 
       ("set-priority"
        (let ((priority (cadr rest)))
-         (unless (and (car rest) priority) (todo-fail "set-priority needs a ref and A, B or C"))
-         (unless (member priority '("A" "B" "C"))
-           (todo-fail (format "priority takes A, B or C, got %s" priority)))
+         (unless (and (car rest) priority) (todo-fail "set-priority needs a ref and A, B, C or D"))
+         (todo--checked-priority priority)
          (let ((board (todo--existing file)))
            (todo-write board (lambda () (todo--goto (car rest))
                                  (org-priority (string-to-char priority))))
@@ -948,17 +1219,19 @@ to, or nil when every container was already empty."
                          (cons 'ignore
                                (mapconcat #'identity (alist-get 'ignore config) ", "))))))
 
-      (_ (todo-fail (format "unknown command %s" (or verb "(none)")))))))
+      (_ (todo-fail (format "unknown command %s - for the verbs and their flags: todo --help"
+                            (or verb "(none)")))))))
 
 ;;; CLI
 
 (defun todo--parse (args)
-  "Split ARGS into (POSITIONALS FLAGS). A leading -- is dropped."
+  "Split ARGS into (POSITIONALS FLAGS). A leading -- is dropped, and a short
+flag is rewritten to its long name, so one spelling reaches the verbs."
   (when (equal (car args) "--") (setq args (cdr args)))
   (let ((flags nil)
         (pos nil))
     (while args
-      (let ((arg (car args)))
+      (let ((arg (or (cdr (assoc (car args) todo-flag-aliases)) (car args))))
         (if (member arg todo-value-flags)
             (progn
               (unless (cadr args) (todo-fail (format "%s needs a value" arg)))

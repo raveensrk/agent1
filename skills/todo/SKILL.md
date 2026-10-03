@@ -41,10 +41,11 @@ ever look for tasks there.
 `[[:alnum:]_@#%]+`, so a hyphen is not a tag character (`:tax_2026:`, not
 `:tax-2026:`). Tags inherit from a container.
 
-**Priority.** `[#A]`, `[#B]` or `[#C]`, between the state and the title. Optional
-and never invented: ask Raveen which one before you assign it, and ask at create
-time rather than adding it later. `create --priority B` or `set-priority` writes
-it, anything else is refused.
+**Priority.** `[#A]`, `[#B]`, `[#C]` or `[#D]`, between the state and the
+title. D is the lowest level - `org-lowest-priority` is D, so org refuses
+nothing the CLI writes. Optional and never invented: ask Raveen which one
+before you assign it, and ask at create time rather than adding it later.
+`create --priority B` or `set-priority` writes it, anything else is refused.
 
 Raveen's rule: a recurring task is always priority B. A deadline with a repeater
 makes the task recurring, so `create` and `set-deadline` apply B themselves and
@@ -100,8 +101,11 @@ container. Everything else here is on you.
 absolute path. Emacs is the only dependency.
 
 ```bash
+scripts/todo --help                         # main help: every verb, one line each
+scripts/todo create --help                  # that verb: usage, options, note, example
 scripts/todo resolve                        # board file and dir
-scripts/todo read [--state TODO] [--tag x] [--file F] [--overdue] [--recurring] [--records]  # config dirs + this board, or just F
+scripts/todo read [--state TODO] [--tag x] [-d|--due] [-p A|B|C|D] [-n 1] [--file F] [--recurring] [--records]  # config dirs + this board, or just F
+scripts/todo read --due -p A -n 1                # the most urgent overdue A task
 scripts/todo doing [--file F]                   # one due TODO or IN_PROGRESS, as one record
 scripts/todo doing --priority A [--file F]      # one open A task, due or not
 scripts/todo --warm read [--records]            # same verb, Emacs stays up
@@ -132,20 +136,35 @@ scripts/todo config
   and the CLI refuses it. Every verb matches tasks; only `set-state` also matches
 a state-less heading (a container or a `capture` line), and it never matches the
 Archive container.
+- `-h` or `--help` prints help and exits 0 without writing: on its own, the main
+  help - every verb with a one-line summary; after a verb, that verb's usage,
+  options, note and example. A bare `scripts/todo` prints the main help too. The
+  text lives in `todo.el` (`todo-help`), so help and the verbs cannot drift.
 - The board is `todo.org` in the cwd; `--file F` overrides. When the user names a
 board, always pass `--file`/`--dir` - the cwd default is a fallback for when the
 board is known, not a licence to pick one.
 - `--file F` means that exact board for every verb, read and write alike, and it
 wins when `--dir` is also given. `--dir D` makes a read scan D's `*.org` files
 instead of the configured dirs; it does nothing for a write.
-- `--overdue` keeps the tasks whose deadline day has passed in IST, repeaters
-  included; `--recurring` keeps the routines, a deadline carrying a repeater. A
-  routine that is late: `read --overdue --recurring`. Neither filters by state,
-  so a `LATER` task with a lapsed deadline still shows - add `--state TODO` to
-  mean open work. `--overdue` reads the same clock and the same repeater maths
-  as `doing`, over every match instead of the one pick.
+- `--due` and `--overdue` are two names for one window: the deadline day is
+  today or earlier in IST, repeaters included. `--due` and `-d` are the short
+  spelling. It keeps open work only - `TODO` and `IN_PROGRESS` - unless
+  `--state S` names another one, which wins outright: `read --due --state LATER`
+  shows the late LATER tasks. A lapsed deadline on a deferred task stays out of
+  the plain `read --due` list. The list comes out most urgent first - most days
+  late, then A before D, then title, then path: the same comparator `doing` picks
+  with, so `doing` is the head of that list. The order is the flag's default,
+  not an option; board order is a plain `read` away. `--recurring` keeps the
+  routines, a deadline carrying a repeater. A routine that is late: `read --due
+  --recurring`. They read the same clock and the same repeater maths as `doing`,
+  over every match instead of the one pick.
+- `read -p A|B|C|D` keeps only the tasks at that priority; `read -n N` cuts the
+  filtered list to its first N - urgency order under `--due`, board order
+  otherwise, the order a plain `read` prints. So `read --due -p A -n 1` is the
+  most urgent overdue A task. `-n` takes a positive count and `-p` one of A, B,
+  C, D - anything else exits non-zero.
 - `read` prints `STATE  Title  (path)` - no deadline, so overdue is not visible
-  in a plain listing. Use `--overdue`/`--recurring` rather than re-parsing the
+  in a plain listing. Use `--due`/`--recurring` rather than re-parsing the
   list line.
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
@@ -157,8 +176,8 @@ instead of the configured dirs; it does nothing for a write.
   note lines too, so the blank line stays a record break). A missing deadline,
   priority or effort is an empty value. There is no JSON: the board is org, the
   CLI is Emacs, and both consumers parse this text.
-- `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before C, then title, then path. The pick prints as one record, or `none`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
-- `doing --priority A|B|C` picks the priority-only way instead: any open task at
+- `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before D, then title, then path - the head of the list `read --due` prints. The pick prints as one record, or `none`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
+- `doing --priority A|B|C|D` picks the priority-only way instead: any open task at
 that priority, due or not, title then path. No match prints `none`, as `doing`
 does. An unknown value is refused.
 - `--warm` runs the same verb in one background Emacs named `todo-skill`. The plain command still starts a fresh Emacs and quits. The window uses `--warm` and starts the worker if it is down. Quit it with `emacsclient -s todo-skill --eval '(kill-emacs)'`. `edit` and `edit-vim` open vim at the heading line. With no terminal they open as `mvim -f`. `edit-emacs` opens Emacs at that same line.
