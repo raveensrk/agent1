@@ -272,6 +272,160 @@ refused: org would otherwise absorb them silently - garbage becomes today,
         (todo-fail (format "%s is not a real date" date)))))
   value)
 
+;; Postpone. A shift is an interval or a day word; an interval moves the later
+;; of the deadline and today, so a task that has already lapsed lands ahead of
+;; today instead of staying late. The time of day and the repeater are kept,
+;; except that an hour shift moves the clock itself: it counts from the later of
+;; the deadline's moment and now, so a lapsed task lands ahead of now.
+
+(defconst todo--day-names ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"]
+  "Day names org writes in a timestamp, indexed by `calendar-day-of-week'.")
+
+(defconst todo-postpone-words '("today" "tomorrow")
+  "The day words `postpone' takes, counted from today in IST.")
+
+(defconst todo-postpone-form "+1h, +1d, +1w, +1m, +1y, today or tomorrow"
+  "The shifts `postpone' accepts, as the refusal prints them.")
+
+(defun todo--day-string (day)
+  "Absolute DAY as YYYY-MM-DD."
+  (let ((date (calendar-gregorian-from-absolute day)))
+    (format "%04d-%02d-%02d" (nth 2 date) (nth 0 date) (nth 1 date))))
+
+(defun todo--day-name (day)
+  "The three-letter day name of absolute DAY, as org writes it."
+  (aref todo--day-names
+        (calendar-day-of-week (calendar-gregorian-from-absolute day))))
+
+(defun todo--month-shift (day months)
+  "Absolute DAY moved MONTHS later, the day of month clamped to the month's
+end: 31 January plus one month is 28 February."
+  (let* ((date (calendar-gregorian-from-absolute day))
+         (month (nth 0 date))
+         (mday (nth 1 date))
+         (year (nth 2 date))
+         (total (+ month months -1 (* 12 year)))
+         (new-year (/ total 12))
+         (new-month (1+ (% total 12))))
+    (calendar-absolute-from-gregorian
+     (list new-month (min mday (date-days-in-month new-year new-month)) new-year))))
+
+(defun todo--day-plus (day count unit)
+  "Absolute DAY moved COUNT UNIT later, UNIT one of d, w, m or y."
+  (pcase unit
+    ("d" (+ day count))
+    ("w" (+ day (* count 7)))
+    ("m" (todo--month-shift day count))
+    ("y" (todo--month-shift day (* count 12)))))
+
+(defun todo--checked-shift (value)
+  "VALUE as a postpone shift, or fail. Returns (COUNT . UNIT) for an interval,
+UNIT one of h, d, w, m or y, or (nil . WORD) for today or tomorrow."
+  (cond
+   ((member value todo-postpone-words) (cons nil value))
+   ((and value (string-match "\\`\\+?\\([1-9][0-9]*\\)\\([hdwmy]\\)\\'" value))
+    (cons (string-to-number (match-string 1 value)) (match-string 2 value)))
+   (t (todo-fail (format "shift takes %s, got %s" todo-postpone-form value)))))
+
+(defun todo--deadline-parts (deadline)
+  "DEADLINE as (DAY TIME REPEATER): its absolute day, its HH:MM and its
+repeater, each nil when absent. Nil DEADLINE gives nils."
+  (when deadline
+    (let* ((tokens (split-string (replace-regexp-in-string "[<>]" "" deadline) "[ \t]+" t))
+           (rest (cdr tokens))
+           (time (cl-find-if (lambda (token)
+                               (string-match-p "\\`[0-9][0-9]:[0-9][0-9]\\'" token))
+                             rest))
+           (repeater (cl-find-if (lambda (token)
+                                   (string-match-p "\\`\\+[0-9]+[dwmy]\\'" token))
+                                 rest)))
+      (list (org-time-string-to-absolute (car tokens)) time repeater))))
+
+(defun todo--postponed-moment (due time today now shift)
+  "The (DAY . MINUTES) a deadline moves to, or (DAY . nil) when it keeps a bare
+date. DUE is its day, or nil, TIME its `HH:MM', TODAY the absolute day and NOW
+the moment now. A day interval keeps the time of day and counts from the later
+of DUE and TODAY, so a lapsed task lands ahead of today. An hour interval moves
+the clock instead and counts from the later of the deadline's moment and NOW,
+so a lapsed task lands ahead of now."
+  (let ((minutes (todo--minutes-of-time time)))
+    (pcase shift
+      (`(nil . ,word) (cons (+ today (if (equal word "tomorrow") 1 0)) minutes))
+      (`(,count . "h")
+       (let* ((due-moment (and due (cons due (or minutes 0))))
+              (base (if (or (null due-moment) (todo--moment< due-moment now))
+                        now
+                      due-moment))
+              (total (+ (* 1440 (car base)) (cdr base) (* 60 count))))
+         (cons (/ total 1440) (% total 1440))))
+      (`(,count . ,unit)
+       (cons (todo--day-plus (max (or due today) today) count unit) minutes)))))
+
+(defun todo-ist-now ()
+  "Now in IST as (DAY . MINUTES): the absolute day and the minutes past midnight."
+  (let ((old (getenv "TZ")))
+    (setenv "TZ" "Asia/Kolkata")
+    (unwind-protect
+        (let ((clock (format-time-string "%H:%M")))
+          (cons (org-time-string-to-absolute (format-time-string "%Y-%m-%d"))
+                (+ (* 60 (string-to-number (substring clock 0 2)))
+                   (string-to-number (substring clock 3 5)))))
+      (if old (setenv "TZ" old) (setenv "TZ" nil)))))
+
+(defun todo--minutes-of-time (time)
+  "TIME as `HH:MM' in minutes past midnight, or nil."
+  (when time
+    (+ (* 60 (string-to-number (substring time 0 2)))
+       (string-to-number (substring time 3 5)))))
+
+(defun todo--time-of-minutes (minutes)
+  "MINUTES past midnight as `HH:MM'."
+  (format "%02d:%02d" (/ minutes 60) (% minutes 60)))
+
+(defun todo--moment< (a b)
+  "Non-nil when the moment A is before the moment B, both (DAY . MINUTES)."
+  (or (< (car a) (car b))
+      (and (= (car a) (car b)) (< (cdr a) (cdr b)))))
+
+(defun todo--deadline-text (day time repeater)
+  "DEADLINE text for absolute DAY. A timestamp is the only shape that holds a
+time or a repeater, so one is written when either is there; else a bare date,
+which org renders into a timestamp itself."
+  (let ((date (todo--day-string day)))
+    (if (or time repeater)
+        (format "<%s %s %s>" date (todo--day-name day)
+                (mapconcat #'identity (delq nil (list time repeater)) " "))
+      date)))
+
+(defun todo-postpone (title shift file)
+  "Move the deadline of the task TITLE, in board FILE, by SHIFT.
+Keeps the time of day and the repeater, and a repeater stays priority B."
+  (let* ((board (todo--existing file))
+         (now (todo-ist-now))
+         deadline)
+    (todo-write
+     board
+     (lambda ()
+       (todo--goto title)
+       (let* ((old (org-entry-get nil "DEADLINE"))
+              (parts (todo--deadline-parts old))
+              (moment (todo--postponed-moment (car parts) (cadr parts) (car now) now shift))
+              (text (todo--deadline-text (car moment)
+                                         (and (cdr moment)
+                                              (todo--time-of-minutes (cdr moment)))
+                                         (caddr parts))))
+         (org-deadline nil text)
+         (when (todo--recurring (org-entry-get nil "DEADLINE"))
+           (org-priority ?B))
+         ;; The write is org's: report the deadline the file now holds, not the
+         ;; text we handed it, which org fills the day name into.
+         (setq deadline (org-entry-get nil "DEADLINE")))))
+    (todo-out (append (list (cons 'title title)
+                            (cons 'file board)
+                            (cons 'deadline deadline))
+                      (when (todo--recurring deadline)
+                        (list (cons 'priority "B")))))))
+
 (defun todo--task-line (file title)
   "Line number of the task heading TITLE in FILE."
   (with-temp-buffer
@@ -864,6 +1018,12 @@ to, or nil when every container was already empty."
      :options (("--file F" "the board; default todo.org in the cwd"))
      :note "D is 2026-11-05, 2026-11-05 20:30 or <2026-11-05 Thu 20:30 +1w>. A repeater forces priority B."
      :example "todo set-deadline \"Pay rent\" 2026-12-01")
+    ("postpone"
+     :summary "move DEADLINE later"
+     :usage "todo postpone <ref> SHIFT [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "SHIFT is +1h, +1d, +1w, +1m or +1y, the + optional, or today or tomorrow. A day interval counts from the later of the deadline and today, an hour interval from the later of the deadline's moment and now, so a lapsed task lands ahead; the repeater is kept. A repeater forces priority B."
+     :example "todo postpone \"Cut nails\" +1d")
     ("set-priority"
      :summary "set A, B, C or D"
      :usage "todo set-priority <ref> A|B|C|D [--file F]"
@@ -1157,6 +1317,11 @@ A help request is answered here, before any verb runs."
          (todo-out (append (list (cons 'title (car rest)) (cons 'file board)
                                  (cons 'deadline deadline))
                            (when routine (list (cons 'priority "B")))))))
+
+      ("postpone"
+       (let ((shift (cadr rest)))
+         (unless (and (car rest) shift) (todo-fail "postpone needs a ref and a shift"))
+         (todo-postpone (car rest) (todo--checked-shift shift) file)))
 
       ("set-priority"
        (let ((priority (cadr rest)))

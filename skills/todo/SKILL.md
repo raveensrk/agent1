@@ -88,6 +88,14 @@ unwrapped repeater (`2026-11-05 +1w`) all exit non-zero, because org would
 otherwise absorb them silently (`garbage` becomes today, `2026-13-45` becomes
 `2027-02-14`).
 
+**Postpone.** `postpone` moves a deadline instead of naming one: `+1h`, `+1d`,
+`+1w`, `+1m` or `+1y` moves it by that interval, and `today` or `tomorrow` names
+the day itself. A day interval keeps the time of day and counts from the later
+of the deadline and today; an hour interval moves the clock and counts from the
+later of the deadline's moment and now. Either way a lapsed task lands ahead
+rather than staying late. The repeater is kept, and a repeater forces B - the
+repeat's anchor moves, so its later instances move with it.
+
 **Delete is delete.** `delete` removes the subtree, body and all. Git keeps
 history; outside git it is unrecoverable. Use `obsolete` only when the record is
 worth keeping.
@@ -119,6 +127,9 @@ scripts/todo set-priority "Pay rent" B
 scripts/todo set-state "An idea captured earlier" TODO   # promotes a plain heading
 scripts/todo set-deadline "Pay rent" 2026-12-01
 scripts/todo set-deadline "Pay rent" "2026-12-01 20:30"   # with a time of day
+scripts/todo postpone "Cut nails" +1d             # +1h +1d +1w +1m +1y, + optional
+scripts/todo postpone "Trim crotch" +2h           # hours count from the later of the deadline and now
+scripts/todo postpone "Clean bike" tomorrow       # today or tomorrow: the day itself
 scripts/todo set-effort "Pay rent" 0:30
 scripts/todo add-tag "Pay rent" home
 scripts/todo remove-tag "Pay rent" home

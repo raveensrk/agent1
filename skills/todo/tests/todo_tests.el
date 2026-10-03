@@ -117,6 +117,122 @@ verbs, same parsing, a few milliseconds each."
   (should (eq 1 (nth 0 (todo-test--cli "create" "Bad estimate" "--effort" "30"))))
   (should-not (string-match-p "Bad estimate" (todo-test--text))))
 
+;;; postpone
+
+(defun todo-test--ist-date (&optional days)
+  "The date DAYS from today in IST, as YYYY-MM-DD, through the CLI's own clock."
+  (todo--day-string (todo--day-plus (todo-ist-day) (or days 0) "d")))
+
+(ert-deftest todo-postpone-shifts-a-deadline-both-ways-it-can-spell-a-shift ()
+  (todo-test--setup)
+  ;; Org forces a year into 1970-2037, the same on the create path, so a date
+  ;; out here would be testing org, not this verb.
+  (todo-test--write (concat "* TODO [#B] Report :work:\n"
+                            "DEADLINE: <2027-01-31 Sun 09:00 +1m>\n"))
+  (let ((result (todo-test--ok "postpone" "Report" "+1m")))
+    ;; 2027 is no leap year, so 31 January clamps to 28 February.
+    (should (string-match-p (concat "^deadline: <2027-02-28 \\w\\{3\\}"
+                                    (regexp-quote " 09:00 +1m>") "$")
+                            (nth 1 result)))
+    (should (string-match-p "^priority: B$" (nth 1 result))))
+  ;; The + is optional: 28 February plus one week is 7 March.
+  (todo-test--ok "postpone" "Report" "1w")
+  (let ((text (todo-test--text)))
+    (should (string-match-p (regexp-quote "DEADLINE: <2027-03-07") text))
+    (should (string-match-p (regexp-quote "09:00 +1m>") text))
+    (should-not (string-match-p "2027-01-31" text))))
+
+(ert-deftest todo-postpone-clamps-a-month-to-the-month-it-lands-in ()
+  (let ((day (lambda (date) (org-time-string-to-absolute date))))
+    (should (equal "2027-02-28" (todo--day-string (todo--month-shift (funcall day "2027-01-31") 1))))
+    (should (equal "2028-02-29" (todo--day-string (todo--month-shift (funcall day "2028-01-31") 1))))
+    (should (equal "2028-01-31" (todo--day-string (todo--month-shift (funcall day "2027-01-31") 12))))
+    (should (equal "2029-02-28" (todo--day-string (todo--month-shift (funcall day "2028-02-29") 12))))))
+
+(ert-deftest todo-postpone-lifts-a-lapsed-task-ahead-of-today ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO [#B] Cut nails :routine:\n"
+                            "DEADLINE: <2020-01-01 Wed 21:30 +1w>\n"))
+  (todo-test--ok "postpone" "Cut nails" "+1d")
+  (let ((text (todo-test--text)))
+    ;; The deadline lapsed in 2020, so the day counts from today, not from it.
+    (should (string-match-p (regexp-quote (format "DEADLINE: <%s " (todo-test--ist-date 1)))
+                            text))
+    (should (string-match-p (regexp-quote "21:30 +1w>") text))
+    (should-not (string-match-p "2020" text))))
+
+(ert-deftest todo-postpone-takes-today-and-tomorrow ()
+  (todo-test--setup)
+  (todo-test--write "* TODO Later\nDEADLINE: <2999-01-01 Thu>\n")
+  (todo-test--ok "postpone" "Later" "tomorrow")
+  (should (string-match-p (regexp-quote (format "DEADLINE: <%s " (todo-test--ist-date 1)))
+                          (todo-test--text)))
+  (todo-test--ok "postpone" "Later" "today")
+  (should (string-match-p (regexp-quote (format "DEADLINE: <%s " (todo-test--ist-date)))
+                          (todo-test--text))))
+
+(ert-deftest todo-postpone-dates-a-task-that-had-no-deadline ()
+  (todo-test--setup)
+  (todo-test--ok "create" "No deadline yet")
+  (todo-test--ok "postpone" "No deadline yet" "+2d")
+  (let ((text (todo-test--text)))
+    (should (string-match-p (regexp-quote (format "DEADLINE: <%s " (todo-test--ist-date 2)))
+                            text))
+    (should (string-match-p "^\\* TODO No deadline yet" text))))
+
+(ert-deftest todo-postpone-refuses-a-shift-it-cannot-read ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Keep me" "--deadline" "2026-11-05")
+  (let ((before (todo-test--text)))
+    (dolist (bad '("+0d" "+0h" "later" "next friday" "-1d" "1x" ""))
+      (let ((result (todo-test--cli "postpone" "Keep me" bad)))
+        (should (eq 1 (nth 0 result)))
+        (should (string-match-p "shift takes" (nth 2 result)))))
+    (should (string-match-p "needs a ref and a shift"
+                            (nth 2 (todo-test--cli "postpone" "Keep me"))))
+    (should (eq 1 (nth 0 (todo-test--cli "postpone" "Ghost" "+1d"))))
+    (should (equal before (todo-test--text)))))
+
+(ert-deftest todo-postpone-hours-count-from-the-later-moment ()
+  (let ((day (lambda (date) (org-time-string-to-absolute date)))
+        (now (cons (org-time-string-to-absolute "2026-10-03") 1423))) ; 23:43
+    ;; The deadline lapsed, so now is the base: +2h is tomorrow at 01:43.
+    (should (equal (cons (funcall day "2026-10-04") 103)
+                   (todo--postponed-moment (funcall day "2026-09-27") "07:30"
+                                           (funcall day "2026-10-03") now (cons 2 "h"))))
+    ;; A deadline still ahead of now is the base instead: 09:00 +2h.
+    (should (equal (cons (funcall day "2026-10-04") 660)
+                   (todo--postponed-moment (funcall day "2026-10-04") "09:00"
+                                           (funcall day "2026-10-03") now (cons 2 "h"))))
+    ;; A day interval keeps the time of day: the lapsed 07:30 counts from today.
+    (should (equal (cons (funcall day "2026-10-10") 450)
+                   (todo--postponed-moment (funcall day "2026-09-27") "07:30"
+                                           (funcall day "2026-10-03") now (cons 1 "w"))))))
+
+(ert-deftest todo-postpone-hours-move-the-clock-in-the-file ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO [#B] Trim :routine:\n"
+                            "DEADLINE: <2027-01-31 Sun 09:00 +1m>\n"))
+  (todo-test--ok "postpone" "Trim" "+2h")
+  (let ((text (todo-test--text)))
+    (should (string-match-p (regexp-quote "DEADLINE: <2027-01-31") text))
+    (should (string-match-p (regexp-quote " 11:00 +1m>") text))))
+
+(ert-deftest todo-postpone-hours-lift-a-lapsed-task-ahead-of-now ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO [#B] Trim :routine:\n"
+                            "DEADLINE: <2020-01-01 Wed 07:30 +1w>\n"))
+  (todo-test--ok "postpone" "Trim" "+2h")
+  (let* ((text (todo-test--text))
+         (stamp (and (string-match "DEADLINE: \\(<[^>]+>\\)" text) (match-string 1 text)))
+         (parts (todo--deadline-parts stamp))
+         (landed (+ (* 1440 (car parts)) (or (todo--minutes-of-time (cadr parts)) 0)))
+         (now (todo-ist-now))
+         (wanted (+ (* 1440 (car now)) (cdr now) 120)))
+    (should stamp)
+    ;; Now plus two hours, within a minute of this test's own reading of the clock.
+    (should (<= (abs (- landed wanted)) 1))))
+
 (ert-deftest todo-deadline-takes-three-forms-and-refuses-the-rest ()
   (todo-test--setup)
   (dolist (good '("2026-11-05" "2026-11-05 20:30" "<2026-11-05 Thu 20:30 +1w>"))
@@ -861,7 +977,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   ;; until the table above grows the same entry.
   (should (equal (mapcar #'car todo-help)
                  '("resolve" "doing" "read" "create" "rename" "delete"
-                   "set-state" "set-deadline" "set-priority" "set-effort"
+                   "set-state" "set-deadline" "postpone" "set-priority" "set-effort"
                    "add-tag" "remove-tag" "append" "set-note" "obsolete" "complete"
                    "archive" "capture" "status" "edit" "edit-vim"
                    "edit-emacs" "config")))
