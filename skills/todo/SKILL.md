@@ -15,6 +15,25 @@ of processes can CRUD at once.
 
 ## 1. The rules
 
+**Org's spec.** The board is org, and org decides its semantics: states are
+org's TODO keywords, a deadline is an org timestamp, archiving is org's own
+arrangement, and a repeater is org's `+Nx`, `++Nx` or `.+Nx`. The CLI writes org
+and never a dialect of its own, and it does no repeat arithmetic - a completion
+hands the shift to org. Anywhere the CLI offers a shorthand, the shorthand
+resolves to an org form.
+
+**Emacs and org first.** The CLI is Emacs Lisp, so before writing a helper,
+find the one that exists: org's parser (`org-parse-time-string`,
+`org-time-string-to-absolute`), org's regexps (`org-ts-regexp3`,
+`org-repeat-re`) and org's own accessors (`org-entry-get`, `org-deadline`,
+`org-get-repeat`) for anything about a board; Emacs's calendar (`time-to-days`,
+`decode-time`, `calendar-day-name`, `calendar-date-is-valid-p`,
+`date-days-in-month`) for anything about a date. A helper that stays is one no
+library answers - `todo--month-shift`, because Emacs has no month arithmetic for
+a numbered date, and the block scanner, because `org-element` cannot see a block
+once a column-0 `*` sits inside it. Write the measurement that justifies a
+keep next to the code, not in a commit message.
+
 **CLI only.** Every read and every write of a board goes through `scripts/todo`.
 Never open a `todo.org` with `read`, `grep`, `sed`, `write` or any other tool,
 not even to look at one line. If the CLI has no verb for the operation you need,
@@ -95,6 +114,16 @@ of the deadline and today; an hour interval moves the clock and counts from the
 later of the deadline's moment and now. Either way a lapsed task lands ahead
 rather than staying late. The repeater is kept, and a repeater forces B - the
 repeat's anchor moves, so its later instances move with it.
+
+**Repeat cookies.** The repeater is org's, so org's three forms mean three
+things. `+Nx` moves the date one interval from its anchor, so a lapse stays
+overdue - three missed months stay three months late. `++Nx` moves it at least
+one interval and as many as it takes to clear today, keeping the weekday and the
+day of month. `.+Nx` moves it from today, or from now for hours. x is `h`, `d`,
+`w`, `m` or `y`; an hour repeater needs a time of day. The CLI writes `++` for a
+repeating deadline it creates or edits, while `++` and `.+` pass through as
+given, and `org-auto-repeat-maybe` does the shift on DONE - so a routine
+completed late lands on its next slot instead of staying overdue.
 
 **Delete is delete.** `delete` removes the subtree, body and all. Git keeps
 history; outside git it is unrecoverable. Use `obsolete` only when the record is
@@ -224,7 +253,9 @@ goes to the board with `create`.
 Verify against the acceptance criteria in the note first. `complete` appends
 `--evidence` to the body, sets `DONE` and writes `CLOSED:`, then moves the task
 to the board's archive file - unless its deadline carries a repeater, in which
-case it stays on the board and org advances the date. The archive copy is org's
+case it stays on the board and org shifts the date by that cookie's own rule: a
+`++` routine lands on its next slot after today, a lone `+` one interval past its
+anchor, so it can stay overdue. The print names where it landed. The archive copy is org's
 own shape: the header, and an `:ARCHIVE_TIME:`/`:ARCHIVE_FILE:`/`:ARCHIVE_CATEGORY:`/
 `:ARCHIVE_TODO:` drawer, per `org-archive-save-context-info`. Print shows which
 happened: `archived: <file>` or `routine: yes`. There is no review loop and no
@@ -247,6 +278,15 @@ may write while you edit, and the last save wins.
   that starts with a star - the write itself refuses a file whose block holds
   such a line, naming the file and the line. `set-note` refuses a star at column
   0 in its TEXT outright, before the file is touched.
+- A routine's date is org's to shift, and org shifts by the cookie it is given:
+a `+1w` routine left for three weeks is still two weeks late after a completion.
+Rewrite it as `++1w` (`todo set-deadline "<%date%> ++1w"`) and a completion lands
+it on its next slot. A routine written by an older CLI, or edited by hand in
+Emacs, can carry a lone `+`.
+- Org asks, once ten repeat intervals are not enough to clear today, whether to
+keep shifting. A batch call has nobody to answer, so the CLI answers yes and the
+routine catches up however far it is behind. The question is org's, not the
+CLI's: it appears only when the same board is completed in interactive Emacs.
 - `set-deadline` on a `DONE` task drops `CLOSED:` (org behaviour). Reopen
   before setting a deadline if the closed time matters.
 - The CLI writes no frontmatter, no extra properties, and creates an archive

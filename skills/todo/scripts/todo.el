@@ -178,7 +178,13 @@ them; this says so out loud, and checks a named path too."
   "Character ranges of #+BEGIN_* ... #+END_* blocks in the current buffer.")
 
 (defun todo--mark-blocks ()
-  "Record the block ranges; a heading inside one is an example, not a task."
+  "Record the block ranges; a heading inside one is an example, not a task.
+This bookkeeping stays hand-rolled on purpose: measured 2026-10-04, nothing in
+org answers it. `org-element' drops the whole block as soon as a column-0 star
+sits inside it (its parse tree then holds a headline, not a src-block), and
+`org-in-block-p' only knows blocks by name, so an unknown `#+BEGIN_FOO' escapes
+it. org's own scanner - `org-map-entries', which the reads use - counts that
+line as a real task, and this scanner holds that same view of the file."
   (setq todo--blocks nil)
   (save-excursion
     (goto-char (point-min))
@@ -231,8 +237,17 @@ them; this says so out loud, and checks a named path too."
 
 (defun todo--recurring (deadline)
   "Non-nil when DEADLINE carries a repeater, so the task is a routine.
+Org decides what a repeater is, through `org-repeat-re', so every form org
+accepts counts, hours included - and org shifts an hour repeater itself.
 Raveen's rule: a recurring task is always priority B."
-  (and deadline (string-match-p "\\+[0-9]+[dwmy]" deadline)))
+  (and (todo--repeat-cookie deadline) t))
+
+(defun todo--repeat-cookie (deadline)
+  "The repeater cookie in DEADLINE, or nil.
+Org's own regexp finds it, so `+Nx', `++Nx' and `.+Nx' all come through, x being
+h, d, w, m or y; a bare date, which cannot hold one, matches none."
+  (when (and deadline (string-match org-repeat-re deadline))
+    (match-string 1 deadline)))
 
 (defun todo--checked-effort (value)
   "VALUE as H:MM, or fail. Org's own Effort format."
@@ -257,18 +272,20 @@ Raveen's rule: a recurring task is always priority B."
 (defun todo--checked-deadline (value)
   "VALUE in one of the three accepted deadline forms, or fail.
 A bare date, a date with a time, or a full org timestamp - the only form that
-keeps a repeater. Prose, an out-of-range date and an unwrapped repeater are
-refused: org would otherwise absorb them silently - garbage becomes today,
-2026-13-45 becomes 2027-02-14."
+keeps a repeater. Prose and an unwrapped repeater are refused: org would
+otherwise absorb them silently - garbage becomes today.
+The stamp form is org's own `org-ts-regexp3', and whether the date exists is
+Emacs's own `calendar-date-is-valid-p', so neither is a regexp of ours."
   (let ((bare "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\( [0-9]\\{2\\}:[0-9]\\{2\\}\\)?\\'")
-        (stamp "\\`<[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [^>]+>\\'"))
+        (stamp (concat "\\`" org-ts-regexp3 "\\'")))
     (unless (or (string-match-p bare value) (string-match-p stamp value))
       (todo-fail (format "deadline takes %s, got %s" todo-deadline-forms value)))
-    (let* ((date (substring value (if (eq (aref value 0) ?<) 1 0)
-                            (+ (if (eq (aref value 0) ?<) 1 0) 10)))
-           (parts (mapcar #'string-to-number (split-string date "-")))
-           (real (ignore-errors (apply #'encode-time 0 0 0 (nreverse parts)))))
-      (unless (and real (equal date (format-time-string "%Y-%m-%d" real)))
+    (let ((date (substring value (if (eq (aref value 0) ?<) 1 0)
+                           (+ (if (eq (aref value 0) ?<) 1 0) 10))))
+      (unless (calendar-date-is-valid-p
+               (list (string-to-number (substring date 5 7))
+                     (string-to-number (substring date 8 10))
+                     (string-to-number (substring date 0 4))))
         (todo-fail (format "%s is not a real date" date)))))
   value)
 
@@ -277,9 +294,12 @@ refused: org would otherwise absorb them silently - garbage becomes today,
 ;; today instead of staying late. The time of day and the repeater are kept,
 ;; except that an hour shift moves the clock itself: it counts from the later of
 ;; the deadline's moment and now, so a lapsed task lands ahead of now.
-
-(defconst todo--day-names ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"]
-  "Day names org writes in a timestamp, indexed by `calendar-day-of-week'.")
+;;
+;; Reuse first: the stamp parsing, the date validation, the day arithmetic and
+;; the day names below are org's and Emacs's own code. What is left here is the
+;; grammar of the shift, which neither library has, and `todo--month-shift',
+;; because Emacs has no month arithmetic for a (MONTH DAY YEAR) date -
+;; `calendar-increment-month' works on month-name symbols, not on numbers.
 
 (defconst todo-postpone-words '("today" "tomorrow")
   "The day words `postpone' takes, counted from today in IST.")
@@ -288,14 +308,12 @@ refused: org would otherwise absorb them silently - garbage becomes today,
   "The shifts `postpone' accepts, as the refusal prints them.")
 
 (defun todo--day-string (day)
-  "Absolute DAY as YYYY-MM-DD."
-  (let ((date (calendar-gregorian-from-absolute day)))
-    (format "%04d-%02d-%02d" (nth 2 date) (nth 0 date) (nth 1 date))))
+  "Absolute DAY as YYYY-MM-DD, through org's own day-to-time."
+  (format-time-string "%Y-%m-%d" (org-time-from-absolute day)))
 
 (defun todo--day-name (day)
   "The three-letter day name of absolute DAY, as org writes it."
-  (aref todo--day-names
-        (calendar-day-of-week (calendar-gregorian-from-absolute day))))
+  (calendar-day-name (calendar-gregorian-from-absolute day) t))
 
 (defun todo--month-shift (day months)
   "Absolute DAY moved MONTHS later, the day of month clamped to the month's
@@ -329,17 +347,19 @@ UNIT one of h, d, w, m or y, or (nil . WORD) for today or tomorrow."
 
 (defun todo--deadline-parts (deadline)
   "DEADLINE as (DAY TIME REPEATER): its absolute day, its HH:MM and its
-repeater, each nil when absent. Nil DEADLINE gives nils."
+repeater, each nil when absent. Nil DEADLINE gives nils.
+Org's own parser reads the stamp and org's own regexp finds the repeater. The
+one thing added is telling a time of day from no time at all, and that test is
+org's own idiom for it."
   (when deadline
-    (let* ((tokens (split-string (replace-regexp-in-string "[<>]" "" deadline) "[ \t]+" t))
-           (rest (cdr tokens))
-           (time (cl-find-if (lambda (token)
-                               (string-match-p "\\`[0-9][0-9]:[0-9][0-9]\\'" token))
-                             rest))
-           (repeater (cl-find-if (lambda (token)
-                                   (string-match-p "\\`\\+[0-9]+[dwmy]\\'" token))
-                                 rest)))
-      (list (org-time-string-to-absolute (car tokens)) time repeater))))
+    (let* ((parsed (org-parse-time-string deadline))
+           (hour (nth 2 parsed))
+           (minute (nth 1 parsed)))
+      (list (org-time-string-to-absolute deadline)
+            ;; Without this, a midnight time and a missing one parse alike.
+            (and (string-match-p "[0-9]\\{1,2\\}:[0-9]\\{2\\}" deadline)
+                 (format "%02d:%02d" hour minute))
+            (todo--repeat-cookie deadline)))))
 
 (defun todo--postponed-moment (due time today now shift)
   "The (DAY . MINUTES) a deadline moves to, or (DAY . nil) when it keeps a bare
@@ -362,21 +382,21 @@ so a lapsed task lands ahead of now."
        (cons (todo--day-plus (max (or due today) today) count unit) minutes)))))
 
 (defun todo-ist-now ()
-  "Now in IST as (DAY . MINUTES): the absolute day and the minutes past midnight."
+  "Now in IST as (DAY . MINUTES): the absolute day and the minutes past midnight.
+Emacs reads the clock - `time-to-days' for the day, `decode-time' for the hour
+and minute."
   (let ((old (getenv "TZ")))
     (setenv "TZ" "Asia/Kolkata")
     (unwind-protect
-        (let ((clock (format-time-string "%H:%M")))
-          (cons (org-time-string-to-absolute (format-time-string "%Y-%m-%d"))
-                (+ (* 60 (string-to-number (substring clock 0 2)))
-                   (string-to-number (substring clock 3 5)))))
+        (let ((clock (decode-time)))
+          (cons (time-to-days (current-time))
+                (+ (* 60 (decoded-time-hour clock)) (decoded-time-minute clock))))
       (if old (setenv "TZ" old) (setenv "TZ" nil)))))
 
 (defun todo--minutes-of-time (time)
-  "TIME as `HH:MM' in minutes past midnight, or nil."
-  (when time
-    (+ (* 60 (string-to-number (substring time 0 2)))
-       (string-to-number (substring time 3 5)))))
+  "TIME as `HH:MM' in minutes past midnight, or nil.
+Org's own duration reader does the parsing."
+  (when time (floor (org-duration-to-minutes time))))
 
 (defun todo--time-of-minutes (minutes)
   "MINUTES past midnight as `HH:MM'."
@@ -397,6 +417,26 @@ which org renders into a timestamp itself."
                 (mapconcat #'identity (delq nil (list time repeater)) " "))
       date)))
 
+(defun todo--catchup-repeater (repeater)
+  "REPEATER with a lone `+' made `++' - org's catch-up cookie.
+Org's own rule does the shifting on DONE: `+Nx' moves one interval from the
+anchor and leaves a lapse overdue, `++Nx' moves at least one interval and as
+many as it takes to clear today, `.+Nx' moves from today. The CLI writes the
+catch-up one by default, and `++' and `.+' pass through as given."
+  (if (and repeater (string-match-p "\\`\\+[0-9]" repeater))
+      (concat "+" repeater)
+    repeater))
+
+(defun todo--catchup-deadline (value)
+  "VALUE with a lone `+' repeater made `++'.
+A value with no repeater, and one already carrying `++' or `.+', comes back
+unchanged - the shape org would write is ours to leave alone."
+  (let* ((parts (todo--deadline-parts value))
+         (repeater (todo--catchup-repeater (caddr parts))))
+    (if (equal repeater (caddr parts))
+        value
+      (todo--deadline-text (car parts) (cadr parts) repeater))))
+
 (defun todo-postpone (title shift file)
   "Move the deadline of the task TITLE, in board FILE, by SHIFT.
 Keeps the time of day and the repeater, and a repeater stays priority B."
@@ -413,7 +453,7 @@ Keeps the time of day and the repeater, and a repeater stays priority B."
               (text (todo--deadline-text (car moment)
                                          (and (cdr moment)
                                               (todo--time-of-minutes (cdr moment)))
-                                         (caddr parts))))
+                                         (todo--catchup-repeater (caddr parts)))))
          (org-deadline nil text)
          (when (todo--recurring (org-entry-get nil "DEADLINE"))
            (org-priority ?B))
@@ -440,9 +480,16 @@ Keeps the time of day and the repeater, and a repeater stays priority B."
   (format "%s +%d %s" editor line (shell-quote-argument file)))
 
 (defun todo--emacs-bin ()
-  "The GUI Emacs binary, or emacs on PATH."
-  (let ((app "/Applications/Emacs.app/Contents/MacOS/Emacs"))
-    (if (file-executable-p app) app (or (executable-find "emacs") "emacs"))))
+  "The Emacs to open a file with: this Emacs's own binary.
+Emacs knows where it lives (`invocation-name' and `invocation-directory'), so
+nothing here hardcodes an install path. macOS keeps an app launcher beside the
+real binary, and that launcher is the one that talks to the window server, so it
+wins when it is there; otherwise the running binary, then `emacs' on PATH."
+  (let ((app (expand-file-name "Emacs" invocation-directory))
+        (self (expand-file-name invocation-name invocation-directory)))
+    (cond ((file-executable-p app) app)
+          ((file-executable-p self) self)
+          (t (or (executable-find "emacs") "emacs")))))
 
 (defun todo--open-editor (editor file line)
   "Run EDITOR on FILE at LINE. Wait until it exits."
@@ -466,6 +513,15 @@ Keeps the time of day and the repeater, and a repeater stays priority B."
     (when (and (not (process-live-p proc))
                (not (eq 0 (process-exit-status proc))))
       (todo-fail (format "emacs exited %s" (process-exit-status proc))))))
+
+(defun todo--org-todo (state)
+  "Set the state at point through org, answering org's own repeat question.
+After ten intervals org asks whether to keep shifting a routine whose anchor is
+that far behind. A batch call has nobody to ask, and refusing would leave the
+routine overdue, which is the thing being fixed, so the CLI answers yes and org
+shifts as far as it takes."
+  (cl-letf (((symbol-function 'y-or-n-p) (lambda (&rest _) t)))
+    (org-todo state)))
 
 (defun todo-edit (title file kind)
   "Open the heading TITLE in FILE with KIND, vim or emacs, at that line."
@@ -512,12 +568,12 @@ layer: the CLI is Emacs reading org, and both consumers parse text."
   "States that can be the main quest.")
 
 (defun todo-ist-day (&optional time)
-  "Absolute day of TIME in IST. TIME defaults to now."
-  (let ((old (getenv "TZ"))
-        (time (or time (current-time))))
+  "Absolute day of TIME in IST. TIME defaults to now.
+Emacs's own `time-to-days' numbers the day, and its numbering is org's own -
+the test `todo-ist-day-is-orgs-day-number' holds the two together."
+  (let ((old (getenv "TZ")))
     (setenv "TZ" "Asia/Kolkata")
-    (unwind-protect
-        (org-time-string-to-absolute (format-time-string "%Y-%m-%d" time))
+    (unwind-protect (time-to-days (or time (current-time)))
       (if old (setenv "TZ" old) (setenv "TZ" nil)))))
 
 (defun todo--due-day (deadline)
@@ -994,6 +1050,7 @@ to, or nil when every container was already empty."
                ("--note TEXT" "body under the heading")
                ("--container NAME" "nest under an existing heading")
                ("--file F" "the board; default todo.org in the cwd"))
+     :note "A repeating deadline is written with org's catch-up cookie ++, so a completion clears a lapse; ++ and .+ pass through as given. A repeater forces priority B."
      :example "todo create \"Pay rent\" --deadline 2026-11-05 --tag finance --priority A")
     ("rename"
      :summary "change a task's title"
@@ -1016,7 +1073,7 @@ to, or nil when every container was already empty."
      :summary "set DEADLINE, with a time or a repeater"
      :usage "todo set-deadline <ref> D [--file F]"
      :options (("--file F" "the board; default todo.org in the cwd"))
-     :note "D is 2026-11-05, 2026-11-05 20:30 or <2026-11-05 Thu 20:30 +1w>. A repeater forces priority B."
+     :note "D is 2026-11-05, 2026-11-05 20:30 or <2026-11-05 Thu 20:30 +1w>. A lone + is written ++, org's catch-up cookie; ++ and .+ pass through. A repeater forces priority B."
      :example "todo set-deadline \"Pay rent\" 2026-12-01")
     ("postpone"
      :summary "move DEADLINE later"
@@ -1068,7 +1125,7 @@ to, or nil when every container was already empty."
      :usage "todo complete <ref> [--evidence TEXT] [--file F]"
      :options (("--evidence TEXT" "appended to the note before the state changes")
                ("--file F" "the board; default todo.org in the cwd"))
-     :note "A task whose deadline carries a repeater stays on the board; everything else moves to <board>.org_archive."
+     :note "A task whose deadline carries a repeater stays on the board, and org shifts that date by the repeater's own rule: a ++ routine lands on its next slot, a lone + one interval past its anchor. Everything else moves to <board>.org_archive."
      :example "todo complete \"Pay rent\" --evidence \"paid from the joint account\"")
     ("archive"
      :summary "inline `* Archive' containers to <board>.org_archive"
@@ -1197,6 +1254,9 @@ and `todo --help read' is the same as `todo read --help'."
     (when effort (todo--checked-effort effort))
     (when priority (todo--checked-priority priority))
     (when deadline (todo--checked-deadline deadline))
+    ;; Org shifts a routine on DONE by its own cookie; `++' is the one that
+    ;; clears a lapse, so a repeating deadline is written with it.
+    (when deadline (setq deadline (todo--catchup-deadline deadline)))
     (when (todo--recurring deadline)
       (when (and priority (not (equal priority "B")))
         (todo-fail (format "a recurring task is always priority B, not %s" priority)))
@@ -1211,7 +1271,7 @@ and `todo --help read' is the same as `todo read --help'."
                (org-end-of-subtree t)
                (insert "\n" (make-string (1+ level) ?*) " " title)))
          (todo--append-root title))
-       (org-todo state)
+       (todo--org-todo state)
        (when priority (org-priority (string-to-char priority)))
        (when tags (org-set-tags tags))
        (when deadline (org-deadline nil deadline))
@@ -1304,12 +1364,12 @@ A help request is answered here, before any verb runs."
        (let ((state (cadr rest)))
          (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
          (let ((board (todo--existing file)))
-           (todo-write board (lambda () (todo--goto (car rest) t) (org-todo state)))
+           (todo-write board (lambda () (todo--goto (car rest) t) (todo--org-todo state)))
            (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state state))))))
 
       ("set-deadline"
        (let* ((board (todo--existing file))
-              (deadline (todo--checked-deadline (cadr rest)))
+              (deadline (todo--catchup-deadline (todo--checked-deadline (cadr rest))))
               (routine (todo--recurring deadline)))
          (todo-write board (lambda () (todo--goto (car rest))
                                (org-deadline nil deadline)
@@ -1367,22 +1427,26 @@ A help request is answered here, before any verb runs."
 
       ("obsolete"
        (let ((board (todo--existing file)))
-         (todo-write board (lambda () (todo--goto (car rest)) (org-todo "OBSOLETE")))
+         (todo-write board (lambda () (todo--goto (car rest)) (todo--org-todo "OBSOLETE")))
          (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state "OBSOLETE")))))
 
       ("complete"
        (let* ((board (todo--existing file))
               (title (car rest))
               (evidence (todo--flag flags "--evidence"))
-              routine captured)
+              routine captured landed)
          (todo-write board
                      (lambda ()
                        (todo--goto title)
                        (when evidence (todo--append-body evidence))
-                       (org-todo "DONE")
+                       (cl-letf (((symbol-function 'y-or-n-p) (lambda (&rest _) t)))
+                         (org-todo "DONE"))
                        ;; A routine repeats: completing it must not take it off
-                       ;; the board, or the next occurrence never shows up.
+                       ;; the board, or the next occurrence never shows up. Org
+                       ;; shifts the date itself, by the cookie's own rule, so
+                       ;; the CLI does no repeat arithmetic here.
                        (setq routine (todo--recurring (org-entry-get nil "DEADLINE")))
+                       (when routine (setq landed (org-entry-get nil "DEADLINE")))
                        (unless routine (setq captured (todo--archive-capture board)))))
          (if captured
              (todo-out (list (cons 'title title)
@@ -1392,7 +1456,10 @@ A help request is answered here, before any verb runs."
            (todo-out (list (cons 'title title)
                            (cons 'state "DONE")
                            (cons 'file board)
-                           (cons 'routine (and routine t)))))))
+                           (cons 'routine (and routine t))
+                           ;; Where org landed it, so the next occurrence is
+                           ;; visible without a second call.
+                           (cons 'deadline landed))))))
 
       ("archive"
        (let* ((board (todo--existing file))

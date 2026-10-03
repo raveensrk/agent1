@@ -132,14 +132,14 @@ verbs, same parsing, a few milliseconds each."
   (let ((result (todo-test--ok "postpone" "Report" "+1m")))
     ;; 2027 is no leap year, so 31 January clamps to 28 February.
     (should (string-match-p (concat "^deadline: <2027-02-28 \\w\\{3\\}"
-                                    (regexp-quote " 09:00 +1m>") "$")
+                                    (regexp-quote " 09:00 ++1m>") "$")
                             (nth 1 result)))
     (should (string-match-p "^priority: B$" (nth 1 result))))
   ;; The + is optional: 28 February plus one week is 7 March.
   (todo-test--ok "postpone" "Report" "1w")
   (let ((text (todo-test--text)))
     (should (string-match-p (regexp-quote "DEADLINE: <2027-03-07") text))
-    (should (string-match-p (regexp-quote "09:00 +1m>") text))
+    (should (string-match-p (regexp-quote "09:00 ++1m>") text))
     (should-not (string-match-p "2027-01-31" text))))
 
 (ert-deftest todo-postpone-clamps-a-month-to-the-month-it-lands-in ()
@@ -158,7 +158,7 @@ verbs, same parsing, a few milliseconds each."
     ;; The deadline lapsed in 2020, so the day counts from today, not from it.
     (should (string-match-p (regexp-quote (format "DEADLINE: <%s " (todo-test--ist-date 1)))
                             text))
-    (should (string-match-p (regexp-quote "21:30 +1w>") text))
+    (should (string-match-p (regexp-quote "21:30 ++1w>") text))
     (should-not (string-match-p "2020" text))))
 
 (ert-deftest todo-postpone-takes-today-and-tomorrow ()
@@ -216,7 +216,7 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "postpone" "Trim" "+2h")
   (let ((text (todo-test--text)))
     (should (string-match-p (regexp-quote "DEADLINE: <2027-01-31") text))
-    (should (string-match-p (regexp-quote " 11:00 +1m>") text))))
+    (should (string-match-p (regexp-quote " 11:00 ++1m>") text))))
 
 (ert-deftest todo-postpone-hours-lift-a-lapsed-task-ahead-of-now ()
   (todo-test--setup)
@@ -240,7 +240,7 @@ verbs, same parsing, a few milliseconds each."
   (let ((text (todo-test--text)))
     (should (string-match-p "DEADLINE: <2026-11-05 Thu>$" text))
     (should (string-match-p "DEADLINE: <2026-11-05 Thu 20:30>$" text))
-    (should (string-match-p (regexp-quote "DEADLINE: <2026-11-05 Thu 20:30 +1w>") text)))
+    (should (string-match-p (regexp-quote "DEADLINE: <2026-11-05 Thu 20:30 ++1w>") text)))
   (dolist (bad '("garbage" "next friday" "2026-13-45" "2026-11-05 +1w" "<2026-11-05"))
     (should (eq 1 (nth 0 (todo-test--cli "create" (format "Bad %s" bad) "--deadline" bad))))
     (should-not (string-match-p (format "Bad %s" (regexp-quote bad)) (todo-test--text))))
@@ -440,6 +440,107 @@ verbs, same parsing, a few milliseconds each."
     (should (equal (mapcar (lambda (i) (todo-test--field i "title")) done) '("Say \"hi\""))))
   (should (equal (nth 1 (todo-test--ok "read" "--records" "--state" "OBSOLETE")) "")))
 
+;;; repeat cookies
+
+(ert-deftest todo-opens-the-emacs-that-runs-it ()
+  ;; The binary comes from Emacs's own invocation info, never a hardcoded path.
+  (should (file-executable-p (todo--emacs-bin)))
+  (should (string-prefix-p (expand-file-name invocation-directory)
+                           (expand-file-name (todo--emacs-bin)))))
+
+(ert-deftest todo-ist-day-is-orgs-day-number ()  ;; Emacs numbers days for the CLI; org numbers them for timestamps. If those
+  ;; two ever drifted, every due window would be off by one.
+  (dolist (date '("2026-10-04" "2026-01-01" "2027-02-28" "1999-12-31" "2037-01-19"))
+    (should (= (org-time-string-to-absolute date)
+               (time-to-days (org-time-from-absolute (org-time-string-to-absolute date)))))))
+
+(ert-deftest todo-routine-detection-follows-org-repeater-syntax ()
+  ;; Org's three repeater forms, every unit, and hours among them.
+  (dolist (deadline '("<2026-11-05 Thu 20:30 +1w>" "<2026-11-05 Thu 20:30 ++1w>"
+                      "<2026-11-05 Thu 20:30 .+1w>" "<2026-11-05 Thu 20:30 +2h>"
+                      "<2026-11-05 Thu +6m>" "<2026-11-05 Thu ++1y>"))
+    (should (todo--recurring deadline)))
+  (dolist (deadline '("<2026-11-05 Thu 20:30>" "2026-11-05" "2026-11-05 20:30" nil))
+    (should-not (todo--recurring deadline))))
+
+(ert-deftest todo-writes-orgs-catch-up-cookie-for-a-repeating-deadline ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Rent" "--deadline" "<2026-11-05 Thu 20:30 +1m>")
+  (should (string-match-p (regexp-quote "DEADLINE: <2026-11-05 Thu 20:30 ++1m>")
+                          (todo-test--text)))
+  ;; `++' and `.+' say what they mean and pass through untouched.
+  (todo-test--ok "create" "Sheets" "--deadline" "<2026-11-06 Fri 09:00 .+1w>")
+  (todo-test--ok "create" "Trash" "--deadline" "<2026-11-07 Sat 09:00 ++1d>")
+  (let ((text (todo-test--text)))
+    (should (string-match-p (regexp-quote "DEADLINE: <2026-11-06 Fri 09:00 .+1w>") text))
+    (should (string-match-p (regexp-quote "DEADLINE: <2026-11-07 Sat 09:00 ++1d>") text)))
+  ;; A one-off deadline is untouched, bare or stamped.
+  (todo-test--ok "create" "Tax" "--deadline" "2026-12-01")
+  (should (string-match-p (regexp-quote "DEADLINE: <2026-12-01 Tue>") (todo-test--text)))
+  ;; And so is the same date moved by set-deadline.
+  (todo-test--ok "set-deadline" "Tax" "<2026-12-01 Tue 20:30 +1m>")
+  (should (string-match-p (regexp-quote "DEADLINE: <2026-12-01 Tue 20:30 ++1m>")
+                          (todo-test--text))))
+
+(ert-deftest todo-postpone-keeps-a-catch-up-repeater ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO [#B] Rent :routine:\n"
+                            "DEADLINE: <2027-01-31 Sun 09:00 ++1m>\n"))
+  (todo-test--ok "postpone" "Rent" "+1m")
+  (should (string-match-p (regexp-quote "DEADLINE: <2027-02-28 Sun 09:00 ++1m>")
+                          (todo-test--text)))
+  ;; A lone `+' is upgraded on the way through, and `.+h' survives with its hours.
+  (todo-test--write (concat "* TODO [#B] Trash :routine:\n"
+                            "DEADLINE: <2027-01-31 Sun 09:00 +1m>\n"
+                            "* TODO [#B] Stretch :routine:\n"
+                            "DEADLINE: <2027-01-31 Sun 09:00 .+2h>\n"))
+  (todo-test--ok "postpone" "Trash" "+1m")
+  (todo-test--ok "postpone" "Stretch" "+2h")
+  (let ((text (todo-test--text)))
+    (should (string-match-p (regexp-quote "++1m>") text))
+    (should (string-match-p (regexp-quote ".+2h>") text))))
+
+(ert-deftest todo-complete-lets-org-catch-a-routine-up ()
+  (todo-test--setup)
+  ;; A weekly routine whose anchor lapsed years ago: org has to shift it past
+  ;; ten intervals, which is where it asks its "Continue?" question.
+  (todo-test--write (concat "* TODO [#B] Sheets :routine:\n"
+                            "DEADLINE: <2020-01-01 Wed 09:00 ++1w>\n"))
+  (let ((result (todo-test--ok "complete" "Sheets")))
+    (should (string-match-p "^routine: yes$" (nth 1 result)))
+    (should (string-match-p "^deadline: <" (nth 1 result))))
+  (let* ((text (todo-test--text))
+         (stamp (and (string-match "DEADLINE: \\(<[^>]+>\\)" text) (match-string 1 text)))
+         (parts (todo--deadline-parts stamp))
+         (landed (car parts))
+         (today (todo-ist-day))
+         (anchor (org-time-string-to-absolute "2020-01-01")))
+    (should stamp)
+    ;; Org's rule: a whole number of weeks past the anchor, and in the future.
+    (should (> landed today))
+    (should (<= landed (+ today 7)))
+    (should (= 0 (% (- landed anchor) 7)))))
+
+(ert-deftest todo-complete-keeps-an-hour-routine ()
+  (todo-test--setup)
+  ;; A two-hour routine whose anchor is two hours behind now: org has to catch up.
+  (let* ((now (todo-ist-now))
+         (earlier (- (+ (* 1440 (car now)) (cdr now)) 120))
+         (day (floor earlier 1440))
+         (deadline (todo--deadline-text day
+                                        (todo--time-of-minutes (- earlier (* 1440 day)))
+                                        "++2h")))
+    (todo-test--write (concat "* TODO [#B] Stretch :routine:\nDEADLINE: " deadline "\n"))
+    (should (string-match-p "^routine: yes$" (nth 1 (todo-test--ok "complete" "Stretch"))))
+    (let* ((text (todo-test--text))
+           (stamp (and (string-match "DEADLINE: \\(<[^>]+>\\)" text) (match-string 1 text)))
+           (parts (todo--deadline-parts stamp))
+           (landed (+ (* 1440 (or (car parts) 0))
+                      (or (todo--minutes-of-time (cadr parts)) 0)))
+           (after (todo-ist-now)))
+      (should stamp)
+      (should (> landed (+ (* 1440 (car after)) (cdr after)))))))
+
 ;;; update
 
 (ert-deftest todo-update-by-title ()
@@ -631,7 +732,7 @@ verbs, same parsing, a few milliseconds each."
   (let ((board (todo-test--text)))
     ;; Still there, priority B from the repeater, and org advanced the date.
     (should (string-match-p "^\\* .*Water plants :routine:$" board))
-    (should (string-match-p (regexp-quote "DEADLINE: <2026-10-12 Mon 09:00 +1w>") board)))
+    (should (string-match-p (regexp-quote "DEADLINE: <2026-10-12 Mon 09:00 ++1w>") board)))
   (should-not (file-exists-p (todo-test--file "todo.org_archive"))))
 
 (ert-deftest todo-read-never-sees-an-archive-file ()
