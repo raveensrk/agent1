@@ -477,6 +477,37 @@ def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
         assert run() == ""
 
 
+def test_cli_help_check_reads_code_not_strings():
+    """A test that writes a fake CLI into a string mentions sys.argv without
+    parsing a single option: flagging it asked a test file for -h and --help
+    (found on test_reddit_dl.py). Real argv use still owes the pair."""
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        script = os.path.join(tmp, "test_tool.py")
+
+        def run():
+            proc = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
+            assert proc.returncode == 0, proc.stderr
+            return proc.stdout
+
+        # sys.argv inside a fixture string is not a file that parses options.
+        with open(script, "w") as fh:
+            fh.write("#!/usr/bin/env python3\n"
+                     "FAKE = 'import sys\\nprint(sys.argv[-1])\\n'\n"
+                     "open('fake.py', 'w').write(FAKE)\n")
+        os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
+        assert run() == "", run()
+        # The same read in code, not in a string, is a CLI that owes the pair.
+        with open(script, "w") as fh:
+            fh.write('#!/usr/bin/env python3\nimport sys\nprint(sys.argv[1:])\n')
+        assert "mentions neither -h nor --help" in run(), run()
+        with open(script, "w") as fh:
+            fh.write('#!/usr/bin/env python3\nimport sys\n'
+                     'if "-h" in sys.argv or "--help" in sys.argv:\n'
+                     '    print("usage: test_tool.py")\n    sys.exit(0)\n')
+        assert run() == "", run()
+
+
 def test_cli_help_check_skips_non_executables_and_honours_the_allowlist():
     check = os.path.join(CHECKS, "cli_help.py")
     with tempfile.TemporaryDirectory() as tmp:

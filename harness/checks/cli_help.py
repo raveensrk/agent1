@@ -12,7 +12,9 @@ So this check decides the hard half only:
     both `-h` and `--help`. argparse's default `add_help` binds both for free,
     and with it each subcommand too, so an argparse file passes without a word;
     only `add_help=False` asks for the explicit pair. A hand-parsed script needs
-    both spellings, and the finding names the one that is missing.
+    both spellings, and the finding names the one that is missing. Option
+    parsing is read from code, never from a string or a comment: a test that
+    writes a fake CLI into a fixture owns no flags.
   * Which short letter a long flag takes stays prose, because "when possible" is
     a judgement: the free letters are not knowable from one file. The check never
     asks for a short alias for anything but help, and it never picks a letter.
@@ -31,10 +33,12 @@ from __future__ import annotations
 
 import ast
 import fnmatch
+import io
 import os
 import re
 import stat
 import sys
+import tokenize
 
 REPOS = os.path.expanduser("~/repos")
 ALLOW = os.path.join(REPOS, "agent2", "harness", "data", "cli_help_allow.txt")
@@ -98,6 +102,26 @@ def allowed(rel: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(base, p) for p in patterns)
 
 
+def code_only(text: str) -> str:
+    """The file with its string and comment tokens dropped.
+
+    `sys.argv` inside a string is not a file that parses options: a test that
+    writes a fake CLI into a fixture, or a docstring showing an example, takes
+    no arguments at all. Reading those as option parsing asked test files for
+    -h and --help.
+    """
+    skip = {tokenize.STRING, tokenize.COMMENT}
+    skip |= {tok for name in ("FSTRING_START", "FSTRING_MIDDLE", "FSTRING_END")
+             if (tok := getattr(tokenize, name, None)) is not None}
+    try:
+        tokens = tokenize.generate_tokens(io.StringIO(text).readline)
+        # Joined with no separator: `sys` `.` `argv` must stay adjacent for the
+        # regexes to see the same code they saw before strings were dropped.
+        return "".join(tok.string for tok in tokens if tok.type not in skip)
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        return text  # unreadable source is not this check's finding
+
+
 def adds_options(text: str) -> bool | None:
     """True when a python file adds argparse options, False when it adds none,
     and nil when it does not parse - the python_compiles check owns that."""
@@ -125,7 +149,8 @@ def findings(rel: str, text: str) -> list[str]:
     # argparse binds -h and --help by default, per parser and per subcommand.
     if adds and "add_help=False" not in text:
         return []
-    if not adds and not HAND_PARSED.search(text):
+    parsed = text if not python else code_only(text)
+    if not adds and not HAND_PARSED.search(parsed):
         return []                          # takes no options at all
     missing = [flag for flag, found in (("-h", SHORT_HELP.search(text)),
                                         ("--help", LONG_HELP.search(text)))
