@@ -16,9 +16,10 @@ shift
 socket=${TODO_SKILL_SOCKET:-todo-skill}
 
 warm_up() {
-  # These functions are the warm contract. A daemon from before either
-  # exists is stale, so this check restarts it.
-  emacsclient -s "$socket" --eval '(fboundp (quote todo-doing-pick))' 2>/dev/null | grep -q '^t$'
+  # The warm contract: the file on disk is the daemon's version. A daemon that
+  # predates the current todo.el is stale, so this check restarts it.
+  stamp=$(stat -f %m "$el")
+  emacsclient -s "$socket" --eval '(todo-warm-stamp)' 2>/dev/null | grep -q "\"$stamp\"$"
 }
 
 if ! warm_up; then

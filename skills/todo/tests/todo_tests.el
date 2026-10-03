@@ -327,6 +327,13 @@ verbs, same parsing, a few milliseconds each."
     (call-process "emacsclient" nil t nil "-s" socket "--eval" "(emacs-pid)")
     (string-to-number (buffer-string))))
 
+(ert-deftest todo-warm-stamp-matches-the-file-on-disk ()
+  (let ((file (expand-file-name "scripts/todo.el" todo-test--root)))
+    (should (equal (todo-warm-stamp)
+                   (string-trim
+                    (shell-command-to-string
+                     (format "stat -f %%m %s" (shell-quote-argument file))))))))
+
 (ert-deftest todo-warm-write-does-not-kill-emacs ()
   (todo-test--setup)
   (let ((process-environment (cons (concat "TODO_SKILL_CONFIG=" todo-test--config)
@@ -442,6 +449,26 @@ verbs, same parsing, a few milliseconds each."
     (should (equal (todo-test--field item "state") "TODO")))
   (todo-test--ok "set-state" "Old" "DONE")
   (should (equal (nth 1 (todo-test--ok "doing" "--json")) "null\n")))
+
+(ert-deftest todo-doing-priority-picks-one-open-a-task ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Low" "--priority" "C" "--deadline" "2099-01-01")
+  (todo-test--ok "create" "Beta" "--priority" "A" "--deadline" "2099-01-01")
+  (todo-test--ok "create" "Alpha" "--priority" "A")
+  (todo-test--ok "create" "Beaten" "--priority" "A")
+  (todo-test--ok "set-state" "Beaten" "DONE")
+  (todo-test--ok "create" "Deferred" "--priority" "A")
+  (todo-test--ok "set-state" "Deferred" "LATER")
+  (let ((lines (nth 1 (todo-test--ok "doing" "--priority" "A"))))
+    (should (equal 1 (length (split-string lines "\n" t))))
+    (should (string-match-p "Alpha" lines)))
+  (should (equal "Alpha"
+                 (todo-test--field
+                  (todo-test--json (nth 1 (todo-test--ok "doing" "--priority" "A" "--json")))
+                  "title")))
+  (should (equal "none\n" (nth 1 (todo-test--ok "doing" "--priority" "B"))))
+  (should (equal "null\n" (nth 1 (todo-test--ok "doing" "--priority" "B" "--json"))))
+  (should (eq 1 (nth 0 (todo-test--cli "doing" "--priority" "High")))))
 
 (ert-deftest todo-task-line-is-the-heading ()
   (todo-test--setup)

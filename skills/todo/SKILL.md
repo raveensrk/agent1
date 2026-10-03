@@ -76,6 +76,7 @@ absolute path. Emacs is the only dependency.
 scripts/todo resolve                        # board file and dir
 scripts/todo read [--state TODO] [--tag x] [--json]  # config dirs + this board
 scripts/todo doing [--json]                     # one due TODO or IN_PROGRESS
+scripts/todo doing --priority A [--json]        # one open A task, due or not
 scripts/todo --warm read [--json]               # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A
 scripts/todo set-state "Pay rent" IN_PROGRESS
@@ -107,6 +108,9 @@ board is known, not a licence to pick one.
 - `capture` appends a plain `*` heading (no state, no properties).
 - Lists print `STATE  Title  (path)`; single results print `key: value`. `read --json` prints the same tasks as one JSON array: title, state, deadline, priority, tags, note, path. A missing deadline or priority is null.
 - `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before C, then title, then path. `--json` prints that one object, or `null`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
+- `doing --priority A|B|C` picks the priority-only way instead: any open task at
+that priority, due or not, title then path. No match prints `none`, as `doing`
+does. An unknown value is refused.
 - `--warm` runs the same verb in one background Emacs named `todo-skill`. The plain command still starts a fresh Emacs and quits. The window uses `--warm` and starts the worker if it is down. Quit it with `emacsclient -s todo-skill --eval '(kill-emacs)'`. `edit` and `edit-vim` open vim at the heading line. With no terminal they open as `mvim -f`. `edit-emacs` opens Emacs at that same line.
 
 Config, `~/dot_local/config/todo_skill.toml`:

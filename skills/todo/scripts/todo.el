@@ -38,6 +38,20 @@
 
 ;;; Errors and output
 
+(defconst todo-loaded-file (or load-file-name buffer-file-name)
+  "This file, as it was loaded.")
+
+(defconst todo-loaded-stamp
+  (let ((time (and todo-loaded-file (file-attribute-modification-time
+                                     (file-attributes todo-loaded-file)))))
+    (and time (format-time-string "%s" time)))
+  "Modification time of the loaded file in epoch seconds.")
+
+(defun todo-warm-stamp ()
+  "The loaded file's stamp. The wrapper compares it with the file on disk: a
+daemon started before an edit is stale and must be restarted."
+  todo-loaded-stamp)
+
 (define-error 'todo-warm-fail "todo warm failed")
 
 (defun todo-fail (msg)
@@ -280,25 +294,37 @@ warm process's multibyte buffer writes illegal \\342 escapes."
       (- (aref priority 0) ?A)
     3))
 
-(defun todo-doing-pick (items today)
-  "The main quest in ITEMS for absolute day TODAY, or nil."
-  (car (sort (cl-remove-if-not
-              (lambda (item)
-                (let ((due (todo--due-day (alist-get 'deadline item))))
-                  (and (member (alist-get 'todo item) todo-doing-states)
-                       due
-                       (<= due today))))
-              items)
-             (lambda (a b)
-               (let ((late-a (- today (todo--due-day (alist-get 'deadline a))))
-                     (late-b (- today (todo--due-day (alist-get 'deadline b))))
-                     (rank-a (todo--priority-rank (alist-get 'priority a)))
-                     (rank-b (todo--priority-rank (alist-get 'priority b))))
-                 (cond ((/= late-a late-b) (> late-a late-b))
-                       ((/= rank-a rank-b) (< rank-a rank-b))
-                       ((not (equal (alist-get 'title a) (alist-get 'title b)))
-                        (string< (alist-get 'title a) (alist-get 'title b)))
-                       (t (string< (alist-get 'path a) (alist-get 'path b)))))))))
+(defun todo-doing-pick (items today &optional priority)
+  "The main quest in ITEMS for absolute day TODAY, or nil.
+With PRIORITY, pick any open task at that priority instead, due or not, title
+then path: the priority-only pick."
+  (if priority
+      (car (sort (cl-remove-if-not
+                  (lambda (item)
+                    (and (member (alist-get 'todo item) todo-doing-states)
+                         (equal (alist-get 'priority item) priority)))
+                  items)
+                 (lambda (a b)
+                   (if (not (equal (alist-get 'title a) (alist-get 'title b)))
+                       (string< (alist-get 'title a) (alist-get 'title b))
+                     (string< (alist-get 'path a) (alist-get 'path b))))))
+    (car (sort (cl-remove-if-not
+                (lambda (item)
+                  (let ((due (todo--due-day (alist-get 'deadline item))))
+                    (and (member (alist-get 'todo item) todo-doing-states)
+                         due
+                         (<= due today))))
+                items)
+               (lambda (a b)
+                 (let ((late-a (- today (todo--due-day (alist-get 'deadline a))))
+                       (late-b (- today (todo--due-day (alist-get 'deadline b))))
+                       (rank-a (todo--priority-rank (alist-get 'priority a)))
+                       (rank-b (todo--priority-rank (alist-get 'priority b))))
+                   (cond ((/= late-a late-b) (> late-a late-b))
+                         ((/= rank-a rank-b) (< rank-a rank-b))
+                         ((not (equal (alist-get 'title a) (alist-get 'title b)))
+                          (string< (alist-get 'title a) (alist-get 'title b)))
+                         (t (string< (alist-get 'path a) (alist-get 'path b))))))))))
 
 (defun todo--json-task (item)
   "ITEM as the read --json object. Missing deadline and priority are null."
@@ -506,13 +532,16 @@ writers never clobber each other."
                          (cons 'exists (file-exists-p board))))))
 
       ("doing"
-       (let ((pick (todo-doing-pick (todo-read dirs nil nil) (todo-ist-day))))
-         (if (member "--json" rest)
-             (todo-print-json-object pick)
-           (if pick
-               (princ (format "%-12s %s  (%s)\n"
-                              (alist-get 'todo pick) (alist-get 'title pick) (alist-get 'path pick)))
-             (princ "none\n")))))
+       (let ((priority (todo--flag flags "--priority")))
+         (when (and priority (not (member priority '("A" "B" "C"))))
+           (todo-fail (format "priority takes A, B or C, got %s" priority)))
+         (let ((pick (todo-doing-pick (todo-read dirs nil nil) (todo-ist-day) priority)))
+           (if (member "--json" rest)
+               (todo-print-json-object pick)
+             (if pick
+                 (princ (format "%-12s %s  (%s)\n"
+                                (alist-get 'todo pick) (alist-get 'title pick) (alist-get 'path pick)))
+               (princ "none\n"))))))
 
       ("read"
        (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")))))
