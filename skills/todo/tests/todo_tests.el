@@ -219,6 +219,25 @@ verbs, same parsing, a few milliseconds each."
 (defun todo-test--field (item key)
   (alist-get (intern key) item))
 
+(ert-deftest todo-read-and-doing-honor-file ()
+  (todo-test--setup)
+  (todo-test--ok "create" "In the test dir")
+  (let* ((dir (make-temp-file "todo-other-" t))
+         (other (expand-file-name "other.org" dir)))
+    (with-temp-file other
+      (insert "* TODO Only in the other board\nDEADLINE: <2020-01-01 Wed>\n"))
+    (should (equal '("Only in the other board")
+                   (mapcar (lambda (i) (todo-test--field i "title"))
+                           (todo-test--json (nth 1 (todo-test--ok "read" "--json" "--file" other))))))
+    (should (equal "Only in the other board"
+                   (todo-test--field
+                    (todo-test--json (nth 1 (todo-test--ok "doing" "--json" "--file" other)))
+                    "title")))
+    (should (equal '("In the test dir")
+                   (mapcar (lambda (i) (todo-test--field i "title"))
+                           (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))))
+    (should (eq 1 (nth 0 (todo-test--cli "read" "--json" "--file" (expand-file-name "nope.org" dir)))))))
+
 (ert-deftest todo-read-json-has-the-card-fields ()
   (todo-test--setup)
   (todo-test--write (concat "* TODO [#A] Pay rent :finance:\n"

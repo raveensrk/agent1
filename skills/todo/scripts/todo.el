@@ -391,23 +391,26 @@ then path: the priority-only pick."
                    out)))))
       (nreverse out))))
 
-(defun todo-read (dirs state tag)
-  "Tasks from DIRS, or the configured dirs, plus the cwd board."
+(defun todo-read (dirs state tag &optional file)
+  "Tasks from DIRS, or the configured dirs, plus the cwd board.
+With FILE, read exactly that one board and nothing else."
   (let* ((config (todo-config))
          (ignore (alist-get 'ignore config))
          (roots (or dirs (alist-get 'default_dirs config)))
          (items nil))
-    (dolist (dir roots)
-      (when (file-directory-p dir)
-        (dolist (file (todo--files dir ignore))
-          (setq items (append items (todo-tasks file))))))
-    (let ((board (todo-board)))
-      (when (and (file-exists-p board)
-                 (not (cl-some (lambda (dir)
-                                 (and (file-directory-p dir) (file-in-directory-p board dir)))
-                               roots))
-                 (not (todo-ignored-p board ignore)))
-        (setq items (append items (todo-tasks board)))))
+    (if file
+        (setq items (todo-tasks (expand-file-name file)))
+      (dolist (dir roots)
+        (when (file-directory-p dir)
+          (dolist (file (todo--files dir ignore))
+            (setq items (append items (todo-tasks file))))))
+      (let ((board (todo-board)))
+        (when (and (file-exists-p board)
+                   (not (cl-some (lambda (dir)
+                                   (and (file-directory-p dir) (file-in-directory-p board dir)))
+                                 roots))
+                   (not (todo-ignored-p board ignore)))
+          (setq items (append items (todo-tasks board))))))
     (when state
       (setq items (cl-remove-if-not (lambda (i) (equal (alist-get 'todo i) state)) items)))
     (when tag
@@ -602,7 +605,7 @@ plain heading, so the Archive container is refused."
        (let ((priority (todo--flag flags "--priority")))
          (when (and priority (not (member priority '("A" "B" "C"))))
            (todo-fail (format "priority takes A, B or C, got %s" priority)))
-         (let ((pick (todo-doing-pick (todo-read dirs nil nil) (todo-ist-day) priority)))
+         (let ((pick (todo-doing-pick (todo-read dirs nil nil file) (todo-ist-day) priority)))
            (if (member "--json" rest)
                (todo-print-json-object pick)
              (if pick
@@ -611,7 +614,7 @@ plain heading, so the Archive container is refused."
                (princ "none\n"))))))
 
       ("read"
-       (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")))))
+       (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")) file)))
          (if (member "--json" rest)
              (todo-print-json items)
            (dolist (item items)

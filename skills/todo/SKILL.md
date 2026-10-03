@@ -84,8 +84,8 @@ absolute path. Emacs is the only dependency.
 
 ```bash
 scripts/todo resolve                        # board file and dir
-scripts/todo read [--state TODO] [--tag x] [--json]  # config dirs + this board
-scripts/todo doing [--json]                     # one due TODO or IN_PROGRESS
+scripts/todo read [--state TODO] [--tag x] [--file F] [--json]  # config dirs + this board, or just F
+scripts/todo doing [--json] [--file F]          # one due TODO or IN_PROGRESS
 scripts/todo doing --priority A [--json]        # one open A task, due or not
 scripts/todo --warm read [--json]               # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A --effort 0:30
@@ -116,6 +116,9 @@ Archive container.
 - The board is `todo.org` in the cwd; `--file F` overrides. When the user names a
 board, always pass `--file`/`--dir` - the cwd default is a fallback for when the
 board is known, not a licence to pick one.
+- `--file F` means that exact board for every verb, read and write alike, and it
+wins when `--dir` is also given. `--dir D` makes a read scan D's `*.org` files
+instead of the configured dirs; it does nothing for a write.
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
