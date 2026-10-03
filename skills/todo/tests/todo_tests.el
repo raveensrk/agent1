@@ -304,6 +304,24 @@ verbs, same parsing, a few milliseconds each."
     (should-not (string-match-p "a body line" text))
     (should (string-match-p "^\\* TODO Keep me$" text))))
 
+(ert-deftest todo-set-state-promotes-a-plain-heading ()
+  (todo-test--setup)
+  (todo-test--write (concat "* Idea worth keeping\n"
+                            "  a line of note\n"
+                            "* Archive\n"
+                            "** DONE Old\n"))
+  (todo-test--ok "set-state" "Idea worth keeping" "TODO")
+  (let ((text (todo-test--text)))
+    (should (string-match-p "^\\* TODO Idea worth keeping$" text))
+    (should (string-match-p "a line of note" text)))
+  (should (equal "TODO"
+                 (todo-test--field
+                  (car (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
+                  "state")))
+  (should (eq 1 (nth 0 (todo-test--cli "set-state" "Archive" "TODO"))))
+  (should (string-match-p "^\\* Archive$" (todo-test--text)))
+  (should (eq 1 (nth 0 (todo-test--cli "set-state" "Old" "TODO")))))
+
 (ert-deftest todo-delete-refuses-an-unknown-task ()
   (todo-test--setup)
   (todo-test--ok "create" "Real task")

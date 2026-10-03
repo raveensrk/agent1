@@ -488,19 +488,25 @@ writers never clobber each other."
     (todo-fail "the board changed while writing; retry"))
   (sleep-for 0.05))
 
-(defun todo--goto (title)
-  "Move to the task named TITLE. Fail when it is absent or ambiguous."
+(defun todo--goto (title &optional container)
+  "Move to the task named TITLE. Fail when it is absent or ambiguous.
+With CONTAINER, a state-less heading matches too - the only path that promotes a
+plain heading, so the Archive container is refused."
   (todo--mark-blocks)
   (let (marker (count 0))
     (org-map-entries
      (lambda ()
-       (when (and (member (org-get-todo-state) todo-states)
+       (when (and (or (member (org-get-todo-state) todo-states) container)
                   (not (todo--in-block-p))
                   (not (todo--archived-p))
+                  (not (and container
+                            (null (org-get-todo-state))
+                            (equal (org-get-heading t t t t) "Archive")))
                   (equal (org-get-heading t t t t) title))
          (cl-incf count)
          (unless marker (setq marker (point-marker))))))
-    (cond ((null marker) (todo-fail (format "%S is not a task heading in this file" title)))
+    (cond ((null marker) (todo-fail (format "%S is not a %sheading in this file" title
+                                            (if container "" "task "))))
           ((> count 1) (todo-fail (format "more than one heading matches %S; refine the ref" title))))
     (goto-char marker)
     (set-marker marker nil)))
@@ -632,7 +638,7 @@ writers never clobber each other."
        (let ((state (cadr rest)))
          (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
          (let ((board (todo--existing file)))
-           (todo-write board (lambda () (todo--goto (car rest)) (org-todo state)))
+           (todo-write board (lambda () (todo--goto (car rest) t) (org-todo state)))
            (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state state))))))
 
       ("set-deadline"

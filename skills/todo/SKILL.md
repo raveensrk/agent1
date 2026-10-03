@@ -27,7 +27,10 @@ They live in `scripts/todo.el`, not in the file. Life cycle: `TODO` ->
 
 **Task line.** A `*` at column 0, a state, a non-empty title:
 `** TODO Pay rent :finance:`. A heading with no state is a container. A task may
-never contain a task - break a big job into peer tasks sharing a tag.
+never contain a task - break a big job into peer tasks sharing a tag. `set-state`
+is the one verb that reaches a state-less heading: it promotes a container (a
+`capture` line) into a task. The Archive container is never promoted - `refs`
+ever look for tasks there.
 
 **Tags.** Lowercase, colon-delimited: `:finance:home:`. The charset is
 `[[:alnum:]_@#%]+`, so a hyphen is not a tag character (`:tax_2026:`, not
@@ -87,6 +90,7 @@ scripts/todo doing --priority A [--json]        # one open A task, due or not
 scripts/todo --warm read [--json]               # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A --effort 0:30
 scripts/todo set-state "Pay rent" IN_PROGRESS
+scripts/todo set-state "An idea captured earlier" TODO   # promotes a plain heading
 scripts/todo set-deadline "Pay rent" 2026-12-01
 scripts/todo set-deadline "Pay rent" "2026-12-01 20:30"   # with a time of day
 scripts/todo set-effort "Pay rent" 0:30
@@ -106,7 +110,9 @@ scripts/todo config
 ```
 
 - A ref is an exact title. Two tasks with the same title make the ref ambiguous
-  and the CLI refuses it.
+  and the CLI refuses it. Every verb matches tasks; only `set-state` also matches
+a state-less heading (a container or a `capture` line), and it never matches the
+Archive container.
 - The board is `todo.org` in the cwd; `--file F` overrides. When the user names a
 board, always pass `--file`/`--dir` - the cwd default is a fallback for when the
 board is known, not a licence to pick one.
