@@ -132,6 +132,28 @@ verbs, same parsing, a few milliseconds each."
   (should (eq 1 (nth 0 (todo-test--cli "set-deadline" "Edit me" "garbage"))))
   (should (string-match-p "DEADLINE: <2026-12-01 Tue>" (todo-test--text))))
 
+(ert-deftest todo-write-refuses-a-heading-inside-a-block ()
+  (todo-test--setup)
+  (todo-test--write (concat "#+TODO: TODO | DONE\n"
+                            "* Tasks\n"
+                            "** TODO Real\n"
+                            "#+BEGIN_SRC text\n"
+                            "* TODO Not a task\n"
+                            "#+END_SRC\n"))
+  (let ((result (todo-test--cli "create" "New")))
+    (should (eq 1 (nth 0 result)))
+    (should (string-match-p "todo.org:5: a column-0 \\* heading sits inside #\\+SRC\\b" (nth 2 result))))
+  (should-not (string-match-p "New" (todo-test--text)))
+  ;; The line indented by one space is prose to org too, so the write goes through.
+  (todo-test--write (concat "#+TODO: TODO | DONE\n"
+                            "* Tasks\n"
+                            "** TODO Real\n"
+                            "#+BEGIN_SRC text\n"
+                            "  * indented stays prose\n"
+                            "#+END_SRC\n"))
+  (todo-test--ok "append" "Real" "note added")
+  (should (string-match-p "note added" (todo-test--text))))
+
 (ert-deftest todo-create-starts-a-plain-file ()
   (todo-test--setup)
   (todo-test--ok "create" "First")

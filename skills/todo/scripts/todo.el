@@ -422,6 +422,31 @@ then path: the priority-only pick."
     (write-region text nil tmp nil 'silent)
     (rename-file tmp file t)))
 
+(defun todo--heading-in-block (text)
+  "First (LINE . BLOCK) where a column-0 heading sits inside a #+BEGIN_* block
+in TEXT, or nil. Org counts that line as a real task; this CLI's read skips it,
+so the two disagree until the line is indented."
+  (let ((depth 0) (line 0) (block nil) found)
+    (dolist (l (split-string text "\n"))
+      (setq line (1+ line))
+      (cond ((string-match "\\`[ \t]*#\\+BEGIN_\\([A-Za-z0-9_]+\\)" l)
+             (cl-incf depth)
+             (when (= depth 1) (setq block (match-string 1 l))))
+            ((string-match "\\`[ \t]*#\\+END_" l)
+             (setq depth (max 0 (1- depth))))
+            ((and (> depth 0) (not found) (string-match "\\`\\*+ " l))
+             (setq found (cons line block)))))
+    found))
+
+(defun todo--check-blocks (file text)
+  "Fail when TEXT would leave a column-0 heading inside a block in FILE."
+  (let ((hit (todo--heading-in-block text)))
+    (when hit
+      (todo-fail (format (concat "%s:%d: a column-0 * heading sits inside #+%s"
+                                 " (org counts it as a real task). Indent it by"
+                                 " one space, then retry.")
+                         file (car hit) (cdr hit))))))
+
 (defun todo-write (file fn)
   "Apply FN to FILE's content and replace the file atomically. When another
 process wrote FILE meanwhile, retry with fresh content, so concurrent
@@ -441,6 +466,7 @@ writers never clobber each other."
                      (goto-char (point-max))
                      (unless (or (bobp) (eq (char-before) ?\n)) (insert "\n"))
                      (buffer-string))))
+        (todo--check-blocks file text)
         (cond
          ;; Two writers creating the same board: one wins the O_EXCL create,
          ;; the loser retries on the winner's content.

@@ -49,7 +49,9 @@ org-columns, org-agenda and org-clock read it.
 
 **Examples.** A heading inside a `#+BEGIN_*` ... `#+END_*` block (src, example,
 quote, ...) is documentation, not a task. `read` and refs ignore it, even when
-the `*` sits at column 0.
+the `*` sits at column 0. Org does not: to org and the agenda that line is a real
+task, so every write refuses a file holding one and names the line - indent it by
+one space, then retry.
 
 **Archive.** Retired tasks stay at the end of the board under a `* Archive`
 container, after the live content and 40 blank lines. There is no separate
@@ -157,7 +159,8 @@ may write while you edit, and the last save wins.
 ## 6. Traps
 
 - Any line starting with `*` at column 0 is a heading, so indent `append` text
-  that starts with a star.
+  that starts with a star - the write itself refuses a file whose block holds
+  such a line, naming the file and the line.
 - `set-deadline` on a `DONE` task drops `CLOSED:` (org behaviour). Reopen
   before setting a deadline if the closed time matters.
 - The CLI writes no frontmatter, no properties, and no archive file. Do not
