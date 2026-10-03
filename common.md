@@ -23,8 +23,10 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Interview me and ask clarifying questions before starting a task.
 - Ask one question at a time. When a decision is needed, ask it as an MCQ and mark the option you recommend with "(recommended)".
 - When a task has two plausible architectures, ask one MCQ before writing any code.
+- A new command's default human-readable output: ask the shape first, with one MCQ that shows a concrete example of each. The renderer is the expensive part to redo.
 - Verify a library call in a scratch buffer or a one-liner before using it in code.
 - A bulk or destructive change prints a per-file plan first, then applies.
+- A live external account is real data. Before the first write to one - a playlist, a mailbox, a third-party API - ask once and name what changes, then prototype on a scratch resource you create rather than the user's own. The real account is only touched by a command the user asked for by name.
 - Back a recommendation with a number measured on this machine, not from memory.
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
@@ -109,6 +111,7 @@ When I don't understand something, show it instead of repeating it in text.
 The harness is everything around the model that turns a rule into a signal: checks,
 generators, hooks and guards. Prose is the fallback, not the default.
 
+- A check that walks the filesystem confirms its root is a repo root first: the dispatcher falls back to the working directory when the edited files are in no repo, and a check that walked it found a file in Trash.
 - A rule a check can decide belongs in a check, not in prose. Write the check in
   [harness/checks](~/repos/agent1/harness/checks) (see
   [harness/README.md](~/repos/agent1/harness/README.md)) and keep the prose rule
@@ -143,6 +146,7 @@ Every session must reconstruct identical context from this repo alone, across pi
 ## Documentation
 
 Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. Suggest new guidelines worth adding.
+- Before removing a path or a symlink, search the docs that reference it and update them in the same change.
 
 ## Verification
 
@@ -152,6 +156,7 @@ For multi-step, ambiguous, or high-impact work, say how you could verify it befo
 - When a value you display mirrors one the vendor's own UI shows, fetch the endpoint that reproduces that exact number and compare it before shipping the field. A plausible field name is not the number.
 - After editing Emacs Lisp, run `check-parens` or the test suite immediately; do not hand-roll a parse check.
 - Run a new checker or validator over the whole existing population, not only the target it was written for. Its first run must pass on every instance, or it is reporting its own bugs.
+- Error paths are verified by the offline unit tests. A live network command is for the happy path, once, bounded with a limit flag; a live call to prove a rejection costs a full fetch and an interruption.
 
 After installing or removing pi packages, verify with `timeout 90 pi -p "reply with just: ok"` and check stderr for warnings.
 
@@ -216,6 +221,15 @@ When what is found does not match what was asked (count or scope), ask before re
 - Any `pi install` or `pi uninstall` reconciles the npm dir to `settings.json` and can silently prune other installed packages. Snapshot `~/.pi/agent/npm/package.json` first and expect collateral removals.
 - The host-dependency warning (host-provided packages in `dependencies`) fires only for enabled extensions. Before acting, scan every installed package that declares `pi.extensions` for host-provided deps in `dependencies`.
 - Host-provided packages (`@earendil-works/pi-ai`, `pi-agent-core`, `pi-coding-agent`, `pi-tui`, `typebox`) belong in `peerDependencies` with a `"*"` range, never in `dependencies`.
+
+## Repos
+
+Never use a nested git repo for my projects, and never a symlink to one. A clone from the internet is the
+exception: it goes in the allowlist that [nested_git_repo](~/repos/agent2/harness/checks/nested_git_repo.py)
+reads, and the check decides the rule. The walker lints nested repos and prints their findings as warnings,
+never as findings, and never changes the exit code - it does nothing to a repo that is not mine. A symlink
+to a repo is a finding either way: the check reports one inside a repo, the walker reports one in a folder
+that no repo owns.
 
 ## Removal and uninstall
 

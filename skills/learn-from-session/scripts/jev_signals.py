@@ -15,7 +15,7 @@ opinion. It builds the state Jev needs - the turns, the calls worth judging, the
 candidate rules - and asks the four question families the review asks every
 time:
 
-    label_*      one choice per user turn
+    label_*      one choice per turn, the user's or a harness trigger's
     waste_*      one noul per slow, aborted, failed or waiting call
     quadrant_*   one choice per finding, over the talk's four cells
     impact_*     one choice per finding
@@ -52,6 +52,7 @@ LABELS = {
     "correction": "Corrects the assistant because the previous answer or code was wrong, or the agent had to change course",
     "answer": "Answers a question the assistant asked",
     "praise": "Approves or praises the assistant's work",
+    "automation": "Sent by a harness check or trigger, not typed by the user",
     "off_topic": "Unrelated to the session goal",
 }
 CELLS = {

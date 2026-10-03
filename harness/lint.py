@@ -45,6 +45,7 @@ CHECK_DIRS = [os.path.join(HERE, "checks"), os.path.join(REPOS, "agent2", "harne
 HEADER = re.compile(r"^#\s*harness-check:\s*(\{.*\})\s*$")
 FINDING = re.compile(r"^(?P<path>[^:]*?):(?P<line>\d+):\s*(?P<message>.*)$")
 MAX_BYTES = 1_000_000
+TRASH = os.path.expanduser("~/.Trash")
 
 
 def git(cwd: str, *args: str) -> str:
@@ -199,28 +200,101 @@ def run_check(check: dict, root: str, label: str, files: list[str]):
     return convert(check["id"], check["quadrant"], root, label, proc.stdout.splitlines()), None, elapsed
 
 
-def collect_targets(args) -> list[tuple[str, list[str], str]]:
-    """(repo root, candidate files, label for multi-repo output) triples."""
+SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".mypy_cache", ".tox"}
+NESTED_DEPTH = 3
+
+
+def nested_repos(root: str) -> list[str]:
+    """Repo roots below ROOT, to a bounded depth: vendored drops and clones.
+
+    Their findings are warnings rather than findings, because nobody here edits
+    a third-party checkout. A found repo is not descended into: it is one unit.
+    """
+    base = root.rstrip("/").count("/")
+    found: list[str] = []
+    for here, dirs, files in os.walk(root):
+        # Test for .git before pruning it: a linked worktree carries it as a file.
+        if here != root and (".git" in dirs or ".git" in files):
+            found.append(here)
+            dirs[:] = []
+            continue
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        if here.count("/") - base >= NESTED_DEPTH:
+            dirs[:] = []
+    return found
+
+
+def link_findings() -> list[dict]:
+    """Symlinks under ~/repos that point at a repo. The rule forbids them.
+
+    nested_git_repo.py decides the rule where a repo owns the link. A link in a
+    plain folder - `income_tax_fy_2025_2026/ledger -> ~/repos/ledger` - has no
+    repo, so no check run ever sees it; the walker reports it here instead, as a
+    finding, because the link is the user's own and the fix is his to make.
+    """
+    out = []
+    for name in sorted(os.listdir(REPOS)):
+        top = os.path.join(REPOS, name)
+        if not os.path.isdir(top):
+            continue
+        for here, dirs, files in os.walk(top):
+            if here.count("/") - top.rstrip("/").count("/") >= NESTED_DEPTH:
+                dirs[:] = []
+            else:
+                dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+            for entry in list(dirs) + files:
+                path = os.path.join(here, entry)
+                if not os.path.islink(path) or not os.path.isdir(path):
+                    continue
+                if not os.path.exists(os.path.join(path, ".git")):
+                    continue
+                out.append({
+                    "path": path,
+                    "line": 1,
+                    "check": "nested_git_repo",
+                    "message": (f"symlink to a git repo: {os.path.relpath(path, REPOS)} -> "
+                                f"{os.path.realpath(path)} - fix: rm {path} "
+                                "(a symlink to a repo is never allowed here)"),
+                })
+    return out
+
+
+def collect_targets(args) -> list[tuple[str, list[str], str, bool]]:
+    """(repo root, candidate files, label, nested) tuples.
+
+    `nested` marks a repo that lives inside another one: its findings print as
+    warnings and never change the exit code.
+    """
     if args.files:
         by_root: dict[str, list[str]] = {}
         for path in args.files:
             absolute = os.path.abspath(path)
+            # Trash is not project content: a session that removes a file should
+            # not be told about the corpse it left there.
+            if absolute.startswith(TRASH + os.sep):
+                continue
             root = repo_root(os.path.dirname(absolute) or ".") or os.getcwd()
             by_root.setdefault(root, []).append(absolute)
-        return [(root, files, "") for root, files in sorted(by_root.items())]
+        return [(root, files, "", False) for root, files in sorted(by_root.items())]
     if args.repos:
         out = []
         for name in sorted(os.listdir(REPOS)):
-            root = os.path.join(REPOS, name)
-            if not os.path.isdir(os.path.join(root, ".git")):
+            top = os.path.join(REPOS, name)
+            if not os.path.isdir(top):
                 continue
-            files = changed_files(root) if args.changed else repo_files(root)
-            out.append((root, files, name))
+            if os.path.isdir(os.path.join(top, ".git")):
+                files = changed_files(top) if args.changed else repo_files(top)
+                out.append((top, files, name, False))
+            # Repos under this directory: nested inside the repo above, or one
+            # of the few top-level folders that only hold checkouts.
+            for root in nested_repos(top):
+                files = changed_files(root) if args.changed else repo_files(root)
+                out.append((root, files, os.path.relpath(root, REPOS), True))
         return out
     root = repo_root(os.getcwd())
     if not root:
         sys.exit(f"lint: {os.getcwd()} is not inside a git repo (use FILE... or --repos)")
-    return [(root, changed_files(root) if args.changed else repo_files(root), "")]
+    return [(root, changed_files(root) if args.changed else repo_files(root), "", False)]
 
 
 def main() -> int:
@@ -244,12 +318,16 @@ def main() -> int:
             print(f"{check['id']:28s} {check['quadrant']:26s} {patterns}")
         return 0
 
-    findings: list[dict] = []
+    findings: list[dict] = link_findings() if args.repos else []
+    warnings: list[dict] = []
     failures: list[dict] = []
     timings: list[str] = []
     scanned = 0
+    nested_seen: set[str] = set()
     checks_seen: set[str] = set()
-    for root, files, label in collect_targets(args):
+    for root, files, label, nested in collect_targets(args):
+        if nested:
+            nested_seen.add(root)
         scanned += len(files)
         if not files:
             continue
@@ -264,22 +342,29 @@ def main() -> int:
             found, error, elapsed = run_check(check, root, label, wanted)
             if error:
                 failures.append({"check": check["id"], "root": root, "error": error})
-            findings.extend(found)
+            # A vendored or cloned repo is not ours to fix: warn, never act.
+            (warnings if nested else findings).extend(found)
             if args.timing:
                 timings.append(f"{check['id']:28s} {elapsed:6.2f}s {len(found):4d} findings")
 
     if args.json:
-        print(json.dumps({"findings": findings, "failures": failures}, indent=2))
+        print(json.dumps({"findings": findings, "warnings": warnings, "failures": failures}, indent=2))
     else:
         for t in timings:
             print(t)
         for finding in sorted(findings, key=lambda f: (f["path"], f["line"], f["check"])):
             location = f"{finding['path']}:{finding['line']}" if finding["path"] else "-"
             print(f"{location}: {finding['check']}: {finding['message']}")
+        for warning in sorted(warnings, key=lambda f: (f["path"], f["line"], f["check"])):
+            location = f"{warning['path']}:{warning['line']}" if warning["path"] else "-"
+            print(f"warning: {location}: {warning['check']}: {warning['message']}")
         for failure in failures:
             print(f"lint: check {failure['check']} failed in {failure['root']}: {failure['error']}",
                   file=sys.stderr)
         summary = f"{len(checks_seen)} checks, {scanned} files, {len(findings)} findings"
+        if warnings:
+            summary += (f", {len(warnings)} warnings in {len(nested_seen)} nested repos "
+                        "(warned only, never acted on)")
         if failures:
             summary += f", {len(failures)} check failures"
         print(summary)

@@ -22,7 +22,10 @@ if not FILES and not sys.stdin.isatty():
 
 # A path only counts when it is the whole token, so a link target or a path
 # inside a word does not trip it. Trailing punctuation is stripped afterwards.
-BARE = re.compile(r"(?<![\w(`/~-])(~|/Users/raveen_kumar_personal)/[\w./~-]+")
+# A leading @ is an import line in an agent startup file - common.md sanctions
+# `@~/path/to/rules.md` in AGENTS.md - and a markdown link there would stop being an
+# import, so the @ form is not prose and not rewritten.
+BARE = re.compile(r"(?<![\w(`/~@-])(~|/Users/raveen_kumar_personal)/[\w./~-]+")
 LINK = re.compile(r"!?\[[^\]]*\]\([^)]*\)")
 CODE = re.compile(r"`[^`]*`")
 TRAILING = ".,;:!?)-"
@@ -60,6 +63,7 @@ def main() -> int:
         lines = text.splitlines()
         skip_until = frontmatter_end(lines)
         fenced = False
+        span = False
         for number, line in enumerate(lines, 1):
             if number <= skip_until:
                 continue
@@ -70,6 +74,14 @@ def main() -> int:
             # not prose.
             if fenced or line.startswith("    ") or line.startswith("\t"):
                 continue
+            # An inline code span can wrap onto the next line, and a wrapped
+            # command is still a command: carry the open span over the break, or a
+            # long `python3 lint.py ~/tmp/one ~/tmp/two` reports both paths as
+            # prose. An odd backtick count toggles the state either way.
+            if span:
+                span = line.count("`") % 2 == 0
+                continue
+            span = line.count("`") % 2 == 1
             if "lint:ignore" in line:
                 continue  # an explicit, greppable escape hatch, like `# rubocop:disable`
             for match in BARE.finditer(prose(line)):

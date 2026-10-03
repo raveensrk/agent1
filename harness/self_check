@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# harness-check: self_check - the tests and the full-population lint, two lines out.
+#
+# The pair a session runs after touching the harness, typed by hand ten times in
+# one review as a chained command (9-12s each). The exit code is lint's verdict:
+# 0 clean, 1 findings, 2 a check failed to run.
+set -uo pipefail
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+python3 -m pytest "$here/tests/test_lint.py" -q 2>&1 | tail -1
+python3 "$here/lint.py" --repos 2>&1 | tail -1

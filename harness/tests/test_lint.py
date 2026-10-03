@@ -6,7 +6,10 @@
 """
 from __future__ import annotations
 
+import argparse
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import stat
@@ -27,11 +30,110 @@ def load_lint():
     return module
 
 
+def test_repos_walk_finds_nested_repos_and_marks_them():
+    """A repo inside a repo, or inside a plain folder, is walked as nested."""
+    lint = load_lint()
+    with tempfile.TemporaryDirectory() as tmp:
+        for rel in ("outer/.git", "outer/vendored/inner/.git", "plain/checkout/.git"):
+            os.makedirs(os.path.join(tmp, rel))
+        old = lint.REPOS
+        lint.REPOS = tmp
+        try:
+            targets = lint.collect_targets(argparse.Namespace(files=[], repos=True, changed=False))
+        finally:
+            lint.REPOS = old
+        seen = {os.path.relpath(root, tmp): nested for root, _, _, nested in targets}
+        assert seen == {"outer": False, "outer/vendored/inner": True, "plain/checkout": True}, seen
+
+
+def test_edited_files_in_trash_are_ignored():
+    """A file a session removed is not project content; the corpse must not nag."""
+    lint = load_lint()
+    with tempfile.TemporaryDirectory() as tmp:
+        trash = os.path.join(tmp, ".Trash")
+        os.makedirs(trash)
+        killed = os.path.join(trash, "old-link")
+        with open(killed, "w") as fh:
+            fh.write("stale\n")
+        kept = os.path.join(tmp, "kept.md")
+        with open(kept, "w") as fh:
+            fh.write("# kept\n")
+        old = lint.TRASH
+        lint.TRASH = trash
+        try:
+            targets = lint.collect_targets(
+                argparse.Namespace(files=[killed, kept], repos=False, changed=False)
+            )
+        finally:
+            lint.TRASH = old
+        listed = [f for _, group, _, _ in targets for f in group]
+        assert killed not in listed, listed
+        assert kept in listed, listed
+
+
+def test_walker_reports_a_symlink_to_a_repo_in_a_plain_folder():
+    """No repo owns such a link, so no check run reaches it - the walker does."""
+    lint = load_lint()
+    with tempfile.TemporaryDirectory() as tmp:
+        real = os.path.join(tmp, "elsewhere", "realrepo")
+        os.makedirs(os.path.join(real, ".git"))
+        plain = os.path.join(tmp, "plain")
+        os.makedirs(plain)
+        os.symlink(real, os.path.join(plain, "linked"))
+        old_repos, old_argv = lint.REPOS, sys.argv
+        lint.REPOS, sys.argv = tmp, ["lint.py", "--repos"]
+        try:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                code = lint.main()
+        finally:
+            lint.REPOS, sys.argv = old_repos, old_argv
+        out = buf.getvalue()
+        assert code == 1, out
+        assert "symlink to a git repo" in out, out
+        assert "1 findings" in out, out
+
+
+def test_nested_repo_findings_warn_and_exit_zero():
+    """The broken file is reported, but nobody acts on a vendored checkout."""
+    lint = load_lint()
+    with tempfile.TemporaryDirectory() as tmp:
+        outer = os.path.join(tmp, "outer")
+        subprocess.run(["git", "init", "-q", outer], check=True)
+        with open(os.path.join(outer, "good.py"), "w") as fh:
+            fh.write("x = 1\n")
+        inner = os.path.join(outer, "vendored", "inner")
+        subprocess.run(["git", "init", "-q", inner], check=True)
+        with open(os.path.join(inner, "broken.py"), "w") as fh:
+            fh.write("def broken(:\n    pass\n")
+        old_repos, old_argv = lint.REPOS, sys.argv
+        lint.REPOS, sys.argv = tmp, ["lint.py", "--repos"]
+        try:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                code = lint.main()
+        finally:
+            lint.REPOS, sys.argv = old_repos, old_argv
+        out = buf.getvalue()
+        assert code == 0, out
+        assert "0 findings" in out, out
+        assert "warning:" in out and "broken.py" in out, out
+        assert "1 nested repos" in out, out
+
+
 def test_discovers_every_check_with_a_header():
-    checks = load_lint().load_checks()
+    lint = load_lint()
+    checks = lint.load_checks()
     ids = sorted(c["id"] for c in checks)
-    # derived, not hardcoded: adding a check file must not fail this test
-    files = sorted(f[:-3] for f in os.listdir(CHECKS) if f.endswith(".py"))
+    # derived, not hardcoded: adding a check file must not fail this test. Every
+    # check directory counts, the public one and the private machine one.
+    files = sorted(
+        f[:-3]
+        for directory in lint.CHECK_DIRS
+        if os.path.isdir(directory)
+        for f in os.listdir(directory)
+        if f.endswith(".py")
+    )
     assert ids == files, ids
     for check in checks:
         assert check["quadrant"] == "feedback/computational", check
@@ -44,9 +146,11 @@ def test_stale_doc_path_check_ignores_relative_tmp():
         with open(doc, "w") as fh:
             fh.write("--output ../tmp/out.json\n")
             fh.write("Write it to `/tmp/definitely_absent_here.json`.\n")
+            fh.write("The socket is `/tmp/bobko.aerospace-$USER.sock`.\n")
         proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
         assert ":1:" not in proc.stdout, proc.stdout
         assert ":2:" in proc.stdout, proc.stdout
+        assert ":3:" not in proc.stdout, proc.stdout
 
 
 def test_stale_doc_path_check_skips_historical_prose():
@@ -119,6 +223,33 @@ def test_python_compiles_check_flags_a_broken_edit_and_clears_after_repair():
         assert "broken.py:2" in after.stdout, after.stdout
 
 
+def test_python_compiles_check_sees_an_extensionless_script():
+    """~/dot/script/yt-wl has a python shebang and no .py name; the globs hid it."""
+    check = os.path.join(CHECKS, "python_compiles.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        script = os.path.join(tmp, "yt-wl")
+        with open(script, "w") as fh:
+            fh.write("#!/usr/bin/env python3\ndef broken(:\n    pass\n")
+        broken = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
+        assert "does not compile: invalid syntax" in broken.stdout, broken.stdout
+        assert script in broken.stdout, broken.stdout
+        prose = os.path.join(tmp, "notes.md")
+        with open(prose, "w") as fh:
+            fh.write("# prose, not python\n")
+        clean = subprocess.run([sys.executable, check, script, prose], capture_output=True, text=True)
+        assert prose not in clean.stdout, clean.stdout
+        assert clean.stdout.count("does not compile") == 1, clean.stdout
+
+
+def test_python_compiles_check_reaches_an_extensionless_script_through_the_dispatcher():
+    """The gap was the glob, so the check must match with no applies patterns."""
+    lint = load_lint()
+    checks = {c["id"]: c for c in lint.load_checks()}
+    check = checks["python_compiles"]
+    assert lint.applies(check, "script/yt-wl"), check
+    assert lint.applies(check, "harness/lint.py"), check
+
+
 def test_interpreter_check_reads_a_rule_and_a_shebang():
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
@@ -155,6 +286,35 @@ def test_interpreter_check_honours_the_ignore_marker():
             fh.write("It said `python3.11` once. <!-- lint:ignore -->\n")
         proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
         assert proc.stdout == "", proc.stdout
+
+
+def test_markdown_check_skips_a_code_span_that_wraps_a_line():
+    """A wrapped command is still a command: the span opened on the line before."""
+    check = os.path.join(CHECKS, "markdown_bare_path.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = os.path.join(tmp, "review.md")
+        with open(doc, "w") as fh:
+            fh.write("- evidence: `python3 lint.py\n")
+            fh.write("  ~/tmp/definitely_absent_one.md ~/tmp/definitely_absent_two.md` printed 0 findings\n")
+            fh.write("- fix: one line in ~/tmp/definitely_absent_three.md\n")
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert ":1:" not in proc.stdout, proc.stdout
+        assert ":2:" not in proc.stdout, proc.stdout
+        assert ":3:" in proc.stdout, proc.stdout
+
+
+def test_markdown_check_leaves_at_imports_alone():
+    """common.md sanctions `@~/path` in AGENTS.md; a link there stops being an import."""
+    check = os.path.join(CHECKS, "markdown_bare_path.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = os.path.join(tmp, "AGENTS.md")
+        with open(doc, "w") as fh:
+            fh.write("# AGENTS\n\n")
+            fh.write("@~/tmp/definitely_absent_rules.md\n\n")
+            fh.write("Read: ~/tmp/definitely_absent_notes.md\n")
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert ":3:" not in proc.stdout, proc.stdout
+        assert ":5:" in proc.stdout, proc.stdout
 
 
 def test_markdown_check_skips_frontmatter_but_not_prose():

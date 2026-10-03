@@ -7,7 +7,10 @@ say `/tmp/explain/...`, and every future session follows the stale path into
 `command not found` or a wrong write target. A `/tmp/...` path that does not
 exist is a stale reference; `~/tmp/...` paths are skipped (home-relative is
 the convention). Inline code spans are checked too - the stale references are
-written as commands. A line containing `lint:ignore` is not reported. Historical
+written as commands. A line containing `lint:ignore` is not reported. Unix
+sockets are exempt: a daemon picks `/tmp` itself (AeroSpace uses
+`/tmp/bobko.aerospace-$USER.sock`), so a `.sock` path is never a staging dir
+an agent wrote to. Historical
 prose - archives, study notes, decks, site content - is out of scope, the same
 exclusions `markdown_bare_path` uses: those files discuss `/tmp` as a Unix
 concept, not as this machine's staging directory.
@@ -20,9 +23,13 @@ import os
 import re
 import sys
 
+# A daemon socket in /tmp is exempt: the daemon chose the path, not the agent
+DAEMON_SOCKET_SUFFIX = ".sock"
+
 # absolute /tmp path, not preceded by ~ or a word char, and not a relative
-# `../tmp/...`: only a leading slash is absolute
-PATH_RE = re.compile(r"(?<![\w~./])/tmp/[\w][\w./-]*")
+# `../tmp/...`: only a leading slash is absolute. `$` and `{}` stay inside the
+# match so a path written as `/tmp/x-$USER.sock` is checked as one path
+PATH_RE = re.compile(r"(?<![\w~./])/tmp/[\w][\w./${}-]*")
 
 
 def check(path: str) -> list[str]:
@@ -36,7 +43,7 @@ def check(path: str) -> list[str]:
             continue
         for match in PATH_RE.finditer(line):
             target = match.group(0)
-            if os.path.exists(target):
+            if os.path.exists(target) or target.endswith(DAEMON_SOCKET_SUFFIX):
                 continue
             home = os.path.expanduser("~/tmp" + target[len("/tmp"):])
             findings.append(
