@@ -650,6 +650,17 @@ plain heading, so the Archive container is refused."
          (todo-write board (lambda () (todo--goto (car rest)) (org-deadline nil deadline)))
          (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'deadline deadline)))))
 
+      ("set-priority"
+       (let ((priority (cadr rest)))
+         (unless (and (car rest) priority) (todo-fail "set-priority needs a ref and A, B or C"))
+         (unless (member priority '("A" "B" "C"))
+           (todo-fail (format "priority takes A, B or C, got %s" priority)))
+         (let ((board (todo--existing file)))
+           (todo-write board (lambda () (todo--goto (car rest))
+                                 (org-priority (string-to-char priority))))
+           (todo-out (list (cons 'title (car rest)) (cons 'file board)
+                           (cons 'priority priority))))))
+
       ("set-effort"
        (let ((effort (cadr rest)))
          (unless (and (car rest) effort) (todo-fail "set-effort needs a ref and an H:MM value"))

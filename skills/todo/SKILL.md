@@ -36,8 +36,9 @@ ever look for tasks there.
 `[[:alnum:]_@#%]+`, so a hyphen is not a tag character (`:tax_2026:`, not
 `:tax-2026:`). Tags inherit from a container.
 
-**Priority.** `[#A]`, `[#B]` or `[#C]`, between the state and the title.
-Optional, and never invented.
+**Priority.** `[#A]`, `[#B]` or `[#C]`, between the state and the title. Optional
+and never invented: `create --priority B` or `set-priority` writes it, anything
+else is refused. Raveen's rule: a recurring task is priority B.
 
 **Planning line.** Directly under the heading. `DEADLINE:` first, then `CLOSED:`
 when both appear. There is no `SCHEDULED:`.
@@ -90,6 +91,7 @@ scripts/todo doing --priority A [--json]        # one open A task, due or not
 scripts/todo --warm read [--json]               # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A --effort 0:30
 scripts/todo set-state "Pay rent" IN_PROGRESS
+scripts/todo set-priority "Pay rent" B
 scripts/todo set-state "An idea captured earlier" TODO   # promotes a plain heading
 scripts/todo set-deadline "Pay rent" 2026-12-01
 scripts/todo set-deadline "Pay rent" "2026-12-01 20:30"   # with a time of day

@@ -292,6 +292,17 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "remove-tag" "Edit me" "home")
   (should-not (string-match-p ":home:" (todo-test--text))))
 
+(ert-deftest todo-set-priority-writes-the-cookie ()
+  (todo-test--setup)
+  (todo-test--write "* TODO Buy milk\n")
+  (todo-test--ok "set-priority" "Buy milk" "B")
+  (should (string-match-p "^\\* TODO \\[#B\\] Buy milk$" (todo-test--text)))
+  (should (equal "B"
+                 (todo-test--field
+                  (car (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
+                  "priority")))
+  (should (eq 1 (nth 0 (todo-test--cli "set-priority" "Buy milk" "High")))))
+
 (ert-deftest todo-set-effort-writes-the-property ()
   (todo-test--setup)
   (todo-test--write "* TODO Buy milk\n")
