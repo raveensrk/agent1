@@ -26,7 +26,7 @@ python3 harness/lint.py --repos         # every git repo under ~/repos
 python3 harness/lint.py --list          # the checks, their quadrant and scope
 python3 harness/lint.py --json          # for scripts and the trigger
 python3 harness/tests/test_lint.py      # the checks' own tests
-python3 harness/tests/test_guards.py    # the commit block's own tests
+node --experimental-strip-types harness/tests/test_command_guard.ts
 python3 harness/self_check              # both suites, then the full-population lint
 ```
 
@@ -77,23 +77,11 @@ And `~/.bash_history` holds 9 `curl ... | sh` installs with no `--max-time`,
 where a dead host blocks forever. Its check is
 `node --experimental-strip-types harness/tests/test_command_guard.ts`.
 
-`guards/commit_block.py` is the machine-wide prohibition: an agent never
-commits. It decides in one place and is called from three:
-
-- The harness hook contract - hook JSON on stdin, exit 2 blocks, stderr is the
-  reason. Claude Code, Codex, Cursor and Gemini CLI all speak it, so one file
-  serves all four. The exact block for each is in
-  [references/harness_wiring.md](../skills/determinize/references/harness_wiring.md).
-- `githooks/pre-commit` and `githooks/pre-push` (a symlink), made global with
-  `./install.py --git-hooks`, which sets `core.hooksPath`. This is the
-  harness-agnostic floor: it fires for an agent, a human, and any harness.
-- `--check "CMD"`, for tests and one-liners.
-
-The git half denies unless `AGENT1_COMMIT=1`. Only the user's own commit path
-sets that ([`lazygit_pi_commit.sh`](~/dot/config/lazygit_pi_commit.sh)), so the
-block is real for the agent and a one-word door for the user. A repo that sets
-its own `core.hooksPath` wins over the global one and must chain
-`guards/commit_block.py` from its own hook.
+A second rule could decide in Python and be called from the harness hook
+contract - hook JSON on stdin, exit 2 blocks, stderr is the reason. Claude Code,
+Codex, Cursor and Gemini CLI all speak it, so one file serves all four. The exact
+block for each is in
+[references/harness_wiring.md](../skills/determinize/references/harness_wiring.md).
 
 A guard message always carries the replacement command. Blocking without
 steering sends the next attempt down the same dead end - the same rule applies

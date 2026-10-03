@@ -12,7 +12,6 @@
 
 (require 'org)
 (require 'cl-lib)
-(require 'json)
 
 ;;; Setup
 
@@ -37,6 +36,11 @@
       make-backup-files nil
       auto-save-default nil
       org-element-use-cache nil
+      ;; A long-lived daemon with the 800 KB default spends its scans in GC:
+      ;; the same directory walk took 0.956 s there and 0.58 s in a fresh
+      ;; process, and 0.55 s in the daemon once the threshold was raised
+      ;; (32 MB already gets it; 64 MB measured the same).
+      gc-cons-threshold (* 64 1024 1024)
       ;; en_IN.UTF-8 resolves to a non-UTF-8 coding system, and a daemon then
       ;; asks which one to use and waits for a keypress. Force UTF-8: boards are.
       coding-system-for-write 'utf-8-unix)
@@ -138,15 +142,23 @@ slash matches that run of components, a glob is a glob, and an absolute or
 
 ;;; Reading
 
+(defun todo--archive-p (path)
+  "Non-nil when PATH is a board's org archive file (`<board>.org_archive').
+Archive files are history: no read, ref or write of the skill looks inside one,
+and they are not boards. The `\.org\'' glob in `todo--files' already skips
+them; this says so out loud, and checks a named path too."
+  (string-match-p "_archive\'" path))
+
 (defun todo--files (dir ignore)
   "Every .org file under DIR, minus ignored paths and hidden directories."
   (cl-remove-if
-   (lambda (file) (todo-ignored-p file ignore))
+   (lambda (file) (or (todo--archive-p file) (todo-ignored-p file ignore)))
    (directory-files-recursively
     dir "\\.org\\'"
     nil
     (lambda (sub)
       (and (not (string-prefix-p "." (file-name-nondirectory sub)))
+           (not (todo--archive-p sub))
            (not (todo-ignored-p sub ignore)))))))
 
 (defvar todo--blocks nil
@@ -290,21 +302,30 @@ refused: org would otherwise absorb them silently - garbage becomes today,
                     (cons 'line line)
                     (cons 'editor editor)))))
 
-(defun todo-print-json (items)
-  "Print ITEMS as one JSON array and a newline.
-json-serialize returns raw UTF-8 bytes. princ of those bytes into the
-warm process's multibyte buffer writes illegal \\342 escapes."
-  (todo--print-json (vconcat (mapcar #'todo--json-task items))))
+(defun todo--record (item)
+  "ITEM as one plain record: `key: value' lines, the note indented four spaces.
+One record per task, records separated by a blank line. No serialization
+layer: the CLI is Emacs reading org, and both consumers parse text."
+  (let ((note (or (alist-get 'note item) "")))
+    (concat
+     (format (concat "title: %s\nstate: %s\ndeadline: %s\npriority: %s\n"
+                     "effort: %s\ntags: %s\npath: %s\n")
+             (alist-get 'title item)
+             (alist-get 'todo item)
+             (or (alist-get 'deadline item) "")
+             (or (alist-get 'priority item) "")
+             (or (alist-get 'effort item) "")
+             (mapconcat #'identity (alist-get 'tags item) " ")
+             (alist-get 'path item))
+     (if (string-empty-p note)
+         ""
+       (concat (mapconcat (lambda (line) (concat "    " line))
+                          (split-string note "\n") "\n")
+               "\n")))))
 
-(defun todo-print-json-object (item)
-  "Print ITEM as one JSON object, or null."
-  (todo--print-json (if item (todo--json-task item) :null)))
-
-(defun todo--print-json (value)
-  (princ (decode-coding-string
-          (json-serialize value :null-object :null)
-          'utf-8))
-  (princ "\n"))
+(defun todo-print-records (items)
+  "Print ITEMS as plain records separated by a blank line."
+  (princ (mapconcat #'todo--record items "\n")))
 
 (defconst todo-doing-states '("TODO" "IN_PROGRESS")
   "States that can be the main quest.")
@@ -359,17 +380,6 @@ then path: the priority-only pick."
                          ((not (equal (alist-get 'title a) (alist-get 'title b)))
                           (string< (alist-get 'title a) (alist-get 'title b)))
                          (t (string< (alist-get 'path a) (alist-get 'path b))))))))))
-
-(defun todo--json-task (item)
-  "ITEM as the read --json object. Missing deadline and priority are null."
-  `((title . ,(alist-get 'title item))
-    (state . ,(alist-get 'todo item))
-    (deadline . ,(or (alist-get 'deadline item) :null))
-    (priority . ,(or (alist-get 'priority item) :null))
-    (effort . ,(or (alist-get 'effort item) :null))
-    (tags . ,(vconcat (alist-get 'tags item)))
-    (note . ,(or (alist-get 'note item) ""))
-    (path . ,(alist-get 'path item))))
 
 (defun todo-tasks (file)
   "Every live task heading in FILE; the Archive container is history."
@@ -548,6 +558,173 @@ plain heading, so the Archive container is refused."
     (insert "\n\n* " text "\n"))
   (forward-line -1))
 
+;;; Archiving
+
+;; Archiving is org's own arrangement: a completed task leaves the board for
+;; `<board>.org_archive', the default `org-archive-location' is "%s_archive::",
+;; with the header org writes and the ARCHIVE_* context properties it records.
+;; Two atomic writes, archive first: a failure between them duplicates a task,
+;; never loses one, and every append goes through `todo-write' so two archivings
+;; at once cannot clobber each other.
+
+(require 'org-archive)
+
+(defun todo--archive-file (board)
+  "BOARD's archive file. Org's default location for todo.org is
+`todo.org_archive'; a board outside that default is archived next to itself."
+  (concat (expand-file-name board) "_archive"))
+
+(defun todo--archive-header (board)
+  "The header org puts at the top of a new archive file. The mode line is not
+cosmetic: `todo.org_archive' does not match `auto-mode-alist', so without it the
+file opens as text."
+  (concat "#    -*- mode: org -*-\n"
+          (format org-archive-file-header-format (expand-file-name board))))
+
+(defun todo--category (board)
+  "The board's category: its `#+CATEGORY:' keyword, else the file name base.
+Org's own `org-get-category' is the reference, but it resolves through
+org-element's deferred global properties, which is fragile in a buffer that only
+had `org-mode' and a scan. Last keyword wins, as it does for org."
+  (let ((category (file-name-base (expand-file-name board))))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^[ \t]*#\\+CATEGORY:[ \t]*\\(.+?\\)[ \t]*$" nil t)
+        (setq category (match-string 1))))
+    category))
+
+(defun todo--context-info (board)
+  "The ARCHIVE_* properties to stamp on the task at point, as (NAME . VALUE).
+Which ones is org's `org-archive-save-context-info'; the values come from org's
+own accessors, so nothing here decides org semantics."
+  (let* ((all (org-get-tags))
+         (inherited (cl-remove-if-not (lambda (tag) (get-text-property 0 'inherited tag)) all))
+         (local (cl-remove-if (lambda (tag) (get-text-property 0 'inherited tag)) all))
+         (values (list (cons 'time (format-time-string (org-time-stamp-format 'with-time 'no-brackets)))
+                       (cons 'file (abbreviate-file-name (expand-file-name board)))
+                       (cons 'olpath (mapconcat #'identity (org-get-outline-path) "/"))
+                       (cons 'category (todo--category board))
+                       (cons 'todo (org-entry-get (point) "TODO"))
+                       (cons 'itags (mapconcat #'identity inherited " "))
+                       (cons 'ltags (mapconcat #'identity local " ")))))
+    (cl-loop for item in org-archive-save-context-info
+             for value = (cdr (assq item values))
+             when (org-string-nw-p value)
+             collect (cons (concat "ARCHIVE_" (upcase (symbol-name item))) value))))
+
+(defun todo--archive-capture (board)
+  "The task at point as text plus the properties to stamp on it: (TEXT . PROPS).
+Point is left alone: the caller archives, then cuts. The properties are read
+first, while point is still on the heading - `org-end-of-subtree' below moves
+it, and reading them afterwards took the next task's state."
+  (let ((props (todo--context-info board)))
+    (cons (buffer-substring-no-properties (progn (org-back-to-heading t) (point))
+                                          (org-end-of-subtree t t))
+          props)))
+
+(defun todo--archive-append (archive header text props)
+  "Append TEXT to ARCHIVE, with PROPS as a property drawer, creating ARCHIVE
+with HEADER when it does not exist yet."
+  (let ((fresh (not (file-exists-p archive))))
+    (todo-write archive
+                (lambda ()
+                  (when fresh (insert header))
+                  (goto-char (point-max))
+                  (unless (bolp) (insert "\n"))
+                  (let ((start (point)))
+                    (insert (string-trim-right text) "\n")
+                    ;; PROPERTIES arrive only with a task, which starts with its own
+                    ;; heading. A container body may be prose or empty, and
+                    ;; `org-back-to-heading' there signals before-first-headline.
+                    (when props
+                      (goto-char start)
+                      (org-back-to-heading t)
+                      (dolist (pair props)
+                        (org-entry-put (point) (car pair) (cdr pair)))))))))
+
+(defun todo-archive-move (board title text props)
+  "Move TEXT, the task TITLE, out of BOARD into BOARD's archive file.
+Archive first, then cut: a failure between the two leaves the task in both
+files, which is recoverable, instead of in neither, which is not."
+  (let ((archive (todo--archive-file board)))
+    (todo--archive-append archive (todo--archive-header board) text props)
+    (todo-write board (lambda () (todo--goto title) (org-cut-subtree)))
+    archive))
+
+(defun todo--archive-container ()
+  "Marker at the board's inline Archive container, or nil.
+A state-less heading titled Archive at any level, which is exactly what
+`todo--archived-p' treats as history: reader and migration must agree on what an
+Archive is, or one moves what the other still shows."
+  (todo--mark-blocks)
+  (let (marker)
+    (org-map-entries
+     (lambda ()
+       (when (and (null (org-get-todo-state))
+                  (not (todo--in-block-p))
+                  (equal (org-get-heading t t t t) "Archive"))
+         (unless marker (setq marker (point-marker))))))
+    marker))
+
+(defun todo--heading-count (text)
+  "Level-1+ headings in TEXT. `count-matches' with explicit bounds: bare
+`how-many' returned 0 on the same buffer."
+  (with-temp-buffer (insert text) (count-matches "^\\*+ " (point-min) (point-max))))
+
+(defvar todo--moved-note nil
+  "The container body just appended, for the cut pass to check itself against.")
+
+(defun todo--archive-container-at-point ()
+  "Cut the Archive container at point, refusing when it is not what was moved."
+  (let ((m (todo--archive-container)))
+    (when m
+      (goto-char m)
+      ;; What is cut must be what was appended: the container's own heading is
+      ;; the only difference.
+      (let ((cut (todo--heading-count
+                  (buffer-substring-no-properties
+                   (point) (save-excursion (org-end-of-subtree t t))))))
+        (unless (= (1- cut) (todo--heading-count todo--moved-note))
+          (todo-fail "the Archive container changed while archiving; nothing cut")))
+      (org-cut-subtree))))
+
+(defun todo-archive-container (board)
+  "Move BOARD's first inline Archive container into its archive file.
+Nil when the board has none, so a re-run settles. A container whose body is
+blank is dropped without touching the archive file."
+  (let (text marker)
+    (with-temp-buffer
+      (insert-file-contents board)
+      (org-mode)
+      (setq marker (todo--archive-container))
+      (when marker
+        ;; Both boundaries are read at the container itself. `org-end-of-subtree'
+        ;; moves point, and called after `forward-line' it returned the first
+        ;; child's end - the cut then took every child and the archive got one.
+        (let ((end (save-excursion (goto-char marker) (org-end-of-subtree t t))))
+          (save-excursion
+            (goto-char marker)
+            (org-back-to-heading t)
+            (forward-line)
+            (setq text (buffer-substring-no-properties (point) end))))))
+    (when text
+      (let ((archive (todo--archive-file board))
+            (todo--moved-note text))
+        (unless (string-blank-p text)
+          (todo--archive-append archive (todo--archive-header board) text nil))
+        (todo-write board (lambda () (todo--archive-container-at-point)))
+        archive))))
+
+(defun todo-archive-containers (board)
+  "Move every inline Archive container out of BOARD into its archive file.
+Returns (COUNT . ARCHIVE-FILE): how many containers went, and the file appended
+to, or nil when every container was already empty."
+  (let ((count 0) (tries 0))
+    (while (and (todo-archive-container board) (< (cl-incf tries) 50))
+      (cl-incf count))
+    (let ((archive (todo--archive-file board)))
+      (cons count (and (> count 0) (file-exists-p archive) archive)))))
+
 ;;; Verbs
 
 (defun todo--flag (flags name)
@@ -594,7 +771,10 @@ plain heading, so the Archive container is refused."
        (when deadline (org-deadline nil deadline))
        (when effort (org-set-property "Effort" effort))
        (when note (todo--append-body note))))
-    (todo-out (list (cons 'title title) (cons 'file board) (cons 'state state)))))
+    (todo-out (append (list (cons 'title title) (cons 'file board) (cons 'state state))
+                      ;; The window updates its card from these pairs; a
+                      ;; recurring create must show the B the CLI just applied.
+                      (when priority (list (cons 'priority priority)))))))
 
 (defun todo-run (pos flags)
   "Dispatch one CLI call: POS are the positionals, FLAGS the parsed options."
@@ -615,17 +795,24 @@ plain heading, so the Archive container is refused."
          (when (and priority (not (member priority '("A" "B" "C"))))
            (todo-fail (format "priority takes A, B or C, got %s" priority)))
          (let ((pick (todo-doing-pick (todo-read dirs nil nil file) (todo-ist-day) priority)))
-           (if (member "--json" rest)
-               (todo-print-json-object pick)
-             (if pick
-                 (princ (format "%-12s %s  (%s)\n"
-                                (alist-get 'todo pick) (alist-get 'title pick) (alist-get 'path pick)))
-               (princ "none\n"))))))
+           (if pick
+               (todo-print-records (list pick))
+             (princ "none\n")))))
 
       ("read"
        (let ((items (todo-read dirs (todo--flag flags "--state") (car (todo--flags flags "--tag")) file)))
-         (if (member "--json" rest)
-             (todo-print-json items)
+         (when (member "--recurring" rest)
+           (setq items (cl-remove-if-not
+                        (lambda (i) (todo--recurring (alist-get 'deadline i))) items)))
+         (when (member "--overdue" rest)
+           (let ((today (todo-ist-day)))
+             (setq items (cl-remove-if-not
+                          (lambda (i)
+                            (let ((due (todo--due-day (alist-get 'deadline i))))
+                              (and due (<= due today))))
+                          items))))
+         (if (member "--records" rest)
+             (todo-print-records items)
            (dolist (item items)
              (princ (format "%-12s %s  (%s)\n"
                             (alist-get 'todo item) (alist-get 'title item) (alist-get 'path item)))))))
@@ -704,14 +891,35 @@ plain heading, so the Archive container is refused."
          (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state "OBSOLETE")))))
 
       ("complete"
-       (let ((board (todo--existing file))
-             (evidence (todo--flag flags "--evidence")))
+       (let* ((board (todo--existing file))
+              (title (car rest))
+              (evidence (todo--flag flags "--evidence"))
+              routine captured)
          (todo-write board
                      (lambda ()
-                       (todo--goto (car rest))
+                       (todo--goto title)
                        (when evidence (todo--append-body evidence))
-                       (org-todo "DONE")))
-         (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state "DONE")))))
+                       (org-todo "DONE")
+                       ;; A routine repeats: completing it must not take it off
+                       ;; the board, or the next occurrence never shows up.
+                       (setq routine (todo--recurring (org-entry-get nil "DEADLINE")))
+                       (unless routine (setq captured (todo--archive-capture board)))))
+         (if captured
+             (todo-out (list (cons 'title title)
+                             (cons 'state "DONE")
+                             (cons 'file board)
+                             (cons 'archived (todo-archive-move board title (car captured) (cdr captured)))))
+           (todo-out (list (cons 'title title)
+                           (cons 'state "DONE")
+                           (cons 'file board)
+                           (cons 'routine (and routine t)))))))
+
+      ("archive"
+       (let* ((board (todo--existing file))
+              (result (todo-archive-containers board)))
+         (todo-out (list (cons 'file board)
+                         (cons 'containers (car result))
+                         (cons 'archive (cdr result))))))
 
       ("capture"
        (let ((text (car rest)))

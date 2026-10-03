@@ -8,8 +8,30 @@
 dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 el="$dir/todo.el"
 
+# A GUI caller - the Main Quest window - inherits launchd's minimal PATH, which
+# has no emacs or emacsclient, so both are resolved by absolute path first.
+find_bin() {
+  for candidate in "$@"; do
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+EMACS=$(find_bin /Applications/Emacs.app/Contents/MacOS/Emacs "$(command -v emacs 2>/dev/null)") || {
+  echo "todo: no emacs found: install Emacs.app in /Applications or put emacs on PATH" >&2
+  exit 1
+}
+EMACSCLIENT=$(find_bin /Applications/Emacs.app/Contents/MacOS/bin/emacsclient \
+                      "$(command -v emacsclient 2>/dev/null)") || {
+  echo "todo: no emacsclient found next to $EMACS" >&2
+  exit 1
+}
+
 if [ "${1:-}" != "--warm" ]; then
-  exec emacs -Q --batch -l "$el" -- "$@"
+  exec "$EMACS" -Q --batch -l "$el" -- "$@"
 fi
 shift
 
@@ -19,12 +41,14 @@ warm_up() {
   # The warm contract: the file on disk is the daemon's version. A daemon that
   # predates the current todo.el is stale, so this check restarts it.
   stamp=$(stat -f %m "$el")
-  emacsclient -s "$socket" --eval '(todo-warm-stamp)' 2>/dev/null | grep -q "\"$stamp\"$"
+  "$EMACSCLIENT" -s "$socket" --eval '(todo-warm-stamp)' 2>/dev/null | grep -q "\"$stamp\"$"
 }
 
+start_log="${TMPDIR:-/tmp}/todo-warm-start-$socket.log"
+
 if ! warm_up; then
-  if emacsclient -s "$socket" --eval t >/dev/null 2>&1; then
-    emacsclient -s "$socket" --eval '(kill-emacs)' >/dev/null 2>&1 || true
+  if "$EMACSCLIENT" -s "$socket" --eval t >/dev/null 2>&1; then
+    "$EMACSCLIENT" -s "$socket" --eval '(kill-emacs)' >/dev/null 2>&1 || true
     sock="${TMPDIR:-/tmp}/emacs$(id -u)/$socket"
     i=0
     while [ -e "$sock" ]; do
@@ -33,16 +57,19 @@ if ! warm_up; then
       sleep 0.1
     done
   fi
-  emacs -Q --daemon="$socket" -l "$el" >/dev/null 2>&1 || true
+  "$EMACS" -Q --daemon="$socket" -l "$el" >"$start_log" 2>&1 || true
   i=0
   while ! warm_up; do
     i=$((i + 1))
     if [ "$i" -gt 50 ]; then
-      echo "todo: warm Emacs did not start" >&2
+      # Print why, not just that: the reason used to go to /dev/null here.
+      echo "todo: warm Emacs did not start (emacs: $EMACS)" >&2
+      [ -s "$start_log" ] && cat "$start_log" >&2
       exit 1
     fi
     sleep 0.1
   done
+  rm -f "$start_log"
 fi
 
 tmp=${TODO_WARM_TMP:-$HOME/tmp}
@@ -58,7 +85,7 @@ fi
 
 esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 here=$(pwd)
-code=$(emacsclient -s "$socket" --eval "(todo-warm-write \"$(esc "$args")\" \"$(esc "$out")\" \"$(esc "$err")\" \"$(esc "$here")\")")
+code=$("$EMACSCLIENT" -s "$socket" --eval "(todo-warm-write \"$(esc "$args")\" \"$(esc "$out")\" \"$(esc "$err")\" \"$(esc "$here")\")")
 status=$?
 cat "$out"
 cat "$err" >&2

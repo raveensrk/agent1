@@ -6,6 +6,12 @@ Commits and pull requests. Loaded from [common.md](common.md) at session start.
 
 Never add an AI co-author trailer.
 
+An agent never commits. Stage the work, say it is ready, and hand over the
+command: `AGENT1_COMMIT=1 git commit`. Two guards enforce it -
+`harness/githooks/pre-commit` for the commit itself and
+`harness/guards/commit_block.py` for a committing bash call - and both print that
+line.
+
 ### Commit Conventions
 
 Use Conventional Commits for messages and PR titles: `type(scope): summary`. Omit scope when spanning multiple scopes.

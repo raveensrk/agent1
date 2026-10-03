@@ -15,7 +15,6 @@ Usage:
   ./install.py --force                  also replace symlinks that point elsewhere
   ./install.py --skill PATH             also install skills from PATH (repeatable)
   ./install.py --skill                  prompt for the path, with tab completion
-  ./install.py --git-hooks              point git at this repo's hooks, every repo
 
 `--skill PATH` accepts either a single skill (a directory holding SKILL.md) or a
 directory that contains several, such as another repo's skills/ folder. Each
@@ -41,7 +40,6 @@ import sys
 
 REPO = os.path.dirname(os.path.realpath(__file__))
 PROMPT_SENTINEL = "\x00prompt\x00"
-GITHOOKS = os.path.join(REPO, "harness", "githooks")
 
 # Harness name -> directory whose presence means the harness is installed.
 HARNESSES = {
@@ -332,38 +330,7 @@ def parse_args(argv):
                         const=PROMPT_SENTINEL,
                         help="also install skills from PATH (repeatable); "
                              "omit PATH to be prompted")
-    parser.add_argument("--git-hooks", action="store_true",
-                        help="set global core.hooksPath to harness/githooks, so the "
-                             "commit block is active in every repo on this machine")
     return parser.parse_args(argv)
-
-
-def git_hooks(run):
-    """Point git at this repo's committed hooks, for every repo on the machine.
-
-    Opt in, because this is global config: the previous value is printed and one
-    command undoes it. A repo that sets its own core.hooksPath wins over this
-    one, and has to chain harness/guards/commit_block.py from its own hook.
-    """
-    current = ""
-    try:
-        proc = subprocess.run(
-            ["git", "config", "--global", "--get", "core.hooksPath"],
-            capture_output=True, text=True, timeout=10)
-        current = proc.stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        current = ""
-    if current and os.path.realpath(os.path.expanduser(current)) == os.path.realpath(GITHOOKS):
-        return run.say("ok", expand("~/.gitconfig"), "core.hooksPath already points here")
-    run.say("set", expand("~/.gitconfig"),
-            "core.hooksPath -> %s (was %s)" % (GITHOOKS, current or "unset"))
-    if run.dry:
-        return
-    if subprocess.run(["git", "config", "--global", "core.hooksPath", GITHOOKS]).returncode:
-        run.errors += 1
-        run.say("error", expand("~/.gitconfig"), "git config --global failed")
-    else:
-        print("          undo: git config --global --unset core.hooksPath")
 
 
 def main(argv=None):
@@ -386,8 +353,6 @@ def main(argv=None):
     dest_dirs, wanted, plan = build_plan(run, skill_dirs)
     for src, dest in plan:
         run.link(src, dest)
-    if opts.git_hooks:
-        git_hooks(run)
 
     managed = load_manifest()
     for dest_dir in dest_dirs:

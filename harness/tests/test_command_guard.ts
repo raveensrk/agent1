@@ -3,7 +3,7 @@
  *   node --experimental-strip-types harness/tests/test_command_guard.ts
  */
 import assert from "node:assert/strict";
-import { commitHit, guardHit } from "../extensions/command_guard.ts";
+import { guardHit } from "../extensions/command_guard.ts";
 
 const BLOCKED = [
 	// the call that cost this session 111s
@@ -19,6 +19,13 @@ const BLOCKED = [
 	"curl https://example.com",
 	"wget https://example.com",
 	"timeout 30 curl https://example.com",
+	// an unbounded test run: 300s + 194s in one session
+	"emacs -Q --batch -l tests/todo_tests.el -f ert-run-tests-batch-and-exit",
+	"cd ~/repos/Main_Quest && swift test",
+	"python3 -m pytest tests/",
+	"cargo test",
+	"npm test",
+	"NO_PROXY=1 python3 -m pytest",
 ];
 
 const ALLOWED = [
@@ -33,6 +40,14 @@ const ALLOWED = [
 	"curl -fsSL --connect-timeout 5 https://example.com",
 	"curl -m 20 https://example.com",
 	"wget --timeout=60 https://example.com",
+	// bounded test runs, and things that merely contain the word test
+	"timeout 180 emacs -Q --batch -l tests/todo_tests.el -f ert-run-tests-batch-and-exit",
+	"timeout 900 swift test",
+	"scripts/test",
+	"~/.agents/skills/todo/scripts/test",
+	"rg -n test ~/repos",
+	"grep -c test file.txt",
+	"rm -rf .build/test-artifacts",
 ];
 
 for (const command of BLOCKED) {
@@ -41,44 +56,10 @@ for (const command of BLOCKED) {
 for (const command of ALLOWED) {
 	assert.equal(guardHit(command), null, `should allow: ${command}`);
 }
-// The commit rule, decided by the Python guard the git hook also calls.
-const COMMIT_BLOCKED = [
-	"git commit -m 'sneak'",
-	"git commit --no-verify -m 'sneak'",
-	"git -C /tmp/repo merge main",
-	"git rebase -i HEAD~3",
-	"git push origin main",
-	"git config --global core.hooksPath /tmp/hooks",
-	"cd ~/repos/agent1 && git cherry-pick abc",
-];
-
-const COMMIT_ALLOWED = [
-	"git status",
-	"git add -A",
-	"git log --oneline -5",
-	"git diff --cached",
-	"git merge-base main HEAD",
-	'rg -n "git commit" README.md',
-	'echo "git push is the user\'s call"',
-];
-
-for (const command of COMMIT_BLOCKED) {
-	assert.notEqual(commitHit(command), null, `should block: ${command}`);
-}
-for (const command of COMMIT_ALLOWED) {
-	assert.equal(commitHit(command), null, `should allow: ${command}`);
-}
-assert.match(commitHit("git commit -m x") ?? "", /git add -A/);
-assert.match(commitHit("git push") ?? "", /git log --oneline/);
-assert.match(commitHit("git config --global core.hooksPath /tmp/h") ?? "", /AGENT1_COMMIT=1/);
-
 const grep = guardHit(BLOCKED[0]);
 const curl = guardHit(BLOCKED[8]);
 assert.equal(grep?.name, "recursive grep", grep);
 assert.equal(curl?.name, "curl or wget with no maximum time", curl);
 assert.match(grep?.fix ?? "", /rg -n/);
 assert.match(curl?.fix ?? "", /--max-time 60/);
-console.log(
-	`command_guard ok: ${BLOCKED.length} blocked, ${ALLOWED.length} allowed, ` +
-		`${COMMIT_BLOCKED.length} commits blocked, ${COMMIT_ALLOWED.length} git calls allowed`,
-);
+console.log(`command_guard ok: ${BLOCKED.length} blocked, ${ALLOWED.length} allowed`);

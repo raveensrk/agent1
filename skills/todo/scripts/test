@@ -1,0 +1,40 @@
+#!/bin/sh
+# The todo skill's suite: bounded, quiet, and diagnosable.
+#
+# Why a script rather than the raw command: in the 2026-10-03 session the suite
+# was launched 15 times, ten of them as `nohup ... & sleep 20; grep`, and the
+# unhangable form burned a full 300s tool timeout plus a 194s abort on one hang.
+# The suite itself takes 5s. A bound turns a hang into a fast failure, and the
+# log tail says why.
+#
+#   scripts/test                  # the whole suite
+#   scripts/test todo-set-effort  # one selector
+#
+# TODO_TEST_TIMEOUT (default 180) and TODO_TEST_LOG (default ~/tmp/todo-test.log)
+# override the bound and the log path.
+dir=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+log=${TODO_TEST_LOG:-$HOME/tmp/todo-test.log}
+limit=${TODO_TEST_TIMEOUT:-180}
+mkdir -p "$(dirname "$log")"
+
+if [ -n "${1:-}" ]; then
+  timeout "$limit" emacs -Q --batch -l "$dir/tests/todo_tests.el" \
+    --eval "(ert-run-tests-batch-and-exit \"$1\")" >"$log" 2>&1
+else
+  timeout "$limit" emacs -Q --batch -l "$dir/tests/todo_tests.el" \
+    -f ert-run-tests-batch-and-exit >"$log" 2>&1
+fi
+code=$?
+
+if [ "$code" -eq 124 ]; then
+  echo "todo: the suite hit the ${limit}s bound and was killed - hung, not slow." >&2
+  echo "A hung run leaves a daemon waiting on a prompt. Look with:" >&2
+  echo "  pgrep -fl 'emacs -Q --batch|todo-skill|bg-daemon'" >&2
+  echo "  sample <pid> 2    # macOS: the stack of a wedged process names the wait" >&2
+fi
+
+grep -E "FAILED|Ran .* tests" "$log" | tail -5
+if [ "$code" -ne 0 ]; then
+  echo "full log: $log" >&2
+fi
+exit "$code"

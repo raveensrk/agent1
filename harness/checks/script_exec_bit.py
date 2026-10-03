@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# harness-check: {"id": "script_exec_bit", "applies": ["*.py", "*.sh", "*.bash", "*.zsh", "*.rb", "*.pl", "*.lua", "harness/githooks/*", "**/.githooks/*"], "quadrant": "feedback/computational"}
+# harness-check: {"id": "script_exec_bit", "applies": ["*.py", "*.sh", "*.bash", "*.zsh", "*.rb", "*.pl", "*.lua", "**/.githooks/*"], "quadrant": "feedback/computational"}
 """A file with a shebang is a script somebody runs, so it needs the exec bit.
 
 common.md: "Scripts meant to be run must always be executable. Add a shebang on

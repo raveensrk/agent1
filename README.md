@@ -112,10 +112,6 @@ installed on the machine. Each item is a link back to this clone, so a
 ~/repos/agent1/install.py --dry-run
 ```
 
-`--git-hooks` is separate and global: it points `core.hooksPath` at
-`harness/githooks`, so the agent commit block is active in every repo on the
-machine, including ones cloned later. The human door is `AGENT1_COMMIT=1`.
-
 ```bash
 ~/repos/agent1/install.py
 ```

@@ -2,7 +2,7 @@
 name: todo
 metadata:
   scope: global
-description: Create, read, update, rename, complete and delete tasks in a repo's org board, and capture into it. The CLI is Emacs Lisp on org-mode, the only writer; concurrent calls are safe. Use when the user asks to add, edit, finish, archive or list todos.
+description: Create, read, update, rename, complete and delete tasks in a repo's org board, and capture into it. Also picks the one task to do now. The CLI is Emacs Lisp on org-mode, the only writer; concurrent calls are safe. Use when the user asks to add, edit, finish, archive or list todos, or asks for the one top-priority item, the next task, the main quest, or what to do now - no need to paste this file.
 argument-hint: "[create|read|update|delete|capture] [repo or dir]"
 ---
 
@@ -14,6 +14,11 @@ retries with fresh content when another process wrote it first, so any number
 of processes can CRUD at once.
 
 ## 1. The rules
+
+**CLI only.** Every read and every write of a board goes through `scripts/todo`.
+Never open a `todo.org` with `read`, `grep`, `sed`, `write` or any other tool,
+not even to look at one line. If the CLI has no verb for the operation you need,
+stop and ask the user whether to implement it - do not hand-edit the board.
 
 **Board first.** A board path (file or dir) in the request is the board: pass
 it as `--file` (writes) or `--dir` (reads). No path given: ask the user which
@@ -62,9 +67,15 @@ the `*` sits at column 0. Org does not: to org and the agenda that line is a rea
 task, so every write refuses a file holding one and names the line - indent it by
 one space, then retry.
 
-**Archive.** Retired tasks stay at the end of the board under a `* Archive`
-container, after the live content and 40 blank lines. There is no separate
-`_archive` file. `read` and refs skip the container: it is history.
+**Archive.** Retired tasks leave the board for its own archive file, org's
+default arrangement: `<board>.org_archive`, so `todo.org` archives to
+`todo.org_archive`. `complete` does this itself for any task without a repeater.
+A routine stays on the board: it repeats, and archiving it would retire it for
+good. `archive` moves a board's old inline `* Archive` container there too.
+Archives are history: no read, ref or scan ever looks inside one (they do not
+match `*.org` either), and `--file <board>.org_archive` is the way to name one
+on purpose. `read --overdue --recurring` on the board will not show a task that
+was archived.
 
 **Dates.** A deadline is one of three forms: `2026-11-05`, `2026-11-05 20:30`,
 or a full org timestamp `<2026-11-05 Thu 20:30 +1w>` - the last is the only one
@@ -90,10 +101,10 @@ absolute path. Emacs is the only dependency.
 
 ```bash
 scripts/todo resolve                        # board file and dir
-scripts/todo read [--state TODO] [--tag x] [--file F] [--json]  # config dirs + this board, or just F
-scripts/todo doing [--json] [--file F]          # one due TODO or IN_PROGRESS
-scripts/todo doing --priority A [--json]        # one open A task, due or not
-scripts/todo --warm read [--json]               # same verb, Emacs stays up
+scripts/todo read [--state TODO] [--tag x] [--file F] [--overdue] [--recurring] [--records]  # config dirs + this board, or just F
+scripts/todo doing [--file F]                   # one due TODO or IN_PROGRESS, as one record
+scripts/todo doing --priority A [--file F]      # one open A task, due or not
+scripts/todo --warm read [--records]            # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A --effort 0:30
 scripts/todo set-state "Pay rent" IN_PROGRESS
 scripts/todo set-priority "Pay rent" B
@@ -105,7 +116,8 @@ scripts/todo add-tag "Pay rent" home
 scripts/todo remove-tag "Pay rent" home
 scripts/todo append "Pay rent" "extra context"
 scripts/todo rename "Pay rent" "Pay the rent"
-scripts/todo complete "Pay rent" [--evidence "what changed"]
+scripts/todo complete "Pay rent" [--evidence "what changed"]   # DONE, then archived
+scripts/todo archive                           # inline `* Archive' -> <board>.org_archive
 scripts/todo obsolete "Pay rent"
 scripts/todo delete "Pay rent"
 scripts/todo capture "Look into OpenRouter routing"
@@ -126,11 +138,26 @@ board is known, not a licence to pick one.
 - `--file F` means that exact board for every verb, read and write alike, and it
 wins when `--dir` is also given. `--dir D` makes a read scan D's `*.org` files
 instead of the configured dirs; it does nothing for a write.
+- `--overdue` keeps the tasks whose deadline day has passed in IST, repeaters
+  included; `--recurring` keeps the routines, a deadline carrying a repeater. A
+  routine that is late: `read --overdue --recurring`. Neither filters by state,
+  so a `LATER` task with a lapsed deadline still shows - add `--state TODO` to
+  mean open work. `--overdue` reads the same clock and the same repeater maths
+  as `doing`, over every match instead of the one pick.
+- `read` prints `STATE  Title  (path)` - no deadline, so overdue is not visible
+  in a plain listing. Use `--overdue`/`--recurring` rather than re-parsing the
+  list line.
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
-- Lists print `STATE  Title  (path)`; single results print `key: value`. `read --json` prints the same tasks as one JSON array: title, state, deadline, priority, effort, tags, note, path. A missing deadline, priority or effort is null.
-- `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before C, then title, then path. `--json` prints that one object, or `null`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
+- Lists print `STATE  Title  (path)`; single results print `key: value`. `read
+  --records` prints one plain record per task, records separated by a blank
+  line: `title:`, `state:`, `deadline:`, `priority:`, `effort:`, `tags:`
+  (space-joined), `path:`, then the note as lines indented four spaces (empty
+  note lines too, so the blank line stays a record break). A missing deadline,
+  priority or effort is an empty value. There is no JSON: the board is org, the
+  CLI is Emacs, and both consumers parse this text.
+- `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before C, then title, then path. The pick prints as one record, or `none`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
 - `doing --priority A|B|C` picks the priority-only way instead: any open task at
 that priority, due or not, title then path. No match prints `none`, as `doing`
 does. An unknown value is refused.
@@ -143,8 +170,10 @@ default_dirs = ["~/dot", "~/repos"]       # read when no --dir is given
 ignore = ["node_modules"]                 # dropped from reads
 ```
 
-Overrides: `TODO_SKILL_CONFIG` (config path). Tests:
-`emacs -Q --batch -l tests/todo_tests.el -f ert-run-tests-batch-and-exit`.
+Overrides: `TODO_SKILL_CONFIG` (config path). Tests: `scripts/test` - bounded at
+180s, prints the failures and the log tail, `scripts/test <selector>` for one test.
+A bound matters: an unbounded run of this suite once hung on a daemon waiting for
+a keypress and burned 300s, while the healthy suite takes 5s.
 
 ## 3. Capture vs board
 
@@ -158,8 +187,13 @@ goes to the board with `create`.
 ## 4. Completing work
 
 Verify against the acceptance criteria in the note first. `complete` appends
-`--evidence` to the body, sets `DONE` and writes `CLOSED:`. There is no review
-loop and no claim: an agent finishes its own work.
+`--evidence` to the body, sets `DONE` and writes `CLOSED:`, then moves the task
+to the board's archive file - unless its deadline carries a repeater, in which
+case it stays on the board and org advances the date. The archive copy is org's
+own shape: the header, and an `:ARCHIVE_TIME:`/`:ARCHIVE_FILE:`/`:ARCHIVE_CATEGORY:`/
+`:ARCHIVE_TODO:` drawer, per `org-archive-save-context-info`. Print shows which
+happened: `archived: <file>` or `routine: yes`. There is no review loop and no
+claim: an agent finishes its own work.
 
 ## 5. Concurrent writers
 
@@ -179,7 +213,11 @@ may write while you edit, and the last save wins.
   such a line, naming the file and the line.
 - `set-deadline` on a `DONE` task drops `CLOSED:` (org behaviour). Reopen
   before setting a deadline if the closed time matters.
-- The CLI writes no frontmatter, no properties, and no archive file. Do not
-  create `todo.org_archive` or `inbox.org`; they are not used.
+- The CLI writes no frontmatter, no extra properties, and creates an archive
+  file only through `complete` (and `archive`). It never creates `inbox.org`.
+- Two writes, archive first: `complete` appends to `<board>.org_archive` and then
+  cuts the task out of the board. A crash between the two leaves the task in
+  both files, never in neither - re-run `complete` after deleting the archive
+  copy, or cut it by hand.
 - `read` skips hidden directories and anything matching `ignore`, and scans
   `*.org` under the configured dirs. It does not descend into `.git`.

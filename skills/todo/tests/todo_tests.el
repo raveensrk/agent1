@@ -6,7 +6,7 @@
 
 (require 'ert)
 (require 'cl-lib)
-(require 'json)
+(require 'seq)
 
 (defconst todo-test--root
   (file-name-directory
@@ -111,7 +111,7 @@ verbs, same parsing, a few milliseconds each."
   (should (equal "0:30"
                  (todo-test--field
                   (cl-find "Write the report"
-                           (todo-test--json (nth 1 (todo-test--ok "read" "--json")))
+                           (todo-test--records (nth 1 (todo-test--ok "read" "--records")))
                            :key (lambda (i) (todo-test--field i "title")) :test #'equal)
                   "effort")))
   (should (eq 1 (nth 0 (todo-test--cli "create" "Bad estimate" "--effort" "30"))))
@@ -213,8 +213,56 @@ verbs, same parsing, a few milliseconds each."
     (should (string-match-p "Plain" done))
     (should-not (string-match-p "Tagged" done))))
 
-(defun todo-test--json (stdout)
-  (json-parse-string stdout :object-type 'alist :array-type 'list :null-object nil))
+(ert-deftest todo-read-filters-overdue-and-recurring ()
+  (todo-test--setup)
+  (with-temp-file (expand-file-name "board.org" todo-test--dir)
+    (insert "* TODO Overdue plain\nDEADLINE: <2020-01-01 Wed>\n"
+            "* TODO Routine late\nDEADLINE: <2020-01-01 Wed 08:00 +1w>\n"
+            "* TODO Future plain\nDEADLINE: <2999-01-01 Thu>\n"))
+  (let ((overdue (nth 1 (todo-test--ok "read" "--overdue")))
+        (recurring (nth 1 (todo-test--ok "read" "--recurring")))
+        (both (nth 1 (todo-test--ok "read" "--overdue" "--recurring"))))
+    (should (string-match-p "Overdue plain" overdue))
+    (should (string-match-p "Routine late" overdue))
+    (should-not (string-match-p "Future plain" overdue))
+    (should (string-match-p "Routine late" recurring))
+    (should-not (string-match-p "Overdue plain" recurring))
+    (should (string-match-p "Routine late" both))
+    (should-not (string-match-p "Overdue plain" both))
+    (should-not (string-match-p "Future plain" both))))
+
+(defun todo-test--pairs (text)
+  "TEXT as an alist of `key: value' lines; indented note lines are skipped."
+  (let (out)
+    (dolist (line (split-string text "\n" t))
+      (when (string-match "\\`\\([a-z_]+\\): \\(.*\\)\\'" line)
+        (push (cons (intern (match-string 1 line)) (match-string 2 line)) out)))
+    (nreverse out)))
+
+(defun todo-test--record-note (record)
+  "The indented note lines of RECORD, unindented and trimmed."
+  (string-trim
+   (mapconcat (lambda (line) (if (string-prefix-p "    " line) (substring line 4) ""))
+              (seq-filter (lambda (line) (string-prefix-p "    " line))
+                          (split-string record "\n" t))
+              "\n")))
+
+(defun todo-test--records (stdout)
+  "STDOUT as a list of task alists, the CLI's plain records."
+  (mapcar (lambda (record)
+            (let* ((pairs (todo-test--pairs record))
+                   (some (lambda (key)
+                           (let ((v (alist-get key pairs)))
+                             (and v (not (string-empty-p v)) v)))))
+              (list (cons 'title (alist-get 'title pairs))
+                    (cons 'state (alist-get 'state pairs))
+                    (cons 'deadline (funcall some 'deadline))
+                    (cons 'priority (funcall some 'priority))
+                    (cons 'effort (funcall some 'effort))
+                    (cons 'tags (split-string (or (alist-get 'tags pairs) "") " " t))
+                    (cons 'note (todo-test--record-note record))
+                    (cons 'path (alist-get 'path pairs)))))
+          (split-string stdout "\n\n" t)))
 
 (defun todo-test--field (item key)
   (alist-get (intern key) item))
@@ -228,17 +276,17 @@ verbs, same parsing, a few milliseconds each."
       (insert "* TODO Only in the other board\nDEADLINE: <2020-01-01 Wed>\n"))
     (should (equal '("Only in the other board")
                    (mapcar (lambda (i) (todo-test--field i "title"))
-                           (todo-test--json (nth 1 (todo-test--ok "read" "--json" "--file" other))))))
+                           (todo-test--records (nth 1 (todo-test--ok "read" "--records" "--file" other))))))
     (should (equal "Only in the other board"
                    (todo-test--field
-                    (todo-test--json (nth 1 (todo-test--ok "doing" "--json" "--file" other)))
+                    (car (todo-test--records (nth 1 (todo-test--ok "doing" "--file" other))))
                     "title")))
     (should (equal '("In the test dir")
                    (mapcar (lambda (i) (todo-test--field i "title"))
-                           (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))))
-    (should (eq 1 (nth 0 (todo-test--cli "read" "--json" "--file" (expand-file-name "nope.org" dir)))))))
+                           (todo-test--records (nth 1 (todo-test--ok "read" "--records"))))))
+    (should (eq 1 (nth 0 (todo-test--cli "read" "--records" "--file" (expand-file-name "nope.org" dir)))))))
 
-(ert-deftest todo-read-json-has-the-card-fields ()
+(ert-deftest todo-read-records-have-the-card-fields ()
   (todo-test--setup)
   (todo-test--write (concat "* TODO [#A] Pay rent :finance:\n"
                             "DEADLINE: <2026-11-05 Thu>\n"
@@ -251,7 +299,7 @@ verbs, same parsing, a few milliseconds each."
   (let ((hidden (expand-file-name "node_modules/hidden.org" todo-test--dir)))
     (make-directory (file-name-directory hidden) t)
     (with-temp-file hidden (insert "* TODO Hidden\n")))
-  (let* ((items (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
+  (let* ((items (todo-test--records (nth 1 (todo-test--ok "read" "--records"))))
          (pay (cl-find "Pay rent" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
          (other (cl-find "Say \"hi\"" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
          (dash (cl-find "Apr\u2013Jun" items :key (lambda (i) (todo-test--field i "title")) :test #'equal)))
@@ -272,9 +320,9 @@ verbs, same parsing, a few milliseconds each."
     (should (equal (todo-test--field other "note") ""))
     (should-not (cl-find "Old" items :key (lambda (i) (todo-test--field i "title")) :test #'equal))
     (should-not (cl-find "Hidden" items :key (lambda (i) (todo-test--field i "title")) :test #'equal)))
-  (let ((done (todo-test--json (nth 1 (todo-test--ok "read" "--json" "--state" "DONE")))))
+  (let ((done (todo-test--records (nth 1 (todo-test--ok "read" "--records" "--state" "DONE")))))
     (should (equal (mapcar (lambda (i) (todo-test--field i "title")) done) '("Say \"hi\""))))
-  (should (equal (nth 1 (todo-test--ok "read" "--json" "--state" "OBSOLETE")) "[]\n")))
+  (should (equal (nth 1 (todo-test--ok "read" "--records" "--state" "OBSOLETE")) "")))
 
 ;;; update
 
@@ -296,6 +344,9 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--setup)
   (todo-test--ok "create" "Water the plants" "--deadline" "<2026-11-05 Thu 08:00 +1w>")
   (should (string-match-p "^\\* TODO \\[#B\\] Water the plants$" (todo-test--text)))
+  (should (string-match-p "priority: B"
+                          (nth 1 (todo-test--ok "create" "Water more plants"
+                                                "--deadline" "<2026-11-05 Thu 08:00 +1w>"))))
   (should (eq 1 (nth 0 (todo-test--cli
                         "create" "Bad routine" "--deadline" "<2026-11-05 Thu 08:00 +1w>"
                         "--priority" "A"))))
@@ -313,7 +364,7 @@ verbs, same parsing, a few milliseconds each."
   (should (string-match-p "^\\* TODO \\[#B\\] Buy milk$" (todo-test--text)))
   (should (equal "B"
                  (todo-test--field
-                  (car (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
+                  (car (todo-test--records (nth 1 (todo-test--ok "read" "--records"))))
                   "priority")))
   (should (eq 1 (nth 0 (todo-test--cli "set-priority" "Buy milk" "High")))))
 
@@ -360,7 +411,7 @@ verbs, same parsing, a few milliseconds each."
     (should (string-match-p "a line of note" text)))
   (should (equal "TODO"
                  (todo-test--field
-                  (car (todo-test--json (nth 1 (todo-test--ok "read" "--json"))))
+                  (car (todo-test--records (nth 1 (todo-test--ok "read" "--records"))))
                   "state")))
   (should (eq 1 (nth 0 (todo-test--cli "set-state" "Archive" "TODO"))))
   (should (string-match-p "^\\* Archive$" (todo-test--text)))
@@ -387,14 +438,70 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "obsolete" "Old work")
   (should (string-match-p "^\\* OBSOLETE Old work$" (todo-test--text))))
 
-(ert-deftest todo-complete-writes-done-closed-and-evidence ()
+(ert-deftest todo-complete-moves-the-task-to-the-archive ()
   (todo-test--setup)
   (todo-test--ok "create" "Pay rent")
-  (todo-test--ok "complete" "Pay rent" "--evidence" "paid via bank transfer")
-  (let ((text (todo-test--text)))
-    (should (string-match-p "^\\* DONE Pay rent$" text))
-    (should (string-match-p "^CLOSED: \\[" text))
-    (should (string-match-p "^paid via bank transfer$" text))))
+  (let ((out (nth 1 (todo-test--ok "complete" "Pay rent" "--evidence" "paid via bank transfer"))))
+    (should (string-match-p "^archived: .*todo\\.org_archive$" out)))
+  ;; Off the board, with org's own archive furniture on the copy.
+  (should (equal "" (todo-test--text)))
+  (let ((archive (todo-test--text "todo.org_archive")))
+    (should (string-match-p "^#    -\\*- mode: org -\\*-$" archive))
+    (should (string-match-p "^Archived entries from file " archive))
+    (should (string-match-p "^\\* DONE Pay rent$" archive))
+    (should (string-match-p "^CLOSED: \\[" archive))
+    (should (string-match-p "^paid via bank transfer$" archive))
+    (should (string-match-p "^:ARCHIVE_TIME: " archive))
+    (should (string-match-p "^:ARCHIVE_TODO: DONE$" archive))))
+
+(ert-deftest todo-complete-keeps-a-routine-on-the-board ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Water plants" "--deadline" "2026-10-05" "--tag" "routine")
+  (todo-test--ok "set-deadline" "Water plants" "<2026-10-05 Mon 09:00 +1w>")
+  (let ((out (nth 1 (todo-test--ok "complete" "Water plants"))))
+    (should (string-match-p "^routine: yes$" out)))
+  (let ((board (todo-test--text)))
+    ;; Still there, priority B from the repeater, and org advanced the date.
+    (should (string-match-p "^\\* .*Water plants :routine:$" board))
+    (should (string-match-p (regexp-quote "DEADLINE: <2026-10-12 Mon 09:00 +1w>") board)))
+  (should-not (file-exists-p (todo-test--file "todo.org_archive"))))
+
+(ert-deftest todo-read-never-sees-an-archive-file ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Pay rent")
+  (todo-test--ok "complete" "Pay rent")
+  (should (equal "" (nth 1 (todo-test--ok "read"))))
+  (should (equal "" (nth 1 (todo-test--ok "read" "--state" "DONE"))))
+  ;; ... and the file itself is still readable when named on purpose.
+  (should (string-match-p "Pay rent"
+                          (nth 1 (todo-test--ok "read" "--file" (todo-test--file "todo.org_archive"))))))
+
+(ert-deftest todo-archive-moves-the-inline-container ()
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO Live one\n"
+                            "* DONE Old one\n"
+                            "  CLOSED: [2025-01-02 Thu]\n"
+                            "* Archive\n"
+                            "** DONE Ancient one\n"
+                            "** DONE Ancient two\n"
+                            "* TODO Live two\n"))
+  (should (string-match-p "^containers: 1$" (nth 1 (todo-test--ok "archive"))))
+  (let ((board (todo-test--text)))
+    (should-not (string-match-p "Archive" board))
+    (should (string-match-p "Live one" board))
+    (should (string-match-p "Live two" board)))
+  ;; Both children, not just the first: the cut takes the whole subtree.
+  (let ((archive (todo-test--text "todo.org_archive")))
+    (should (string-match-p "Ancient one" archive))
+    (should (string-match-p "Ancient two" archive)))
+  (should (string-match-p "^containers: 0$" (nth 1 (todo-test--ok "archive")))))
+
+(ert-deftest todo-archive-drops-a-blank-container-without-an-archive-file ()
+  (todo-test--setup)
+  (todo-test--write "* TODO Live one\n* Archive\n* TODO Live two\n")
+  (should (string-match-p "^containers: 1$" (nth 1 (todo-test--ok "archive"))))
+  (should (equal "* TODO Live one\n* TODO Live two\n" (todo-test--text)))
+  (should-not (file-exists-p (todo-test--file "todo.org_archive"))))
 
 ;;; capture, resolve, status, config
 
@@ -426,7 +533,8 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "complete" "One" "--evidence" "done")
   (let ((out (nth 1 (todo-test--ok "status"))))
     (should (string-match-p "^exists: yes$" out))
-    (should (string-match-p "^tasks: 2$" out))))
+    ;; One is archived on completion, so the board holds one task.
+    (should (string-match-p "^tasks: 1$" out))))
 
 (ert-deftest todo-config-prints-the-loaded-file ()
   (todo-test--setup)
@@ -456,6 +564,31 @@ verbs, same parsing, a few milliseconds each."
                    (string-trim
                     (shell-command-to-string
                      (format "stat -f %%m %s" (shell-quote-argument file))))))))
+
+(ert-deftest todo-warm-wrapper-finds-emacs-with-launchd-path ()
+  "The Main Quest window spawns the wrapper with launchd's PATH, which holds no
+emacs. The wrapper must resolve its own binaries, or the window reports
+\"warm Emacs did not start\" and every GUI verb fails."
+  (todo-test--setup)
+  (let* ((socket (format "todo-skill-path-%s" (emacs-pid)))
+         (board (expand-file-name "gui.org" todo-test--dir))
+         (script (expand-file-name "scripts/todo" todo-test--root))
+         (client "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient")
+         (out (generate-new-buffer "todo-path")))
+    (unwind-protect
+        (progn
+          (with-temp-file board (insert "* TODO Seen from a GUI PATH\n"))
+          (let ((code (call-process "env" nil (list out nil) nil
+                                    "-i" "PATH=/usr/bin:/bin"
+                                    (concat "HOME=" (expand-file-name "~"))
+                                    (concat "TMPDIR=" (or (getenv "TMPDIR") "/tmp"))
+                                    (concat "TODO_SKILL_SOCKET=" socket)
+                                    (concat "TODO_SKILL_CONFIG=" todo-test--config)
+                                    script "--warm" "status" "--file" board)))
+            (should (eq code 0))
+            (should (string-match-p "tasks: 1" (with-current-buffer out (buffer-string))))))
+      (ignore-errors (call-process client nil nil nil "-s" socket "--eval" "(kill-emacs)"))
+      (kill-buffer out))))
 
 (ert-deftest todo-warm-write-does-not-kill-emacs ()
   (todo-test--setup)
@@ -489,7 +622,7 @@ verbs, same parsing, a few milliseconds each."
           (let ((pid (todo-test--emacs-pid socket)))
             (should (> pid 0))
             (should (eq 0 (call-process script nil nil nil "--warm" "create" "Apr\u2013Jun")))
-            (should (eq 0 (call-process script nil (list out nil) nil "--warm" "read" "--json")))
+            (should (eq 0 (call-process script nil (list out nil) nil "--warm" "read" "--records")))
             (should (string-match-p "Warm" (with-current-buffer out (buffer-string))))
             (should (string-match-p "Apr\u2013Jun" (with-current-buffer out (buffer-string))))
             (should-not (string-match-p "\\\\342" (with-current-buffer out (buffer-string))))
@@ -506,10 +639,10 @@ verbs, same parsing, a few milliseconds each."
           (with-temp-file file
             (insert "* TODO Pay rent\nDEADLINE: <2026-09-28 Mon>\n* TODO Other\nDEADLINE: <2026-09-28 Mon>\n* TODO Repeat\nDEADLINE: <2026-09-27 Sun +1w>\n"))
           (let ((item (todo-doing-item `((title . "Pay rent")
-                                         (path . ,file)
+                                         (file . ,file)
                                          (deadline . "<2026-09-28 Mon>"))))
                 (repeat (todo-doing-item `((title . "Repeat")
-                                           (path . ,file)
+                                           (file . ,file)
                                            (deadline . "<2026-09-27 Sun +1w>")))))
             (should (string-match-p "Pay rent" item))
             (should-not (string-match-p "Other" item))
@@ -567,11 +700,11 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--setup)
   (todo-test--ok "create" "Old" "--deadline" "2026-01-01")
   (todo-test--ok "create" "Far" "--deadline" "2099-01-01")
-  (let ((item (todo-test--json (nth 1 (todo-test--ok "doing" "--json")))))
+  (let ((item (car (todo-test--records (nth 1 (todo-test--ok "doing"))))))
     (should (equal (todo-test--field item "title") "Old"))
     (should (equal (todo-test--field item "state") "TODO")))
   (todo-test--ok "set-state" "Old" "DONE")
-  (should (equal (nth 1 (todo-test--ok "doing" "--json")) "null\n")))
+  (should (equal (nth 1 (todo-test--ok "doing")) "none\n")))
 
 (ert-deftest todo-doing-priority-picks-one-open-a-task ()
   (todo-test--setup)
@@ -583,14 +716,14 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--ok "create" "Deferred" "--priority" "A")
   (todo-test--ok "set-state" "Deferred" "LATER")
   (let ((lines (nth 1 (todo-test--ok "doing" "--priority" "A"))))
-    (should (equal 1 (length (split-string lines "\n" t))))
+    (should (equal 1 (length (split-string lines "\n\n" t))))
     (should (string-match-p "Alpha" lines)))
   (should (equal "Alpha"
                  (todo-test--field
-                  (todo-test--json (nth 1 (todo-test--ok "doing" "--priority" "A" "--json")))
+                  (car (todo-test--records (nth 1 (todo-test--ok "doing" "--priority" "A"))))
                   "title")))
   (should (equal "none\n" (nth 1 (todo-test--ok "doing" "--priority" "B"))))
-  (should (equal "null\n" (nth 1 (todo-test--ok "doing" "--priority" "B" "--json"))))
+  (should (equal "none\n" (nth 1 (todo-test--ok "doing" "--priority" "B"))))
   (should (eq 1 (nth 0 (todo-test--cli "doing" "--priority" "High")))))
 
 (ert-deftest todo-task-line-is-the-heading ()

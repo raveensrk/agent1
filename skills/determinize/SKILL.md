@@ -73,18 +73,16 @@ becomes - and wait for a yes. Nothing is written before the yes.
   on every instance or it is reporting its own bugs, and it must fire on the
   violation that motivated it. Paste that output in the report.
 - **Guard**: a script that reads hook JSON on stdin, exits 2 to block, and
-  prints the reason and the replacement on stderr, shaped like
-  [commit_block.py](../../harness/guards/commit_block.py). Test the payload
-  shapes and the fail-closed parse error, like
-  [test_guards.py](../../harness/tests/test_guards.py).
+  prints the reason and the replacement on stderr. Test the payload shapes and
+  the fail-closed parse error.
 - **Wiring**: the exact block per harness is in
   [references/harness_wiring.md](references/harness_wiring.md). Write it for the
   harnesses installed on this machine, into the repo. For a harness that is not
   installed, emit the block in the report; write it only when asked with
   `--all-harnesses`.
-- **The floor**: git hooks fire for every harness and for a human, so a
-  prohibition also gets a hook under `.githooks/`, chained to the same guard
-  script. A repo that sets its own `core.hooksPath` wins over the global one.
+- **The floor**: a repo-local git hook under `.githooks/` fires for every
+  harness and for a human, so a prohibition that must hold everywhere gets one,
+  chained to the same guard script.
 - Leave one runnable check behind for every non-trivial script.
 
 ## 5. Thin the prose

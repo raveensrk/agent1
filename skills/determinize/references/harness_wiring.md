@@ -6,25 +6,9 @@ reason the model reads.** That is what makes the layer harness-agnostic - only
 the wiring below is per harness.
 
 Verify the block after wiring it: run the command by hand and confirm the agent
-is refused, then confirm the human door still opens. A guard nobody watched fire
-is a guess.
+is refused. A guard nobody watched fire is a guess.
 
-## The floor: git hooks
-
-Every harness, and a human, goes through git. `harness/githooks/pre-commit` and
-`pre-push` call `harness/guards/commit_block.py --git`, which denies unless
-`AGENT1_COMMIT=1`.
-
-```bash
-~/repos/agent1/install.py --git-hooks     # sets global core.hooksPath once per machine
-```
-
-A repo that sets its own `core.hooksPath` wins over the global one, so its own
-hook has to chain the same decision instead:
-
-```sh
-python3 "$HOME/repos/agent1/harness/guards/commit_block.py" --git pre-commit || exit 1
-```
+Each `command` below writes the guard's own path as `GUARD`: substitute yours.
 
 ## Claude Code
 
@@ -40,7 +24,7 @@ Exit code 2 blocks and feeds stderr to the model.
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/repos/agent1/harness/guards/commit_block.py\""
+            "command": "python3 \"$GUARD\""
           }
         ]
       }
@@ -68,7 +52,7 @@ The same decision can also be returned as JSON on stdout instead of exit 2.
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$HOME/repos/agent1/harness/guards/commit_block.py\"",
+            "command": "/usr/bin/python3 \"$GUARD\"",
             "statusMessage": "Checking the command"
           }
         ]
@@ -94,7 +78,7 @@ is in the command. Exit 2 blocks; any other nonzero code fails open.
   "hooks": {
     "beforeShellExecution": [
       {
-        "command": "python3 \"$HOME/repos/agent1/harness/guards/commit_block.py\"",
+        "command": "python3 \"$GUARD\"",
         "matcher": "git",
         "timeout": 30
       }
@@ -116,9 +100,9 @@ is in the command. Exit 2 blocks; any other nonzero code fails open.
         "matcher": "run_shell_command",
         "hooks": [
           {
-            "name": "commit-block",
+            "name": "guard",
             "type": "command",
-            "command": "python3 \"$HOME/repos/agent1/harness/guards/commit_block.py\""
+            "command": "python3 \"$GUARD\""
           }
         ]
       }
@@ -130,14 +114,14 @@ is in the command. Exit 2 blocks; any other nonzero code fails open.
 ## pi
 
 An extension in `~/.pi/agent/extensions/`, installed from
-`~/repos/agent1/harness/extensions/` by `install.py`. The handler calls the same
-Python decision - a second copy in TypeScript would drift from the git hook.
+`~/repos/agent1/harness/extensions/` by `install.py`. The handler shells out to
+the guard, so one decision serves every harness rather than a second copy in
+TypeScript that would drift.
 
 ```ts
 import { execFileSync } from "node:child_process";
 
-export function commitHit(command: string): string | null {
-  if (!/\bgit\b/.test(command)) return null;
+export function guardHit(command: string): string | null {
   try {
     execFileSync("python3", [GUARD, "--check", command], { stdio: "pipe" });
     return null;

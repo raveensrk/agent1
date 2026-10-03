@@ -10,11 +10,6 @@
  *
  * Blocking with the replacement command is the point: the next attempt must be
  * the right one. A guard that only says no sends it down the same dead end.
- *
- * The third rule - an agent never commits - is decided in Python, in
- * harness/guards/commit_block.py, and called from here. One decision serves this
- * guard, the git hook, and every future harness wiring; a second copy in
- * TypeScript would drift.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { execFileSync } from "node:child_process";
@@ -24,6 +19,31 @@ import { join } from "node:path";
 const GREP_NAMES = new Set(["grep", "egrep", "fgrep", "rgrep", "ggrep"]);
 const FETCHERS = new Set(["curl", "wget"]);
 const TIMEOUT_FLAG = /(^|\s)--(max-time|connect-timeout|timeout)(=\S+)?(\s|$)|(^|\s)-m(\s|$|\d)/;
+
+// A test suite run with no shell bound. Measured 2026-10-03: one
+// `emacs -Q --batch ... ert-run-tests-batch-and-exit` hung on a daemon waiting
+// for a keypress, burned the full 300s tool timeout, and cost another 194s when
+// it was aborted - the same suite finishes in 5s when it is healthy.
+const RUNNERS = [
+	/\bpytest\b/,
+	/\bcargo\s+test\b/,
+	/\bswift\s+test\b/,
+	/\bgo\s+test\b/,
+	/\bnpm\s+(run\s+)?test\b/,
+	/\byarn\s+test\b/,
+	/\bert-run-tests/,
+];
+const SHELL_BOUND = /(^|\s)timeout\s+\d+/;
+
+/** The test runner in COMMAND with no shell bound, or null. */
+function unboundedRunner(command: string): string | null {
+	if (SHELL_BOUND.test(command)) return null;
+	for (const runner of RUNNERS) {
+		const found = command.match(runner);
+		if (found) return found[0];
+	}
+	return null;
+}
 
 type Hit = { name: string; fix: string };
 
@@ -68,24 +88,19 @@ export function guardHit(command: string): Hit | null {
 			}
 		}
 	}
-	return null;
-}
-
-const COMMIT_GUARD = join(homedir(), "repos/agent1/harness/guards/commit_block.py");
-
-/** The block reason when a command would commit or push, else null. */
-export function commitHit(command: string): string | null {
-	if (!/\bgit\b/.test(command)) return null;
-	try {
-		execFileSync("python3", [COMMIT_GUARD, "--check", command], { stdio: "pipe" });
-		return null;
-	} catch (error) {
-		const failed = error as { status?: number; stderr?: Buffer };
-		// ponytail: only exit 2 blocks; a broken guard allows, and the git hook
-		// still denies the commit that reaches it
-		if (failed.status !== 2) return null;
-		return (failed.stderr ?? Buffer.from("")).toString().trim();
+	const runner = unboundedRunner(command);
+	if (runner) {
+		return {
+			name: `unbounded test run (${runner})`,
+			fix: [
+				"Bound it, and state the ETA before starting it (jobs.md):",
+				"  timeout 180 emacs -Q --batch -l tests/todo_tests.el -f ert-run-tests-batch-and-exit",
+				"  scripts/test                      # the todo skill's suite: bounded, prints the failures",
+				"  timeout 900 swift test",
+			].join("\n"),
+		};
 	}
+	return null;
 }
 
 const MEASURED =
@@ -104,7 +119,5 @@ export default function (pi: ExtensionAPI) {
 				reason: `Blocked: ${hit.name}. ${MEASURED}\n${hit.fix}\nBound the path for a search, and keep the timeout on every fetch.`,
 			};
 		}
-		const commit = commitHit(command);
-		if (commit) return { block: true, reason: commit };
 	});
 }

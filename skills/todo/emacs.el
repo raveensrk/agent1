@@ -18,15 +18,24 @@
 (defvar-local todo-doing-marker nil)
 (defvar-local todo-doing-stamp nil)
 
+(defun todo-emacs-pairs (text)
+  "TEXT as an alist of the CLI's `key: value' lines.
+Indented lines are the note and are skipped."
+  (let (out)
+    (dolist (line (split-string text "\n" t))
+      (when (string-match "\\`\\([a-z_]+\\): \\(.*\\)\\'" line)
+        (push (cons (intern (match-string 1 line)) (match-string 2 line)) out)))
+    (nreverse out)))
+
 (defun todo-doing-task ()
-  "The task `scripts/todo doing --json' returns, or nil."
+  "The task `scripts/todo doing' prints, or nil."
   (let* ((cli (expand-file-name "scripts/todo" todo-emacs-root))
          (buf (generate-new-buffer " *doing*"))
          (err (make-temp-file "doing-err"))
          status)
     (unwind-protect
         (progn
-          (setq status (call-process cli nil (list buf err) nil "--warm" "doing" "--json"))
+          (setq status (call-process cli nil (list buf err) nil "--warm" "doing"))
           (with-current-buffer buf
             (if (not (eq status 0))
                 (error "%s" (string-trim
@@ -34,17 +43,14 @@
                                      (with-temp-buffer
                                        (insert-file-contents err)
                                        (buffer-string)))))
-              (let ((parsed (json-parse-string (buffer-string)
-                                               :object-type 'alist
-                                               :null-object nil
-                                               :false-object nil)))
-                (and (consp parsed) parsed)))))
+              (let ((pairs (todo-emacs-pairs (buffer-string))))
+                (and (assoc 'title pairs) pairs)))))
       (delete-file err)
       (kill-buffer buf))))
 
 (defun todo-doing-item (task)
   "One agenda item string for TASK."
-  (let* ((file (alist-get 'path task))
+  (let* ((file (alist-get 'file task))
          (title (alist-get 'title task))
          (deadline (alist-get 'deadline task))
          (day (calendar-gregorian-from-absolute (org-time-string-to-absolute deadline))))

@@ -22,6 +22,12 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Use a past example as the format to match.
 - Interview me and ask clarifying questions before starting a task.
 - Ask one question at a time. When a decision is needed, ask it as an MCQ and mark the option you recommend with "(recommended)".
+- Batch 2-4 questions in one call only when they are genuinely independent of each
+  other; otherwise one at a time.
+- When I name a priority and a timeframe together - "B - next weekend", "C", "B
+  it" - set both in one pass rather than asking again: `set-priority` plus a
+  `set-deadline` on the date I mean. "Next weekend" is the coming Saturday unless
+  I say otherwise.
 - When a task has two plausible architectures, ask one MCQ before writing any code.
 - A new command's default human-readable output: ask the shape first, with one MCQ that shows a concrete example of each. The renderer is the expensive part to redo.
 - Verify a library call in a scratch buffer or a one-liner before using it in code.
@@ -33,6 +39,9 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
 - Read the exact region before an edit when this session has not shown that text - one guessed `oldText` aborts the whole batch and costs a retry.
 - A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
+- End a bash call so it exits 0 when finding nothing is a valid answer:
+  `grep -c ... || true`, `ls <glob> 2>/dev/null || true`. A clean scan that exits
+  1 is reported as an error and reads as a failure - 12 of those in one session.
 - Machine-wide: search with `rg`, never `grep -r` - recursive grep walks `.git` and `node_modules`. Measured on this machine, one `grep -rn` over `~/repos` (17 GB, 169,203 files) ran 111 s of a 137 s session and had to be aborted; `rg -l` answered the same question in 2.6 s. `harness/extensions/command_guard.ts` blocks the recursive form, and a `curl` or `wget` with no timeout, printing the replacement either way. Bound the path either way.
 - Machine-wide: a path a command already named needs no second scan to confirm it. When that path turns out missing, ask one question instead of searching for an alternative: the sweep cost 111 s on a task whose whole ambiguity was one question.
 - When I say I unsubscribed or cancelled a service I control, record that and do not open mail, the site, or System Settings to check it.
@@ -137,12 +146,6 @@ generators, hooks and guards. Prose is the fallback, not the default.
   doc or inside the check.
 - The deterministic layer is harness-agnostic: one check command, one guard
   contract, committed in the repo. Only the wiring is per harness.
-- An agent never commits.
-  [commit_block.py](~/repos/agent1/harness/guards/commit_block.py) blocks
-  `git commit`, `merge`, `rebase`, `cherry-pick`, `revert`, `am` and `push` at the
-  tool call, and [harness/githooks](~/repos/agent1/harness/githooks) denies a
-  commit that still reaches git unless `AGENT1_COMMIT=1`, which only my own commit
-  path sets. Stage the work, then say it is ready for review.
 - A mistake that happened twice means a signal is missing, not that a rule was too
   quiet. Ask "how could this be the last time?" and name the check, generator or
   hook that will catch it next time, before you touch rule text.
@@ -233,6 +236,10 @@ Exception: library files and files meant only to be imported or sourced.
 - `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
 - BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
 - BSD `cat` has no `-A`. Use `cat -v -e`, or `sed -n l` to show line ends and tabs.
+
+- A hung process names its own wait: `sample <pid> 2` prints its stack. For an
+  Emacs daemon that is normally `select-safe-coding-system-interactively` ->
+  `completing-read`, a prompt nobody can answer, so bound the run instead.
 
 ## Confirmation
 
