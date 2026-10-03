@@ -22,3 +22,9 @@ https://openrouter.ai/workspaces/default/guardrails
   - SKILL.md says the CLI rejects a time, angle brackets and a hand-written day name.
   - Cause: the check around line 272 of scripts/todo.el is (and deadline (ignore-errors (org-time-string-to-absolute deadline))), which accepts far more than a bare YYYY-MM-DD.
   - Done when a time, angle brackets and a day name each exit non-zero with a clear message, a bare 2026-11-05 still works, and a test covers each rejection.
+
+* TODO Print one high-priority task alone from a single command :todo_skill:
+The CLI already has doing: one TODO or IN_PROGRESS that is due today or overdue, priority A before C. This asks for the priority-only pick instead - print one high-priority task, alone, with no list around it. Decide extend doing with a flag (for example --priority A) or add a new verb, and reuse the same pick order (priority, then title, then path) so emacs.el and agenda2 stay consistent. Verify: the command prints exactly one line for a board holding several priority A tasks, and prints nothing when none exists. Docs: SKILL.md section 2.
+
+* TODO Add a completion-time estimate to a task's properties when creating it :todo_skill:
+On create, also record how long the task is expected to take, as a task property. Prefer the org built-in Effort property - a :PROPERTIES: drawer holding :Effort: 0:30 - because org-columns, org-agenda and org-clock already read it, so no new name needs inventing; fix the format at H:MM and reject anything else. Today the CLI writes no properties and no drawers at all (SKILL.md section 6), so create needs a new flag, for example --effort 30, and must leave a file that already has drawers intact. read --json should expose the value. Update SKILL.md sections 1 (properties) and 2 (CLI) and todo_tests.el. Verify: create with an estimate, then read --json shows it; a create without the flag writes no drawer; the suite passes.
