@@ -265,6 +265,48 @@ def test_interpreter_check_reads_a_rule_and_a_shebang():
         assert proc.stdout == "", proc.stdout
 
 
+def test_nested_git_repo_check_reports_a_nested_repo_and_honours_the_allowlist():
+    """A repo under mine is a finding; an allowed clone and a clean file are not."""
+    check = os.path.join(CHECKS, "nested_git_repo.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        outer = os.path.join(tmp, "outer")
+        inner = os.path.join(outer, "vendored", "inner")
+        os.makedirs(os.path.join(inner, ".git"))
+        subprocess.run(["git", "init", "-q", outer], check=True)
+        edited = os.path.join(inner, "kept.py")
+        with open(edited, "w") as fh:
+            fh.write("x = 1\n")
+        elsewhere = os.path.join(tmp, "elsewhere", "clone")
+        os.makedirs(os.path.join(elsewhere, ".git"))
+        link = os.path.join(outer, "linked")
+        os.symlink(elsewhere, link)
+        proc = subprocess.run([sys.executable, check, edited], capture_output=True, text=True, cwd=outer)
+        assert "nested git repo" in proc.stdout, proc.stdout
+        assert "vendored/inner" in proc.stdout, proc.stdout
+        assert "symlink to a git repo" in proc.stdout, proc.stdout
+        os.unlink(link)
+        # The allowlist lives in the private repo; this run points at a fixture.
+        allow = os.path.join(tmp, "allow.txt")
+        allowlist = {"allowed": "# a clone from the internet\nvendored/*\n", "empty": "# nothing yet\n"}
+        spec = importlib.util.spec_from_file_location("nested_git_repo", check)
+        module = importlib.util.module_from_spec(spec)
+        old_argv, cwd = sys.argv, os.getcwd()
+        sys.argv = ["nested_git_repo.py", edited]
+        try:
+            spec.loader.exec_module(module)
+            os.chdir(outer)
+            for name, body in allowlist.items():
+                with open(allow, "w") as fh:
+                    fh.write(body)
+                module.ALLOW = allow
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    module.main()
+                assert (buf.getvalue() == "") == (name == "allowed"), (name, buf.getvalue())
+        finally:
+            sys.argv, _ = old_argv, os.chdir(cwd)
+
+
 def test_repo_local_check_overrides_the_machine_one():
     lint = load_lint()
     with tempfile.TemporaryDirectory() as tmp:

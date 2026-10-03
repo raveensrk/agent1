@@ -84,3 +84,9 @@ to a check's message.
 Checks that encode machine-specific rules belong in `~/repos/agent2/harness/checks/`
 (private repo), not here. The dispatcher picks that directory up only when it
 exists, the same conditional rule `common.md` uses for `agent2/AGENTS.md`.
+
+The reverse split is `nested_git_repo.py`: the rule is general, so the check is
+public here, while the allowlist of internet clones it reads names this
+machine's repos and stays at
+`~/repos/agent2/harness/data/nested_repo_allow.txt`. With that file absent the
+check runs with no allowlist.
