@@ -116,6 +116,33 @@ generators, hooks and guards. Prose is the fallback, not the default.
   [harness/checks](~/repos/agent1/harness/checks) (see
   [harness/README.md](~/repos/agent1/harness/README.md)) and keep the prose rule
   only if it says something the check cannot.
+- Deterministic first, and pick the shape the rule needs:
+  - Decidable after the work - a check in
+    [harness/checks](~/repos/agent1/harness/checks), run by
+    [lint.py](~/repos/agent1/harness/lint.py). The prose keeps one pointer line.
+  - A prohibition that must never happen - a guard in
+    [harness/guards](~/repos/agent1/harness/guards). It reads hook JSON on stdin,
+    exits 2 to block, and prints the reason and the replacement on stderr. Claude
+    Code, Codex, Cursor and Gemini CLI all speak that contract; pi and opencode
+    run a thin adapter over the same script.
+  - Pin the tool. "Follow the CommonMark spec" has no falsifier, every string is
+    valid CommonMark; `mdformat --check` does. A rule with no falsifier is prose.
+  - Judgement stays prose. Never fake it with a regex, and reach for Jev only when
+    the answer is a label or a score with a threshold.
+  - Convert with the [determinize](~/repos/agent1/skills/determinize/SKILL.md)
+    skill: it scans the instruction files, classifies every rule, builds what is
+    missing, and thins the prose to pointers.
+- Instruction files stay thin: decisions and routing, nothing else. The file names
+  the decision and the program that decides it; the detail lives in an on-demand
+  doc or inside the check.
+- The deterministic layer is harness-agnostic: one check command, one guard
+  contract, committed in the repo. Only the wiring is per harness.
+- An agent never commits.
+  [commit_block.py](~/repos/agent1/harness/guards/commit_block.py) blocks
+  `git commit`, `merge`, `rebase`, `cherry-pick`, `revert`, `am` and `push` at the
+  tool call, and [harness/githooks](~/repos/agent1/harness/githooks) denies a
+  commit that still reaches git unless `AGENT1_COMMIT=1`, which only my own commit
+  path sets. Stage the work, then say it is ready for review.
 - A mistake that happened twice means a signal is missing, not that a rule was too
   quiet. Ask "how could this be the last time?" and name the check, generator or
   hook that will catch it next time, before you touch rule text.

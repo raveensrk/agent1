@@ -10,8 +10,16 @@
  *
  * Blocking with the replacement command is the point: the next attempt must be
  * the right one. A guard that only says no sends it down the same dead end.
+ *
+ * The third rule - an agent never commits - is decided in Python, in
+ * harness/guards/commit_block.py, and called from here. One decision serves this
+ * guard, the git hook, and every future harness wiring; a second copy in
+ * TypeScript would drift.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { execFileSync } from "node:child_process";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 const GREP_NAMES = new Set(["grep", "egrep", "fgrep", "rgrep", "ggrep"]);
 const FETCHERS = new Set(["curl", "wget"]);
@@ -63,6 +71,23 @@ export function guardHit(command: string): Hit | null {
 	return null;
 }
 
+const COMMIT_GUARD = join(homedir(), "repos/agent1/harness/guards/commit_block.py");
+
+/** The block reason when a command would commit or push, else null. */
+export function commitHit(command: string): string | null {
+	if (!/\bgit\b/.test(command)) return null;
+	try {
+		execFileSync("python3", [COMMIT_GUARD, "--check", command], { stdio: "pipe" });
+		return null;
+	} catch (error) {
+		const failed = error as { status?: number; stderr?: Buffer };
+		// ponytail: only exit 2 blocks; a broken guard allows, and the git hook
+		// still denies the commit that reaches it
+		if (failed.status !== 2) return null;
+		return (failed.stderr ?? Buffer.from("")).toString().trim();
+	}
+}
+
 const MEASURED =
 	"Measured here: one recursive grep over ~/repos ran 111s of a 137s session and was " +
 	"aborted, and ~/.bash_history holds 9 curl installs with no --max-time.";
@@ -73,10 +98,13 @@ export default function (pi: ExtensionAPI) {
 		const command = (event.input as { command?: unknown }).command;
 		if (typeof command !== "string") return;
 		const hit = guardHit(command);
-		if (!hit) return;
-		return {
-			block: true,
-			reason: `Blocked: ${hit.name}. ${MEASURED}\n${hit.fix}\nBound the path for a search, and keep the timeout on every fetch.`,
-		};
+		if (hit) {
+			return {
+				block: true,
+				reason: `Blocked: ${hit.name}. ${MEASURED}\n${hit.fix}\nBound the path for a search, and keep the timeout on every fetch.`,
+			};
+		}
+		const commit = commitHit(command);
+		if (commit) return { block: true, reason: commit };
 	});
 }

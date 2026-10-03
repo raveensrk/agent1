@@ -96,6 +96,7 @@ directory name to match the skill `name`.
 | Skill | What it does |
 |---|---|
 | `agent-usage-report` | HTML report of every model used across agent harnesses (pi, Claude Code, Codex, opencode): tokens, cost, and the most intelligent and most efficient model |
+| `determinize` | Scans a directory's agent instructions, turns every decidable rule into a check, a guard or a git hook, and thins the prose to decisions and routing |
 | `git-report` | Your commits across all your repos, local and remote, for any time window |
 | `migrate-todo` | Converts line-schema todos to the lisp schema, one repo at a time |
 | `model-price-report` | Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis scores |
@@ -110,6 +111,10 @@ installed on the machine. Each item is a link back to this clone, so a
 ```bash
 ~/repos/agent1/install.py --dry-run
 ```
+
+`--git-hooks` is separate and global: it points `core.hooksPath` at
+`harness/githooks`, so the agent commit block is active in every repo on the
+machine, including ones cloned later. The human door is `AGENT1_COMMIT=1`.
 
 ```bash
 ~/repos/agent1/install.py

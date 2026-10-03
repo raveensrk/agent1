@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# harness-check: {"id": "script_exec_bit", "applies": ["*.py", "*.sh", "*.bash", "*.zsh", "*.rb", "*.pl", "*.lua"], "quadrant": "feedback/computational"}
+# harness-check: {"id": "script_exec_bit", "applies": ["*.py", "*.sh", "*.bash", "*.zsh", "*.rb", "*.pl", "*.lua", "harness/githooks/*", "**/.githooks/*"], "quadrant": "feedback/computational"}
 """A file with a shebang is a script somebody runs, so it needs the exec bit.
 
 common.md: "Scripts meant to be run must always be executable. Add a shebang on
@@ -10,6 +10,9 @@ only ever passed to python3. The message names both, because a fragment with a
 copied shebang trips this twice a session and only the chmod remedy was offered.
 
     script_exec_bit.py FILE...      (or paths on stdin)
+
+Git hooks are in scope too: git silently ignores a hook without the exec bit,
+which is the quietest way for a guard to stop guarding.
 """
 from __future__ import annotations
 

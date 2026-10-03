@@ -26,6 +26,8 @@ python3 harness/lint.py --repos         # every git repo under ~/repos
 python3 harness/lint.py --list          # the checks, their quadrant and scope
 python3 harness/lint.py --json          # for scripts and the trigger
 python3 harness/tests/test_lint.py      # the checks' own tests
+python3 harness/tests/test_guards.py    # the commit block's own tests
+python3 harness/self_check              # both suites, then the full-population lint
 ```
 
 Exit 0 clean, 1 findings, 2 a check failed to run. A failing check is reported
@@ -65,19 +67,37 @@ session did not touch - a repo full of old findings must not nag every run.
 
 ## Guards
 
-`extensions/command_guard.ts` is the other half of the trigger: a guard refuses a
-tool call before it runs, where the lint reacts after the files are written. Two
-shapes, both measured here. One recursive `grep -rn` over `~/repos` ran 111 s of
-a 137 s session (17 GB, 169,203 files) and had to be aborted, while `rg -l`
-answered in 2.6 s. And `~/.bash_history` holds 9 `curl ... | sh` installs with no
-`--max-time`, where a dead host blocks forever. The guard blocks both and prints
-the replacement with those numbers. Its check is
-`node --experimental-strip-types harness/tests/test_command_guard.ts`, eleven
-blocked cases and eleven allowed ones.
+A guard refuses a tool call before it runs, where the lint reacts after the files
+are written. There are two shapes here.
+
+`extensions/command_guard.ts` refuses the commands that hang, both measured
+directly. One recursive `grep -rn` over `~/repos` ran 111 s of a 137 s session
+(17 GB, 169,203 files) and had to be aborted, while `rg -l` answered in 2.6 s.
+And `~/.bash_history` holds 9 `curl ... | sh` installs with no `--max-time`,
+where a dead host blocks forever. Its check is
+`node --experimental-strip-types harness/tests/test_command_guard.ts`.
+
+`guards/commit_block.py` is the machine-wide prohibition: an agent never
+commits. It decides in one place and is called from three:
+
+- The harness hook contract - hook JSON on stdin, exit 2 blocks, stderr is the
+  reason. Claude Code, Codex, Cursor and Gemini CLI all speak it, so one file
+  serves all four. The exact block for each is in
+  [references/harness_wiring.md](../skills/determinize/references/harness_wiring.md).
+- `githooks/pre-commit` and `githooks/pre-push` (a symlink), made global with
+  `./install.py --git-hooks`, which sets `core.hooksPath`. This is the
+  harness-agnostic floor: it fires for an agent, a human, and any harness.
+- `--check "CMD"`, for tests and one-liners.
+
+The git half denies unless `AGENT1_COMMIT=1`. Only the user's own commit path
+sets that ([`lazygit_pi_commit.sh`](~/dot/config/lazygit_pi_commit.sh)), so the
+block is real for the agent and a one-word door for the user. A repo that sets
+its own `core.hooksPath` wins over the global one and must chain
+`guards/commit_block.py` from its own hook.
 
 A guard message always carries the replacement command. Blocking without
 steering sends the next attempt down the same dead end - the same rule applies
-to a check's message.
+to a check's message, and to a guard's.
 
 ## Private checks
 
