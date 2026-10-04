@@ -13,39 +13,62 @@ At session start, Read these files
 - [agent2 AGENTS.md](~/repos/agent2/AGENTS.md) - only if the file exists
 
 Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
+
 - Tool configs live in `~/dot/config`, stowed into place by `~/dot/script/install.py`. Read `~/dot/AGENTS.md` before searching for a tool's config.
 - Tool list: when `~/dot/docs/dev_tools.md` exists, read it before choosing a tool and prefer a tool listed there over an unlisted one.
 
 ## Working style
 
 - Nothing vague - precise goal / result.
+
 - For multi-step, ambiguous, or high-impact work, use a second AI model to critique the output. Skip it for small, well-defined changes.
+
 - Define the precise criteria for a great result up front.
+
 - Use a past example as the format to match.
+
 - Interview me and ask clarifying questions before starting a task.
+
 - Ask one question at a time. When a decision is needed, ask it as an MCQ and mark the option you recommend with "(recommended)".
+
 - Batch 2-4 questions in one call only when they are genuinely independent of each
   other; otherwise one at a time.
+
 - When I name a priority and a timeframe together - "B - next weekend", "C", "B
   it" - set both in one pass rather than asking again: `set-priority` plus a
   `set-deadline` on the date I mean. "Next weekend" is the coming Saturday unless
   I say otherwise.
+
 - When a task has two plausible architectures, ask one MCQ before writing any code.
+
 - A new command's default human-readable output: ask the shape first, with one MCQ that shows a concrete example of each. The renderer is the expensive part to redo.
+
 - Verify a library call in a scratch buffer or a one-liner before using it in code.
+
 - A bulk or destructive change prints a per-file plan first, then applies.
+
 - A live external account is real data. Before the first write to one - a playlist, a mailbox, a third-party API - ask once and name what changes, then prototype on a scratch resource you create rather than the user's own. The real account is only touched by a command the user asked for by name.
+
 - Back a recommendation with a number measured on this machine, not from memory.
+
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
+
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
+
 - `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
+
 - Read the exact region before an edit when this session has not shown that text - one guessed `oldText` aborts the whole batch and costs a retry.
+
 - A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
+
 - End a bash call so it exits 0 when finding nothing is a valid answer:
   `grep -c ... || true`, `ls <glob> 2>/dev/null || true`. A clean scan that exits
   1 is reported as an error and reads as a failure - 12 of those in one session.
+
 - Machine-wide: search with `rg`, never `grep -r` - recursive grep walks `.git` and `node_modules`. Measured on this machine, one `grep -rn` over `~/repos` (17 GB, 169,203 files) ran 111 s of a 137 s session and had to be aborted; `rg -l` answered the same question in 2.6 s. `harness/extensions/command_guard.ts` blocks the recursive form, and a `curl` or `wget` with no timeout, printing the replacement either way. Bound the path either way.
+
 - Machine-wide: a path a command already named needs no second scan to confirm it. When that path turns out missing, ask one question instead of searching for an alternative: the sweep cost 111 s on a task whose whole ambiguity was one question.
+
 - When I say I unsubscribed or cancelled a service I control, record that and do not open mail, the site, or System Settings to check it.
 
 - An ambiguous request that follows unrelated work and could target either the harness or the project in cwd: confirm scope with one question before editing anything outside cwd (`~/.pi`, dotfiles, `~/repos`); default to the project in cwd.
@@ -175,6 +198,7 @@ Every session must reconstruct identical context from this repo alone, across pi
 ## Documentation
 
 Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. Suggest new guidelines worth adding.
+
 - Before removing a path or a symlink, search the docs that reference it and update them in the same change.
 
 ## Verification
@@ -210,8 +234,8 @@ Exceptions:
 
 When linking file paths, use markdown links.
 
-Do      : [File Name](/path/to/file_name.md)
-Don't   : `/path/to/file_name.md`
+Do : [File Name](/path/to/file_name.md)
+Don't : `/path/to/file_name.md`
 
 Same goes for images and media. For images and media use links with preview `![]()`.
 
@@ -261,11 +285,17 @@ stay prose: this file.
 ## macOS
 
 - iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies. While pi is open, address the bash window by `id`, never `current window`: `current window` is the pi TUI and the text becomes a user message. Do not `write text` into a tab that is waiting at a password prompt, and never redirect that prompt's stderr; the tab looks hung and the first characters are eaten as the answer.
+
 - `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
+
 - BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
+
 - BSD `cat` has no `-A`. Use `cat -v -e`, or `sed -n l` to show line ends and tabs.
+
 - `pgrep` on macOS has no `-c`. Count with `pgrep ... | wc -l`.
+
 - `defaults write` cannot take a preference key containing spaces or parentheses, which is every pbs.plist service entry. Use `/usr/libexec/PlistBuddy` for those.
+
 - A screenshot path under `/var/folders/.../TemporaryItems/NSIRD_screencaptureui_*` is deleted within minutes. Copy it into `~/tmp` before referring to it.
 
 - A hung process names its own wait: `sample <pid> 2` prints its stack. For an

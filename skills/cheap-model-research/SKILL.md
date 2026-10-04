@@ -25,6 +25,7 @@ and marked.
    (`both` / `pi` / `opencode`), enriches with pricing,
    context, and capabilities from https://models.dev/api.json, and prints one
    JSON object to stdout. Never hand-run the intersection yourself.
+
    - `price_usd_per_m`: blended `usd/M` at a 3:1 input:output ratio.
      `pricing` is `free` (both directions 0), `paid`, or `unknown` (no cost
      in models.dev, e.g. plan-only access).
@@ -33,13 +34,15 @@ and marked.
    - For presentation, dedupe identical model ids across providers: one row
      per model id, cheapest price shown, availability = union of the tools
      that offer it.
+
 2. **Intelligence scores** - web-research one score per shortlisted model
    (Artificial Analysis index, LMArena, or a named benchmark with a date).
    Record the score and its source URL. If no score is found, say so in the
    report rather than guessing. Coverage rule: score-verify every usable
-   model with blended price &le; $0.50/M (the cheap lane) plus all free
+   model with blended price ≤ $0.50/M (the cheap lane) plus all free
    models; models a benchmark source does not track are marked "not
    tracked", never guessed.
+
 3. **Latency ping-pong (podium models)** - run the bundled benchmark:
 
    ```bash
@@ -51,11 +54,14 @@ and marked.
    per model; note that timing includes pi CLI startup equally and that
    long time mixes thinking and generation. The script retries with
    backoff on provider failures.
+
 4. **Cutoff** - data-driven, stated in the report: keep the cheapest models
    whose verified score clears a usable-for-agentic-coding bar. Never fix
    the cutoff in this file; compute it from the data and say what you used.
+
 5. **HTML report** - write `~/Downloads/cheap_models_YYYY-MM-DD.html`
    (local date). Self-contained means:
+
    - inline CSS, inline JS, inline SVG only; no CDN, no webfonts, no
      external images, no network requests of any kind;
    - a sortable/filterable table (plain inline JS, no libraries);
@@ -71,6 +77,7 @@ and marked.
      availability);
    - citations section: every price and score claim links to
      its source.
+
 6. **Verify** - before finishing, confirm the file has no `http` URL in a
    `src=`/`href=` attribute, then print the path.
 

@@ -15,7 +15,7 @@ Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as ru
 
 ### Refactor
 
-- Go over this entire project and critic it. 
+- Go over this entire project and critic it.
 - Tell me which parts of the project we can refactor.
 - Should we replace the backend or frontend or both? The codebase of the project must align with the docs. Which framework would be be suited for this kind of work? I want the project to be highly expressive so the programming languages used must also be highly expressive.
 
@@ -52,9 +52,9 @@ Based on this session,
 
 - If there is any improvements that can be made to the cli, do it.
 - Refer
-    - https://clig.dev/
-    - https://github.com/cli-guidelines/cli-guidelines
-    - https://github.com/cli-guidelines/cli-guidelines/blob/main/content/_index.md 
+  - https://clig.dev/
+  - https://github.com/cli-guidelines/cli-guidelines
+  - https://github.com/cli-guidelines/cli-guidelines/blob/main/content/\_index.md
 
 ## Stage 3 - Documentation
 
@@ -63,7 +63,7 @@ Based on the current session update the documentation and training data.
 - Remove stale docs
 - Write and Update documentation
 - Reconcile docs and codebase.
-- Try to reduce token usage in the project by updating the docs. 
+- Try to reduce token usage in the project by updating the docs.
 - Write docs like a book and wiki.
 - Based on this session update and reconcile the docs and codebase.
 - If you learned anything new, add notes and instructions to the docs.
@@ -98,7 +98,7 @@ Based on this current session do the following,
 
 - Commit with a sensible message. Tag. Push the changes to the repository.
 
-## Stage 6 - Archive chat 
+## Stage 6 - Archive chat
 
 - Archive chat
 
@@ -138,6 +138,7 @@ the code, config, and scripts to verify anything you're unsure about. Don't
 invent conventions that aren't there.
 
 Cover:
+
 - What this project is and what it's for, in a couple of sentences.
 - Layout: the directories that matter and what lives in each.
 - Setup: exact commands to install deps, run, build, test, and lint.

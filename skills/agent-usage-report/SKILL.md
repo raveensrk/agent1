@@ -78,7 +78,7 @@ Tier membership comes from Artificial Analysis data, never a hardcoded list:
   moves as the market moves.
 - **Flash tier**: a model whose name carries flash/mini/lite/turbo/nano/
   instant/hydro, or one that is cheap and fast per AA data (blended price
-  <= $0.5/1M and >= 80 output tokens/sec). A model named flash stays flash
+  \<= $0.5/1M and >= 80 output tokens/sec). A model named flash stays flash
   even if it scores high.
 
 Supporting analysis (still in the report, not the verdict): per-model AA

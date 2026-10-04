@@ -179,18 +179,18 @@ scripts/todo config
 
 - A ref is an exact title. Two tasks with the same title make the ref ambiguous
   and the CLI refuses it. Every verb matches tasks; only `set-state` and
-`set-note` also match a state-less heading (a container or a `capture` line), and
-neither matches the Archive container.
+  `set-note` also match a state-less heading (a container or a `capture` line), and
+  neither matches the Archive container.
 - `-h` or `--help` prints help and exits 0 without writing: on its own, the main
   help - every verb with a one-line summary; after a verb, that verb's usage,
   options, note and example. A bare `scripts/todo` prints the main help too. The
   text lives in `todo.el` (`todo-help`), so help and the verbs cannot drift.
 - The board is `todo.org` in the cwd; `--file F` overrides. When the user names a
-board, always pass `--file`/`--dir` - the cwd default is a fallback for when the
-board is known, not a licence to pick one.
+  board, always pass `--file`/`--dir` - the cwd default is a fallback for when the
+  board is known, not a licence to pick one.
 - `--file F` means that exact board for every verb, read and write alike, and it
-wins when `--dir` is also given. `--dir D` makes a read scan D's `*.org` files
-instead of the configured dirs; it does nothing for a write.
+  wins when `--dir` is also given. `--dir D` makes a read scan D's `*.org` files
+  instead of the configured dirs; it does nothing for a write.
 - `--due` and `--overdue` are two names for one window: the deadline day is
   today or earlier in IST, repeaters included. `--due` and `-d` are the short
   spelling. It keeps open work only - `TODO` and `IN_PROGRESS` - unless
@@ -200,8 +200,7 @@ instead of the configured dirs; it does nothing for a write.
   late, then A before D, then title, then path: the same comparator `doing` picks
   with, so `doing` is the head of that list. The order is the flag's default,
   not an option; board order is a plain `read` away. `--recurring` keeps the
-  routines, a deadline carrying a repeater. A routine that is late: `read --due
-  --recurring`. They read the same clock and the same repeater maths as `doing`,
+  routines, a deadline carrying a repeater. A routine that is late: `read --due --recurring`. They read the same clock and the same repeater maths as `doing`,
   over every match instead of the one pick.
 - `read -p A|B|C|D` keeps only the tasks at that priority; `read -n N` cuts the
   filtered list to its first N - urgency order under `--due`, board order
@@ -214,8 +213,7 @@ instead of the configured dirs; it does nothing for a write.
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
-- Lists print `STATE  Title  (path)`; single results print `key: value`. `read
-  --records` prints one plain record per task, records separated by a blank
+- Lists print `STATE  Title  (path)`; single results print `key: value`. `read --records` prints one plain record per task, records separated by a blank
   line: `title:`, `state:`, `deadline:`, `priority:`, `effort:`, `tags:`
   (space-joined), `path:`, then the note as lines indented four spaces (empty
   note lines too, so the blank line stays a record break). A missing deadline,
@@ -223,8 +221,8 @@ instead of the configured dirs; it does nothing for a write.
   CLI is Emacs, and both consumers parse this text.
 - `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before D, then title, then path - the head of the list `read --due` prints. The pick prints as one record, or `none`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
 - `doing --priority A|B|C|D` picks the priority-only way instead: any open task at
-that priority, due or not, title then path. No match prints `none`, as `doing`
-does. An unknown value is refused.
+  that priority, due or not, title then path. No match prints `none`, as `doing`
+  does. An unknown value is refused.
 - `--warm` runs the same verb in one background Emacs named `todo-skill`. The plain command still starts a fresh Emacs and quits. The window uses `--warm` and starts the worker if it is down. Quit it with `emacsclient -s todo-skill --eval '(kill-emacs)'`. `edit` and `edit-vim` open vim at the heading line. With no terminal they open as `mvim -f`. `edit-emacs` opens Emacs at that same line.
 
 Config, `~/dot_local/config/todo_skill.toml`:
@@ -279,14 +277,14 @@ may write while you edit, and the last save wins.
   such a line, naming the file and the line. `set-note` refuses a star at column
   0 in its TEXT outright, before the file is touched.
 - A routine's date is org's to shift, and org shifts by the cookie it is given:
-a `+1w` routine left for three weeks is still two weeks late after a completion.
-Rewrite it as `++1w` (`todo set-deadline "<%date%> ++1w"`) and a completion lands
-it on its next slot. A routine written by an older CLI, or edited by hand in
-Emacs, can carry a lone `+`.
+  a `+1w` routine left for three weeks is still two weeks late after a completion.
+  Rewrite it as `++1w` (`todo set-deadline "<%date%> ++1w"`) and a completion lands
+  it on its next slot. A routine written by an older CLI, or edited by hand in
+  Emacs, can carry a lone `+`.
 - Org asks, once ten repeat intervals are not enough to clear today, whether to
-keep shifting. A batch call has nobody to answer, so the CLI answers yes and the
-routine catches up however far it is behind. The question is org's, not the
-CLI's: it appears only when the same board is completed in interactive Emacs.
+  keep shifting. A batch call has nobody to answer, so the CLI answers yes and the
+  routine catches up however far it is behind. The question is org's, not the
+  CLI's: it appears only when the same board is completed in interactive Emacs.
 - `set-deadline` on a `DONE` task drops `CLOSED:` (org behaviour). Reopen
   before setting a deadline if the closed time matters.
 - The CLI writes no frontmatter, no extra properties, and creates an archive

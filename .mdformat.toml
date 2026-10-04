@@ -1,0 +1,6 @@
+# mdformat config. Pinned so `mdformat` and the mdformat_check guard agree.
+# number: keep 1. 2. 3. in ordered lists; mdformat's default renumbers all to 1.
+# FRONTMATTER: requires the mdformat-frontmatter plugin (`pipx inject mdformat
+# mdformat-frontmatter`). Without it mdformat rewrites SKILL.md frontmatter into
+# a setext heading and every skill loses its metadata.
+number = true

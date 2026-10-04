@@ -14,6 +14,7 @@ data; you only choose the window and write the report.
 ## Requirements
 
 - git 2.31+ and python 3.11+.
+
 - A config at `~/.local/git_report.toml`. Each person keeps their own:
 
   ```toml
@@ -80,20 +81,26 @@ it, or when `--check` reports a problem.
    - `emails`: emails from git config (global, per repo, current directory),
      with how many commits each authored. Never from other people's commits.
    - `config_exists`: whether a config is already there.
+
 2. Add what this session already knows: emails, folders or remote repos the
    user mentioned, and the current working directory.
+
 3. Propose the values as a numbered list, each with a one-line reason, and
    flag doubtful ones instead of dropping them silently:
+
    - `dirs`: prefer project folders (like `~/repos`). Flag scratch or
      download folders (`~/Downloads`, `~/tmp`) and let the user choose.
    - `emails`: flag test or placeholder addresses (`example.com`,
      `localhost`) and emails with very few commits.
    - `repos`: only remote URLs or paths the user named.
    - Window: `default_hours = 24` unless the user wants otherwise.
+
 4. Wait for the user to confirm or edit the list.
+
 5. Write the file with the template in Requirements. If a config already
    exists, show the exact diff first, get a yes, and copy the old file to
    `~/.local/git_report.toml.bak` before writing.
+
 6. Validate. It reads the config and finds repos without fetching:
 
    ```bash

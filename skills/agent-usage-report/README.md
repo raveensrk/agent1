@@ -119,7 +119,7 @@ that also appear in your logs are flagged "you use it" and highlighted with a
 Tier membership comes from Artificial Analysis data, never a hardcoded list:
 frontier = top quartile of the AA Intelligence Index catalog; flash tier =
 models whose name carries flash/mini/lite/turbo/nano/instant/hydro, or that
-are cheap (blended price <= $0.5/1M) and fast (>= 80 output tokens/sec) per
+are cheap (blended price \<= $0.5/1M) and fast (>= 80 output tokens/sec) per
 AA data. A model named flash stays flash even if it scores high.
 
 ## Scoring
