@@ -97,36 +97,11 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 ## Browser and computer use
 
-When you drive any application with browser use or computer use, maximize that window before you start, and keep it maximized until the work is done. That way the contents stay fully visible.
-
-When you open a website, or a local HTML file in a browser, stop at the first installed browser in this order:
-
-1. Firefox
-2. Chrome
-3. System default browser
-
-Always open a tab in an existing window. Do not open a new window if that browser already has one. A first window is allowed only when the browser is not running.
-
-macOS commands:
-
-- Firefox: `/Applications/Firefox.app/Contents/MacOS/firefox -new-tab URL`
-- Chrome, only if Firefox is missing: tell the front window to make a new tab. Create a window only when Chrome has zero windows.
-- System default, only if both are missing: `open URL`
-
-Do not use `-new-window`, `open -na`, or `open -a Firefox URL`. Those can spawn a window.
-
-A window's frame is not the app's to set on this machine: AeroSpace and Rectangle manage windows, so an accessibility frame shows the tile, not what the code asked for. Verify geometry with `screencapture -o -l <windowid>` and check for a running tiler before blaming AppKit.
+Topic file: [browser.md](browser.md) - maximize first, browser order, one-tab rule, window frames.
 
 ## Subscriptions
 
-On this machine, a request for what subscriptions I have starts with two reads:
-
-1. `~/repos/ledger/journals/transactions.ledger`
-2. `~/Library/Mail/V10/MailData/Envelope Index`
-
-Then open `https://apps.apple.com/account/subscriptions` for Apple subscriptions. Do not start at System Settings, StoreKit, or Chrome commerce databases.
-
-The keep list is `~/repos/ledger/data/subscriptions.json`. A subscription not in `current` must be unsubscribed.
+Topic file: [subscriptions.md](subscriptions.md) - the two reads, the Apple subscriptions page, the keep list.
 
 ## Output style
 
@@ -166,50 +141,17 @@ When I don't understand something, show it instead of repeating it in text.
 
 ## Harness
 
-The harness is everything around the model that turns a rule into a signal: checks,
-generators, hooks and guards. Prose is the fallback, not the default.
+The harness is everything around the model that turns a rule into a signal: checks, generators, hooks and guards. Prose is the fallback, not the default. The grid, the commands and the check contract live in [harness/README.md](harness/README.md).
 
+- A rule a check can decide belongs in a check, not in prose. Write it in [harness/checks](harness/checks), run by [lint.py](harness/lint.py), and keep the prose rule only if it says something the check cannot.
+- Deterministic first, and pick the shape the rule needs: decidable after the work, a check; a falsifier pinned to a tool, like `mdformat --check` (the pinned pair lives in [mdformat_check.py](harness/checks/mdformat_check.py)); judgement stays prose, never faked with a regex, and Jev only when the answer is a label or a score with a threshold. Convert with the [determinize](skills/determinize/SKILL.md) skill.
+- A skill is discovered by its frontmatter, so a sweep that eats it is silent: [skill_frontmatter.py](harness/checks/skill_frontmatter.py) wants `name` and `description` in every `SKILL.md`, and the directory name to match it.
+- Instruction files stay thin: decisions and routing, nothing else. The file names the decision and the program that decides it; the detail lives in an on-demand doc or inside the check.
 - A check that walks the filesystem confirms its root is a repo root first: the dispatcher falls back to the working directory when the edited files are in no repo, and a check that walked it found a file in Trash.
-- A rule a check can decide belongs in a check, not in prose. Write the check in
-  [harness/checks](~/repos/agent1/harness/checks) (see
-  [harness/README.md](~/repos/agent1/harness/README.md)) and keep the prose rule
-  only if it says something the check cannot.
-- A skill is discovered by its frontmatter, so a sweep that eats it is silent:
-  [harness/checks/skill_frontmatter.py](~/repos/agent1/harness/checks/skill_frontmatter.py)
-  wants `name` and `description` in every `SKILL.md`, and the directory name to
-  match it.
-- Deterministic first, and pick the shape the rule needs:
-  - Decidable after the work - a check in
-    [harness/checks](~/repos/agent1/harness/checks), run by
-    [lint.py](~/repos/agent1/harness/lint.py). The prose keeps one pointer line.
-  - Pin the tool. "Follow the CommonMark spec" has no falsifier, every string is
-    valid CommonMark; `mdformat --check` does, and the pin is part of the rule:
-    the pipx binary at `~/.local/bin/mdformat` with the mdformat-frontmatter
-    plugin, plus `.mdformat.toml` in the repo. The bare `mdformat` on PATH is a
-    different build that rewrites YAML frontmatter into a setext heading and
-    renumbers ordered lists, which cost 15 skills their metadata on 04 Oct 2026.
-    `harness/checks/mdformat_check.py` enforces the pinned pair. A rule with no
-    falsifier is prose.
-  - Judgement stays prose. Never fake it with a regex, and reach for Jev only when
-    the answer is a label or a score with a threshold.
-  - Convert with the [determinize](~/repos/agent1/skills/determinize/SKILL.md)
-    skill: it scans the instruction files, classifies every rule, builds what is
-    missing, and thins the prose to pointers.
-- Instruction files stay thin: decisions and routing, nothing else. The file names
-  the decision and the program that decides it; the detail lives in an on-demand
-  doc or inside the check.
-- The deterministic layer is harness-agnostic: one check command, one guard
-  contract, committed in the repo. Only the wiring is per harness.
-- A mistake that happened twice means a signal is missing, not that a rule was too
-  quiet. Ask "how could this be the last time?" and name the check, generator or
-  hook that will catch it next time, before you touch rule text.
-- A refusal, block or guard always prints the exact replacement command with its
-  syntax (`Creating files under db/migrate/ is blocked. Use bin/rails generate`
-  `migration AddPartNumberToProducts part_number:string`). Never block without
-  steering; the next attempt must be the right one.
-- When code needs a semantic decision (is this a refund request, is this line
-  relevant), call Jev for a typed, threshold-able answer instead of asking an LLM
-  for JSON. See [typesafe-ai](~/.agents/skills/typesafe-ai/SKILL.md).
+- The deterministic layer is harness-agnostic: one check command, one guard contract, committed in the repo. Only the wiring is per harness.
+- A mistake that happened twice means a signal is missing, not that a rule was too quiet. Ask "how could this be the last time?" and name the check, generator or hook that will catch it next time, before you touch rule text.
+- A refusal, block or guard always prints the exact replacement command with its syntax. Never block without steering; the next attempt must be the right one.
+- When code needs a semantic decision (is this a refund request, is this line relevant), call Jev for a typed, threshold-able answer instead of asking an LLM for JSON. See [typesafe-ai](~/.agents/skills/typesafe-ai/SKILL.md).
 
 ## Parallel work
 
@@ -263,17 +205,7 @@ After installing or removing pi packages, verify with `timeout 90 pi -p "reply w
 
 ## Naming
 
-Files and directories use `snake_case` - lowercase words joined by underscores.
-
-- Files: `use_case.md`, `hello_world.py`
-- Directories: `docs/`, `scripts/`
-- Files under `docs/` use `snake_case` (underscores, not hyphens). Lowercase only.
-
-Exceptions:
-
-- Tool-recognized / conventional files keep their canonical casing: `README.md`,
-  `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `SKILL.md`, `.gitignore`.
-- `README.md` may stay mixed-case under `docs/` when a host requires that name.
+Files and directories use `snake_case` - lowercase words joined by underscores. [file_naming.py](harness/checks/file_naming.py) decides it: lowercase letters, digits, underscores and dots only, with the canonical tool names (`README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `SKILL.md`, `.gitignore`, `.claude-plugin/`) exempt. Skill directories under `skills/` are kebab-case by the Agent Skills format, decided by [skill_frontmatter.py](harness/checks/skill_frontmatter.py).
 
 ## Markdown
 
@@ -293,60 +225,15 @@ In replies, the Output style rule wins: write the full URL and the full absolute
 
 ## Scripts
 
-Scripts meant to be run must always be executable. When creating or editing a runnable script:
-
-1. Add a `#!/usr/bin/env python3` shebang on line 1, naming an interpreter that
-   exists here (`python3` is 3.14; `python3.12` and `python3.14` are installed too).
-2. `chmod +x` it.
-
-Exception: library files and files meant only to be imported or sourced.
+Scripts meant to be run are executable: a line-1 shebang naming an installed interpreter (`python3` is 3.14; `python3.12` and `python3.14` are installed too), then `chmod +x`. Library files meant to be imported or sourced are exempt. [interpreter_resolves.py](harness/checks/interpreter_resolves.py) and [script_exec_bit.py](harness/checks/script_exec_bit.py) decide the hard half.
 
 ## CLI apps
 
-A CLI I write tells me how to use it - the author six months later is the
-caller. The worked example is `scripts/todo`, help table and all.
-
-- `-h` and `--help` are a hard rule: every CLI app has both, on the main command
-  and on every subcommand. Usage line, what the app does, every option, one
-  runnable example. Exit 0, and nothing else runs - a help call never writes,
-  never starts a daemon, never asks a question. argparse's default `add_help`
-  gives both, and gives them per subcommand; a script that parses options by
-  hand has to handle the pair itself.
-- A bare call prints the main help too, unless a bare call is itself a real
-  command (`bookmark` with no arguments lists).
-- Short flags are the optional half. The long flag is the default spelling, and
-  a short alias goes in when a free letter exists: `--due|-d`, `--priority|-p`.
-  A letter already taken in that app goes to the next free one; when none fits,
-  the long flag stands alone.
-- One table drives the main help and every subcommand's help, and a test asserts
-  every verb has an entry, so the two cannot drift (see `todo-help` in
-  [scripts/todo.el](skills/todo/scripts/todo.el)).
-
-`harness/checks/cli_help.py` decides the hard half: a file that parses options
-must mention both `-h` and `--help`, and the finding names the one that is
-missing. Which letter a short flag takes, and how a subcommand's help reads,
-stay prose: this file.
+Topic file: [cli.md](cli.md) - help shape, bare calls, short flags, one help table. [cli_help.py](harness/checks/cli_help.py) decides the hard half: a file that parses options must mention both `-h` and `--help`.
 
 ## macOS
 
-- iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies. While pi is open, address the bash window by `id`, never `current window`: `current window` is the pi TUI and the text becomes a user message. Do not `write text` into a tab that is waiting at a password prompt, and never redirect that prompt's stderr; the tab looks hung and the first characters are eaten as the answer.
-
-- `zcat` fails on `.gz` files (BSD `zcat` expects `.Z`). Use `gunzip -c` or `gzip -dc`.
-
-- BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
-
-- BSD `cat` has no `-A`. Use `cat -v -e`, or `sed -n l` to show line ends and tabs.
-  The guard refuses `cat -A` and prints both forms.
-
-- `pgrep` on macOS has no `-c`. Count with `pgrep ... | wc -l`.
-
-- `defaults write` cannot take a preference key containing spaces or parentheses, which is every pbs.plist service entry. Use `/usr/libexec/PlistBuddy` for those.
-
-- A screenshot path under `/var/folders/.../TemporaryItems/NSIRD_screencaptureui_*` is deleted within minutes. Copy it into `~/tmp` before referring to it.
-
-- A hung process names its own wait: `sample <pid> 2` prints its stack. For an
-  Emacs daemon that is normally `select-safe-coding-system-interactively` ->
-  `completing-read`, a prompt nobody can answer, so bound the run instead.
+Topic file: [macos.md](macos.md) - iTerm2 tabs, BSD tool traps, PlistBuddy, screenshots, hung processes.
 
 ## Confirmation
 
@@ -356,34 +243,15 @@ When what is found does not match what was asked (count or scope), ask before re
 
 ## Pi packages
 
-- Manual npm commands in `~/.pi/agent/npm` need `--legacy-peer-deps`; without it npm fails with ERESOLVE. Pi's own package manager passes the same flag.
-- `pi uninstall npm:<pkg>` only removes sources listed in `settings.json`. For installed-but-not-enabled packages, `npm uninstall --legacy-peer-deps <pkg>` in `~/.pi/agent/npm`; a reconcile (`pi install`, `pi uninstall`, `pi update --extensions`) also prunes them, and `pi list` shows what is configured.
-- A `node_modules` entry absent from `settings.json` is not dead: an enabled package may depend on it. Check `grep -rl "<pkg>" node_modules/*/package.json` and `package-lock.json` before calling it an orphan.
-- Any `pi install` or `pi uninstall` reconciles the npm dir to `settings.json` and can silently prune other installed packages. Snapshot `~/.pi/agent/npm/package.json` first and expect collateral removals.
-- The host-dependency warning (host-provided packages in `dependencies`) fires only for enabled extensions. Before acting, scan every installed package that declares `pi.extensions` for host-provided deps in `dependencies`.
-- Host-provided packages (`@earendil-works/pi-ai`, `pi-agent-core`, `pi-coding-agent`, `pi-tui`, `typebox`) belong in `peerDependencies` with a `"*"` range, never in `dependencies`.
+Topic file: [pi.md](pi.md) - npm `--legacy-peer-deps`, reconcile pruning, orphan checks, host dependencies.
 
 ## Repos
 
-Never use a nested git repo for my projects, and never a symlink to one. A clone from the internet is the
-exception: it goes in the allowlist that [nested_git_repo](~/repos/agent1/harness/checks/nested_git_repo.py)
-reads, and the check decides the rule. The check is public; the allowlist is private, at
-`~/repos/agent2/harness/data/nested_repo_allow.txt`. The walker lints nested repos and prints their findings as warnings,
-never as findings, and never changes the exit code - it does nothing to a repo that is not mine. A symlink
-to a repo is a finding either way: the check reports one inside a repo, the walker reports one in a folder
-that no repo owns.
+Topic file: [repos.md](repos.md) - no nested git repos, no symlinks to one, the allowlist and the walker. Loaded only when `~/repos` exists.
 
 ## Removal and uninstall
 
-- Check `~/dot/script` for an existing tool before writing a scanner. [`,ai_data_scrub.py`](~/dot/script/,ai_data_scrub.py) catalogues AI harness data with keep/delete tiers and a `--be-gone` uninstall tier.
-- Print the numbered per-file plan first, then apply. Removals are destructive.
-- Removals go to Trash by default. The plan names anything that deletes permanently (the scrubber's `--delete` and `--be-gone`, `brew uninstall`, TCC paths that need `sudo rm`) and gets explicit confirmation for it. Empty the Trash only on explicit request; report what it holds and print the one-line purge command.
-- Verify a removal by re-running the same scan that found the items and diffing the result. If the scan was ad hoc, save it, or use [`,ai_data_scrub.py`](~/dot/script/,ai_data_scrub.py), before removing anything.
-- Remove browser extensions through the browser UI (`chrome://extensions`), not by deleting profile directories; a direct delete is not recorded in sync and the extension can return at the next sign-in. Verify again after signing in.
-- After removing a harness, grep update, install and doctor scripts for its commands and drop the dead entries.
-- Uninstall casks one at a time: a multi-cask `brew uninstall --cask` stops at the first failure. Use `--force` per cask, then check `brew list --cask`.
-- `--zap` removes a directory only when it is empty. Re-list each top-level harness directory after the cask uninstall.
-- Expect TCC-protected leftovers (Containers, sharedfilelist, root-owned symlinks). Collect them into one sudo list and hand it to the user at the end.
+Topic file: [removal.md](removal.md) - plan first, Trash by default, casks one at a time, TCC leftovers.
 
 ## Agent context files
 

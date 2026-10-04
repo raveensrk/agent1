@@ -22,9 +22,10 @@
  * actually get missed if the context cost ever shows up in a token report.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+
 
 const COMMON = join(homedir(), "repos/agent1/common.md");
 const EXPERIMENTAL = join(homedir(), "repos/agent1/experimental.md");
@@ -45,7 +46,24 @@ const TOPICS: [string, string][] = [
 	["git.md", "commits and pull requests"],
 	["jobs.md", "ETA rules for long-running jobs"],
 	["skills/todo/SKILL.md", "the todo skill, the board's only writer"],
+	["browser.md", "browser and computer use rules"],
+	["macos.md", "macOS command traps"],
+	["subscriptions.md", "where a subscription question starts"],
+	["cli.md", "writing a CLI app"],
+	["pi.md", "pi package management"],
+	["removal.md", "removing apps, packages and harnesses"],
 ];
+
+/** repos.md matters only where ~/repos exists - the user asked for that gate,
+ * and it is a pure filesystem test, decided here not by the model. */
+const REPOS_TOPIC: [string, string] = [
+	"repos.md",
+	"nested git repo policy for ~/repos (loaded only when ~/repos exists)",
+];
+
+function topics(): [string, string][] {
+	return existsSync(join(homedir(), "repos")) ? [...TOPICS, REPOS_TOPIC] : TOPICS;
+}
 
 export function rulesSection(
 	text: string,
@@ -81,7 +99,7 @@ export default function (pi: ExtensionAPI) {
 		try {
 			section = rulesSection(
 				readFileSync(COMMON, "utf8"),
-				TOPICS,
+				topics(),
 				readIfPresent(EXPERIMENTAL),
 			);
 		} catch {

@@ -75,15 +75,22 @@ answer means the import did not load.
 
 | File | What it covers |
 |---|---|
+| `browser.md` | Browser and computer use rules |
+| `cli.md` | CLI app conventions: help, flags, one help table |
 | `code_style.md` | How to write code |
-| `common.md` | Session start, working style, output style |
+| `common.md` | Session start, working style, output style, and the pointer hub for topic rules |
 | `emoji_legend.md` | Status emoji vocabulary for agent reports |
 | `git.md` | Commits and pull requests |
 | `harness/` | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
 | `install.py` | Installs skills, commands and extensions into Claude Code, Codex and pi |
 | `jobs.md` | ETA rules for long-running jobs |
+| `macos.md` | macOS command traps |
+| `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
+| `removal.md` | Removing apps, packages and harnesses |
+| `repos.md` | Nested git repo policy for `~/repos` |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
+| `subscriptions.md` | Where a subscription question starts |
 | `terminologies.md` | Personal prompt-vocab notes |
 | `use_case.md` | Personal notes: what I use agents for |
 
