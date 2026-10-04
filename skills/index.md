@@ -9,6 +9,7 @@ with [install.py](../install.py).
 - [git-report](./git-report/SKILL.md) - Your commits across all your repos, local and remote, for any time window.
 - [html-explainer](./html-explainer/SKILL.md) - Explain any concept, config or error as a self-contained dark-mode HTML page in ~/tmp with numbered sections and a feedback loop.
 - [lazygit](./lazygit/SKILL.md) - Opens lazygit for every repo this session wrote to that has uncommitted changes: a tab in iTerm, a window in Terminal.app.
+- [learn-from-failure](./learn-from-failure/SKILL.md) - Failures-only pass over the current session: scans hard tool errors, reports what failed, why, the fix, applies approved fixes and verifies them. Deep analysis only on "deep".
 - [learn-from-session](./learn-from-session/SKILL.md) - Reviews the session as a coach: patterns, errors, inefficiencies, missing deterministic checks, Jev-labeled signals, online research, prioritized report, and approved AGENTS.md updates.
 - [model-price-report](./model-price-report/SKILL.md) - Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis intelligence scores.
 - [privacy-scan](./privacy-scan/SKILL.md) - Scans files or a diff for PII, privacy and security issues.
