@@ -90,7 +90,6 @@ answer means the import did not load.
 | `removal.md` | Removing apps, packages and harnesses |
 | `repos.md` | Nested git repo policy for `~/repos` |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
-| `subscriptions.md` | Where a subscription question starts |
 | `terminologies.md` | Personal prompt-vocab notes |
 | `use_case.md` | Personal notes: what I use agents for |
 

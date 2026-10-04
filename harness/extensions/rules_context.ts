@@ -48,7 +48,6 @@ const TOPICS: [string, string][] = [
 	["skills/todo/SKILL.md", "the todo skill, the board's only writer"],
 	["browser.md", "browser and computer use rules"],
 	["macos.md", "macOS command traps"],
-	["subscriptions.md", "where a subscription question starts"],
 	["cli.md", "writing a CLI app"],
 	["pi.md", "pi package management"],
 	["removal.md", "removing apps, packages and harnesses"],

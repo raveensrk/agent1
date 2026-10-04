@@ -99,10 +99,6 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 Topic file: [browser.md](browser.md) - maximize first, browser order, one-tab rule, window frames.
 
-## Subscriptions
-
-Topic file: [subscriptions.md](subscriptions.md) - the two reads, the Apple subscriptions page, the keep list.
-
 ## Output style
 
 - Always respond in active voice.
