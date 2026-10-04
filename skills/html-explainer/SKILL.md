@@ -84,6 +84,7 @@ Without `PUPPETEER_EXECUTABLE_PATH` it fails, because no Chromium was downloaded
 - "Copy feedback" copies a plain-text block: page id, then `understood:` line, then `q ...:` lines, then `section: comment` lines and `Q:` lines. User pastes it into chat.
 - "Save & download" embeds the same data as JSON into the downloaded file. When the user later hands you such a file, parse that block first, answer each item, and produce the next NN.
 - Always acknowledge feedback items explicitly ("2.2: fixed — X was wrong because…"). Never silently edit.
+- When the user confirms they understood (`understood: yes`), delete the pages this conversation created, unless they ask to keep them. Never touch other files in `~/tmp/`.
 
 ## Failure modes to avoid
 
