@@ -193,6 +193,19 @@ generators, hooks and guards. Prose is the fallback, not the default.
   relevant), call Jev for a typed, threshold-able answer instead of asking an LLM
   for JSON. See [typesafe-ai](~/.agents/skills/typesafe-ai/SKILL.md).
 
+## Parallel work
+
+- Delegation to subagents is authorized. A `reviewer` subagent critiques
+  multi-step, ambiguous, or high-impact implementation before it is summarized;
+  a `scout` maps an unfamiliar subsystem before claims about it; an `oracle`
+  challenges a risky or irreversible decision; long jobs run in the background.
+  Complexity alone does not authorize a subagent.
+- A second concurrent session on one repo takes its own worktree and branch:
+  run `/worktree` in that session before it edits anything. One branch per
+  worktree; merge back when the task ends.
+- A subagent shares the parent session's working tree. Do not run a subagent on
+  the same files the parent is editing; isolate in a worktree first.
+
 ## Plan mode and Brainstorming
 
 Remind me to brainstorm and plan depending on the prompt and task. Decide based on your best judgement - for multi-step, ambiguous, or high-impact work; skip it for small, well-defined changes.
