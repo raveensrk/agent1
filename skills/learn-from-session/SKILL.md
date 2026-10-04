@@ -8,7 +8,7 @@ argument-hint: "[path to AGENTS.md]"
 
 A session review that trains future sessions: read the transcript, interview the
 user, find the missing signals, research better approaches, rank findings by
-impact, write a report, and merge the durable rules into an `AGENTS.md`. The
+impact, write the findings, and merge the durable rules into an `AGENTS.md`. The
 point is not a prettier rule, it is a session that cannot repeat the mistake.
 Nothing is written without approval.
 
@@ -47,7 +47,7 @@ ambiguity about what this session was supposed to achieve.
 
 Every confirmed answer is classified before the session ends: it becomes a rule
 (section 10), it becomes a check (section 4), it is explicitly dropped, or it
-goes to the report's Open questions because it cannot be made operational. There
+goes to the review's Open questions because it cannot be made operational. There
 is no third state.
 
 ## 3. Analyze
@@ -80,7 +80,7 @@ impression:
 - Are there any mistakes that happened multiple times?
 
 Rank every finding by impact: time lost, error frequency, quality or speed
-gain. Impact decides the order of the report.
+gain. Impact decides the order of the findings.
 
 ### Mine the command history
 
@@ -145,7 +145,7 @@ three shapes:
 - **Generator-shaped**: the file has a fixed shape and the agent hand-rolled it.
   Build a generator or template.
 - **Judgement-shaped**: taste, structure, naming, prose quality. This stays a
-  rule or a review step. Say so in the report instead of pretending it is
+  rule or a review step. Say so in the review instead of pretending it is
   checkable.
 
 Then:
@@ -206,7 +206,7 @@ the counts.
   above, which decides lint, guard, generator or prose.
 - Judge the proposed rules: nouls for falsifiable, scoped, evidence-backed, plus
   one choice over the existing rules of the target file to catch a duplicate.
-- Score the findings for impact, so the report order comes from numbers.
+- Score the findings for impact, so the finding order comes from numbers.
 
 Constraints, from the model's own docs: it reads literally, so write the exact
 criterion in `instructions` and boundary cases in `criteria`; it cannot count,
@@ -235,7 +235,7 @@ Open questions. Answers below 0.6 are the ones to hold loosely.
 It posts to the same systemone endpoint as
 [jev.py](~/repos/agent2/fast-mac-use/scripts/jev.py) (private config). With no
 `TYPESAFE_API_KEY` it says so rather than guessing: make the four judgements in
-prose and record in the report that they were not machine-labeled.
+prose and record in the review that they were not machine-labeled.
 
 ## 6. Research
 
@@ -243,23 +243,24 @@ Proactively search when a better approach is suspected, even if the session
 succeeded. Prefer official docs. Verify the suggestion applies to the installed
 versions before proposing it, and cite the source link.
 
-## 7. Report
+## 7. Findings
 
-Always write the report to `~/tmp/`. If the user declines a report, keep the
-findings in chat and skip the file.
+Keep the findings in chat. Write no file. Eleven reports sat unread in `~/tmp`
+between 01 and 04 Oct 2026, and the skill's escape hatch was there all along:
+"if the user declines a report, keep the findings in chat". Declining by not
+reading is still declining. Write `~/tmp/session_review_<YYYY-MM-DD>.md`, with
+`_2`, `_3` appended when the name is taken, only when the user asks for a file.
 
-File: `~/tmp/session_review_<YYYY-MM-DD>.md`, appending `_2`, `_3` when taken. A
-prioritized list, highest impact first, one line per finding:
+In chat, a prioritized list, highest impact first, one line per finding:
 
 ```
 - [high] <finding> - quadrant: <feedback|feedforward>/<computational|inferential> - evidence: <quote or line from transcript> - fix: <action> - source: <link>
 ```
 
-Include what worked, not only what failed. Then a `Signals` section: the Jev
-labels with their probabilities and the counts they produce. Then a `Checks`
-section: every check this review built or proposed, its path, its first-run
-count over the full population, and whether its trigger is wired. End with
-`Open questions` for anything only the user can answer, including every
+Include what worked, not only what failed. Then the signals: the Jev
+labels with their probabilities and the counts they produce. Then the checks:
+every check this review built or proposed, its path, its first-run count over the
+full population, and whether its trigger is wired. End with `Open questions` for anything only the user can answer, including every
 low-confidence Jev judgement.
 
 ## 8. Interview, phase two - improvements
@@ -267,7 +268,7 @@ low-confidence Jev judgement.
 Ask about each proposed improvement before writing it anywhere: keep, drop, or
 change. One question at a time. Keep only what the user confirms. A call
 carries at most three questions, each option is one line, and anything low-stakes
-goes to the report's Open questions instead of a question - a review that asks ten
+goes to the review's Open questions instead of a question - a review that asks ten
 questions costs more than its findings save. A proposed
 check is asked separately from a proposed rule, because the check is code and
 the rule is prose.
@@ -295,7 +296,7 @@ decision log: the scope lives in the rule, the why lives in the commit message.
 - Add or minimally amend. Never reword, reorder, or delete existing content
   unless a check has taken the rule over, and then leave the pointer line.
 - Durable rules only: corrections, conventions, commands, gotchas. Task-specific
-  suggestions stay in the report.
+  suggestions stay in the review.
 - If the session produced no durable rules, say so and write nothing.
 
 ## 11. Approve, then write
@@ -321,5 +322,5 @@ they count as approved.
 ## 12. Close follow-ups
 
 Every item found mid-session that is not the main task gets an outcome before
-the session ends: fix it now, record it in the report's Open questions, or drop
+the session ends: fix it now, record it in the review's Open questions, or drop
 it with a reason. Nothing is left carried only in chat.
