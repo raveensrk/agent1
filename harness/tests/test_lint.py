@@ -584,6 +584,46 @@ def test_cli_help_check_skips_the_scratch_dir():
             sys.argv = old_argv
 
 
+def test_skill_frontmatter_flags_a_missing_block():
+    # The motivating case: a sweep that did not know frontmatter rewrote it away,
+    # and the file stayed valid markdown, so nothing else fired.
+    check = os.path.join(CHECKS, "skill_frontmatter.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        skill = os.path.join(tmp, "skills", "demo", "SKILL.md")
+        os.makedirs(os.path.dirname(skill))
+        with open(skill, "w") as fh:
+            fh.write("______________________________________________________________________\n\n## name: demo description: gone\n")
+        proc = subprocess.run([sys.executable, check, skill], capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stderr
+        assert "no YAML frontmatter" in proc.stdout, proc.stdout
+        assert "name: demo" in proc.stdout, proc.stdout  # the fix names the directory
+
+
+def test_skill_frontmatter_wants_the_directory_name_and_a_description():
+    check = os.path.join(CHECKS, "skill_frontmatter.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        skill = os.path.join(tmp, "skills", "demo", "SKILL.md")
+        os.makedirs(os.path.dirname(skill))
+        with open(skill, "w") as fh:
+            fh.write("---\nname: other\n---\n\n# demo\n")
+        proc = subprocess.run([sys.executable, check, skill], capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stderr
+        assert "does not match the directory" in proc.stdout, proc.stdout
+        assert "no description" in proc.stdout, proc.stdout
+
+
+def test_skill_frontmatter_is_quiet_on_a_good_skill():
+    check = os.path.join(CHECKS, "skill_frontmatter.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        skill = os.path.join(tmp, "skills", "demo", "SKILL.md")
+        os.makedirs(os.path.dirname(skill))
+        with open(skill, "w") as fh:
+            fh.write('---\nname: "demo"\ndescription: Use when testing the check.\n---\n\n# demo\n')
+        proc = subprocess.run([sys.executable, check, skill], capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stderr
+        assert proc.stdout.strip() == "", proc.stdout
+
+
 def mdformat_bin():
     """The pinned mdformat, or None when this machine has no pipx install."""
     override = os.environ.get("MDFORMAT_BIN")
