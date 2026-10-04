@@ -53,7 +53,8 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - A live external account is real data. Before the first write to one - a playlist, a mailbox, a third-party API - ask once and name what changes, then prototype on a scratch resource you create rather than the user's own. The real account is only touched by a command the user asked for by name.
 
-- Back a recommendation with a number measured on this machine, not from memory.
+- Back a recommendation with a number measured on this machine, not from memory; a
+  constant that ships records its sample size and date beside it.
 
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 
