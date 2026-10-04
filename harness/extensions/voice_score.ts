@@ -175,8 +175,13 @@ export function spans(text: string): string[] {
 }
 
 function words(span: string): Set<string> {
-	const clean = span.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "");
-	return new Set(clean.split(/\s+/).filter(Boolean));
+	// punctuation is a boundary, not a letter: a path tokenises into its parts
+	return new Set(span.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+}
+
+/** Jaccard overlap of two texts' word sets, 0-1; call duplication reads this. */
+export function similarity(a: string, b: string): number {
+	return overlap(words(a), words(b));
 }
 
 function overlap(a: Set<string>, b: Set<string>): number {
@@ -357,13 +362,14 @@ export function writeEnabled(enabled: boolean, path = CONFIG_PATH): void {
 	writeFileSync(path, `${JSON.stringify({ enabled }, null, 2)}\n`);
 }
 
-function tier(score: number, pass: number, good: number): "low" | "mid" | "high" {
+/** The good/mid/low cut every score line shares. */
+export function tier(score: number, pass: number, good: number): "low" | "mid" | "high" {
 	if (score >= good) return "high";
 	if (score >= pass) return "mid";
 	return "low";
 }
 
-const COLORS = { low: "error", mid: "warning", high: "success" } as const;
+export const COLORS = { low: "error", mid: "warning", high: "success" } as const;
 
 export function band(score: number): { label: string; color: "success" | "warning" | "error" } {
 	const names = { low: "verbose", mid: "passable", high: "telegraph" } as const;
@@ -487,7 +493,7 @@ export function ledgerRows(data: VoiceScoreData, session: string, date = new Dat
 }
 
 /** Silent on failure: a bad ledger path must never break a turn. */
-export function appendLedger(rows: LedgerRow[], path = LEDGER_PATH): void {
+export function appendLines(rows: object[], path: string): void {
 	if (rows.length === 0) return;
 	try {
 		mkdirSync(dirname(path), { recursive: true });
@@ -495,6 +501,11 @@ export function appendLedger(rows: LedgerRow[], path = LEDGER_PATH): void {
 	} catch {
 		// nothing to report: the ledger is a convenience, not a contract
 	}
+}
+
+/** Append the rows to the shared voice_score ledger, creating its directory. */
+export function appendLedger(rows: LedgerRow[], path = LEDGER_PATH): void {
+	appendLines(rows, path);
 }
 
 export default function (pi: ExtensionAPI) {

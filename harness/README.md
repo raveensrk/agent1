@@ -86,6 +86,14 @@ never reaches the model's context, and the whole feature costs one classifier
 call per run. `/voice-score off` stops the call. Both threshold pairs, their
 measured gaps and the calibration behind them are documented in the extension.
 
+`extensions/call_score.ts` scores the other half of the bill: every tool call of
+the run gets Jev's necessity score times a result gate, drawn as a third line,
+`calls  1.5/3 2.8/3 0.4/3 +9`, with repeats, subsumed reads and oversized
+results measured from the transcript and shown in the expanded view. Its bands
+are parked: the 2026-10-04 calibration found no gap to sit them in, so the
+numbers draw dim until the ledger says otherwise. `/call-score off` stops the
+call; it shares the voice_score ledger and costs one classifier call per run.
+
 ## Guards
 
 A guard refuses a tool call before it runs, where the lint reacts after the files
