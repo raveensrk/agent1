@@ -27,7 +27,7 @@ python3 harness/lint.py --list          # the checks, their quadrant and scope
 python3 harness/lint.py --json          # for scripts and the trigger
 python3 harness/tests/test_lint.py      # the checks' own tests
 node --experimental-strip-types harness/tests/test_command_guard.ts
-python3 harness/self_check              # both suites, then the full-population lint
+python3 harness/self_check              # every suite, then the full-population lint
 ```
 
 Exit 0 clean, 1 findings, 2 a check failed to run. A failing check is reported
@@ -64,6 +64,27 @@ edited, and when something is found it appends one message and continues the
 agent once, so the agent fixes its own output before you see it. It stops after
 three nudges, skips findings it already reported, and never looks at files the
 session did not touch - a repo full of old findings must not nag every run.
+
+`extensions/telegraph.ts` carries the voice rule itself, so the rule and its
+switch cannot drift apart. The rule text lives in `extensions/telegraph.md` - not
+in `experimental.md`, where turning it off meant editing a rules file. When the
+switch is on, the extension appends the rule to the prompt; `/telegraph off`
+drops it from the next request, and off is persisted in
+`~/.pi/agent/telegraph.json`.
+
+`extensions/voice_score.ts` is the signal for that rule. After a run settles it
+sends every thinking block of the run plus the reply to
+[Jev](https://docs.typesafe.ai) and draws two lines under the turn:
+`voice  think 2.8/3  reply 2.2/3` and `tokens think 1.4/3  reply 2.6/3`. Both
+lines score 0 to 3 and draw the max with every number. The second is
+the token-efficiency score - Jev's 0-3 for the block times the probability it
+missed nothing - and the expanded view shows the measured evidence next to it:
+filler count, repeated spans, chars and estimated tokens. One row per scored
+block is appended to `~/.local/share/voice_score/scores.jsonl`, machine-local,
+for recalibration from real turns. Display only: nothing is corrected, the entry
+never reaches the model's context, and the whole feature costs one classifier
+call per run. `/voice-score off` stops the call. Both threshold pairs, their
+measured gaps and the calibration behind them are documented in the extension.
 
 ## Guards
 
