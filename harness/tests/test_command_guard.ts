@@ -3,7 +3,7 @@
  *   node --experimental-strip-types harness/tests/test_command_guard.ts
  */
 import assert from "node:assert/strict";
-import { guardHit } from "../extensions/command_guard.ts";
+import { executableText, guardHit } from "../extensions/command_guard.ts";
 
 const BLOCKED = [
 	// the call that cost this session 111s
@@ -26,6 +26,16 @@ const BLOCKED = [
 	"cargo test",
 	"npm test",
 	"NO_PROXY=1 python3 -m pytest",
+	// the real shapes stay caught: a runner after a quoted argument, a bound
+	// written inside quotes, and a real suite after a closed heredoc
+	'python3 -m pytest "tests/unit" -q',
+	'echo "timeout 900" && python3 -m pytest tests/',
+	[
+		"cat <<'EOF' > ~/tmp/notes.txt",
+		"nothing to see here",
+		"EOF",
+		"python3 -m pytest tests/",
+	].join("\n"),
 	// BSD cat has no -A, and the flag aborts the call: one failed call, 2026-10-04
 	"cat -A README.md",
 	"sed -n '50,62p' README.md | cat -n | cat -A",
@@ -56,6 +66,25 @@ const ALLOWED = [
 	"rg -n test ~/repos",
 	"grep -c test file.txt",
 	"rm -rf .build/test-artifacts",
+	// a quoted mention and a heredoc body are data, not commands. Both blocked
+	// real work on 2026-10-04: a quoted echo, and a note written through a
+	// heredoc. A script built inside a heredoc can still hide a run; that false
+	// negative is the price of never blocking note text.
+	"rg -n 'pytest' ~/repos/agent1/harness/tests/test_lint.py | head -5",
+	"echo '=== pytest test names ==='",
+	[
+		"python3 - <<'PY'",
+		"import subprocess",
+		'subprocess.run(["pytest", "tests/"])',
+		"PY",
+	].join("\n"),
+	[
+		"cat <<'EOF' > ~/tmp/scratch.sh",
+		"grep -rn foo ~/repos",
+		"EOF",
+		"chmod +x ~/tmp/scratch.sh",
+	].join("\n"),
+	"timeout 180 python3 -m pytest tests/",
 	// the safe forms of both, and a read from /tmp, which the rule allows
 	"cat -v -e README.md",
 	"cat -n README.md",
@@ -79,4 +108,10 @@ assert.equal(grep?.name, "recursive grep", grep);
 assert.equal(curl?.name, "curl or wget with no maximum time", curl);
 assert.match(grep?.fix ?? "", /rg -n/);
 assert.match(curl?.fix ?? "", /--max-time 60/);
+
+// the text the patterns read: quoted spans and heredoc bodies are gone
+assert.ok(!executableText("echo 'pytest'").includes("pytest"), "quoted spans must be dropped");
+assert.match(executableText("cat <<'EOF' > f\nbody\nEOF\nls"), /^cat <<.* > f\nls$/, "body and terminator go, the tail stays");
+assert.equal(executableText("cat <<'EOF' > f\nunclosed"), "cat <<'' > f", "an unterminated heredoc swallows the rest");
+
 console.log(`command_guard ok: ${BLOCKED.length} blocked, ${ALLOWED.length} allowed`);

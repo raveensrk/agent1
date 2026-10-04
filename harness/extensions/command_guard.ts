@@ -10,6 +10,11 @@
  *
  * Blocking with the replacement command is the point: the next attempt must be
  * the right one. A guard that only says no sends it down the same dead end.
+ *
+ * What it reads is the command, minus the parts the shell never runs: quoted
+ * spans and heredoc bodies are data. A measured false positive blocked a call
+ * whose only offence was a runner keyword inside a quoted echo, and another
+ * inside a heredoc body, so both are dropped before the patterns match.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { execFileSync } from "node:child_process";
@@ -35,11 +40,46 @@ const RUNNERS = [
 ];
 const SHELL_BOUND = /(^|\s)timeout\s+\d+/;
 
+/**
+ * COMMAND with heredoc bodies removed: a body is data, not something the shell
+ * runs. An unterminated heredoc swallows the rest of the command, which can
+ * hide a hit - the right side to err on, since a guard that invents a block
+ * costs a real call.
+ */
+function stripHeredocs(command: string): string {
+	const kept: string[] = [];
+	let terminator: string | null = null;
+	for (const line of command.split("\n")) {
+		if (terminator) {
+			if (line.trim() === terminator) terminator = null;
+			continue;
+		}
+		kept.push(line);
+		const opener = line.match(
+			/<<-?[ \t]*(?:'([A-Za-z_][A-Za-z0-9_]*)'|"([A-Za-z_][A-Za-z0-9_]*)"|([A-Za-z_][A-Za-z0-9_]*))/,
+		);
+		if (opener) terminator = opener[1] ?? opener[2] ?? opener[3] ?? null;
+	}
+	return kept.join("\n");
+}
+
+/**
+ * The part of COMMAND that would actually run. Quoted spans and heredoc bodies
+ * are dropped, which is what the two measured false positives needed: a runner
+ * keyword in a quoted echo, and one in a heredoc body, both blocked real work.
+ */
+export function executableText(command: string): string {
+	return stripHeredocs(command)
+		.replace(/'[^']*'/g, "''")
+		.replace(/"[^"]*"/g, '""');
+}
+
 /** The test runner in COMMAND with no shell bound, or null. */
 function unboundedRunner(command: string): string | null {
-	if (SHELL_BOUND.test(command)) return null;
+	const text = executableText(command);
+	if (SHELL_BOUND.test(text)) return null;
 	for (const runner of RUNNERS) {
-		const found = command.match(runner);
+		const found = text.match(runner);
 		if (found) return found[0];
 	}
 	return null;
@@ -54,9 +94,10 @@ function isRecursiveFlag(word: string): boolean {
 }
 
 function wordsOf(command: string): string[][] {
-	// ponytail: quoted spans are dropped, not parsed, so a heredoc can hide a hit
-	const bare = command.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
-	return bare.split(/\|\||&&|[;|\n]/).map((segment) => segment.trim().split(/\s+/));
+	// ponytail: quoted spans and heredoc bodies are dropped, not parsed, so a heredoc can hide a hit
+	return executableText(command)
+		.split(/\|\||&&|[;|\n]/)
+		.map((segment) => segment.trim().split(/\s+/));
 }
 
 /** The command shape that would hang, or null when it is safe. */
