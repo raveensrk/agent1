@@ -133,6 +133,7 @@ def judgeable(path: str) -> tuple[list[dict], list[dict]]:
                 "status": analyze.status_of(result, str(call.get("name"))),
             }
         )
+    failures = [row for row in rows if row["status"] in ("aborted", "error")]
     notable = [
         row
         for row in rows
@@ -140,14 +141,19 @@ def judgeable(path: str) -> tuple[list[dict], list[dict]]:
         or (row["seconds"] or 0.0) >= analyze.SLOW_SECONDS
     ]
     notable = sorted(notable, key=lambda r: -(r["seconds"] or 0.0))[:MAX_JUDGED_CALLS]
+    # A failure is a finding even when it was fast. Selecting findings after the
+    # truncation above meant a session whose six failures took 0.1s each reported
+    # "0 findings" and asked no quadrant or impact question, because twelve waits
+    # of up to 147s had filled every judged slot (measured 2026-10-04).
+    for row in failures:
+        if row not in notable:
+            notable.append(row)
     findings = [
         {
             "id": f"f{index}",
-            "text": f"{row['seconds']:.1f}s {row['status']} call: {row['command'][:120]}",
+            "text": f"{(row['seconds'] or 0.0):.1f}s {row['status']} call: {row['command'][:120]}",
         }
-        for index, row in enumerate(
-            [r for r in notable if r["status"] in ("aborted", "error")][:MAX_FINDINGS], start=1
-        )
+        for index, row in enumerate(failures[:MAX_FINDINGS], start=1)
     ]
     return notable, findings
 
