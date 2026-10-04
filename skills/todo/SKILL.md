@@ -81,7 +81,11 @@ org-columns, org-agenda and org-clock read it.
 **Notes.** Everything between the heading and the next heading is the note.
 `- [ ]` checklists are steps, not tasks. `append` adds a line to it; `set-note`
 replaces it and keeps the planning line and drawers, so a `DEADLINE:`, an
-`:Effort:` or a `:LOGBOOK:` survives.
+`:Effort:` or a `:LOGBOOK:` survives. Long text reaches the CLI through
+`--note-file F`, never through a shell heredoc: backticks inside one run as
+commands, and a note that expands to nothing lands empty. The CLI refuses an
+empty `--note`, an empty or unreadable file, and `--note` together with
+`--note-file`.
 
 **Examples.** A heading inside a `#+BEGIN_*` ... `#+END_*` block (src, example,
 quote, ...) is documentation, not a task. `read` and refs ignore it, even when
@@ -151,6 +155,8 @@ scripts/todo doing [--file F]                   # one due TODO or IN_PROGRESS, a
 scripts/todo doing --priority A [--file F]      # one open A task, due or not
 scripts/todo --warm read [--records]            # same verb, Emacs stays up
 scripts/todo create "Pay rent" --deadline 2026-11-05 --tag finance --priority A --effort 0:30
+scripts/todo create "Pay rent" --note-file ~/tmp/rent.md      # long note, no heredoc
+scripts/todo set-note "Inbox" --note-file ~/tmp/triage.txt     # replace the note from a file
 scripts/todo set-state "Pay rent" IN_PROGRESS
 scripts/todo set-priority "Pay rent" B
 scripts/todo set-state "An idea captured earlier" TODO   # promotes a plain heading
@@ -276,6 +282,10 @@ may write while you edit, and the last save wins.
   that starts with a star - the write itself refuses a file whose block holds
   such a line, naming the file and the line. `set-note` refuses a star at column
   0 in its TEXT outright, before the file is touched.
+- A long note goes in a file, through `--note-file F`. A heredoc built into a
+  command line is the trap: backticks in the body run as commands, and the task
+  lands with an empty note. An empty note is refused, so the damage stops at the
+  call instead of reaching the board.
 - A routine's date is org's to shift, and org shifts by the cookie it is given:
   a `+1w` routine left for three weeks is still two weeks late after a completion.
   Rewrite it as `++1w` (`todo set-deadline "<%date%> ++1w"`) and a completion lands

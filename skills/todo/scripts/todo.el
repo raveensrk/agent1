@@ -34,8 +34,8 @@ spelling of each flag.")
   "The deadline forms the CLI accepts, as refusals and SKILL.md print them.")
 
 (defconst todo-value-flags '("--file" "--state" "--tag" "--container" "--deadline"
-                             "--priority" "--note" "--dir" "--editor" "--evidence"
-                             "--effort" "--number")
+                             "--priority" "--note" "--note-file" "--dir" "--editor"
+                             "--evidence" "--effort" "--number")
   "Flags that take a value.")
 
 (setq org-todo-keywords '((sequence "TODO" "IN_PROGRESS" "OPTIONAL" "LATER"
@@ -1047,7 +1047,8 @@ to, or nil when every container was already empty."
                ("-p, --priority A|B|C|D" "ask Raveen first; a repeater forces B")
                ("--deadline D" "2026-11-05 | 2026-11-05 20:30 | <2026-11-05 Thu 20:30 +1w>")
                ("--effort H:MM" "org's :Effort: property")
-               ("--note TEXT" "body under the heading")
+               ("--note TEXT" "body under the heading; not empty")
+               ("--note-file F" "the note read from F; long text never touches the shell")
                ("--container NAME" "nest under an existing heading")
                ("--file F" "the board; default todo.org in the cwd"))
      :note "A repeating deadline is written with org's catch-up cookie ++, so a completion clears a lapse; ++ and .+ pass through as given. A repeater forces priority B."
@@ -1111,9 +1112,10 @@ to, or nil when every container was already empty."
      :example "todo append \"Pay rent\" \"receipt in mail\"")
     ("set-note"
      :summary "replace a heading's note"
-     :usage "todo set-note <ref> TEXT [--file F]"
-     :options (("--file F" "the board; default todo.org in the cwd"))
-     :note "Replaces the note of a task or a container; the planning line and drawers stay, and TEXT may run to several lines. An empty TEXT and a line starting with `*' at column 0 are refused: a star there is a heading, so indent it."
+     :usage "todo set-note <ref> [TEXT] [--note-file F] [--file F]"
+     :options (("--note-file F" "the note read from F; long text never touches the shell")
+               ("--file F" "the board; default todo.org in the cwd"))
+     :note "Replaces the note of a task or a container; the planning line and drawers stay, and TEXT may run to several lines. TEXT and --note-file are alternatives, one of them is required, and an empty note and a line starting with `*' at column 0 are refused: a star there is a heading, so indent it."
      :example "todo set-note \"Inbox\" \"read this first\"")
     ("obsolete"
      :summary "OBSOLETE, keeping the record"
@@ -1237,6 +1239,33 @@ and `todo --help read' is the same as `todo read --help'."
   "All values given for flag NAME."
   (cl-loop for (key . value) in flags when (equal key name) collect value))
 
+(defun todo--note-from-file (path)
+  "The contents of PATH as a note, or fail. A file that cannot be read, or
+whose text is blank, is refused: a shell heredoc that ate the text leaves an
+empty note behind, and an empty note is never what was meant."
+  (unless (file-readable-p path)
+    (todo-fail (format "note file not readable: %s" path)))
+  (let ((text (string-trim-right
+               (with-temp-buffer
+                 (insert-file-contents path)
+                 (buffer-string)))))
+    (when (string-empty-p text)
+      (todo-fail (format "note file is empty: %s" path)))
+    text))
+
+(defun todo--note-value (flags)
+  "The note from --note or --note-file, or nil when neither is given.
+Refuses both at once, an explicitly empty --note, and a file that cannot be
+read or is blank. Long text belongs in a file: a command line is where a
+heredoc eats it."
+  (let ((text (todo--flag flags "--note"))
+        (path (todo--flag flags "--note-file")))
+    (when (and text path)
+      (todo-fail "--note and --note-file cannot be combined"))
+    (when (and (assoc "--note" flags) (string-empty-p (string-trim text)))
+      (todo-fail "--note must not be empty; put long text in a file and use --note-file F"))
+    (if path (todo--note-from-file path) text)))
+
 (defun todo-create (rest flags)
   (let* ((title (car rest))
          (board (todo-board (todo--flag flags "--file")))
@@ -1245,7 +1274,7 @@ and `todo --help read' is the same as `todo read --help'."
          (deadline (todo--flag flags "--deadline"))
          (priority (todo--flag flags "--priority"))
          (effort (todo--flag flags "--effort"))
-         (note (todo--flag flags "--note"))
+         (note (todo--note-value flags))
          (tags (todo--flags flags "--tag")))
     (unless title (todo-fail "create needs a title"))
     (when (string-prefix-p "-" title)
@@ -1417,8 +1446,12 @@ A help request is answered here, before any verb runs."
          (todo-out (list (cons 'title (car rest)) (cons 'file board)))))
 
       ("set-note"
-       (let ((text (cadr rest)))
-         (unless (and (car rest) (cdr rest)) (todo-fail "set-note needs a ref and text"))
+       (let* ((path (todo--flag flags "--note-file"))
+              (text (if path (todo--note-value flags) (cadr rest))))
+         (unless (car rest) (todo-fail "set-note needs a ref"))
+         (when (and path (cdr rest))
+           (todo-fail "set-note takes TEXT or --note-file F, not both"))
+         (unless text (todo-fail "set-note needs text or --note-file F"))
          (when (string-empty-p (string-trim text)) (todo-fail "the note must not be empty"))
          (todo--checked-note-text text)
          (let ((board (todo--existing file)))
