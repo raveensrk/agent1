@@ -75,3 +75,18 @@ Trigger: the TypeSafe prepaid balance on https://console.typesafe.ai/usage reach
 Route: point every Jev caller at https://ai-gateway.vercel.sh/typesafe/v1/systemone with a Vercel AI Gateway key and model id typesafe-ai/jev.
 Callers to change: /Users/raveen_kumar_personal/dot/script/bookmark, /Users/raveen_kumar_personal/.pi/agent/extensions/voice_score.ts, /Users/raveen_kumar_personal/.pi/agent/extensions/call_score.ts, and pi's typesafe-ai skill.
 Balance then comes from GET https://ai-gateway.vercel.sh/v1/credits (balance, totalUsed). Do not add a TypeSafe key under BYOK - that makes the gateway balance stop tracking Jev.
+
+* TODO [#D] Investigate the Jev score that returned confidence 0.00 :voice_score:
+Seen in the reviewed session 01a103cc (2026-10-03): one think score came back with confidence 0.00 while the other answers of the same Jev call carried a real confidence.
+Evidence: the voice-score entry in /Users/raveen_kumar_personal/.pi/agent/sessions/--Users-raveen_kumar_personal--/2026-10-03T22-04-48-266Z_01a103cc-6109-758b-9e74-9a975cd1980e.jsonl, and the ledger rows for that run.
+Check, in order:
+- which question id it was (think or reply) and what score it carried;
+- whether the other answers of the same call had real confidence values;
+- whether the classifier returned a confidence at all, or the extension read a field that was not there.
+Done when: one line names the cause beside the code, and the calibration note in the extension header says whether confidence is trustworthy or should leave the display.
+
+* TODO [#D] Re-check the Jev review labels below 0.6 confidence :learn_from_session:
+From the learn-from-session review of session 01a103cc (2026-10-04): six labels sat below the 0.6 confidence bar, so they are open questions, not verdicts.
+impact_f2 0.49, impact_f3 0.26, quadrant_f2 0.41, quadrant_f3 0.32, plus the evidence and scoped answers for the candidate rules R1-R4.
+What to do: re-run /Users/raveen_kumar_personal/.agents/skills/learn-from-session/scripts/jev_signals.py on that transcript with annotated turns (the skill measures a two-word turn at 0.36 from bare text and 0.89 once annotated), then promote each label to a finding or drop it.
+Done when: each of the six labels has a verdict in a note or the report, and the ones that stay below 0.6 are dropped with a reason.
