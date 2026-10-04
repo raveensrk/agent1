@@ -550,6 +550,126 @@ def test_cli_help_check_skips_non_executables_and_honours_the_allowlist():
             sys.argv, _ = old_argv, os.chdir(cwd)
 
 
+def test_cli_help_check_skips_the_scratch_dir():
+    """A probe under ~/tmp dies with the session, so the six-months-later author
+    the rule protects never meets it. The boundary is the scratch path: one
+    directory over, the same file is a finding again."""
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        scratch = os.path.join(tmp, "tmp")
+        os.makedirs(scratch)
+        script = os.path.join(scratch, "probe.py")
+        body = '#!/usr/bin/env python3\nimport sys\nprint(sys.argv[1])\n'
+        with open(script, "w") as fh:
+            fh.write(body)
+        os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
+        spec = importlib.util.spec_from_file_location("cli_help", check)
+        module = importlib.util.module_from_spec(spec)
+        old_argv = sys.argv
+        sys.argv = ["cli_help.py", script]
+        try:
+            spec.loader.exec_module(module)
+            module.SCRATCH = os.path.realpath(scratch)
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                module.main()
+            assert buf.getvalue() == "", buf.getvalue()
+            # Not the scratch dir: a temp file anywhere else still owes the pair.
+            module.SCRATCH = os.path.realpath(os.path.join(tmp, "elsewhere"))
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                module.main()
+            assert "mentions neither -h nor --help" in buf.getvalue(), buf.getvalue()
+        finally:
+            sys.argv = old_argv
+
+
+def mdformat_bin():
+    """The pinned mdformat, or None when this machine has no pipx install."""
+    override = os.environ.get("MDFORMAT_BIN")
+    if override:
+        return override if os.path.exists(override) else None
+    pinned = os.path.expanduser("~/.local/bin/mdformat")
+    if os.path.exists(pinned):
+        return pinned
+    return None
+
+
+def test_mdformat_check_flags_an_unformatted_file_and_steers():
+    # The motivating case: a blank-line mess in a repo that pinned the tool. The
+    # message must carry the command that fixes it, or the next attempt
+    # reformats nothing.
+    bin_path = mdformat_bin()
+    if not bin_path:
+        return  # no pinned mdformat on this machine
+    check = os.path.join(CHECKS, "mdformat_check.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        open(os.path.join(tmp, ".mdformat.toml"), "w").write("number = true\n")
+        doc = os.path.join(tmp, "prose.md")
+        with open(doc, "w") as fh:
+            fh.write("# Title\n\nProse.\n\n\n\nMore prose.\n")
+        env = dict(os.environ, MDFORMAT_BIN=bin_path)
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True, env=env)
+        assert proc.returncode == 0, proc.stderr
+        assert doc in proc.stdout, proc.stdout
+        assert "fix: " in proc.stdout, proc.stdout
+
+
+def test_mdformat_check_skips_a_repo_that_did_not_pin_the_tool():
+    # mdformat's output is config-dependent, so without .mdformat.toml there is
+    # no pinned invocation and nothing to enforce. The file is left alone.
+    bin_path = mdformat_bin()
+    if not bin_path:
+        return
+    check = os.path.join(CHECKS, "mdformat_check.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = os.path.join(tmp, "prose.md")
+        with open(doc, "w") as fh:
+            fh.write("# Title\n\nProse.\n\n\n\nMore prose.\n")
+        env = dict(os.environ, MDFORMAT_BIN=bin_path)
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True, env=env)
+        assert proc.returncode == 0, proc.stderr
+        assert proc.stdout.strip() == "", proc.stdout
+
+
+def test_mdformat_check_is_quiet_on_a_clean_file():
+    bin_path = mdformat_bin()
+    if not bin_path:
+        return
+    check = os.path.join(CHECKS, "mdformat_check.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        open(os.path.join(tmp, ".mdformat.toml"), "w").write("number = true\n")
+        doc = os.path.join(tmp, "prose.md")
+        with open(doc, "w") as fh:
+            fh.write("# Title\n\nProse.\n\nMore prose.\n")
+        subprocess.run([bin_path, doc], check=True, capture_output=True)
+        env = dict(os.environ, MDFORMAT_BIN=bin_path)
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True, env=env)
+        assert proc.returncode == 0, proc.stderr
+        assert proc.stdout.strip() == "", proc.stdout
+
+
+def test_mdformat_check_refuses_a_binary_without_the_plugin():
+    # Without mdformat-frontmatter, mdformat rewrites SKILL.md frontmatter into
+    # a setext heading. That is a broken tool, not a finding, so: exit 2 and a
+    # steering message, never a finding on stdout.
+    check = os.path.join(CHECKS, "mdformat_check.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        open(os.path.join(tmp, ".mdformat.toml"), "w").write("number = true\n")
+        fake = os.path.join(tmp, "mdformat")
+        with open(fake, "w") as fh:
+            fh.write("#!/bin/sh\necho 'mdformat 1.0.0'\nexit 0\n")
+        os.chmod(fake, 0o755)
+        doc = os.path.join(tmp, "prose.md")
+        with open(doc, "w") as fh:
+            fh.write("# Title\n")
+        env = dict(os.environ, MDFORMAT_BIN=fake)
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True, env=env)
+        assert proc.returncode == 2, (proc.returncode, proc.stdout, proc.stderr)
+        assert "mdformat-frontmatter" in proc.stderr, proc.stderr
+        assert proc.stdout.strip() == "", proc.stdout
+
+
 if __name__ == "__main__":
     failures = 0
     for name, func in sorted(globals().items()):

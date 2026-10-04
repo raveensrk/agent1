@@ -27,7 +27,7 @@ python3 harness/lint.py --list          # the checks, their quadrant and scope
 python3 harness/lint.py --json          # for scripts and the trigger
 python3 harness/tests/test_lint.py      # the checks' own tests
 node --experimental-strip-types harness/tests/test_command_guard.ts
-python3 harness/self_check              # every suite, then the full-population lint
+bash harness/self_check                 # every suite, then the full-population lint
 ```
 
 Exit 0 clean, 1 findings, 2 a check failed to run. A failing check is reported
