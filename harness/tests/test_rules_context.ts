@@ -40,7 +40,7 @@ assert.ok(!rulesSection("# Common\n", undefined, "  \n").includes("Experimental 
 // the file this reads in a real session is the canonical rules file
 const common = readFileSync(join(homedir(), "repos/agent1/common.md"), "utf8");
 const real = rulesSection(common);
-assert.match(real, /## Output style/, "common.md's sections must survive verbatim");
+assert.match(real, /## Working style/, "common.md's sections must survive verbatim");
 assert.ok(real.includes(common.trim()), "the rules body must be the file itself");
 assert.ok(real.split("\n").length > 200, `expected the whole file, got ${real.split("\n").length} lines`);
 
