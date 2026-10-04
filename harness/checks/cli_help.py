@@ -21,7 +21,12 @@ So this check decides the hard half only:
 
 Files under `harness/checks/` are exempt: the dispatcher
 hands them file paths on stdin, they are not commands somebody types. So is a
-backup copy (`box.sh.bak_codex`): nobody runs it.
+backup copy (`box.sh.bak_codex`): nobody runs it. So is anything under `~/tmp`:
+the scratch dir holds probes and copies that die with the session, and the
+six-months-later author this rule protects never meets them. Measured 2026-10-04:
+12 executables under `~/tmp` parse options, and not one is a command anybody
+types. The scratch path is the exemption, not "outside a repo": a script in any
+other temp dir still owes the pair, which the tests below exercise.
 
 Measured before writing it: 46 tracked scripts through the dispatcher and 6 in
 ~/dot parse options and are missing the pair; every argparse CLI that day passed,
@@ -42,6 +47,8 @@ import tokenize
 
 REPOS = os.path.expanduser("~/repos")
 ALLOW = os.path.join(REPOS, "agent2", "harness", "data", "cli_help_allow.txt")
+# The scratch dir: throwaway probes, not commands anybody types.
+SCRATCH = os.path.realpath(os.path.expanduser("~/tmp"))
 
 # Enough for any script; a bigger file is not a hand-written CLI.
 MAX_BYTES = 400_000
@@ -100,6 +107,13 @@ def allow_patterns() -> list[str]:
 def allowed(rel: str, patterns: list[str]) -> bool:
     base = os.path.basename(rel)
     return any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(base, p) for p in patterns)
+
+
+def in_scratch(path: str) -> bool:
+    """True for a probe under ~/tmp. Realpaths, so a symlinked scratch dir and
+    the `/private` prefix macOS puts in front of `/tmp` compare equal."""
+    p = os.path.realpath(path)
+    return p == SCRATCH or p.startswith(SCRATCH + os.sep)
 
 
 def code_only(text: str) -> str:
@@ -170,7 +184,7 @@ def main() -> int:
     for path in FILES:
         rel = os.path.relpath(path)
         if (HARNESS_TOOLS.search(rel) or BACKUP.search(os.path.basename(rel))
-                or allowed(rel, patterns)):
+                or in_scratch(path) or allowed(rel, patterns)):
             continue
         if not shebang(path) or not executable(path):
             continue
