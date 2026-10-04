@@ -25,3 +25,7 @@ caller. The worked example is `scripts/todo`, help table and all.
 must mention both `-h` and `--help`, and the finding names the one that is
 missing. Which letter a short flag takes, and how a subcommand's help reads,
 stay prose: this file.
+
+## Designing a new command
+
+- A new command's default human-readable output: ask the shape first, with one MCQ that shows a concrete example of each. The renderer is the expensive part to redo.

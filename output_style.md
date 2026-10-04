@@ -2,6 +2,8 @@
 
 Split from [common.md](common.md); intentionally unlinked - no router, index or pointer names this file.
 
+This is experimental.
+
 - Always respond in active voice.
 - Always write the full URL and the full file path. Visible text must be the complete string, not a short label. A URL includes the scheme and host (`https://www.crunchyroll.com`, not `crunchyroll`). A file path is absolute (`/Users/raveen_kumar_personal/repos/agent1/common.md`, not `common.md`).
 - Lots of information to show? Split it into bullets.

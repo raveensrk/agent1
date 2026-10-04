@@ -25,3 +25,7 @@ Scopes are optional; use the affected package or area when helpful, e.g. core, w
 ## Pull Requests
 
 PR descriptions should explain what changed, why the change is needed, and the intent or constraints a reviewer cannot infer from the diff alone. Keep simple PRs brief, but give non-trivial changes enough context to stand on their own. Skip file-by-file inventories, test result summaries, and anything obvious from the code itself.
+
+## Command gotchas
+
+- `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.

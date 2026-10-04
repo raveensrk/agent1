@@ -80,6 +80,7 @@ answer means the import did not load.
 | `code_style.md` | How to write code |
 | `common.md` | Session start, working style, output style, and the pointer hub for topic rules |
 | `emoji_legend.md` | Status emoji vocabulary for agent reports |
+| `external.md` | Probes, live external accounts, credentials |
 | `git.md` | Commits and pull requests |
 | `harness/` | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
 | `install.py` | Installs skills, commands and extensions into Claude Code, Codex and pi |

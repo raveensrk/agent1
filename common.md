@@ -41,27 +41,13 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - When a task has two plausible architectures, ask one MCQ before writing any code.
 
-- A new command's default human-readable output: ask the shape first, with one MCQ that shows a concrete example of each. The renderer is the expensive part to redo.
-
 - Verify a library call in a scratch buffer or a one-liner before using it in code.
-
-- A probe of an external system is one script taking the query as an argument; a
-  second near-identical script is a rewrite, not a probe. Six CDP probe scripts
-  were copied one per question on 04 Oct 2026, and the command analyzer missed
-  all six because each had a different filename.
 
 - A bulk or destructive change prints a per-file plan first, then applies, and a
   formatter or rewriter is proven on copies before it sweeps: run it on one or
   two representative files in `~/tmp`, diff the result, then apply it across the
   tree. The sweep that skipped that step rewrote 15 `SKILL.md` frontmatter
   blocks on 04 Oct 2026.
-
-- A live external account is real data. Before the first write to one - a playlist, a mailbox, a third-party API - ask once and name what changes, then prototype on a scratch resource you create rather than the user's own. The real account is only touched by a command the user asked for by name.
-
-- A credential materialized to disk - a browser cookie jar, a copied cookie
-  database, a browser profile holding a live session - is deleted in the same tool
-  call that stops needing it, never left across tool calls. A console session
-  cookie sat in `~/tmp` for 50 minutes beside three copied browser profiles.
 
 - Back a recommendation with a number measured on this machine, not from memory; a
   constant that ships records its sample size and date beside it.
@@ -77,8 +63,6 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
 
-- `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
-
 - Read the exact region before an edit when this session has not shown that text - one guessed `oldText` aborts the whole batch and costs a retry.
 
 - A repeated question gets a fresh measurement, not the old answer. Re-scan, diff against the previous answer, and report what changed; another session or process may have altered the machine meanwhile.
@@ -90,8 +74,6 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Machine-wide: search with `rg`, never `grep -r` - recursive grep walks `.git` and `node_modules`. Measured on this machine, one `grep -rn` over `~/repos` (17 GB, 169,203 files) ran 111 s of a 137 s session and had to be aborted; `rg -l` answered the same question in 2.6 s. `harness/extensions/command_guard.ts` blocks the recursive form, and a `curl` or `wget` with no timeout, printing the replacement either way. Bound the path either way.
 
 - Machine-wide: a path a command already named needs no second scan to confirm it. When that path turns out missing, ask one question instead of searching for an alternative: the sweep cost 111 s on a task whose whole ambiguity was one question.
-
-- When I say I unsubscribed or cancelled a service I control, record that and do not open mail, the site, or System Settings to check it.
 
 - An ambiguous request that follows unrelated work and could target either the harness or the project in cwd: confirm scope with one question before editing anything outside cwd (`~/.pi`, dotfiles, `~/repos`); default to the project in cwd.
 
