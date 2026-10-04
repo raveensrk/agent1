@@ -45,7 +45,11 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - Verify a library call in a scratch buffer or a one-liner before using it in code.
 
-- A bulk or destructive change prints a per-file plan first, then applies.
+- A bulk or destructive change prints a per-file plan first, then applies, and a
+  formatter or rewriter is proven on copies before it sweeps: run it on one or
+  two representative files in `~/tmp`, diff the result, then apply it across the
+  tree. The sweep that skipped that step rewrote 15 `SKILL.md` frontmatter
+  blocks on 04 Oct 2026.
 
 - A live external account is real data. Before the first write to one - a playlist, a mailbox, a third-party API - ask once and name what changes, then prototype on a scratch resource you create rather than the user's own. The real account is only touched by a command the user asked for by name.
 
@@ -152,6 +156,10 @@ generators, hooks and guards. Prose is the fallback, not the default.
   [harness/checks](~/repos/agent1/harness/checks) (see
   [harness/README.md](~/repos/agent1/harness/README.md)) and keep the prose rule
   only if it says something the check cannot.
+- A skill is discovered by its frontmatter, so a sweep that eats it is silent:
+  [harness/checks/skill_frontmatter.py](~/repos/agent1/harness/checks/skill_frontmatter.py)
+  wants `name` and `description` in every `SKILL.md`, and the directory name to
+  match it.
 - Deterministic first, and pick the shape the rule needs:
   - Decidable after the work - a check in
     [harness/checks](~/repos/agent1/harness/checks), run by
@@ -297,6 +305,7 @@ stay prose: this file.
 - BSD `sed` fails with `parentheses not balanced` when `|` is both the delimiter and an alternation (`s|(a|b)|x|`). Use another delimiter, for example `#`.
 
 - BSD `cat` has no `-A`. Use `cat -v -e`, or `sed -n l` to show line ends and tabs.
+  The guard refuses `cat -A` and prints both forms.
 
 - `pgrep` on macOS has no `-c`. Count with `pgrep ... | wc -l`.
 
