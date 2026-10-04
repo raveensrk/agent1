@@ -32,9 +32,49 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 
 - Dark only (`#17181c` background family from template). No light mode.
 - Colors: accent `#2d77e0`, success `#89d281`, warning `#febc38`, error `#ff5b5b`, muted `#8b919b`. Callouts use these.
-- Diagrams: pure HTML/CSS boxes and arrows (flex + `→` glyphs or borders). SVG only when necessary. No JS chart libraries.
+- Diagrams: mermaid source rendered to inline SVG at build time (see below). Pure HTML/CSS boxes and arrows for a two-item comparison; mermaid for anything with a branch, a loop, or more than three nodes.
+- No JS chart libraries, no CDN, no external assets: the page opens offline, forever.
 - Code/config blocks: `<pre><code>`, monospace, with inline `<mark>` or comment-style callouts for annotations. Before/after: two columns side by side.
 - Every page must render correctly at ~800–1400px width; test mentally for narrow windows.
+
+## Flowcharts with mermaid
+
+Write the diagram as mermaid, render it once, paste the SVG inline. The page then
+carries a picture, not a library.
+
+1. Write the source to `~/tmp/<topic>.mmd`:
+
+   ```
+   flowchart TD
+     A["Session edits markdown"] --> B{"Which mdformat?"}
+     B -->|"brew: no plugin"| C["frontmatter mangled"]
+     B -->|"pipx: plugin + config"| D["frontmatter intact"]
+   ```
+
+2. Render it dark, on a transparent background:
+
+   ```sh
+   PUPPETEER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+     mmdc -i ~/tmp/<topic>.mmd -o ~/tmp/<topic>.svg -t dark -b transparent
+   ```
+
+3. Paste the SVG into the page, and keep the mermaid source in a comment above it,
+   so the next session edits the diagram instead of redrawing it:
+
+   ```html
+   <!-- mermaid: flowchart TD ... -->
+   <div class="flow"><svg ...>...</svg></div>
+   ```
+
+4. One mermaid diagram per page: `mmdc` names every SVG `my-svg`, so two of them
+   collide. Give the wrapper `max-width` and let the SVG scale to the window.
+
+5. Labels carry the words, arrows carry the logic. Six words per node keeps it
+   legible at 800px.
+
+The pin matters: `mmdc` 12.0.0 from `npm i -g @mermaid-js/mermaid-cli` installed with
+`PUPPETEER_SKIP_DOWNLOAD=true`, so it drives the Chrome already on this machine.
+Without `PUPPETEER_EXECUTABLE_PATH` it fails, because no Chromium was downloaded.
 
 ## Feedback protocol
 
