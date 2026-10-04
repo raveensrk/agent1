@@ -13,6 +13,11 @@
  * names the topic files with what each is for, so a skipped read is a decision
  * rather than an oversight.
  *
+ * Measured 2026-10-04: a fresh session asked to name itself answered "I am Pi",
+ * because experimental.md was only *named*. A trial rule a session may skip is
+ * not being trialled, so experimental.md is appended too - after common.md, so
+ * the precedence reads in order.
+ *
  * ponytail: the whole file on every run, ~270 lines. Trim it to the rules that
  * actually get missed if the context cost ever shows up in a token report.
  */
@@ -22,6 +27,16 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 const COMMON = join(homedir(), "repos/agent1/common.md");
+const EXPERIMENTAL = join(homedir(), "repos/agent1/experimental.md");
+
+/** A rule file that may not exist yet. A missing file is not an error here. */
+function readIfPresent(path: string): string {
+	try {
+		return readFileSync(path, "utf8");
+	} catch {
+		return "";
+	}
+}
 
 /** Topic files common.md points at, with the reason to read each one. */
 const TOPICS: [string, string][] = [
@@ -32,23 +47,43 @@ const TOPICS: [string, string][] = [
 	["skills/todo/SKILL.md", "the todo skill, the board's only writer"],
 ];
 
-export function rulesSection(text: string, topics: [string, string][] = TOPICS): string {
+export function rulesSection(
+	text: string,
+	topics: [string, string][] = TOPICS,
+	experimental = "",
+): string {
 	if (!text.trim()) return "";
-	return [
+	const lines = [
 		"## Rules (loaded from ~/repos/agent1/common.md)",
 		"",
 		text.trim(),
 		"",
 		"Read the topic file when the task touches it:",
 		...topics.map(([name, why]) => `- agent1/${name} - ${why}`),
-	].join("\n");
+	];
+	if (experimental.trim()) {
+		lines.push(
+			"",
+			"## Experimental rules (loaded from ~/repos/agent1/experimental.md)",
+			"",
+			"Live trial rules. They win over anything above that conflicts, until the",
+			"user promotes one into common.md or deletes it.",
+			"",
+			experimental.trim(),
+		);
+	}
+	return lines.join("\n");
 }
 
 export default function (pi: ExtensionAPI) {
 	pi.on("before_agent_start", (event) => {
 		let section: string;
 		try {
-			section = rulesSection(readFileSync(COMMON, "utf8"));
+			section = rulesSection(
+				readFileSync(COMMON, "utf8"),
+				TOPICS,
+				readIfPresent(EXPERIMENTAL),
+			);
 		} catch {
 			section =
 				"## Rules\n\n~/repos/agent1/common.md is missing, so the session-start rules did not load. Read the topic files under ~/repos/agent1/ before starting.";
