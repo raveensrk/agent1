@@ -157,7 +157,13 @@ generators, hooks and guards. Prose is the fallback, not the default.
     [harness/checks](~/repos/agent1/harness/checks), run by
     [lint.py](~/repos/agent1/harness/lint.py). The prose keeps one pointer line.
   - Pin the tool. "Follow the CommonMark spec" has no falsifier, every string is
-    valid CommonMark; `mdformat --check` does. A rule with no falsifier is prose.
+    valid CommonMark; `mdformat --check` does, and the pin is part of the rule:
+    the pipx binary at `~/.local/bin/mdformat` with the mdformat-frontmatter
+    plugin, plus `.mdformat.toml` in the repo. The bare `mdformat` on PATH is a
+    different build that rewrites YAML frontmatter into a setext heading and
+    renumbers ordered lists, which cost 15 skills their metadata on 04 Oct 2026.
+    `harness/checks/mdformat_check.py` enforces the pinned pair. A rule with no
+    falsifier is prose.
   - Judgement stays prose. Never fake it with a regex, and reach for Jev only when
     the answer is a label or a score with a threshold.
   - Convert with the [determinize](~/repos/agent1/skills/determinize/SKILL.md)
