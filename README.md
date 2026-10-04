@@ -52,6 +52,7 @@ two agents never drift apart:
 
 - Use a `~/` path. `$HOME` is not expanded, and `/Users/<name>/` breaks on
   another machine.
+
 - Confirm it resolves before you rely on it:
 
   ```bash
