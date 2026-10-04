@@ -10,7 +10,6 @@ with [install.py](../install.py).
 - [html-explainer](./html-explainer/SKILL.md) - Explain any concept, config or error as a self-contained dark-mode HTML page in ~/tmp with numbered sections and a feedback loop.
 - [lazygit](./lazygit/SKILL.md) - Opens lazygit for every repo this session wrote to that has uncommitted changes: a tab in iTerm, a window in Terminal.app.
 - [learn-from-session](./learn-from-session/SKILL.md) - Reviews the session as a coach: patterns, errors, inefficiencies, missing deterministic checks, Jev-labeled signals, online research, prioritized report, and approved AGENTS.md updates.
-- [migrate-todo](./migrate-todo/SKILL.md) - Converts line-schema todos to the lisp schema, one repo at a time.
 - [model-price-report](./model-price-report/SKILL.md) - Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis intelligence scores.
 - [privacy-scan](./privacy-scan/SKILL.md) - Scans files or a diff for PII, privacy and security issues.
 - [session-name](./session-name/SKILL.md) - Names the current Pi session from its goal, as a short label the user picks.

@@ -98,7 +98,6 @@ directory name to match the skill `name`.
 | `agent-usage-report` | HTML report of every model used across agent harnesses (pi, Claude Code, Codex, opencode): tokens, cost, and the most intelligent and most efficient model |
 | `determinize` | Scans a directory's agent instructions, turns every decidable rule into a check, a guard or a git hook, and thins the prose to decisions and routing |
 | `git-report` | Your commits across all your repos, local and remote, for any time window |
-| `migrate-todo` | Converts line-schema todos to the lisp schema, one repo at a time |
 | `model-price-report` | Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis scores |
 | `privacy-scan` | Scans files or a diff for PII, privacy and security issues |
 
