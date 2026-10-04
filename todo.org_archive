@@ -1,0 +1,147 @@
+#    -*- mode: org -*-
+
+Archived entries from file /Users/raveen_kumar_personal/repos/agent1/todo.org
+
+* DONE [#C] Efficiency evidence: filler, duplicate spans, density helpers with tests :voice_score:
+CLOSED: [2026-10-04 Sun 17:53]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 17:53
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+The deterministic half of the token-efficiency score, in /Users/raveen_kumar_personal/repos/agent1/harness/extensions/voice_score.ts (same file; it stays node-loadable because it only type-imports pi). Pure functions, no model call, no I/O, no theme.
+- fillers(text): case-insensitive word-boundary matches for: just, really, basically, simply, actually, essentially, quite, very, note that, it is worth noting, it is important to note, in order to, the fact that. Returns the words found with counts.
+- repeats(text): split into sentence-ish spans (on blank lines and sentence ends), normalize (lowercase, strip punctuation), and treat two spans as duplicates when the Jaccard overlap of their word sets is >= 0.8. Returns the count of spans beyond the first in each duplicate group.
+- density(text): chars, estimated tokens (chars / 4), and zlib deflate ratio (compressed length / raw length), where a high ratio means high information density.
+Tests in /Users/raveen_kumar_personal/repos/agent1/harness/tests/test_voice_score.ts: one positive case, one negative case and the empty string for each helper.
+Run: timeout 180 node --experimental-strip-types /Users/raveen_kumar_personal/repos/agent1/harness/tests/test_voice_score.ts
+Why: measured facts beat a judge's opinion. This evidence goes in the expanded view next to Jev's number, and it is the sanity check on Jev during calibration (task 6).
+Order: tasks 1-8 in board order; each is one session-sized unit that leaves the tree green.
+fillers/repeats/density/evidence in harness/extensions/voice_score.ts; suite green: timeout 180 node --experimental-strip-types harness/tests/test_voice_score.ts
+* DONE [#C] Capture the user request and a compact tool-call trace per run :voice_score:
+CLOSED: [2026-10-04 Sun 17:53]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 17:53
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+In /Users/raveen_kumar_personal/repos/agent1/harness/extensions/voice_score.ts, next to the existing think/reply collection.
+- message_end with role user: keep the last request text, truncated to 2000 chars.
+- message_end with an assistant toolCall block (check the transcript shape first; blocks are type toolCall): record name plus a 120-char args summary.
+- message_end with role toolResult: attach the result size in chars to the call.
+- Cap the trace at 12 entries, oldest dropped, one line each: read voice_score.ts (1,840 chars result).
+- Reset at agent_start, exactly like think and reply today.
+Write this caveat into the code: a thinking block is judged against calls made after it, because that is the only way to know whether the thinking was needed at all.
+Jev state layout, backticked paths, per task 3: request, trace, then one field per block.
+Verify before moving on: a pi -p run with PI_VOICE_TRACE=1 logs the trace once, so the capture can be seen without the ledger (task 5).
+request+toolCall/toolResult capture, 12-entry cap; PI_VOICE_TRACE=1 pi -p logged request and one call with its result size
+* DONE [#C] Jev efficiency question and its completeness or circularity gate :voice_score:
+CLOSED: [2026-10-04 Sun 17:53]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 17:53
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+
+One Jev call per run stays the rule; the efficiency questions join the voice questions inside it at agent_before_settle. Two questions per block.
+1) Efficiency score e, 0-3, HIGHER IS BETTER so the colours match the voice line. Instruction: How token-efficient is b0 for this task? Judge only the text, not whether the reasoning is correct.
+   Criteria: 0: at least half the tokens are non-essential, restatement, filler or material the task did not ask for | 1: noticeable waste, repeated points, throat-clearing or detail beyond what the task needed | 2: mostly load-bearing, a few clauses or hedges could go | 3: every sentence carries information needed for this task, nothing could be cut without losing content.
+2) Gate, a bool per block. Reply: Does the reply deliver everything this turn learned that the user needs, judged against the request and the trace? true: it covers what the task needed; false: something needed is missing. Thinking: Does the thinking avoid circularity? true: each step advances the reasoning, nothing re-derived; false: it repeats or re-derives a point it already settled.
+Then efficiency = e x p(gate). The gate carries the omission penalty, because a bare conciseness score is weak on its own (ConCISE measured an LLM conciseness rating at r = -0.108 against human ratings, while compression-based measures reached 0.628: https://arxiv.org/html/2511.16846v2).
+Do not add a second Jev call, and do not change the voice questions.
+e/g questions in buildQuestions, efficiency = e x gate; one classify call; live pi -p session entry holds both score sets
+* DONE [#C] Second display line for tokens, evidence in the expanded view :voice_score:
+CLOSED: [2026-10-04 Sun 17:53]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 17:53
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+The entry gains one line under the existing one:
+  voice  think 2.8  reply 2.2
+  tokens think 1.4  reply 2.6
+- Same band colours and thresholds as the voice line, one decimal per number, worst not separated out.
+- Blocks under FLOOR (200 chars) stay unscored, same as voice. When a run has a voice score but no efficiency score, print the empty tokens line and say nothing else.
+- Expanded view, per block: filler words found, duplicate span count, chars, estimated tokens, Jev score, gate probability, confidence. Example: reply load-bearing 2.6 gate 0.95 conf 0.60 fillers 3 repeats 1 1840 chars.
+- Display only, as before: no nudge, no continue, the entry is a custom entry and never reaches the model's context.
+Render it through a pure renderLines-style helper so the text can be unit-tested without a terminal.
+renderLines draws voice + tokens lines, expiry and evidence detail; suite asserts both, expanded evidence line
+* DONE [#C] Append one voice_score ledger row per scored block :voice_score:
+CLOSED: [2026-10-04 Sun 17:53]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 17:53
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+
+File: /Users/raveen_kumar_personal/.local/share/voice_score/scores.jsonl. mkdir -p the directory; machine-local data, never committed, never inside a repo.
+One JSON object per line, appended, one row per scored block:
+{"at":"2026-10-04T04:40:00-07:00","session":"01a103cc","kind":"reply","voice":2.2,"efficiency":2.5,"gate":0.95,"chars":1840,"fillers":3,"repeats":1,"tokens":460}
+- session comes from the PI_SESSION_ID environment variable when present, else an empty string.
+- Append with one writeFileSync(path, line, {flag: "a"}); wrap it in try/catch and stay silent on failure, so a bad path never breaks a turn.
+Why: re-calibration from real turns and trends over time, without re-parsing every transcript.
+~/.local/share/voice_score/scores.jsonl gained 3 rows from two live pi -p runs, one per scored block, both scores and evidence
+* DONE [#C] Calibrate the efficiency bands before shipping them :voice_score:
+CLOSED: [2026-10-04 Sun 18:00]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 18:00
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+
+Do this before freezing the PASS and GOOD constants for the tokens line. The voice bands came from 162 past samples and a measured gap; this number deserves the same, and it was never measured.
+1) Hand-label first: pick 10 blocks by hand, 5 wasteful (pre-rule verbose thinking from early October sessions, or a deliberately long explanation) and 5 tight (telegraph replies from the 2026-10-03 session). Jev must separate them: wasteful below 1.5, tight above 2.0.
+2) Population run: reuse /Users/raveen_kumar_personal/tmp/voice_probe/calibrate.py, adapted to the new questions. It posts to https://api.typesafe.ai/v1/systemone with TYPESAFE_API_KEY (the key is in the environment), batches 6 questions per call, and reads the 25 newest sessions under /Users/raveen_kumar_personal/.pi/agent/sessions/.
+3) Sanity check: rank-correlate Jev's efficiency score against the deterministic evidence from task 1 (filler count, repeat count, deflate density). If the correlation is weak, report it and stop rather than shipping the number.
+4) Set PASS and GOOD in the measured gap, and record both numbers in the extension header with the date and the sample size.
+2026-10-04: hand set of 10 (5 pre-rule thinking, 5 telegraph replies) scored wasteful 0.17-0.52, tight 0.81-2.62 (only 1/5 above the plan's 2.0, stable to 0.07 across 3 runs); population 87 blocks from 25 newest sessions, median 0.66, max 2.41; Spearman -0.691 fillers, +0.525 deflate density, -0.232 repeats; EFF_PASS 0.75 in the one measured gap, EFF_GOOD 1.5 top quartile, both recorded in the header with date and sample sizes
+* DONE [#C] Document the efficiency score in the extension header and harness README :voice_score:
+CLOSED: [2026-10-04 Sun 18:00]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 18:00
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+- /Users/raveen_kumar_personal/repos/agent1/harness/extensions/voice_score.ts header: the gate formula, the two bands with their provenance, the ledger path, and that display only remains the rule.
+- /Users/raveen_kumar_personal/repos/agent1/harness/README.md: the voice_score paragraph gains the second line and the ledger, in one or two sentences. Keep the existing tone: what it costs, what it never does.
+- The pointer in /Users/raveen_kumar_personal/repos/agent1/experimental.md stays unchanged: /voice-score already owns both lines.
+- Do not add a new command or a new config file: /voice-score on|off keeps owning voice and efficiency together, one Jev call.
+header: gate formula, both threshold pairs with date, sample sizes and Spearman, ledger path, display-only rule; harness/README.md paragraph gains the tokens line, the evidence fields and the ledger path; experimental.md pointer untouched; no new command or config
+* DONE [#C] Verify the efficiency score: suites, lint, live probe, one TUI turn :voice_score:
+CLOSED: [2026-10-04 Sun 18:17]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 18:17
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+
+1) timeout 900 bash /Users/raveen_kumar_personal/repos/agent1/harness/self_check   # every suite, then the full-population lint
+2) timeout 300 python3 /Users/raveen_kumar_personal/repos/agent1/harness/lint.py /Users/raveen_kumar_personal/repos/agent1/harness/extensions/voice_score.ts /Users/raveen_kumar_personal/repos/agent1/harness/tests/test_voice_score.ts /Users/raveen_kumar_personal/repos/agent1/harness/README.md   # 0 findings expected
+3) Live probe: timeout 120 pi -p "List six facts about lighthouses, one per line, no preamble, no closing line." - then confirm the newest file under /Users/raveen_kumar_personal/.pi/agent/sessions/ holds a voice-score entry with both score sets, and that /Users/raveen_kumar_personal/.local/share/voice_score/scores.jsonl gained rows.
+4) The user's probe: one turn in a fresh pi session, both lines visible, and the pasted result.
+5) Expected magnitudes: still one Jev call per run, two more questions per scored block, under 1 s and well under $0.001 per turn. Numbers must be real, not estimated.
+harness/self_check: 27 pytest passed, all 5 ts suites ok, lint --repos 12532 files 63 findings (machine-wide, pre-existing; the 3 changed files lint 0); live pi -p run wrote an entry with both score sets + evidence and the ledger 3 -> 5 rows; user TUI turn drew 'voice  think 1.7/3  reply 1.9/3' and 'tokens think 0.2/3  reply 2.5/3'; magnitudes: one Jev call per run, 3 questions per block (was 1), 424 ms measured for 2 blocks and 6 questions, 1385 tokens, /bin/bash catalog cost on the typesafe route, /bin/bash.000058 at the OpenRouter 0.042/M rate
+* DONE [#C] Jev-score tool calls and their output :voice_score:
+CLOSED: [2026-10-04 Sun 19:07]
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-10-04 Sun 19:07
+:ARCHIVE_FILE: ~/repos/agent1/todo.org
+:ARCHIVE_CATEGORY: todo
+:ARCHIVE_TODO: DONE
+:END:
+Score each tool call and its result, per turn, the way voice_score.ts scores thinking and the reply. Design settled in the 2026-10-03 session; do not re-litigate:
+- Unit: the tool loop of one run - one score per call, plus its result size.
+- Deterministic side first: session transcripts already record every call, its args and its result size, so repeated calls, subsumed retrieval and oversized outputs are computable with no model call.
+- Jev then judges whether the call was necessary, as a typed score plus a gate, multiplied, the same shape as the token-efficiency score.
+- Jev sees the request plus the call and a bounded slice of its result, never the whole result.
+- Display only, no nudge, and its own switch, separate from /voice-score.
+- Sources: https://arxiv.org/abs/2609.30725 (subsumed retrieval, similar script generation, test re-execution), https://arxiv.org/html/2607.12161v4 (token reduction is not cost reduction), https://arxiv.org/html/2509.23586 (AgentDiet trajectory reduction).
+call_score.ts: necessity x gate per call, request + bounded 600/200 result slice to Jev, deterministic repeats/subsumed reads/oversize, own /call-score switch, ledger kind call; entry draws 'calls  2.6/3 0.1/3 0.2/3' (verified by rendering a live entry). Suites green (31 pytest + 6 ts), lint 0 on changed files. Calibration 2026-10-04: hand set 10 wasteful 0.02-0.87 vs necessary 0.01-1.22, population 230 calls median 1.06 smooth, Spearman -0.34 chars / -0.17 repeats: no gap, so CALL_PASS/CALL_GOOD stay 0 and the numbers draw dim until a later calibration finds one.
