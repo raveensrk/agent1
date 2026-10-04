@@ -87,6 +87,31 @@ export function guardHit(command: string): Hit | null {
 				};
 			}
 		}
+		const catAt = names.findIndex((name) => name === "cat");
+		if (catAt !== -1 && words.slice(catAt + 1).some((word) => /^-[^-]*A/.test(word))) {
+			return {
+				name: "cat -A, which BSD cat does not have",
+				fix: [
+					"common.md: BSD cat has no -A, and the flag aborts the call:",
+					"  cat -v -e FILE",
+					"  sed -n l FILE",
+				].join("\n"),
+			};
+		}
+		const tmpAt = words.findIndex(
+			(word, index) =>
+				/^[0-9&]?>>?\/tmp\//.test(word) ||
+				(/^[0-9&]?>>?$/.test(word) && (words[index + 1] ?? "").startsWith("/tmp/")),
+		);
+		if (tmpAt !== -1) {
+			return {
+				name: "a temp file written under /tmp",
+				fix: [
+					"Temp files go under ~/tmp, never /tmp (common.md):",
+					"  mkdir -p ~/tmp/review && cmd 2> ~/tmp/review/err.txt",
+				].join("\n"),
+			};
+		}
 	}
 	const runner = unboundedRunner(command);
 	if (runner) {

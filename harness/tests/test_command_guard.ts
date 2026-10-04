@@ -26,6 +26,14 @@ const BLOCKED = [
 	"cargo test",
 	"npm test",
 	"NO_PROXY=1 python3 -m pytest",
+	// BSD cat has no -A, and the flag aborts the call: one failed call, 2026-10-04
+	"cat -A README.md",
+	"sed -n '50,62p' README.md | cat -n | cat -A",
+	"/bin/cat -vA file.txt",
+	// temp files belong under ~/tmp; one redirect to /tmp failed, 2026-10-04
+	"echo hi > /tmp/notes.txt",
+	"python3 scripts/scan.py 2>/tmp/scan.err",
+	"ls >/tmp/list.txt",
 ];
 
 const ALLOWED = [
@@ -48,6 +56,15 @@ const ALLOWED = [
 	"rg -n test ~/repos",
 	"grep -c test file.txt",
 	"rm -rf .build/test-artifacts",
+	// the safe forms of both, and a read from /tmp, which the rule allows
+	"cat -v -e README.md",
+	"cat -n README.md",
+	"sed -n l README.md",
+	"echo hi > ~/tmp/notes.txt",
+	"python3 scripts/scan.py 2> ~/tmp/scan.err",
+	"rg -n pattern /tmp/leftover.txt",
+	"cat /tmp/leftover.txt | head -3",
+	"python3 scripts/scan.py 2>&1 | tail -3",
 ];
 
 for (const command of BLOCKED) {
