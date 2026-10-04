@@ -245,7 +245,7 @@ versions before proposing it, and cite the source link.
 
 ## 7. Findings
 
-Keep the findings in chat. Write no file. Eleven reports sat unread in `~/tmp`
+Keep the findings in chat. Write no file. Ten reports sat unread in `~/tmp`
 between 01 and 04 Oct 2026, and the skill's escape hatch was there all along:
 "if the user declines a report, keep the findings in chat". Declining by not
 reading is still declining. Write `~/tmp/session_review_<YYYY-MM-DD>.md`, with
