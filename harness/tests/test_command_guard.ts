@@ -44,6 +44,19 @@ const BLOCKED = [
 	"echo hi > /tmp/notes.txt",
 	"python3 scripts/scan.py 2>/tmp/scan.err",
 	"ls >/tmp/list.txt",
+	// ls with a suppressed error, chained to a print: the call exits 1 having
+	// printed nothing, and the rest of the command is silently dropped. Measured
+	// 2026-10-04 over 147 transcripts: 4 instances, every one this shape.
+	"ls -d ~/tmp/a ~/tmp/b 2>/dev/null && echo 'PLAN'",
+	"ls ~/repos/agent2/AGENTS.md 2>/dev/null && cat ~/repos/agent2/AGENTS.md",
+	"cd ~ && ls -la helloapp_exe 2>/dev/null && echo done",
+	"ls -la helloapp_exe 2> /dev/null && printf 'ok\\n'",
+	"/bin/ls -d x 2>/dev/null && echo y",
+	// a browser cookie database copied into a scratch path and left there: the
+	// copy that put a live console session in ~/tmp for 50 minutes, 2026-10-04
+	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/tmp/ff_cookies.sqlite 2>/dev/null && sqlite3 ~/tmp/ff_cookies.sqlite 'select 1'",
+	"cp ~/Library/Application Support/Google/Chrome/Default/Cookies ~/tmp/chrome_cookies.sqlite",
+	'cp /Users/raveen/Library/Application Support/Firefox/Profiles/x/cookies.sqlite "/tmp/cookies.sqlite"',
 ];
 
 const ALLOWED = [
@@ -94,6 +107,22 @@ const ALLOWED = [
 	"rg -n pattern /tmp/leftover.txt",
 	"cat /tmp/leftover.txt | head -3",
 	"python3 scripts/scan.py 2>&1 | tail -3",
+	// the safe forms of both new shapes
+	"ls -d ~/tmp/a ~/tmp/b 2>/dev/null || true",
+	"ls -d ~/tmp/a ~/tmp/b 2>/dev/null; echo 'PLAN'",
+	"if [ -d ~/tmp/a ]; then cd ~/tmp/a; fi",
+	"ls -la helloapp_exe 2>/dev/null && ./helloapp_exe",
+	"ls -la helloapp_exe 2>/dev/null && make helloapp_exe",
+	"ls ~/repos/agent2/AGENTS.md 2>/dev/null || echo missing",
+	// the print does not end the chain, so skipping it is the point: a header
+	// before a run, a label before a count, and a step guarded by existence
+	"ls -la helloapp_exe 2>/dev/null && echo '--- run ---' && ./helloapp_exe",
+	"ls -la ~/repos/agent1/ 2>/dev/null && echo '---' && wc -l ~/repos/agent1/*.md 2>/dev/null",
+	// a || in the same segment means the missing path is handled
+	'ls -d ~/.Trash/elpa 2>/dev/null && echo "target exists - abort" || { mv ~/.emacs.d/elpa ~/.Trash/elpa && echo moved; }',
+	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/tmp/ff.sqlite && sqlite3 ~/tmp/ff.sqlite 'select 1'; rm -f ~/tmp/ff.sqlite",
+	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/backup/cookies.sqlite",
+	"cp ~/Library/Application Support/Firefox/Profiles/x/prefs.js ~/tmp/prefs.js",
 ];
 
 for (const command of BLOCKED) {

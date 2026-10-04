@@ -45,6 +45,11 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - Verify a library call in a scratch buffer or a one-liner before using it in code.
 
+- A probe of an external system is one script taking the query as an argument; a
+  second near-identical script is a rewrite, not a probe. Six CDP probe scripts
+  were copied one per question on 04 Oct 2026, and the command analyzer missed
+  all six because each had a different filename.
+
 - A bulk or destructive change prints a per-file plan first, then applies, and a
   formatter or rewriter is proven on copies before it sweeps: run it on one or
   two representative files in `~/tmp`, diff the result, then apply it across the
@@ -53,8 +58,20 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - A live external account is real data. Before the first write to one - a playlist, a mailbox, a third-party API - ask once and name what changes, then prototype on a scratch resource you create rather than the user's own. The real account is only touched by a command the user asked for by name.
 
+- A credential materialized to disk - a browser cookie jar, a copied cookie
+  database, a browser profile holding a live session - is deleted in the same tool
+  call that stops needing it, never left across tool calls. A console session
+  cookie sat in `~/tmp` for 50 minutes beside three copied browser profiles.
+
 - Back a recommendation with a number measured on this machine, not from memory; a
   constant that ships records its sample size and date beside it.
+
+- When a measurement shows an approach costs more than the option text said, stop
+  and re-ask with the measured number instead of pushing on to make the original
+  option true. An option offered as "about 5 s per refresh" turned out to need a
+  visible window, a one-time login and a persistent profile, because headless
+  Chrome is hard-blocked by Cloudflare; the session spent 40 more minutes making
+  the broken option work, and the answer was then reversed twice.
 
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 

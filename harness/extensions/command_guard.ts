@@ -100,8 +100,86 @@ function wordsOf(command: string): string[][] {
 		.map((segment) => segment.trim().split(/\s+/));
 }
 
+/**
+ * `ls ... 2>/dev/null && echo|cat|printf`. The suppressed error hides a missing
+ * path, and the `&&` then skips the print, so the call exits 1 having printed
+ * nothing - which reads as a failure and silently drops the rest of the command.
+ * Measured 2026-10-04 across 147 pi transcripts and 4612 bash commands: 4
+ * instances, every one this shape, and one aborted a per-file plan mid-command.
+ * The tail must be
+ * a print, so `ls X 2>/dev/null && ./X` - skip the work when it is missing -
+ * stays allowed, and ~/.bash_history holds 0 of either, so this is an agent
+ * habit rather than a typed one.
+ */
+function lsSuppressedThenPrint(command: string): boolean {
+	// Split on ; and newline and a single |, but never inside a ||: a || is the
+	// fallback that makes the whole shape correct.
+	for (const segment of executableText(command).split(/[;\n]|(?<!\|)\|(?!\|)/)) {
+		// A `||` anywhere in the segment means the failure is handled, which is
+		// the shape `ls X 2>/dev/null && echo exists || { fallback; }`.
+		if (segment.includes("||")) continue;
+		const parts = segment.split("&&").map((part) => part.trim());
+		for (let i = 0; i < parts.length - 1; i++) {
+			if (!/(?:^|\s)(?:\S*\/)?ls\s/.test(parts[i])) continue;
+			if (!/2>\s*\/dev\/null/.test(parts[i])) continue;
+			// The print must END the chain: `ls X && echo hdr && ./X` is a guard
+			// on the next step, and skipping it when X is missing is intended.
+			if (i + 1 !== parts.length - 1) continue;
+			if (/^(?:echo|cat|printf)\b/.test(parts[i + 1])) return true;
+		}
+	}
+	return false;
+}
+
+/** A path a copy is expected to be disposable at. */
+const SCRATCH = /^(?:~\/tmp\/|\/tmp\/|\$TMPDIR\/|\/var\/folders\/)/;
+
+/**
+ * A browser cookie database copied into a scratch path and left there. Measured
+ * 2026-10-04: `cp .../cookies.sqlite ~/tmp/ff_cookies.sqlite` put a live console
+ * session in ~/tmp for 50 minutes, beside three copied browser profiles. The
+ * copy itself is needed - the browser holds the database locked - so the fix is
+ * to delete it in the same command, not to refuse the work.
+ *
+ * Reads the heredoc-stripped command, not the quote-stripped one: a destination
+ * is often quoted, and a quoted span is exactly what the other patterns drop.
+ */
+function cookieCopyWithoutDelete(command: string): string | null {
+	const text = stripHeredocs(command);
+	const copy = text.match(
+		/(?:^|[;&|\n])\s*cp\s[^;&|\n]*\/(?:cookies\.sqlite|Cookies)\s+("[^"]*"|'[^']*'|[^\s;&|]+)/,
+	);
+	if (!copy) return null;
+	const dest = copy[1].replace(/^["']|["']$/g, "");
+	if (!SCRATCH.test(dest)) return null;
+	const escaped = dest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const removed = new RegExp(`(?:^|[;&|\\n])\\s*(?:rm|unlink)\\s[^;&|\\n]*${escaped}`);
+	return removed.test(text) ? null : dest;
+}
+
 /** The command shape that would hang, or null when it is safe. */
 export function guardHit(command: string): Hit | null {
+	if (lsSuppressedThenPrint(command)) {
+		return {
+			name: "ls with a suppressed error, chained to a print",
+			fix: [
+				"A missing path fails the ls, and the && then skips the print, so the",
+				"call exits 1 having printed nothing (common.md):",
+				"  ls A B 2>/dev/null || true      # a listing that may be empty",
+				"  if [ -d A ]; then cd A; fi      # act only when it exists",
+			].join("\n"),
+		};
+	}
+	const copied = cookieCopyWithoutDelete(command);
+	if (copied) {
+		return {
+			name: `a browser cookie database copied to ${copied} and left there`,
+			fix: [
+				"The copy is fine; leaving it is not. Delete it in the same command:",
+				'  D=~/tmp/cookies.sqlite; cp SRC "$D" && sqlite3 "$D" "select 1"; rm -f "$D"',
+			].join("\n"),
+		};
+	}
 	for (const words of wordsOf(command)) {
 		const names = words.map((word) => word.split("/").pop() ?? "");
 		const grepAt = names.findIndex((name) => GREP_NAMES.has(name));
