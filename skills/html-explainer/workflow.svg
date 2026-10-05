@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1430" role="img" aria-labelledby="workflow_title workflow_desc">
   <title id="workflow_title">How the html-explainer skill works</title>
-  <desc id="workflow_desc">The skill responds to explicit HTML requests or proposes a page when explanations fail to land. It scopes one topic, then uses either a standard explainer workflow with a chosen diagram format or a no-diagram interactive Q&amp;A form. Both select a fresh numbered file, build offline, open Firefox, and revise or clean up only under the skill's rules.</desc>
+  <desc id="workflow_desc">The skill responds to explicit HTML requests or proposes a page when explanations fail to land. It scopes one topic, then uses either a standard explainer workflow with a chosen diagram format or a no-diagram interactive Q&amp;A form. Each invocation gets one unique title-and-ID directory under ~/tmp for all generated contents. It builds offline, opens Firefox, keeps revisions in the same directory, and moves that directory to Trash after the user confirms understanding.</desc>
   <defs>
     <marker id="workflow_arrow_blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#2d77e0"/>
@@ -36,7 +36,7 @@
   <rect width="1600" height="1430" rx="26" fill="#17181c"/>
   <text x="70" y="58" class="wf_eyebrow">HTML-EXPLAINER / USER WORKFLOW</text>
   <text x="70" y="108" class="wf_heading">How the html-explainer skill works</text>
-  <text x="70" y="143" class="wf_subhead">From request to review, with separate paths for explainers and interactive Q&amp;A.</text>
+  <text x="70" y="143" class="wf_subhead">One unique ~/tmp/&lt;explanation_title&gt;__&lt;unique_id&gt;/ folder per invocation; cleanup follows your confirmation.</text>
 
   <rect x="70" y="178" width="1460" height="122" rx="16" class="wf_panel"/>
   <line x1="800" y1="198" x2="800" y2="280" stroke="#343840" stroke-width="2"/>
@@ -93,14 +93,14 @@
   <path d="M1175 865 V894 H800" class="wf_line_green"/>
 
   <rect x="320" y="925" width="960" height="76" rx="14" class="wf_card"/>
-  <text x="800" y="956" text-anchor="middle" class="wf_label">Choose next output path: ~/tmp/explain-topic-NN.html</text>
-  <text x="800" y="982" text-anchor="middle" class="wf_muted">Check existing pages first; never overwrite.</text>
+  <text x="800" y="956" text-anchor="middle" class="wf_label">Create unique workspace: ~/tmp/&lt;explanation_title&gt;__&lt;unique_id&gt;/</text>
+  <text x="800" y="982" text-anchor="middle" class="wf_muted">fields.json, diagrams, previews, and HTML stay together; never reuse workspace.</text>
 
   <path d="M800 1001 V1024" class="wf_line_muted"/>
   <rect x="250" y="1030" width="1100" height="112" rx="16" class="wf_blue"/>
   <text x="800" y="1070" text-anchor="middle" class="wf_title">Build and validate with scripts/build.py</text>
   <text x="800" y="1098" text-anchor="middle" class="wf_body">Exact fields · diagram requirements · escaped title/page ID · offline assets</text>
-  <text x="800" y="1122" text-anchor="middle" class="wf_muted">Build failure leaves no HTML; successful page is self-contained.</text>
+  <text x="800" y="1122" text-anchor="middle" class="wf_muted">Mermaid scratch stays in workspace and auto-cleans; page is self-contained.</text>
 
   <path d="M800 1142 V1164" class="wf_line_muted"/>
   <rect x="370" y="1170" width="860" height="74" rx="14" class="wf_green"/>
@@ -110,6 +110,6 @@
   <path d="M800 1244 V1264" class="wf_line_muted"/>
   <rect x="180" y="1270" width="1240" height="100" rx="14" class="wf_panel"/>
   <text x="210" y="1305" class="wf_label wf_gold">After review</text>
-  <text x="210" y="1333" class="wf_body">Revise only when asked, using the next NN. When user confirms understanding, delete pages created here unless asked to keep them.</text>
-  <text x="210" y="1358" class="wf_muted">All pages offline and self-contained. Feedback stays in chat, not in the default HTML.</text>
+  <text x="210" y="1333" class="wf_body">Revisions stay here (next NN). On understanding confirmation, move only this folder to Trash unless asked to keep it.</text>
+  <text x="210" y="1358" class="wf_muted">Never empty Trash or touch another run folder. Feedback stays in chat, not HTML.</text>
 </svg>

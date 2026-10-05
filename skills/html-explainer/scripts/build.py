@@ -27,12 +27,17 @@ def render(fields, diagrams, template, output, launch=True):
     if any(TOKEN.search(value) for value in fields.values()):
         raise ValueError("unfilled template field; fill it before opening Firefox")
     scratch = Path.home() / "tmp"
-    if not output.resolve().is_relative_to(scratch.resolve()):
-        raise ValueError("output must be under ~/tmp; use ~/tmp/explain-TOPIC-NN.html")
+    output_dir = output.parent.resolve()
+    if not output.resolve().is_relative_to(scratch.resolve()) or output_dir == scratch.resolve():
+        raise ValueError("output must be inside a per-invocation directory under ~/tmp")
+    if not output_dir.is_dir():
+        raise ValueError("create the per-invocation output directory before building")
     if has_diagrams and not diagrams:
         raise ValueError("provide at least one --diagram FILE.svg or FILE.mmd")
     if diagrams and not has_diagrams:
         raise ValueError("selected template does not accept diagrams")
+    if any(not path.resolve().is_relative_to(output_dir) for path in diagrams):
+        raise ValueError("diagram sources must be inside the output invocation directory")
     if output.exists():
         raise ValueError(f"refusing to overwrite {output}; choose the next NN")
     if any(path.suffix.lower() not in (".svg", ".mmd") for path in diagrams):
@@ -57,8 +62,7 @@ console.log(process.env.PUPPETEER_EXECUTABLE_PATH || await puppeteer.executableP
         env = dict(os.environ, PUPPETEER_EXECUTABLE_PATH=browser)
     blocks = []
     ids = set()
-    scratch.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="explain_", dir=scratch) as dir:
+    with tempfile.TemporaryDirectory(prefix="explain_", dir=output_dir) as dir:
         for index, (path, source) in enumerate(zip(diagrams, sources), 1):
             if path.suffix.lower() == ".svg":
                 try:
@@ -104,10 +108,12 @@ def main():
     parser.add_argument("fields", type=Path, help="JSON mapping of template fields to trusted HTML strings")
     parser.add_argument("-d", "--diagram", type=Path, action="append", help="authored SVG or Mermaid file; repeat for multiple diagrams")
     parser.add_argument("--template", type=Path, default=Path(__file__).resolve().parent.parent / "template.html", help="HTML template to fill")
-    parser.add_argument("-o", "--output", type=Path, required=True, help="new HTML path under ~/tmp")
+    parser.add_argument("-o", "--output", type=Path, required=True, help="new HTML path inside per-invocation directory under ~/tmp")
     parser.add_argument("--no-open", action="store_true", help="build without launching Firefox")
     args = parser.parse_args()
     try:
+        if not args.fields.resolve().is_relative_to(args.output.parent.resolve()):
+            raise ValueError("fields JSON must be inside the output invocation directory")
         render(json.loads(args.fields.read_text()), args.diagram or [],
                args.template, args.output, launch=not args.no_open)
     except (OSError, ValueError, subprocess.SubprocessError) as err:

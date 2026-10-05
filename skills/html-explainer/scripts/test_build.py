@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline checks for template validation, diagram IDs, and Firefox launch gating."""
 import json
+from io import StringIO
 from pathlib import Path
 import re
 import subprocess
@@ -23,8 +24,9 @@ MAPS = (
             "scripts/build.py",
             "mmdc",
             "Firefox",
-            "~/tmp/fields.json",
-            "Same scratch path reused",
+            "RUN_DIR/fields.json",
+            "unique_id",
+            "Trash",
         ),
     ),
     (
@@ -34,7 +36,9 @@ MAPS = (
             "Proactive offer",
             "template.html",
             "template-qa.html",
-            "never overwrite",
+            "never reuse workspace",
+            "unique_id",
+            "Trash",
             "Firefox",
         ),
     ),
@@ -68,6 +72,7 @@ class Builder(unittest.TestCase):
                 '<div class="qa-item"><h3>4.2 Second?</h3><p>Second answer.</p></div>'
             )
             output = dir / "page.html"
+            root_output = scratch / f"{dir.name}-root.html"
 
             def execute(command, **kwargs):
                 if "--svgId" in command:
@@ -80,10 +85,18 @@ class Builder(unittest.TestCase):
                  patch.object(build.subprocess, "check_output", return_value="/browser\n"), \
                  patch.object(build.os, "access", return_value=True), \
                  patch.object(build.subprocess, "run", side_effect=execute) as run:
+                with self.assertRaisesRegex(ValueError, "per-invocation directory"):
+                    build.render(fields, [diagram], TEMPLATE, root_output)
+                self.assertFalse(root_output.exists())
                 with self.assertRaisesRegex(ValueError, "at least one --diagram"):
                     build.render(fields, [], TEMPLATE, dir / "no-diagram.html")
                 self.assertFalse((dir / "no-diagram.html").exists())
                 build.render(fields, [diagram, diagram], TEMPLATE, output)
+                render_command = run.call_args_list[0].args[0]
+                rendered_svg = Path(render_command[render_command.index("-o") + 1])
+                self.assertTrue(rendered_svg.is_relative_to(dir))
+                self.assertFalse(rendered_svg.exists())
+                self.assertFalse(list(dir.glob("explain_*")))
                 page = output.read_text()
                 self.assertNotIn('id="feedback"', page)
                 self.assertNotIn('<textarea', page)
@@ -117,6 +130,24 @@ class Builder(unittest.TestCase):
                     build.render(fields, [diagram], TEMPLATE, dir / "failed.html")
                 self.assertEqual(run.call_count, 1)
                 self.assertFalse((dir / "failed.html").exists())
+
+    def test_cli_keeps_fields_in_invocation_directory(self):
+        scratch = Path.home() / "tmp"
+        scratch.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=scratch) as dir:
+            dir = Path(dir)
+            fields = scratch / f"{dir.name}-fields.json"
+            fields.write_text("{}")
+            output = dir / "page.html"
+            try:
+                with patch("sys.argv", ["build.py", str(fields), "-o", str(output), "--no-open"]):
+                    with patch("sys.stderr", StringIO()):
+                        with self.assertRaises(SystemExit) as err:
+                            build.main()
+                self.assertEqual(err.exception.code, 1)
+                self.assertFalse(output.exists())
+            finally:
+                fields.unlink(missing_ok=True)
 
     def test_qa_template(self):
         scratch = Path.home() / "tmp"
@@ -177,6 +208,12 @@ class Builder(unittest.TestCase):
             source = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><title id="direct_title">Direct</title></svg>'
             svg.write_text(source)
             output = dir / "direct.html"
+            outside = scratch / f"{dir.name}-external.svg"
+            outside.write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+            with self.assertRaisesRegex(ValueError, "diagram sources must be inside"):
+                build.render(fields, [outside], TEMPLATE, dir / "outside.html", launch=False)
+            self.assertFalse((dir / "outside.html").exists())
+            outside.unlink()
             with patch.object(build.shutil, "which", side_effect=AssertionError("SVG needs no renderer")), \
                  patch.object(build.subprocess, "run") as run:
                 build.render(fields, [svg], TEMPLATE, output, launch=False)

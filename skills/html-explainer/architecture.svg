@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1260" role="img" aria-labelledby="arch_title arch_desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1320" role="img" aria-labelledby="arch_title arch_desc">
   <title id="arch_title">How html-explainer constructs an HTML page</title>
-  <desc id="arch_desc">Two authoring routes, standard explainer and interactive Q&amp;A, feed scripts/build.py. The builder validates fields and diagrams, fills the selected template, and writes a self-contained offline HTML file under the temporary directory. The browser workflow opens it in an existing Firefox tab.</desc>
+  <desc id="arch_desc">Two authoring routes, standard explainer and interactive Q&amp;A, feed scripts/build.py. Each invocation stores fields, diagram sources, and HTML in one unique title-and-ID directory under the temporary directory. Temporary Mermaid renders stay inside it and are removed after build. The browser opens the offline page; after the user confirms understanding, the invocation directory moves to Trash.</desc>
   <defs>
     <marker id="arch_arrow_blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#2d77e0"/>
@@ -33,19 +33,19 @@
     </style>
   </defs>
 
-  <rect width="1600" height="1260" rx="26" fill="#17181c"/>
+  <rect width="1600" height="1320" rx="26" fill="#17181c"/>
   <text x="70" y="58" class="eyebrow">HTML-EXPLAINER / PAGE PIPELINE</text>
   <text x="70" y="108" class="heading">How an HTML page is constructed</text>
-  <text x="70" y="143" class="subhead">Skill templates + per-page fields in ~/tmp feed one builder; output is offline HTML.</text>
+  <text x="70" y="143" class="subhead">One unique ~/tmp/&lt;explanation_title&gt;__&lt;unique_id&gt;/ holds fields, diagrams, previews, and HTML.</text>
 
   <rect x="60" y="178" width="720" height="560" rx="18" class="panel"/>
   <text x="92" y="222" class="panel_title"><tspan class="blue">01</tspan>  Standard explainer</text>
   <text x="92" y="250" class="muted">Story-led page with a primary visual</text>
 
   <rect x="92" y="274" width="310" height="92" rx="12" class="card"/>
-  <text x="112" y="307" class="label blue">~/tmp/fields.json</text>
-  <text x="112" y="334" class="body">Same scratch path reused.</text>
-  <text x="112" y="354" class="body">Values change per output.</text>
+  <text x="112" y="307" class="label blue">RUN_DIR/fields.json</text>
+  <text x="112" y="334" class="body">Per-invocation values;</text>
+  <text x="112" y="354" class="body">kept with source and output.</text>
 
   <rect x="428" y="274" width="320" height="92" rx="12" class="card"/>
   <text x="448" y="307" class="label blue">template.html</text>
@@ -54,7 +54,7 @@
 
   <path d="M247 366 V385 H420 V404" class="connector_blue"/>
   <path d="M588 366 V385 H420" fill="none" stroke="#2d77e0" stroke-width="3"/>
-  <text x="92" y="430" class="label">Diagram input <tspan class="muted">(-d; choose format first)</tspan></text>
+  <text x="92" y="430" class="label">Diagram input <tspan class="muted">(-d; source stays in RUN_DIR)</tspan></text>
 
   <rect x="92" y="450" width="310" height="120" rx="12" class="card_blue"/>
   <text x="112" y="482" class="label blue">Authored .svg</text>
@@ -77,9 +77,9 @@
   <text x="852" y="250" class="muted">Form-only page; no diagram or renderer</text>
 
   <rect x="852" y="274" width="310" height="92" rx="12" class="card"/>
-  <text x="872" y="307" class="label green">~/tmp/fields.json</text>
-  <text x="872" y="334" class="body">Same scratch path reused.</text>
-  <text x="872" y="354" class="body">Values change per output.</text>
+  <text x="872" y="307" class="label green">RUN_DIR/fields.json</text>
+  <text x="872" y="334" class="body">Per-invocation values;</text>
+  <text x="872" y="354" class="body">kept with the HTML.</text>
 
   <rect x="1188" y="274" width="320" height="92" rx="12" class="card"/>
   <text x="1208" y="307" class="label green">template-qa.html</text>
@@ -110,16 +110,21 @@
   <rect x="250" y="810" width="1100" height="130" rx="18" class="card_blue"/>
   <text x="800" y="850" text-anchor="middle" class="panel_title">scripts/build.py</text>
   <text x="800" y="880" text-anchor="middle" class="body">Checks exact template fields and diagram requirements · escapes title/page ID · refuses overwrite</text>
-  <text x="800" y="906" text-anchor="middle" class="body">Fills selected template; inlines rendered SVG or form content under ~/tmp</text>
+  <text x="800" y="906" text-anchor="middle" class="body">Fills selected template; temporary Mermaid renders stay in RUN_DIR and auto-clean</text>
 
   <path d="M800 940 V973" class="connector_muted"/>
   <rect x="310" y="978" width="980" height="104" rx="16" class="card"/>
   <text x="800" y="1018" text-anchor="middle" class="panel_title">Self-contained HTML file</text>
   <text x="800" y="1048" text-anchor="middle" class="body">Inline CSS + content + SVG (standard) or form/JS (Q&amp;A); no CDN or network calls.</text>
-  <text x="800" y="1070" text-anchor="middle" class="muted">~/tmp/explain-topic-NN.html</text>
+  <text x="800" y="1070" text-anchor="middle" class="muted">~/tmp/&lt;explanation_title&gt;__&lt;unique_id&gt;/explain-topic-NN.html</text>
 
   <path d="M800 1082 V1114" class="connector_muted"/>
   <rect x="430" y="1118" width="740" height="76" rx="16" class="card_green"/>
   <text x="800" y="1150" text-anchor="middle" class="label green">Open local page in existing Firefox tab</text>
   <text x="800" y="1177" text-anchor="middle" class="muted">Follow browser.md; builder does not launch Firefox for skill workflows.</text>
+
+  <path d="M800 1194 V1216" class="connector_muted"/>
+  <rect x="350" y="1220" width="900" height="76" rx="16" class="card"/>
+  <text x="800" y="1252" text-anchor="middle" class="label">When you confirm understanding: move only RUN_DIR to Trash</text>
+  <text x="800" y="1279" text-anchor="middle" class="muted">Keep it only if you ask; never empty Trash or touch other run directories.</text>
 </svg>

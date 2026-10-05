@@ -1,9 +1,9 @@
 ---
 name: html-explainer
-description: Explain anything (concept, config, error, code diff, data) as a self-contained dark-mode HTML page in ~/tmp/. Use when the user asks for an html explanation, says "explain visually", "make an html page", "I don't understand", or when the agent senses confusion and proactively offers one.
+description: Explain anything (concept, config, error, code diff, data) as a self-contained dark-mode HTML page in a unique invocation directory under ~/tmp/. Use when the user asks for an html explanation, says "explain visually", "make an html page", "I don't understand", or when the agent senses confusion and proactively offers one.
 ---
 
-Explain things as self-contained dark-mode HTML pages in `~/tmp/`. Feedback is optional and stays in chat, not in the HTML page. The user is not a terminal-native reader; pages are the communication channel when words in chat are not landing.
+Explain things as self-contained dark-mode HTML pages in one per-invocation directory under `~/tmp/`. Feedback is optional and stays in chat, not in the HTML page. The user is not a terminal-native reader; pages are the communication channel when words in chat are not landing.
 
 ## When to build
 
@@ -14,12 +14,12 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`. Feedback is o
 
 1. **Topic**: one topic per page. Split sprawling topics into multiple pages.
 2. **Diagram format**: if the requested page needs a diagram, use `ask_user` to explicitly ask whether the user prefers direct SVG (recommended) or Mermaid (fallback). Ask even when you have a recommendation; wait for their choice before drawing. The format choice must not change the diagram type: preserve the requested flowchart, timeline, sequence, or infographic. If the user has no preference, use direct SVG. Before changing diagram type or format, explain why and ask permission. Skip this step for Q&A-only forms or other pages with no diagram.
-3. **File**: `~/tmp/explain-<topic-slug>-NN.html`, NN starting at 01. Check existing files with `ls ~/tmp/explain-*` and use the next number for that topic. Never overwrite.
+3. **Invocation directory**: slug the explanation title to lowercase kebab-case as `TITLE_SLUG`. Create a unique directory atomically: `mkdir -p "$HOME/tmp"; RUN_DIR=$(mktemp -d "$HOME/tmp/${TITLE_SLUG}__XXXXXXXX")`. This yields `~/tmp/<explanation-title>__<unique_id>/`. Keep `fields.json`, authored SVG/Mermaid sources, previews, and HTML in `RUN_DIR`; never write generated files to the skill directory. Use same directory for requested revisions; each independent skill invocation gets a new directory. Name HTML `explain-${TITLE_SLUG}-NN.html`, starting at `01` and incrementing for revisions. Never overwrite.
 4. **Content passes**: draft the explanation first. Then independently draft useful, likely reader follow-up Q&A; do not merely turn each detail heading into a question or repeat the body. Include only questions that add value, with clear standalone answers. Keep Q&A on the same page.
 5. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QA_ITEMS`. Put one or more numbered question-and-answer blocks in `QA_ITEMS`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
 6. **Interactive Q&A**: if readers should answer questions, use separate `template-qa.html`, not the default explainer template. Fill its `TITLE`, `PAGE_ID`, `INTRO`, and `QUESTIONS` fields. Group each question with `<fieldset class="question">` and `<legend>`, and use stable `name` values. Put normal text/radio/checkbox answers in `.answer-options`. For a text answer, include a checked `data-text-mode` radio choice with value `custom` (“Write my answer”) and a textarea; choosing an alternative disables and clears that textarea, while choosing the custom radio re-enables it. After a visible separator, every question gets one `.answer-alternatives` radio group. Give all four radios the same question-specific `name` and values `all-of-the-above`, `none-of-the-above`, `i-dont-know`, `you-decide`. The template makes alternatives mutually exclusive with each other and normal answers. Yes/No questions use Yes/No as normal radio options, plus the same alternative group. The page has no server or JSON download: readers can copy all question-and-answer pairs as plain text.
-7. **Build and open**: standard page: `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.svg -o ~/tmp/explain-topic-NN.html --no-open`. Interactive Q&A page: `python3 scripts/build.py ~/tmp/fields.json --template template-qa.html -o ~/tmp/explain-topic-NN.html --no-open` (no `-d`). Use `.mmd` only when Mermaid is chosen; repeat `-d` for multiple or mixed diagrams. After a successful build, follow `~/repos/agent1/browser.md` to maximize the browser and open an existing Firefox tab. Never overwrite; tell the user the output path.
-8. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file. No feedback forms, buttons, or feedback JavaScript in the default page.
+7. **Build and open**: standard page: `python3 scripts/build.py "$RUN_DIR/fields.json" -d "$RUN_DIR/${TITLE_SLUG}.svg" -o "$RUN_DIR/explain-${TITLE_SLUG}-01.html" --no-open`. Interactive Q&A page: `python3 scripts/build.py "$RUN_DIR/fields.json" --template template-qa.html -o "$RUN_DIR/explain-${TITLE_SLUG}-01.html" --no-open` (no `-d`). Use `.mmd` only when Mermaid is chosen; repeat `-d` for multiple or mixed diagrams. Builder keeps temporary Mermaid renders inside `RUN_DIR` and removes them after build. After a successful build, follow `~/repos/agent1/browser.md` to maximize the browser and open an existing Firefox tab. Never overwrite; tell the user the output path.
+8. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file inside the same `RUN_DIR`. No feedback forms, buttons, or feedback JavaScript in the default page.
 
 ## Default explainer page grammar (mandatory structure)
 
@@ -50,7 +50,7 @@ Update both in the same change whenever workflow, templates, CLI/build validatio
 
 ## Direct SVG (preferred)
 
-Write trusted, locally authored SVG to `~/tmp/<topic>.svg` and pass it with `-d`.
+Write trusted, locally authored SVG to `$RUN_DIR/$TITLE_SLUG.svg` and pass it with `-d`.
 The builder embeds it verbatim; SVG-only builds need no Mermaid, Node, or Chromium.
 
 - Use an `<svg>` root, `viewBox`, readable labels, and accessible `<title>` / `<desc>`.
@@ -63,7 +63,7 @@ The builder embeds it verbatim; SVG-only builds need no Mermaid, Node, or Chromi
 After the user chooses Mermaid, write `.mmd` files and pass them to `scripts/build.py`.
 The builder renders and embeds SVG; the page carries pictures, not a runtime library.
 
-1. Write the source to `~/tmp/<topic>.mmd`:
+1. Write the source to `$RUN_DIR/$TITLE_SLUG.mmd`:
 
    ```
    flowchart TD
@@ -95,8 +95,8 @@ Run checks with `timeout 60 python3 scripts/test_build.py` from this skill direc
 
 - Page embeds `data-page-id="explain-<topic>-NN"` for identification.
 - No feedback is required to finish an explanation. Do not add feedback UI to the page.
-- If the user gives feedback in chat, acknowledge each item and create the next numbered page.
-- When the user confirms they understood, delete the pages this conversation created, unless they ask to keep them. Never touch other files in `~/tmp/`.
+- If the user gives feedback in chat, acknowledge each item and create the next numbered page in the same invocation directory.
+- Keep page and source files available for review/revisions. When the user confirms they understood, list the invocation directory contents, then move only `RUN_DIR` to `~/.Trash` unless they ask to keep it. Never touch another invocation directory or empty Trash.
 
 ## Failure modes to avoid
 
