@@ -122,11 +122,13 @@ High effort is the default. Before executing **any** prompt:
 
 ## Repeatability
 
-Every session must reconstruct identical context from this repo alone, across pi and any future harness. Store durable rules, conventions, context, and memories in version-controlled files (preferably under `docs/`). Never in agent-private memory. If it is worth remembering, commit it. Agent-private memory may hold only pointers back to the repo.
+Every session must reconstruct identical context from this repo alone, across pi and any future harness. Store durable rules, conventions, context, and memories in version-controlled files. Never in agent-private memory. If it is worth remembering, commit it. Agent-private memory may hold only pointers back to the repo.
 
 ## Documentation
 
 Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. Suggest new guidelines worth adding.
+
+- Follow code-as-doc wherever practical: use clear code and keep small program-specific documentation in the program itself (docstrings, comments, or `--help`). Ask me before creating a separate documentation file.
 
 - Before removing a path or a symlink, search the docs that reference it and update them in the same change.
 
