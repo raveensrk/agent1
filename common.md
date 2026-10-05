@@ -61,6 +61,8 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
 
+- For operational tasks, prefer native CLI commands and short shell sequences over ad-hoc Python/JavaScript wrappers when existing tools can perform the task safely. Before writing a wrapper, explain the specific capability the native CLI lacks.
+
 - When a command fails because a dependency is missing, stop and ask: install it, or use an alternative. Never silently substitute a different tool or runner.
 
 - Read the exact region before an edit when this session has not shown that text - one guessed `oldText` aborts the whole batch and costs a retry.

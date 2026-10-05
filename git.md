@@ -28,4 +28,5 @@ PR descriptions should explain what changed, why the change is needed, and the i
 
 ## Command gotchas
 
+- For Git operations, use Git CLI and preserve unrelated staged and unstaged changes.
 - `git mv` needs its destination directory to exist. `mkdir -p` the parent first, or the move fails and a `set -e` batch stops there.
