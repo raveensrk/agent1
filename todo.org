@@ -93,3 +93,5 @@ Done when: each of the six labels has a verdict in a note or the report, and the
 
 * TODO Let the voice score extension be invoked on demand
 Scope: harness/extensions/voice_score.ts, run by /voice-score on|off (Jev score line under the turn). Change it so the score runs only when asked for, not on every turn.
+
+* TODO Find a good trajectory extension or CLI app to track trajectories in Pi
