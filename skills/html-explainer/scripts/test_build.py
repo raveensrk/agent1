@@ -22,7 +22,6 @@ class Builder(unittest.TestCase):
             diagram = dir / "test.mmd"
             diagram.write_text('flowchart TD\nA{{TOKEN}} --> B["Done"]\n')
             fields = {name: "Example" for name in build.TOKEN.findall(TEMPLATE.read_text())}
-            fields.pop("SECTION_N", None)  # Instructional comment is not a field.
             fields.pop("DIAGRAMS")
             output = dir / "page.html"
 
@@ -39,6 +38,9 @@ class Builder(unittest.TestCase):
                  patch.object(build.subprocess, "run", side_effect=execute) as run:
                 build.render(fields, [diagram, diagram], TEMPLATE, output)
                 page = output.read_text()
+                self.assertNotIn('id="feedback"', page)
+                self.assertNotIn('<textarea', page)
+                self.assertNotIn('navigator.clipboard', page)
                 self.assertIn('id="diagram_1"', page)
                 self.assertIn('id="diagram_2"', page)
                 self.assertIn('A{{TOKEN}} --', page)  # Diagram syntax is not template syntax.

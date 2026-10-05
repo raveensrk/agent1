@@ -1,9 +1,9 @@
 ---
 name: html-explainer
-description: Explain anything (concept, config, error, code diff, data) as a self-contained dark-mode HTML page in ~/tmp/ with a live feedback loop. Use when the user asks for an html explanation, says "explain visually", "make an html page", "I don't understand", or when the agent senses confusion and proactively offers one.
+description: Explain anything (concept, config, error, code diff, data) as a self-contained dark-mode HTML page in ~/tmp/. Use when the user asks for an html explanation, says "explain visually", "make an html page", "I don't understand", or when the agent senses confusion and proactively offers one.
 ---
 
-Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on feedback. The user is not a terminal-native reader; pages are the communication channel when words in chat are not landing.
+Explain things as self-contained dark-mode HTML pages in `~/tmp/`. Feedback is optional and stays in chat, not in the HTML page. The user is not a terminal-native reader; pages are the communication channel when words in chat are not landing.
 
 ## When to build
 
@@ -16,7 +16,7 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 2. **File**: `~/tmp/explain-<topic-slug>-NN.html`, NN starting at 01. Check existing files with `ls ~/tmp/explain-*` and use the next number for that topic. Never overwrite.
 3. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QUESTION`, `ANSWER`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
 4. **Build and open**: from this skill's directory, run `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.mmd -o ~/tmp/explain-topic-NN.html`. It opens Firefox only after validation and successful rendering. Repeat `-d` for more diagrams; `--no-open` builds without launching. Never overwrite; tell the user the output path.
-5. **Iterate**: user replies with section numbers, pasted feedback, or a downloaded file path. If a file path is given, read it — feedback embedded via the page's save button appears as `<script type="application/json" id="feedback-data">`. Address every item, then write the next NN file (copy forward their prior answers when relevant).
+5. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file. No feedback forms, buttons, or feedback JavaScript in the default page.
 
 ## Page grammar (mandatory structure)
 
@@ -26,7 +26,6 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 4. Numbered sections (`2.1`, `2.2`…): the detail. Each starts with one bold sentence, then expands. Wrap long detail in `<details class="more">` so the page reads compact but expands on demand.
 5. Glossary table for jargon, if any term might be unknown.
 6. Q&A block: predefined "you might ask" questions with answers.
-7. Feedback block (from template): yes/no "Did you understand?" question above the buttons, optional multi-select questions (author fills the `QUESTIONS` array - empty renders nothing; more than one choice can be picked per question, the last question always gets an exclusive `None of the above` choice and every question gets an optional note box), text areas per section + one general box, "Copy feedback" and "Save & download updated page" buttons.
 
 ## Visual kit rules
 
@@ -69,15 +68,12 @@ renderer or browser stops the build; ask before installation or download. The
 builder prints the replacement command. No browser launch occurs on build failure.
 Run checks with `timeout 60 python3 scripts/test_build.py` from this skill directory.
 
-## Feedback protocol
+## Optional revisions
 
-- Page embeds `data-page-id="explain-<topic>-NN"`.
-- The "Did you understand?" yes/no answer is included in feedback (`understood: yes|no`). If the answer is "no" with no section comments, ask which section lost them.
-- MCQ answers ride along as `q <id> (<question>): <choice>` lines, with multiple choices joined by `, ` (and `answers` in the embedded JSON, where each `answer` is an array). The last question always gets an exclusive `None of the above` choice, and each question has an optional note box collected as `q <id> note: <comment>`. Questions with no answer and no note are simply omitted.
-- "Copy feedback" copies a plain-text block: page id, then `understood:` line, then `q ...:` lines, then `section: comment` lines and `Q:` lines. User pastes it into chat.
-- "Save & download" embeds the same data as JSON into the downloaded file. When the user later hands you such a file, parse that block first, answer each item, and produce the next NN.
-- Always acknowledge feedback items explicitly ("2.2: fixed — X was wrong because…"). Never silently edit.
-- When the user confirms they understood (`understood: yes`), delete the pages this conversation created, unless they ask to keep them. Never touch other files in `~/tmp/`.
+- Page embeds `data-page-id="explain-<topic>-NN"` for identification.
+- No feedback is required to finish an explanation. Do not add feedback UI to the page.
+- If the user gives feedback in chat, acknowledge each item and create the next numbered page.
+- When the user confirms they understood, delete the pages this conversation created, unless they ask to keep them. Never touch other files in `~/tmp/`.
 
 ## Failure modes to avoid
 

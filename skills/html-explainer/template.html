@@ -1,8 +1,7 @@
 <!doctype html>
 <!--
   html-explainer template.
-  Replace {{TITLE}}, {{PAGE_ID}}, {{SECTION_N}} placeholders.
-  Keep the <style> block and the feedback <script> unchanged.
+  Fill content placeholders; builder supplies DIAGRAMS.
 -->
 <html lang="en">
 <head>
@@ -52,27 +51,12 @@
 
   .sec { margin-top: 8px; }
   .lead { font-weight: bold; }
-
-  /* feedback */
-  #feedback { margin-top: 40px; border-top: 2px solid #26292f; padding-top: 16px; }
-  #feedback label { display: block; margin: 10px 0 4px; color: #aeb4bd; font-size: 13px; }
-  #feedback textarea { width: 100%; min-height: 56px; background: #23262c; border: 1px solid #3a3f47; color: #d5d8dd; border-radius: 6px; padding: 8px; font: inherit; resize: vertical; }
-  #feedback .btns { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
-  #feedback .understand { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
-  #feedback .understand span { color: #d5d8dd; font-weight: bold; }
-  #feedback .understand button { padding: 6px 14px; }
-  #feedback .understand button.no { background: none; border: 1px solid #3a3f47; color: #8b919b; }
-  #feedback .mcq { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 10px; }
-  #feedback .mcq-opt { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: #d5d8dd; font-size: 13px; }
-  #feedback button { background: #2d77e0; border: none; color: #fff; padding: 9px 16px; border-radius: 6px; font: inherit; cursor: pointer; }
-  #feedback button.alt { background: none; border: 1px solid #3a3f47; color: #8b919b; }
-  #feedback .status { color: #89d281; margin-top: 8px; min-height: 18px; }
 </style>
 </head>
 <body data-page-id="{{PAGE_ID}}">
 
 <h1>{{TITLE}}</h1>
-<div class="subtitle">Page {{PAGE_ID}} · reply with section numbers, or use the feedback box at the bottom</div>
+<div class="subtitle">Page {{PAGE_ID}}</div>
 
 <div class="tldr"><strong>TL;DR</strong><br>{{TLDR}}</div>
 
@@ -99,163 +83,5 @@
   <p>{{ANSWER}}</p>
 </div>
 
-<div id="feedback">
-  <h2>Feedback</h2>
-  <label for="fb-2-1">2.1</label>
-  <textarea id="fb-2-1" placeholder="still unclear? wrong? too shallow?"></textarea>
-  <label for="fb-general">Anything else / questions</label>
-  <textarea id="fb-general" placeholder="your questions, what to expand, what to remove"></textarea>
-  <div class="understand">
-    <span>Did you understand?</span>
-    <button type="button" id="fb-yes">Yes</button>
-    <button type="button" class="no" id="fb-no">Not yet</button>
-  </div>
-  <div id="fb-questions"></div>
-  <div class="btns">
-    <button type="button" id="fb-copy">Copy feedback</button>
-    <button type="button" class="alt" id="fb-save">Save &amp; download updated page</button>
-  </div>
-  <div class="status" id="fb-status"></div>
-</div>
-
-<script>
-// Feedback machinery. Do not modify when instantiating the template.
-(function () {
-  var pageId = document.body.dataset.pageId;
-  var understood = null;
-
-  // Optional multiple-choice questions. Author edits this array; empty = none.
-  // Each: { id: "q1", text: "...", options: ["a", "b", "c"] }
-  // More than one choice can be selected per question. The last question
-  // automatically gains an exclusive "None of the above" option, and every
-  // question renders an optional note/comment textarea under its choices.
-  var QUESTIONS = [];
-
-  var qWrap = document.getElementById("fb-questions");
-  QUESTIONS.forEach(function (q, qi) {
-    q.options = q.options || [];
-    // Last question gets an escape hatch: "None of the above".
-    if (qi === QUESTIONS.length - 1 && q.options.length && q.options.indexOf("None of the above") === -1) {
-      q.options = q.options.concat("None of the above");
-    }
-    var noneIndex = q.options.indexOf("None of the above");
-    var label = document.createElement("label");
-    label.textContent = q.text;
-    qWrap.appendChild(label);
-    var opts = document.createElement("div");
-    opts.className = "mcq";
-    q.options.forEach(function (opt, i) {
-      var lab = document.createElement("label");
-      lab.className = "mcq-opt";
-      var box = document.createElement("input");
-      box.type = "checkbox";
-      box.name = q.id;
-      box.value = String(i);
-      // "None of the above" is exclusive: picking it clears the other choices,
-      // and picking any other choice clears it.
-      box.addEventListener("change", function () {
-        if (!box.checked) return;
-        qWrap.querySelectorAll('input[name="' + q.id + '"]').forEach(function (other) {
-          if (other !== box && (Number(box.value) === noneIndex || Number(other.value) === noneIndex)) other.checked = false;
-        });
-      });
-      lab.append(box, document.createTextNode(" " + opt));
-      opts.appendChild(lab);
-    });
-    qWrap.appendChild(opts);
-    var note = document.createElement("textarea");
-    note.id = "fb-note-" + q.id;
-    note.className = "q-note";
-    note.placeholder = "Note or comment (optional)";
-    note.setAttribute("aria-label", "Note for: " + q.text);
-    qWrap.appendChild(note);
-  });
-
-  document.getElementById("fb-yes").addEventListener("click", function () {
-    understood = "yes";
-    document.getElementById("fb-status").textContent = "Noted — glad it landed.";
-  });
-  document.getElementById("fb-no").addEventListener("click", function () {
-    understood = "no";
-    document.getElementById("fb-status").textContent = "Noted — tell pi which section lost you (or just hit Copy feedback).";
-  });
-
-  function collect() {
-    var out = { page: pageId, items: [] };
-    if (understood) out.understood = understood;
-    var answers = [];
-    QUESTIONS.forEach(function (q) {
-      var checked = qWrap.querySelectorAll('input[name="' + q.id + '"]:checked');
-      var noteEl = qWrap.querySelector("#fb-note-" + q.id);
-      var note = noteEl ? noteEl.value.trim() : "";
-      if (checked.length || note) {
-        var entry = { id: q.id, text: q.text };
-        if (checked.length) entry.answer = Array.prototype.map.call(checked, function (b) { return q.options[Number(b.value)]; });
-        if (note) entry.note = note;
-        answers.push(entry);
-      }
-    });
-    if (answers.length) out.answers = answers;
-    document.querySelectorAll("#feedback textarea:not(.q-note)").forEach(function (ta) {
-      var v = ta.value.trim();
-      if (v) out.items.push({ section: ta.id.replace(/^fb-/, "").replace(/-/g, "."), text: v });
-    });
-    return out;
-  }
-
-  function text() {
-    var d = collect();
-    var lines = ["FEEDBACK " + d.page];
-    if (d.understood) lines.push("understood: " + d.understood);
-    (d.answers || []).forEach(function (a) {
-      if (a.answer && a.answer.length) lines.push("q " + a.id + " (" + a.text + "): " + a.answer.join(", "));
-      if (a.note) lines.push("q " + a.id + " note: " + a.note);
-    });
-    d.items.forEach(function (it) { lines.push(it.section + ": " + it.text); });
-    return lines.join("\n");
-  }
-
-  document.getElementById("fb-copy").addEventListener("click", function () {
-    navigator.clipboard.writeText(text()).then(function () {
-      document.getElementById("fb-status").textContent = "Copied — paste it into pi.";
-    }, function () {
-      document.getElementById("fb-status").textContent = "Clipboard blocked. Select + copy manually below.";
-    });
-  });
-
-  document.getElementById("fb-save").addEventListener("click", function () {
-    try {
-      // Sync live input state into the DOM so the clone carries it.
-      document.querySelectorAll("#feedback textarea").forEach(function (ta) { ta.textContent = ta.value; });
-      document.querySelectorAll("#feedback input[type=checkbox]").forEach(function (r) {
-        if (r.checked) r.setAttribute("checked", "checked"); else r.removeAttribute("checked");
-      });
-
-      var json = JSON.stringify(collect(), null, 2).replace(/<\//g, "<\\/");
-      var doc = document.documentElement.cloneNode(true);
-      var old = doc.querySelector("script#feedback-data");
-      if (old) old.remove();
-      var s = doc.querySelector("#feedback");
-      var embed = document.createElement("script");
-      embed.id = "feedback-data";
-      embed.type = "application/json";
-      embed.textContent = json;
-      s.parentNode.insertBefore(embed, s);
-      var html = "<!doctype html>\n" + doc.outerHTML;
-      var url = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-      var name = pageId + "-answered.html";
-      var a = document.createElement("a");
-      a.href = url;
-      a.download = name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      document.getElementById("fb-status").innerHTML = "Downloaded <b>" + name + "</b> — give that path to pi. Nothing saved? <a href=\"" + url + "\" download=\"" + name + "\">click here</a>.";
-    } catch (e) {
-      document.getElementById("fb-status").textContent = "Save failed: " + e.message;
-    }
-  });
-})();
-</script>
 </body>
 </html>
