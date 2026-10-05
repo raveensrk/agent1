@@ -44,8 +44,8 @@
 
   <rect x="92" y="274" width="310" height="92" rx="12" class="card"/>
   <text x="112" y="307" class="label blue">~/tmp/fields.json</text>
-  <text x="112" y="334" class="body">Generated per page;</text>
-  <text x="112" y="354" class="body">outside skill directory.</text>
+  <text x="112" y="334" class="body">Same scratch path reused.</text>
+  <text x="112" y="354" class="body">Values change per output.</text>
 
   <rect x="428" y="274" width="320" height="92" rx="12" class="card"/>
   <text x="448" y="307" class="label blue">template.html</text>
@@ -78,8 +78,8 @@
 
   <rect x="852" y="274" width="310" height="92" rx="12" class="card"/>
   <text x="872" y="307" class="label green">~/tmp/fields.json</text>
-  <text x="872" y="334" class="body">Generated per page;</text>
-  <text x="872" y="354" class="body">outside skill directory.</text>
+  <text x="872" y="334" class="body">Same scratch path reused.</text>
+  <text x="872" y="354" class="body">Values change per output.</text>
 
   <rect x="1188" y="274" width="320" height="92" rx="12" class="card"/>
   <text x="1208" y="307" class="label green">template-qa.html</text>

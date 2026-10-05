@@ -24,7 +24,7 @@ MAPS = (
             "mmdc",
             "Firefox",
             "~/tmp/fields.json",
-            "outside skill directory",
+            "Same scratch path reused",
         ),
     ),
     (
