@@ -7,15 +7,15 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 
 ## When to build
 
-1. Explicit asks: "make an html page", "explain as html", "show me visually".
+1. Explicit asks: "make an html page", "explain as html", "show me visually", "explain visually with Mermaid". Build offline HTML and open Firefox; chat-only Mermaid source does not fulfill these asks.
 2. Proactive: when the user asks "what is X" twice, or a reply of yours visibly didn't land (they re-ask, misread, or say "I don't know what you mean"). Propose: "Want this as an html page?" then build on yes. Never silently spam files.
 
 ## Workflow
 
 1. **Topic**: one topic per page. Split sprawling topics into multiple pages.
 2. **File**: `~/tmp/explain-<topic-slug>-NN.html`, NN starting at 01. Check existing files with `ls ~/tmp/explain-*` and use the next number for that topic. Never overwrite.
-3. **Template**: read `template.html` next to this SKILL.md. It contains the CSS kit, page grammar, and the feedback machinery. Copy it, replace `{{TITLE}}` and add content sections. Inline everything; no CDN, no external assets, no build step.
-4. **Open**: run `open ~/tmp/explain-<topic>-NN.html` and tell the user the path.
+3. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QUESTION`, `ANSWER`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
+4. **Build and open**: from this skill's directory, run `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.mmd -o ~/tmp/explain-topic-NN.html`. It opens Firefox only after validation and successful rendering. Repeat `-d` for more diagrams; `--no-open` builds without launching. Never overwrite; tell the user the output path.
 5. **Iterate**: user replies with section numbers, pasted feedback, or a downloaded file path. If a file path is given, read it — feedback embedded via the page's save button appears as `<script type="application/json" id="feedback-data">`. Address every item, then write the next NN file (copy forward their prior answers when relevant).
 
 ## Page grammar (mandatory structure)
@@ -39,8 +39,8 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`, iterate on fe
 
 ## Flowcharts with mermaid
 
-Write the diagram as mermaid, render it once, paste the SVG inline. The page then
-carries a picture, not a library.
+Write Mermaid files and pass them to `scripts/build.py`. The builder embeds SVG;
+the page carries pictures, not a runtime library.
 
 1. Write the source to `~/tmp/<topic>.mmd`:
 
@@ -51,30 +51,23 @@ carries a picture, not a library.
      B -->|"pipx: plugin + config"| D["frontmatter intact"]
    ```
 
-2. Render it dark, on a transparent background:
+2. The builder preflights `mmdc`, resolves its installed Puppeteer dependency, and
+   awaits Puppeteer's browser path. An executable `PUPPETEER_EXECUTABLE_PATH`
+   overrides that path. Do not guess Chrome locations or Puppeteer internal paths.
 
-   ```sh
-   PUPPETEER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-     mmdc -i ~/tmp/<topic>.mmd -o ~/tmp/<topic>.svg -t dark -b transparent
-   ```
+3. It renders dark SVG on a transparent background and assigns each diagram a
+   unique `--svgId`. Multiple diagrams are allowed; keep one primary visual.
 
-3. Paste the SVG into the page, and keep the mermaid source in a comment above it,
-   so the next session edits the diagram instead of redrawing it:
-
-   ```html
-   <!-- mermaid: flowchart TD ... -->
-   <div class="flow"><svg ...>...</svg></div>
-   ```
-
-4. One mermaid diagram per page: `mmdc` names every SVG `my-svg`, so two of them
-   collide. Give the wrapper `max-width` and let the SVG scale to the window.
+4. Source is retained in `script.mermaid-source` JSON blocks. Do not put Mermaid
+   arrows in HTML comments: `-->` ends the comment. The template scales SVGs.
 
 5. Labels carry the words, arrows carry the logic. Six words per node keeps it
    legible at 800px.
 
-The pin matters: `mmdc` 12.0.0 from `npm i -g @mermaid-js/mermaid-cli` installed with
-`PUPPETEER_SKIP_DOWNLOAD=true`, so it drives the Chrome already on this machine.
-Without `PUPPETEER_EXECUTABLE_PATH` it fails, because no Chromium was downloaded.
+Verified here: Mermaid CLI 12.0.0 with Puppeteer 25.12.0 (05 Oct 2026). A missing
+renderer or browser stops the build; ask before installation or download. The
+builder prints the replacement command. No browser launch occurs on build failure.
+Run checks with `timeout 60 python3 scripts/test_build.py` from this skill directory.
 
 ## Feedback protocol
 
