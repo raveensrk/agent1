@@ -88,6 +88,7 @@ answer means the import did not load.
 | `macos.md` | macOS command traps |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
+| [`quesion_types.yaml`](./quesion_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |
 | `removal.md` | Removing apps, packages and harnesses |
 | `repos.md` | Nested git repo policy for `~/repos` |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |

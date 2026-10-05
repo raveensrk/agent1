@@ -1,0 +1,38 @@
+# Categorize question formats available when vibe coding with AI.
+ai:
+  - Single choice (MCQ) — Select exactly one option.
+  - Multiple select — Select all options that apply.
+  - True/false — Decide whether a statement is true or false.
+  - Yes/no — Answer a question with yes or no.
+  - Ordering / sequencing — Arrange items in the required order.
+  - Short answer — Respond with a word, phrase, or brief sentence.
+  - Numeric answer — Enter a number, optionally with units.
+
+non-ai:
+  - Dropdown — Choose an option from a drop-down list.
+  - Fill in the blank — Enter the missing word or value.
+  - Matching — Pair related items from two lists.
+  - Long answer / essay — Write an extended response.
+  - Show your work — Provide solution steps as well as the answer.
+  - Categorize / sort — Group items by their shared properties.
+  - Label an image or diagram — Name specified parts of a visual.
+  - Code answer — Write code that solves the given task.
+  - File upload or drawing response — Upload a file or create a visual answer.
+  - Assertion–reason — Decide whether both statements are true and whether one explains the other.
+  - Explain why — Give the reason or mechanism behind a fact or result.
+  - Justify with evidence — Support an answer using evidence, examples, or citations.
+  - Compare and contrast — Explain similarities and differences between items.
+  - Scenario or case study — Apply knowledge to a described real-world situation.
+  - Passage or source analysis — Interpret a text, document, or other provided source.
+  - Chart, graph, or data interpretation — Answer questions using displayed data.
+  - Find and correct the error — Identify a mistake and provide the correction.
+  - Rank by importance — Arrange items by priority or significance.
+  - Grid or matrix response — Answer multiple related prompts in a row-and-column grid.
+  - Image hotspot — Click the correct location on an image.
+  - Draw a graph or diagram — Create a visual response in a drawing area.
+  - Proof or derivation — Show a logical or mathematical argument leading to a result.
+  - Multi-step problem — Solve a problem in stages, with credit for intermediate work.
+  - Audio listening or transcription — Answer questions about audio or transcribe what was heard.
+  - Recorded spoken response — Record an oral answer.
+  - Code tracing — Predict what a code snippet outputs or how it changes state.
+  - Code debugging — Find and fix an error in a code snippet.
