@@ -104,6 +104,7 @@ The harness is everything around the model that turns a rule into a signal: chec
   a `scout` maps an unfamiliar subsystem before claims about it; an `oracle`
   challenges a risky or irreversible decision; long jobs run in the background.
   Complexity alone does not authorize a subagent.
+- Before starting a reviewer subagent, always ask me which model and effort level to use and wait for my answer before launching it.
 - A second concurrent session on one repo takes its own worktree and branch:
   run `/worktree` in that session before it edits anything. One branch per
   worktree; merge back when the task ends.
