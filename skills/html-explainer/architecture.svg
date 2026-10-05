@@ -36,16 +36,16 @@
   <rect width="1600" height="1260" rx="26" fill="#17181c"/>
   <text x="70" y="58" class="eyebrow">HTML-EXPLAINER / PAGE PIPELINE</text>
   <text x="70" y="108" class="heading">How an HTML page is constructed</text>
-  <text x="70" y="143" class="subhead">Two authoring routes converge in the builder, then produce one offline document.</text>
+  <text x="70" y="143" class="subhead">Skill templates + per-page fields in ~/tmp feed one builder; output is offline HTML.</text>
 
   <rect x="60" y="178" width="720" height="560" rx="18" class="panel"/>
   <text x="92" y="222" class="panel_title"><tspan class="blue">01</tspan>  Standard explainer</text>
   <text x="92" y="250" class="muted">Story-led page with a primary visual</text>
 
   <rect x="92" y="274" width="310" height="92" rx="12" class="card"/>
-  <text x="112" y="307" class="label blue">fields.json</text>
-  <text x="112" y="334" class="body">Title, TL;DR, details, glossary,</text>
-  <text x="112" y="354" class="body">independently drafted QA_ITEMS</text>
+  <text x="112" y="307" class="label blue">~/tmp/fields.json</text>
+  <text x="112" y="334" class="body">Generated per page;</text>
+  <text x="112" y="354" class="body">outside skill directory.</text>
 
   <rect x="428" y="274" width="320" height="92" rx="12" class="card"/>
   <text x="448" y="307" class="label blue">template.html</text>
@@ -77,9 +77,9 @@
   <text x="852" y="250" class="muted">Form-only page; no diagram or renderer</text>
 
   <rect x="852" y="274" width="310" height="92" rx="12" class="card"/>
-  <text x="872" y="307" class="label green">fields.json</text>
-  <text x="872" y="334" class="body">TITLE · PAGE_ID · INTRO</text>
-  <text x="872" y="354" class="body">QUESTIONS markup</text>
+  <text x="872" y="307" class="label green">~/tmp/fields.json</text>
+  <text x="872" y="334" class="body">Generated per page;</text>
+  <text x="872" y="354" class="body">outside skill directory.</text>
 
   <rect x="1188" y="274" width="320" height="92" rx="12" class="card"/>
   <text x="1208" y="307" class="label green">template-qa.html</text>

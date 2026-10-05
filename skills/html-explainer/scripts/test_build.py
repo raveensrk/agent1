@@ -17,7 +17,15 @@ QA_TEMPLATE = SKILL / "template-qa.html"
 MAPS = (
     (
         SKILL / "architecture.svg",
-        ("template.html", "template-qa.html", "scripts/build.py", "mmdc", "Firefox"),
+        (
+            "template.html",
+            "template-qa.html",
+            "scripts/build.py",
+            "mmdc",
+            "Firefox",
+            "~/tmp/fields.json",
+            "outside skill directory",
+        ),
     ),
     (
         SKILL / "workflow.svg",

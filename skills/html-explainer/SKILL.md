@@ -43,8 +43,8 @@ This structure applies to standard explanation pages. Interactive Q&A-only forms
 
 ## Maintained maps
 
-- `architecture.svg` shows how the standard and interactive templates flow through `scripts/build.py` to HTML.
-- `workflow.svg` shows when/how the skill builds, opens, revises, and cleans up pages.
+- [![Page construction architecture](architecture.svg)](architecture.svg) shows how the standard and interactive templates flow through `scripts/build.py` to HTML.
+- [![Skill workflow](workflow.svg)](workflow.svg) shows when/how the skill builds, opens, revises, and cleans up pages.
 
 Update both in the same change whenever workflow, templates, CLI/build validation, diagram rendering, output behavior, or interactive Q&A behavior changes. `scripts/test_build.py` checks both maps remain valid and cover the current routes.
 
