@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1260" role="img" aria-labelledby="arch_title arch_desc">
+  <title id="arch_title">How html-explainer constructs an HTML page</title>
+  <desc id="arch_desc">Two authoring routes, standard explainer and interactive Q&amp;A, feed scripts/build.py. The builder validates fields and diagrams, fills the selected template, and writes a self-contained offline HTML file under the temporary directory. The browser workflow opens it in an existing Firefox tab.</desc>
+  <defs>
+    <marker id="arch_arrow_blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2d77e0"/>
+    </marker>
+    <marker id="arch_arrow_green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#89d281"/>
+    </marker>
+    <marker id="arch_arrow_muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b919b"/>
+    </marker>
+    <style>
+      text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #d5d8dd; }
+      .eyebrow { font-size: 15px; font-weight: 700; letter-spacing: 2px; fill: #89d281; }
+      .heading { font-size: 36px; font-weight: 700; fill: #f1f2f4; }
+      .subhead { font-size: 17px; fill: #aeb4bd; }
+      .panel { fill: #1d2026; stroke: #343840; stroke-width: 2; }
+      .card { fill: #17181c; stroke: #3a3f47; stroke-width: 2; }
+      .card_blue { fill: #1d2430; stroke: #2d77e0; stroke-width: 2; }
+      .card_green { fill: #1c261c; stroke: #89d281; stroke-width: 2; }
+      .panel_title { font-size: 23px; font-weight: 700; fill: #f1f2f4; }
+      .label { font-size: 18px; font-weight: 700; }
+      .body { font-size: 15px; fill: #c1c5cc; }
+      .muted { font-size: 14px; fill: #8b919b; }
+      .blue { fill: #8fb7f5; }
+      .green { fill: #89d281; }
+      .gold { fill: #febc38; }
+      .connector_blue { fill: none; stroke: #2d77e0; stroke-width: 3; marker-end: url(#arch_arrow_blue); }
+      .connector_green { fill: none; stroke: #89d281; stroke-width: 3; marker-end: url(#arch_arrow_green); }
+      .connector_muted { fill: none; stroke: #8b919b; stroke-width: 3; marker-end: url(#arch_arrow_muted); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1260" rx="26" fill="#17181c"/>
+  <text x="70" y="58" class="eyebrow">HTML-EXPLAINER / PAGE PIPELINE</text>
+  <text x="70" y="108" class="heading">How an HTML page is constructed</text>
+  <text x="70" y="143" class="subhead">Two authoring routes converge in the builder, then produce one offline document.</text>
+
+  <rect x="60" y="178" width="720" height="560" rx="18" class="panel"/>
+  <text x="92" y="222" class="panel_title"><tspan class="blue">01</tspan>  Standard explainer</text>
+  <text x="92" y="250" class="muted">Story-led page with a primary visual</text>
+
+  <rect x="92" y="274" width="310" height="92" rx="12" class="card"/>
+  <text x="112" y="307" class="label blue">fields.json</text>
+  <text x="112" y="334" class="body">Title, TL;DR, details, glossary,</text>
+  <text x="112" y="354" class="body">independently drafted QA_ITEMS</text>
+
+  <rect x="428" y="274" width="320" height="92" rx="12" class="card"/>
+  <text x="448" y="307" class="label blue">template.html</text>
+  <text x="448" y="334" class="body">Header · TL;DR · Picture · Details</text>
+  <text x="448" y="354" class="body">Glossary · You might ask</text>
+
+  <path d="M247 366 V385 H420 V404" class="connector_blue"/>
+  <path d="M588 366 V385 H420" fill="none" stroke="#2d77e0" stroke-width="3"/>
+  <text x="92" y="430" class="label">Diagram input <tspan class="muted">(-d; choose format first)</tspan></text>
+
+  <rect x="92" y="450" width="310" height="120" rx="12" class="card_blue"/>
+  <text x="112" y="482" class="label blue">Authored .svg</text>
+  <text x="112" y="510" class="body">Validate SVG root and unique IDs;</text>
+  <text x="112" y="532" class="body">embed inline; no renderer required.</text>
+
+  <rect x="428" y="450" width="320" height="120" rx="12" class="card_blue"/>
+  <text x="448" y="482" class="label blue">Mermaid .mmd</text>
+  <text x="448" y="510" class="body">mmdc + Node/Puppeteer renders SVG;</text>
+  <text x="448" y="532" class="body">embed inline at build time.</text>
+
+  <path d="M247 570 V596 H420 V610" class="connector_blue"/>
+  <path d="M588 570 V596 H420" fill="none" stroke="#2d77e0" stroke-width="3"/>
+  <rect x="92" y="612" width="656" height="94" rx="12" class="card"/>
+  <text x="112" y="646" class="label">Page content and visual meet</text>
+  <text x="112" y="674" class="body">Standard template requires a diagram; Q&amp;A content stays in the same page.</text>
+
+  <rect x="820" y="178" width="720" height="560" rx="18" class="panel"/>
+  <text x="852" y="222" class="panel_title"><tspan class="green">02</tspan>  Interactive Q&amp;A</text>
+  <text x="852" y="250" class="muted">Form-only page; no diagram or renderer</text>
+
+  <rect x="852" y="274" width="310" height="92" rx="12" class="card"/>
+  <text x="872" y="307" class="label green">fields.json</text>
+  <text x="872" y="334" class="body">TITLE · PAGE_ID · INTRO</text>
+  <text x="872" y="354" class="body">QUESTIONS markup</text>
+
+  <rect x="1188" y="274" width="320" height="92" rx="12" class="card"/>
+  <text x="1208" y="307" class="label green">template-qa.html</text>
+  <text x="1208" y="334" class="body">Native text, radio, checkbox</text>
+  <text x="1208" y="354" class="body">and Yes/No controls</text>
+
+  <path d="M1007 366 V385 H1180 V402" class="connector_green"/>
+  <path d="M1348 366 V385 H1180" fill="none" stroke="#89d281" stroke-width="3"/>
+
+  <rect x="852" y="408" width="656" height="88" rx="12" class="card_green"/>
+  <text x="872" y="442" class="label green">Primary answers</text>
+  <text x="872" y="470" class="body">Write-in, single choice, multi-select, or Yes/No.</text>
+
+  <path d="M1180 496 V514" class="connector_green"/>
+  <rect x="852" y="518" width="656" height="116" rx="12" class="card_green"/>
+  <text x="872" y="552" class="label green">Separated alternative radio group</text>
+  <text x="872" y="579" class="body">All of the above · None of the above · I don't know · You decide</text>
+  <text x="872" y="606" class="body">One at a time; choosing either group clears the other.</text>
+
+  <path d="M1180 634 V642" class="connector_green"/>
+  <rect x="852" y="646" width="656" height="68" rx="12" class="card"/>
+  <text x="872" y="676" class="body">Inline JS toggles text entry and copies responses as plain text.</text>
+  <text x="872" y="699" class="muted">No server or JSON download.</text>
+
+  <path d="M420 738 V774 H800 V804" class="connector_blue"/>
+  <path d="M1180 738 V774 H800" class="connector_green"/>
+
+  <rect x="250" y="810" width="1100" height="130" rx="18" class="card_blue"/>
+  <text x="800" y="850" text-anchor="middle" class="panel_title">scripts/build.py</text>
+  <text x="800" y="880" text-anchor="middle" class="body">Checks exact template fields and diagram requirements · escapes title/page ID · refuses overwrite</text>
+  <text x="800" y="906" text-anchor="middle" class="body">Fills selected template; inlines rendered SVG or form content under ~/tmp</text>
+
+  <path d="M800 940 V973" class="connector_muted"/>
+  <rect x="310" y="978" width="980" height="104" rx="16" class="card"/>
+  <text x="800" y="1018" text-anchor="middle" class="panel_title">Self-contained HTML file</text>
+  <text x="800" y="1048" text-anchor="middle" class="body">Inline CSS + content + SVG (standard) or form/JS (Q&amp;A); no CDN or network calls.</text>
+  <text x="800" y="1070" text-anchor="middle" class="muted">~/tmp/explain-topic-NN.html</text>
+
+  <path d="M800 1082 V1114" class="connector_muted"/>
+  <rect x="430" y="1118" width="740" height="76" rx="16" class="card_green"/>
+  <text x="800" y="1150" text-anchor="middle" class="label green">Open local page in existing Firefox tab</text>
+  <text x="800" y="1177" text-anchor="middle" class="muted">Follow browser.md; builder does not launch Firefox for skill workflows.</text>
+</svg>

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1430" role="img" aria-labelledby="workflow_title workflow_desc">
+  <title id="workflow_title">How the html-explainer skill works</title>
+  <desc id="workflow_desc">The skill responds to explicit HTML requests or proposes a page when explanations fail to land. It scopes one topic, then uses either a standard explainer workflow with a chosen diagram format or a no-diagram interactive Q&amp;A form. Both select a fresh numbered file, build offline, open Firefox, and revise or clean up only under the skill's rules.</desc>
+  <defs>
+    <marker id="workflow_arrow_blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2d77e0"/>
+    </marker>
+    <marker id="workflow_arrow_green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#89d281"/>
+    </marker>
+    <marker id="workflow_arrow_muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b919b"/>
+    </marker>
+    <style>
+      text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #d5d8dd; }
+      .wf_eyebrow { font-size: 15px; font-weight: 700; letter-spacing: 2px; fill: #89d281; }
+      .wf_heading { font-size: 36px; font-weight: 700; fill: #f1f2f4; }
+      .wf_subhead { font-size: 17px; fill: #aeb4bd; }
+      .wf_panel { fill: #1d2026; stroke: #343840; stroke-width: 2; }
+      .wf_card { fill: #17181c; stroke: #3a3f47; stroke-width: 2; }
+      .wf_blue { fill: #1d2430; stroke: #2d77e0; stroke-width: 2; }
+      .wf_green { fill: #1c261c; stroke: #89d281; stroke-width: 2; }
+      .wf_title { font-size: 22px; font-weight: 700; fill: #f1f2f4; }
+      .wf_label { font-size: 17px; font-weight: 700; }
+      .wf_body { font-size: 15px; fill: #c1c5cc; }
+      .wf_muted { font-size: 14px; fill: #8b919b; }
+      .wf_blue_text { fill: #8fb7f5; }
+      .wf_green_text { fill: #89d281; }
+      .wf_gold { fill: #febc38; }
+      .wf_line_blue { fill: none; stroke: #2d77e0; stroke-width: 3; marker-end: url(#workflow_arrow_blue); }
+      .wf_line_green { fill: none; stroke: #89d281; stroke-width: 3; marker-end: url(#workflow_arrow_green); }
+      .wf_line_muted { fill: none; stroke: #8b919b; stroke-width: 3; marker-end: url(#workflow_arrow_muted); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1430" rx="26" fill="#17181c"/>
+  <text x="70" y="58" class="wf_eyebrow">HTML-EXPLAINER / USER WORKFLOW</text>
+  <text x="70" y="108" class="wf_heading">How the html-explainer skill works</text>
+  <text x="70" y="143" class="wf_subhead">From request to review, with separate paths for explainers and interactive Q&amp;A.</text>
+
+  <rect x="70" y="178" width="1460" height="122" rx="16" class="wf_panel"/>
+  <line x1="800" y1="198" x2="800" y2="280" stroke="#343840" stroke-width="2"/>
+  <text x="105" y="216" class="wf_label wf_blue_text">Explicit request</text>
+  <text x="105" y="245" class="wf_body">“Make an HTML page” or “show me visually” → build offline page.</text>
+  <text x="105" y="270" class="wf_muted">Chat-only Mermaid source does not replace the HTML page.</text>
+  <text x="840" y="216" class="wf_label wf_green_text">Proactive offer</text>
+  <text x="840" y="245" class="wf_body">Topic repeated or explanation missed → ask “Want this as an HTML page?”</text>
+  <text x="840" y="270" class="wf_muted">Build only after the user says yes; never silently create pages.</text>
+
+  <path d="M800 300 V324" class="wf_line_muted"/>
+  <rect x="425" y="330" width="750" height="76" rx="14" class="wf_card"/>
+  <text x="800" y="361" text-anchor="middle" class="wf_title">Scope one topic per page</text>
+  <text x="800" y="388" text-anchor="middle" class="wf_body">Split sprawling topics; preserve the user's requested diagram type.</text>
+
+  <path d="M800 406 V432 H425 V454" class="wf_line_blue"/>
+  <path d="M800 432 H1175 V454" class="wf_line_green"/>
+
+  <rect x="70" y="460" width="710" height="405" rx="18" class="wf_panel"/>
+  <text x="102" y="502" class="wf_title"><tspan class="wf_blue_text">A</tspan>  Standard explainer</text>
+  <text x="102" y="530" class="wf_muted">Use when reader needs an explanation and primary visual.</text>
+
+  <rect x="102" y="552" width="646" height="83" rx="12" class="wf_blue"/>
+  <text x="122" y="583" class="wf_label wf_blue_text">Content passes</text>
+  <text x="122" y="610" class="wf_body">Draft explanation, then independently draft useful follow-up Q&amp;A.</text>
+
+  <rect x="102" y="650" width="646" height="99" rx="12" class="wf_card"/>
+  <text x="122" y="680" class="wf_label">Diagram choice</text>
+  <text x="122" y="708" class="wf_body">Ask SVG (recommended) or Mermaid before drawing.</text>
+  <text x="122" y="733" class="wf_muted">Keep requested type; never switch format/type without permission.</text>
+
+  <rect x="102" y="764" width="646" height="72" rx="12" class="wf_card"/>
+  <text x="122" y="793" class="wf_label">Fill template.html</text>
+  <text x="122" y="819" class="wf_body">Title · TL;DR · picture · details · glossary · You might ask</text>
+
+  <rect x="820" y="460" width="710" height="405" rx="18" class="wf_panel"/>
+  <text x="852" y="502" class="wf_title"><tspan class="wf_green_text">B</tspan>  Interactive Q&amp;A form</text>
+  <text x="852" y="530" class="wf_muted">Use when reader should answer questions; no diagram needed.</text>
+
+  <rect x="852" y="552" width="646" height="83" rx="12" class="wf_green"/>
+  <text x="872" y="583" class="wf_label wf_green_text">Fill template-qa.html</text>
+  <text x="872" y="610" class="wf_body">Title + intro + labelled text, choice, multi-select, or Yes/No inputs.</text>
+
+  <rect x="852" y="650" width="646" height="99" rx="12" class="wf_card"/>
+  <text x="872" y="680" class="wf_label">Each question has two exclusive zones</text>
+  <text x="872" y="708" class="wf_body">Primary response, then All · None · I don't know · You decide.</text>
+  <text x="872" y="733" class="wf_muted">Copy answers as plain text; no server, JSON, or feedback form.</text>
+
+  <rect x="852" y="764" width="646" height="72" rx="12" class="wf_card"/>
+  <text x="872" y="793" class="wf_label">No diagram-format question</text>
+  <text x="872" y="819" class="wf_body">Text entry or one alternative; build form-only page.</text>
+
+  <path d="M425 865 V894 H800 V919" class="wf_line_blue"/>
+  <path d="M1175 865 V894 H800" class="wf_line_green"/>
+
+  <rect x="320" y="925" width="960" height="76" rx="14" class="wf_card"/>
+  <text x="800" y="956" text-anchor="middle" class="wf_label">Choose next output path: ~/tmp/explain-topic-NN.html</text>
+  <text x="800" y="982" text-anchor="middle" class="wf_muted">Check existing pages first; never overwrite.</text>
+
+  <path d="M800 1001 V1024" class="wf_line_muted"/>
+  <rect x="250" y="1030" width="1100" height="112" rx="16" class="wf_blue"/>
+  <text x="800" y="1070" text-anchor="middle" class="wf_title">Build and validate with scripts/build.py</text>
+  <text x="800" y="1098" text-anchor="middle" class="wf_body">Exact fields · diagram requirements · escaped title/page ID · offline assets</text>
+  <text x="800" y="1122" text-anchor="middle" class="wf_muted">Build failure leaves no HTML; successful page is self-contained.</text>
+
+  <path d="M800 1142 V1164" class="wf_line_muted"/>
+  <rect x="370" y="1170" width="860" height="74" rx="14" class="wf_green"/>
+  <text x="800" y="1200" text-anchor="middle" class="wf_label wf_green_text">Maximize, then open in an existing Firefox tab</text>
+  <text x="800" y="1227" text-anchor="middle" class="wf_muted">Follow browser.md; tell the user the output path.</text>
+
+  <path d="M800 1244 V1264" class="wf_line_muted"/>
+  <rect x="180" y="1270" width="1240" height="100" rx="14" class="wf_panel"/>
+  <text x="210" y="1305" class="wf_label wf_gold">After review</text>
+  <text x="210" y="1333" class="wf_body">Revise only when asked, using the next NN. When user confirms understanding, delete pages created here unless asked to keep them.</text>
+  <text x="210" y="1358" class="wf_muted">All pages offline and self-contained. Feedback stays in chat, not in the default HTML.</text>
+</svg>

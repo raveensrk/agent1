@@ -6,6 +6,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
 import build
@@ -13,9 +14,38 @@ import build
 SKILL = Path(__file__).resolve().parent.parent
 TEMPLATE = SKILL / "template.html"
 QA_TEMPLATE = SKILL / "template-qa.html"
+MAPS = (
+    (
+        SKILL / "architecture.svg",
+        ("template.html", "template-qa.html", "scripts/build.py", "mmdc", "Firefox"),
+    ),
+    (
+        SKILL / "workflow.svg",
+        (
+            "Explicit request",
+            "Proactive offer",
+            "template.html",
+            "template-qa.html",
+            "never overwrite",
+            "Firefox",
+        ),
+    ),
+)
 
 
 class Builder(unittest.TestCase):
+    def test_skill_maps(self):
+        for path, terms in MAPS:
+            root = ET.parse(path).getroot()
+            self.assertEqual(root.tag, "{http://www.w3.org/2000/svg}svg")
+            self.assertIsNotNone(root.find("{http://www.w3.org/2000/svg}title"))
+            self.assertIsNotNone(root.find("{http://www.w3.org/2000/svg}desc"))
+            ids = [node.get("id") for node in root.iter() if node.get("id")]
+            self.assertEqual(len(ids), len(set(ids)), path)
+            text = " ".join(root.itertext())
+            for term in terms:
+                self.assertIn(term, text, path)
+
     def test_build_and_failures(self):
         scratch = Path.home() / "tmp"
         scratch.mkdir(exist_ok=True)

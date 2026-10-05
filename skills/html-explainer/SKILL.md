@@ -41,6 +41,13 @@ This structure applies to standard explanation pages. Interactive Q&A-only forms
 - Code/config blocks: `<pre><code>`, monospace, with inline `<mark>` or comment-style callouts for annotations. Before/after: two columns side by side.
 - Every page must render correctly at ~800–1400px width; test mentally for narrow windows.
 
+## Maintained maps
+
+- `architecture.svg` shows how the standard and interactive templates flow through `scripts/build.py` to HTML.
+- `workflow.svg` shows when/how the skill builds, opens, revises, and cleans up pages.
+
+Update both in the same change whenever workflow, templates, CLI/build validation, diagram rendering, output behavior, or interactive Q&A behavior changes. `scripts/test_build.py` checks both maps remain valid and cover the current routes.
+
 ## Direct SVG (preferred)
 
 Write trusted, locally authored SVG to `~/tmp/<topic>.svg` and pass it with `-d`.
