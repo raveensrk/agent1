@@ -13,10 +13,11 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`. Feedback is o
 ## Workflow
 
 1. **Topic**: one topic per page. Split sprawling topics into multiple pages.
-2. **File**: `~/tmp/explain-<topic-slug>-NN.html`, NN starting at 01. Check existing files with `ls ~/tmp/explain-*` and use the next number for that topic. Never overwrite.
-3. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QUESTION`, `ANSWER`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
-4. **Build and open**: from this skill's directory, run `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.mmd -o ~/tmp/explain-topic-NN.html`. It opens Firefox only after validation and successful rendering. Repeat `-d` for more diagrams; `--no-open` builds without launching. Never overwrite; tell the user the output path.
-5. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file. No feedback forms, buttons, or feedback JavaScript in the default page.
+2. **Diagram format**: before drawing, use `ask_user` to explicitly ask whether the user prefers direct SVG (recommended) or Mermaid (fallback). Ask even when you have a recommendation; wait for their choice before drawing. The format choice must not change the diagram type: preserve the requested flowchart, timeline, sequence, or infographic. If the user has no preference, use direct SVG. Before changing diagram type or format, explain why and ask permission.
+3. **File**: `~/tmp/explain-<topic-slug>-NN.html`, NN starting at 01. Check existing files with `ls ~/tmp/explain-*` and use the next number for that topic. Never overwrite.
+4. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QUESTION`, `ANSWER`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
+5. **Build and open**: from this skill's directory, run `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.svg -o ~/tmp/explain-topic-NN.html --no-open`. Use `.mmd` only when Mermaid is chosen; repeat `-d` for multiple or mixed diagrams. After a successful build, follow `~/repos/agent1/browser.md` to maximize the browser and open an existing Firefox tab. Never overwrite; tell the user the output path.
+6. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file. No feedback forms, buttons, or feedback JavaScript in the default page.
 
 ## Page grammar (mandatory structure)
 
@@ -31,15 +32,25 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`. Feedback is o
 
 - Dark only (`#17181c` background family from template). No light mode.
 - Colors: accent `#2d77e0`, success `#89d281`, warning `#febc38`, error `#ff5b5b`, muted `#8b919b`. Callouts use these.
-- Diagrams: mermaid source rendered to inline SVG at build time (see below). Pure HTML/CSS boxes and arrows for a two-item comparison; mermaid for anything with a branch, a loop, or more than three nodes.
+- Diagrams: directly authored inline SVG by default, in the user-confirmed diagram type. Mermaid is an approved fallback when automatic layout better serves a complex graph; branches, loops, or node count alone do not force it.
 - No JS chart libraries, no CDN, no external assets: the page opens offline, forever.
 - Code/config blocks: `<pre><code>`, monospace, with inline `<mark>` or comment-style callouts for annotations. Before/after: two columns side by side.
 - Every page must render correctly at ~800–1400px width; test mentally for narrow windows.
 
-## Flowcharts with mermaid
+## Direct SVG (preferred)
 
-Write Mermaid files and pass them to `scripts/build.py`. The builder embeds SVG;
-the page carries pictures, not a runtime library.
+Write trusted, locally authored SVG to `~/tmp/<topic>.svg` and pass it with `-d`.
+The builder embeds it verbatim; SVG-only builds need no Mermaid, Node, or Chromium.
+
+- Use an `<svg>` root, `viewBox`, readable labels, and accessible `<title>` / `<desc>`.
+- Prefix IDs and CSS classes per diagram; authored SVG IDs must not repeat across diagrams.
+- Keep assets inline. No scripts, event handlers, external resources, or untrusted downloaded SVG.
+- Draw the confirmed flowchart, timeline, sequence diagram, or infographic; keep its arrows, ordering, and meaning explicit.
+
+## Mermaid fallback
+
+After the user chooses Mermaid, write `.mmd` files and pass them to `scripts/build.py`.
+The builder renders and embeds SVG; the page carries pictures, not a runtime library.
 
 1. Write the source to `~/tmp/<topic>.mmd`:
 
@@ -63,9 +74,10 @@ the page carries pictures, not a runtime library.
 5. Labels carry the words, arrows carry the logic. Six words per node keeps it
    legible at 800px.
 
-Verified here: Mermaid CLI 12.0.0 with Puppeteer 25.12.0 (05 Oct 2026). A missing
-renderer or browser stops the build; ask before installation or download. The
-builder prints the replacement command. No browser launch occurs on build failure.
+Verified here: Mermaid CLI 12.0.0 with Puppeteer 25.12.0 (05 Oct 2026). For Mermaid
+input, a missing renderer or Chromium stops the build; ask before installation or
+download. The builder prints the replacement command. SVG-only input bypasses this
+preflight. No browser launch occurs on build failure.
 Run checks with `timeout 60 python3 scripts/test_build.py` from this skill directory.
 
 ## Optional revisions

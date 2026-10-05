@@ -47,6 +47,12 @@ class Builder(unittest.TestCase):
                 self.assertEqual(run.call_args.args[0], ["open", "-a", "Firefox", str(output)])
                 for source in re.findall(r'class="mermaid-source">(.*?)</script>', page):
                     self.assertEqual(json.loads(source), diagram.read_text())
+                svg = dir / "direct.svg"
+                svg.write_text('<svg xmlns="http://www.w3.org/2000/svg" id="authored"></svg>')
+                mixed = dir / "mixed.html"
+                build.render(fields, [svg, diagram], TEMPLATE, mixed, launch=False)
+                self.assertIn(svg.read_text(), mixed.read_text())
+                self.assertIn('id="diagram_2"', mixed.read_text())
                 run.reset_mock()
                 with self.assertRaisesRegex(ValueError, "overwrite"):
                     build.render(fields, [diagram], TEMPLATE, output)
@@ -62,6 +68,33 @@ class Builder(unittest.TestCase):
                     build.render(fields, [diagram], TEMPLATE, dir / "failed.html")
                 self.assertEqual(run.call_count, 1)
                 self.assertFalse((dir / "failed.html").exists())
+
+    def test_svg_inputs(self):
+        scratch = Path.home() / "tmp"
+        scratch.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=scratch) as dir:
+            dir = Path(dir)
+            fields = {name: "Example" for name in build.TOKEN.findall(TEMPLATE.read_text())}
+            fields.pop("DIAGRAMS")
+            svg = dir / "direct.svg"
+            source = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><title id="direct_title">Direct</title></svg>'
+            svg.write_text(source)
+            output = dir / "direct.html"
+            with patch.object(build.shutil, "which", side_effect=AssertionError("SVG needs no renderer")), \
+                 patch.object(build.subprocess, "run") as run:
+                build.render(fields, [svg], TEMPLATE, output, launch=False)
+                self.assertIn(source, output.read_text())
+                self.assertNotIn('class="mermaid-source"', output.read_text())
+                for source in ("<svg>", "<div/>", '<svg><g id="same"/><g id="same"/></svg>'):
+                    svg.write_text(source)
+                    with self.assertRaisesRegex(ValueError, "SVG|duplicate"):
+                        build.render(fields, [svg], TEMPLATE, dir / "bad.html")
+                    self.assertFalse((dir / "bad.html").exists())
+                svg.write_text('<svg id="same"/>')
+                with self.assertRaisesRegex(ValueError, "duplicate"):
+                    build.render(fields, [svg, svg], TEMPLATE, dir / "duplicate.html")
+                self.assertFalse((dir / "duplicate.html").exists())
+                run.assert_not_called()
 
 
 if __name__ == "__main__":
