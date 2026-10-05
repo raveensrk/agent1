@@ -12,6 +12,10 @@ Two sources, both already on disk:
 The point is a number, not an impression: "the review felt slow" is a finding
 nobody can act on, "one call was 111s of a 137s session" is one you can.
 
+A batch of calls issued in one assistant message ran concurrently, so it is one
+group with one span: summing six per-call durations counted one 9.9s parallel
+batch as 59.2s (measured 2026-10-05).
+
 Why the transcript and not the shell: bash on this machine records no duration
 and no exit code. `grep -c '^#[0-9]\\{10\\}' ~/.bash_history` returns 0, so
 history lines carry neither. Two ways to add them were probed and rejected -
@@ -147,6 +151,7 @@ def read_transcript(path: str) -> tuple[list[dict], dict[str, dict], list[dateti
                             "name": block.get("name"),
                             "args": block.get("arguments") or {},
                             "ts": stamp,
+                            "msg": entry.get("id"),
                         }
                     )
     return calls, results, stamps
@@ -165,14 +170,17 @@ def command_of(call: dict) -> str:
 def status_of(result: dict | None, name: str = "") -> str:
     if result is None:
         return "unfinished"
-    if name in WAIT_TOOLS:
-        # a question waits for a human: think time, not tool slowness
-        return "waiting"
     text, error = result.get("text", ""), result.get("error")
     if error and re.search(r"Command aborted|operation was aborted", text):
         return "aborted"
-    # the words appear in ordinary output too, so only isError decides
-    return "error" if error else "ok"
+    # an errored wait is a failure, not think time: the question never reached
+    # the user, so the error is the finding. The order is what got this wrong.
+    if error:
+        return "error"
+    if name in WAIT_TOOLS:
+        # a question waits for a human: think time, not tool slowness
+        return "waiting"
+    return "ok"
 
 
 HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?")
@@ -209,6 +217,36 @@ def scan_patterns(text: str) -> list[tuple[str, str]]:
     return hits
 
 
+def group_rows(rows: list[dict]) -> list[dict]:
+    """Rows grouped by the assistant message that issued them, one span each.
+
+    Calls batched into one message run in parallel, so their per-call durations
+    overlap. Summing them told the review that six tools cost 59.2s when the
+    batch took 9.9s (2026-10-05 session). The group's span - first call to last
+    result - is the honest cost, and the slow list names the batch, not each
+    call inside it.
+    """
+    groups: list[dict] = []
+    for row in rows:
+        if groups and row.get("msg") and row["msg"] == groups[-1]["rows"][0].get("msg"):
+            groups[-1]["rows"].append(row)
+        else:
+            groups.append({"rows": [row]})
+    for group in groups:
+        starts = [r["ts"] for r in group["rows"] if r.get("ts")]
+        ends = [r["end"] for r in group["rows"] if r.get("end")]
+        statuses = {r["status"] for r in group["rows"]}
+        group["span"] = seconds(min(starts), max(ends)) if starts and ends else None
+        group["status"] = statuses.pop() if len(statuses) == 1 else "mixed"
+        group["command"] = (
+            group["rows"][0]["command"]
+            if len(group["rows"]) == 1
+            else f"{len(group['rows'])} parallel calls: "
+            + ", ".join(str(r["name"]) for r in group["rows"])
+        )
+    return groups
+
+
 def report_session(path: str) -> int:
     calls, results, stamps = read_transcript(path)
     if not stamps:
@@ -222,17 +260,24 @@ def report_session(path: str) -> int:
             {
                 "name": call.get("name"),
                 "command": command_of(call),
+                "msg": call.get("msg"),
+                "ts": call.get("ts"),
+                "end": (result or {}).get("ts"),
                 "seconds": seconds(call.get("ts"), (result or {}).get("ts")),
                 "status": status_of(result, str(call.get("name"))),
             }
         )
 
+    groups = group_rows(rows)
     wall = seconds(min(stamps), max(stamps)) or 0.0
-    tool_time = sum(r["seconds"] or 0.0 for r in rows)
-    waiting = [r for r in rows if r["status"] == "waiting"]
+    # waiting groups are user think time, not machine cost: excluded from the
+    # tool time and from the slowest line, reported on their own
+    busy = [g for g in groups if g["status"] != "waiting"]
+    tool_time = sum(g["span"] or 0.0 for g in busy)
+    waiting = [g for g in groups if g["status"] == "waiting"]
     slow = sorted(
-        (r for r in rows if r["status"] != "waiting" and (r["seconds"] or 0.0) >= SLOW_SECONDS),
-        key=lambda r: r["seconds"] or 0.0,
+        (g for g in busy if (g["span"] or 0.0) >= SLOW_SECONDS),
+        key=lambda g: g["span"] or 0.0,
         reverse=True,
     )
     aborted = [r for r in rows if r["status"] == "aborted"]
@@ -245,24 +290,24 @@ def report_session(path: str) -> int:
         if wall
         else f"{len(rows)} tool calls, tool time {tool_time:.1f}s"
     )
-    top = rows and max(rows, key=lambda r: r["seconds"] or 0.0)
-    if top and top["seconds"]:
+    top = busy and max(busy, key=lambda g: g["span"] or 0.0)
+    if top and top["span"]:
         print(
-            f"slowest call {top['seconds']:.1f}s = {100 * top['seconds'] / wall:.0f}% of wall clock: "
+            f"slowest call {top['span']:.1f}s = {100 * top['span'] / wall:.0f}% of wall clock: "
             f"{top['command'][:100]}"
         )
 
     if waiting:
-        waited = sum(r["seconds"] or 0.0 for r in waiting)
-        longest = max(r["seconds"] or 0.0 for r in waiting)
+        waited = sum(g["span"] or 0.0 for g in waiting)
+        longest = max(g["span"] or 0.0 for g in waiting)
         print(
             f"\n=== waiting on the user: {len(waiting)} questions, {waited:.1f}s total, "
             f"longest {longest:.1f}s (think time, excluded from the slow list)"
         )
 
     print(f"\n=== over {SLOW_SECONDS:.0f}s ({len(slow)})")
-    for row in slow:
-        print(f"{row['seconds']:7.1f}s  {row['status']:10} {row['command'][:110]}")
+    for group in slow:
+        print(f"{group['span']:7.1f}s  {group['status']:10} {group['command'][:110]}")
     if not slow:
         print("none")
 
@@ -410,6 +455,43 @@ def selftest() -> int:
     assert status_of(None) == "unfinished"
     assert next(s for s in scan_patterns(calls[0]["args"]["command"]))[0] == "recursive-grep"
 
+    # a batched message: two calls, one span, counted once
+    batch = {
+        "id": "m2",
+        "timestamp": "2026-10-05T15:57:11.000Z",
+        "message": {"role": "assistant", "content": [
+            {"type": "toolCall", "id": "c2", "name": "read", "arguments": {"path": "a"}},
+            {"type": "toolCall", "id": "c3", "name": "read", "arguments": {"path": "b"}},
+        ]},
+    }
+    endings = [
+        {"timestamp": "2026-10-05T15:57:21.000Z",
+         "message": {"role": "toolResult", "toolCallId": call_id,
+                     "content": [{"type": "text", "text": "ok"}]}}
+        for call_id in ("c2", "c3")
+    ]
+    with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as handle:
+        handle.write(json.dumps(batch) + "\n")
+        for entry in endings:
+            handle.write(json.dumps(entry) + "\n")
+        batch_path = handle.name
+    batch_calls, batch_results, _ = read_transcript(batch_path)
+    os.unlink(batch_path)
+    batch_rows = [
+        {"name": c["name"], "command": command_of(c), "msg": c.get("msg"),
+         "ts": c["ts"], "end": (batch_results.get(c["id"]) or {}).get("ts"),
+         "status": status_of(batch_results.get(c["id"]), str(c["name"]))}
+        for c in batch_calls
+    ]
+    groups = group_rows(batch_rows)
+    assert len(groups) == 1 and len(groups[0]["rows"]) == 2, groups
+    assert round(groups[0]["span"]) == 10, groups
+    assert sum(g["span"] or 0.0 for g in groups) == 10, "the batch counts once"
+
+    # a failed wait is a failure, not think time
+    assert status_of({"ts": None, "text": "bad payload", "error": True}, "ask_user") == "error"
+    assert status_of({"ts": None, "text": "", "error": False}, "ask_user") == "waiting"
+
     blocked = [p[1] for p in PATTERNS if p[0] == "recursive-grep"][0]
     for bad in ["grep -rn x .", "grep -R x .", "grep --recursive x .", "egrep -r x ."]:
         assert blocked.search(bad), bad
@@ -433,7 +515,8 @@ def selftest() -> int:
     assert read_history(hist) == ["sleep 1", "ls", "sleep 1"], read_history(hist)
     os.unlink(hist)
 
-    print("selftest ok: 111s call paired, aborted detected, patterns and history parsing hold")
+    print("selftest ok: 111s call paired, aborted detected, batch span counted once, "
+          "failed wait is an error, patterns and history parsing hold")
     return 0
 
 
