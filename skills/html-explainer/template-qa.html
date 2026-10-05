@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 36px 20px 72px; background: #17181c; color: #d5d8dd; font: 16px/1.65 ui-monospace, Menlo, monospace; }
+  main { max-width: 820px; margin: 0 auto; }
+  h1 { margin: 0 0 8px; color: #f1f2f4; font-size: clamp(24px, 5vw, 36px); line-height: 1.2; }
+  .intro { margin: 0 0 28px; color: #aeb4bd; }
+  .question { min-width: 0; margin: 16px 0; padding: 16px; border: 1px solid #343840; border-radius: 10px; background: #1d2026; }
+  .question legend { padding: 0 6px; color: #f1f2f4; font-weight: bold; }
+  .question label { cursor: pointer; }
+  .answer-label { display: block; margin: 8px 0 6px; color: #aeb4bd; }
+  .answer-alternatives { margin-top: 16px; padding-top: 8px; border-top: 1px solid #343840; }
+  .answer-alternatives > p { margin: 4px 0 8px; color: #8b919b; font-size: 13px; }
+  textarea, input[type="text"] { display: block; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #4a505a; border-radius: 6px; background: #101114; color: #f1f2f4; font: inherit; }
+  textarea { min-height: 120px; resize: vertical; }
+  .choice { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; }
+  .choice input { flex: none; width: 18px; height: 18px; margin: 3px 0 0; accent-color: #2d77e0; }
+  :focus-visible { outline: 3px solid #8fb7f5; outline-offset: 3px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  button { padding: 11px 16px; border: 0; border-radius: 7px; background: #2d77e0; color: white; font: inherit; font-weight: bold; cursor: pointer; }
+  button.secondary { border: 1px solid #4a505a; background: #252a32; }
+  .privacy, #status { color: #8b919b; font-size: 13px; }
+  #status { min-height: 1.65em; }
+  @media (max-width: 520px) { body { padding: 26px 16px 48px; } .question { padding: 13px; } }
+</style>
+</head>
+<body data-page-id="{{PAGE_ID}}">
+<main>
+  <header>
+    <h1>{{TITLE}}</h1>
+    <p class="intro">{{INTRO}}</p>
+  </header>
+  <form id="answers-form">
+    {{QUESTIONS}}
+    <div class="actions">
+      <button type="button" id="copy-answers">Copy answers as plain text</button>
+    </div>
+  </form>
+  <p class="privacy">Answers stay on this page until you close it. Nothing is submitted to a server.</p>
+  <p id="status" role="status" aria-live="polite"></p>
+</main>
+<script>
+  const form = document.querySelector("#answers-form");
+  const status = document.querySelector("#status");
+  form.addEventListener("submit", event => event.preventDefault());
+  function answerText() {
+    return [...form.querySelectorAll("fieldset.question")].map((group, index) => {
+      const question = group.querySelector("legend")?.textContent.trim() || `Question ${index + 1}`;
+      const answers = [...group.querySelectorAll("input, textarea, select")].flatMap(input => {
+        if (input.disabled || input.hasAttribute("data-text-mode") || ((input.type === "radio" || input.type === "checkbox") && !input.checked)) return [];
+        const value = input.type === "radio" || input.type === "checkbox"
+          ? [...(input.labels || [])].map(label => label.textContent.trim()).join(" ")
+          : input.value.trim();
+        return value ? [`- ${value}`] : [];
+      });
+      return `${question}\n${answers.length ? answers.join("\n") : "- (no answer)"}`;
+    }).join("\n\n");
+  }
+  form.addEventListener("change", event => {
+    const input = event.target;
+    const group = input.closest("fieldset.question");
+    if (!group) return;
+    const options = group.querySelector(".answer-options");
+    const alternatives = group.querySelector(".answer-alternatives");
+    if (input.closest(".answer-alternatives") && input.checked) {
+      for (const control of options.querySelectorAll("input, textarea, select")) {
+        if (control.type === "radio" || control.type === "checkbox") control.checked = false;
+        else {
+          control.value = "";
+          control.disabled = true;
+        }
+      }
+      return;
+    }
+    if (input.closest(".answer-options") && (input.checked || input.value)) {
+      for (const choice of alternatives.querySelectorAll('input[type="radio"]')) choice.checked = false;
+    }
+    if (input.hasAttribute("data-text-mode")) group.querySelector("textarea").disabled = !input.checked;
+  });
+  form.addEventListener("input", event => {
+    const group = event.target.closest("fieldset.question");
+    if (!group || !event.target.closest(".answer-options")) return;
+    for (const choice of group.querySelectorAll('.answer-alternatives input[type="radio"]')) choice.checked = false;
+  });
+  document.querySelector("#copy-answers").addEventListener("click", async () => {
+    const text = answerText();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const fallback = document.createElement("textarea");
+      fallback.value = text;
+      fallback.setAttribute("readonly", "");
+      fallback.style.position = "fixed";
+      fallback.style.opacity = "0";
+      document.body.append(fallback);
+      fallback.select();
+      let copied = false;
+      try { copied = document.execCommand("copy"); } catch {}
+      if (copied) {
+        fallback.remove();
+        status.textContent = "Copied answers as plain text.";
+        return;
+      }
+      fallback.style.position = "static";
+      fallback.style.opacity = "1";
+      fallback.setAttribute("aria-label", "Answers in plain text");
+      fallback.focus();
+      fallback.select();
+      status.textContent = "Clipboard unavailable. Answers are selected below; copy them manually.";
+      return;
+    }
+    status.textContent = "Copied answers as plain text.";
+  });
+</script>
+</body>
+</html>

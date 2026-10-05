@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fill the HTML template with authored SVG or offline Mermaid diagrams."""
+"""Fill HTML templates with local SVG, Mermaid, or Q&A form content."""
 import argparse
 import html
 import json
@@ -18,6 +18,7 @@ SVG = ("svg", "{http://www.w3.org/2000/svg}svg")
 def render(fields, diagrams, template, output, launch=True):
     """Fields and SVG are trusted local markup; title and page ID are escaped."""
     page = re.sub(r"<!--.*?-->", "", template.read_text(), flags=re.S)
+    has_diagrams = "DIAGRAMS" in TOKEN.findall(page)
     required = set(TOKEN.findall(page)) - {"DIAGRAMS"}
     if not isinstance(fields, dict) or set(fields) != required:
         raise ValueError("fields must contain exactly: " + ", ".join(sorted(required)))
@@ -28,8 +29,10 @@ def render(fields, diagrams, template, output, launch=True):
     scratch = Path.home() / "tmp"
     if not output.resolve().is_relative_to(scratch.resolve()):
         raise ValueError("output must be under ~/tmp; use ~/tmp/explain-TOPIC-NN.html")
-    if not diagrams:
+    if has_diagrams and not diagrams:
         raise ValueError("provide at least one --diagram FILE.svg or FILE.mmd")
+    if diagrams and not has_diagrams:
+        raise ValueError("selected template does not accept diagrams")
     if output.exists():
         raise ValueError(f"refusing to overwrite {output}; choose the next NN")
     if any(path.suffix.lower() not in (".svg", ".mmd") for path in diagrams):
@@ -87,7 +90,7 @@ console.log(process.env.PUPPETEER_EXECUTABLE_PATH || await puppeteer.executableP
     for key in ("TITLE", "PAGE_ID"):
         values[key] = html.escape(values[key], quote=True)
     page = TOKEN.sub(lambda match: values[match[1]], page)
-    if "<svg" not in page:
+    if has_diagrams and "<svg" not in page:
         raise ValueError("page has no rendered diagram")
     with output.open("x") as file:
         file.write(page)
@@ -99,14 +102,14 @@ console.log(process.env.PUPPETEER_EXECUTABLE_PATH || await puppeteer.executableP
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("fields", type=Path, help="JSON mapping of template fields to trusted HTML strings")
-    parser.add_argument("-d", "--diagram", type=Path, action="append", required=True, help="authored SVG or Mermaid file; repeat for multiple diagrams")
+    parser.add_argument("-d", "--diagram", type=Path, action="append", help="authored SVG or Mermaid file; repeat for multiple diagrams")
+    parser.add_argument("--template", type=Path, default=Path(__file__).resolve().parent.parent / "template.html", help="HTML template to fill")
     parser.add_argument("-o", "--output", type=Path, required=True, help="new HTML path under ~/tmp")
     parser.add_argument("--no-open", action="store_true", help="build without launching Firefox")
     args = parser.parse_args()
     try:
-        render(json.loads(args.fields.read_text()), args.diagram,
-               Path(__file__).resolve().parent.parent / "template.html",
-               args.output, launch=not args.no_open)
+        render(json.loads(args.fields.read_text()), args.diagram or [],
+               args.template, args.output, launch=not args.no_open)
     except (OSError, ValueError, subprocess.SubprocessError) as err:
         parser.exit(1, f"{err}\n")
     print(args.output.resolve())

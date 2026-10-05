@@ -13,20 +13,24 @@ Explain things as self-contained dark-mode HTML pages in `~/tmp/`. Feedback is o
 ## Workflow
 
 1. **Topic**: one topic per page. Split sprawling topics into multiple pages.
-2. **Diagram format**: before drawing, use `ask_user` to explicitly ask whether the user prefers direct SVG (recommended) or Mermaid (fallback). Ask even when you have a recommendation; wait for their choice before drawing. The format choice must not change the diagram type: preserve the requested flowchart, timeline, sequence, or infographic. If the user has no preference, use direct SVG. Before changing diagram type or format, explain why and ask permission.
+2. **Diagram format**: if the requested page needs a diagram, use `ask_user` to explicitly ask whether the user prefers direct SVG (recommended) or Mermaid (fallback). Ask even when you have a recommendation; wait for their choice before drawing. The format choice must not change the diagram type: preserve the requested flowchart, timeline, sequence, or infographic. If the user has no preference, use direct SVG. Before changing diagram type or format, explain why and ask permission. Skip this step for Q&A-only forms or other pages with no diagram.
 3. **File**: `~/tmp/explain-<topic-slug>-NN.html`, NN starting at 01. Check existing files with `ls ~/tmp/explain-*` and use the next number for that topic. Never overwrite.
-4. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QUESTION`, `ANSWER`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
-5. **Build and open**: from this skill's directory, run `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.svg -o ~/tmp/explain-topic-NN.html --no-open`. Use `.mmd` only when Mermaid is chosen; repeat `-d` for multiple or mixed diagrams. After a successful build, follow `~/repos/agent1/browser.md` to maximize the browser and open an existing Firefox tab. Never overwrite; tell the user the output path.
-6. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file. No feedback forms, buttons, or feedback JavaScript in the default page.
+4. **Content passes**: draft the explanation first. Then independently draft useful, likely reader follow-up Q&A; do not merely turn each detail heading into a question or repeat the body. Include only questions that add value, with clear standalone answers. Keep Q&A on the same page.
+5. **Template**: read `template.html` next to this SKILL.md. Write a JSON object mapping its fields to locally authored HTML strings: `TITLE`, `PAGE_ID`, `TLDR`, `SECTION_TITLE`, `ONE_BOLD_SENTENCE`, `EXPLANATION`, `EXPANDED_DETAIL`, `TERM`, `MEANING`, `QA_ITEMS`. Put one or more numbered question-and-answer blocks in `QA_ITEMS`. The builder supplies `DIAGRAMS`, escapes title and page ID, and rejects missing or unresolved fields. Inline everything; no CDN or external assets.
+6. **Interactive Q&A**: if readers should answer questions, use separate `template-qa.html`, not the default explainer template. Fill its `TITLE`, `PAGE_ID`, `INTRO`, and `QUESTIONS` fields. Group each question with `<fieldset class="question">` and `<legend>`, and use stable `name` values. Put normal text/radio/checkbox answers in `.answer-options`. For a text answer, include a checked `data-text-mode` radio choice with value `custom` (“Write my answer”) and a textarea; choosing an alternative disables and clears that textarea, while choosing the custom radio re-enables it. After a visible separator, every question gets one `.answer-alternatives` radio group. Give all four radios the same question-specific `name` and values `all-of-the-above`, `none-of-the-above`, `i-dont-know`, `you-decide`. The template makes alternatives mutually exclusive with each other and normal answers. Yes/No questions use Yes/No as normal radio options, plus the same alternative group. The page has no server or JSON download: readers can copy all question-and-answer pairs as plain text.
+7. **Build and open**: standard page: `python3 scripts/build.py ~/tmp/fields.json -d ~/tmp/topic.svg -o ~/tmp/explain-topic-NN.html --no-open`. Interactive Q&A page: `python3 scripts/build.py ~/tmp/fields.json --template template-qa.html -o ~/tmp/explain-topic-NN.html --no-open` (no `-d`). Use `.mmd` only when Mermaid is chosen; repeat `-d` for multiple or mixed diagrams. After a successful build, follow `~/repos/agent1/browser.md` to maximize the browser and open an existing Firefox tab. Never overwrite; tell the user the output path.
+8. **Revise only when requested**: if the user gives feedback in chat, address it and write the next NN file. No feedback forms, buttons, or feedback JavaScript in the default page.
 
-## Page grammar (mandatory structure)
+## Default explainer page grammar (mandatory structure)
+
+This structure applies to standard explanation pages. Interactive Q&A-only forms use `template-qa.html` and consist of a title, introduction, and answerable questions; they do not need the explainer diagram or detail sections.
 
 1. Header: title + one-line "what this page is about".
 2. TL;DR box: max 3 bullets. If the reader stops here, they still get the point.
 3. One primary visual: flow diagram, before/after, or annotated code — the single most clarifying picture.
 4. Numbered sections (`2.1`, `2.2`…): the detail. Each starts with one bold sentence, then expands. Wrap long detail in `<details class="more">` so the page reads compact but expands on demand.
 5. Glossary table for jargon, if any term might be unknown.
-6. Q&A block: predefined "you might ask" questions with answers.
+6. Q&A block: independently drafted, useful likely follow-up questions with standalone answers; include on same page.
 
 ## Visual kit rules
 
