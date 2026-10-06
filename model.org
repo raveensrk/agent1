@@ -1,0 +1,110 @@
+#+title: Models
+
+* Models
+
+Harness reviews: [[file:harness.org][Harness]].
+Model usage records: [[file:model_usage_history.org][Model usage history]].
+
+** Recommendations
+Effort levels reflect personal preference; adjust them according to the task.
+
+Reference sources for recommendations:
+- [[https://aicharts.io/][AI Charts]]
+- [[https://artificialanalysis.ai/][Artificial Analysis]]
+
+*** Flash
+- GLM 5.3 Flash (max effort)
+- DeepSeek V4.1 Flash (max effort)
+- GPT 6 Luna (max effort)
+- GPT 6.1 Sol (low effort)
+
+*** Balanced
+- GPT 6.1 Sol (minimal to xhigh effort)
+
+*** Max
+- GPT 6.1 Sol (max effort)
+- Claude Opus 5.5 (max effort)
+
+** Reviews
+Personal assessments of the AI models I use. Dated notes, newest first.
+These assessments are not benchmark results or agent behavior instructions.
+
+*** Rules
+- Always give the full, correct model name along with its reasoning effort throughout this file. Verify both before adding or updating entries; show effort separately from the model name. If effort is unknown or not applicable, say so rather than guessing.
+- Use the same readable name for each model in recommendations, reviews, and usage history. Preserve source identifiers separately in the Recorded ID column.
+- Keep dated journal entries newest first (descending date order). Include the full model name, version, and reasoning effort in each entry heading; mark unknown versions or effort explicitly. Include the rating in each heading as [7], with the scale understood to be out of 10; use [unrated] when missing.
+- One headline tag per model - the single most defining trait; omit the tag when unknown.
+- Keep model name, version, reasoning effort, and rating in the heading only; do not duplicate them in properties. Write reviews and notes directly beneath each model heading, including harness, task context, assessment, and reuse decision. Do not create separate Review or Verdict headings.
+
+*** Rating Scale
+Ratings are out of 10; intermediate scores are allowed. Existing out-of-5 ratings have been doubled. Missing ratings remain unrated.
+
+| Rating | Label | Meaning                                           |
+|--------+-------+---------------------------------------------------|
+| 10/10  | best  | Best in class. First pick for this kind of work.  |
+| 8/10   | good  | Strong. Reliable, minor gaps.                     |
+| 6/10   | mid   | Usable. Gets the job done with some supervision.  |
+| 4/10   | bad   | Weak. Needs heavy correction or a fallback model. |
+| 2/10   | worst | Avoid for this kind of work.                      |
+
+*** Journal
+Newest first. Copy the template, fill it in, paste directly below the marker.
+Use one headline tag for the model's defining trait; omit the tag if unknown.
+
+ #+begin_example
+ **** YYYY-MM-DD - <full model name and version> (<reasoning effort> effort) [<score> or unrated] :tag:
+
+ <review and notes, including harness, task context, assessment, and whether to reuse>
+ #+end_example
+
+# Newest entry first. Add new entries directly below this line.
+
+**** 2026-10-06 - GPT 6 Luna (max effort) [7] :cheap:
+
+Used for short tasks and complex tasks. Reasonably good and cheap. Good for short tasks; takes a while on complex tasks.
+
+Use for short tasks; allow extra time for complex work.
+
+**** 2026-09-25 - Claude Opus 4.8 (max effort) [9] :design:
+
+Used in Claude. Good taste in design. Writes in detail.
+
+**** 2026-09-25 - GPT 6 Astra (max effort) [0]
+
+Used in Codex. Heavy but powerful.
+
+**** 2026-09-25 - Grok 4.6 (high effort) [7]
+
+Used in Grok. Better responses than Anthropic or OpenAI models.
+
+**** 2026-09-25 - Grok 4.7 (xhigh effort) [8]
+
+Used in Grok. Better than Grok 4.6.
+
+**** 2026-09-25 - GLM 5.3 Flash (max effort) [9.5] :cheap:
+
+Used in OpenCode. Default in pi at the time of this review. Good daily driver. Good cheap model.
+
+**** 2026-09-24 - DeepSeek V4.1 Flash (high effort) [8] :cheap:
+
+Used in pi with the opencode-go provider for design, schema design, analysis, code review, and code writing. Strong at analysis and code review, and catches things I miss. Cheap for code generation. Falls short on visual design and front-end work, which I hand to Claude Opus 5 (high effort). Needs supervision on design and does not ask enough clarifying questions on its own.
+
+Reuse. First pick for cheap code generation, analysis, and code review.
+
+**** 2026-09-24 - Claude Opus 5 (high effort) [10] :design:
+
+Used in Claude. Writes in detail. Good taste in design.
+
+**** 2026-09-24 - Claude Fable 5 (high effort) [10] :companion:
+
+Used in Claude. Next-level companion. Good taste in design.
+
+**** 2026-09-24 - GPT 5.6 Sol (medium effort) [6] :design:
+
+Used in Codex. Basic but works. Bad taste in design.
+
+**** 2026-09-24 - Big Pickle (version unknown; default effort) [6] :free:
+
+Used in OpenCode. Free. Used for data collection. Reasoning effort was not explicitly set.
+
+[[https://opencode.ai/docs/en/zen/][OpenCode documents Big Pickle as a stealth model]] with the unversioned ID =big-pickle=. The underlying version used could not be verified from the approximate usage date.
