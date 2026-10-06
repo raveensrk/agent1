@@ -17,7 +17,7 @@ export default function (pi: ExtensionAPI) {
 
 		// Model picker: current choice first, rest sorted
 		const models = [...ctx.modelRegistry.getAvailable()];
-		const cur = pi.getModel();
+		const cur = (ctx as ExtensionContext).model;
 		const label = (m: any) => `${m.provider}/${m.id}`;
 		models.sort((a: any, b: any) => {
 			const acur = cur && a.provider === cur.provider && a.id === cur.id;
