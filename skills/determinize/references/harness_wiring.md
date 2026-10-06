@@ -113,9 +113,11 @@ is in the command. Exit 2 blocks; any other nonzero code fails open.
 
 ## pi
 
-An extension in `~/.pi/agent/extensions/`, installed from
-`~/repos/agent1/harness/extensions/` by `install.py`. `command_guard.ts` is the
-working version, with its test in `harness/tests/test_command_guard.ts`.
+Pi loads these extensions live from this repo as a local package: `package.json`
+declares `harness/extensions/*.ts` under the `pi` key, and `settings.json` in the
+dotfiles repo lists `"~/repos/agent1"` under `packages`. No symlinks in either
+repo. `command_guard.ts` is the working version, with its test in
+`harness/tests/test_command_guard.ts`.
 
 ## opencode
 

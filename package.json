@@ -1,0 +1,11 @@
+{
+  "name": "agent1",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Agent harness: rules, checks, and pi extensions. Loaded by pi as a local package (see dot config/pi/settings.json).",
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["harness/extensions/*.ts"]
+  }
+}

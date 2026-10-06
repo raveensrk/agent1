@@ -57,8 +57,6 @@ TARGETS = [
     ("skills/*/SKILL.md", "~/.agents/skills", ["pi"]),
     ("commands/*.md", "~/.claude/commands", ["claude"]),
     ("commands/*.md", "~/.pi/agent/prompts", ["pi"]),  # Codex has no custom commands
-    # The reactive half of the harness: pi trigger shims, installed like skills.
-    ("harness/extensions/*.ts", "~/.pi/agent/extensions", ["pi"]),
 ]
 
 # Skills from --skill go only to the skill directories, one link per directory.

@@ -58,8 +58,10 @@ that exists today. A check nobody has seen fire is a guess.
 
 ## Trigger
 
-`extensions/harness_lint.ts` is installed into `~/.pi/agent/extensions/` by
-[install.py](../install.py). After a run it lints the files this session
+`extensions/harness_lint.ts` ships with the rest of `harness/extensions/` - pi
+loads it live from this repo via the local package declared in the dotfiles'
+`settings.json` (see [harness_wiring.md](../skills/determinize/references/harness_wiring.md)).
+After a run it lints the files this session
 edited, and when something is found it appends one message and continues the
 agent once, so the agent fixes its own output before you see it. It stops after
 three nudges, skips findings it already reported, and never looks at files the
