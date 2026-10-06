@@ -16,7 +16,7 @@ export default function (pi: ExtensionAPI) {
 		if (!ctx.hasUI) return;
 
 		// Model picker: current choice first, rest sorted
-		const models = [...ctx.modelRegistry.getAllModels()];
+		const models = [...ctx.modelRegistry.getAvailable()];
 		const cur = pi.getModel();
 		const label = (m: any) => `${m.provider}/${m.id}`;
 		models.sort((a: any, b: any) => {
