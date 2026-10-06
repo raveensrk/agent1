@@ -86,6 +86,7 @@ answer means the import did not load.
 | `install.py` | Installs skills, commands and extensions into Claude Code, Codex and pi |
 | `jobs.md` | ETA rules for long-running jobs |
 | `macos.md` | macOS command traps |
+| [`models.org`](./models.org) | Personal model reviews and historical harness usage |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | [`quesion_types.yaml`](./quesion_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |

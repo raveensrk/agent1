@@ -1,0 +1,320 @@
+#+title: Models
+
+* Models
+
+** Recommendations
+Effort levels reflect personal preference; adjust them according to the task.
+
+Reference sources for recommendations:
+- [[https://aicharts.io/][AI Charts]]
+- [[https://artificialanalysis.ai/][Artificial Analysis]]
+
+*** Flash
+- GLM 5.3 Flash (max effort)
+- DeepSeek V4.1 Flash (max effort)
+- GPT 6 Luna (max effort)
+- GPT 6.1 Sol (low effort)
+
+*** Balanced
+- GPT 6.1 Sol (minimal to xhigh effort)
+
+*** Max
+- GPT 6.1 Sol (max effort)
+- Claude Opus 5.5 (max effort)
+
+** Reviews
+Personal assessments of the AI models I use. Dated notes, newest first.
+These assessments are not benchmark results or agent behavior instructions.
+
+*** Rules
+- Always give the full, correct model name along with its reasoning effort throughout this file. Verify both before adding or updating entries; show effort separately from the model name. If effort is unknown or not applicable, say so rather than guessing.
+- One tag per model - the single most defining trait.
+
+*** Rating Scale
+| Rating | Label | Meaning                                           |
+|--------+-------+---------------------------------------------------|
+| 5      | best  | Best in class. First pick for this kind of work.  |
+| 4      | good  | Strong. Reliable, minor gaps.                     |
+| 3      | mid   | Usable. Gets the job done with some supervision.  |
+| 2      | bad   | Weak. Needs heavy correction or a fallback model. |
+| 1      | worst | Avoid for this kind of work.                      |
+
+*** Journal
+Newest first. Copy the template, fill it in, paste directly below the marker.
+
+ #+begin_example
+ **** YYYY-MM-DD - <model>
+ - Model: <full model name>
+ - Reasoning effort: <level, unknown, or not applicable>
+ - Harness:
+ - Task:
+ - Rating:
+ - Review:
+ - Tags:
+ - Verdict: <one line, reuse or not>
+ #+end_example
+
+# Newest entry first. Add new entries directly below this line.
+
+**** 2026-10-06 - GPT 6 Luna
+- Model: GPT 6 Luna
+- Reasoning effort: max
+- Harness:
+- Task: Short tasks and complex tasks.
+- Rating: 3.5/5 (7/10)
+- Review: Reasonably good and cheap. Good for short tasks; takes a while on complex tasks.
+- Tags: cheap
+- Verdict: Use for short tasks; allow extra time for complex work.
+
+**** 2026-09-25 - Claude Opus 4.8
+- Model: Claude Opus 4.8
+- Reasoning effort: unknown
+- Harness: Claude
+- Task:
+- Rating:
+- Review: Good taste in design. Writes in detail.
+- Tags: design
+- Verdict:
+
+**** 2026-09-25 - GPT 6 Astra
+- Model: GPT 6 Astra
+- Reasoning effort: unknown
+- Harness: Codex
+- Task:
+- Rating:
+- Review: Heavy but powerful.
+- Tags:
+- Verdict:
+
+**** 2026-09-25 - Grok 4.6
+- Model: Grok 4.6
+- Reasoning effort: unknown
+- Harness: Grok
+- Task:
+- Rating:
+- Review: Better responses than Anthropic or OpenAI models.
+- Tags:
+- Verdict:
+
+**** 2026-09-25 - Grok 4.7
+- Model: Grok 4.7
+- Reasoning effort: unknown
+- Harness: Grok
+- Task:
+- Rating:
+- Review: Better than Grok 4.6.
+- Tags:
+- Verdict:
+
+**** 2026-09-25 - GLM 5.3 Flash
+- Model: GLM 5.3 Flash
+- Reasoning effort: unknown
+- Harness: OpenCode
+- Task:
+- Rating:
+- Review: Default in pi at the time of this review. Good daily driver. Good cheap model.
+- Tags: cheap
+- Verdict:
+
+**** 2026-09-24 - DeepSeek V4.1 Flash
+- Model: DeepSeek V4.1 Flash
+- Reasoning effort: high
+- Harness: pi (opencode-go provider)
+- Task: Design, schema design, analysis, code review, code writing.
+- Rating: 4 - good
+- Review: Strong at analysis and code review, and catches things I miss. Cheap for code generation. Falls short on visual design and front-end work, which I hand to Claude Opus (version and reasoning effort unknown). Needs supervision on design and does not ask enough clarifying questions on its own.
+- Tags: cheap
+- Verdict: Reuse. First pick for cheap code generation, analysis, and code review.
+
+**** 2026-09-24 - Claude Opus 5
+- Model: Claude Opus 5
+- Reasoning effort: unknown
+- Harness: Claude
+- Task:
+- Rating: 5 - best
+- Review: Writes in detail. Good taste in design.
+- Tags: design
+- Verdict:
+
+**** 2026-09-24 - Claude Fable 5
+- Model: Claude Fable 5
+- Reasoning effort: unknown
+- Harness: Claude
+- Task:
+- Rating: 5 - best
+- Review: Next-level companion. Good taste in design.
+- Tags: companion
+- Verdict:
+
+**** 2026-09-24 - GPT 5.6 Sol
+- Model: GPT 5.6 Sol
+- Reasoning effort: unknown
+- Harness: Codex
+- Task:
+- Rating: 3 - mid
+- Review: Basic but works. Bad taste in design.
+- Tags: design
+- Verdict:
+
+**** 2026-09-24 - BigPickle
+- Model: BigPickle
+- Reasoning effort: unknown
+- Harness: OpenCode
+- Task:
+- Rating: 3 - mid
+- Review: Free. Used for data collection.
+- Tags: free
+- Verdict:
+
+** Usage history
+Models recorded across agent harnesses on this machine, rebuilt from local session logs, databases, and config files. Scanned 2026-09-24.
+
+Historical entries preserve the exact recorded model IDs rather than expanding ambiguous names. Reasoning effort is unknown unless explicitly encoded in the recorded ID. Defaults below are snapshots from the scan date, not current settings.
+
+Method: read the harness's own record of a model being selected (session =model_change= events, message metadata, thread data), not its model catalog. Counts are log events, so they show relative use, not exact message counts.
+
+*** pi
+Source: =~/.pi/agent/sessions/**/*.jsonl= (session =model_change= events).
+
+| Provider    | Model               | Events |
+|-------------+---------------------+--------|
+| anthropic   | claude-opus-4-5     | 1      |
+| anthropic   | claude-opus-5       | 1      |
+| opencode-go | deepseek-v4-pro     | 1      |
+| opencode-go | deepseek-v4.1-flash | 5      |
+| opencode-go | glm-5.3             | 5      |
+| opencode-go | glm-5.3-flash       | 3      |
+| opencode-go | grok-4.6            | 1      |
+| opencode-go | kimi-k2.7-code      | 1      |
+| opencode-go | kimi-k3             | 2      |
+| opencode-go | longcat-2.0         | 1      |
+| opencode-go | qwen3.8-flash       | 1      |
+| xai         | grok-4.6            | 45     |
+
+Default at scan time: =opencode-go/deepseek-v4.1-flash= (=~/.pi/agent/settings.json=).
+
+*** Claude Code
+Source: =~/.claude/**/*.jsonl= message metadata, plus =~/.claude.json=.
+
+| Model           | Events |
+|-----------------+--------|
+| claude-opus-5   | 21152  |
+| claude-fable-5  | 8543   |
+| claude-opus-5-5 | 68     |
+| claude-sonnet-5 | 48     |
+
+=<synthetic>= also appears (36) - an internal placeholder, not a real model. Default at scan time: =opus[1m]= (=~/.claude/settings.json=).
+
+*** Codex CLI
+Source: =~/.codex/sessions/**= and =~/.codex/archived_sessions/**=.
+
+| Model              | Events |
+|--------------------+--------|
+| gpt-5.5            | 668    |
+| gpt-5.4            | 644    |
+| gpt-5.2-codex      | 284    |
+| gpt-5.2            | 106    |
+| gpt-5.3-codex      | 60     |
+| gpt-5.4-mini       | 28     |
+| gpt-5.6-terra      | 10     |
+| grok-2-latest      | 4      |
+| gpt-5.1-codex-mini | 2      |
+
+Default at scan time: =gpt-5.6-terra= (=~/.codex/config.toml=).
+
+*** opencode
+Source: =~/.local/share/opencode/opencode.db= (message table).
+
+| Provider    | Model         | Events |
+|-------------+---------------+--------|
+| opencode    | big-pickle    | 655    |
+| opencode    | hy3-free      | 197    |
+| opencode-go | glm-5.3-flash | 4      |
+| opencode-go | kimi-k2.6     | 1      |
+| xai         | grok-4.5      | 2      |
+| xai         | grok-4        | 1      |
+
+*** Gemini CLI
+Source: =~/.gemini/tmp/*/chats/*.json=.
+
+| Model                  | Events |
+|------------------------+--------|
+| gemini-3-flash-preview | 84     |
+
+*** Cursor
+Source: =~/Library/Application Support/Cursor/User/globalStorage/state.vscdb=. The AI code-tracking database (=~/.cursor/ai-tracking=) is empty.
+
+| Model              | Events |
+|--------------------+--------|
+| GPT-5.6            | 35     |
+| GPT-5.4            | 30     |
+| grok-4.5           | 25     |
+| GPT-5.5            | 20     |
+| GPT-5.1            | 20     |
+| GPT-5              | 15     |
+| grok-4.6           | 12     |
+| GPT-5.2            | 10     |
+| composer-2.5-fast  | 6      |
+| gpt-5.3-codex-high | 5      |
+| GPT-5.3            | 5      |
+| gpt-5.2-high       | 5      |
+| gpt-5-low-fast     | 5      |
+| gpt-5-high-fast    | 5      |
+| gpt-5-high         | 5      |
+| GPT-5-Codex        | 5      |
+| claude-opus-5-fast | 5      |
+
+Caveat: Cursor's local state also caches the model picker, so a few of these may be listed rather than run.
+
+*** Zed
+Source: =~/Library/Application Support/Zed/threads/threads.db= and =~/Library/Application Support/Zed/settings.json=.
+
+| Provider | Model                        |
+|----------+------------------------------|
+| ollama   | dolphin2.6-mistral-7b:latest |
+
+*** Claude desktop app
+Source: =~/Library/Application Support/Claude/claude-code-sessions/**=.
+
+| Model           | Events |
+|-----------------+--------|
+| claude-fable-5  | 42     |
+| claude-opus-4-8 | 19     |
+| claude-opus-5   | 17     |
+
+*** Ollama (local models)
+Installed, from =~/.ollama/models/manifests=:
+
+- nous-hermes2-yi-34b:latest
+- nous-hermes2-mistral-7b:latest
+- dolphin2.6-mistral-7b:latest
+
+Run or pulled, from =~/.zsh_history= and =~/.bash_history=:
+
+- qwen2.5-coder:32b
+- qwen2.5-coder
+- llama3.2
+- llama3.1
+- llama2-uncensored
+- =huihui_ai/deephermes3-abliterated=
+- CognitiveComputations/dolphin-llama3.1:latest
+- deepseek-r1:latest
+- deepseek-r1
+- deepseek
+
+*** AI Toolkit (VS Code extension)
+Source: =~/.aitk/*.log=.
+
+- Phi-4-reasoning (generic-cpu, generic-gpu)
+
+*** No model recorded
+These harnesses are installed and were opened, but their local state holds no model selection:
+
+- Copilot CLI (=~/.copilot=) - logs show startup and shutdown only.
+- Copilot Chat for VS Code (=github.copilot-chat= global storage) - no model IDs.
+- ChatGPT desktop (=com.openai.chat=) - conversation files are opaque.
+
+*** Not counted
+- =~/.pi/agent/models-store.json= - catalog of ~40 configured models, only some used.
+- =~/.codex/models_cache.json= and =~/.claude/cache/model-catalog= - provider catalogs.
+- =~/.aitk/models/foundry.modelinfo.json= - model catalog (Qwen3, Qwen3.5, DeepSeek-R1, Phi).
