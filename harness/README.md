@@ -74,19 +74,22 @@ switch is on, the extension appends the rule to the prompt; `/telegraph off`
 drops it from the next request, and off is persisted in
 `~/.pi/agent/telegraph.json`.
 
-`extensions/voice_score.ts` is the signal for that rule. After a run settles it
-sends every thinking block of the run plus the reply to
-[Jev](https://docs.typesafe.ai) and draws two lines under the turn:
+`extensions/voice_score.ts` is the signal for that rule, asked for by hand and
+never on its own. `/voice-score` sends the last run's thinking blocks and reply
+to [Jev](https://docs.typesafe.ai); `/voice-score -0` walks every run of the
+session in turn. Each scored run draws two lines at the end of the transcript:
 `voice  think 2.8/3  reply 2.2/3` and `tokens think 1.4/3  reply 2.6/3`. Both
 lines score 0 to 3 and draw the max with every number. The second is
 the token-efficiency score - Jev's 0-3 for the block times the probability it
 missed nothing - and the expanded view shows the measured evidence next to it:
 filler count, repeated spans, chars and estimated tokens. One row per scored
 block is appended to `~/.local/share/voice_score/scores.jsonl`, machine-local,
-for recalibration from real turns. Display only: nothing is corrected, the entry
-never reaches the model's context, and the whole feature costs one classifier
-call per run. `/voice-score off` stops the call. Both threshold pairs, their
-measured gaps and the calibration behind them are documented in the extension.
+for recalibration from real turns. The runs come from the session branch, so a
+turn that finished before the command was typed is scoreable, and a turn nobody
+asks about costs nothing. Display only: nothing is corrected, the entry never
+reaches the model's context, and each run asked about costs one classifier call.
+Both threshold pairs, their measured gaps and the calibration behind them are
+documented in the extension.
 
 `extensions/call_score.ts` scores the other half of the bill: every tool call of
 the run gets Jev's necessity score times a result gate, drawn as a third line,

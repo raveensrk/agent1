@@ -24,6 +24,6 @@ The rule moved out of this file, and now travels with its own switch:
 
 - Rule text: `harness/extensions/telegraph.md`
 - Injector: `harness/extensions/telegraph.ts`, `/telegraph on|off`
-- Jev score line that reads it: `harness/extensions/voice_score.ts`, `/voice-score on|off`
+- Jev score line that reads it: `harness/extensions/voice_score.ts`, `/voice-score` for the last turn, `/voice-score -0` for the session
 
 `/telegraph off` drops the section from the next request. Nothing to edit here.

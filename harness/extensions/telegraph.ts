@@ -11,9 +11,9 @@
  * `${event.systemPrompt}\n\n${ruleSection(...)}` composes with rules_context.ts
  * in either load order.
  *
- * The Jev score line is a separate switch with its own file: /voice-score in
- * voice_score.ts, config ~/.pi/agent/voice_score.json. Thresholds and evidence
- * for that number live in voice_score.ts.
+ * The Jev score line is its own command instead: /voice-score in voice_score.ts,
+ * one classifier call per run asked about. Thresholds and evidence for that
+ * number live in voice_score.ts.
  *
  * Config: ~/.pi/agent/telegraph.json {"enabled": bool}. Absent or malformed
  * means on, because a missing switch must not silently drop a voice rule.

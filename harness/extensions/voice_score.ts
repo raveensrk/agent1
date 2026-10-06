@@ -1,11 +1,12 @@
 /**
- * voice score: Jev reads one turn's thinking, its reply and what it spent.
+ * voice score: Jev reads a turn's thinking, its reply and what it spent - on
+ * demand, never on its own.
  *
  * The telegraph rule covers thinking as well as replies, but a rule with no
- * signal is a wish. This is the signal: after a run settles, one Jev call
- * scores every thinking block of the run plus the reply - voice and
- * token-efficiency, two questions each - and the result is appended as a
- * session entry, drawn as two lines under the turn, and written to a ledger.
+ * signal is a wish. This is the signal: `/voice-score` scores the last turn,
+ * `/voice-score -0` scores every turn of the session, one Jev call per run -
+ * voice and token-efficiency, two questions per block - and each scored run is
+ * appended as a session entry, drawn as two lines, and written to a ledger.
  *
  * The entry draws two lines under the run: `voice  think 2.8/3  reply 2.2/3`
  * and `tokens think 1.4/3  reply 2.6/3`; both scales run 0 to 3, so every
@@ -15,7 +16,12 @@
  * omission cannot be paid for with brevity.
  *
  * Display only. It never nudges, blocks or rewrites, and the entry is not sent
- * to the model, so the whole feature costs one Jev call per run and no context.
+ * to the model, so the whole feature costs one Jev call per run asked about and
+ * no context: a turn nobody asks about is free, and nothing is scored on its
+ * own. History comes from `ctx.sessionManager.getBranch()`, thinking blocks
+ * included, which is why the command can score a run that finished before it
+ * was typed. A run too long for one call is split at CALL_CHAR_BUDGET, so a 59
+ * block run costs several calls rather than a 400; the entry says how many.
  *
  * Voice thresholds, measured on 152 samples from 25 past sessions plus 10
  * labeled ones (calibration in [voice_probe](~/tmp/voice_probe)):
@@ -38,15 +44,14 @@
  * The ledger is /Users/raveen_kumar_personal/.local/share/voice_score/scores.jsonl
  * (LEDGER_PATH): one row per scored block, machine-local, never committed.
  *
- * Toggle: /voice-score on|off|status, persisted to CONFIG_PATH. Off spends nothing.
+ * Usage: /voice-score for the last turn, /voice-score -0 for the session.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { deflateSync } from "node:zlib";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-export const CONFIG_PATH = join(homedir(), ".pi/agent/voice_score.json");
 export const LEDGER_PATH = join(homedir(), ".local/share/voice_score/scores.jsonl");
 /** Shorter blocks carry no voice to judge, only a score to guess. */
 export const FLOOR = 200;
@@ -135,6 +140,8 @@ export type VoiceScoreData = {
 	scores: VoiceScore[];
 	efficiency?: EfficiencyScore[];
 	error?: string;
+	/** What a run too long for one call has to say about itself. */
+	note?: string;
 	at: number;
 };
 export type LedgerRow = {
@@ -302,6 +309,56 @@ export function blocksOf(content: unknown): { think: Block[]; reply?: Block } {
 	return { think, reply: text.length >= FLOOR ? { kind: "reply", text } : undefined };
 }
 
+/** One run as the transcript holds it: the ask, its calls and its blocks. */
+export type Run = { request: string; trace: Trace[]; think: Block[]; reply?: Block };
+
+/** The blocks a run is judged on, in the order the questions name them. */
+export function blocksOfRun(run: Run): Block[] {
+	return [...run.think, ...(run.reply ? [run.reply] : [])];
+}
+
+/**
+ * A session branch folded back into runs, by the same rules the message_end
+ * handler used to apply live: a user message opens a run, an assistant message
+ * adds its thinking, its calls and its last substantive text, and a tool result
+ * sizes the call that asked for it.
+ *
+ * Only runs with something long enough to judge are kept, and a non-message
+ * entry - a model change, a compaction summary - is skipped.
+ */
+export function runsOf(entries: readonly unknown[]): Run[] {
+	const runs: Run[] = [];
+	let run: Run | undefined;
+	for (const entry of entries) {
+		if (!entry || typeof entry !== "object") continue;
+		const candidate = entry as {
+			type?: string;
+			message?: { role?: string; content?: unknown; toolCallId?: string };
+		};
+		if (candidate.type !== "message" || !candidate.message) continue;
+		const message = candidate.message;
+		if (message.role === "user") {
+			run = { request: "", trace: [], think: [] };
+			runs.push(run);
+			const text = textOf(message.content);
+			if (text) run.request = text.slice(0, REQUEST_MAX);
+			continue;
+		}
+		if (!run) continue;
+		if (message.role === "toolResult") {
+			addResult(run.trace, message);
+			continue;
+		}
+		if (message.role !== "assistant") continue;
+		const found = blocksOf(message.content);
+		run.think.push(...found.think);
+		// only the run's last substantive text is the reply; earlier text is narration
+		if (found.reply) run.reply = found.reply;
+		for (const call of callsOf(message.content)) addCall(run.trace, call);
+	}
+	return runs.filter((candidate) => blocksOfRun(candidate).length > 0);
+}
+
 // --- the Jev call ---
 
 /** One voice, one efficiency and one gate question per block. */
@@ -334,6 +391,56 @@ export function buildQuestions(blocks: Block[]): Record<string, Question> {
 	return questions;
 }
 
+/**
+ * Jev's window is 64,000 tokens and one call carries the state plus three
+ * questions per block. Measured 2026-10-06 on a 59-block run: state 138,080
+ * chars and questions 70,713 chars - ~52,000 tokens at four chars a token, and
+ * over the window at the tokenizer's real density, which the API answered with
+ * `max_tokens_exceeded`. One call is therefore budgeted well inside it, and a
+ * run longer than the budget is split across calls instead of being trimmed.
+ */
+export const CALL_CHAR_BUDGET = 64000;
+
+/**
+ * The blocks of a run, grouped so each group's state and questions fit one
+ * Jev call. Greedy and in order, so a group is a contiguous slice of the run.
+ * The questions are measured per block rather than guessed: they carry the
+ * criteria, and they are large enough to change where the cut lands.
+ */
+export function chunksOf(blocks: Block[], request = "", trace: Trace[] = []): Block[][] {
+	const base = stateChars(stateOf([], request, trace));
+	const chunks: Block[][] = [];
+	let current: Block[] = [];
+	let size = base;
+	for (const block of blocks) {
+		const cost = block.text.length + questionChars(block);
+		if (current.length > 0 && size + cost > CALL_CHAR_BUDGET) {
+			chunks.push(current);
+			current = [];
+			size = base;
+		}
+		current.push(block);
+		size += cost;
+	}
+	if (current.length > 0) chunks.push(current);
+	return chunks;
+}
+
+function stateChars(state: Record<string, string>): number {
+	let total = 0;
+	for (const [key, value] of Object.entries(state)) total += key.length + value.length;
+	return total;
+}
+
+/** The three questions one block adds to the call, criteria and instructions included. */
+function questionChars(block: Block): number {
+	let total = 0;
+	for (const [key, value] of Object.entries(buildQuestions([block]))) {
+		total += key.length + JSON.stringify(value).length;
+	}
+	return total;
+}
+
 export function stateOf(blocks: Block[], request = "", trace: Trace[] = []): Record<string, string> {
 	const state: Record<string, string> = { request, trace: traceText(trace) };
 	blocks.forEach((block, index) => {
@@ -348,19 +455,6 @@ export function efficiency(score: number, gate: number): number {
 }
 
 // --- display and ledger ---
-
-export function readEnabled(path = CONFIG_PATH): boolean {
-	try {
-		const config = JSON.parse(readFileSync(path, "utf8")) as { enabled?: unknown };
-		return config.enabled !== false;
-	} catch {
-		return true;
-	}
-}
-
-export function writeEnabled(enabled: boolean, path = CONFIG_PATH): void {
-	writeFileSync(path, `${JSON.stringify({ enabled }, null, 2)}\n`);
-}
 
 /** The good/mid/low cut every score line shares. */
 export function tier(score: number, pass: number, good: number): "low" | "mid" | "high" {
@@ -440,6 +534,7 @@ export function renderLines(
 			),
 		);
 	}
+	if (data.note) lines.push(fg("dim", data.note));
 	if (expanded) {
 		for (const voice of voices) {
 			lines.push(
@@ -509,45 +604,6 @@ export function appendLedger(rows: LedgerRow[], path = LEDGER_PATH): void {
 }
 
 export default function (pi: ExtensionAPI) {
-	let enabled = readEnabled();
-	let think: Block[] = [];
-	let reply: Block | undefined;
-	let request = "";
-	let trace: Trace[] = [];
-
-	function reset(): void {
-		think = [];
-		reply = undefined;
-		request = "";
-		trace = [];
-	}
-
-	pi.on("session_start", () => {
-		enabled = readEnabled();
-		reset();
-	});
-	pi.on("agent_start", reset);
-
-	pi.on("message_end", (event) => {
-		if (!enabled) return;
-		const message = event.message as { role?: string; content?: unknown; toolCallId?: string };
-		if (message.role === "user") {
-			const text = textOf(message.content);
-			if (text) request = text.slice(0, REQUEST_MAX);
-			return;
-		}
-		if (message.role === "toolResult") {
-			addResult(trace, message);
-			return;
-		}
-		if (message.role !== "assistant") return;
-		const found = blocksOf(message.content);
-		think.push(...found.think);
-		// only the run's last substantive text is the reply; earlier text is narration
-		if (found.reply) reply = found.reply;
-		for (const call of callsOf(message.content)) addCall(trace, call);
-	});
-
 	pi.registerEntryRenderer<VoiceScoreData>("voice-score", (entry, { expanded }, theme) => {
 		const lines = renderLines(entry.data ?? { scores: [], at: 0 }, expanded, (color, text) =>
 			theme.fg(color, text),
@@ -559,65 +615,101 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("voice-score", {
-		description: "Turn Jev scoring of thinking, the reply and the run's spend on or off, or show its state",
+		description: "Score the last turn's voice and tokens with Jev, or every turn of this session with -0",
 		handler: async (args, ctx) => {
-			const word = args.trim().toLowerCase();
-			if (word === "on" || word === "off") {
-				enabled = word === "on";
-				writeEnabled(enabled);
-				if (!enabled) reset();
+			const word = args.trim();
+			if (word !== "" && word !== "-0") {
+				ctx.ui.notify(`voice score: no argument scores the last turn, -0 the session, got ${word}`, "warning");
+				return;
 			}
-			const detail = enabled
-				? `voice pass ${PASS} telegraph ${GOOD}, tokens pass ${EFF_PASS} load-bearing ${EFF_GOOD}`
-				: "no Jev call is spent";
-			ctx.ui.notify(`voice score: ${enabled ? "on" : "off"} - ${detail}`, "info");
+			const runs = runsOf(ctx.sessionManager.getBranch());
+			const wanted = word === "-0" ? runs : runs.slice(-1);
+			if (wanted.length === 0) {
+				ctx.ui.notify("voice score: nothing in this session ran long enough to judge", "info");
+				return;
+			}
+			let done = 0;
+			for (const run of wanted) {
+				if (await scoreRun(pi, ctx, run)) done += 1;
+			}
+			ctx.ui.notify(`voice score: ${done} of ${wanted.length} runs scored by Jev`, "info");
 		},
 	});
+}
 
-	pi.on("agent_before_settle", async (_event, ctx) => {
-		if (!enabled) return;
-		const blocks = [...think, ...(reply ? [reply] : [])];
-		const asked = { request, trace: trace.slice() };
-		reset();
-		if (blocks.length === 0) return;
+/**
+ * One Jev call for one run: score it, append the entry, write its ledger rows.
+ * Undefined when the run held nothing long enough to judge, so the caller's
+ * count stays honest. A missing classifier is an entry like any other, drawn as
+ * `voice score unavailable`, rather than a silent nothing.
+ */
+async function scoreRun(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	run: Run,
+): Promise<VoiceScoreData | undefined> {
+	const blocks = blocksOfRun(run);
+	if (blocks.length === 0) return undefined;
 
-		if (process.env.PI_VOICE_TRACE === "1") {
-			process.stderr.write(`voice trace: request ${JSON.stringify(asked.request)}\n${traceText(asked.trace)}\n`);
-		}
+	if (process.env.PI_VOICE_TRACE === "1") {
+		process.stderr.write(`voice trace: request ${JSON.stringify(run.request)}\n${traceText(run.trace)}\n`);
+	}
 
-		const jev = ctx.modelRegistry.findOfType("classifier", "typesafe", "jev-latest");
-		if (!jev) return;
-
-		// A thinking block is judged against the calls of its run, including ones
-		// made after it: only the later calls show whether the thinking was needed.
-		const result = await ctx.modelRegistry.classify(jev, {
-			state: stateOf(blocks, asked.request, asked.trace),
-			questions: buildQuestions(blocks),
-		});
-		const data: VoiceScoreData = { scores: [], efficiency: [], at: Date.now() };
-		if (result.stopReason !== "stop") {
-			data.error = result.errorMessage ?? result.stopReason;
-		} else {
-			blocks.forEach((block, index) => {
-				const voice = result.answers[`b${index}`];
-				if (voice?.type === "score") {
-					data.scores.push({ kind: block.kind, index, score: voice.score, confidence: voice.confidence });
-				}
-				const spend = result.answers[`e${index}`];
-				const gate = result.answers[`g${index}`];
-				if (spend?.type === "score" && gate?.type === "bool") {
-					data.efficiency?.push({
-						kind: block.kind,
-						index,
-						score: spend.score,
-						gate: gate.probability,
-						confidence: spend.confidence,
-						evidence: evidence(block.text),
-					});
-				}
+	const data: VoiceScoreData = { scores: [], efficiency: [], at: Date.now() };
+	const jev = ctx.modelRegistry.findOfType("classifier", "typesafe", "jev-latest");
+	if (!jev) {
+		data.error = "no Jev classifier in this session";
+	} else {
+		const chunks = chunksOf(blocks, run.request, run.trace);
+		const failed: string[] = [];
+		let index = 0;
+		for (const chunk of chunks) {
+			// A thinking block is judged against the calls of its run, including ones
+			// made after it: only the later calls show whether the thinking was needed.
+			const result = await ctx.modelRegistry.classify(jev, {
+				state: stateOf(chunk, run.request, run.trace),
+				questions: buildQuestions(chunk),
 			});
+			if (result.stopReason !== "stop") {
+				failed.push(result.errorMessage ?? result.stopReason);
+			} else {
+				chunk.forEach((block, local) => {
+					const voice = result.answers[`b${local}`];
+					if (voice?.type === "score") {
+						data.scores.push({
+							kind: block.kind,
+							index: index + local,
+							score: voice.score,
+							confidence: voice.confidence,
+						});
+					}
+					const spend = result.answers[`e${local}`];
+					const gate = result.answers[`g${local}`];
+					if (spend?.type === "score" && gate?.type === "bool") {
+						data.efficiency?.push({
+							kind: block.kind,
+							index: index + local,
+							score: spend.score,
+							gate: gate.probability,
+							confidence: spend.confidence,
+							evidence: evidence(block.text),
+						});
+					}
+				});
+			}
+			index += chunk.length;
 		}
-		pi.appendEntry<VoiceScoreData>("voice-score", data);
-		appendLedger(ledgerRows(data, process.env.PI_SESSION_ID ?? ""));
-	});
+		// Every call failing is the run failing; some of them failing is a partial
+		// score, and the note says so rather than letting the line look whole.
+		if (failed.length === chunks.length) {
+			data.error = failed[0];
+		} else if (failed.length > 0) {
+			data.note = `${failed.length} of ${chunks.length} calls failed: ${failed[0]}`;
+		} else if (chunks.length > 1) {
+			data.note = `${chunks.length} calls, one per ${Math.ceil(blocks.length / chunks.length)} blocks`;
+		}
+	}
+	pi.appendEntry<VoiceScoreData>("voice-score", data);
+	appendLedger(ledgerRows(data, process.env.PI_SESSION_ID ?? ""));
+	return data;
 }

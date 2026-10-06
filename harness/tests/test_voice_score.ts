@@ -3,18 +3,22 @@
  *   timeout 180 node --experimental-strip-types harness/tests/test_voice_score.ts
  */
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import voiceScore, {
 	addCall,
 	addResult,
 	appendLedger,
 	argLine,
 	band,
 	blocksOf,
+	blocksOfRun,
 	buildQuestions,
+	CALL_CHAR_BUDGET,
 	callsOf,
+	chunksOf,
 	CRITERIA,
 	density,
 	EFFICIENCY_CRITERIA,
@@ -30,10 +34,10 @@ import {
 	ledgerRows,
 	ofKind,
 	PASS,
-	readEnabled,
 	renderLines,
 	repeats,
 	REQUEST_MAX,
+	runsOf,
 	SHOWN,
 	stamp,
 	stateOf,
@@ -43,7 +47,6 @@ import {
 	TRACE_MAX,
 	traceLine,
 	traceText,
-	writeEnabled,
 	type EfficiencyScore,
 	type VoiceScore,
 	type VoiceScoreData,
@@ -181,15 +184,70 @@ assert.equal(efficiency(3, 1), 3);
 assert.equal(efficiency(2.6, 0.95), 2.47);
 assert.equal(efficiency(0, 1), 0);
 
-// the config file: absent means on, off is explicit, malformed means on
+// a scratch directory for the ledger below
 const dir = mkdtempSync(join(tmpdir(), "voice-score-"));
-assert.equal(readEnabled(join(dir, "absent.json")), true);
-writeEnabled(false, join(dir, "off.json"));
-assert.equal(readEnabled(join(dir, "off.json")), false);
-writeEnabled(true, join(dir, "on.json"));
-assert.equal(readEnabled(join(dir, "on.json")), true);
-writeFileSync(join(dir, "broken.json"), "{not json");
-assert.equal(readEnabled(join(dir, "broken.json")), true);
+
+// chunksOf: a run that fits one call stays one call, a long run is split, and
+// no chunk carries more than the budget
+const one = chunksOf([{ kind: "think", text: long }], "ask", []);
+assert.equal(one.length, 1, "a short run is one call");
+assert.equal(one[0].length, 1);
+const longRun = Array.from({ length: 40 }, (_value, index) => ({ kind: "think" as const, text: `${index} `.repeat(2000) }));
+const split = chunksOf(longRun, "ask", []);
+assert.ok(split.length > 1, `40 large blocks split (got ${split.length})`);
+assert.equal(
+	split.reduce((sum, chunk) => sum + chunk.length, 0),
+	longRun.length,
+	"every block lands in exactly one chunk, none dropped",
+);
+for (const chunk of split) {
+	const size =
+		Object.entries(stateOf(chunk, "ask", [])).reduce((sum, [key, value]) => sum + key.length + value.length, 0) +
+		Object.entries(buildQuestions(chunk)).reduce((sum, [key, value]) => sum + key.length + JSON.stringify(value).length, 0);
+	assert.ok(size <= CALL_CHAR_BUDGET, `chunk of ${chunk.length} blocks is ${size} chars, over the budget`);
+}
+assert.equal(chunksOf([], "ask", []).length, 0, "nothing to score, no call");
+
+// runsOf: a session branch folded back into runs, the way the live capture
+// read the same messages before the command could ask for them
+const branch = [
+	{ type: "session_info", name: "not a message" },
+	{ type: "message", message: { role: "user", content: "first ask" } },
+	{
+		type: "message",
+		message: {
+			role: "assistant",
+			content: [
+				{ type: "thinking", thinking: long },
+				{ type: "toolCall", id: "t1", name: "read", arguments: { path: "a.ts" } },
+				{ type: "text", text: long },
+			],
+		},
+	},
+	{ type: "message", message: { role: "toolResult", toolCallId: "t1", content: "x".repeat(1840) } },
+	{ type: "message", message: { role: "user", content: "second ask" } },
+	{ type: "message", message: { role: "assistant", content: [{ type: "text", text: "y".repeat(FLOOR) }] } },
+	{ type: "message", message: { role: "user", content: "too short to judge" } },
+	{ type: "message", message: { role: "assistant", content: [{ type: "text", text: short }] } },
+];
+const runs = runsOf(branch);
+assert.equal(runs.length, 2, "a run with nothing long enough to judge is dropped");
+assert.equal(runs[0].request, "first ask");
+assert.equal(runs[0].think.length, 1, "short thinking is left out of the run too");
+assert.equal(runs[0].reply?.text, long);
+assert.deepEqual(blocksOfRun(runs[0]).map((block) => block.kind), ["think", "reply"]);
+assert.equal(runs[0].trace.length, 1, "the call is kept, the result attached to it");
+assert.equal(traceLine(runs[0].trace[0]), "read a.ts (1,840 chars result)");
+assert.equal(runs[1].request, "second ask");
+assert.equal(runs[1].think.length, 0);
+assert.equal(runs[1].trace.length, 0);
+assert.deepEqual(runsOf([]), []);
+assert.deepEqual(runsOf([{ type: "message", message: { role: "assistant", content: [] } }]), [], "no request, no run");
+const capped = runsOf([
+	{ type: "message", message: { role: "user", content: "z".repeat(REQUEST_MAX + 50) } },
+	{ type: "message", message: { role: "assistant", content: [{ type: "text", text: long }] } },
+]);
+assert.equal(capped[0].request.length, REQUEST_MAX, "the request is capped");
 
 // --- the drawn lines ---
 
@@ -267,8 +325,59 @@ assert.equal(stored.length, 2);
 assert.equal(stored[1].session, "01a103cc");
 assert.equal(stored[1].kind, "reply");
 assert.ok(!("evidence" in stored[1]), "the row is flat");
-assert.doesNotThrow(() => appendLedger(rows, join(dir, "on.json", "nested.jsonl")), "a bad path stays silent");
+assert.doesNotThrow(() => appendLedger(rows, join(dir, "missing", "nested.jsonl")), "a bad path stays silent");
 
 assert.ok(REQUEST_MAX >= FLOOR, "a request worth keeping is longer than a block");
 
-console.log(`voice_score ok: bands, ${CRITERIA.length}+${EFFICIENCY_CRITERIA.length} criteria, evidence, trace, questions, lines, ledger`);
+// --- the command: no argument scores the last run, -0 walks the branch ---
+
+const notes: string[] = [];
+const entries: VoiceScoreData[] = [];
+const registered: Record<string, { handler: (args: string, ctx: unknown) => Promise<void> }> = {};
+const fakePi = {
+	registerEntryRenderer: () => {},
+	registerCommand: (name: string, spec: { handler: (args: string, ctx: unknown) => Promise<void> }) => {
+		registered[name] = spec;
+	},
+	appendEntry: (_type: string, data: VoiceScoreData) => entries.push(data),
+};
+voiceScore(fakePi as unknown as ExtensionAPI);
+
+// no classifier is registered here, so every score is the drawn error entry and
+// no network call happens: this checks the wiring, not Jev
+const commandCtx = (sessionBranch: unknown[]) => ({
+	ui: { notify: (message: string) => notes.push(message) },
+	sessionManager: { getBranch: () => sessionBranch },
+	modelRegistry: { findOfType: () => undefined },
+});
+const command = registered["voice-score"];
+assert.ok(command, "the command is registered");
+
+await command.handler("", commandCtx(branch));
+assert.equal(entries.length, 1, "no argument scores the last run only");
+assert.equal(entries[0].error, "no Jev classifier in this session");
+assert.equal(notes.at(-1), "voice score: 1 of 1 runs scored by Jev");
+
+await command.handler(" -0 ", commandCtx(branch));
+assert.equal(entries.length, 3, "-0 walks every run of the branch, surrounding space ignored");
+assert.equal(notes.at(-1), "voice score: 2 of 2 runs scored by Jev");
+
+notes.length = 0;
+await command.handler("on", commandCtx(branch));
+assert.equal(entries.length, 3, "a word that is not the switch spends nothing");
+assert.match(notes[0], /no argument scores the last turn, -0 the session, got on/);
+
+notes.length = 0;
+await command.handler("", commandCtx([]));
+assert.equal(entries.length, 3, "an empty session has nothing to score");
+assert.match(notes[0], /nothing in this session ran long enough to judge/);
+
+// the note line: a run that took several calls says so under its two lines
+const noted = renderLines({ scores, efficiency: spend, note: "6 calls, one per 10 blocks", at: 0 }, false, plain);
+assert.equal(noted.length, 3, "two score lines and the note");
+assert.equal(noted[2], "6 calls, one per 10 blocks");
+assert.equal(renderLines({ scores, efficiency: spend, at: 0 }, false, plain).length, 2, "no note, no line");
+
+console.log(
+	`voice_score ok: bands, ${CRITERIA.length}+${EFFICIENCY_CRITERIA.length} criteria, evidence, trace, questions, runs, command, chunks, lines, ledger`,
+);

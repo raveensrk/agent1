@@ -80,9 +80,6 @@ impact_f2 0.49, impact_f3 0.26, quadrant_f2 0.41, quadrant_f3 0.32, plus the evi
 What to do: re-run /Users/raveen_kumar_personal/.agents/skills/learn-from-session/scripts/jev_signals.py on that transcript with annotated turns (the skill measures a two-word turn at 0.36 from bare text and 0.89 once annotated), then promote each label to a finding or drop it.
 Done when: each of the six labels has a verdict in a note or the report, and the ones that stay below 0.6 are dropped with a reason.
 
-* TODO Let the voice score extension be invoked on demand
-Scope: harness/extensions/voice_score.ts, run by /voice-score on|off (Jev score line under the turn). Change it so the score runs only when asked for, not on every turn.
-
 * TODO Find a good trajectory extension or CLI app to track trajectories in Pi
 * TODO [#C] Create elimination life skill - scan computer and life for things to remove :skills:declutter:
 - Skill for AI agents (pi), like declutter: scans and finds what to REMOVE, not what to add.

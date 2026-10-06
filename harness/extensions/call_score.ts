@@ -36,6 +36,7 @@
  * CONFIG_PATH. Off spends nothing. Rows share the voice_score ledger
  * (~/.local/share/voice_score/scores.jsonl) with kind "call".
  */
+import { readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -46,7 +47,6 @@ import {
 	COLORS,
 	LEDGER_PATH,
 	LABEL,
-	readEnabled,
 	REQUEST_MAX,
 	REPEAT_OVERLAP,
 	SCALE,
@@ -56,7 +56,6 @@ import {
 	textOf,
 	thousands,
 	tier,
-	writeEnabled,
 } from "./voice_score.ts";
 
 export const CONFIG_PATH = join(homedir(), ".pi/agent/call_score.json");
@@ -277,7 +276,23 @@ export function ledgerRows(data: CallScoreData, session: string, date = new Date
 	}));
 }
 
-/** Read and write on every message_end, reset per run like voice_score. */
+/**
+ * This switch is its own: absent or malformed means on, so a missing file never
+ * silently drops the score. Read on every message_end, reset per run.
+ */
+function readEnabled(path = CONFIG_PATH): boolean {
+	try {
+		const config = JSON.parse(readFileSync(path, "utf8")) as { enabled?: unknown };
+		return config.enabled !== false;
+	} catch {
+		return true;
+	}
+}
+
+function writeEnabled(enabled: boolean, path = CONFIG_PATH): void {
+	writeFileSync(path, `${JSON.stringify({ enabled }, null, 2)}\n`);
+}
+
 function factory(pi: ExtensionAPI) {
 	let enabled = readEnabled(CONFIG_PATH);
 	let request = "";

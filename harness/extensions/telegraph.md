@@ -55,11 +55,13 @@ clipped to fit it.
 6. Numbers exact with units: `2.6 s`, `169,203 files`.
 
 Thinking is prose, so it carries this rule too, and one check now reads it.
-`/telegraph` owns the whole feature: `rule on|off` injects or drops this file,
-`score on|off` starts or stops the Jev score. `score` sends every thinking block
-of a run plus the reply to Jev and draws one line under the turn:
-`voice  think 2.8  reply 2.2`. Display only - nothing is corrected yet. The line
-reads `voice score unavailable: ...` when Jev is unreachable. The threshold `1.8`
-sits in the measured gap: pre-rule thinking scored `0.66-1.52`, telegraph replies
-`2.02-2.79`. A violation that survives the audit twice is the signal to add the
-nudge - pi's `message_end` can rewrite or reject a reply.
+`/telegraph on|off` injects or drops this file. The Jev score is asked for by
+hand: `/voice-score` sends the last run's thinking plus its reply to Jev,
+`/voice-score -0` walks the whole session, and a run nobody asks about is never
+scored. A scored run draws one line: `voice  think 2.8  reply 2.2`. Display only
+
+- nothing is corrected yet. The line reads `voice score unavailable: ...` when
+  Jev is unreachable. The threshold `1.8` sits in the measured gap: pre-rule
+  thinking scored `0.66-1.52`, telegraph replies `2.02-2.79`. A violation that
+  survives the audit twice is the signal to add the nudge - pi's `message_end` can
+  rewrite or reject a reply.
