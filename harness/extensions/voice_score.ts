@@ -41,6 +41,24 @@
  *     -0.232 against repeat count
  * Re-run the calibration before moving any number.
  *
+ * Confidence, surveyed 2026-10-06 over every voice-score entry on disk - 1,991
+ * answered questions in 189 session files (~/tmp/voice_probe/confidence_survey.py):
+ *   - a real per-answer number, median 0.48 over a 0-0.94 range, 82 distinct
+ *     values, and a median within-call spread of 0.29: only 5 of 202 calls
+ *     returned one number for every answer, so it separates the blocks of a
+ *     call instead of repeating the call's mood
+ *   - 3 of the 1,991 are exactly 0, all on think blocks: one scoring 1.14 beside
+ *     a reply at 0.6, one scoring 1.41 beside a reply at 0.8, one scoring 1.81
+ *     inside a 19-block call whose confidences run 0.14-0.65 and whose
+ *     neighbours score 1.82 and 2.00. All three sit next to ordinary scores, so
+ *     a zero does not mark a score to distrust.
+ *   - a zero cannot be a field that was not there: pi's parser insists on a
+ *     finite `confidence` and throws on anything else, which fails the whole
+ *     call rather than filling in a zero
+ * Verdict: keep it in the expanded view, never gate on it. Nothing measured
+ * says the number is calibrated - no threshold, gate, ledger row or decision in
+ * this file reads it - so it is a hint beside the score, not a weight on it.
+ *
  * The ledger is /Users/raveen_kumar_personal/.local/share/voice_score/scores.jsonl
  * (LEDGER_PATH): one row per scored block, machine-local, never committed.
  *
@@ -680,6 +698,9 @@ async function scoreRun(
 							kind: block.kind,
 							index: index + local,
 							score: voice.score,
+							// Jev's own 0-1 answer, read straight through: a 0 is the floor
+							// of that answer, not a missing field - pi's parser throws on a
+							// non-finite confidence (see Confidence in the header).
 							confidence: voice.confidence,
 						});
 					}
