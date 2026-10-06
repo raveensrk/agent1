@@ -19,6 +19,8 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 ## Working style
 
+- When using lists always prefer numbered lists.
+
 - Nothing vague - precise goal / result.
 
 - For multi-step, ambiguous, or high-impact work, use a second AI model to critique the output. Skip it for small, well-defined changes.
