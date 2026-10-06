@@ -106,10 +106,11 @@ was archived.
 **Dates.** A deadline is one of three forms: `2026-11-05`, `2026-11-05 20:30`,
 or a full org timestamp `<2026-11-05 Thu 20:30 +1w>` - the last is the only one
 that keeps a repeater. Org fills the day name itself for the first two. Anything
-else is refused: prose (`next friday`), an impossible date (`2026-13-45`) and an
-unwrapped repeater (`2026-11-05 +1w`) all exit non-zero, because org would
-otherwise absorb them silently (`garbage` becomes today, `2026-13-45` becomes
-`2027-02-14`).
+else is refused: prose (`next friday`), an impossible date (`2026-13-45`), an
+impossible time (`2026-11-05 25:00`) and an unwrapped repeater
+(`2026-11-05 +1w`) all exit non-zero, because org would otherwise absorb them
+silently (`garbage` becomes today, `2026-13-45` becomes `2027-02-14`, `25:00`
+becomes the next day at 01:00).
 
 **Postpone.** `postpone` moves a deadline instead of naming one: `+1h`, `+1d`,
 `+1w`, `+1m` or `+1y` moves it by that interval, and `today` or `tomorrow` names

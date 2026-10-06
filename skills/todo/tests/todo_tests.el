@@ -241,11 +241,13 @@ verbs, same parsing, a few milliseconds each."
     (should (string-match-p "DEADLINE: <2026-11-05 Thu>$" text))
     (should (string-match-p "DEADLINE: <2026-11-05 Thu 20:30>$" text))
     (should (string-match-p (regexp-quote "DEADLINE: <2026-11-05 Thu 20:30 ++1w>") text)))
-  (dolist (bad '("garbage" "next friday" "2026-13-45" "2026-11-05 +1w" "<2026-11-05"))
+  (dolist (bad '("garbage" "next friday" "2026-13-45" "2026-11-05 +1w" "<2026-11-05"
+                 "2026-11-05 25:00" "2026-11-05 20:99" "<2026-11-05 Thu 25:00 +1w>"))
     (should (eq 1 (nth 0 (todo-test--cli "create" (format "Bad %s" bad) "--deadline" bad))))
     (should-not (string-match-p (format "Bad %s" (regexp-quote bad)) (todo-test--text))))
   (todo-test--ok "create" "Edit me" "--deadline" "2026-12-01")
   (should (eq 1 (nth 0 (todo-test--cli "set-deadline" "Edit me" "garbage"))))
+  (should (eq 1 (nth 0 (todo-test--cli "set-deadline" "Edit me" "2026-12-01 25:00"))))
   (should (string-match-p "DEADLINE: <2026-12-01 Tue>" (todo-test--text))))
 
 (ert-deftest todo-write-refuses-a-heading-inside-a-block ()

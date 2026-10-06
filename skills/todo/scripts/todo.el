@@ -275,7 +275,10 @@ A bare date, a date with a time, or a full org timestamp - the only form that
 keeps a repeater. Prose and an unwrapped repeater are refused: org would
 otherwise absorb them silently - garbage becomes today.
 The stamp form is org's own `org-ts-regexp3', and whether the date exists is
-Emacs's own `calendar-date-is-valid-p', so neither is a regexp of ours."
+Emacs's own `calendar-date-is-valid-p', so neither is a regexp of ours.
+The time of day goes through the same test: org's parsers take 25:00 and
+`org-parse-time-string' hands back hour 25 rather than nil, so a value only
+this function refuses is a value org would silently roll into the next day."
   (let ((bare "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\( [0-9]\\{2\\}:[0-9]\\{2\\}\\)?\\'")
         (stamp (concat "\\`" org-ts-regexp3 "\\'")))
     (unless (or (string-match-p bare value) (string-match-p stamp value))
@@ -286,7 +289,17 @@ Emacs's own `calendar-date-is-valid-p', so neither is a regexp of ours."
                (list (string-to-number (substring date 5 7))
                      (string-to-number (substring date 8 10))
                      (string-to-number (substring date 0 4))))
-        (todo-fail (format "%s is not a real date" date)))))
+        (todo-fail (format "%s is not a real date" date))))
+    ;; Both accepted shapes take any two digits per field, and org rolls an
+    ;; impossible pair over in silence: 25:00 lands tomorrow at 01:00, 20:99 at
+    ;; 21:39. Encoding the pair and reading it back is the whole test, the same
+    ;; round trip `calendar-date-is-valid-p' does for the date.
+    (when (string-match "\\([0-9][0-9]\\):\\([0-9][0-9]\\)" value)
+      (let* ((hour (string-to-number (match-string 1 value)))
+             (minute (string-to-number (match-string 2 value)))
+             (back (decode-time (encode-time 0 minute hour 1 1 2000))))
+        (unless (and (= hour (nth 2 back)) (= minute (nth 1 back)))
+          (todo-fail (format "%s is not a real time" (match-string 0 value)))))))
   value)
 
 ;; Postpone. A shift is an interval or a day word; an interval moves the later
