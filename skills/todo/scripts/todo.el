@@ -601,13 +601,14 @@ the test `todo-ist-day-is-orgs-day-number' holds the two together."
 
 (defun todo-late-sort (items today)
   "ITEMS sorted the urgency way: most days late first, then A before D, then
-title, then path. `doing' picks the head of it and `read --due' prints the whole
-thing, so one definition orders both. Every item must carry a deadline - both
-callers filter first."
+title, then path. `doing' picks the head of it; `read --due' and `brief' print
+the whole thing, so one definition orders them all. A task with no deadline is
+not late and sorts with the due-today ones by priority - `brief' uses that for
+its undated group."
   (sort items
         (lambda (a b)
-          (let ((late-a (- today (todo--due-day (alist-get 'deadline a))))
-                (late-b (- today (todo--due-day (alist-get 'deadline b))))
+          (let ((late-a (- today (or (todo--due-day (alist-get 'deadline a)) today)))
+                (late-b (- today (or (todo--due-day (alist-get 'deadline b)) today)))
                 (rank-a (todo--priority-rank (alist-get 'priority a)))
                 (rank-b (todo--priority-rank (alist-get 'priority b))))
             (cond ((/= late-a late-b) (> late-a late-b))
@@ -639,6 +640,41 @@ then path: the priority-only pick."
                     (<= due today))))
            items)
           today))))
+
+(defun todo-brief-groups (items state today)
+  "ITEMS as (DUE . UNDATED) for `brief', each group in urgency order.
+DUE is the due window - a deadline today or earlier in IST, repeaters
+included. UNDATED is every open task with no deadline. Open work is TODO and
+IN_PROGRESS; STATE names another state and wins, the same rule `read --due'
+takes."
+  (let* ((open (if state
+                   items
+                 (cl-remove-if-not
+                  (lambda (item) (member (alist-get 'todo item) todo-doing-states))
+                  items)))
+         (due (cl-remove-if-not
+               (lambda (item)
+                 (let ((day (todo--due-day (alist-get 'deadline item))))
+                   (and day (<= day today))))
+               open))
+         (undated (cl-remove-if-not
+                   (lambda (item) (not (alist-get 'deadline item)))
+                   open)))
+    (cons (todo-late-sort due today)
+          (todo-late-sort undated today))))
+
+(defun todo-brief-easiest (items)
+  "The task in ITEMS with the smallest :Effort:, or nil.
+Ties go to the earlier item, so callers pass urgency order. A task with no
+:Effort: cannot be picked: guessing at size is not the CLI's job."
+  (let (best best-minutes)
+    (dolist (item items)
+      (let* ((text (alist-get 'effort item))
+             (minutes (and text (not (string-empty-p text))
+                           (todo--minutes-of-time text))))
+        (when (and minutes (or (not best-minutes) (< minutes best-minutes)))
+          (setq best item best-minutes minutes))))
+    best))
 
 (defun todo-tasks (file)
   "Every live task heading in FILE; the Archive container is history."
@@ -1052,6 +1088,17 @@ to, or nil when every container was already empty."
                ("--dir D" "scan D's *.org files instead of the configured dirs"))
      :note "--due and --overdue keep open work, TODO and IN_PROGRESS, unless --state names another one - which wins on its own. The list is one urgency order: most days late first, then A before D, then title, then path."
      :example "todo read --due -p A -n 1")
+    ("brief"
+     :summary "due or late + undated, then the easiest pick"
+     :usage "todo brief [--state S] [--tag T] [-p A|B|C|D] [--records] [--file F] [--dir D]"
+     :options (("--state S" "only that state")
+               ("--tag T" "only that tag")
+               ("-p, --priority A|B|C|D" "only tasks at that priority")
+               ("--records" "one plain record list, due first; no sections or pick")
+               ("--file F" "that board, and nothing else")
+               ("--dir D" "scan D's *.org files instead of the configured dirs"))
+     :note "Two groups: due (the deadline day is today or earlier in IST, repeaters included) and undated (no deadline), each in urgency order - most days late first, then A before D, then title, then path. Open work is TODO and IN_PROGRESS; --state S names another state and wins. The easiest line names the smallest :Effort: in the list, ties by urgency; without a recorded effort it prints none."
+     :example "todo brief")
     ("create"
      :summary "add a task"
      :usage "todo create <title> [options]"
@@ -1385,6 +1432,34 @@ A help request is answered here, before any verb runs."
            (dolist (item items)
              (princ (format "%-12s %s  (%s)\n"
                             (alist-get 'todo item) (alist-get 'title item) (alist-get 'path item)))))))
+
+      ("brief"
+       (let* ((state (todo--flag flags "--state"))
+              (priority (todo--checked-priority (todo--flag flags "--priority")))
+              (items (todo-read dirs state (car (todo--flags flags "--tag")) file)))
+         (when priority
+           (setq items (cl-remove-if-not
+                        (lambda (item) (equal (alist-get 'priority item) priority))
+                        items)))
+         (let* ((groups (todo-brief-groups items state (todo-ist-day)))
+                (due (car groups))
+                (undated (cdr groups))
+                (all (append due undated)))
+           (if (member "--records" rest)
+               (todo-print-records all)
+             (dolist (group (list (cons "due" due) (cons "undated" undated)))
+               (princ (format "%s (%d):\n" (car group) (length (cdr group))))
+               (dolist (item (cdr group))
+                 (princ (format "%-12s %s  (%s)\n"
+                                (alist-get 'todo item) (alist-get 'title item)
+                                (alist-get 'path item)))))
+             (let ((easiest (todo-brief-easiest all)))
+               (princ (if easiest
+                          (format "easiest: %s  (%s, %s)\n"
+                                  (alist-get 'title easiest)
+                                  (alist-get 'effort easiest)
+                                  (alist-get 'path easiest))
+                        "easiest: none (no :Effort: recorded)\n")))))))
 
       ("create"
        (todo-create rest flags))

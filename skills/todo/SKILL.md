@@ -152,6 +152,7 @@ scripts/todo create --help                  # that verb: usage, options, note, e
 scripts/todo resolve                        # board file and dir
 scripts/todo read [--state TODO] [--tag x] [-d|--due] [-p A|B|C|D] [-n 1] [--file F] [--recurring] [--records]  # config dirs + this board, or just F
 scripts/todo read --due -p A -n 1                # the most urgent overdue A task
+scripts/todo brief                              # due or late + undated, then the easiest pick
 scripts/todo doing [--file F]                   # one due TODO or IN_PROGRESS, as one record
 scripts/todo doing --priority A [--file F]      # one open A task, due or not
 scripts/todo --warm read [--records]            # same verb, Emacs stays up
@@ -214,6 +215,13 @@ scripts/todo config
   otherwise, the order a plain `read` prints. So `read --due -p A -n 1` is the
   most urgent overdue A task. `-n` takes a positive count and `-p` one of A, B,
   C, D - anything else exits non-zero.
+- `brief` is the review: one read that answers what is late and what is
+  unscheduled. Two groups - the `--due` window, then every open task with no
+  deadline - each in urgency order, under `due (N):` and `undated (N):` headers,
+  then one `easiest:` line. The pick is the smallest `:Effort:` in the list,
+  ties by urgency; with none recorded it prints `easiest: none (no :Effort: recorded)`. Default open work only, TODO and IN_PROGRESS; `--state S` names
+  another state and wins, the rule `--due` uses. `--records` drops the headers
+  and the pick: one plain record list, due first.
 - `read` prints `STATE  Title  (path)` - no deadline, so overdue is not visible
   in a plain listing. Use `--due`/`--recurring` rather than re-parsing the
   list line.

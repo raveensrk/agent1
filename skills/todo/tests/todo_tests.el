@@ -442,6 +442,81 @@ verbs, same parsing, a few milliseconds each."
     (should (equal (mapcar (lambda (i) (todo-test--field i "title")) done) '("Say \"hi\""))))
   (should (equal (nth 1 (todo-test--ok "read" "--records" "--state" "OBSOLETE")) "")))
 
+;;; brief
+
+(ert-deftest todo-brief-splits-due-and-undated-in-urgency-order ()
+  (todo-test--setup)
+  (todo-test--write
+   (concat "* TODO [#A] Undated A\n"
+           "* TODO [#B] Undated B\n"
+           "* LATER [#A] Deferred\n"
+           "* DONE Finished\n"
+           "* TODO Overdue plain\n"
+           "DEADLINE: <2020-01-01 Wed>\n"
+           (format "* TODO [#B] Due today\nDEADLINE: <%s %s>\n"
+                   (todo-test--ist-date) (todo--day-name (todo-ist-day)))
+           "* TODO [#A] Future\n"
+           "DEADLINE: <2999-01-01 Thu>\n"))
+  (let ((out (nth 1 (todo-test--ok "brief"))))
+    (should (string-match-p (concat "^" (regexp-quote "due (2):")) out))
+    (should (string-match-p (concat "^" (regexp-quote "undated (2):")) out))
+    (should (string-match-p "Overdue plain" out))
+    (should (string-match-p "Due today" out))
+    (should-not (string-match-p "Deferred\\|Finished\\|Future" out))
+    ;; Urgency order inside a group, the due group before the undated one.
+    (should (< (string-match "Overdue plain" out) (string-match "Due today" out)))
+    (should (< (string-match "Undated A" out) (string-match "Undated B" out)))
+    (should (< (string-match "Due today" out) (string-match "Undated A" out)))
+    (should (string-match-p (regexp-quote "easiest: none (no :Effort: recorded)") out))))
+
+(ert-deftest todo-brief-picks-the-smallest-recorded-effort ()
+  (todo-test--setup)
+  (todo-test--write
+   (concat "* TODO [#A] Alpha job\n:PROPERTIES:\n:Effort: 0:30\n:END:\n"
+           "* TODO [#C] Charlie job\n:PROPERTIES:\n:Effort: 0:30\n:END:\n"
+           "* TODO Big job\n:PROPERTIES:\n:Effort: 2:00\n:END:\n"))
+  ;; The smallest effort wins; a tie goes to the earlier, more urgent item.
+  (should (string-match-p (regexp-quote "easiest: Alpha job  (0:30,")
+                          (nth 1 (todo-test--ok "brief"))))
+  ;; A due routine beats an undated task when its effort is smaller.
+  (todo-test--write
+   (concat "* TODO Routine\nDEADLINE: <2020-01-01 Wed 08:00 +1w>\n"
+           ":PROPERTIES:\n:Effort: 0:05\n:END:\n"
+           "* TODO [#A] Alpha job\n:PROPERTIES:\n:Effort: 0:30\n:END:\n"))
+  (should (string-match-p (regexp-quote "easiest: Routine  (0:05,")
+                          (nth 1 (todo-test--ok "brief"))))
+  ;; No effort recorded: an honest none, no guess.
+  (todo-test--write "* TODO Plain\n")
+  (should (string-match-p (regexp-quote "easiest: none (no :Effort: recorded)")
+                          (nth 1 (todo-test--ok "brief")))))
+
+(ert-deftest todo-brief-takes-the-same-filters-and-prints-records ()
+  (todo-test--setup)
+  (todo-test--write
+   (concat "* TODO [#A] Home A :home:\n"
+           "* TODO [#B] Home B :home:\n"
+           "* TODO [#A] Work A :work:\n"
+           "* LATER [#A] Deferred :home:\n"
+           "* TODO [#C] Overdue home :home:\n"
+           "DEADLINE: <2020-01-01 Wed>\n"))
+  (let ((out (nth 1 (todo-test--ok "brief"))))
+    (should (string-match-p (concat "^" (regexp-quote "due (1):")) out))
+    (should (string-match-p (concat "^" (regexp-quote "undated (3):")) out))
+    (should-not (string-match-p "Deferred" out)))
+  (let ((out (nth 1 (todo-test--ok "brief" "-p" "A" "--tag" "home"))))
+    (should (string-match-p "Home A" out))
+    (should-not (string-match-p "Home B\\|Work A\\|Overdue home\\|Deferred" out)))
+  (let ((out (nth 1 (todo-test--ok "brief" "--state" "LATER"))))
+    (should (string-match-p "Deferred" out))
+    (should-not (string-match-p "Home A\\|Overdue home" out)))
+  ;; --records: one plain list, due first, no headers and no pick.
+  (let* ((out (nth 1 (todo-test--ok "brief" "--records")))
+         (items (todo-test--records out)))
+    (should-not (string-match-p (regexp-quote "due (") out))
+    (should-not (string-match-p "easiest:" out))
+    (should (equal '("Overdue home" "Home A" "Work A" "Home B")
+                   (mapcar (lambda (item) (todo-test--field item "title")) items)))))
+
 ;;; repeat cookies
 
 (ert-deftest todo-opens-the-emacs-that-runs-it ()
@@ -1112,7 +1187,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   ;; A verb with no entry would be missing from the main help; this fails
   ;; until the table above grows the same entry.
   (should (equal (mapcar #'car todo-help)
-                 '("resolve" "doing" "read" "create" "rename" "delete"
+                 '("resolve" "doing" "read" "brief" "create" "rename" "delete"
                    "set-state" "set-deadline" "postpone" "set-priority" "set-effort"
                    "add-tag" "remove-tag" "append" "set-note" "obsolete" "complete"
                    "archive" "capture" "status" "edit" "edit-vim"
