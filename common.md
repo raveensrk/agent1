@@ -79,6 +79,8 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - An ambiguous request that follows unrelated work and could target either the harness or the project in cwd: confirm scope with one question before editing anything outside cwd (`~/.pi`, dotfiles, `~/repos`); default to the project in cwd.
 
+- Symlinks: never create one, never commit one. Warn me first and name the alternative you chose instead - [no_symlinks.py](harness/checks/no_symlinks.py) decides it.
+
 ## Browser and computer use
 
 Topic file: [browser.md](browser.md) - maximize first, browser order, one-tab rule, window frames.

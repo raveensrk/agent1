@@ -11,3 +11,8 @@ reads, and the check decides the rule. The check is public; the allowlist is pri
 never as findings, and never changes the exit code - it does nothing to a repo that is not mine. A symlink
 to a repo is a finding either way: the check reports one inside a repo, the walker reports one in a folder
 that no repo owns.
+
+Every symlink, not only one that points at a repo, is a finding now: [no_symlinks](~/repos/agent1/harness/checks/no_symlinks.py)
+scans the working tree and the index of the repo it runs in, exempts the same `SKIP_DIRS`, and prints one
+finding per link naming the alternative to use instead. There is no allowlist: a repo holds no link. The
+warn-before-creating half of the rule lives in [common.md](common.md)'s Working style.

@@ -130,9 +130,9 @@ installed on the machine. Each item is a link back to this clone, so a
 
 | Item | Claude Code | Codex | pi |
 |---|---|---|---|
-| `skills/*` | `~/.claude/skills/` | `~/.codex/skills/` | settings.json (global skills only, via `~/dot/script/,agent_config.py`) |
+| `skills/*` | `~/.claude/skills/` | `~/.codex/skills/` | `~/.agents/skills/` (Pi reads the Agent Skills dir) |
 | `commands/*.md` (none yet) | `~/.claude/commands/` | not supported | `~/.pi/agent/prompts/` |
-| `harness/extensions/*.ts` | not supported | not supported | `~/.pi/agent/extensions/` |
+| `harness/extensions/*.ts` | not supported | not supported | pi package: `"~/repos/agent1"` in `~/dot/config/pi/settings.json` `packages` (local source, loads live) |
 
 - Idempotent: run it again after every `git pull`. It adds new items and
   removes links to items that were deleted or renamed here.
