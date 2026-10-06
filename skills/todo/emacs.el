@@ -14,6 +14,14 @@
 (setq org-agenda-window-setup 'only-window
       org-agenda-restore-windows-after-quit t)
 
+;; `x' completes the task: DONE, then refresh. Vanilla `x' (org-agenda-exit)
+;; is useless here, so this replaces it.
+(defun todo-agenda-done ()
+  "Mark the entry at point DONE and refresh the agenda."
+  (interactive)
+  (org-agenda-todo "DONE"))
+(define-key org-agenda-mode-map "x" #'todo-agenda-done)
+
 (defvar todo-doing-rebuilding nil)
 (defvar-local todo-doing-marker nil)
 (defvar-local todo-doing-stamp nil)
