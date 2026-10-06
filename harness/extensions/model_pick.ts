@@ -1,17 +1,17 @@
 /**
- * Prompts for model and thinking level on every session start
- * (startup, resume, new, fork, reload). Searchable pickers like
+ * Prompts for model and thinking level on session start, except reload.
+ * Searchable pickers like
  * /model and /thinking; Esc keeps the current value.
  */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { ThinkingLevel } from "@earendil-works/pi-ai";
-import { Container, DynamicBorder, SelectList, Text, type SelectItem } from "@earendil-works/pi-tui";
+import { Container, SelectList, Text, type SelectItem } from "@earendil-works/pi-tui";
 
 const LEVELS: ThinkingLevel[] = ["minimal", "low", "medium", "high", "xhigh", "max"];
 
 export default function (pi: ExtensionAPI) {
-	pi.on("session_start", async (_event, ctx) => {
-		await pick(ctx);
+	pi.on("session_start", async (event, ctx) => {
+		if (event.reason !== "reload") await pick(ctx);
 	});
 
 	async function pick(ctx: ExtensionContext) {
@@ -49,7 +49,6 @@ export default function (pi: ExtensionAPI) {
 	function chooser(ctx: ExtensionContext, title: string, items: SelectItem[]): Promise<string | null> {
 		return ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
 			const container = new Container();
-			container.addChild(new DynamicBorder((str) => theme.fg("accent", str)));
 			container.addChild(new Text(theme.fg("accent", theme.bold(title))));
 
 			const selectList = new SelectList(items, Math.min(items.length, 10), {
@@ -64,7 +63,6 @@ export default function (pi: ExtensionAPI) {
 			container.addChild(selectList);
 
 			container.addChild(new Text(theme.fg("dim", "type to filter • ↑↓ navigate • enter select • esc cancel")));
-			container.addChild(new DynamicBorder((str) => theme.fg("accent", str)));
 
 			return {
 				render(width: number) {
