@@ -5,13 +5,14 @@
  */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { ThinkingLevel } from "@earendil-works/pi-ai";
-import { Container, SelectList, Text, type SelectItem } from "@earendil-works/pi-tui";
+import { Container, fuzzyFilter, getKeybindings, Input, SelectList, Spacer, Text, type SelectItem } from "@earendil-works/pi-tui";
 
 const LEVELS: ThinkingLevel[] = ["minimal", "low", "medium", "high", "xhigh", "max"];
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (event, ctx) => {
-		if (event.reason !== "reload") await pick(ctx);
+		if (event.reason === "reload" || ctx.mode !== "tui") return;
+		await pick(ctx);
 	});
 
 	async function pick(ctx: ExtensionContext) {
@@ -45,24 +46,38 @@ export default function (pi: ExtensionAPI) {
 		if (level) pi.setThinkingLevel(level as ThinkingLevel);
 	}
 
-	// Searchable SelectList overlay; resolves to item value or null on Esc
+	// Fuzzy-searchable picker; resolves to item value or null on Esc.
 	function chooser(ctx: ExtensionContext, title: string, items: SelectItem[]): Promise<string | null> {
 		return ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
 			const container = new Container();
+			const search = new Input({ prompt: "Search: ", placeholder: "type to filter" });
+			search.focused = true;
+			const listBox = new Container();
+			const style = {
+				selectedPrefix: (text: string) => theme.fg("accent", text),
+				selectedText: (text: string) => theme.fg("accent", text),
+				description: (text: string) => theme.fg("muted", text),
+				scrollInfo: (text: string) => theme.fg("dim", text),
+				noMatch: (text: string) => theme.fg("warning", text),
+			};
+			let list: SelectList;
+
+			function buildList(filtered: SelectItem[]) {
+				list = new SelectList(filtered, Math.max(1, Math.min(filtered.length, 10)), style);
+				list.onSelect = (item) => done(item.value);
+				list.onCancel = () => done(null);
+				listBox.clear();
+				listBox.addChild(list);
+			}
+
 			container.addChild(new Text(theme.fg("accent", theme.bold(title))));
-
-			const selectList = new SelectList(items, Math.min(items.length, 10), {
-				selectedPrefix: (text) => theme.fg("accent", text),
-				selectedText: (text) => theme.fg("accent", text),
-				description: (text) => theme.fg("muted", text),
-				scrollInfo: (text) => theme.fg("dim", text),
-				noMatch: (text) => theme.fg("warning", text),
-			});
-			selectList.onSelect = (item) => done(item.value);
-			selectList.onCancel = () => done(null);
-			container.addChild(selectList);
-
-			container.addChild(new Text(theme.fg("dim", "type to filter • ↑↓ navigate • enter select • esc cancel")));
+			container.addChild(new Spacer(1));
+			container.addChild(search);
+			container.addChild(new Spacer(1));
+			container.addChild(listBox);
+			container.addChild(new Spacer(1));
+			container.addChild(new Text(theme.fg("dim", "type to search · ↑↓ navigate · enter select · esc cancel")));
+			buildList(items);
 
 			return {
 				render(width: number) {
@@ -72,7 +87,18 @@ export default function (pi: ExtensionAPI) {
 					container.invalidate();
 				},
 				handleInput(data: string) {
-					selectList.handleInput(data);
+					const kb = getKeybindings();
+					const isNav = kb.matches(data, "tui.select.up") ||
+						kb.matches(data, "tui.select.down") ||
+						kb.matches(data, "tui.select.confirm") ||
+						kb.matches(data, "tui.select.cancel");
+					if (isNav) {
+						list.handleInput(data);
+					} else {
+						search.handleInput(data);
+						const query = search.getValue();
+						buildList(query ? fuzzyFilter(items, query, (item) => `${item.label} ${item.value} ${item.description ?? ""}`) : items);
+					}
 					tui.requestRender();
 				},
 			};
