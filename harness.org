@@ -1,14 +1,23 @@
 #+title: Harness
 
 * Harness
+:PROPERTIES:
+:CUSTOM_ID: harness
+:END:
 
 Model usage records: [[file:model_usage_history.org][Model usage history]].
 Model recommendations and reviews: [[file:model.org][Models]].
 
+** Recommendations
+1. Pi
+2. OpenCode
+3. Claude Code
+4. Codex
+
 ** Reviews
 Personal assessments of the agent harnesses I use. Dated notes, newest first.
 
-*** Rules
+*** Rules :publish_hide:
 - Use the full harness name; include its version when known, otherwise mark the version unknown.
 - Keep dated entries newest first. Use the review date, not a model-usage scan date.
 - Put the harness name, version, and rating in the heading only. Ratings are out of 10, written as [7]; use [unrated] when missing.
@@ -16,9 +25,11 @@ Personal assessments of the agent harnesses I use. Dated notes, newest first.
 - Write review and notes directly under each entry, including tasks, strengths, problems, and whether to reuse. No separate Review or Verdict headings or duplicate properties.
 
 *** Rating Scale
-Ratings range from 0 to 10; fractional scores are allowed. See [[file:model.org::*Rating Scale][the model rating scale]] for label meanings.
+Ratings range from 0 to 10; fractional scores are allowed. See [[file:model.org::#model-rating-scale][the model rating scale]] for label meanings.
 
 *** Journal
+
+**** Template :publish_hide:
 Newest first. Copy the template, fill it in, paste directly below the marker.
 
  #+begin_example
@@ -41,6 +52,6 @@ As good as Claude Code, but needs better models.
 
 Claude Code paired with Claude Opus or Claude Fable models is very powerful.
 
-**** 2026-10-06 - pi 1.0.4 [10] :lightweight:
+**** 2026-10-06 - Pi 1.0.4 [10] :lightweight:
 
 Good learning experience and a lightweight program.

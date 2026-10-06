@@ -1,0 +1,7 @@
+#+TITLE: Models & Harness Reviews
+#+OPTIONS: toc:2 num:nil author:nil email:nil creator:nil date:nil html-preamble:nil html-postamble:nil
+
+# Skip source-file metadata; include each document's Org content in this page.
+#+INCLUDE: "model.org" :lines "3-"
+
+#+INCLUDE: "harness.org" :lines "3-"

@@ -84,6 +84,7 @@ answer means the import did not load.
 | `git.md` | Commits and pull requests |
 | `harness/` | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
 | `install.py` | Installs skills, commands and extensions into Claude Code, Codex and pi |
+| `Makefile` | Builds the shareable one-page HTML export |
 | `jobs.md` | ETA rules for long-running jobs |
 | `macos.md` | macOS command traps |
 | [`index.org`](./index.org) | Index of model reviews, harness reviews, and usage records |
@@ -98,6 +99,11 @@ answer means the import did not load.
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
 | `terminologies.md` | Personal prompt-vocab notes |
 | `use_case.md` | Personal notes: what I use agents for |
+
+## Shareable HTML
+
+Requires Emacs with Org Mode. Run `make html` to build `dist/agent1.html`.
+The export includes model and harness reviews; it excludes model usage history.
 
 ## Skills
 
