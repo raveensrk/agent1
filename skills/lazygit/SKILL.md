@@ -1,6 +1,6 @@
 ---
 name: lazygit
-description: Open lazygit for every repo this session wrote to that has uncommitted changes - a tab in iTerm, a window in Terminal.app. Use when the user says /lazygit, "open my dirty repos in lazygit", "show the repos I changed this session in lazygit", "which repos have uncommitted changes", or "open lazygit for everything I touched".
+description: Open lazygit for every repo this session wrote to that has uncommitted changes - a tab in iTerm, a window in Terminal.app - or for one repo the user names, clean or not. Use when the user says /lazygit, "open my dirty repos in lazygit", "show the repos I changed this session in lazygit", "which repos have uncommitted changes", "open lazygit for everything I touched", or "open lazygit in a tab for <repo>".
 ---
 
 # lazygit
@@ -43,6 +43,9 @@ ends when lazygit quits.
 
 Other flags, only when the answers need them:
 
+- `--repo <path>` - open that repo whether it is clean or not, skipping the
+  session scan. Repeatable. Use it when the user names a repo: the scan answers
+  "everything I touched", not "open this one".
 - `--terminal iterm` or `--terminal terminal` - override the auto-detection.
 - `--session-file <path.jsonl>` - read another session.
 

@@ -12,7 +12,10 @@ Terminal.app (which has no AppleScript tab creation), each running
 
 Usage:
   open_dirty_repos.py [--dry-run] [--terminal auto|iterm|terminal]
-                      [--session-file PATH] [--self-test]
+                      [--session-file PATH] [--repo PATH]... [--self-test]
+
+`--repo PATH` skips the session scan and opens that repo whether it is clean or
+not - the user named it, so the dirty filter does not apply. Repeatable.
 """
 from __future__ import annotations
 
@@ -148,6 +151,15 @@ def collect(targets: list[str], cwd: Path) -> list[tuple[str, Path, tuple[int, i
     return rows
 
 
+def named_repo(target: str) -> tuple[str, Path, tuple[int, int, str]] | None:
+    """One repo the user named by path, clean or dirty; None when it is not a repo."""
+    root = repo_root(target, Path.cwd())
+    if root is None:
+        return None
+    branch = git(root, "symbolic-ref", "--short", "-q", "HEAD").strip() or "detached"
+    return root.name, root, dirty_state(root) or (0, 0, branch)
+
+
 def pick_terminal(requested: str) -> str:
     if requested in ("iterm", "terminal"):
         return requested
@@ -245,10 +257,13 @@ def report(rows, what: str) -> None:
     if not rows:
         print("No dirty repos found in this session.")
         return
-    print(f"{len(rows)} repos with uncommitted changes, {what}")
+    all_dirty = all(changed or untracked for _, _, (changed, untracked, _) in rows)
+    head = f"{len(rows)} repos with uncommitted changes" if all_dirty else f"{len(rows)} repos"
+    print(f"{head}, {what}")
     width = max(len(name) for name, _, _ in rows)
     for name, _, (changed, untracked, branch) in rows:
-        print(f"  {name:<{width}}  {changed} changed, {untracked} untracked  ({branch})")
+        state = f"{changed} changed, {untracked} untracked" if changed or untracked else "clean"
+        print(f"  {name:<{width}}  {state}  ({branch})")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -258,6 +273,12 @@ def main(argv: list[str] | None = None) -> int:
         "--terminal", choices=("auto", "iterm", "terminal"), default="auto", help="which terminal to use"
     )
     parser.add_argument("--session-file", help="session jsonl to read instead of the current one")
+    parser.add_argument(
+        "--repo",
+        action="append",
+        metavar="PATH",
+        help="open this repo whether clean or not, skipping the session scan; repeatable",
+    )
     parser.add_argument("--self-test", action="store_true", help="run the built-in check")
     args = parser.parse_args(argv)
 
@@ -267,9 +288,18 @@ def main(argv: list[str] | None = None) -> int:
     if not shutil.which("lazygit"):
         raise SystemExit("ERROR: lazygit not on PATH. Install it: brew install lazygit")
 
-    path = session_path(args.session_file)
-    targets, cwd = session_writes(path)
-    rows = collect(targets, cwd)
+    if args.repo:
+        rows: list[tuple[str, Path, tuple[int, int, str]]] = []
+        for target in args.repo:
+            row = named_repo(target)
+            if row is None:
+                raise SystemExit(f"ERROR: no git repo at {target}")
+            if all(row[1] != existing[1] for existing in rows):
+                rows.append(row)
+    else:
+        path = session_path(args.session_file)
+        targets, cwd = session_writes(path)
+        rows = collect(targets, cwd)
     terminal = pick_terminal(args.terminal)
     if terminal == "iterm":
         mode, what = "tabs", "opening tabs in iTerm"
