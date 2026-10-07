@@ -1,5 +1,7 @@
 # Common
 
+Agent1 is for everyone. Public rules, written for any agent and any harness.
+
 ## General
 
 At session start, Read these files
