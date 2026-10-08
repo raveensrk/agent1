@@ -164,6 +164,12 @@ After installing or removing pi packages, verify with `timeout 90 pi -p "reply w
 
 Files and directories use `snake_case` - lowercase words joined by underscores. [file_naming.py](harness/checks/file_naming.py) decides it: lowercase letters, digits, underscores and dots only, with the canonical tool names (`README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `SKILL.md`, `.gitignore`, `.claude-plugin/`) exempt. Skill directories under `skills/` are kebab-case by the Agent Skills format, decided by [skill_frontmatter.py](harness/checks/skill_frontmatter.py). Pi package prompts under `prompts/` may use kebab-case `.md` filenames: Pi uses them as slash-command names.
 
+Names are singular: files, directories, fields, keys, tables, variables and CLI verbs (`tag` not `tags`, `task/` not `tasks/`). Use the plural only when the singular is already taken or would read wrong.
+
+## Theme
+
+Dark theme by default: HTML pages, reports, apps, GUIs, terminal output colors and tool configs. Do not follow the system's light setting. Offer light only as an explicit option the user switches to.
+
 ## Markdown
 
 When linking file paths, use markdown links.
