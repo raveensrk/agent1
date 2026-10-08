@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Scan macOS for installed apps (GUI + brew), leftovers. Writes JSON to stdout."""
+"""Scan macOS for installed apps (GUI + brew), leftovers. Writes JSON to stdout.
+
+usage: scan.py [-h|--help]
+example: python3 scripts/scan.py > ~/tmp/declutter/scan.json
+
+Read-only. Reads /Applications, ~/Applications, the Homebrew Cellar and
+Caskroom under $HOMEBREW_PREFIX (default /opt/homebrew), ~/Library/Application
+Support, ~/Library/Caches, ~/Library/Logs, the Xcode caches under
+~/Library/Developer, and ~/.config/declutter/ignored.json (paths to hide).
+Runs `mdls` and `brew list --cask`. Exit 0 with the JSON on stdout.
+"""
 import json
 import os
 import plistlib
@@ -251,6 +261,9 @@ def scan_files():
 
 
 def main():
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        return
     apps, casks = scan_apps()
     formulae = scan_formulae()
     installed_keys = ({norm(a["name"]) for a in apps}

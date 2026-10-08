@@ -3,11 +3,17 @@
 
     python3 inventory.py [DIR]        default: the current directory
     python3 inventory.py --selftest   this script's own check
+    python3 inventory.py -h|--help    this text
 
 Prints the git root, the instruction files and the docs they read at session
 start with line counts, the checks that already exist, the guards and git hooks
 already wired, and which agent harnesses are installed. Classifying each rule is
 judgement; this script is the repeatable discovery that comes first.
+
+Example: python3 inventory.py ~/repos/agent2
+
+Runs git and ~/repos/agent1/harness/lint.py --list; writes nothing outside a
+temp dir. Exit 0; --selftest exits nonzero on a failed check.
 """
 from __future__ import annotations
 
@@ -139,6 +145,9 @@ def selftest() -> int:
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        sys.exit(0)
     if "--selftest" in sys.argv:
         sys.exit(selftest())
     print(report(sys.argv[1] if len(sys.argv) > 1 else "."))

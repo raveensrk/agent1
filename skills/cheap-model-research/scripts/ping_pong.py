@@ -8,9 +8,14 @@ the model's thinking time; identical for every model, so comparisons hold.
 Usage:
   ping_pong.py model1 [model2 ...] [--runs N]     default runs=3
   ping_pong.py --prompts                          print the two prompts
+  ping_pong.py -h|--help                          this text
+
+Example: ping_pong.py <winner> <runner1> <runner2> --runs 3
 
 Output: one JSON object with per-model short (times, mean, median) and long
-(total seconds, output chars) results.
+(total seconds, output chars) results; per-model progress on stderr. Runs
+`pi -p` (600 s cap per call, 2 retries); writes no files. Exit 0; 1 with the
+usage line when no model is given.
 """
 
 import json
@@ -47,6 +52,9 @@ def run(model, prompt, timeout=600, retries=2):
 
 def main():
     args = sys.argv[1:]
+    if {"-h", "--help"} & set(args):
+        print(__doc__)
+        return
     if "--prompts" in args:
         print("SHORT:", SHORT, "\nLONG:", LONG)
         return

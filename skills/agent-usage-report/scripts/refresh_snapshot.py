@@ -5,6 +5,11 @@ Run this occasionally so the offline fallback stays current:
 
     python3 scripts/refresh_snapshot.py
 
+Options: -h, --help prints this text; there are no others. Fetches
+https://models.dev/api.json (60 s timeout) and overwrites
+assets/prices_snapshot.json.gz. Exit 0 once written; a failed fetch exits 1
+with a traceback.
+
 Writes a compact form: provider -> models -> {cost, limit.context}. Everything
 else models.dev publishes (names, modalities, release dates) is dropped, which
 takes the payload from ~4.9 MB to ~100 KB gzipped.
@@ -44,6 +49,9 @@ def compact(source):
 
 
 def main():
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        return 0
     print("fetching %s" % SOURCE)
     request = urllib.request.Request(SOURCE, headers={"User-Agent": "agent-usage-report"})
     with urllib.request.urlopen(request, timeout=60) as response:

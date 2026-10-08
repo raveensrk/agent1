@@ -9,6 +9,10 @@ The adapter tests point every harness at ``tests/fixtures`` through the
 environment overrides the adapters already honour, so they never touch real
 logs. Expected token totals are written out explicitly: if an adapter changes
 its parsing, these numbers fail loudly.
+
+Options: -h, --help prints this text, then unittest's own options (-k
+PATTERN, -f, ...). Sets the AGENT_REPORT_* env vars for its own run; writes
+only temp files. Exit 0 when every test passes, 1 on a failure.
 """
 
 from __future__ import annotations
@@ -357,4 +361,7 @@ class OutputDirTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    # -h and --help: this docstring, then unittest prints its options and exits 0.
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
     unittest.main(verbosity=2)

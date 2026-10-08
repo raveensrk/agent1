@@ -14,6 +14,14 @@ Usage:
   catalog.py            full pipeline (network for models.dev)
   catalog.py --selftest parser tests only, no network
   catalog.py --check    live pipeline, asserts instead of JSON
+  catalog.py -h|--help  this text
+
+Example: catalog.py > ~/tmp/catalog.json
+
+Runs `pi --list-models` and `opencode models`. Reads models.dev from
+~/.cache/cheap_model_research/api.json when present, else fetches
+https://models.dev/api.json and writes it there; delete the file to refresh
+prices. Exit 0; a failed command or assertion exits 1 with a traceback.
 """
 
 import json
@@ -215,6 +223,9 @@ def selftest():
 
 
 if __name__ == "__main__":
+    if {"-h", "--help"} & set(sys.argv[1:]):
+        print(__doc__)
+        sys.exit(0)
     if "--selftest" in sys.argv:
         selftest()
     elif "--check" in sys.argv:

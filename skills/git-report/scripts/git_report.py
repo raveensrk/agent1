@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Collect a person's git commits across their repos for a time window; prints JSON."""
+"""Collect a person's git commits across their repos for a time window; prints JSON.
+
+Config: ~/.local/git_report.toml (dirs, repos, emails, and default_hours or
+start/end); --suggest proposes values. Every repo is fetched, 8 at a time,
+with ssh in batch mode; a remote URL is cloned as a mirror into
+~/.cache/git_report first. Exit 0 with JSON on stdout; 1 with an ERROR line
+for a bad config, window or flag.
+
+Example: git_report.py -1d
+"""
 import concurrent.futures, datetime, json, os, re, subprocess, sys
 
 if sys.version_info < (3, 11):
@@ -269,11 +278,16 @@ USAGE = """usage:
   git_report.py WINDOW      0d today, -1d yesterday, -Nd that one day,
                             -N last N days, -Nw or '-N week' last N weeks
   git_report.py --check [--start ...] [--end ...]   validate config, no fetch
-  git_report.py --suggest                           suggest config values"""
+  git_report.py --suggest                           suggest config values
+  git_report.py -h|--help                           this text"""
 
 
 def main():
     argv = sys.argv[1:]
+    if {"-h", "--help"} & set(argv):
+        print(__doc__)
+        print(USAGE)
+        return
     if argv == ["--suggest"]:
         return suggest()
     check = "--check" in argv
