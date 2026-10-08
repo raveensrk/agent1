@@ -3,7 +3,8 @@
 Split from [common.md](common.md); routed by [rules_context.ts](harness/extensions/rules_context.ts).
 
 A CLI I write tells me how to use it - the author six months later is the
-caller. The worked example is `scripts/todo`, help table and all.
+caller. The worked example is Waypoint's CLI,
+[src/cli.ts](~/repos/waypoint/src/cli.ts), help table and all.
 
 - `-h` and `--help` are a hard rule: every CLI app has both, on the main command
   and on every subcommand. Usage line, what the app does, every option, one
@@ -18,8 +19,8 @@ caller. The worked example is `scripts/todo`, help table and all.
   A letter already taken in that app goes to the next free one; when none fits,
   the long flag stands alone.
 - One table drives the main help and every subcommand's help, and a test asserts
-  every verb has an entry, so the two cannot drift (see `todo-help` in
-  [scripts/todo.el](skills/todo/scripts/todo.el)).
+  every verb has an entry, so the two cannot drift (see `VERB` in
+  [src/cli.ts](~/repos/waypoint/src/cli.ts) and its help test).
 
 `harness/checks/cli_help.py` decides the hard half: a file that parses options
 must mention both `-h` and `--help`, and the finding names the one that is

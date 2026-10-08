@@ -238,8 +238,7 @@ export function guardHit(command: string): Hit | null {
 			name: `unbounded test run (${runner})`,
 			fix: [
 				"Bound it, and state the ETA before starting it (jobs.md):",
-				"  timeout 180 emacs -Q --batch -l tests/todo_tests.el -f ert-run-tests-batch-and-exit",
-				"  scripts/test                      # the todo skill's suite: bounded, prints the failures",
+				"  timeout 180 bun test",
 				"  timeout 900 swift test",
 			].join("\n"),
 		};

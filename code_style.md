@@ -41,9 +41,3 @@ From <https://fabiensanglard.net/agent.md/index.html>.
 - Don't touch blocks of code unrelated to the feature you implement. e.g. Don't add comments to a block of code if you did not create it or modify it. As much as possible try to minimize the number of changed lines when implementing a feature.
 
 - If the prompt is a high-impact or regression-prone bugfix, write a failing test first, then the fix, then confirm the test passes. Skip this for tiny obvious fixes.
-
-## Emacs
-
-- Invoke Emacs interactively with `-nw` (terminal UI, no window). `--batch` never opens a window, so `-nw` changes nothing there.
-- `alist-get` compares keys with `eq` by default, so a string-keyed alist silently returns nil. Use `assoc` for string keys, or intern the keys as symbols.
-- `write-region` takes MUSTBENEW as the 7th argument: `(write-region text nil file nil nil nil 'excl)`. A symbol in the 5th slot is VISIT and silently overwrites.

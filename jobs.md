@@ -17,7 +17,6 @@ ETA rules for long-running jobs. Loaded from [common.md](common.md) at session s
 
 - `command_guard` refuses a test runner (pytest, `cargo test`, `swift test`,
   `go test`, npm/yarn test, ERT) with no `timeout N`, and prints the bounded form.
-  The todo skill's suite is `scripts/test`: bounded, prints the failures.
 
 Applies to any background job, and any foreground job expected to exceed 10 min.
 
