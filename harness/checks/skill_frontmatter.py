@@ -10,7 +10,7 @@ the damaged files were still valid markdown, still mdformat-clean, and every
 other check passed. This is the signal that was missing.
 
 It also holds the convention the skills README states: the directory names the
-skill, so `skills/todo/SKILL.md` carries `name: todo`.
+skill, so `skills/lazygit/SKILL.md` carries `name: lazygit`.
 
     skill_frontmatter.py FILE...      (or paths on stdin)
 """

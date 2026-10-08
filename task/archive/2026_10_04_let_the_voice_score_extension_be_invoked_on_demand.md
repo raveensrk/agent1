@@ -1,0 +1,18 @@
+---
+id: "ncpd3p4tkx"
+title: "Let the voice score extension be invoked on demand"
+state: "done"
+due: ""
+priority: ""
+tag: []
+repeat: ""
+effort: ""
+postpone: 0
+created: "2026-10-04"
+closed: "2026-10-06T23:47"
+---
+
+Scope: harness/extensions/voice_score.ts, run by /voice-score on|off (Jev score line under the turn). Change it so the score runs only when asked for, not on every turn.
+Built 2026-10-06: /voice-score scores the last run, /voice-score -0 walks every run of the session, and nothing is scored on its own. Runs come from ctx.sessionManager.getBranch(), thinking blocks included, so a turn that finished before the command was typed is scoreable. The on|off toggle, its config file and the agent_before_settle auto-score are gone; ~/.pi/agent/voice_score.json moved to ~/.Trash/voice_score.json-2026-10-06. call_score.ts imported readEnabled/writeEnabled from voice_score.ts and broke the load until it got local copies. Verified: test_voice_score.ts (new runsOf cases plus a fake-pi command test: last run, -0, bad arg, empty session) and test_call_score.ts pass; harness/lint.py --changed 12 checks 0 findings; timeout 90 pi -p loads every extension with no error. Pending: one live probe, /reload then /voice-score and /voice-score -0 in the TUI.
+Probe 2026-10-06 returned voice score unavailable: System One API error (400) max_tokens_exceeded. Cause measured on this session: one run held 59 thinking blocks, and the call payload was state 138,080 + questions 70,713 chars, about 52,000 tokens at four chars a token, over Jev 64,000-token window at the tokenizer real density. The questions alone cost about 300 tokens per block. Fix: chunksOf splits a run into calls that each stay under CALL_CHAR_BUDGET 64,000 chars, so that run is now 4 calls of 63,891 chars worst instead of one 208,793-char call, and nothing is dropped. The entry says how many calls a split run took; a partial failure says so instead of drawing a whole line. Test suite green, harness/lint.py --changed 12 checks 0 findings, pi -p loads clean. Probe again after /reload.
+Done 2026-10-06, live probe passed: after /reload, /voice-score drew its voice and tokens lines in the TUI. The score is now asked for and never automatic: /voice-score scores the last run, /voice-score -0 walks every run of the session, any other argument only prints usage. Runs come from ctx.sessionManager.getBranch(), thinking blocks included, so a turn that finished before the command was typed is scoreable. Removed: the on|off toggle, readEnabled/writeEnabled/CONFIG_PATH, the message_end capture buffers and the agent_before_settle auto-score; ~/.pi/agent/voice_score.json moved to ~/.Trash/voice_score.json-2026-10-06. call_score.ts had been importing those helpers and broke the load until it got its own local copies - caught by the pi -p load probe, not by the unit tests. Added: runsOf and blocksOfRun (a branch folded into runs by the old capture rules), chunksOf with CALL_CHAR_BUDGET because the first probe answered System One 400 max_tokens_exceeded - one run here held 59 blocks and the payload was state 138,080 + questions 70,713 chars, ~52,000 tokens at four chars a token against Jev 64,000-token window, and that run is now 4 calls worst 63,891 chars with no block dropped. A split run draws a dim note; a partial failure says so. Tests: runsOf, chunksOf budget boundary, no block loss, the note line, and a fake-pi command test for last run, -0, bad argument and empty session - test_voice_score.ts and test_call_score.ts green; harness/lint.py --changed 12 checks 0 findings; timeout 90 pi -p loads every extension with no error. Docs: voice_score.ts header, harness/README.md, telegraph.md, telegraph.ts comment, experimental.md.

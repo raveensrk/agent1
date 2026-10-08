@@ -1,5 +1,5 @@
 # Models and harnesses: recommendations and dated reviews of the AI models and
-# agent harnesses I use. Model usage records: model_usage_history.org.
+# agent harnesses I use. Model usage records: model_usage_history.md.
 # `make html` renders this file into dist/agent1.html with publish.lua.
 #
 # Text fields are markdown: links and blank-line paragraphs carry through.
@@ -37,7 +37,7 @@ models:
   # Not published.
   rules:
     - Always give the full, correct model name and its reasoning effort; verify both before adding or updating a review. Keep effort in effort, never in name. If effort is unknown or not applicable, say so rather than guessing.
-    - Use the same readable name for each model in recommendations, reviews, and usage history. Source identifiers stay in the Recorded ID column of model_usage_history.org.
+    - Use the same readable name for each model in recommendations, reviews, and usage history. Source identifiers stay in the Recorded ID column of model_usage_history.md.
     - note holds task context, assessment, and the reuse decision.
 
   recommendations:

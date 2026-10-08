@@ -1,6 +1,6 @@
 # Subscription Plan
 
-Model recommendations and reviews: [Models](model_and_harness.yaml). Recorded model use: [Model usage history](model_usage_history.org). Harness reviews: [Harness](model_and_harness.yaml).
+Model recommendations and reviews: [Models](model_and_harness.yaml). Recorded model use: [Model usage history](model_usage_history.md). Harness reviews: [Harness](model_and_harness.yaml).
 
 What to buy, what it covers, and what it costs. Prices are dated and sourced; measured spend comes from this machine's own logs. Review date 2026-10-07.
 

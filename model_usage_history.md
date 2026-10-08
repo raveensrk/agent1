@@ -1,0 +1,174 @@
+# Model Usage History
+
+Model recommendations and reviews: [Models](model_and_harness.yaml).
+Harness reviews: [Harness](model_and_harness.yaml).
+
+Models recorded across agent harnesses on this machine, rebuilt from local session logs, databases, and config files. Scanned 2026-09-24.
+
+Readable model names follow the same spelling as recommendations and reviews. Recorded IDs remain unchanged in a separate column, preserving aliases and variants. Reasoning effort is unknown unless explicitly encoded in the recorded ID; fast variants and free routes are not effort levels. Ambiguous versions and sizes remain unknown. Defaults below are snapshots from the scan date, not current settings.
+
+Method: read the harness's own record of a model being selected (session `model_change` events, message metadata, thread data), not its model catalog. Counts are log events, so they show relative use, not exact message counts.
+
+## pi
+
+Source: `~/.pi/agent/sessions/**/*.jsonl` (session `model_change` events).
+
+| Provider | Model | Recorded ID | Reasoning effort | Events |
+|-------------|---------------------|---------------------|------------------|--------|
+| anthropic | Claude Opus 4.5 | claude-opus-4-5 | unknown | 1 |
+| anthropic | Claude Opus 5 | claude-opus-5 | unknown | 1 |
+| opencode-go | DeepSeek V4 Pro | deepseek-v4-pro | unknown | 1 |
+| opencode-go | DeepSeek V4.1 Flash | deepseek-v4.1-flash | unknown | 5 |
+| opencode-go | GLM 5.3 | glm-5.3 | unknown | 5 |
+| opencode-go | GLM 5.3 Flash | glm-5.3-flash | unknown | 3 |
+| opencode-go | Grok 4.6 | grok-4.6 | unknown | 1 |
+| opencode-go | Kimi K2.7 Code | kimi-k2.7-code | unknown | 1 |
+| opencode-go | Kimi K3 | kimi-k3 | unknown | 2 |
+| opencode-go | LongCat 2.0 | longcat-2.0 | unknown | 1 |
+| opencode-go | Qwen 3.8 Flash | qwen3.8-flash | unknown | 1 |
+| xai | Grok 4.6 | grok-4.6 | unknown | 45 |
+
+Default at scan time: DeepSeek V4.1 Flash (reasoning effort unknown); recorded ID `opencode-go/deepseek-v4.1-flash` (`~/.pi/agent/settings.json`).
+
+## Claude Code
+
+Source: `~/.claude/**/*.jsonl` message metadata, plus `~/.claude.json`.
+
+| Model | Recorded ID | Reasoning effort | Events |
+|-----------------|-----------------|------------------|--------|
+| Claude Opus 5 | claude-opus-5 | unknown | 21152 |
+| Claude Fable 5 | claude-fable-5 | unknown | 8543 |
+| Claude Opus 5.5 | claude-opus-5-5 | unknown | 68 |
+| Claude Sonnet 5 | claude-sonnet-5 | unknown | 48 |
+
+`<synthetic>` also appears (36) - an internal placeholder, not a real model. Default at scan time: Claude Opus (version and reasoning effort unknown), with a 1M context alias; recorded ID `opus[1m]` (`~/.claude/settings.json`).
+
+## Codex CLI
+
+Source: `~/.codex/sessions/**` and `~/.codex/archived_sessions/**`.
+
+| Model | Recorded ID | Reasoning effort | Events |
+|----|----|----|----|
+| GPT 5.5 | gpt-5.5 | unknown | 668 |
+| GPT 5.4 | gpt-5.4 | unknown | 644 |
+| GPT 5.2 Codex | gpt-5.2-codex | unknown | 284 |
+| GPT 5.2 | gpt-5.2 | unknown | 106 |
+| GPT 5.3 Codex | gpt-5.3-codex | unknown | 60 |
+| GPT 5.4 Mini | gpt-5.4-mini | unknown | 28 |
+| GPT 5.6 Terra | gpt-5.6-terra | unknown | 10 |
+| Grok 2 (latest alias; exact version unknown) | grok-2-latest | unknown | 4 |
+| GPT 5.1 Codex Mini | gpt-5.1-codex-mini | unknown | 2 |
+
+Default at scan time: GPT 5.6 Terra (reasoning effort unknown); recorded ID `gpt-5.6-terra` (`~/.codex/config.toml`).
+
+## opencode
+
+Source: `~/.local/share/opencode/opencode.db` (message table).
+
+| Provider | Model | Recorded ID | Reasoning effort | Events |
+|-------------|------------------|---------------|------------------|--------|
+| opencode | Big Pickle | big-pickle | unknown | 655 |
+| opencode | Hy3 (free route) | hy3-free | unknown | 197 |
+| opencode-go | GLM 5.3 Flash | glm-5.3-flash | unknown | 4 |
+| opencode-go | Kimi K2.6 | kimi-k2.6 | unknown | 1 |
+| xai | Grok 4.5 | grok-4.5 | unknown | 2 |
+| xai | Grok 4 | grok-4 | unknown | 1 |
+
+## Gemini CLI
+
+Source: `~/.gemini/tmp/*/chats/*.json`.
+
+| Model | Recorded ID | Reasoning effort | Events |
+|------------------------|------------------------|------------------|--------|
+| Gemini 3 Flash Preview | gemini-3-flash-preview | unknown | 84 |
+
+## Cursor
+
+Source: `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`. The AI code-tracking database (`~/.cursor/ai-tracking`) is empty.
+
+| Model | Recorded ID | Reasoning effort | Events |
+|------------------------------|--------------------|------------------|--------|
+| GPT 5.6 | GPT-5.6 | unknown | 35 |
+| GPT 5.4 | GPT-5.4 | unknown | 30 |
+| Grok 4.5 | grok-4.5 | unknown | 25 |
+| GPT 5.5 | GPT-5.5 | unknown | 20 |
+| GPT 5.1 | GPT-5.1 | unknown | 20 |
+| GPT 5 | GPT-5 | unknown | 15 |
+| Grok 4.6 | grok-4.6 | unknown | 12 |
+| GPT 5.2 | GPT-5.2 | unknown | 10 |
+| Composer 2.5 (fast variant) | composer-2.5-fast | unknown | 6 |
+| GPT 5.3 Codex | gpt-5.3-codex-high | high | 5 |
+| GPT 5.3 | GPT-5.3 | unknown | 5 |
+| GPT 5.2 | gpt-5.2-high | high | 5 |
+| GPT 5 (fast variant) | gpt-5-low-fast | low | 5 |
+| GPT 5 (fast variant) | gpt-5-high-fast | high | 5 |
+| GPT 5 | gpt-5-high | high | 5 |
+| GPT 5 Codex | GPT-5-Codex | unknown | 5 |
+| Claude Opus 5 (fast variant) | claude-opus-5-fast | unknown | 5 |
+
+Caveat: Cursor's local state also caches the model picker, so a few of these may be listed rather than run.
+
+## Zed
+
+Source: `~/Library/Application Support/Zed/threads/threads.db` and `~/Library/Application Support/Zed/settings.json`.
+
+| Provider | Model | Recorded ID | Reasoning effort |
+|----|----|----|----|
+| ollama | Dolphin 2.6 Mistral 7B | dolphin2.6-mistral-7b:latest | unknown |
+
+## Claude desktop app
+
+Source: `~/Library/Application Support/Claude/claude-code-sessions/**`.
+
+| Model | Recorded ID | Reasoning effort | Events |
+|-----------------|-----------------|------------------|--------|
+| Claude Fable 5 | claude-fable-5 | unknown | 42 |
+| Claude Opus 4.8 | claude-opus-4-8 | unknown | 19 |
+| Claude Opus 5 | claude-opus-5 | unknown | 17 |
+
+## Ollama (local models)
+
+Installed, from `~/.ollama/models/manifests`:
+
+| Model | Recorded ID | Reasoning effort |
+|--------------------------|--------------------------------|------------------|
+| Nous Hermes 2 Yi 34B | nous-hermes2-yi-34b:latest | unknown |
+| Nous Hermes 2 Mistral 7B | nous-hermes2-mistral-7b:latest | unknown |
+| Dolphin 2.6 Mistral 7B | dolphin2.6-mistral-7b:latest | unknown |
+
+Run or pulled, from `~/.zsh_history` and `~/.bash_history`:
+
+| Model | Recorded ID | Reasoning effort |
+|----|----|----|
+| Qwen 2.5 Coder 32B | qwen2.5-coder:32b | unknown |
+| Qwen 2.5 Coder (size unknown) | qwen2.5-coder | unknown |
+| Llama 3.2 (size unknown) | llama3.2 | unknown |
+| Llama 3.1 (size unknown) | llama3.1 | unknown |
+| Llama 2 Uncensored (size unknown) | llama2-uncensored | unknown |
+| DeepHermes 3 (Huihui abliterated variant; size unknown) | `huihui_ai/deephermes3-abliterated` | unknown |
+| Dolphin Llama 3.1 (size unknown) | CognitiveComputations/dolphin-llama3.1:latest | unknown |
+| DeepSeek R1 (latest alias; size unknown) | deepseek-r1:latest | unknown |
+| DeepSeek R1 (size unknown) | deepseek-r1 | unknown |
+| DeepSeek (version unknown) | deepseek | unknown |
+
+## AI Toolkit (VS Code extension)
+
+Source: `~/.aitk/*.log`.
+
+| Model | Recorded ID | Reasoning effort | Runtimes |
+|-----------------|-----------------|------------------|--------------------------|
+| Phi 4 Reasoning | Phi-4-reasoning | unknown | generic-cpu, generic-gpu |
+
+## No model recorded
+
+These harnesses are installed and were opened, but their local state holds no model selection:
+
+- Copilot CLI (`~/.copilot`) - logs show startup and shutdown only.
+- Copilot Chat for VS Code (`github.copilot-chat` global storage) - no model IDs.
+- ChatGPT desktop (`com.openai.chat`) - conversation files are opaque.
+
+## Not counted
+
+- `~/.pi/agent/models-store.json` - catalog of ~40 configured models, only some used.
+- `~/.codex/models_cache.json` and `~/.claude/cache/model-catalog` - provider catalogs.
+- `~/.aitk/models/foundry.modelinfo.json` - model catalog (Qwen 3, Qwen 3.5, DeepSeek R1, Phi family); reasoning efforts unknown.

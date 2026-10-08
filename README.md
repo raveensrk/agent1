@@ -87,9 +87,9 @@ answer means the import did not load.
 | `Makefile` | Builds the shareable one-page HTML export |
 | `jobs.md` | ETA rules for long-running jobs |
 | `macos.md` | macOS command traps |
-| [`index.org`](./index.org) | Index of model reviews, harness reviews, and usage records |
+| [`index.md`](./index.md) | Index of model reviews, harness reviews, and usage records |
 | [`model_and_harness.yaml`](./model_and_harness.yaml) | Model and harness recommendations and dated reviews |
-| [`model_usage_history.org`](./model_usage_history.org) | Historical model usage across agent harnesses |
+| [`model_usage_history.md`](./model_usage_history.md) | Historical model usage across agent harnesses |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | `prompts/` | Reusable Pi slash commands loaded from the local package |
@@ -102,7 +102,7 @@ answer means the import did not load.
 
 ## Shareable HTML
 
-Requires Emacs with Org Mode. Run `make html` to build `dist/agent1.html`.
+Requires pandoc. Run `make html` to build `dist/agent1.html`.
 The export includes model and harness reviews; it excludes model usage history.
 
 ## Skills
