@@ -287,7 +287,6 @@ def main():
             "ignored_hidden": len(items) - len(shown),
         },
         "items": shown,
-        "items": items,
     }, sys.stdout, indent=1)
 
 

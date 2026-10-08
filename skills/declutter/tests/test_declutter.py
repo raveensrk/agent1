@@ -54,6 +54,29 @@ def test_dir_age():
         assert scan.dir_age_days(td) == 0
 
 
+def test_ignored_hidden():
+    import contextlib
+    import io
+    import tempfile
+    scan = load("scan")
+    keep = {"kind": "app", "name": "Keep", "path": "/Applications/Keep.app",
+            "bundle_id": "", "bytes": 10, "badge": "JUNK"}
+    gone = {**keep, "name": "Gone", "path": "/Applications/Gone.app"}
+    scan.scan_apps = lambda: ([keep, gone], {})
+    scan.scan_formulae = lambda: []
+    scan.scan_leftovers = lambda installed_keys: []
+    scan.scan_files = lambda: []
+    out = io.StringIO()
+    with tempfile.TemporaryDirectory() as td:
+        scan.IGNORE_FILE = Path(td) / "ignored.json"
+        scan.IGNORE_FILE.write_text(json.dumps([gone["path"]]))
+        with contextlib.redirect_stdout(out):
+            scan.main()
+    data = json.loads(out.getvalue())
+    assert [i["path"] for i in data["items"]] == [keep["path"]]
+    assert data["counts"]["ignored_hidden"] == 1
+
+
 def test_merge_ignore():
     delete = load("delete")
     assert delete.merge_ignore(["/a"], ["/b", "/a", "", None]) == ["/a", "/b"]
