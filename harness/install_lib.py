@@ -5,9 +5,12 @@ its checkout, through each harness's own load path:
 
   pi      ~/.pi/agent/settings.json `packages` lists the repo; its package.json
           `pi` key declares the skills, prompts and extensions.
-  claude  ~/.claude/settings.json registers the repo's .claude-plugin
-          marketplace as a directory source and enables its plugins. Claude
+  claude  `claude plugin marketplace add REPO` registers the repo's
+          .claude-plugin marketplace as a directory source, and
+          `claude plugin install` enables its plugins at user scope. Claude
           reads a directory plugin live from the checkout; no update step.
+          Needs the claude CLI on PATH (or CLAUDE_BIN); the state is read from
+          ~/.claude/plugins/*.json, so a dry run and --check need no CLI.
   codex   not wired yet; skipped with a note while ~/.codex exists.
 
 A harness whose home directory is missing is skipped. `git pull` in the repo
@@ -32,6 +35,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import time
 
 HOME = os.path.expanduser("~")
@@ -41,6 +46,9 @@ PI_HOME = os.path.join(HOME, ".pi")
 PI_SETTINGS = os.path.join(HOME, ".pi", "agent", "settings.json")
 CLAUDE_HOME = os.path.join(HOME, ".claude")
 CLAUDE_SETTINGS = os.path.join(HOME, ".claude", "settings.json")
+CLAUDE_KNOWN = os.path.join(HOME, ".claude", "plugins", "known_marketplaces.json")
+CLAUDE_INSTALLED = os.path.join(HOME, ".claude", "plugins", "installed_plugins.json")
+CLAUDE_INSTALL = "curl -fsSL --max-time 60 https://claude.ai/install.sh | bash"
 CODEX_HOME = os.path.join(HOME, ".codex")
 
 # Directories older installers filled with links back into a repo.
@@ -50,6 +58,7 @@ LEGACY_DIRS = [
     "~/.claude/commands",
     "~/.codex/skills",
     "~/.pi/agent/prompts",
+    "~/.pi/agent/extensions",
 ]
 
 
@@ -67,11 +76,15 @@ def load(path: str) -> dict:
 
 
 def save(path: str, data: dict) -> None:
+    """Write DATA as JSON, atomically, keeping the old file's mode (~/.claude.json is 0600)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    mode = os.stat(path).st_mode & 0o777 if os.path.exists(path) else 0o644
     tmp = path + ".tmp"
-    with open(tmp, "w") as handle:
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+    with os.fdopen(fd, "w") as handle:
         json.dump(data, handle, indent=2)
         handle.write("\n")
+    os.chmod(tmp, mode)
     os.replace(tmp, path)
 
 
@@ -94,6 +107,22 @@ class Run:
         self.say("update", path, note)
         if self.apply:
             save(path, data)
+
+    def claude(self, *args: str) -> None:
+        """Run one `claude` CLI command, or name it in a dry run."""
+        self.changes += 1
+        self.say("run", "claude " + " ".join(tilde(a) for a in args))
+        if not self.apply:
+            return
+        cli = os.environ.get("CLAUDE_BIN") or shutil.which("claude")
+        if not cli:
+            self.conflicts += 1
+            return self.say("conflict", "claude", "CLI not on PATH; install it, then rerun:\n"
+                            "  " + CLAUDE_INSTALL)
+        done = subprocess.run([cli, *args], capture_output=True, text=True)
+        if done.returncode:
+            self.conflicts += 1
+            self.say("error", "claude " + args[1], (done.stderr or done.stdout).strip())
 
     def trash(self, path: str, note: str) -> None:
         self.changes += 1
@@ -133,32 +162,35 @@ def pi(run: Run, repo: str, remove: bool) -> None:
 
 def claude(run: Run, repo: str, remove: bool) -> None:
     if not os.path.isdir(CLAUDE_HOME):
-        return run.say("skip", CLAUDE_SETTINGS, "claude not installed")
+        return run.say("skip", CLAUDE_HOME, "claude not installed")
     market = load(os.path.join(repo, ".claude-plugin", "marketplace.json"))
     if not market.get("name"):
-        return run.say("skip", CLAUDE_SETTINGS, "repo has no .claude-plugin/marketplace.json")
+        return run.say("skip", CLAUDE_HOME, "repo has no .claude-plugin/marketplace.json")
 
     name = market["name"]
     plugins = ["%s@%s" % (p["name"], name) for p in market.get("plugins", [])]
-    source = {"source": {"source": "directory", "path": repo}}
-    settings = load(CLAUDE_SETTINGS)
-    known = settings.setdefault("extraKnownMarketplaces", {})
-    enabled = settings.setdefault("enabledPlugins", {})
+    known = load(CLAUDE_KNOWN)
+    installed = load(CLAUDE_INSTALLED).get("plugins", {})
+    enabled = load(CLAUDE_SETTINGS).get("enabledPlugins", {})
+    before = run.changes
 
     if remove:
-        if name not in known and not any(p in enabled for p in plugins):
-            return run.say("ok", CLAUDE_SETTINGS, "marketplace %s absent" % name)
-        known.pop(name, None)
         for plugin in plugins:
-            enabled.pop(plugin, None)
-        return run.write(CLAUDE_SETTINGS, settings, "removed marketplace %s" % name)
+            if plugin in installed:
+                run.claude("plugin", "uninstall", plugin, "--scope", "user")
+        if name in known:
+            run.claude("plugin", "marketplace", "remove", name)
+    else:
+        if known.get(name, {}).get("source", {}).get("path") != repo:
+            run.claude("plugin", "marketplace", "add", repo)
+        for plugin in plugins:
+            if plugin not in installed:
+                run.claude("plugin", "install", plugin, "--scope", "user")
+            elif enabled.get(plugin) is not True:
+                run.claude("plugin", "enable", plugin, "--scope", "user")
 
-    if known.get(name) == source and all(enabled.get(p) is True for p in plugins):
-        return run.say("ok", CLAUDE_SETTINGS, "plugins: %s" % ", ".join(plugins))
-    known[name] = source
-    for plugin in plugins:
-        enabled[plugin] = True
-    run.write(CLAUDE_SETTINGS, settings, "enabled %s" % ", ".join(plugins))
+    if run.changes == before:
+        run.say("ok", CLAUDE_HOME, "plugins: %s" % ", ".join(plugins))
 
 
 def codex(run: Run, repo: str, remove: bool) -> None:

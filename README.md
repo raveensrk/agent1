@@ -137,7 +137,7 @@ a `git pull` updates every harness on its next start.
 | Harness | How it loads this repo |
 |---|---|
 | pi | `~/repos/agent1` in `~/.pi/agent/settings.json` `packages`; `package.json` `pi` declares `skills/`, `prompts/` and `harness/extensions/` |
-| Claude Code | plugin `agents@raveen-agents` from the directory marketplace in `.claude-plugin/`, read live from the clone |
+| Claude Code | plugin `agents@raveen-agents` from the directory marketplace in `.claude-plugin/`, read live from the clone; registered with `claude plugin marketplace add` and `claude plugin install`, so the `claude` CLI must be on `PATH` (or set `CLAUDE_BIN`) |
 | Codex | not wired yet |
 
 - Idempotent, and touches only the keys this repo owns in each settings file.
