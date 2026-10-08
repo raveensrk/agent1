@@ -46,7 +46,6 @@ const TOPICS: [string, string][] = [
 	["git.md", "commits and pull requests"],
 	["jobs.md", "ETA rules for long-running jobs"],
 	["external.md", "probing external systems, live accounts, credentials on disk"],
-	["skills/todo/SKILL.md", "the todo skill, the board's only writer"],
 	["browser.md", "browser and computer use rules"],
 	["macos.md", "macOS command traps"],
 	["cli.md", "writing a CLI app"],

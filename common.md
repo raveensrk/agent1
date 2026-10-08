@@ -8,7 +8,7 @@ At session start, Read these files
 
 - [Emoji Legend](emoji_legend.md) - in the same directory as this file
 - [Experimental rules](experimental.md) - live trial rules; a keeper moves into common.md or another file, the rest are deleted
-- [Todo skill](skills/todo/SKILL.md) - task format and the agent protocol. The destination.
+- [Waypoint skill](~/repos/waypoint/skills/waypoint/SKILL.md) - tasks: one Markdown file per task, the `waypoint` CLI the only writer. The Waypoint repo's `install.py` installs it.
 - [Code Style](code_style.md) - how to write code
 - [Git](git.md) - commits and pull requests
 - [Jobs](jobs.md) - ETA rules for long-running jobs
@@ -39,13 +39,13 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
   other; otherwise one at a time.
 
 - When I name a priority and a timeframe together - "B - next weekend", "C", "B
-  it" - set both in one pass rather than asking again: `set-priority` plus a
-  `set-deadline` on the date I mean. "Next weekend" is the coming Saturday unless
+  it" - set both in one pass rather than asking again:
+  `waypoint edit <ref> --priority B --due <date>` on the date I mean. "Next weekend" is the coming Saturday unless
   I say otherwise.
 
-- "Later" on a task means postpone it one week - `todo postpone "<title>" +1w`,
-  which works on an undated task too. Keep the task `TODO`; the only states are
-  `TODO`, `IN_PROGRESS`, `DONE` and `OBSOLETE`.
+- "Later" on a task means postpone it one week - `waypoint postpone <ref> +1w`,
+  which works on an undated task too. Keep the task `todo`; the only states are
+  `todo`, `in_progress`, `done` and `obsolete`.
 
 - When a task has two plausible architectures, ask one MCQ before writing any code.
 
