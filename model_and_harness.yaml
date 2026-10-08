@@ -1,0 +1,215 @@
+# Models and harnesses: recommendations and dated reviews of the AI models and
+# agent harnesses I use. Model usage records: model_usage_history.org.
+# `make html` renders this file into dist/agent1.html with publish.lua.
+#
+# Text fields are markdown: links and blank-line paragraphs carry through.
+
+# Not published. They bind every review below.
+rules:
+  - Keep reviews newest first. Use the review date, not a model-usage scan date.
+  - rating is a number from 0 to 10, fractions allowed; write "unrated" when missing.
+  - Quote version so YAML keeps it a string ("1.10" would become 1.1). Write "unknown" when it cannot be verified.
+  - tag is optional, one word for the single most defining trait; omit it when unknown.
+  - Name, version, effort, rating and date live in their fields only; note holds the review itself.
+
+rating_scale:
+  intro: >-
+    Ratings are out of 10; intermediate scores are allowed. Existing out-of-5
+    ratings have been doubled. Missing ratings remain unrated.
+  levels:
+    - rating: 10
+      label: best
+      meaning: Best in class. First pick for this kind of work.
+    - rating: 8
+      label: good
+      meaning: Strong. Reliable, minor gaps.
+    - rating: 6
+      label: mid
+      meaning: Usable. Gets the job done with some supervision.
+    - rating: 4
+      label: bad
+      meaning: Weak. Needs heavy correction or a fallback model.
+    - rating: 2
+      label: worst
+      meaning: Avoid for this kind of work.
+
+models:
+  # Not published.
+  rules:
+    - Always give the full, correct model name and its reasoning effort; verify both before adding or updating a review. Keep effort in effort, never in name. If effort is unknown or not applicable, say so rather than guessing.
+    - Use the same readable name for each model in recommendations, reviews, and usage history. Source identifiers stay in the Recorded ID column of model_usage_history.org.
+    - note holds task context, assessment, and the reuse decision.
+
+  recommendations:
+    intro: Effort levels reflect personal preference; adjust them according to the task.
+    sources:
+      - "[AI Charts](https://aicharts.io/)"
+      - "[Artificial Analysis](https://artificialanalysis.ai/)"
+    tiers:
+      - tier: Flash
+        picks:
+          1: {name: GLM 5.3 Flash, effort: max}
+          2: {name: DeepSeek V4.1 Flash, effort: max}
+          3: {name: GPT 6 Luna, effort: max}
+          4: {name: GPT 6.1 Sol, effort: low}
+      - tier: Balanced
+        picks:
+          1: {name: GPT 6.1 Sol, effort: minimal to xhigh}
+      - tier: Max
+        picks:
+          1: {name: GPT 6.1 Sol, effort: max}
+          2: {name: Claude Opus 5.5, effort: max}
+
+  intro: >-
+    Personal assessments of the AI models I use. Dated notes, newest first.
+    These assessments are not benchmark results or agent behavior instructions.
+
+  # Newest first. Add new reviews at the top of this list.
+  reviews:
+    - name: GPT 6 Luna
+      effort: max
+      rating: 7
+      date: 2026-10-06
+      tag: cheap
+      note: |
+        Used for short tasks and complex tasks. Reasonably good and cheap. Good for short tasks; takes a while on complex tasks.
+
+        Use for short tasks; allow extra time for complex work.
+
+    - name: Claude Opus 4.8
+      effort: max
+      rating: 9
+      date: 2026-09-25
+      tag: design
+      note: Good taste in design. Writes in detail.
+
+    - name: GPT 6 Astra
+      effort: max
+      rating: 0
+      date: 2026-09-25
+      note: Heavy but powerful.
+
+    - name: Grok 4.6
+      effort: high
+      rating: 7
+      date: 2026-09-25
+      note: Better responses than Anthropic or OpenAI models.
+
+    - name: Grok 4.7
+      effort: xhigh
+      rating: 8
+      date: 2026-09-25
+      note: Better than Grok 4.6.
+
+    - name: GLM 5.3 Flash
+      effort: max
+      rating: 9.5
+      date: 2026-09-25
+      tag: cheap
+      note: Good daily driver. Good cheap model.
+
+    - name: DeepSeek V4.1 Flash
+      effort: high
+      rating: 8
+      date: 2026-09-24
+      tag: cheap
+      note: |
+        Used for design, schema design, analysis, code review, and code writing. Strong at analysis and code review, and catches things I miss. Cheap for code generation. Falls short on visual design and front-end work, which I hand to Claude Opus 5 (high effort). Needs supervision on design and does not ask enough clarifying questions on its own.
+
+        Reuse. First pick for cheap code generation, analysis, and code review.
+
+    - name: Claude Opus 5
+      effort: high
+      rating: 10
+      date: 2026-09-24
+      tag: design
+      note: Writes in detail. Good taste in design.
+
+    - name: Claude Fable 5
+      effort: high
+      rating: 10
+      date: 2026-09-24
+      tag: companion
+      note: Next-level companion. Good taste in design.
+
+    - name: GPT 5.6 Sol
+      effort: medium
+      rating: 6
+      date: 2026-09-24
+      tag: design
+      note: Basic but works. Bad taste in design.
+
+    - name: Big Pickle
+      version: unknown
+      effort: default
+      rating: 6
+      date: 2026-09-24
+      tag: free
+      note: |
+        Free model. Used for data collection. Reasoning effort was not explicitly set.
+
+        [Provider documentation identifies Big Pickle as a stealth model](https://opencode.ai/docs/en/zen/) with the unversioned ID `big-pickle`. The underlying version used could not be verified from the approximate usage date.
+
+harnesses:
+  # Not published.
+  rules:
+    - Use the full harness name; include its version when known.
+    - note holds the review and notes, including tasks, strengths, problems, and whether to reuse.
+
+  recommendations:
+    1: Pi
+    2: OpenCode
+    3: Claude Code
+    4: Codex
+
+  intro: Personal assessments of the agent harnesses I use. Dated notes, newest first.
+
+  # Newest first. Add new reviews at the top of this list.
+  reviews:
+    - name: Ollama
+      version: "0.40.1"
+      rating: 7
+      date: 2026-10-08
+      note: Used to try local models.
+
+    - name: Claude desktop app
+      version: "2.26454.2"
+      rating: 10
+      date: 2026-10-08
+      note: Used for everything; all good. Needs more customization.
+
+    - name: Zed
+      version: "1.23.2"
+      rating: 5
+      date: 2026-10-08
+      note: I don't like IDEs.
+
+    - name: OpenCode
+      version: "1.18.10"
+      rating: 10
+      date: 2026-10-06
+      tag: opensource
+      note: >-
+        The benchmark for open-source coding agents. Lots of free models and
+        subscription options, which is very good. Watch for telemetry in free
+        models; models with telemetry can be disabled in settings.
+
+    - name: Codex CLI
+      version: "0.146.0"
+      rating: 9.5
+      date: 2026-10-06
+      note: As good as Claude Code, but needs better models.
+
+    - name: Claude Code
+      version: "2.1.266"
+      rating: 10
+      date: 2026-10-06
+      tag: powerful
+      note: Claude Code paired with Claude Opus or Claude Fable models is very powerful.
+
+    - name: Pi
+      version: "1.0.4"
+      rating: 10
+      date: 2026-10-06
+      tag: lightweight
+      note: Good learning experience and a lightweight program.

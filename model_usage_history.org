@@ -2,8 +2,8 @@
 
 * Model Usage History
 
-Model recommendations and reviews: [[file:model.org][Models]].
-Harness reviews: [[file:harness.org][Harness]].
+Model recommendations and reviews: [[file:model_and_harness.yaml][Models]].
+Harness reviews: [[file:model_and_harness.yaml][Harness]].
 
 Models recorded across agent harnesses on this machine, rebuilt from local session logs, databases, and config files. Scanned 2026-09-24.
 

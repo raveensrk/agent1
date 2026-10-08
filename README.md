@@ -88,8 +88,7 @@ answer means the import did not load.
 | `jobs.md` | ETA rules for long-running jobs |
 | `macos.md` | macOS command traps |
 | [`index.org`](./index.org) | Index of model reviews, harness reviews, and usage records |
-| [`model.org`](./model.org) | Personal model recommendations and reviews |
-| [`harness.org`](./harness.org) | Dated harness reviews and ratings |
+| [`model_and_harness.yaml`](./model_and_harness.yaml) | Model and harness recommendations and dated reviews |
 | [`model_usage_history.org`](./model_usage_history.org) | Historical model usage across agent harnesses |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
