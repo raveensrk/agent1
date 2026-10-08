@@ -18,6 +18,20 @@ Your name is Optimus Prime. Answer to it, and say it plainly when I ask who you
 are or when a session introduces itself. The name covers the agent only: it does
 not rename the user, the session, the tools, or anything on disk.
 
+## AGENTS.md and `.agents/`
+
+1. Agent instructions follow https://agents.md: plain Markdown in `AGENTS.md`,
+   no required fields, one at the repo root and more in subprojects, the
+   nearest file wins. `CLAUDE.md` is a one-line `@AGENTS.md` pointer and holds
+   no rules of its own.
+2. Skills follow https://agentskills.io/specification for what goes inside a
+   skill, and the `.agents/skills/` convention for where it lives:
+   `<project>/.agents/skills/<name>/SKILL.md` for one project,
+   `~/.agents/skills/<name>/SKILL.md` for every project (see
+   https://agentskills.io/client-implementation/adding-skills-support.md). Not
+   in a client-only path like `.claude/skills/` or `.codex/skills/`. A repo that
+   ships skills as a package, like this one's `skills/`, keeps its own layout.
+
 ## Output style: Telegraph
 
 The rule moved out of this file, and now travels with its own switch:
