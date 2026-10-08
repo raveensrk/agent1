@@ -242,12 +242,16 @@ scripts/todo config
 - `create` appends at the root; `--container NAME` nests under an existing
   heading. A new file starts straight at the task, no frontmatter.
 - `capture` appends a plain `*` heading (no state, no properties).
-- Lists print `STATE  Title  (path)`; single results print `key: value`. `read --records` prints one plain record per task, records separated by a blank
-  line: `title:`, `state:`, `deadline:`, `priority:`, `effort:`, `tags:`
-  (space-joined), `path:`, then the note as lines indented four spaces (empty
-  note lines too, so the blank line stays a record break). A missing deadline,
-  priority or effort is an empty value. There is no JSON: the board is org, the
-  CLI is Emacs, and both consumers parse this text.
+- Lists print `STATE  Title  (path)`; single results print `key: value`.
+  `--records` prints GNU recutils' recfile format
+  (https://www.gnu.org/software/recutils/manual/), one record per task and a
+  blank line between records, so `recsel` and `recfmt` read it as is. Every
+  record has the fields `title:`, `state:`, `deadline:`, `priority:`,
+  `effort:`, `tags:` (space-joined), `path:` and `note:`, in that order. An
+  empty field prints as `name:`. The note's further lines continue on `+ `
+  lines, a blank one as a bare `+`, so a blank line only ever ends a record.
+  There is no JSON: the board is org, the CLI is Emacs, and both consumers
+  parse this text.
 - `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before D, then title, then path - the head of the list `read --due` prints. The pick prints as one record, or `none`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.
 - `doing --priority A|B|C|D` picks the priority-only way instead: any open task at
   that priority, due or not, title then path. No match prints `none`, as `doing`

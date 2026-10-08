@@ -559,29 +559,33 @@ shifts as far as it takes."
                     (cons 'line line)
                     (cons 'editor editor)))))
 
+(defun todo--rec-field (name value)
+  "NAME and VALUE as one recfile field: `NAME: VALUE'. Each further line of
+VALUE continues on a `+ ' line, and an empty VALUE prints as `NAME:'."
+  (concat name ":"
+          (mapconcat (lambda (line) (if (string-empty-p line) "" (concat " " line)))
+                     (split-string value "\n") "\n+")
+          "\n"))
+
 (defun todo--record (item)
-  "ITEM as one plain record: `key: value' lines, the note indented four spaces.
-One record per task, records separated by a blank line. No serialization
-layer: the CLI is Emacs reading org, and both consumers parse text."
-  (let ((note (or (alist-get 'note item) "")))
+  "ITEM as one record in GNU recutils' recfile format, so `recsel' and
+`recfmt' read the list as is. Every field prints, an empty one as `NAME:';
+the note is the last field and its further lines continue on `+ ' lines,
+so a blank note line stays inside the record. No serialization layer: the
+CLI is Emacs reading org, and both consumers parse text."
+  (let ((field (lambda (name value) (todo--rec-field name (or value "")))))
     (concat
-     (format (concat "title: %s\nstate: %s\ndeadline: %s\npriority: %s\n"
-                     "effort: %s\ntags: %s\npath: %s\n")
-             (alist-get 'title item)
-             (alist-get 'todo item)
-             (or (alist-get 'deadline item) "")
-             (or (alist-get 'priority item) "")
-             (or (alist-get 'effort item) "")
-             (mapconcat #'identity (alist-get 'tags item) " ")
-             (alist-get 'path item))
-     (if (string-empty-p note)
-         ""
-       (concat (mapconcat (lambda (line) (concat "    " line))
-                          (split-string note "\n") "\n")
-               "\n")))))
+     (funcall field "title" (alist-get 'title item))
+     (funcall field "state" (alist-get 'todo item))
+     (funcall field "deadline" (alist-get 'deadline item))
+     (funcall field "priority" (alist-get 'priority item))
+     (funcall field "effort" (alist-get 'effort item))
+     (funcall field "tags" (mapconcat #'identity (alist-get 'tags item) " "))
+     (funcall field "path" (alist-get 'path item))
+     (funcall field "note" (string-trim-right (or (alist-get 'note item) "") "\n+")))))
 
 (defun todo-print-records (items)
-  "Print ITEMS as plain records separated by a blank line."
+  "Print ITEMS as recfile records separated by a blank line."
   (princ (mapconcat #'todo--record items "\n")))
 
 (defconst todo-doing-states '("TODO" "IN_PROGRESS")

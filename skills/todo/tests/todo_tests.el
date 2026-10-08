@@ -357,18 +357,23 @@ verbs, same parsing, a few milliseconds each."
         (push (cons (intern (match-string 1 line)) (match-string 2 line)) out)))
     (nreverse out)))
 
-(defun todo-test--record-note (record)
-  "The indented note lines of RECORD, unindented and trimmed."
-  (string-trim
-   (mapconcat (lambda (line) (if (string-prefix-p "    " line) (substring line 4) ""))
-              (seq-filter (lambda (line) (string-prefix-p "    " line))
-                          (split-string record "\n" t))
-              "\n")))
+(defun todo-test--rec-fields (record)
+  "RECORD, one recfile record, as an alist of (FIELD . VALUE) in order.
+A `+' line continues the field before it; the one blank after `:' or `+'
+is syntax, not value."
+  (let (out)
+    (dolist (line (split-string record "\n" t))
+      (cond ((string-match "\\`\\+ ?\\(.*\\)\\'" line)
+             (setcdr (car out) (concat (cdar out) "\n" (match-string 1 line))))
+            ((string-match "\\`\\([a-zA-Z%][a-zA-Z0-9_]*\\): ?\\(.*\\)\\'" line)
+             (push (cons (intern (match-string 1 line)) (match-string 2 line)) out))
+            (t (error "Not a recfile line: %S" line))))
+    (nreverse out)))
 
 (defun todo-test--records (stdout)
-  "STDOUT as a list of task alists, the CLI's plain records."
+  "STDOUT as a list of task alists, the CLI's recfile records."
   (mapcar (lambda (record)
-            (let* ((pairs (todo-test--pairs record))
+            (let* ((pairs (todo-test--rec-fields record))
                    (some (lambda (key)
                            (let ((v (alist-get key pairs)))
                              (and v (not (string-empty-p v)) v)))))
@@ -378,7 +383,7 @@ verbs, same parsing, a few milliseconds each."
                     (cons 'priority (funcall some 'priority))
                     (cons 'effort (funcall some 'effort))
                     (cons 'tags (split-string (or (alist-get 'tags pairs) "") " " t))
-                    (cons 'note (todo-test--record-note record))
+                    (cons 'note (string-trim (or (alist-get 'note pairs) "")))
                     (cons 'path (alist-get 'path pairs)))))
           (split-string stdout "\n\n" t)))
 
@@ -403,6 +408,25 @@ verbs, same parsing, a few milliseconds each."
                    (mapcar (lambda (i) (todo-test--field i "title"))
                            (todo-test--records (nth 1 (todo-test--ok "read" "--records"))))))
     (should (eq 1 (nth 0 (todo-test--cli "read" "--records" "--file" (expand-file-name "nope.org" dir)))))))
+
+(ert-deftest todo-records-are-recfile ()
+  ;; GNU recutils' format: `field: value', an empty field as `field:', and
+  ;; the note's further lines - a blank one too - on `+' lines, so the blank
+  ;; line between records is the only one.
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO [#A] Pay rent :finance:home:\n"
+                            "DEADLINE: <2026-11-05 Thu>\n"
+                            "paid\n\n  in cash\n"
+                            "* TODO Bare\n"))
+  (should (equal (nth 1 (todo-test--ok "read" "--records"))
+                 (concat "title: Pay rent\nstate: TODO\ndeadline: <2026-11-05 Thu>\n"
+                         "priority: A\neffort:\ntags: finance home\n"
+                         "path: " (expand-file-name "todo.org" todo-test--dir) "\n"
+                         "note: paid\n+\n+   in cash\n"
+                         "\n"
+                         "title: Bare\nstate: TODO\ndeadline:\npriority:\neffort:\ntags:\n"
+                         "path: " (expand-file-name "todo.org" todo-test--dir) "\n"
+                         "note:\n"))))
 
 (ert-deftest todo-read-records-have-the-card-fields ()
   (todo-test--setup)
