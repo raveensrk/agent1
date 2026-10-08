@@ -29,16 +29,18 @@ EMACS=$(find_bin /Applications/Emacs.app/Contents/MacOS/Emacs "$(command -v emac
   echo "todo: no emacs found: install Emacs.app in /Applications or put emacs on PATH" >&2
   exit 1
 }
-EMACSCLIENT=$(find_bin /Applications/Emacs.app/Contents/MacOS/bin/emacsclient \
-                      "$(command -v emacsclient 2>/dev/null)") || {
-  echo "todo: no emacsclient found next to $EMACS" >&2
-  exit 1
-}
-
 if [ "${1:-}" != "--warm" ]; then
   exec "$EMACS" -Q --batch -l "$el" -- "$@"
 fi
 shift
+
+# Only the warm path talks to a daemon, so only it needs emacsclient: a plain
+# call must not fail because emacsclient is missing.
+EMACSCLIENT=$(find_bin /Applications/Emacs.app/Contents/MacOS/bin/emacsclient \
+                      "$(command -v emacsclient 2>/dev/null)") || {
+  echo "todo: --warm needs emacsclient; none found next to $EMACS or on PATH" >&2
+  exit 1
+}
 
 socket=${TODO_SKILL_SOCKET:-todo-skill}
 
