@@ -44,10 +44,16 @@ it as `--file` (writes) or `--dir` (reads). No path given: ask the user which
 repo or `todo.org` before writing - never guess the cwd or the config dirs. Do
 not write the same task to a board and move it later.
 
-**States.** `TODO`, `IN_PROGRESS`, `OPTIONAL`, `LATER`, `DONE`, `OBSOLETE`.
-They live in `scripts/todo.el`, not in the file. Life cycle: `TODO` ->
-`IN_PROGRESS` -> `DONE`; `OPTIONAL` and `LATER` are deferred; anything can become
-`OBSOLETE` to keep the record. A task's kind is a tag, not a state (`:bug:`).
+**States.** `TODO`, `IN_PROGRESS`, `DONE`, `OBSOLETE`.
+They live in `scripts/todo.el`; `keywords` writes them into a board's own
+`#+TODO:` line for Emacs and beorg. Life cycle: `TODO` -> `IN_PROGRESS` ->
+`DONE`; anything can become `OBSOLETE`, and only through `obsolete <ref> --reason TEXT`:
+the reason lands in the note (`Obsolete: TEXT`) and the task moves to the
+archive, so the record says why it was dropped. `set-state` and `create` refuse
+`OBSOLETE`. There is no deferred
+state (`LATER` and `OPTIONAL` were retired 2026-10-08): a task put off stays
+`TODO` and gets a deadline - `postpone +1w` for "later", or a date
+months out for a long deferral. A task's kind is a tag, not a state (`:bug:`).
 
 **Task line.** A `*` at column 0, a state, a non-empty title:
 `** TODO Pay rent :finance:`. A heading with no state is a container. A task may
@@ -176,10 +182,11 @@ scripts/todo set-note "Inbox" "$(cat triage.txt)"    # replace the note, meta da
 scripts/todo rename "Pay rent" "Pay the rent"
 scripts/todo complete "Pay rent" [--evidence "what changed"]   # DONE, then archived
 scripts/todo archive                           # inline `* Archive' -> <board>.org_archive
-scripts/todo obsolete "Pay rent"
+scripts/todo obsolete "Pay rent" --reason "moved out"   # OBSOLETE + reason, then archived
 scripts/todo delete "Pay rent"
 scripts/todo capture "Look into OpenRouter routing"
 scripts/todo status
+scripts/todo keywords --file todo.org            # the board's #+TODO: line = the CLI's states
 scripts/todo edit "Pay rent" --file todo.org       # vim, at that heading line
 scripts/todo edit-vim "Pay rent" --file todo.org
 scripts/todo edit-emacs "Pay rent" --file todo.org   # Emacs, at that heading line
@@ -203,8 +210,8 @@ scripts/todo config
 - `--due` and `--overdue` are two names for one window: the deadline day is
   today or earlier in IST, repeaters included. `--due` and `-d` are the short
   spelling. It keeps open work only - `TODO` and `IN_PROGRESS` - unless
-  `--state S` names another one, which wins outright: `read --due --state LATER`
-  shows the late LATER tasks. A lapsed deadline on a deferred task stays out of
+  `--state S` names another one, which wins outright: `read --due --state DONE`
+  shows the late DONE tasks. A lapsed deadline on a closed task stays out of
   the plain `read --due` list. The list comes out most urgent first - most days
   late, then A before D, then title, then path: the same comparator `doing` picks
   with, so `doing` is the head of that list. The order is the flag's default,

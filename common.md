@@ -43,6 +43,10 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
   `set-deadline` on the date I mean. "Next weekend" is the coming Saturday unless
   I say otherwise.
 
+- "Later" on a task means postpone it one week - `todo postpone "<title>" +1w`,
+  which works on an undated task too. Keep the task `TODO`; the only states are
+  `TODO`, `IN_PROGRESS`, `DONE` and `OBSOLETE`.
+
 - When a task has two plausible architectures, ask one MCQ before writing any code.
 
 - Verify a library call in a scratch buffer or a one-liner before using it in code.

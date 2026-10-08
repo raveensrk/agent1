@@ -15,7 +15,7 @@
 
 ;;; Setup
 
-(defconst todo-states '("TODO" "IN_PROGRESS" "OPTIONAL" "LATER" "DONE" "OBSOLETE")
+(defconst todo-states '("TODO" "IN_PROGRESS" "DONE" "OBSOLETE")
   "The state words the skill knows.")
 
 (defconst todo-priorities '("A" "B" "C" "D")
@@ -35,10 +35,10 @@ spelling of each flag.")
 
 (defconst todo-value-flags '("--file" "--state" "--tag" "--container" "--deadline"
                              "--priority" "--note" "--note-file" "--dir" "--editor"
-                             "--evidence" "--effort" "--number")
+                             "--evidence" "--effort" "--number" "--reason")
   "Flags that take a value.")
 
-(setq org-todo-keywords '((sequence "TODO" "IN_PROGRESS" "OPTIONAL" "LATER"
+(setq org-todo-keywords '((sequence "TODO" "IN_PROGRESS"
                                     "|" "DONE" "OBSOLETE"))
       org-log-done 'time                ; DONE writes CLOSED:
       ;; The fourth level. Org's own lowest priority is C and refuses [#D].
@@ -527,6 +527,13 @@ wins when it is there; otherwise the running binary, then `emacs' on PATH."
                (not (eq 0 (process-exit-status proc))))
       (todo-fail (format "emacs exited %s" (process-exit-status proc))))))
 
+(defun todo--refuse-bare-obsolete (state ref)
+  "Fail when STATE is OBSOLETE: an obsolete task carries its reason, and only
+`obsolete' asks for one."
+  (when (equal state "OBSOLETE")
+    (todo-fail (format "OBSOLETE needs a reason: todo obsolete %S --reason \"why it no longer matters\""
+                       (or ref "<title>")))))
+
 (defun todo--org-todo (state)
   "Set the state at point through org, answering org's own repeat question.
 After ten intervals org asks whether to keep shifting a routine whose anchor is
@@ -777,6 +784,55 @@ so the two disagree until the line is indented."
                                  " (org counts it as a real task). Indent it by"
                                  " one space, then retry.")
                          file (car hit) (cdr hit))))))
+
+;;; Keywords
+
+;; A board may carry its own `#+TODO:' line, for Emacs and beorg; the CLI's
+;; states come from `org-todo-keywords' above. `keywords' rewrites that line so
+;; the two agree, and refuses while a task still uses a state it would drop:
+;; that heading would silently become a container.
+
+(defconst todo--keywords-re "^#\\+\\(?:SEQ_\\)?TODO:.*$"
+  "A board's own TODO keyword line, any case.")
+
+(defun todo--keywords-line ()
+  "The `#+TODO:' line `org-todo-keywords' implies."
+  (concat "#+TODO: " (string-join (cdar org-todo-keywords) " ")))
+
+(defun todo-sync-keywords (board)
+  "Rewrite BOARD's `#+TODO:' lines to `todo--keywords-line'.
+Returns the alist `todo-out' prints. A board with no such line is left alone:
+the CLI writes no frontmatter."
+  (let* ((line (todo--keywords-line))
+         (keep (split-string (substring line (length "#+TODO: "))))
+         (text (with-temp-buffer (insert-file-contents board) (buffer-string)))
+         (case-fold-search t)
+         old)
+    (with-temp-buffer
+      (insert text)
+      (goto-char (point-min))
+      (while (re-search-forward todo--keywords-re nil t)
+        (push (match-string 0) old)))
+    (if (not old)
+        (list (cons 'file board) (cons 'keywords "none") (cons 'changed "no"))
+      (let* ((words (cl-remove-duplicates
+                     (cl-mapcan (lambda (l) (cdr (split-string l))) old) :test #'equal))
+             (dropped (cl-set-difference (remove "|" words) keep :test #'equal))
+             (case-fold-search nil))
+        (dolist (word dropped)
+          (when (string-match (format "^\\*+ %s\\_>.*$" (regexp-quote word)) text)
+            (todo-fail (format "%s: a task still uses %s, which the keywords would drop: %s"
+                               board word (match-string 0 text)))))
+        (if (cl-every (lambda (l) (equal l line)) old)
+            (list (cons 'file board) (cons 'keywords line) (cons 'changed "no"))
+          (todo-write board
+                      (lambda ()
+                        (let ((case-fold-search t))
+                          (goto-char (point-min))
+                          (while (re-search-forward todo--keywords-re nil t)
+                            (replace-match line t t)))))
+          (list (cons 'file board) (cons 'keywords line) (cons 'changed "yes")
+                (cons 'dropped (string-join dropped " "))))))))
 
 (defun todo-write (file fn)
   "Apply FN to FILE's content and replace the file atomically. When another
@@ -1132,7 +1188,7 @@ to, or nil when every container was already empty."
     ("create"
      :summary "add a task"
      :usage "todo create <title> [options]"
-     :options (("--state S" "TODO (default), IN_PROGRESS, OPTIONAL, LATER")
+     :options (("--state S" "TODO (default) or IN_PROGRESS")
                ("--tag T" "repeatable; :finance:home:")
                ("-p, --priority A|B|C|D" "ask Raveen first; a repeater forces B")
                ("--deadline D" "2026-11-05 | 2026-11-05 20:30 | <2026-11-05 Thu 20:30 +1w>")
@@ -1158,7 +1214,7 @@ to, or nil when every container was already empty."
      :summary "move a task to a state; promotes a plain heading"
      :usage "todo set-state <ref> STATE [--file F]"
      :options (("--file F" "the board; default todo.org in the cwd"))
-     :note "STATE is one of TODO, IN_PROGRESS, OPTIONAL, LATER, DONE, OBSOLETE."
+     :note "STATE is one of TODO, IN_PROGRESS, DONE, OBSOLETE."
      :example "todo set-state \"Pay rent\" IN_PROGRESS")
     ("set-deadline"
      :summary "set DEADLINE, with a time or a repeater"
@@ -1208,10 +1264,12 @@ to, or nil when every container was already empty."
      :note "Replaces the note of a task or a container; the planning line and drawers stay, and TEXT may run to several lines. TEXT and --note-file are alternatives, one of them is required, and an empty note and a line starting with `*' at column 0 are refused: a star there is a heading, so indent it."
      :example "todo set-note \"Inbox\" \"read this first\"")
     ("obsolete"
-     :summary "OBSOLETE, keeping the record"
-     :usage "todo obsolete <ref> [--file F]"
-     :options (("--file F" "the board; default todo.org in the cwd"))
-     :example "todo obsolete \"Pay rent\"")
+     :summary "OBSOLETE with its reason, then archive"
+     :usage "todo obsolete <ref> --reason TEXT [--file F]"
+     :options (("--reason TEXT" "why it no longer matters; required, written into the note")
+               ("--file F" "the board; default todo.org in the cwd"))
+     :note "The note gains `Obsolete: TEXT', the task closes as OBSOLETE and moves to <board>.org_archive, so the record says why it was dropped. A routine goes too: obsolete retires it instead of shifting its date. set-state and create refuse OBSOLETE and point here."
+     :example "todo obsolete \"Pay rent\" --reason \"moved out; no rent due\"")
     ("complete"
      :summary "DONE + CLOSED, then archive; a routine stays"
      :usage "todo complete <ref> [--evidence TEXT] [--file F]"
@@ -1229,6 +1287,12 @@ to, or nil when every container was already empty."
      :usage "todo capture <text> [--file F]"
      :options (("--file F" "the board; default todo.org in the cwd"))
      :example "todo capture \"Look into OpenRouter routing\"")
+    ("keywords"
+     :summary "rewrite the board's #+TODO: line to the CLI's states"
+     :usage "todo keywords [--file F]"
+     :options (("--file F" "the board; default todo.org in the cwd"))
+     :note "Emacs and beorg read a board's own #+TODO: line; the CLI reads its states from todo.el. This makes the line match. A board without the line is left alone, and a board whose tasks still use a state the line would drop is refused, naming the task."
+     :example "todo keywords --file ~/repos/agent1/todo.org")
     ("status"
      :summary "board path, existence, task count"
      :usage "todo status [--file F]"
@@ -1370,6 +1434,7 @@ heredoc eats it."
     (when (string-prefix-p "-" title)
       (todo-fail "create title must not be a flag"))
     (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
+    (todo--refuse-bare-obsolete state title)
     (when effort (todo--checked-effort effort))
     (when priority (todo--checked-priority priority))
     (when deadline (todo--checked-deadline deadline))
@@ -1529,6 +1594,7 @@ A help request is answered here, before any verb runs."
       ("set-state"
        (let ((state (cadr rest)))
          (unless (member state todo-states) (todo-fail (format "unknown state %s" state)))
+         (todo--refuse-bare-obsolete state (car rest))
          (let ((board (todo--existing file)))
            (todo-write board (lambda () (todo--goto (car rest) t) (todo--org-todo state)))
            (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state state))))))
@@ -1596,9 +1662,26 @@ A help request is answered here, before any verb runs."
            (todo-out (list (cons 'title (car rest)) (cons 'file board))))))
 
       ("obsolete"
-       (let ((board (todo--existing file)))
-         (todo-write board (lambda () (todo--goto (car rest)) (todo--org-todo "OBSOLETE")))
-         (todo-out (list (cons 'title (car rest)) (cons 'file board) (cons 'state "OBSOLETE")))))
+       (let* ((board (todo--existing file))
+              (title (car rest))
+              (reason (todo--flag flags "--reason"))
+              captured)
+         (unless (and reason (not (string-empty-p (string-trim reason))))
+           (todo--refuse-bare-obsolete "OBSOLETE" title))
+         (todo-write board
+                     (lambda ()
+                       (todo--goto title)
+                       (todo--append-body (concat "Obsolete: " (string-trim reason)))
+                       ;; OBSOLETE is a done state, so org would shift a
+                       ;; routine's date and reopen it. Obsolete retires it.
+                       (cl-letf (((symbol-function 'org-auto-repeat-maybe) #'ignore))
+                         (org-todo "OBSOLETE"))
+                       (setq captured (todo--archive-capture board))))
+         (todo-out (list (cons 'title title)
+                         (cons 'state "OBSOLETE")
+                         (cons 'reason (string-trim reason))
+                         (cons 'file board)
+                         (cons 'archived (todo-archive-move board title (car captured) (cdr captured)))))))
 
       ("complete"
        (let* ((board (todo--existing file))
@@ -1644,6 +1727,9 @@ A help request is answered here, before any verb runs."
          (let ((board (todo-board file)))
            (todo-write board (lambda () (todo--append-root text)))
            (todo-out (list (cons 'title text) (cons 'file board))))))
+
+      ("keywords"
+       (todo-out (todo-sync-keywords (todo--existing file))))
 
       ("status"
        (let* ((board (todo-board file))

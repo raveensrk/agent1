@@ -449,7 +449,7 @@ verbs, same parsing, a few milliseconds each."
   (todo-test--write
    (concat "* TODO [#A] Undated A\n"
            "* TODO [#B] Undated B\n"
-           "* LATER [#A] Deferred\n"
+           "* OBSOLETE [#A] Deferred\n"
            "* DONE Finished\n"
            "* TODO Overdue plain\n"
            "DEADLINE: <2020-01-01 Wed>\n"
@@ -496,7 +496,7 @@ verbs, same parsing, a few milliseconds each."
    (concat "* TODO [#A] Home A :home:\n"
            "* TODO [#B] Home B :home:\n"
            "* TODO [#A] Work A :work:\n"
-           "* LATER [#A] Deferred :home:\n"
+           "* OBSOLETE [#A] Deferred :home:\n"
            "* TODO [#C] Overdue home :home:\n"
            "DEADLINE: <2020-01-01 Wed>\n"))
   (let ((out (nth 1 (todo-test--ok "brief"))))
@@ -506,7 +506,7 @@ verbs, same parsing, a few milliseconds each."
   (let ((out (nth 1 (todo-test--ok "brief" "-p" "A" "--tag" "home"))))
     (should (string-match-p "Home A" out))
     (should-not (string-match-p "Home B\\|Work A\\|Overdue home\\|Deferred" out)))
-  (let ((out (nth 1 (todo-test--ok "brief" "--state" "LATER"))))
+  (let ((out (nth 1 (todo-test--ok "brief" "--state" "OBSOLETE"))))
     (should (string-match-p "Deferred" out))
     (should-not (string-match-p "Home A\\|Overdue home" out)))
   ;; --records: one plain list, due first, no headers and no pick.
@@ -525,7 +525,7 @@ verbs, same parsing, a few milliseconds each."
    (concat "* TODO [#B] Plain B :home:\n"
            "* IN_PROGRESS [#A] Plain A :work:\n"
            "* TODO Unprioritised\n"
-           "* LATER [#A] Deferred\n"
+           "* OBSOLETE [#A] Deferred\n"
            "* DONE Finished\n"
            "* TODO Has deadline\nDEADLINE: <2999-01-01 Thu>\n"
            "* TODO Has scheduled\nSCHEDULED: <2999-01-01 Thu>\n"))
@@ -537,7 +537,7 @@ verbs, same parsing, a few milliseconds each."
     (should (string-match-p "^IN_PROGRESS +Plain A  (" out))
     (should-not (string-match-p "Has deadline\\|Has scheduled\\|Deferred\\|Finished" out)))
   ;; The same filters as read: state wins, tag, priority, a count.
-  (let ((out (nth 1 (todo-test--ok "undated" "--state" "LATER"))))
+  (let ((out (nth 1 (todo-test--ok "undated" "--state" "OBSOLETE"))))
     (should (string-match-p "Deferred" out))
     (should-not (string-match-p "Plain" out)))
   (should (string-match-p "Plain B" (nth 1 (todo-test--ok "undated" "--tag" "home"))))
@@ -547,6 +547,47 @@ verbs, same parsing, a few milliseconds each."
   ;; brief's undated group is the same list, so a scheduled task leaves it too.
   (should (string-match-p (regexp-quote "undated (3):") (nth 1 (todo-test--ok "brief"))))
   (should-not (eq 0 (car (todo-test--cli "undated" "-p" "E")))))
+
+;;; states
+
+(ert-deftest todo-later-is-not-a-state ()
+  ;; LATER and OPTIONAL were retired on 2026-10-08: a deferred task gets a
+  ;; deadline instead.
+  (todo-test--setup)
+  (todo-test--ok "create" "Someday")
+  (should-not (eq 0 (car (todo-test--cli "set-state" "Someday" "LATER"))))
+  (should-not (eq 0 (car (todo-test--cli "create" "Other" "--state" "LATER"))))
+  (should-not (eq 0 (car (todo-test--cli "set-state" "Someday" "OPTIONAL")))))
+
+;;; keywords
+
+(ert-deftest todo-keywords-rewrites-the-board-line ()
+  (todo-test--setup)
+  (todo-test--write (concat "#+TODO: TODO IN_PROGRESS OPTIONAL LATER | DONE OBSOLETE\n"
+                            "* TODO Keep me\n"))
+  (let ((out (nth 1 (todo-test--ok "keywords"))))
+    (should (string-match-p "changed: yes" out))
+    (should (string-match-p "dropped: .*OPTIONAL" out))
+    (should (string-match-p "dropped: .*LATER" out)))
+  (should (string-prefix-p "#+TODO: TODO IN_PROGRESS | DONE OBSOLETE\n* TODO Keep me"
+                           (todo-test--text)))
+  ;; A second run is a no-op.
+  (should (string-match-p "changed: no" (nth 1 (todo-test--ok "keywords")))))
+
+(ert-deftest todo-keywords-leaves-a-bare-board-alone ()
+  (todo-test--setup)
+  (todo-test--write "* TODO Plain\n")
+  (should (string-match-p "keywords: none" (nth 1 (todo-test--ok "keywords"))))
+  (should (equal "* TODO Plain\n" (todo-test--text))))
+
+(ert-deftest todo-keywords-refuses-while-a-task-uses-a-dropped-state ()
+  (todo-test--setup)
+  (todo-test--write (concat "#+TODO: TODO LATER | DONE\n" "* LATER Someday\n"))
+  (let ((before (todo-test--text))
+        (result (todo-test--cli "keywords")))
+    (should-not (eq 0 (car result)))
+    (should (string-match-p "Someday" (nth 2 result)))
+    (should (equal before (todo-test--text)))))
 
 ;;; repeat cookies
 
@@ -842,11 +883,45 @@ verbs, same parsing, a few milliseconds each."
     (should (eq 1 (nth 0 result)))
     (should (string-match-p "more than one" (nth 2 result)))))
 
-(ert-deftest todo-obsolete-keeps-the-record ()
+(ert-deftest todo-obsolete-archives-the-task-with-its-reason ()
   (todo-test--setup)
   (todo-test--ok "create" "Old work")
-  (todo-test--ok "obsolete" "Old work")
-  (should (string-match-p "^\\* OBSOLETE Old work$" (todo-test--text))))
+  (todo-test--ok "create" "Keep me")
+  (let ((out (nth 1 (todo-test--ok "obsolete" "Old work" "--reason" "superseded by the new plan"))))
+    (should (string-match-p "archived: .*todo.org_archive" out))
+    (should (string-match-p "reason: superseded by the new plan" out)))
+  ;; Off the board, into the archive with its reason and a CLOSED stamp.
+  (should-not (string-match-p "Old work" (todo-test--text)))
+  (should (string-match-p "Keep me" (todo-test--text)))
+  (let ((archive (todo-test--text "todo.org_archive")))
+    (should (string-match-p "^\\* OBSOLETE Old work" archive))
+    (should (string-match-p "CLOSED: \\[" archive))
+    (should (string-match-p "Obsolete: superseded by the new plan" archive))))
+
+(ert-deftest todo-obsolete-needs-a-reason ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Old work")
+  (let ((before (todo-test--text)))
+    (dolist (args '(("obsolete" "Old work")
+                    ("obsolete" "Old work" "--reason" "  ")
+                    ("set-state" "Old work" "OBSOLETE")
+                    ("create" "Other" "--state" "OBSOLETE")))
+      (let ((result (apply #'todo-test--cli args)))
+        (should-not (eq 0 (car result)))
+        ;; The refusal steers to the one verb that takes a reason.
+        (should (string-match-p "todo obsolete .*--reason" (nth 2 result)))))
+    (should (equal before (todo-test--text)))))
+
+(ert-deftest todo-obsolete-retires-a-routine ()
+  (todo-test--setup)
+  (todo-test--ok "create" "Water plants" "--deadline" "<2020-01-01 Wed ++1w>")
+  (todo-test--ok "obsolete" "Water plants" "--reason" "no plants left")
+  ;; Not shifted and reopened, as complete would: gone from the board.
+  (should-not (string-match-p "Water plants" (todo-test--text)))
+  (let ((archive (todo-test--text "todo.org_archive")))
+    (should (string-match-p "^\\* OBSOLETE \\[#B\\] Water plants" archive))
+    (should (string-match-p "DEADLINE: <2020-01-01 Wed \\+\\+1w>" archive))
+    (should (string-match-p "Obsolete: no plants left" archive))))
 
 (ert-deftest todo-complete-moves-the-task-to-the-archive ()
   (todo-test--setup)
@@ -1075,7 +1150,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
                        (cons 'deadline "<2026-10-02 Fri>") (cons 'priority nil) (cons 'path "/b"))
                  (list (cons 'todo "TODO") (cons 'title "Pay rent")
                        (cons 'deadline "<2026-09-28 Mon>") (cons 'priority nil) (cons 'path "/a"))
-                 (list (cons 'todo "LATER") (cons 'title "Sheets")
+                 (list (cons 'todo "OBSOLETE") (cons 'title "Sheets")
                        (cons 'deadline "<2026-09-01 Tue>") (cons 'priority nil) (cons 'path "/a"))
                  (list (cons 'todo "TODO") (cons 'title "Future")
                        (cons 'deadline "<2026-10-08 Thu +1w>") (cons 'priority nil) (cons 'path "/a"))
@@ -1124,7 +1199,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   (todo-test--ok "create" "Beaten" "--priority" "A")
   (todo-test--ok "set-state" "Beaten" "DONE")
   (todo-test--ok "create" "Deferred" "--priority" "A")
-  (todo-test--ok "set-state" "Deferred" "LATER")
+  (todo-test--ok "obsolete" "Deferred" "--reason" "not needed")
   (let ((lines (nth 1 (todo-test--ok "doing" "--priority" "A"))))
     (should (equal 1 (length (split-string lines "\n\n" t))))
     (should (string-match-p "Alpha" lines)))
@@ -1221,7 +1296,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
                  '("resolve" "doing" "read" "brief" "undated" "create" "rename" "delete"
                    "set-state" "set-deadline" "postpone" "set-priority" "set-effort"
                    "add-tag" "remove-tag" "append" "set-note" "obsolete" "complete"
-                   "archive" "capture" "status" "edit" "edit-vim"
+                   "archive" "capture" "keywords" "status" "edit" "edit-vim"
                    "edit-emacs" "config")))
   (dolist (spec todo-help)
     (should (plist-get (cdr spec) :summary))
@@ -1272,8 +1347,6 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   (todo-test--setup)
   (todo-test--write (concat "* TODO Open late\nDEADLINE: <2020-01-01 Wed>\n"
                             "* IN_PROGRESS Working late\nDEADLINE: <2020-01-02 Thu>\n"
-                            "* LATER Deferred late\nDEADLINE: <2020-01-03 Fri>\n"
-                            "* OPTIONAL Optional late\nDEADLINE: <2020-01-04 Sat>\n"
                             "* OBSOLETE Dropped late\nDEADLINE: <2020-01-05 Sun>\n"))
   (let ((titles (lambda (out)
                   (mapcar (lambda (item) (todo-test--field item "title"))
@@ -1284,14 +1357,12 @@ emacs. The wrapper must resolve its own binaries, or the window reports
       (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "-d" "--records")))))
       (should (equal expected (funcall titles (nth 1 (todo-test--ok "read" "--overdue" "--records"))))))
     ;; `--state' names a state and wins on its own.
-    (should (equal '("Deferred late")
-                   (funcall titles (nth 1 (todo-test--ok "read" "--due" "--state" "LATER" "--records")))))
     (should (equal '("Dropped late")
                    (funcall titles (nth 1 (todo-test--ok "read" "--due" "--state" "OBSOLETE" "--records")))))
     (should (equal '("Open late")
                    (funcall titles (nth 1 (todo-test--ok "read" "--due" "--state" "TODO" "--records")))))
     ;; Plain read still shows every state.
-    (should (equal '("Open late" "Working late" "Deferred late" "Optional late" "Dropped late")
+    (should (equal '("Open late" "Working late" "Dropped late")
                    (funcall titles (nth 1 (todo-test--ok "read" "--records")))))))
 
 (ert-deftest todo-read-filters-priority-and-takes-the-first-n ()
