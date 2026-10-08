@@ -250,6 +250,8 @@ scripts/todo config
   `effort:`, `tags:` (space-joined), `path:` and `note:`, in that order. An
   empty field prints as `name:`. The note's further lines continue on `+ `
   lines, a blank one as a bare `+`, so a blank line only ever ends a record.
+  A line that ends in `\` prints with one space after it: recfile reads a
+  backslash at the end of a line as a line continuation and has no escape for it.
   There is no JSON: the board is org, the CLI is Emacs, and both consumers
   parse this text.
 - `doing` prints the main quest: `TODO` or `IN_PROGRESS`, due today or overdue in IST. Org reads the deadline, including a repeater. Most late wins, then priority A before D, then title, then path - the head of the list `read --due` prints. The pick prints as one record, or `none`. `emacs.el` draws that pick as one agenda line (`agenda2`). `agenda2.sh` is the shell alias.

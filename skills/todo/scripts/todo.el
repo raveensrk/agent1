@@ -561,9 +561,18 @@ shifts as far as it takes."
 
 (defun todo--rec-field (name value)
   "NAME and VALUE as one recfile field: `NAME: VALUE'. Each further line of
-VALUE continues on a `+ ' line, and an empty VALUE prints as `NAME:'."
+VALUE continues on a `+ ' line, and an empty VALUE prints as `NAME:'.
+A line that ends in a backslash gets one space after it. Recfile has no
+escape for a backslash at the end of a line: recutils' parser
+\(rec-parser.c, `rec_parse_field_value') drops every backslash-newline
+pair, even one after a second backslash, so `C:\\dir\\' followed by
+`+ next' would read back as `C:\\dir+ next'. A backslash followed by a space is literal there,
+so every reader sees the same value: the line plus one trailing space."
   (concat name ":"
-          (mapconcat (lambda (line) (if (string-empty-p line) "" (concat " " line)))
+          (mapconcat (lambda (line)
+                       (cond ((string-empty-p line) "")
+                             ((string-suffix-p "\\" line) (concat " " line " "))
+                             (t (concat " " line))))
                      (split-string value "\n") "\n+")
           "\n"))
 

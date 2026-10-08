@@ -428,6 +428,20 @@ is syntax, not value."
                          "path: " (expand-file-name "todo.org" todo-test--dir) "\n"
                          "note:\n"))))
 
+(ert-deftest todo-records-guard-a-trailing-backslash ()
+  ;; Recfile reads a backslash at the end of a line as a line continuation
+  ;; and has no escape for it, so the line gets one space after the
+  ;; backslash: nothing merges and nothing is lost.
+  (todo-test--setup)
+  (todo-test--write (concat "* TODO Path ends in a slash\\\n"
+                            "C:\\dir\\\n"
+                            "next\n"
+                            "last\\\n"))
+  (let ((out (nth 1 (todo-test--ok "read" "--records"))))
+    (should (string-match-p "^title: Path ends in a slash\\\\ $" out))
+    (should (string-match-p "^note: C:\\\\dir\\\\ \n\\+ next\n\\+ last\\\\ \n\\'" out))
+    (should-not (string-match-p "\\\\\n" out))))
+
 (ert-deftest todo-read-records-have-the-card-fields ()
   (todo-test--setup)
   (todo-test--write (concat "* TODO [#A] Pay rent :finance:\n"
