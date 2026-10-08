@@ -12,6 +12,12 @@ Each `command` below writes the guard's own path as `GUARD`: substitute yours.
 
 ## Claude Code
 
+agent1 ships its guards to Claude as plugin hooks: `hooks/hooks.json` at the
+repo root calls `harness/hook.ts`, which reuses the pi extensions' exported
+functions (see [harness/README.md](../../../harness/README.md)). A new guard for
+agent1 goes into the extension plus one `hook.ts` branch, not a second copy.
+The shape below is for a guard outside agent1.
+
 Project hooks: `.claude/settings.json`. User scope: `~/.claude/settings.json`.
 Exit code 2 blocks and feeds stderr to the model.
 

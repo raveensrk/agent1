@@ -9,7 +9,11 @@
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const NUDGE_AT = 2;
+export const NUDGE_AT = 2;
+
+export function nudgeText(tool: string): string {
+	return `${tool} failed twice in a row - say "learn from failure" to scan and fix`;
+}
 
 export default function (pi: ExtensionAPI) {
 	let streak = 0;
@@ -21,9 +25,6 @@ export default function (pi: ExtensionAPI) {
 		}
 		streak += 1;
 		if (streak !== NUDGE_AT || !ctx.hasUI) return;
-		ctx.ui.notify(
-			`${event.toolName} failed twice in a row - say "learn from failure" to scan and fix`,
-			"info",
-		);
+		ctx.ui.notify(nudgeText(event.toolName), "info");
 	});
 }

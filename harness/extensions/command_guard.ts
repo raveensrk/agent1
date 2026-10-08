@@ -251,17 +251,19 @@ const MEASURED =
 	"Measured here: one recursive grep over ~/repos ran 111s of a 137s session and was " +
 	"aborted, and ~/.bash_history holds 9 curl installs with no --max-time.";
 
+/** The refusal for COMMAND, or null when it may run. Shared with harness/hook.ts. */
+export function commandBlock(command: string): string | null {
+	const hit = guardHit(command);
+	if (!hit) return null;
+	return `Blocked: ${hit.name}. ${MEASURED}\n${hit.fix}\nBound the path for a search, and keep the timeout on every fetch.`;
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.on("tool_call", (event) => {
 		if (event.toolName !== "bash") return;
 		const command = (event.input as { command?: unknown }).command;
 		if (typeof command !== "string") return;
-		const hit = guardHit(command);
-		if (hit) {
-			return {
-				block: true,
-				reason: `Blocked: ${hit.name}. ${MEASURED}\n${hit.fix}\nBound the path for a search, and keep the timeout on every fetch.`,
-			};
-		}
+		const reason = commandBlock(command);
+		if (reason) return { block: true, reason };
 	});
 }

@@ -27,7 +27,7 @@ assert.ok(live.startsWith("## Output style: Telegraph"), `rule file must open wi
 assert.ok(live.length > 2000, `the whole rule, not a stub: ${live.length} chars`);
 assert.match(live, /strict audit/, "the session audit is part of the rule");
 assert.ok(RULE_PATH.endsWith("harness/extensions/telegraph.md"), RULE_PATH);
-assert.ok(CONFIG_PATH.endsWith(".pi/agent/telegraph.json"), CONFIG_PATH);
+assert.ok(CONFIG_PATH.endsWith(".local/state/agent1/telegraph.json"), "one switch for every harness");
 
 // the injected section: provenance, body, and it appends rather than replaces
 const section = ruleSection(live);

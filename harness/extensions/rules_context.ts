@@ -93,19 +93,18 @@ export function rulesSection(
 	return lines.join("\n");
 }
 
+/** The rules as they stand on disk now. Shared with harness/hook.ts. */
+export function currentRules(): string {
+	try {
+		return rulesSection(readFileSync(COMMON, "utf8"), topics(), readIfPresent(EXPERIMENTAL));
+	} catch {
+		return "## Rules\n\n~/repos/agent1/common.md is missing, so the session-start rules did not load. Read the topic files under ~/repos/agent1/ before starting.";
+	}
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.on("before_agent_start", (event) => {
-		let section: string;
-		try {
-			section = rulesSection(
-				readFileSync(COMMON, "utf8"),
-				topics(),
-				readIfPresent(EXPERIMENTAL),
-			);
-		} catch {
-			section =
-				"## Rules\n\n~/repos/agent1/common.md is missing, so the session-start rules did not load. Read the topic files under ~/repos/agent1/ before starting.";
-		}
+		const section = currentRules();
 		if (!section) return;
 		return { systemPrompt: `${event.systemPrompt}\n\n${section}` };
 	});

@@ -15,16 +15,18 @@
  * one classifier call per run asked about. Thresholds and evidence for that
  * number live in voice_score.ts.
  *
- * Config: ~/.pi/agent/telegraph.json {"enabled": bool}. Absent or malformed
- * means on, because a missing switch must not silently drop a voice rule.
+ * Config: ~/.local/state/agent1/telegraph.json {"enabled": bool}, one switch
+ * for every harness - Claude Code reads it through harness/hook.ts. Absent or
+ * malformed means on, because a missing switch must not silently drop a voice
+ * rule.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export const RULE_PATH = join(homedir(), "repos/agent1/harness/extensions/telegraph.md");
-export const CONFIG_PATH = join(homedir(), ".pi/agent/telegraph.json");
+export const CONFIG_PATH = join(homedir(), ".local/state/agent1/telegraph.json");
 
 export function readEnabled(path = CONFIG_PATH): boolean {
 	try {
@@ -36,6 +38,7 @@ export function readEnabled(path = CONFIG_PATH): boolean {
 }
 
 export function writeEnabled(enabled: boolean, path = CONFIG_PATH): void {
+	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, `${JSON.stringify({ enabled }, null, 2)}\n`);
 }
 

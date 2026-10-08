@@ -17,17 +17,17 @@ import { join } from "node:path";
 
 const LINT = join(homedir(), "repos/agent1/harness/lint.py");
 // ponytail: fixed caps, raise them if a session ever needs more than three nudges
-const MAX_CONTINUATIONS = 3;
+export const MAX_CONTINUATIONS = 3;
 const SHOWN = 20;
 const TIMEOUT_MS = 30_000;
 
-type Finding = { check: string; path: string; line: number; message: string };
+export type Finding = { check: string; path: string; line: number; message: string };
 
-function key(finding: Finding): string {
+export function key(finding: Finding): string {
 	return `${finding.check}:${finding.path}:${finding.line}`;
 }
 
-function lint(files: string[], cwd: string): Promise<Finding[]> {
+export function lint(files: string[], cwd: string): Promise<Finding[]> {
 	return new Promise((resolve) => {
 		execFile(
 			"python3",
@@ -43,6 +43,20 @@ function lint(files: string[], cwd: string): Promise<Finding[]> {
 			},
 		);
 	});
+}
+
+/** The message that hands FINDINGS back to the agent. */
+export function findingsMessage(findings: Finding[]): string {
+	const lines = findings
+		.slice(0, SHOWN)
+		.map((f) => `- ${f.path}:${f.line}: ${f.check}: ${f.message}`);
+	if (findings.length > SHOWN) lines.push(`- and ${findings.length - SHOWN} more`);
+	return [
+		`harness lint found ${findings.length} findings in the files this session edited:`,
+		...lines,
+		"",
+		"Fix them, or say why one is a false positive. If a rule is wrong rather than the code, say so and fix the rule.",
+	].join("\n");
 }
 
 export default function (pi: ExtensionAPI) {
@@ -70,20 +84,14 @@ export default function (pi: ExtensionAPI) {
 		findings.forEach((f) => reported.add(key(f)));
 		continuations += 1;
 
-		const lines = findings
-			.slice(0, SHOWN)
-			.map((f) => `- ${f.path}:${f.line}: ${f.check}: ${f.message}`);
-		if (findings.length > SHOWN) lines.push(`- and ${findings.length - SHOWN} more`);
-		const text = [
-			`harness lint found ${findings.length} findings in the files this session edited:`,
-			...lines,
-			"",
-			"Fix them, or say why one is a false positive. If a rule is wrong rather than the code, say so and fix the rule.",
-		].join("\n");
-
 		return {
 			entries: [
-				{ type: "custom_message", customType: "harness-lint", content: text, display: true },
+				{
+					type: "custom_message",
+					customType: "harness-lint",
+					content: findingsMessage(findings),
+					display: true,
+				},
 			],
 			continue: true,
 		};

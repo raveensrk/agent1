@@ -3,7 +3,9 @@ description: Estimate tokens and USD to complete a task with the active model
 argument-hint: "[task]"
 ---
 
-Estimate the additional tokens and USD to complete ${@:-the most recent unfinished task discussed before this command}. Do not perform the task.
+Estimate the additional tokens and USD to complete this task: $ARGUMENTS
+
+If no task follows the colon above, estimate the most recent unfinished task discussed before this command. Do not perform the task.
 
 Identify the active provider, model, and thinking level. Check pricing from the actual billing provider, including cache rates and context-size tiers. Ground the estimate in bounded, read-only inspection and recent session usage; never invent a missing rate.
 

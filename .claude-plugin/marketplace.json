@@ -8,7 +8,7 @@
     {
       "name": "agents",
       "source": "./",
-      "description": "Shared agent skills - git report, todo migration, privacy scanning"
+      "description": "agent1 harness: skills, commands, guards, lint and rules hooks"
     }
   ]
 }

@@ -1,8 +1,12 @@
 {
   "name": "agents",
-  "description": "Shared agent skills and conventions - git report, todo migration, privacy scanning",
+  "description": "agent1 harness for Claude Code: skills, commands, and the guards, lint, nudge and rules hooks that pi runs as extensions",
   "version": "0.1.0",
   "author": {
     "name": "Raveen Kumar"
-  }
+  },
+  "commands": [
+    "./commands",
+    "./prompts"
+  ]
 }
