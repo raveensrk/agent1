@@ -139,6 +139,18 @@ def test_discovers_every_check_with_a_header():
         assert check["quadrant"] == "feedback/computational", check
 
 
+def test_pi_prompt_filename_is_a_slash_command():
+    check = os.path.join(CHECKS, "file_naming.py")
+    root = os.path.dirname(HARNESS)
+    good = os.path.join(root, "prompts", "estimate-cost.md")
+    bad = os.path.join(root, "prompts", "bad--name.md")
+    outside = os.path.join(root, "bad-name.md")
+    run = subprocess.run([sys.executable, check, good, bad, outside], capture_output=True, text=True)
+    assert run.returncode == 0, run.stderr
+    assert good not in run.stdout, run.stdout
+    assert bad in run.stdout and outside in run.stdout, run.stdout
+
+
 def test_stale_doc_path_check_ignores_relative_tmp():
     check = os.path.join(CHECKS, "stale_doc_paths.py")
     with tempfile.TemporaryDirectory() as tmp:

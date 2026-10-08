@@ -11,7 +11,9 @@ AGENTS.md, CLAUDE.md, SKILL.md, .gitignore, and the .claude-plugin directory
 Scope: everything except the skills/ subtree of the repo that owns the file.
 Skill directories are kebab-case because the Agent Skills format requires the
 directory name to match the skill name (README.md: "Skill directories use
-hyphens"), and skill_frontmatter.py already decides that pair.
+hyphens"), and skill_frontmatter.py already decides that pair. Pi package
+prompt templates under prompts/ may use hyphens: Pi turns the filename into the
+slash-command name.
 
 Directories are validated as the ancestors of each file, up to the repo root.
 A directory with no files in it is invisible here; git does not track empty
@@ -74,6 +76,9 @@ def check(path: str) -> list[str]:
 			f"rename it: git mv {os.path.join(root, *dirs)} {suggestion(directory)}"
 		)
 		break
+	# Pi package prompt filenames become slash commands, such as /estimate-cost.
+	if dirs == ["prompts"] and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md", name):
+		return findings
 	if name in CANONICAL or SNAKE.match(name):
 		return findings
 	findings.append(

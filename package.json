@@ -6,6 +6,7 @@
   "description": "Agent harness: rules, checks, and pi extensions. Loaded by pi as a local package (see dot config/pi/settings.json).",
   "keywords": ["pi-package"],
   "pi": {
-    "extensions": ["harness/extensions/*.ts", "!harness/extensions/model_pick.ts"]
+    "extensions": ["harness/extensions/*.ts", "!harness/extensions/model_pick.ts"],
+    "prompts": ["prompts/estimate-cost.md"]
   }
 }

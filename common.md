@@ -158,7 +158,7 @@ After installing or removing pi packages, verify with `timeout 90 pi -p "reply w
 
 ## Naming
 
-Files and directories use `snake_case` - lowercase words joined by underscores. [file_naming.py](harness/checks/file_naming.py) decides it: lowercase letters, digits, underscores and dots only, with the canonical tool names (`README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `SKILL.md`, `.gitignore`, `.claude-plugin/`) exempt. Skill directories under `skills/` are kebab-case by the Agent Skills format, decided by [skill_frontmatter.py](harness/checks/skill_frontmatter.py).
+Files and directories use `snake_case` - lowercase words joined by underscores. [file_naming.py](harness/checks/file_naming.py) decides it: lowercase letters, digits, underscores and dots only, with the canonical tool names (`README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `SKILL.md`, `.gitignore`, `.claude-plugin/`) exempt. Skill directories under `skills/` are kebab-case by the Agent Skills format, decided by [skill_frontmatter.py](harness/checks/skill_frontmatter.py). Pi package prompts under `prompts/` may use kebab-case `.md` filenames: Pi uses them as slash-command names.
 
 ## Markdown
 

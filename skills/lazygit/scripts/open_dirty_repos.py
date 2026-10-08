@@ -6,12 +6,12 @@ Reads the pi session jsonl ($PI_SESSION_FILE, or the newest session under
 tool calls, plus bash `>`, `>>` and `tee` targets), maps each to its git repo
 root, and keeps the roots whose `git status --porcelain` is non-empty.
 
-Then opens one lazygit per repo: a tab in the front iTerm window, a window in
-Terminal.app (which has no AppleScript tab creation), each running
-`cd <repo> && exec lazygit`.
+Then opens one lazygit per repo: an unfocused Herdr tab inside Herdr, an iTerm
+tab, or a Terminal.app window. Herdr takes precedence over an inherited
+TERM_PROGRAM=iTerm.app.
 
 Usage:
-  open_dirty_repos.py [--dry-run] [--terminal auto|iterm|terminal]
+  open_dirty_repos.py [--dry-run] [--terminal auto|herdr|iterm|terminal]
                       [--session-file PATH] [--repo PATH]... [--self-test]
 
 `--repo PATH` skips the session scan and opens that repo whether it is clean or
@@ -29,6 +29,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 WRITE_TOOLS = {"edit", "write"}
 REDIRECT_RE = re.compile(r"(?:^|[\s;|&(])>>?\s*(\"[^\"]+\"|'[^']+'|[^\s;|&<>()]+)")
@@ -161,8 +162,10 @@ def named_repo(target: str) -> tuple[str, Path, tuple[int, int, str]] | None:
 
 
 def pick_terminal(requested: str) -> str:
-    if requested in ("iterm", "terminal"):
+    if requested in ("herdr", "iterm", "terminal"):
         return requested
+    if os.environ.get("HERDR_ENV") == "1":
+        return "herdr"
     program = os.environ.get("TERM_PROGRAM", "")
     if program == "iTerm.app":
         return "iterm"
@@ -189,12 +192,37 @@ def shell_command(root: Path, name: str) -> str:
     )
 
 
-def open_tabs(rows: list[tuple[str, Path, tuple[int, int, str]]], terminal: str) -> None:
-    records = ", ".join(
-        "{" + applescript_string(name) + ", " + applescript_string(shell_command(root, name)) + "}"
-        for name, root, _ in rows
-    )
-    body = f"set repos to {{{records}}}\n"
+def open_herdr(rows: list[tuple[str, Path, tuple[int, int, str]]]) -> None:
+    """Create an unfocused tab in the current Herdr workspace for each repo."""
+    if os.environ.get("HERDR_ENV") != "1":
+        raise SystemExit("ERROR: Herdr tabs require HERDR_ENV=1. Run from a Herdr pane instead.")
+    workspace = os.environ.get("HERDR_WORKSPACE_ID")
+    if not workspace:
+        raise SystemExit("ERROR: HERDR_WORKSPACE_ID missing. Run from a Herdr pane instead.")
+    if not shutil.which("herdr"):
+        raise SystemExit("ERROR: herdr not on PATH. Install Herdr or use --terminal iterm.")
+
+    for name, root, _ in rows:
+        created = subprocess.run(
+            ["herdr", "tab", "create", "--workspace", workspace, "--cwd", str(root),
+             "--label", f"lazygit: {name}", "--no-focus"],
+            capture_output=True, text=True, check=False,
+        )
+        if created.returncode:
+            raise SystemExit(f"ERROR: herdr tab create failed: {created.stderr.strip()}")
+        try:
+            pane = json.loads(created.stdout)["result"]["root_pane"]["pane_id"]
+        except (ValueError, KeyError, TypeError):
+            raise SystemExit(f"ERROR: herdr tab create returned no pane ID: {created.stdout.strip()}") from None
+
+        started = subprocess.run(
+            ["herdr", "pane", "run", pane, "exec lazygit"],
+            capture_output=True, text=True, check=False,
+        )
+        if started.returncode:
+            raise SystemExit(f"ERROR: herdr pane run failed for {pane}: {started.stderr.strip()}")
+
+
 def terminal_has_idle_prompt() -> bool:
     """Whether Terminal.app's front window holds an idle shell prompt.
 
@@ -214,6 +242,9 @@ def terminal_has_idle_prompt() -> bool:
 
 
 def open_tabs(rows: list[tuple[str, Path, tuple[int, int, str]]], mode: str) -> None:
+    if mode == "herdr":
+        open_herdr(rows)
+        return
     records = ", ".join(
         "{" + applescript_string(name) + ", " + applescript_string(shell_command(root, name)) + "}"
         for name, root, _ in rows
@@ -270,7 +301,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dry-run", action="store_true", help="list repos, open nothing")
     parser.add_argument(
-        "--terminal", choices=("auto", "iterm", "terminal"), default="auto", help="which terminal to use"
+        "--terminal", choices=("auto", "herdr", "iterm", "terminal"), default="auto", help="which terminal to use"
     )
     parser.add_argument("--session-file", help="session jsonl to read instead of the current one")
     parser.add_argument(
@@ -301,7 +332,9 @@ def main(argv: list[str] | None = None) -> int:
         targets, cwd = session_writes(path)
         rows = collect(targets, cwd)
     terminal = pick_terminal(args.terminal)
-    if terminal == "iterm":
+    if terminal == "herdr":
+        mode, what = "herdr", "opening tabs in Herdr"
+    elif terminal == "iterm":
         mode, what = "tabs", "opening tabs in iTerm"
     elif terminal_has_idle_prompt():
         mode, what = "commands", "Terminal.app has an idle shell in front: paste these"
@@ -316,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def self_test() -> int:
-    """Check extraction, repo-root walk and dirty counting on a scratch repo."""
+    """Check repo discovery and terminal launch paths on a scratch repo."""
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "scratch_repo"
         (repo / "src").mkdir(parents=True)
@@ -360,6 +393,42 @@ def self_test() -> int:
         changed, untracked, branch = rows[0][2]
         assert (changed, untracked) == (1, 1) and branch, rows
         assert repo_root("relative/thing.py", cwd) is None, "non-repo path yields no root"
+
+        with patch.dict(os.environ, {"HERDR_ENV": "1", "HERDR_WORKSPACE_ID": "w1", "TERM_PROGRAM": "iTerm.app"}), \
+             patch("shutil.which", return_value="herdr"), patch("subprocess.run") as cli:
+            cli.side_effect = [
+                subprocess.CompletedProcess([], 0, '{"result":{"root_pane":{"pane_id":"w1:p9"}}}', ""),
+                subprocess.CompletedProcess([], 0, "", ""),
+            ]
+            assert pick_terminal("auto") == "herdr"
+            assert pick_terminal("iterm") == "iterm", "explicit override wins"
+            open_herdr(rows)
+            assert [call.args[0] for call in cli.call_args_list] == [
+                ["herdr", "tab", "create", "--workspace", "w1", "--cwd", str(repo),
+                 "--label", "lazygit: scratch_repo", "--no-focus"],
+                ["herdr", "pane", "run", "w1:p9", "exec lazygit"],
+            ], "Herdr tab stays in the current workspace without stealing focus"
+
+        with patch.dict(os.environ, {"HERDR_ENV": "", "TERM_PROGRAM": "iTerm.app"}):
+            assert pick_terminal("auto") == "iterm", "outside Herdr, keep iTerm behavior"
+            try:
+                open_herdr(rows)
+                assert False, "Herdr outside a managed pane must fail"
+            except SystemExit as exc:
+                assert "HERDR_ENV=1" in str(exc)
+
+        with patch.dict(os.environ, {"HERDR_ENV": "", "TERM_PROGRAM": "Apple_Terminal"}):
+            assert pick_terminal("auto") == "terminal", "outside Herdr, keep Terminal.app behavior"
+
+        with patch.dict(os.environ, {"HERDR_ENV": "1", "HERDR_WORKSPACE_ID": "w1"}), \
+             patch("shutil.which", return_value="herdr"), \
+             patch("subprocess.run", return_value=subprocess.CompletedProcess([], 1, "", "no server")):
+            try:
+                open_herdr(rows)
+                assert False, "a failed Herdr command must stop"
+            except SystemExit as exc:
+                assert "no server" in str(exc)
+
         print("self-test ok")
     return 0
 

@@ -93,6 +93,7 @@ answer means the import did not load.
 | [`model_usage_history.org`](./model_usage_history.org) | Historical model usage across agent harnesses |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
+| `prompts/` | Reusable Pi slash commands loaded from the local package |
 | [`quesion_types.yaml`](./quesion_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |
 | `removal.md` | Removing apps, packages and harnesses |
 | `repos.md` | Nested git repo policy for `~/repos` |
@@ -138,7 +139,7 @@ installed on the machine. Each item is a link back to this clone, so a
 |---|---|---|---|
 | `skills/*` | `~/.claude/skills/` | `~/.codex/skills/` | `~/.agents/skills/` (Pi reads the Agent Skills dir) |
 | `commands/*.md` (none yet) | `~/.claude/commands/` | not supported | `~/.pi/agent/prompts/` |
-| `harness/extensions/*.ts` | not supported | not supported | pi package: `"~/repos/agent1"` in `~/dot/config/pi/settings.json` `packages` (local source, loads live) |
+| `harness/extensions/*.ts` and `prompts/*.md` | not supported | not supported | pi package: `"~/repos/agent1"` in `~/dot/config/pi/settings.json` `packages` (local source, loads live) |
 
 - Idempotent: run it again after every `git pull`. It adds new items and
   removes links to items that were deleted or renamed here.
