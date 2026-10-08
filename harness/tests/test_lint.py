@@ -487,6 +487,17 @@ def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
             fh.write(head.replace("ArgumentParser()", "ArgumentParser(add_help=False)")
                      + 'p.add_argument("-h", "--help", action="help")\np.parse_args()\n')
         assert run() == ""
+        # A shared-flags parser that only feeds parents= turns no help off.
+        common = 'common = argparse.ArgumentParser(add_help=False)\ncommon.add_argument("-q")\n'
+        with open(script, "w") as fh:
+            fh.write(head + common + 'sub = p.add_subparsers()\n'
+                     'sub.add_parser("build", parents=[common])\np.parse_args()\n')
+        assert run() == ""
+        # A subcommand built with add_help=False does lose its help.
+        with open(script, "w") as fh:
+            fh.write(head + common + 'sub = p.add_subparsers()\n'
+                     'sub.add_parser("build", parents=[common], add_help=False)\np.parse_args()\n')
+        assert "mentions neither -h nor --help" in run(), run()
 
 
 def test_cli_help_check_reads_code_not_strings():

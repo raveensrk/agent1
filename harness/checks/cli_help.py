@@ -11,7 +11,9 @@ So this check decides the hard half only:
   * A file that parses options - argparse, getopts, `$#`, sys.argv - must mention
     both `-h` and `--help`. argparse's default `add_help` binds both for free,
     and with it each subcommand too, so an argparse file passes without a word;
-    only `add_help=False` asks for the explicit pair. A hand-parsed script needs
+    only `add_help=False` asks for the explicit pair, and not on a parser that
+    only feeds `parents=`: that is the shared-flags idiom, and every parser
+    built from it still binds both. A hand-parsed script needs
     both spellings, and the finding names the one that is missing. Option
     parsing is read from code, never from a string or a comment: a test that
     writes a fake CLI into a fixture owns no flags.
@@ -151,6 +153,30 @@ def adds_options(text: str) -> bool | None:
     )
 
 
+def help_off(text: str) -> bool:
+    """True when a parser really turns argparse's -h and --help off.
+
+    `add_help=False` on a parser passed only as `parents=` turns nothing off.
+    Reading every `add_help=False` as an opt-out flagged marriage_notes_2's
+    publish/wiki.py on 2026-10-09, whose `wiki -h` and `wiki build -h` both work.
+    An `add_help=False` parser not bound to a plain name still counts as off.
+    """
+    tree = ast.parse(text)
+    parents = {name.id for node in ast.walk(tree)
+               if isinstance(node, ast.keyword) and node.arg == "parents"
+               for name in ast.walk(node.value) if isinstance(name, ast.Name)}
+    bound = {id(node.value): node.targets[0].id for node in ast.walk(tree)
+             if isinstance(node, ast.Assign) and len(node.targets) == 1
+             and isinstance(node.targets[0], ast.Name)}
+    return any(
+        bound.get(id(node)) not in parents
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and any(kw.arg == "add_help" and isinstance(kw.value, ast.Constant)
+                and kw.value.value is False for kw in node.keywords)
+    )
+
+
 def findings(rel: str, text: str) -> list[str]:
     """This REL file's findings, worded for the repo-relative path."""
     lines = text.splitlines()
@@ -161,7 +187,7 @@ def findings(rel: str, text: str) -> list[str]:
         if adds is None:
             return []                      # does not parse; python_compiles owns it
     # argparse binds -h and --help by default, per parser and per subcommand.
-    if adds and "add_help=False" not in text:
+    if adds and not help_off(text):
         return []
     parsed = text if not python else code_only(text)
     if not adds and not HAND_PARSED.search(parsed):
