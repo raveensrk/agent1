@@ -1,7 +1,7 @@
 ---
 id: "qyjzxgw4p6"
 title: "Todo skill and CLI: implement a task, tick its steps, support subtasks"
-state: "todo"
+state: "obsolete"
 due: ""
 priority: "C"
 tag: []
@@ -9,7 +9,7 @@ repeat: ""
 effort: ""
 postpone: 0
 created: "2026-10-04"
-closed: ""
+closed: "2026-10-08T23:52"
 ---
 
 Decided 2026-10-04, both halves. The CLI stays the only writer; the agent does the work.
@@ -24,3 +24,7 @@ B) Structural subtasks:
 - capture --container is today's way to group tasks without states; SKILL.md should say when a container is still the right shape.
 Tests: extend the skill's own suite (scripts/test, bounded, prints failures) with a check/uncheck round-trip, a single-ref record read, a parent refused while a child is open, and archiving a completed child.
 Also update the skill's rule text in /Users/raveen_kumar_personal/repos/agent1/skills/todo/SKILL.md in the same change; the rules live there, not in the CLI.
+
+## Log
+
+- obsolete 2026-10-08 23:52: Emacs, Org and Lisp ruled out 2026-10-08; Waypoint replaces the org tooling
