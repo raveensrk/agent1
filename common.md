@@ -170,6 +170,13 @@ Names are singular: files, directories, fields, keys, tables, variables and CLI 
 
 Dark theme by default: HTML pages, reports, apps, GUIs, terminal output colors and tool configs. Do not follow the system's light setting. Offer light only as an explicit option the user switches to.
 
+## Ruled out
+
+Emacs, Org mode and Lisp: I tried them in 2026 and they did not fit me. If I
+start to install, configure or discuss Emacs, Org or a Lisp, warn me first in
+one plain sentence, point at Waypoint (plain Markdown tasks) and ask whether to
+go on.
+
 ## Markdown
 
 When linking file paths, use markdown links.
