@@ -423,7 +423,8 @@ def test_dispatcher_end_to_end_in_a_temp_repo():
         subprocess.run(["git", "init", "-q", tmp], check=True)
         bad = os.path.join(tmp, "tool.sh")
         with open(bad, "w") as fh:
-            fh.write("#!/bin/sh\necho hi\n")
+            # The help arm keeps cli_help quiet: a no-arg runnable owes it too.
+            fh.write('#!/bin/sh\ncase "${1:-}" in -h|--help) echo "usage: tool.sh"; exit 0;; esac\necho hi\n')
         proc = subprocess.run(
             [sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp
         )
@@ -461,6 +462,54 @@ def test_cli_help_check_wants_both_flags_and_names_the_missing_one():
         with open(script, "w") as fh:
             fh.write('#!/bin/sh\ncase "${1:-}" in\n  -h|--help) echo "usage: tool.sh"; exit 0;;\nesac\n')
         assert run() == ""
+
+
+def test_cli_help_check_wants_help_from_a_no_arg_runnable_but_not_a_hook_or_test():
+    """experimental.md: a program's docs live inside it, behind -h and --help,
+    options or not. A no-arg git hook or test is called, not typed."""
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+
+        def run(rel, body):
+            path = os.path.join(tmp, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as fh:
+                fh.write(body)
+            os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
+            proc = subprocess.run([sys.executable, check, path], capture_output=True, text=True)
+            assert proc.returncode == 0, proc.stderr
+            return proc.stdout
+
+        bare = "#!/bin/sh\necho hi\n"
+        out = run("tool.sh", bare)
+        assert "runnable mentions neither -h nor --help" in out, out
+        # Both ways out are named: a sourced file, and a callback.
+        assert "chmod -x" in out and "cli_help_allow.txt" in out, out
+        # The suggested idioms pass as written: shell prints its header comment,
+        # python its docstring.
+        shell = out.split("shell, from the header comment: `")[1].split("`")[0]
+        assert run("tool.sh", f"#!/bin/sh\n# Say hi.\n{shell}\necho hi\n") == ""
+        idiom = out.split("python, from the module docstring: `")[1].split("`")[0]
+        assert run("tool.py", f'#!/usr/bin/env python3\n"""Say hi."""\nimport sys\n{idiom}\n') == ""
+        # argparse with no option added still answers -h and --help ...
+        parse = ('#!/usr/bin/env python3\nimport argparse\n'
+                 'argparse.ArgumentParser(description="Say hi.").parse_args()\n')
+        assert run("tool.py", parse) == ""
+        # ... unless help is off, and another object's parse_args binds nothing.
+        assert "mentions neither" in run("tool.py", parse.replace('description="Say hi."', "add_help=False"))
+        other = ('#!/usr/bin/env python3\nimport sys\n'
+                 'class C:\n    def parse_args(self, a):\n        return a\n'
+                 'C().parse_args(sys.argv[1:])\n')
+        assert "mentions neither" in run("tool.py", other)
+        # A no-arg hook or a runner-collected test is exempt ...
+        for rel in ("hooks/pre-commit", ".githooks/pre-push", "githooks/pre-push",
+                    "test_tool.py", "tool_test.py", "tool.test.ts"):
+            assert run(rel, bare) == "", rel
+        # ... a typed runner is not, and neither is a hook that parses options.
+        for rel in ("tests/run_all.sh", "test_collage.sh"):
+            assert "runnable mentions" in run(rel, bare), rel
+        parsed = '#!/bin/sh\nif [ "$#" -lt 1 ]; then exit 2; fi\n'
+        assert "mentions neither -h nor --help" in run("hooks/commit-msg", parsed)
 
 
 def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():

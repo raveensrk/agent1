@@ -17,6 +17,13 @@ So this check decides the hard half only:
     both spellings, and the finding names the one that is missing. Option
     parsing is read from code, never from a string or a comment: a test that
     writes a fake CLI into a fixture owns no flags.
+  * A runnable that takes no options owes the pair too: experimental.md puts a
+    program's docs inside it, behind -h and --help. Exempt from that branch
+    only: a script under a hooks dir (`hooks/`, `.githooks/`, `githooks/`,
+    `git_hooks/`) and a file a test runner collects (`test_*.py`, `*_test.py`,
+    `*.test.[jt]s`) - called, never typed. A typed runner like `tests/run_all.sh`
+    or `test_collage.sh` owes it. A hook or test that parses options owes the
+    pair, as before.
   * Which short letter a long flag takes stays prose, because "when possible" is
     a judgement: the free letters are not knowable from one file. The check never
     asks for a short alias for anything but help, and it never picks a letter.
@@ -33,6 +40,12 @@ other temp dir still owes the pair, which the tests below exercise.
 Measured before writing it: 46 tracked scripts through the dispatcher and 6 in
 ~/dot parse options and are missing the pair; every argparse CLI that day passed,
 because add_help binds both flags for free.
+
+Measured 2026-10-09 over 390 tracked executables in ~/repos and ~/dot: the
+no-arg branch added 204 findings to the 31 option-parser ones. 6 of the 204 are
+not typed - 3 sourced files carrying a stray exec bit, 3 callbacks (ranger's
+scope.sh, ptpython's startup file, a lazygit command) - so the finding names
+both ways out. The trigger lints only edited files: old gaps surface when touched.
 
     cli_help.py FILE...      (or paths on stdin)
 """
@@ -67,6 +80,13 @@ LONG_HELP = re.compile(r"--help")
 HAND_PARSED = re.compile(r"getopts|sys\.argv|\$#|case\s+\"?\$\{?1")
 HARNESS_TOOLS = re.compile(r"(^|/)harness/(checks|guards)/")
 BACKUP = re.compile(r"\.(bak|orig|rej|save)([._~-]|$)|~$")
+# Run by git or collected by a test runner, never typed: a no-arg one owes no help.
+# e.g. config/git/hooks/pre-commit, test_wiki.py, wiki_test.py, wiki.test.ts.
+# A typed runner - tests/run_all.sh, personal/ffmpeg/test_collage.sh - is not exempt.
+UNTYPED = re.compile(r"(^|/)(\.githooks|githooks|git_hooks|hooks)/|(^|/)test_[^/]*\.py$|_test\.py$|\.test\.[jt]s$")
+# argparse's parse calls bind -h and --help even with no option added; another
+# object's parse_args does not, so these count only when argparse is imported.
+PARSE = {"parse_args", "parse_known_args"}
 
 
 def shebang(path: str) -> str | None:
@@ -138,19 +158,25 @@ def code_only(text: str) -> str:
         return text  # unreadable source is not this check's finding
 
 
-def adds_options(text: str) -> bool | None:
-    """True when a python file adds argparse options, False when it adds none,
-    and nil when it does not parse - the python_compiles check owns that."""
+def argparsed(text: str) -> bool | None:
+    """True when a python file runs argparse, False when it does not, and nil
+    when it does not parse - the python_compiles check owns that.
+
+    `ArgumentParser(description=__doc__).parse_args()` adds no option and still
+    answers -h and --help, so a parse call counts as much as an added option -
+    when argparse is imported. `Config().parse_args(argv)` binds nothing."""
     try:
         tree = ast.parse(text)
     except SyntaxError:
         return None
-    return any(
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "add_argument"
+    imported = any(
+        isinstance(node, ast.Import) and any(a.name == "argparse" for a in node.names)
+        or isinstance(node, ast.ImportFrom) and node.module == "argparse"
         for node in ast.walk(tree)
     )
+    calls = {node.func.attr for node in ast.walk(tree)
+             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)}
+    return "add_argument" in calls or bool(imported and calls & PARSE)
 
 
 def help_off(text: str) -> bool:
@@ -183,21 +209,35 @@ def findings(rel: str, text: str) -> list[str]:
     python = bool(lines) and "python" in lines[0]
     adds: bool | None = False
     if python:
-        adds = adds_options(text)
+        adds = argparsed(text)
         if adds is None:
             return []                      # does not parse; python_compiles owns it
     # argparse binds -h and --help by default, per parser and per subcommand.
     if adds and not help_off(text):
         return []
     parsed = text if not python else code_only(text)
-    if not adds and not HAND_PARSED.search(parsed):
-        return []                          # takes no options at all
+    takes = adds or bool(HAND_PARSED.search(parsed))
+    if not takes and UNTYPED.search(rel):
+        return []                          # a no-arg hook or test: nobody types it
     missing = [flag for flag, found in (("-h", SHORT_HELP.search(text)),
                                         ("--help", LONG_HELP.search(text)))
                if not found]
     if not missing:
         return []
     lacks = "neither -h nor --help" if len(missing) == 2 else f"no {missing[0]}"
+
+    # A no-arg runnable owes the pair too: its docs live inside it (experimental.md).
+    if not takes:
+        return [
+            f"{rel}:1: runnable mentions {lacks} - fix: every runnable answers -h "
+            "and --help with its own docs (content: ~/repos/agent1/cli.md) and "
+            "exits 0 before doing anything; python, from the module docstring: "
+            '`if {"-h", "--help"} & set(sys.argv[1:]): print(__doc__); sys.exit(0)`, '
+            "shell, from the header comment: `case \"${1:-}\" in -h|--help) "
+            "sed -n '2,/^[^#]/s/^# \\{0,1\\}//p' \"$0\"; exit 0;; esac`; sourced, "
+            "not run: `chmod -x` it; run by another program, not typed: list its "
+            "repo-relative path in ~/repos/agent2/harness/data/cli_help_allow.txt"
+        ]
     return [
         f"{rel}:1: mentions {lacks} - fix: -h and --help are the hard rule for a "
         "CLI; handle both and exit 0 (argparse's add_help gives both free, a shell "

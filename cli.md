@@ -22,10 +22,10 @@ caller. The worked example is Waypoint's CLI,
   every verb has an entry, so the two cannot drift (see `VERB` in
   [src/cli.ts](~/repos/waypoint/src/cli.ts) and its help test).
 
-`harness/checks/cli_help.py` decides the hard half: a file that parses options
-must mention both `-h` and `--help`, and the finding names the one that is
-missing. Which letter a short flag takes, and how a subcommand's help reads,
-stay prose: this file.
+`harness/checks/cli_help.py` decides the hard half: a runnable - options or
+not, per [experimental.md](experimental.md) - must mention both `-h` and
+`--help`, and the finding names the one that is missing. Which letter a short
+flag takes, and how a subcommand's help reads, stay prose: this file.
 
 ## Designing a new command
 
