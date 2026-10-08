@@ -517,6 +517,37 @@ verbs, same parsing, a few milliseconds each."
     (should (equal '("Overdue home" "Home A" "Work A" "Home B")
                    (mapcar (lambda (item) (todo-test--field item "title")) items)))))
 
+;;; undated
+
+(ert-deftest todo-undated-lists-open-tasks-with-no-date ()
+  (todo-test--setup)
+  (todo-test--write
+   (concat "* TODO [#B] Plain B :home:\n"
+           "* IN_PROGRESS [#A] Plain A :work:\n"
+           "* TODO Unprioritised\n"
+           "* LATER [#A] Deferred\n"
+           "* DONE Finished\n"
+           "* TODO Has deadline\nDEADLINE: <2999-01-01 Thu>\n"
+           "* TODO Has scheduled\nSCHEDULED: <2999-01-01 Thu>\n"))
+  ;; Open work only, A before B before none; dated tasks of either kind stay out.
+  (let ((items (todo-test--records (nth 1 (todo-test--ok "undated" "--records")))))
+    (should (equal '("Plain A" "Plain B" "Unprioritised")
+                   (mapcar (lambda (i) (todo-test--field i "title")) items))))
+  (let ((out (nth 1 (todo-test--ok "undated"))))
+    (should (string-match-p "^IN_PROGRESS +Plain A  (" out))
+    (should-not (string-match-p "Has deadline\\|Has scheduled\\|Deferred\\|Finished" out)))
+  ;; The same filters as read: state wins, tag, priority, a count.
+  (let ((out (nth 1 (todo-test--ok "undated" "--state" "LATER"))))
+    (should (string-match-p "Deferred" out))
+    (should-not (string-match-p "Plain" out)))
+  (should (string-match-p "Plain B" (nth 1 (todo-test--ok "undated" "--tag" "home"))))
+  (should-not (string-match-p "Plain A" (nth 1 (todo-test--ok "undated" "--tag" "home"))))
+  (should (equal (nth 1 (todo-test--ok "undated" "-p" "A" "-n" "1"))
+                 (format "%-12s %s  (%s)\n" "IN_PROGRESS" "Plain A" (todo-test--file))))
+  ;; brief's undated group is the same list, so a scheduled task leaves it too.
+  (should (string-match-p (regexp-quote "undated (3):") (nth 1 (todo-test--ok "brief"))))
+  (should-not (eq 0 (car (todo-test--cli "undated" "-p" "E")))))
+
 ;;; repeat cookies
 
 (ert-deftest todo-opens-the-emacs-that-runs-it ()
@@ -1187,7 +1218,7 @@ emacs. The wrapper must resolve its own binaries, or the window reports
   ;; A verb with no entry would be missing from the main help; this fails
   ;; until the table above grows the same entry.
   (should (equal (mapcar #'car todo-help)
-                 '("resolve" "doing" "read" "brief" "create" "rename" "delete"
+                 '("resolve" "doing" "read" "brief" "undated" "create" "rename" "delete"
                    "set-state" "set-deadline" "postpone" "set-priority" "set-effort"
                    "add-tag" "remove-tag" "append" "set-note" "obsolete" "complete"
                    "archive" "capture" "status" "edit" "edit-vim"

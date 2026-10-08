@@ -641,10 +641,27 @@ then path: the priority-only pick."
            items)
           today))))
 
+(defun todo--undated-p (item)
+  "Non-nil when ITEM has neither a DEADLINE: nor a SCHEDULED: stamp."
+  (not (or (alist-get 'deadline item) (alist-get 'scheduled item))))
+
+(defun todo-undated (items state today)
+  "The open ITEMS with no date, in urgency order: A before D, then title, then
+path. Open work is TODO and IN_PROGRESS; STATE names another state and wins,
+the rule `read --due' takes. `brief' prints this as its undated group."
+  (todo-late-sort
+   (cl-remove-if-not
+    (lambda (item)
+      (and (todo--undated-p item)
+           (or state (member (alist-get 'todo item) todo-doing-states))))
+    items)
+   today))
+
 (defun todo-brief-groups (items state today)
   "ITEMS as (DUE . UNDATED) for `brief', each group in urgency order.
 DUE is the due window - a deadline today or earlier in IST, repeaters
-included. UNDATED is every open task with no deadline. Open work is TODO and
+included. UNDATED is `todo-undated': every open task with no deadline and no
+scheduled stamp. Open work is TODO and
 IN_PROGRESS; STATE names another state and wins, the same rule `read --due'
 takes."
   (let* ((open (if state
@@ -656,12 +673,9 @@ takes."
                (lambda (item)
                  (let ((day (todo--due-day (alist-get 'deadline item))))
                    (and day (<= day today))))
-               open))
-         (undated (cl-remove-if-not
-                   (lambda (item) (not (alist-get 'deadline item)))
-                   open)))
+               open)))
     (cons (todo-late-sort due today)
-          (todo-late-sort undated today))))
+          (todo-undated items state today))))
 
 (defun todo-brief-easiest (items)
   "The task in ITEMS with the smallest :Effort:, or nil.
@@ -695,6 +709,10 @@ Ties go to the earlier item, so callers pass urgency order. A task with no
                          (cons 'title (org-get-heading t t t t))
                          (cons 'tags (org-get-tags))
                          (cons 'deadline (org-entry-get nil "DEADLINE"))
+                         ;; The schema writes no SCHEDULED:, but a board edited
+                         ;; elsewhere (beorg, Emacs) can carry one, and a
+                         ;; scheduled task is dated all the same.
+                         (cons 'scheduled (org-entry-get nil "SCHEDULED"))
                          (cons 'priority (todo--priority))
                          (cons 'effort (org-entry-get nil "Effort"))
                          (cons 'note (todo--note)))
@@ -1099,6 +1117,18 @@ to, or nil when every container was already empty."
                ("--dir D" "scan D's *.org files instead of the configured dirs"))
      :note "Two groups: due (the deadline day is today or earlier in IST, repeaters included) and undated (no deadline), each in urgency order - most days late first, then A before D, then title, then path. Open work is TODO and IN_PROGRESS; --state S names another state and wins. The easiest line names the smallest :Effort: in the list, ties by urgency; without a recorded effort it prints none."
      :example "todo brief")
+    ("undated"
+     :summary "open tasks with no deadline and no scheduled date"
+     :usage "todo undated [--state S] [--tag T] [-p A|B|C|D] [-n N] [--records] [--file F] [--dir D]"
+     :options (("--state S" "only that state; default open work, TODO and IN_PROGRESS")
+               ("--tag T" "only that tag")
+               ("-p, --priority A|B|C|D" "only tasks at that priority")
+               ("-n, --number N" "the first N of the list")
+               ("--records" "one plain record per task, instead of a line")
+               ("--file F" "that board, and nothing else")
+               ("--dir D" "scan D's *.org files instead of the configured dirs"))
+     :note "A task is undated when it carries neither DEADLINE: nor SCHEDULED:. The list is brief's undated group: A before D, then title, then path. --state S names another state and wins."
+     :example "todo undated -p A")
     ("create"
      :summary "add a task"
      :usage "todo create <title> [options]"
@@ -1460,6 +1490,25 @@ A help request is answered here, before any verb runs."
                                   (alist-get 'effort easiest)
                                   (alist-get 'path easiest))
                         "easiest: none (no :Effort: recorded)\n")))))))
+
+      ("undated"
+       (let* ((state (todo--flag flags "--state"))
+              (priority (todo--checked-priority (todo--flag flags "--priority")))
+              (number (todo--checked-number (todo--flag flags "--number")))
+              (items (todo-undated (todo-read dirs state (car (todo--flags flags "--tag")) file)
+                                   state (todo-ist-day))))
+         (when priority
+           (setq items (cl-remove-if-not
+                        (lambda (item) (equal (alist-get 'priority item) priority))
+                        items)))
+         (when number
+           (setq items (cl-subseq items 0 (min number (length items)))))
+         (if (member "--records" rest)
+             (todo-print-records items)
+           (dolist (item items)
+             (princ (format "%-12s %s  (%s)\n"
+                            (alist-get 'todo item) (alist-get 'title item)
+                            (alist-get 'path item)))))))
 
       ("create"
        (todo-create rest flags))

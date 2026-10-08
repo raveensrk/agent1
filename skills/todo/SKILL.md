@@ -153,6 +153,7 @@ scripts/todo resolve                        # board file and dir
 scripts/todo read [--state TODO] [--tag x] [-d|--due] [-p A|B|C|D] [-n 1] [--file F] [--recurring] [--records]  # config dirs + this board, or just F
 scripts/todo read --due -p A -n 1                # the most urgent overdue A task
 scripts/todo brief                              # due or late + undated, then the easiest pick
+scripts/todo undated [-p A] [-n N] [--records]  # open tasks with no DEADLINE: and no SCHEDULED:
 scripts/todo doing [--file F]                   # one due TODO or IN_PROGRESS, as one record
 scripts/todo doing --priority A [--file F]      # one open A task, due or not
 scripts/todo --warm read [--records]            # same verb, Emacs stays up
@@ -217,11 +218,17 @@ scripts/todo config
   C, D - anything else exits non-zero.
 - `brief` is the review: one read that answers what is late and what is
   unscheduled. Two groups - the `--due` window, then every open task with no
-  deadline - each in urgency order, under `due (N):` and `undated (N):` headers,
+  deadline and no scheduled date - each in urgency order, under `due (N):` and `undated (N):` headers,
   then one `easiest:` line. The pick is the smallest `:Effort:` in the list,
   ties by urgency; with none recorded it prints `easiest: none (no :Effort: recorded)`. Default open work only, TODO and IN_PROGRESS; `--state S` names
   another state and wins, the rule `--due` uses. `--records` drops the headers
   and the pick: one plain record list, due first.
+- `undated` lists the open tasks with neither a `DEADLINE:` nor a `SCHEDULED:`
+  stamp - brief's undated group on its own, in the same order: A before D, then
+  title, then path. It takes `read`'s filters: `--state S` (wins over the
+  open-work default), `--tag`, `-p`, `-n`, `--records`, `--file`, `--dir`. The
+  schema writes no `SCHEDULED:`, but a board edited in beorg or Emacs can carry
+  one, and that task counts as dated in both `undated` and `brief`.
 - `read` prints `STATE  Title  (path)` - no deadline, so overdue is not visible
   in a plain listing. Use `--due`/`--recurring` rather than re-parsing the
   list line.
