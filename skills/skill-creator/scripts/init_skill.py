@@ -111,7 +111,7 @@ def main() -> int:
     print("next:")
     print("  1. write SKILL.md, replace the TODOs")
     print(f"  2. validate: ~/repos/agent1/skills/skill-creator/scripts/validate_skill.py {dest}")
-    print(f"  3. install:  cd {default_skills_dir().parent} && ./install.py")
+    print(f"  3. install:  cd {default_skills_dir().parent} && ./install.py --check")
     print("  4. index:    add a one-line entry to skills/index.md")
     return 0
 

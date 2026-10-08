@@ -3,10 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Agent harness: rules, checks, and pi extensions. Loaded by pi as a local package (see dot config/pi/settings.json).",
-  "keywords": ["pi-package"],
+  "description": "Agent harness: rules, skills, checks and pi extensions. Loaded in place by pi (package) and Claude Code (plugin); see install.py.",
+  "keywords": [
+    "pi-package"
+  ],
   "pi": {
-    "extensions": ["harness/extensions/*.ts", "!harness/extensions/model_pick.ts"],
-    "prompts": ["prompts/estimate-cost.md"]
+    "extensions": [
+      "harness/extensions/*.ts",
+      "!harness/extensions/model_pick.ts"
+    ],
+    "prompts": [
+      "prompts/estimate-cost.md"
+    ],
+    "skills": [
+      "skills",
+      "!skills/index.md"
+    ]
   }
 }

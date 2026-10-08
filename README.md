@@ -83,7 +83,7 @@ answer means the import did not load.
 | `external.md` | Probes, live external accounts, credentials |
 | `git.md` | Commits and pull requests |
 | `harness/` | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
-| `install.py` | Installs skills, commands and extensions into Claude Code, Codex and pi |
+| `install.py` | Registers this repo with pi (package) and Claude Code (plugin) so both load it in place |
 | `Makefile` | Builds the shareable one-page HTML export |
 | `jobs.md` | ETA rules for long-running jobs |
 | `macos.md` | macOS command traps |
@@ -123,43 +123,30 @@ directory name to match the skill `name`.
 
 ### Install
 
-`install.py` symlinks every skill and command into each harness that is
-installed on the machine. Each item is a link back to this clone, so a
-`git pull` updates every harness at once.
+`install.py` registers this clone with every harness installed on the
+machine. Nothing is copied or linked: each harness loads the repo in place, so
+a `git pull` updates every harness on its next start.
 
 ```bash
-~/repos/agent1/install.py --dry-run
+~/repos/agent1/install.py           # dry-run: show the plan
+~/repos/agent1/install.py --apply   # write it
+~/repos/agent1/install.py --check   # exit 1 on drift
+~/repos/agent1/uninstall.py --apply # unregister
 ```
 
-```bash
-~/repos/agent1/install.py
-```
+| Harness | How it loads this repo |
+|---|---|
+| pi | `~/repos/agent1` in `~/.pi/agent/settings.json` `packages`; `package.json` `pi` declares `skills/`, `prompts/` and `harness/extensions/` |
+| Claude Code | plugin `agents@raveen-agents` from the directory marketplace in `.claude-plugin/`, read live from the clone |
+| Codex | not wired yet |
 
-| Item | Claude Code | Codex | pi |
-|---|---|---|---|
-| `skills/*` | `~/.claude/skills/` | `~/.codex/skills/` | `~/.agents/skills/` (Pi reads the Agent Skills dir) |
-| `commands/*.md` (none yet) | `~/.claude/commands/` | not supported | `~/.pi/agent/prompts/` |
-| `harness/extensions/*.ts` and `prompts/*.md` | not supported | not supported | pi package: `"~/repos/agent1"` in `~/dot/config/pi/settings.json` `packages` (local source, loads live) |
-
-- Idempotent: run it again after every `git pull`. It adds new items and
-  removes links to items that were deleted or renamed here.
-- Never deletes or overwrites a real file or directory. It reports a
-  conflict and exits 1 instead.
-- `--force` replaces symlinks that point somewhere else (for example an
-  older clone). `--uninstall` removes every link into this clone.
-- A harness whose home directory (`~/.claude`, `~/.codex`, `~/.pi`) is
-  missing is skipped.
-- Older versions linked skills into `~/.agents/skills/`. Pi now loads global
-  skills from its settings and Codex uses `~/.codex/skills/`, so `install.py`
-  prunes any links left there.
-- Needs Python 3.8+ on macOS or Linux.
-- Claude Code: use `install.py` or the plugin, not both, or each skill
-  loads twice.
-- Any other harness: paste the skill's `SKILL.md` as the prompt and give the
-  agent the script path.
-
-To support a new harness or item type, add a line to `HARNESSES` or
-`TARGETS` at the top of `install.py`.
+- Idempotent, and touches only the keys this repo owns in each settings file.
+- A harness whose home directory (`~/.pi`, `~/.claude`, `~/.codex`) is missing
+  is skipped.
+- Links that the older symlink installer made into this clone are moved to
+  the Trash.
+- Other repos that ship skills use the same code: their `install.py` calls
+  [harness/install_lib.py](./harness/install_lib.py).
 
 Verify: start a new session and ask "what git work did I do in the last 24
 hours?". The agent should run `scripts/git_report.py`.

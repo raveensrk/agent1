@@ -1,7 +1,7 @@
 # Skills
 
 Agent skills in the [Agent Skills](https://agentskills.io) format. Install them
-with [install.py](../install.py).
+by registering this repo with [install.py](../install.py).
 
 - [agent-usage-report](./agent-usage-report/SKILL.md) - HTML report of every model used across agent harnesses, with tokens, cost and model rankings.
 - [artificial-analysis-report](./artificial-analysis-report/SKILL.md) - Stats-only Artificial Analysis page for the newest GLM, DeepSeek and Grok model, every published effort.

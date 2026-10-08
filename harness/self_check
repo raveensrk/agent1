@@ -8,7 +8,7 @@ set -uo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-python3 -m pytest "$here/tests/test_lint.py" -q 2>&1 | tail -1
+python3 -m pytest "$here/tests/test_lint.py" "$here/tests/test_install_lib.py" -q 2>&1 | tail -1
 for suite in "$here"/tests/*.ts; do
 	timeout 180 node --experimental-strip-types "$suite" 2>&1 | tail -1
 done

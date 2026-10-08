@@ -8,7 +8,7 @@ argument-hint: "[skill idea or skill to improve]"
 
 Turn a repeated task into a skill, or fix one that exists: a small instruction
 package at `~/repos/agent1/skills/<name>/SKILL.md`, installed by this repo's
-`install.py` into every harness. A skill is instructions only - it grants no
+`install.py` with every harness (loaded in place, no copies). A skill is instructions only - it grants no
 new tools, filesystem, network, or approval privileges.
 
 ## 1. Check it should exist
@@ -73,8 +73,8 @@ Resources only when they remove real repeated work:
 
 ```bash
 cd ~/repos/agent1
-./install.py --dry-run    # expect one new link per installed harness
-./install.py
+./install.py --check      # exit 0: this repo is registered; new skills need no install
+./install.py --apply      # only when --check reports drift
 ```
 
 - Add a one-line entry to `skills/index.md`, matching the existing shape.
@@ -99,7 +99,7 @@ When the user names a skill to fix, optimize, or extend:
 2. Collect the evidence: what failed in real sessions, what the user corrected, what takes too many steps. Quote it.
 3. Plan the smallest diff: which sections change, what gets added or deleted. Show it and get a yes.
 4. Edit in place. Keep the skill's voice and step order. Change the description only when the trigger phrases change.
-5. Re-verify: validate, `./install.py` (symlink follows the repo), then the test prompts from section 5.
+5. Re-verify: validate, `./install.py --check` (the harness reads the repo in place), then the test prompts from section 5.
 6. Report the diff and what now works.
 
 ## 7. Report
