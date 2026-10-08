@@ -25,8 +25,6 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - Nothing vague - precise goal / result.
 
-- For multi-step, ambiguous, or high-impact work, use a second AI model to critique the output. Skip it for small, well-defined changes.
-
 - Define the precise criteria for a great result up front.
 
 - Use a past example as the format to match.
@@ -107,19 +105,11 @@ The harness is everything around the model that turns a rule into a signal: chec
 - A refusal, block or guard always prints the exact replacement command with its syntax. Never block without steering; the next attempt must be the right one.
 - When code needs a semantic decision (is this a refund request, is this line relevant), call Jev for a typed, threshold-able answer instead of asking an LLM for JSON. See [typesafe-ai](~/.agents/skills/typesafe-ai/SKILL.md).
 
-## Parallel work
+## Parallel sessions
 
-- Delegation to subagents is authorized. A `reviewer` subagent critiques
-  multi-step, ambiguous, or high-impact implementation before it is summarized;
-  a `scout` maps an unfamiliar subsystem before claims about it; an `oracle`
-  challenges a risky or irreversible decision; long jobs run in the background.
-  Complexity alone does not authorize a subagent.
-- Before starting a reviewer subagent, always ask me which model and effort level to use and wait for my answer before launching it.
 - A second concurrent session on one repo takes its own worktree and branch:
   run `/worktree` in that session before it edits anything. One branch per
   worktree; merge back when the task ends.
-- A subagent shares the parent session's working tree. Do not run a subagent on
-  the same files the parent is editing; isolate in a worktree first.
 
 ## Plan mode and Brainstorming
 
