@@ -6,9 +6,12 @@ description: >-
   self-contained HTML report; the user picks what goes via checkboxes
   (exports declutter-selection.json); the skill deletes safely:
   brew uninstall for brew items, everything else moved to ~/.Trash, never rm.
+  Logs verified program removals in ~/dot_local/app_cleanup.yaml and checks
+  every run for reinstalls, asking the user Keep or Remove when one returns.
   Use when the user asks to clean up their Mac, delete unused apps,
   free disk space, declutter, or find apps they do not use.
-argument-hint: "[--scan | --delete ~/Downloads/declutter-selection.json]"
+metadata:
+  invocation_hint: "[--scan | --delete ~/Downloads/declutter-selection.json]"
 ---
 
 # declutter
@@ -17,6 +20,27 @@ Scan, report, user decides, delete safely. The skill judges nothing on its own:
 badges are suggestions, checkboxes are the user's decision, Trash is the undo.
 
 ## Run
+
+Before each run, check the persistent program log:
+
+```sh
+python3 scripts/ledger.py check
+```
+
+Read `reinstalled` before proceeding, even for programs hidden by the ignore list.
+For each returning program, ask **Keep** or **Remove**, with its installed path or
+Homebrew token. Never infer Remove from an earlier uninstall. Record the answer:
+
+```sh
+python3 scripts/ledger.py decide ID --choice keep
+python3 scripts/ledger.py decide ID --choice remove
+```
+
+Keep records an allowed installation, preserving its removal history and avoiding
+repeat prompts. Remove records intent only: add the currently installed item to
+the selection and use the dry-run/confirmation flow below. An inventory failure
+is unknown, not proof of absence; resolve it before claiming verification.
+`scan.py` also includes this check in its JSON as `reinstall_check`.
 
 1. Scan + build report (read-only):
 
@@ -27,7 +51,8 @@ badges are suggestions, checkboxes are the user's decision, Trash is the undo.
    open ~/tmp/declutter/report.html
    ```
 
-   Requirements: macOS, python3 3.9+, Homebrew (optional - report works without).
+   Requirements: macOS, python3 3.9+, PyYAML, Homebrew (optional except when
+   checking or removing previously logged Homebrew packages).
    Scan needs Spotlight (`mdls`) for last-used dates; missing dates show as "unknown".
 
 2. Tell the user: review the report, tick rows, press **Export selection**
@@ -53,6 +78,10 @@ badges are suggestions, checkboxes are the user's decision, Trash is the undo.
 4. Show the dry-run output, ask for explicit confirmation.
 
 5. Only after a clear "yes, delete": `python3 scripts/delete.py ... --execute`.
+   Program removals are logged automatically in `~/dot_local/app_cleanup.yaml`
+   only after app/path and Homebrew checks verify absence. Dry runs and failed
+   removals never enter the program log. Re-run `python3 scripts/ledger.py check`
+   and compare the installed inventory with the scan from before removal.
    Then remind them to empty the Trash once happy.
 
 ## What the report shows

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scan macOS for installed apps (GUI + brew), leftovers. Writes JSON to stdout.
 
-usage: scan.py [-h|--help]
+usage: scan.py [-h|--help|help]
 example: python3 scripts/scan.py > ~/tmp/declutter/scan.json
 
 Read-only. Reads /Applications, ~/Applications, the Homebrew Cellar and
@@ -9,6 +9,9 @@ Caskroom under $HOMEBREW_PREFIX (default /opt/homebrew), ~/Library/Application
 Support, ~/Library/Caches, ~/Library/Logs, the Xcode caches under
 ~/Library/Developer, and ~/.config/declutter/ignored.json (paths to hide).
 Runs `mdls` and `brew list --cask`. Exit 0 with the JSON on stdout.
+Before scanning, reads ~/dot_local/app_cleanup.yaml and checks logged program
+removals through ledger.py. Includes returning programs as reinstall_check,
+independent of the ignore list. Requires PyYAML; an unverified log fails the scan.
 """
 import json
 import os
@@ -19,6 +22,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import time as _time
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ledger
 
 HOME = Path.home()
 BREW_PREFIX = Path(os.environ.get("HOMEBREW_PREFIX", "/opt/homebrew"))
@@ -261,9 +267,12 @@ def scan_files():
 
 
 def main():
-    if {"-h", "--help"} & set(sys.argv[1:]):
+    if {"-h", "--help", "help"} & set(sys.argv[1:]):
         print(__doc__)
         return
+    history = ledger.check()
+    if history["unknown"]:
+        raise RuntimeError(f"cannot verify removal history: {history['unknown']}")
     apps, casks = scan_apps()
     formulae = scan_formulae()
     installed_keys = ({norm(a["name"]) for a in apps}
@@ -277,6 +286,7 @@ def main():
     shown = [i for i in items if i["path"] not in ignored]
     json.dump({
         "generated": datetime.now(timezone.utc).isoformat(),
+        "reinstall_check": history,
         "counts": {
             "apps": len(apps),
             "formulae": len(formulae),
