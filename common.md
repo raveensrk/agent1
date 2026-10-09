@@ -168,9 +168,17 @@ go on.
 
 ## Markdown
 
-When linking file paths, use markdown links.
+1. Real file references use Markdown links. Inline and fenced code are for
+   literal text and syntax examples, not navigable file references. A link label
+   may use inline code: `` [`guide.md`](docs/guide.md) ``.
+2. Prefer relative link destinations inside repo documents. For spaces, use
+   `%20` or an angle-bracket destination: `[Guide](<docs/my guide.md>)`.
+3. Markdown does not expand `~`, `$VAR` or `${VAR}` in link destinations. Do not
+   assume a renderer does; use them only when the consuming tool explicitly
+   supports expansion. A leading `/` is a root-relative URL, not universally
+   a filesystem path.
 
-Do : [File Name](/path/to/file_name.md)
+Do : `[File Name](/path/to/file_name.md)`
 Don't : `/path/to/file_name.md`
 
 Same goes for images and media. For images and media use links with preview `![]()`.
