@@ -9,9 +9,9 @@ carry a header:
 
 The dispatcher hands the candidate file paths to the check on stdin, one per
 line. The check prints findings as `path:line: message` and exits 0. A nonzero
-exit means the check itself is broken and is reported as a check failure, not
-as a finding. Adding a check is dropping a file in `checks/`; nothing here
-needs to change.
+exit, or a stdout line in any other form, means the check itself is broken and
+is reported as a check failure, not as a finding. Adding a check is dropping a
+file in `checks/`; nothing here needs to change.
 
 Usage:
   lint.py                       check this repo: git-tracked and untracked files
@@ -43,7 +43,10 @@ REPOS = os.path.expanduser("~/repos")
 # common.md uses for agent2/AGENTS.md.
 CHECK_DIRS = [os.path.join(HERE, "checks"), os.path.join(REPOS, "agent2", "harness", "checks")]
 HEADER = re.compile(r"^#\s*harness-check:\s*(\{.*\})\s*$")
-FINDING = re.compile(r"^(?P<path>[^:]*?):(?P<line>\d+):\s*(?P<message>.*)$")
+# A path may hold a colon - `x.sv:Zone - Copy.Identifier`, a Windows copy's
+# leftover, 276 of them under ~/repos on 2026-10-09 - but never one followed by
+# whitespace, so `path: message` with no line still fails to parse.
+FINDING = re.compile(r"^(?P<path>(?:[^:]|:(?!\s))*?):(?P<line>\d+):\s*(?P<message>.*)$")
 MAX_BYTES = 1_000_000
 TRASH = os.path.expanduser("~/.Trash")
 
@@ -157,13 +160,16 @@ def applies(check: dict, rel: str) -> bool:
     return keep
 
 
-def convert(check_id: str, quadrant: str, root: str, label: str, found: list[dict]) -> list[dict]:
+def convert(check_id: str, quadrant: str, root: str, label: str, found: list[str]) -> tuple[list[dict], list[str]]:
+    """Findings parsed from a check's stdout, plus the lines that did not parse."""
     out = []
+    stray = []
     for line in found:
         if not line.strip():
             continue
         m = FINDING.match(line)
         if not m:
+            stray.append(line)
             continue
         path = m.group("path")
         if os.path.isabs(path):
@@ -177,7 +183,7 @@ def convert(check_id: str, quadrant: str, root: str, label: str, found: list[dic
                 "message": m.group("message").strip(),
             }
         )
-    return out
+    return out, stray
 
 
 def run_check(check: dict, root: str, label: str, files: list[str]):
@@ -197,7 +203,17 @@ def run_check(check: dict, root: str, label: str, files: list[str]):
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip().splitlines()
         return [], f"exit {proc.returncode}: {detail[-1] if detail else 'no output'}", elapsed
-    return convert(check["id"], check["quadrant"], root, label, proc.stdout.splitlines()), None, elapsed
+    found, stray = convert(check["id"], check["quadrant"], root, label, proc.stdout.splitlines())
+    # A line that is not `path:line: message` is a check off the contract, not
+    # noise: dropping it hid every file_naming finding until 2026-10-09. The
+    # lines that parse still count.
+    if stray:
+        return found, (
+            f"{len(stray)} stdout line(s) not in path:line: message form, first: {stray[0]!r} - "
+            f"fix: make {check['path']} print each finding as path:line: message "
+            "(line 1 for a whole-file finding)"
+        ), elapsed
+    return found, None, elapsed
 
 
 SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".mypy_cache", ".tox"}

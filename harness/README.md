@@ -48,8 +48,9 @@ reads its header and decides which files it sees.
   a leading `!` drops a path. No `applies` means every file.
 - The dispatcher passes the candidate file paths on stdin, one per line, and
   runs the check with the repo root as the working directory.
-- Print findings as `path:line: message` and exit 0. Nothing on stdout means
-  clean. A nonzero exit means the check itself is broken.
+- Print findings as `path:line: message` and exit 0, with line 1 for a
+  whole-file finding. Nothing on stdout means clean. A nonzero exit, or a
+  stdout line in any other form, means the check itself is broken.
 - End the message with the fix, as a command when there is one. A signal that
   does not steer sends the next attempt down the same dead end.
 

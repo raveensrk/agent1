@@ -215,10 +215,12 @@ def test_applies_globs_and_negation():
     assert lint.applies({"applies": []}, "anything") is True
 
 
-def test_convert_parses_findings_and_ignores_noise():
+def test_convert_parses_findings_and_returns_the_rest():
     lint = load_lint()
-    found = lint.convert("demo", "feedback/computational", "/tmp/repo", "", [
+    found, stray = lint.convert("demo", "feedback/computational", "/tmp/repo", "", [
         "/tmp/repo/a.py:12: message one",
+        "/tmp/repo/b.sv:Zone - Copy.Identifier:1: message two",
+        "/tmp/repo/c.py: message with no line",
         "not a finding",
         "",
     ])
@@ -229,8 +231,19 @@ def test_convert_parses_findings_and_ignores_noise():
             "path": "a.py",
             "line": 12,
             "message": "message one",
-        }
+        },
+        {
+            "check": "demo",
+            "quadrant": "feedback/computational",
+            "path": "b.sv:Zone - Copy.Identifier",
+            "line": 1,
+            "message": "message two",
+        },
     ], found
+    # A line that does not parse comes back for the caller to fail on; blank
+    # lines are not output. A colon inside a path parses, one before a space
+    # does not.
+    assert stray == ["/tmp/repo/c.py: message with no line", "not a finding"], stray
 
 
 def test_exec_bit_check_flags_a_script_and_clears_after_chmod():
@@ -438,6 +451,71 @@ def test_dispatcher_end_to_end_in_a_temp_repo():
         proc = subprocess.run([sys.executable, LINT], capture_output=True, text=True, cwd=tmp)
         assert proc.returncode == 0, proc.stdout
         assert "0 findings" in proc.stdout, proc.stdout
+
+
+def test_dispatcher_reports_a_name_that_is_not_snake_case():
+    """Until 2026-10-09 file_naming printed `path: message` with no line number
+    and the dispatcher dropped every one, so the rule never fired through lint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        for rel in ("script/find-link.py", "docs/Old-Drafts/v1/note.txt"):
+            os.makedirs(os.path.join(tmp, os.path.dirname(rel)))
+            with open(os.path.join(tmp, rel), "w") as fh:
+                fh.write("x = 1\n")
+        proc = subprocess.run(
+            [sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp
+        )
+        assert proc.returncode == 1, proc.stderr
+        report = json.loads(proc.stdout)
+        assert report["failures"] == [], report
+        found = sorted((f["check"], f["path"], f["line"]) for f in report["findings"])
+        assert found == [
+            ("file_naming", "docs/Old-Drafts/v1/note.txt", 1),
+            ("file_naming", "script/find-link.py", 1),
+        ], report
+        # The rename steers to the offending directory itself, not the file's
+        # own directory, and to absolute paths on both sides.
+        root = os.path.realpath(tmp)
+        messages = {f["path"]: f["message"] for f in report["findings"]}
+        assert messages["docs/Old-Drafts/v1/note.txt"].endswith(
+            f"git mv {root}/docs/Old-Drafts {root}/docs/old_drafts"
+        ), messages
+        assert messages["script/find-link.py"].endswith(f"{root}/script/find_link.py"), messages
+
+
+def test_dispatcher_fails_a_check_whose_output_does_not_parse():
+    """A stdout line that is not `path:line: message` fails the check, exit 2,
+    naming the check and the line: dropping it hid file_naming for good. The
+    lines that do parse still count."""
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        checks = os.path.join(tmp, "scripts", "checks")
+        os.makedirs(checks)
+        with open(os.path.join(checks, "drift.py"), "w") as fh:
+            fh.write(
+                '# harness-check: {"id": "drift", "applies": ["*.txt"]}\n'
+                "import sys\n"
+                "for path in sys.stdin.read().splitlines():\n"
+                '    print(f"{path}:3: a finding that parses")\n'
+                '    print(f"{path}: a finding with no line")\n'
+            )
+        with open(os.path.join(tmp, "note.txt"), "w") as fh:
+            fh.write("hi\n")
+        proc = subprocess.run(
+            [sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp
+        )
+        assert proc.returncode == 2, proc.stdout
+        report = json.loads(proc.stdout)
+        assert [(f["check"], f["path"], f["line"]) for f in report["findings"]] == [
+            ("drift", "note.txt", 3)
+        ], report
+        assert [f["check"] for f in report["failures"]] == ["drift"], report
+        assert "note.txt: a finding with no line" in report["failures"][0]["error"], report
+
+        proc = subprocess.run([sys.executable, LINT], capture_output=True, text=True, cwd=tmp)
+        assert proc.returncode == 2, proc.stdout
+        assert "lint: check drift failed" in proc.stderr, proc.stderr
+        assert "note.txt: a finding with no line" in proc.stderr, proc.stderr
 
 
 def test_cli_help_check_wants_both_flags_and_names_the_missing_one():

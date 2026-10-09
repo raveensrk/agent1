@@ -68,12 +68,14 @@ def check(path: str) -> list[str]:
 	if parts[0] == "skills":
 		return findings
 	dirs, name = parts[:-1], parts[-1]
-	for directory in dirs:
+	for index, directory in enumerate(dirs):
 		if directory in SKIP_DIRS or directory in CANONICAL_DIRS or SNAKE.match(directory):
 			continue
+		# rename the offending directory in place, not the file's own directory
+		parent = os.path.join(root, *dirs[:index])
 		findings.append(
-			f"{path}: directory '{directory}' is not snake_case - "
-			f"rename it: git mv {os.path.join(root, *dirs)} {suggestion(directory)}"
+			f"{path}:1: directory '{directory}' is not snake_case - "
+			f"rename it: git mv {os.path.join(parent, directory)} {os.path.join(parent, suggestion(directory))}"
 		)
 		break
 	# Pi package prompt filenames become slash commands, such as /estimate-cost.
@@ -82,7 +84,7 @@ def check(path: str) -> list[str]:
 	if name in CANONICAL or SNAKE.match(name):
 		return findings
 	findings.append(
-		f"{path}: file '{name}' is not snake_case - "
+		f"{path}:1: file '{name}' is not snake_case - "
 		f"rename it: git mv {path} {os.path.join(root, *dirs, suggestion(name))}"
 	)
 	return findings
