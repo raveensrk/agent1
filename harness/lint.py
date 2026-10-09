@@ -22,6 +22,12 @@ Usage:
   lint.py --check ID            run one check only
   lint.py --json                machine-readable output
   lint.py --timing              print how long each check took
+  lint.py help                  this text; -h and --help print the short help
+
+Reads the files it checks, git state, and the checks in harness/checks/,
+~/repos/agent2/harness/checks/ and the checked repo's scripts/checks/. Writes
+nothing. No environment variables of its own; mdformat_check reads
+MDFORMAT_BIN.
 
 Exit: 0 clean, 1 findings, 2 a check failed.
 """
@@ -314,7 +320,15 @@ def collect_targets(args) -> list[tuple[str, list[str], str, bool]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(add_help=True)
+    # `help` is the long help: the module docstring, contract and all.
+    if sys.argv[1:2] == ["help"]:
+        print(__doc__)
+        return 0
+    parser = argparse.ArgumentParser(
+        add_help=True,
+        description=__doc__.split("\n\n")[0],
+        epilog="example: python3 harness/lint.py --changed (long help: lint.py help)",
+    )
     parser.add_argument("files", nargs="*", help="files to check instead of the whole repo")
     parser.add_argument("--changed", action="store_true", help="only files changed against HEAD")
     parser.add_argument("--repos", action="store_true", help="check every repo under ~/repos")
