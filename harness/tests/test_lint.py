@@ -322,6 +322,22 @@ def test_interpreter_check_reads_a_rule_and_a_shebang():
         assert proc.stdout == "", proc.stdout
 
 
+def test_interpreter_check_reads_a_bare_code_span():
+    """common.md names interpreters as bare spans: (`python3` is 3.14; `python3.15` ...)."""
+    check = os.path.join(CHECKS, "interpreter_resolves.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = os.path.join(tmp, "rules.md")
+        with open(doc, "w") as fh:
+            fh.write("(`python3` is the default; `python3.99` is installed too)\n")
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert "interpreter not on this machine: python3.99" in proc.stdout, proc.stdout
+        # Names that only start like an interpreter are not interpreters.
+        with open(doc, "w") as fh:
+            fh.write("Install `python3.99-pip`, keep it `pythonic`, see `sh.99x`.\n")
+        proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
+        assert proc.stdout == "", proc.stdout
+
+
 def test_nested_git_repo_check_reports_a_nested_repo_and_honours_the_allowlist():
     """A repo under mine is a finding; an allowed clone and a clean file are not."""
     check = os.path.join(CHECKS, "nested_git_repo.py")
