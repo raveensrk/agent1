@@ -309,11 +309,12 @@ def test_python_compiles_check_reaches_an_extensionless_script_through_the_dispa
 def test_interpreter_check_reads_a_rule_and_a_shebang():
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
+        # python3.99 does not exist, so the finding holds whatever this machine has installed.
         doc = os.path.join(tmp, "rules.md")
         with open(doc, "w") as fh:
-            fh.write("Use a `#!/usr/bin/env python3.11` shebang.\n")
+            fh.write("Use a `#!/usr/bin/env python3.99` shebang.\n")
         proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
-        assert "interpreter not on this machine: python3.11" in proc.stdout, proc.stdout
+        assert "interpreter not on this machine: python3.99" in proc.stdout, proc.stdout
         good = os.path.join(tmp, "ok.md")
         with open(good, "w") as fh:
             fh.write("Use a `#!/usr/bin/env python3` shebang.\n")
@@ -380,8 +381,9 @@ def test_interpreter_check_honours_the_ignore_marker():
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
         doc = os.path.join(tmp, "quoted.md")
+        # A form the check matches (see the rule test), so only the marker keeps it quiet.
         with open(doc, "w") as fh:
-            fh.write("It said `python3.11` once. <!-- lint:ignore -->\n")
+            fh.write("Use a `#!/usr/bin/env python3.99` shebang. <!-- lint:ignore -->\n")
         proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
         assert proc.stdout == "", proc.stdout
 
