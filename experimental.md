@@ -44,17 +44,19 @@ The rule moved out of this file, and now travels with its own switch:
 
 ## Docs live inside the program
 
-A program's documentation lives inside it, and `-h` and `--help` print it. A
-separate doc holds only what help cannot, and the program's shape decides when
-that is.
+A program's documentation lives inside it: `-h` and `--help` print the short
+help, `<program> help` the long help. A separate doc holds only what help
+cannot, and the program's shape decides when that is.
 
-1. Every runnable answers `-h` and `--help`, options or not. Help carries
-   [cli.md](cli.md)'s list plus the env vars it reads, the files it reads and
-   writes, and exit codes.
+1. Every runnable answers all three, options or not, exits 0 and does nothing
+   else. Short help (`-h`, `--help`): usage line, one line on what it does, the
+   options. Long help (`help`): [cli.md](cli.md)'s list plus the env vars it
+   reads, the files it reads and writes, and exit codes.
 2. Script - one file. Everything lives in the file: help for the caller, a
    header comment or docstring for the maintainer - why it exists, how it
-   works. Help can print that header (`print(__doc__)`, or `sed` over the
-   comment block in shell). Never a separate doc.
+   works. Help can print that header - its first paragraph for `-h`, all of it
+   for `help` (`__doc__`, or `sed` over the comment block in shell). Never a
+   separate doc.
 3. Program - several files, one tool, subcommands allowed. Help on every
    command, as in 1. `README.md` holds install and one pointer, "run
    `x --help`", and no usage.
@@ -79,5 +81,6 @@ that is.
    session touches it.
 
 [cli_help.py](harness/checks/cli_help.py) decides the hard half: a runnable
-that does not mention both `-h` and `--help` is a finding, options or not. Help
-content, the tier and the no-copy rule stay prose.
+that does not handle `-h`, `--help` and a `help` command is a finding, options
+or not. Help content, which help is short and which long, the tier and the
+no-copy rule stay prose.

@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # harness-check: {"id": "cli_help", "applies": ["*"], "quadrant": "feedback/computational"}
-"""Every CLI app carries -h and --help. That rule is hard.
+"""Every CLI app carries -h, --help and a `help` command. That rule is hard.
+
+experimental.md: -h and --help print the short help, `<program> help` the long
+help. The check decides presence only - all three must be handled - and never
+reads what they print. argparse binds -h and --help but no `help` command, so
+an argparse file owes that one by hand: `sub.add_parser("help")`, or a
+`sys.argv[1:2] == ["help"]` test before parse_args. `action="help"` is the
+-h/--help binding, not the command, and does not count.
 
 common.md: "The --help|-h is a hard rule. Every CLI program/app must have these
 two flags. The long/short pairing is optional: when possible add a short flag,
@@ -77,6 +84,11 @@ if not FILES and not sys.stdin.isatty():
 # keeps it out of `--help` and out of words like `-helpful`.
 SHORT_HELP = re.compile(r"""["']-h["']|(?<![\w-])-h(?![\w-])|getopts[^\n]*h""")
 LONG_HELP = re.compile(r"--help")
+# A `help` command: the quoted word (not argparse's action="help"), a shell case
+# arm like `help)` or `|help)`, or a test like `[ "$1" = help ]`. The lookbehind
+# keeps `--help)` out.
+HELP_CMD = re.compile(
+    r"""(?<!action=)["']help["']|(?<![\w-])help\s*[|)]|\$\{?1(:-)?\}?["']?\s*==?\s*["']?help\b""")
 HAND_PARSED = re.compile(r"getopts|sys\.argv|\$#|case\s+\"?\$\{?1")
 HARNESS_TOOLS = re.compile(r"(^|/)harness/(checks|guards)/")
 BACKUP = re.compile(r"\.(bak|orig|rej|save)([._~-]|$)|~$")
@@ -213,35 +225,44 @@ def findings(rel: str, text: str) -> list[str]:
         if adds is None:
             return []                      # does not parse; python_compiles owns it
     # argparse binds -h and --help by default, per parser and per subcommand.
-    if adds and not help_off(text):
-        return []
+    bound = bool(adds) and not help_off(text)
     parsed = text if not python else code_only(text)
     takes = adds or bool(HAND_PARSED.search(parsed))
     if not takes and UNTYPED.search(rel):
         return []                          # a no-arg hook or test: nobody types it
-    missing = [flag for flag, found in (("-h", SHORT_HELP.search(text)),
-                                        ("--help", LONG_HELP.search(text)))
+    missing = [flag for flag, found in (("-h", bound or SHORT_HELP.search(text)),
+                                        ("--help", bound or LONG_HELP.search(text)),
+                                        ("help", HELP_CMD.search(text)))
                if not found]
     if not missing:
         return []
-    lacks = "neither -h nor --help" if len(missing) == 2 else f"no {missing[0]}"
+    flags = [m for m in missing if m != "help"]
+    parts = (["neither -h nor --help"] if len(flags) == 2 else [f"no {f}" for f in flags])
+    parts += ["no `help` command"] if "help" in missing else []
+    lacks = ", and ".join(parts)
 
-    # A no-arg runnable owes the pair too: its docs live inside it (experimental.md).
+    # A no-arg runnable owes all three too: its docs live inside it (experimental.md).
     if not takes:
         return [
             f"{rel}:1: runnable mentions {lacks} - fix: every runnable answers -h "
-            "and --help with its own docs (content: ~/repos/agent1/cli.md) and "
-            "exits 0 before doing anything; python, from the module docstring: "
-            '`if {"-h", "--help"} & set(sys.argv[1:]): print(__doc__); sys.exit(0)`, '
-            "shell, from the header comment: `case \"${1:-}\" in -h|--help) "
-            "sed -n '2,/^[^#]/s/^# \\{0,1\\}//p' \"$0\"; exit 0;; esac`; sourced, "
-            "not run: `chmod -x` it; run by another program, not typed: list its "
-            "repo-relative path in ~/repos/agent2/harness/data/cli_help_allow.txt"
+            "and --help with short help and `help` with its full docs (content: "
+            "~/repos/agent1/cli.md), exits 0 and does nothing else; python, from "
+            "the module docstring: `if sys.argv[1:2] in ([\"-h\"], [\"--help\"], "
+            "[\"help\"]): print(__doc__ if sys.argv[1] == \"help\" else "
+            "__doc__.split(\"\\n\\n\")[0]); sys.exit(0)`, shell, from the header "
+            "comment: `case \"${1:-}\" in -h|--help) sed -n '2s/^# \\{0,1\\}//p' "
+            "\"$0\"; exit 0;; help) sed -n '2,/^[^#]/s/^# \\{0,1\\}//p' \"$0\"; "
+            "exit 0;; esac`; sourced, not run: `chmod -x` it; run by another "
+            "program, not typed: list its repo-relative path in "
+            "~/repos/agent2/harness/data/cli_help_allow.txt"
         ]
     return [
-        f"{rel}:1: mentions {lacks} - fix: -h and --help are the hard rule for a "
-        "CLI; handle both and exit 0 (argparse's add_help gives both free, a shell "
-        'script needs `case "$1" in -h|--help) usage; exit 0;; esac`)'
+        f"{rel}:1: mentions {lacks} - fix: -h and --help (short help) and a "
+        "`help` command (long help) are the hard rule for a CLI; handle all three "
+        "and exit 0 (argparse's add_help gives -h and --help free, `help` needs "
+        '`sub.add_parser("help")` or a `sys.argv[1:2] == ["help"]` test before '
+        'parse_args; a shell script needs `case "$1" in -h|--help) usage; exit 0;; '
+        "help) usage_long; exit 0;; esac`)"
     ]
 
 

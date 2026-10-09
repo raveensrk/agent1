@@ -183,7 +183,7 @@ Scripts meant to be run are executable: a line-1 shebang naming an installed int
 
 ## CLI apps
 
-Topic file: [cli.md](cli.md) - help shape, bare calls, short flags, one help table. [cli_help.py](harness/checks/cli_help.py) decides the hard half: a runnable, options or not, must mention both `-h` and `--help`.
+Topic file: [cli.md](cli.md) - help shape, bare calls, short flags, one help table. [cli_help.py](harness/checks/cli_help.py) decides the hard half: a runnable, options or not, must handle `-h` and `--help` (short help) and a `help` command (long help).
 
 ## macOS
 

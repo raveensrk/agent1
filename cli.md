@@ -12,6 +12,10 @@ caller. The worked example is Waypoint's CLI,
   never starts a daemon, never asks a question. argparse's default `add_help`
   gives both, and gives them per subcommand; a script that parses options by
   hand has to handle the pair itself.
+- `<program> help` is the long help, and `-h`/`--help` the short one - the split
+  and what each carries live in [experimental.md](experimental.md). argparse
+  gives no `help` command: add `sub.add_parser("help")`, or test
+  `sys.argv[1:2] == ["help"]` before `parse_args`.
 - A bare call prints the main help too, unless a bare call is itself a real
   command (`bookmark` with no arguments lists).
 - Short flags are the optional half. The long flag is the default spelling, and
@@ -23,8 +27,8 @@ caller. The worked example is Waypoint's CLI,
   [src/cli.ts](~/repos/waypoint/src/cli.ts) and its help test).
 
 `harness/checks/cli_help.py` decides the hard half: a runnable - options or
-not, per [experimental.md](experimental.md) - must mention both `-h` and
-`--help`, and the finding names the one that is missing. Which letter a short
+not, per [experimental.md](experimental.md) - must handle `-h`, `--help`
+and a `help` command, and the finding names the ones that are missing. Which letter a short
 flag takes, and how a subcommand's help reads, stay prose: this file.
 
 ## Designing a new command

@@ -424,7 +424,7 @@ def test_dispatcher_end_to_end_in_a_temp_repo():
         bad = os.path.join(tmp, "tool.sh")
         with open(bad, "w") as fh:
             # The help arm keeps cli_help quiet: a no-arg runnable owes it too.
-            fh.write('#!/bin/sh\ncase "${1:-}" in -h|--help) echo "usage: tool.sh"; exit 0;; esac\necho hi\n')
+            fh.write('#!/bin/sh\ncase "${1:-}" in -h|--help|help) echo "usage: tool.sh"; exit 0;; esac\necho hi\n')
         proc = subprocess.run(
             [sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp
         )
@@ -461,6 +461,10 @@ def test_cli_help_check_wants_both_flags_and_names_the_missing_one():
         assert "mentions no --help" in run(), run()
         with open(script, "w") as fh:
             fh.write('#!/bin/sh\ncase "${1:-}" in\n  -h|--help) echo "usage: tool.sh"; exit 0;;\nesac\n')
+        assert "mentions no `help` command" in run(), run()
+        with open(script, "w") as fh:
+            fh.write('#!/bin/sh\ncase "${1:-}" in\n  -h|--help) echo "usage: tool.sh"; exit 0;;\n'
+                     '  help) echo "usage: tool.sh, in full"; exit 0;;\nesac\n')
         assert run() == ""
 
 
@@ -494,7 +498,10 @@ def test_cli_help_check_wants_help_from_a_no_arg_runnable_but_not_a_hook_or_test
         # argparse with no option added still answers -h and --help ...
         parse = ('#!/usr/bin/env python3\nimport argparse\n'
                  'argparse.ArgumentParser(description="Say hi.").parse_args()\n')
-        assert run("tool.py", parse) == ""
+        assert run("tool.py", parse).count("mentions no `help` command") == 1
+        helped = parse.replace("import argparse\n", 'import argparse, sys\n'
+                               'if sys.argv[1:2] == ["help"]: print(__doc__); sys.exit(0)\n')
+        assert run("tool.py", helped) == ""
         # ... unless help is off, and another object's parse_args binds nothing.
         assert "mentions neither" in run("tool.py", parse.replace('description="Say hi."', "add_help=False"))
         other = ('#!/usr/bin/env python3\nimport sys\n'
@@ -518,7 +525,9 @@ def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
     check = os.path.join(CHECKS, "cli_help.py")
     with tempfile.TemporaryDirectory() as tmp:
         script = os.path.join(tmp, "app.py")
-        head = "#!/usr/bin/env python3\nimport argparse\n\np = argparse.ArgumentParser()\n"
+        head = ("#!/usr/bin/env python3\nimport argparse, sys\n"
+                'if sys.argv[1:2] == ["help"]: print("long"); sys.exit(0)\n'
+                "\np = argparse.ArgumentParser()\n")
         with open(script, "w") as fh:
             fh.write(head + 'p.add_argument("--only", action="append")\np.parse_args()\n')
         os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
@@ -549,6 +558,36 @@ def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
         assert "mentions neither -h nor --help" in run(), run()
 
 
+def test_cli_help_check_wants_a_help_command():
+    """experimental.md: -h and --help print short help, `<program> help` the long
+    help. argparse's action="help" is the flag binding, not the command."""
+    check = os.path.join(CHECKS, "cli_help.py")
+    with tempfile.TemporaryDirectory() as tmp:
+
+        def run(name, body):
+            path = os.path.join(tmp, name)
+            with open(path, "w") as fh:
+                fh.write(body)
+            os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
+            proc = subprocess.run([sys.executable, check, path], capture_output=True, text=True)
+            assert proc.returncode == 0, proc.stderr
+            return proc.stdout
+
+        head = "#!/usr/bin/env python3\nimport argparse\np = argparse.ArgumentParser()\n"
+        assert "mentions no `help` command" in run("a.py", head + "p.parse_args()\n")
+        off = head.replace("ArgumentParser()", "ArgumentParser(add_help=False)")
+        out = run("a.py", off + 'p.add_argument("-h", "--help", action="help")\np.parse_args()\n')
+        assert "mentions no `help` command" in out, out
+        sub = head + 'sub = p.add_subparsers()\nsub.add_parser("help")\np.parse_args()\n'
+        assert run("a.py", sub) == ""
+        shell = ('#!/bin/sh\ncase "${1:-}" in -h|--help) echo short; exit 0;; esac\n'
+                 'if [ "$1" = help ]; then echo long; exit 0; fi\n')
+        assert run("b.sh", shell) == ""
+        # The word in prose is not a command.
+        prose = '#!/bin/sh\n# -h, --help: print some help\necho hi\n'
+        assert "no `help` command" in run("b.sh", prose)
+
+
 def test_cli_help_check_reads_code_not_strings():
     """A test that writes a fake CLI into a string mentions sys.argv without
     parsing a single option: flagging it asked a test file for -h and --help
@@ -575,7 +614,7 @@ def test_cli_help_check_reads_code_not_strings():
         assert "mentions neither -h nor --help" in run(), run()
         with open(script, "w") as fh:
             fh.write('#!/usr/bin/env python3\nimport sys\n'
-                     'if "-h" in sys.argv or "--help" in sys.argv:\n'
+                     'if sys.argv[1:2] in (["-h"], ["--help"], ["help"]):\n'
                      '    print("usage: test_tool.py")\n    sys.exit(0)\n')
         assert run() == "", run()
 
