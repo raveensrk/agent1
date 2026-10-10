@@ -1,6 +1,6 @@
 # Git
 
-Commits and pull requests. Loaded from [common.md](common.md) at session start.
+Commits and pull requests.
 
 ## Commits and PR Titles
 

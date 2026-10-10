@@ -1,7 +1,6 @@
 # Experimental rules
 
-Rules I am trying out. They are live - a session reads this file at start, the
-same as [common.md](common.md) - but they are not settled.
+Rules I am trying out. 
 
 A rule lands here when I ask for one, or when a session proposes one and I say
 yes. It leaves when it holds up, promoted into [common.md](common.md) or another

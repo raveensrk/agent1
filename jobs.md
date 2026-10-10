@@ -1,6 +1,6 @@
 # Jobs
 
-ETA rules for long-running jobs. Loaded from [common.md](common.md) at session start.
+ETA rules for long-running jobs.
 
 ## Bash tool timeout
 

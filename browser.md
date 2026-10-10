@@ -1,7 +1,5 @@
 # Browser and computer use
 
-Split from [common.md](common.md); routed by [rules_context.ts](harness/extensions/rules_context.ts).
-
 When you drive any application with browser use or computer use, maximize that window before you start, and keep it maximized until the work is done. That way the contents stay fully visible.
 
 When you open a website, or a local HTML file in a browser, stop at the first installed browser in this order:

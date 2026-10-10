@@ -1,7 +1,5 @@
 # Code Style
 
-How to write code. Loaded from [common.md](common.md) at session start.
-
 ## Naming Enforcement
 
 - Use single word names by default for new locals, params, and helper functions.

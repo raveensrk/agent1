@@ -1,7 +1,5 @@
 # CLI apps
 
-Split from [common.md](common.md); routed by [rules_context.ts](harness/extensions/rules_context.ts).
-
 A CLI I write tells me how to use it - the author six months later is the
 caller. The worked example is Waypoint's CLI,
 [src/cli.ts](~/repos/waypoint/src/cli.ts), help table and all.
