@@ -661,9 +661,36 @@ def test_dispatcher_reports_a_name_that_is_not_snake_case():
         root = os.path.realpath(tmp)
         messages = {f["path"]: f["message"] for f in report["findings"]}
         assert messages["docs/Old-Drafts/v1/note.txt"].endswith(
-            f"git mv {root}/docs/Old-Drafts {root}/docs/old_drafts"
+            f"git -C {root} mv {root}/docs/Old-Drafts {root}/docs/old_drafts"
         ), messages
         assert messages["script/find-link.py"].endswith(f"{root}/script/find_link.py"), messages
+
+
+def test_file_naming_rename_works_as_printed_from_another_repo():
+    """The rename printed `git mv <abs> <abs>` with no -C and no quoting: from a
+    cwd outside the repo git says 'is outside repository', and a name with a
+    space split in two. 8,914 rename findings under ~/repos on 2026-10-10."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        root = os.path.realpath(tmp)
+        files = [os.path.join(root, "Blog Posts", "note.md"), os.path.join(root, "My Note.md")]
+        for path in files:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "w").close()
+        subprocess.run(["git", "-C", root, "add", "-A"], check=True)
+        subprocess.run(
+            ["git", "-C", root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"],
+            check=True,
+        )
+        run = subprocess.run([sys.executable, check, *files], capture_output=True, text=True)
+        lines = run.stdout.splitlines()
+        assert len(lines) == 2, run.stdout
+        for line in lines:
+            command = line.split("rename it: ", 1)[1]
+            subprocess.run(command, shell=True, check=True, cwd=HERE, capture_output=True)
+        assert os.path.isfile(os.path.join(root, "blog_posts", "note.md")), os.listdir(root)
+        assert os.path.isfile(os.path.join(root, "my_note.md")), os.listdir(root)
 
 
 def test_dispatcher_fails_a_check_whose_output_does_not_parse():

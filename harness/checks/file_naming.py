@@ -136,6 +136,12 @@ def tracked(root: str) -> frozenset[str]:
 	return frozenset(proc.stdout.split("\0")) if proc.returncode == 0 else frozenset()
 
 
+def move(root: str, old: str, new: str) -> str:
+	"""The rename steer, runnable from any cwd: git -C names the repo, and the
+	paths are absolute and quoted, since a name may hold a space."""
+	return f"git -C {shlex.quote(root)} mv {shlex.quote(old)} {shlex.quote(new)}"
+
+
 def junk(path: str, root: str, rel: str, name: str) -> str:
 	"""The delete steer for junk: git rm when tracked, trash when not.
 
@@ -183,7 +189,7 @@ def check(path: str) -> list[str]:
 		parent = os.path.join(root, *dirs[:index])
 		findings.append(
 			f"{path}:1: directory '{directory}' is not snake_case - "
-			f"rename it: git mv {os.path.join(parent, directory)} {os.path.join(parent, suggestion(directory))}"
+			f"rename it: {move(root, os.path.join(parent, directory), os.path.join(parent, suggestion(directory)))}"
 		)
 		break
 	# Pi package prompt filenames become slash commands, such as /estimate-cost.
@@ -197,7 +203,7 @@ def check(path: str) -> list[str]:
 		return findings
 	findings.append(
 		f"{path}:1: file '{name}' is not snake_case - "
-		f"rename it: git mv {path} {os.path.join(root, *dirs, suggestion(name))}"
+		f"rename it: {move(root, os.path.join(root, rel), os.path.join(root, *dirs, suggestion(name)))}"
 	)
 	return findings
 
