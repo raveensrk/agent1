@@ -76,6 +76,13 @@ assert.match(blocked, /lint: check broken failed in \/r: exit 1: boom/, "a faile
 assert.equal(JSON.parse(blocked).decision, "block");
 assert.equal(run(["lint"], stop, dir).stdout, "", "a failure already reported must not block again");
 
+// lint: lint.py itself crashing is a failure too, never a clean run
+writeFileSync(join(stub, "lint.py"), `import sys\nsys.exit("Traceback (most recent call last):\\nKeyError: 'x'")\n`);
+const crash = { ...stop, session_id: "crash" };
+const crashed = run(["lint"], crash, dir).stdout;
+assert.ok(crashed.includes(`lint: check lint.py failed in ${dir}: exit 1: KeyError: 'x'`), crashed);
+assert.equal(run(["lint"], crash, dir).stdout, "", "a crash already reported must not block again");
+
 // rules: the SessionStart context carries common.md
 const rules = JSON.parse(run(["rules"], {}).stdout);
 assert.match(rules.hookSpecificOutput.additionalContext, /common\.md/);

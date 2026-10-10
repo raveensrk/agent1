@@ -40,18 +40,30 @@ export function lint(files: string[], cwd: string): Promise<Report> {
 			"python3",
 			[LINT, "--json", ...files],
 			{ cwd, timeout: TIMEOUT_MS, maxBuffer: 1 << 22 },
-			(_error, stdout) => {
+			(error, stdout, stderr) => {
 				// lint exits 1 on findings and 2 on a failed check, and prints the JSON
-				// either way; only unparsable output is a failure
+				// either way; only unparsable output is a failure - of lint.py itself
 				try {
 					const report = JSON.parse(stdout) as Partial<Report>;
 					resolve({ findings: report.findings ?? [], failures: report.failures ?? [] });
 				} catch {
-					resolve({ findings: [], failures: [] });
+					resolve({ findings: [], failures: [crash(error, stderr, cwd)] });
 				}
 			},
 		);
 	});
+}
+
+/** lint.py itself as a failure: it timed out, crashed, never started or printed no JSON. */
+export function crash(error: unknown, stderr: string, root: string): Failure {
+	const err = (error ?? {}) as { killed?: boolean; code?: unknown; message?: string };
+	const last = stderr.trim().split("\n").at(-1);
+	const what = err.killed
+		? `timed out after ${TIMEOUT_MS / 1000} s`
+		: typeof err.code === "number"
+			? `exit ${err.code}: ${last || "no output"}`
+			: err.message || "no JSON on stdout";
+	return { check: "lint.py", root, error: `${what} - see it: python3 ${LINT} --timing FILE...` };
 }
 
 /** The message that hands FINDINGS, then FAILURES, back to the agent. */

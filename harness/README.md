@@ -71,7 +71,9 @@ session did not touch - a repo full of old findings must not nag every run.
 A check that failed to run comes back the same way, one line each in lint.py's
 own form, `lint: check <id> failed in <root>: <error>`: a failed check is not a
 pass. It is reported once per check and repo, whatever its error says, so one
-broken check cannot spend every nudge. Check:
+broken check cannot spend every nudge. lint.py itself counts the same way: a
+timeout, a crash or output that is not JSON comes back as `check lint.py`,
+never as a clean run. Check:
 `node --experimental-strip-types harness/tests/test_harness_lint.ts`.
 
 `extensions/telegraph.ts` carries the voice rule itself, so the rule and its

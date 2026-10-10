@@ -13,7 +13,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import trigger, { findingsMessage, lint } from "../extensions/harness_lint.ts";
+import trigger, { crash, findingsMessage, lint } from "../extensions/harness_lint.ts";
 
 // findings alone: the message is byte for byte what it was
 const finding = { check: "file_naming", path: "Bad Name.md", line: 1, message: "rename it" };
@@ -66,6 +66,15 @@ assert.equal(first?.continue, true, "a failed check alone continues the agent");
 assert.ok(first.entries[0].content.split("\n").includes(line), first.entries[0].content);
 broken("boom again");
 assert.equal(await settle(), undefined, "one check in one repo is reported once, whatever its error says");
+
+// lint.py itself: a timeout, a crash, a missing python3 and empty output each
+// name what happened, so a dead dispatcher never reads as a clean run
+const why = (error: unknown, stderr = "") => crash(error, stderr, "/r");
+assert.match(why({ killed: true, signal: "SIGTERM" }).error, /^timed out after 30 s - see it: .*lint\.py --timing FILE\.\.\.$/);
+assert.match(why({ code: 1 }, "Traceback\nKeyError: 'x'\n").error, /^exit 1: KeyError: 'x' - see it: /);
+assert.match(why({ code: "ENOENT", message: "spawn python3 ENOENT" }).error, /^spawn python3 ENOENT - see it: /);
+assert.match(why(null).error, /^no JSON on stdout - see it: /);
+assert.deepEqual([why(null).check, why(null).root], ["lint.py", "/r"]);
 
 rmSync(dir, { recursive: true, force: true });
 console.log("ok - harness_lint");
