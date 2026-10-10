@@ -68,6 +68,12 @@ agent once, so the agent fixes its own output before you see it. It stops after
 three nudges, skips findings it already reported, and never looks at files the
 session did not touch - a repo full of old findings must not nag every run.
 
+A check that failed to run comes back the same way, one line each in lint.py's
+own form, `lint: check <id> failed in <root>: <error>`: a failed check is not a
+pass. It is reported once per check and repo, whatever its error says, so one
+broken check cannot spend every nudge. Check:
+`node --experimental-strip-types harness/tests/test_harness_lint.ts`.
+
 `extensions/telegraph.ts` carries the voice rule itself, so the rule and its
 switch cannot drift apart. The rule text lives in `extensions/telegraph.md` - not
 in `experimental.md`, where turning it off meant editing a rules file. When the

@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -55,6 +55,20 @@ const outs = [1, 2, 3].map(() => run(["nudge"], event, dir).stdout);
 assert.deepEqual(outs.map((out) => out.includes("systemMessage")), [false, true, false]);
 run(["nudge"], { ...event, hook_event_name: "PostToolUse" }, dir);
 assert.equal(run(["nudge"], event, dir).stdout, "", "a success resets the streak");
+
+// lint: a failed check blocks Stop once, as lint.py's own line; the rerun is quiet.
+// HOME is the temp dir, so hook.ts runs this stub in place of ~/repos/agent1/harness/lint.py.
+const stub = join(dir, "repos", "agent1", "harness");
+mkdirSync(stub, { recursive: true });
+const failure = { check: "broken", root: "/r", error: "exit 1: boom" };
+writeFileSync(join(stub, "lint.py"), `print(${JSON.stringify(JSON.stringify({ findings: [], failures: [failure] }))})\n`);
+const log = join(dir, "transcript.jsonl");
+writeFileSync(log, `${JSON.stringify({ message: { content: [{ type: "tool_use", name: "Write", input: { file_path: file } }] } })}\n`);
+const stop = { session_id: "lint", transcript_path: log, cwd: dir };
+const blocked = run(["lint"], stop, dir).stdout;
+assert.match(blocked, /lint: check broken failed in \/r: exit 1: boom/, "a failed check must reach the agent");
+assert.equal(JSON.parse(blocked).decision, "block");
+assert.equal(run(["lint"], stop, dir).stdout, "", "a failure already reported must not block again");
 
 // rules: the SessionStart context carries common.md
 const rules = JSON.parse(run(["rules"], {}).stdout);

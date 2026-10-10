@@ -2,9 +2,10 @@
  * harness lint: the reactive half of the harness.
  *
  * After the agent finishes a run, run agent1's deterministic checks over the
- * files this session edited and hand any findings back as a message, so the
- * agent reacts to a signal instead of being asked to remember a rule. This is
- * the pi equivalent of a Claude "Stop" hook running rubocop on changed files.
+ * files this session edited and hand any findings, and any check that failed
+ * to run, back as a message, so the agent reacts to a signal instead of being
+ * asked to remember a rule. This is the pi equivalent of a Claude "Stop" hook
+ * running rubocop on changed files.
  *
  * The full-population run stays a deliberate act (`python3 harness/lint.py
  * --repos`); this only ever looks at what this session touched, because a repo
@@ -22,41 +23,59 @@ const SHOWN = 20;
 const TIMEOUT_MS = 30_000;
 
 export type Finding = { check: string; path: string; line: number; message: string };
+/** A check lint.py could not run or could not read: the files it covers are not known clean. */
+export type Failure = { check: string; root: string; error: string };
+export type Report = { findings: Finding[]; failures: Failure[] };
 
-export function key(finding: Finding): string {
-	return `${finding.check}:${finding.path}:${finding.line}`;
+export function key(entry: Finding | Failure): string {
+	// A failure is one check in one repo, whatever its error says: the text can
+	// change run to run, and each new text would spend another nudge.
+	if ("root" in entry) return `${entry.check}:${entry.root}`;
+	return `${entry.check}:${entry.path}:${entry.line}`;
 }
 
-export function lint(files: string[], cwd: string): Promise<Finding[]> {
+export function lint(files: string[], cwd: string): Promise<Report> {
 	return new Promise((resolve) => {
 		execFile(
 			"python3",
 			[LINT, "--json", ...files],
 			{ cwd, timeout: TIMEOUT_MS, maxBuffer: 1 << 22 },
 			(_error, stdout) => {
-				// lint exits 1 when it finds something; only unparsable output is a failure
+				// lint exits 1 on findings and 2 on a failed check, and prints the JSON
+				// either way; only unparsable output is a failure
 				try {
-					resolve((JSON.parse(stdout) as { findings?: Finding[] }).findings ?? []);
+					const report = JSON.parse(stdout) as Partial<Report>;
+					resolve({ findings: report.findings ?? [], failures: report.failures ?? [] });
 				} catch {
-					resolve([]);
+					resolve({ findings: [], failures: [] });
 				}
 			},
 		);
 	});
 }
 
-/** The message that hands FINDINGS back to the agent. */
-export function findingsMessage(findings: Finding[]): string {
+/** The message that hands FINDINGS, then FAILURES, back to the agent. */
+export function findingsMessage(findings: Finding[], failures: Failure[] = []): string {
 	const lines = findings
 		.slice(0, SHOWN)
 		.map((f) => `- ${f.path}:${f.line}: ${f.check}: ${f.message}`);
 	if (findings.length > SHOWN) lines.push(`- and ${findings.length - SHOWN} more`);
-	return [
+	const found = [
 		`harness lint found ${findings.length} findings in the files this session edited:`,
 		...lines,
 		"",
 		"Fix them, or say why one is a false positive. If a rule is wrong rather than the code, say so and fix the rule.",
-	].join("\n");
+	];
+	if (failures.length === 0) return found.join("\n");
+
+	// The line lint.py prints on stderr, so a broken check reads the same in both places.
+	const failed = [
+		...failures.map((f) => `lint: check ${f.check} failed in ${f.root}: ${f.error}`),
+		"",
+		"A failed check is not a pass: the files it covers are not known clean. Fix the check, or tell the user it is broken.",
+	];
+	if (findings.length === 0) return failed.join("\n");
+	return [...found, "", ...failed].join("\n");
 }
 
 export default function (pi: ExtensionAPI) {
@@ -79,9 +98,11 @@ export default function (pi: ExtensionAPI) {
 		const files = [...edited];
 		edited = new Set();
 
-		const findings = (await lint(files, ctx.cwd)).filter((f) => !reported.has(key(f)));
-		if (findings.length === 0) return;
-		findings.forEach((f) => reported.add(key(f)));
+		const report = await lint(files, ctx.cwd);
+		const findings = report.findings.filter((f) => !reported.has(key(f)));
+		const failures = report.failures.filter((f) => !reported.has(key(f)));
+		if (findings.length === 0 && failures.length === 0) return;
+		[...findings, ...failures].forEach((f) => reported.add(key(f)));
 		continuations += 1;
 
 		return {
@@ -89,7 +110,7 @@ export default function (pi: ExtensionAPI) {
 				{
 					type: "custom_message",
 					customType: "harness-lint",
-					content: findingsMessage(findings),
+					content: findingsMessage(findings, failures),
 					display: true,
 				},
 			],

@@ -135,13 +135,15 @@ async function stop(event: Event): Promise<number> {
 	if (files.length === 0) return 0;
 
 	const seen = new Set(state.reported);
-	const fresh = (await lint(files, event.cwd ?? process.cwd())).filter((f: Finding) => !seen.has(key(f)));
-	if (fresh.length === 0) return 0;
+	const report = await lint(files, event.cwd ?? process.cwd());
+	const fresh = report.findings.filter((f: Finding) => !seen.has(key(f)));
+	const failures = report.failures.filter((f) => !seen.has(key(f)));
+	if (fresh.length === 0 && failures.length === 0) return 0;
 
-	state.reported.push(...fresh.map(key));
+	state.reported.push(...fresh.map(key), ...failures.map(key));
 	state.continuations += 1;
 	saveState(event, state);
-	process.stdout.write(`${JSON.stringify({ decision: "block", reason: findingsMessage(fresh) })}\n`);
+	process.stdout.write(`${JSON.stringify({ decision: "block", reason: findingsMessage(fresh, failures) })}\n`);
 	return 0;
 }
 
