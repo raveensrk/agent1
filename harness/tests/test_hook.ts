@@ -23,6 +23,12 @@ function run(args: string[], event: unknown, home?: string) {
 	});
 }
 
+// help: -h is the header's first line plus the usage; `help` is the whole header
+assert.match(run(["-h"], {}).stdout, /^hook: agent1's harness for Claude Code.*\nusage: hook\.ts/);
+const help = run(["help"], {});
+assert.equal(help.status, 0);
+assert.match(help.stdout, /^Exit: 0 allow/m);
+
 // guard: the pi command_guard rules, refused with the replacement command
 const grep = run(["guard"], { tool_name: "Bash", tool_input: { command: "grep -rn foo ~/repos" } });
 assert.equal(grep.status, 2);

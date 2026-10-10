@@ -20,8 +20,18 @@
  * Per-session state (lint nudges, failure streak) is in
  * ~/.local/state/agent1/sessions/<session_id>.json.
  *
+ * Reads the event on stdin, the transcript it names, common.md, experimental.md
+ * and harness/extensions/telegraph.md under ~/repos/agent1, and the switch in
+ * ~/.local/state/agent1/telegraph.json; lint runs ~/repos/agent1/harness/lint.py.
+ * Writes the session state above and, for telegraph on|off, the switch. HOME
+ * locates every path; no other environment variable.
+ *
+ * Exit: 0 allow, with the hook's JSON on stdout when it has something to say;
+ * 2 block (guard), stderr the reason; 1 usage error.
+ *
  * Usage: node --experimental-strip-types harness/hook.ts <command> < event.json
- *        harness/hook.ts -h | --help
+ *        harness/hook.ts -h | --help | help
+ * Example: node --experimental-strip-types harness/hook.ts telegraph status
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -185,12 +195,23 @@ function telegraph(word: string): number {
 	return 0;
 }
 
-const USAGE = "usage: hook.ts guard|lint|nudge|rules < event.json\n       hook.ts telegraph on|off|status\n";
+const USAGE =
+	"usage: hook.ts guard|lint|nudge|rules < event.json\n       hook.ts telegraph on|off|status\n       hook.ts -h|--help|help\n";
+
+/** The header comment at the top of this file, markers stripped: the long help. */
+function header(): string {
+	const text = readFileSync(new URL(import.meta.url), "utf8");
+	return text.slice(text.indexOf("/**") + 3, text.indexOf("*/")).replace(/^[ \t]*\* ?/gm, "").trim();
+}
 
 async function main(argv: string[]): Promise<number> {
 	const [command, arg = ""] = argv;
 	if (command === "-h" || command === "--help") {
-		process.stdout.write(USAGE);
+		process.stdout.write(`${header().split("\n\n")[0]}\n${USAGE}`);
+		return 0;
+	}
+	if (command === "help") {
+		process.stdout.write(`${header()}\n`);
 		return 0;
 	}
 	if (command === "telegraph") return telegraph(arg.trim().toLowerCase());
