@@ -22,9 +22,21 @@ Scopes are optional; use the affected package or area when helpful, e.g. core, w
 - docs: update contributing guide
 - chore(verif): rename variables
 
+## Landing a Branch
+
+Never suggest opening a PR. In every repo, once work is committed on a branch other than main, suggest landing it locally as one step and wait for a yes:
+
+1. Check the main checkout is on main and clean. If it is not, stop and say what is in the way; never stash, switch branches or touch that work.
+2. If main has moved, rebase the branch onto main.
+3. Fast-forward main to the branch from the main checkout: `git merge --ff-only <branch>`. No merge commits, no squash.
+4. Remove the worktree if there is one: `git worktree remove <path>`.
+5. Delete the branch: `git branch -d <branch>`.
+
+Run steps 3 to 5 from the main checkout, not from inside the worktree being removed. Do not push; pushing is a separate request.
+
 ## Pull Requests
 
-PR descriptions should explain what changed, why the change is needed, and the intent or constraints a reviewer cannot infer from the diff alone. Keep simple PRs brief, but give non-trivial changes enough context to stand on their own. Skip file-by-file inventories, test result summaries, and anything obvious from the code itself.
+Open a PR only when asked. PR descriptions should explain what changed, why the change is needed, and the intent or constraints a reviewer cannot infer from the diff alone. Keep simple PRs brief, but give non-trivial changes enough context to stand on their own. Skip file-by-file inventories, test result summaries, and anything obvious from the code itself.
 
 ## Command gotchas
 

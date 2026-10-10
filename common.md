@@ -109,7 +109,7 @@ The harness is everything around the model that turns a rule into a signal: chec
 
 - A second concurrent session on one repo takes its own worktree and branch:
   run `/worktree` in that session before it edits anything. One branch per
-  worktree; merge back when the task ends.
+  worktree; land it on main when the task ends ([Landing a Branch](git.md#landing-a-branch)).
 
 ## Plan mode and Brainstorming
 
