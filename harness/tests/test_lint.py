@@ -153,6 +153,11 @@ def test_pi_prompt_filename_is_a_slash_command():
         assert run.returncode == 0, run.stderr
         assert good not in run.stdout, run.stdout
         assert bad in run.stdout and outside in run.stdout, run.stdout
+        # make finds only these exact names, so they are exempt like README.md
+        makefile = os.path.join(root, "Makefile")
+        open(makefile, "w").close()
+        run = subprocess.run([sys.executable, check, makefile], capture_output=True, text=True)
+        assert run.stdout == "", run.stdout
 
 
 def test_file_naming_stops_at_a_linked_worktree_and_skips_deleted_files():

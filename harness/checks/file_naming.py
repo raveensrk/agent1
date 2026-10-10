@@ -5,7 +5,8 @@
 common.md's Naming rule, decided. A basename passes when every character is a
 lowercase letter, digit, underscore or dot, so no uppercase, no spaces, no
 hyphens. Tool-recognized canonical names are exempt: README.md, LICENSE,
-AGENTS.md, CLAUDE.md, SKILL.md, .gitignore, and the .claude-plugin directory
+AGENTS.md, CLAUDE.md, SKILL.md, .gitignore, Makefile (make looks for that
+exact name), and the .claude-plugin directory
 (Claude Code discovers the plugin manifest only under that exact name).
 
 Scope: everything except the skills/ subtree of the repo that owns the file.
@@ -27,7 +28,7 @@ import os
 import re
 import sys
 
-CANONICAL = {"README.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "SKILL.md", ".gitignore"}
+CANONICAL = {"README.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "SKILL.md", ".gitignore", "Makefile"}
 
 # tool-recognized directories whose name the tool owns, not this repo
 CANONICAL_DIRS = {".claude-plugin"}
