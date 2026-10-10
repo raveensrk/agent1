@@ -44,10 +44,14 @@ def suggestion(name: str) -> str:
 
 
 def repo_root(path: str) -> str | None:
-	"""The nearest ancestor that is a repo root: it holds .git, or a harness/ dir."""
+	"""The nearest ancestor that is a repo root: it holds .git, or a harness/ dir.
+
+	A linked worktree's .git is a file, so a file counts too; otherwise the walk
+	climbs into the main repo and judges the worktree folder's tool-chosen name.
+	"""
 	current = os.path.dirname(os.path.realpath(path))
 	while True:
-		if os.path.isdir(os.path.join(current, ".git")) or os.path.isdir(
+		if os.path.exists(os.path.join(current, ".git")) or os.path.isdir(
 			os.path.join(current, "harness")
 		):
 			return current
@@ -59,6 +63,9 @@ def repo_root(path: str) -> str | None:
 
 def check(path: str) -> list[str]:
 	findings = []
+	# a deleted file has no name left to fix, and git mv on it would fail
+	if not os.path.lexists(path):
+		return findings
 	root = repo_root(path)
 	if root is None:
 		return findings

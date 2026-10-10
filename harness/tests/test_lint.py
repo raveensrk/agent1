@@ -141,14 +141,40 @@ def test_discovers_every_check_with_a_header():
 
 def test_pi_prompt_filename_is_a_slash_command():
     check = os.path.join(CHECKS, "file_naming.py")
-    root = os.path.dirname(HARNESS)
-    good = os.path.join(root, "prompts", "estimate-cost.md")
-    bad = os.path.join(root, "prompts", "bad--name.md")
-    outside = os.path.join(root, "bad-name.md")
-    run = subprocess.run([sys.executable, check, good, bad, outside], capture_output=True, text=True)
-    assert run.returncode == 0, run.stderr
-    assert good not in run.stdout, run.stdout
-    assert bad in run.stdout and outside in run.stdout, run.stdout
+    with tempfile.TemporaryDirectory() as root:
+        os.makedirs(os.path.join(root, ".git"))
+        os.makedirs(os.path.join(root, "prompts"))
+        good = os.path.join(root, "prompts", "estimate-cost.md")
+        bad = os.path.join(root, "prompts", "bad--name.md")
+        outside = os.path.join(root, "bad-name.md")
+        for path in (good, bad, outside):
+            open(path, "w").close()
+        run = subprocess.run([sys.executable, check, good, bad, outside], capture_output=True, text=True)
+        assert run.returncode == 0, run.stderr
+        assert good not in run.stdout, run.stdout
+        assert bad in run.stdout and outside in run.stdout, run.stdout
+
+
+def test_file_naming_stops_at_a_linked_worktree_and_skips_deleted_files():
+    """A worktree's .git is a file, and its folder name is the tool's, not the repo's.
+
+    On 2026-10-10 the Stop hook flagged `.claude/worktrees/silly-bohr-0702b5`
+    after the worktree was removed: nothing marked a root on the way up, so the
+    walk reached the main repo and judged the app-chosen worktree name.
+    """
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as root:
+        os.makedirs(os.path.join(root, ".git"))
+        tree = os.path.join(root, ".claude", "worktrees", "silly-bohr-0702b5")
+        os.makedirs(os.path.join(tree, "docs"))
+        with open(os.path.join(tree, ".git"), "w") as fh:
+            fh.write("gitdir: ../../../.git/worktrees/silly-bohr-0702b5\n")
+        kept = os.path.join(tree, "docs", "notes.md")
+        open(kept, "w").close()
+        gone = os.path.join(root, ".claude", "worktrees", "Gone-Tree", "notes.md")
+        run = subprocess.run([sys.executable, check, kept, gone], capture_output=True, text=True)
+        assert run.returncode == 0, run.stderr
+        assert run.stdout == "", run.stdout
 
 
 def test_stale_doc_path_check_ignores_relative_tmp():
