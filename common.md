@@ -17,7 +17,7 @@ At session start, Read these files
 Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
 
 - Tool configs live in `~/dot/config`, installed by `~/dot/script/install.py` (no symlinks). Read `~/dot/AGENTS.md` before searching for a tool's config.
-- Tool list: when `~/dot/docs/dev_tools.md` exists, read it before choosing a tool and prefer a tool listed there over an unlisted one.
+- Tool list: read [Dev Tools](dev_tools.md) before choosing a tool and prefer a tool listed there over an unlisted one.
 
 ## Working style
 
