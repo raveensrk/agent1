@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import stat
 import subprocess
 import sys
@@ -341,6 +342,7 @@ def test_interpreter_check_reads_a_rule_and_a_shebang():
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
         # python3.99 does not exist, so the finding holds whatever this machine has installed.
+        assert shutil.which("python3.99") is None, "python3.99 is installed; pick another made-up name"
         doc = os.path.join(tmp, "rules.md")
         with open(doc, "w") as fh:
             fh.write("Use a `#!/usr/bin/env python3.99` shebang.\n")
@@ -357,6 +359,7 @@ def test_interpreter_check_reads_a_bare_code_span():
     """common.md names interpreters as bare spans: (`python3` is 3.14; `python3.15` ...)."""
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
+        assert shutil.which("python3.99") is None, "python3.99 is installed; pick another made-up name"
         doc = os.path.join(tmp, "rules.md")
         with open(doc, "w") as fh:
             fh.write("(`python3` is the default; `python3.99` is installed too)\n")
