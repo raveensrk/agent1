@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 import shutil
 import stat
 import subprocess
@@ -204,6 +205,113 @@ def test_file_naming_honours_the_allowlist():
         checked = os.path.join(repos, "code", "Study", "Old Note.md")
         assert module.check(skipped) == [], module.check(skipped)
         assert "directory 'Study' is not snake_case" in "".join(module.check(checked))
+
+
+def test_file_naming_exempts_the_names_a_tool_or_convention_fixes():
+    """75 findings under ~/repos on 2026-10-10 named a file a build tool reads by
+    its exact spelling (Makefile x47) or a doc of the README and LICENSE kind.
+    The exemption is the exact spelling: a near miss is still a finding."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    names = [
+        "Makefile", "CMakeLists.txt", "package-lock.json", "Cargo.toml", "Cargo.lock",
+        "Info.plist", "BUILD.bazel", ".markdownlint-cli2.jsonc",
+        "README.txt", "CHANGELOG.md", "COPYING", "LICENSE.txt",
+    ]
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        exempt = [os.path.join(tmp, "tool", name) for name in names]
+        # a separate directory: macOS folds MakeFile and Makefile into one file
+        near = [os.path.join(tmp, "near", name) for name in ("MakeFile", "Changelog.md", "Makefile.vcs")]
+        # a path that does not exist is a deleted file and is skipped, so make them
+        for path in exempt + near:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "w").close()
+        run = subprocess.run([sys.executable, check, *exempt, *near], capture_output=True, text=True)
+        assert run.returncode == 0, run.stderr
+        flagged = sorted(line.split(":1: ")[0] for line in run.stdout.splitlines())
+        assert flagged == sorted(near), run.stdout
+
+
+def test_file_naming_steers_junk_to_a_delete_by_git_state():
+    """A Windows Zone.Identifier copy keeps its colon in any snake_case spelling
+    (276 under ~/repos on 2026-10-10, all tracked), and Finder writes .DS_Store
+    again after a delete. Both steer to a delete, never a rename: git rm when
+    tracked, trash when not, and .DS_Store also into the repo's .gitignore."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        root = os.path.realpath(tmp)
+        tracked = [
+            os.path.join(root, "rtl", name)
+            for name in ("cru.sv:Zone - Copy.Identifier", "cru.sv:Zone.Identifier",
+                         "cru.sv:Zone - Copy (2).Identifier")
+        ]
+        finder = os.path.join(root, "web", ".DS_Store")
+        for path in tracked + [finder]:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "w").close()
+        subprocess.run(["git", "-C", root, "add", "rtl"], check=True)
+        subprocess.run(
+            ["git", "-C", root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "zone"],
+            check=True,
+        )
+        run = subprocess.run([sys.executable, check, *tracked, finder], capture_output=True, text=True)
+        assert run.returncode == 0, run.stderr
+        ignore = shlex.quote(os.path.join(root, ".gitignore"))
+        assert run.stdout.splitlines() == [
+            f"{path}:1: file '{os.path.basename(path)}' is a Windows Zone.Identifier leftover, "
+            f"not content - delete it, do not rename it: git -C {shlex.quote(root)} rm -- {shlex.quote(path)}"
+            for path in tracked
+        ] + [
+            f"{finder}:1: file '.DS_Store' is macOS Finder metadata, not content - delete and "
+            f"ignore it: trash {shlex.quote(finder)} && printf '\\n.DS_Store\\n' >> {ignore}"
+        ], run.stdout
+
+        # Through the dispatcher: a colon inside the path still parses.
+        proc = subprocess.run([sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp)
+        report = json.loads(proc.stdout)
+        assert report["failures"] == [], report
+        paths = sorted(f["path"] for f in report["findings"] if f["check"] == "file_naming")
+        assert paths == sorted(os.path.relpath(p, root) for p in tracked + [finder]), report
+
+        # The steer works as printed, from a cwd in another repo.
+        command = run.stdout.splitlines()[0].split("do not rename it: ", 1)[1]
+        subprocess.run(command, shell=True, check=True, cwd=HERE, capture_output=True)
+        assert not os.path.exists(tracked[0]), command
+        status = subprocess.run(["git", "-C", root, "status", "--porcelain"], capture_output=True, text=True)
+        assert 'D  "rtl/cru.sv:Zone - Copy.Identifier"' in status.stdout, status.stdout
+
+
+def test_file_naming_lets_a_skill_directory_carry_its_kebab_name():
+    """skill_frontmatter.py wants a skill's directory to match its kebab-case
+    name, so a snake_case rename traded one finding for another: 12 under
+    ~/repos on 2026-10-10, in .agents/skills/, .claude/skills/ and a repo root.
+    The files inside the directory are still checked."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        root = os.path.realpath(tmp)
+        skill = os.path.join(root, ".agents", "skills", "page-precheck")
+        upper = os.path.join(root, "Page Check")
+        for directory in (skill, upper):
+            os.makedirs(directory)
+            open(os.path.join(directory, "SKILL.md"), "w").close()
+        inside = [os.path.join(skill, name) for name in ("SKILL.md", "state.yaml", "session-log.md")]
+        # kebab-case, but no SKILL.md: an ordinary directory
+        plain = os.path.join(root, "docs", "how-to", "x.md")
+        for path in inside + [plain]:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "a").close()
+        run = subprocess.run(
+            [sys.executable, check, *inside, os.path.join(upper, "SKILL.md"), plain],
+            capture_output=True, text=True,
+        )
+        assert run.returncode == 0, run.stderr
+        assert "directory 'page-precheck'" not in run.stdout, run.stdout
+        assert f"{inside[2]}:1: file 'session-log.md'" in run.stdout, run.stdout
+        # a skill name is kebab-case, so a directory that is not stays a finding
+        assert "directory 'Page Check'" in run.stdout, run.stdout
+        assert "directory 'how-to'" in run.stdout, run.stdout
 
 
 def test_stale_doc_path_check_ignores_relative_tmp():
