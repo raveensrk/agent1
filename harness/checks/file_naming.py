@@ -20,13 +20,23 @@ Directories are validated as the ancestors of each file, up to the repo root.
 A directory with no files in it is invisible here; git does not track empty
 directories either.
 
+This machine's exceptions live in the private repo, like nested_git_repo.py's:
+~/repos/agent2/harness/data/file_naming_allow.txt holds one fnmatch glob per
+line, relative to ~/repos with the repo name first (`notes/*`), because a
+folder name such as requirements/ is fine in one repo and a finding in another.
+
     file_naming.py FILE...      (or paths on stdin)
 """
 from __future__ import annotations
 
+import fnmatch
 import os
 import re
 import sys
+
+REPOS = os.path.expanduser("~/repos")
+ALLOW = os.path.join(REPOS, "agent2", "harness", "data", "file_naming_allow.txt")
+PATTERNS: dict[str, list[str]] = {}
 
 CANONICAL = {"README.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "SKILL.md", ".gitignore", "Makefile"}
 
@@ -42,6 +52,22 @@ SNAKE = re.compile(r"^[a-z0-9_.]+$")
 def suggestion(name: str) -> str:
 	"""The snake_case spelling: lowercase, runs of spaces and hyphens to underscores."""
 	return re.sub(r"[\s-]+", "_", name.strip()).lower()
+
+
+def allowed(path: str) -> bool:
+	"""PATH sits under a glob in ALLOW, matched relative to REPOS; `#` lines are comments."""
+	rel = os.path.relpath(os.path.realpath(path), os.path.realpath(REPOS))
+	if rel.startswith(".."):
+		return False
+	# read once per allowlist path; tests point ALLOW at a fixture after import
+	if ALLOW not in PATTERNS:
+		try:
+			with open(ALLOW, encoding="utf-8") as fh:
+				lines = fh.read().splitlines()
+		except OSError:
+			lines = []
+		PATTERNS[ALLOW] = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+	return any(fnmatch.fnmatch(rel, pattern) for pattern in PATTERNS[ALLOW])
 
 
 def repo_root(path: str) -> str | None:
@@ -73,7 +99,7 @@ def check(path: str) -> list[str]:
 	rel = os.path.relpath(os.path.realpath(path), root)
 	parts = rel.split(os.sep)
 	# the whole skills/ subtree follows the Agent Skills naming, not this rule
-	if parts[0] == "skills":
+	if parts[0] == "skills" or allowed(path):
 		return findings
 	dirs, name = parts[:-1], parts[-1]
 	for index, directory in enumerate(dirs):

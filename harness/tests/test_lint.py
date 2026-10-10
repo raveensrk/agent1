@@ -183,6 +183,29 @@ def test_file_naming_stops_at_a_linked_worktree_and_skips_deleted_files():
         assert run.stdout == "", run.stdout
 
 
+def test_file_naming_honours_the_allowlist():
+    """A glob relative to ~/repos, repo name first, skips that tree and no other."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        repos = os.path.realpath(tmp)
+        for repo in ("notes", "code"):
+            os.makedirs(os.path.join(repos, repo, ".git"))
+            os.makedirs(os.path.join(repos, repo, "Study"))
+            open(os.path.join(repos, repo, "Study", "Old Note.md"), "w").close()
+        # The allowlist lives in the private repo; this run points at a fixture.
+        allow = os.path.join(repos, "allow.txt")
+        with open(allow, "w") as fh:
+            fh.write("# personal notes keep their human names\nnotes/*\n")
+        spec = importlib.util.spec_from_file_location("file_naming", check)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.REPOS, module.ALLOW = repos, allow
+        skipped = os.path.join(repos, "notes", "Study", "Old Note.md")
+        checked = os.path.join(repos, "code", "Study", "Old Note.md")
+        assert module.check(skipped) == [], module.check(skipped)
+        assert "directory 'Study' is not snake_case" in "".join(module.check(checked))
+
+
 def test_stale_doc_path_check_ignores_relative_tmp():
     check = os.path.join(CHECKS, "stale_doc_paths.py")
     with tempfile.TemporaryDirectory() as tmp:
