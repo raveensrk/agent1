@@ -47,6 +47,7 @@ import re
 import shlex
 import subprocess
 import sys
+import unicodedata
 
 REPOS = os.path.expanduser("~/repos")
 ALLOW = os.path.join(REPOS, "agent2", "harness", "data", "file_naming_allow.txt")
@@ -82,9 +83,26 @@ ZONE = re.compile(r":Zone(?: - Copy(?: \(\d+\))?)?\.Identifier$")
 FINDER = ".DS_Store"
 
 
-def suggestion(name: str) -> str:
-	"""The snake_case spelling: lowercase, runs of spaces and hyphens to underscores."""
-	return re.sub(r"[\s-]+", "_", name.strip()).lower()
+def suggestion(name: str) -> str | None:
+	"""The snake_case spelling, or None when no ASCII letter or digit survives.
+
+	Accents fold to ASCII (café -> cafe), a run of dots becomes one (… folds to
+	...), every other character outside the rule becomes one underscore, and the
+	underscores that leaves at the edges or before the extension go, while an
+	underscore the name had stays:
+	`2025-01-29-(a ##2 b) [-2].md` -> `2025_01_29_a_2_b_2.md`.
+	"""
+	def fold(text: str) -> str:
+		decomposed = unicodedata.normalize("NFKD", text.strip().lower())
+		return "".join(c for c in decomposed if not unicodedata.combining(c))
+
+	if not re.search(r"[a-z0-9]", fold(os.path.splitext(name)[0])):
+		return None
+	snake = re.sub(r"\.{2,}", ".", fold(name))
+	# mark what the mapping replaces, so only its underscores are tidied away
+	snake = re.sub(r"[^a-z0-9_.]+", "\0", snake)
+	snake = re.sub(r"^\0+|\0+$|\0+(?=\.)", "", snake)
+	return re.sub(r"_?\0+_?", "_", snake)
 
 
 def allowed(path: str) -> bool:
@@ -136,10 +154,15 @@ def tracked(root: str) -> frozenset[str]:
 	return frozenset(proc.stdout.split("\0")) if proc.returncode == 0 else frozenset()
 
 
-def move(root: str, old: str, new: str) -> str:
+def move(root: str, parent: str, name: str) -> str:
 	"""The rename steer, runnable from any cwd: git -C names the repo, and the
-	paths are absolute and quoted, since a name may hold a space."""
-	return f"git -C {shlex.quote(root)} mv {shlex.quote(old)} {shlex.quote(new)}"
+	paths are absolute and quoted, since a name may hold a space. A name with
+	no ASCII letter or digit gets no command: any target would be made up."""
+	new = suggestion(name)
+	if new is None:
+		return "rename it by hand to an ASCII snake_case name: no letters or digits survive"
+	old, new = shlex.quote(os.path.join(parent, name)), shlex.quote(os.path.join(parent, new))
+	return f"rename it: git -C {shlex.quote(root)} mv {old} {new}"
 
 
 def junk(path: str, root: str, rel: str, name: str) -> str:
@@ -189,7 +212,7 @@ def check(path: str) -> list[str]:
 		parent = os.path.join(root, *dirs[:index])
 		findings.append(
 			f"{path}:1: directory '{directory}' is not snake_case - "
-			f"rename it: {move(root, os.path.join(parent, directory), os.path.join(parent, suggestion(directory)))}"
+			f"{move(root, parent, directory)}"
 		)
 		break
 	# Pi package prompt filenames become slash commands, such as /estimate-cost.
@@ -203,7 +226,7 @@ def check(path: str) -> list[str]:
 		return findings
 	findings.append(
 		f"{path}:1: file '{name}' is not snake_case - "
-		f"rename it: {move(root, os.path.join(root, rel), os.path.join(root, *dirs, suggestion(name)))}"
+		f"{move(root, os.path.join(root, *dirs), name)}"
 	)
 	return findings
 

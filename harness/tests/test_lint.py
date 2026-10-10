@@ -666,6 +666,44 @@ def test_dispatcher_reports_a_name_that_is_not_snake_case():
         assert messages["script/find-link.py"].endswith(f"{root}/script/find_link.py"), messages
 
 
+def test_file_naming_suggestion_always_passes_the_rule():
+    """suggestion() turned only spaces and hyphens into underscores, so 331 rename
+    targets under ~/repos on 2026-10-10 still failed the rule: `…`, `,`, `(`,
+    `#`, `’`, `@`, emoji, Tamil. Names from that population."""
+    spec = importlib.util.spec_from_file_location("file_naming", os.path.join(CHECKS, "file_naming.py"))
+    naming = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(naming)
+    cases = {
+        "Old-Drafts": "old_drafts",
+        "find-link.py": "find_link.py",
+        "2025-01-29-$time system function.md": "2025_01_29_time_system_function.md",
+        "2025-01-29-(a ##2 b) [-2].md": "2025_01_29_a_2_b_2.md",
+        "memory block….md": "memory_block.md",
+        "Issue #495 · gitui….md": "issue_495_gitui.md",
+        "AppIcon-60x60@2x.png": "appicon_60x60_2x.png",
+        "I’m fine, café.md": "i_m_fine_cafe.md",
+        "_config Old.yml": "_config_old.yml",
+        # an underscore the name had is not tidied away, only the mapping's
+        "index-Cj0i6kQ_.js": "index_cj0i6kq_.js",
+        "a_-_b.md": "a_b.md",
+    }
+    for name, want in cases.items():
+        assert naming.suggestion(name) == want, (name, naming.suggestion(name))
+        assert naming.SNAKE.match(want), want
+    # nothing ASCII left to build a name from: no command, a plain instruction
+    for name in ("எழுத்து.md", "😂.md"):
+        assert naming.suggestion(name) is None, (name, naming.suggestion(name))
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        path = os.path.join(tmp, "எழுத்து.md")
+        open(path, "w").close()
+        run = subprocess.run([sys.executable, naming.__file__, path], capture_output=True, text=True)
+        assert run.stdout.strip().endswith(
+            "rename it by hand to an ASCII snake_case name: no letters or digits survive"
+        ), run.stdout
+        assert "git -C" not in run.stdout, run.stdout
+
+
 def test_file_naming_rename_works_as_printed_from_another_repo():
     """The rename printed `git mv <abs> <abs>` with no -C and no quoting: from a
     cwd outside the repo git says 'is outside repository', and a name with a
