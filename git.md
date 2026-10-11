@@ -4,7 +4,7 @@ Commits and pull requests.
 
 ## Commits and PR Titles
 
-Never add an AI co-author trailer.
+Never add an AI co-author trailer. [commit-msg](harness/githooks/commit-msg) refuses one in every repo, through the global `core.hooksPath`.
 
 ### Commit Conventions
 

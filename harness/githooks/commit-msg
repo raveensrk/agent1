@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""commit-msg: refuse a commit message with an AI co-author trailer.
+
+git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
+off (2026-10-08), but pi and other harnesses can still write one, so git
+itself refuses it. A human co-author passes. Comment lines (#) are ignored.
+
+Runs for every repo through the global core.hooksPath, which points here:
+  git config --global core.hooksPath ~/repos/agent1/harness/githooks
+A global hooksPath hides each repo's .git/hooks, so a repo's own
+.git/hooks/commit-msg, when there is one, is run after this check.
+
+  commit-msg MSGFILE     (git passes the message file)
+  commit-msg -h | --help | help
+Bypass once, deliberately: git commit --no-verify
+"""
+import os
+import re
+import subprocess
+import sys
+
+TRAILER = re.compile(r"^\s*co-authored-by\s*:(.*)$", re.IGNORECASE)
+
+# Names and addresses of AI tools that write co-author trailers.
+AI = re.compile(
+    r"\b(claude|anthropic|codex|openai|chatgpt|gpt-?\d|copilot|gemini|grok|"
+    r"deepseek|cursor|devin|aider|qwen|kimi|glm|llm|ai assistant)\b",
+    re.IGNORECASE,
+)
+
+
+def offending(message):
+    """The AI co-author lines in MESSAGE, comments skipped."""
+    hits = []
+    for line in message.splitlines():
+        if line.lstrip().startswith("#"):
+            continue
+        found = TRAILER.match(line)
+        if found and AI.search(found.group(1)):
+            hits.append(line.strip())
+    return hits
+
+
+def main(argv):
+    if argv[:1] in (["-h"], ["--help"], ["help"]):
+        print(__doc__.strip() if argv[0] == "help" else __doc__.split("\n\n")[0])
+        return 0
+    if len(argv) != 1:
+        print("usage: commit-msg MSGFILE (see commit-msg --help)", file=sys.stderr)
+        return 2
+    with open(argv[0], encoding="utf-8", errors="replace") as fh:
+        hits = offending(fh.read())
+    if hits:
+        print("commit refused: AI co-author trailer (git.md: never add one)", file=sys.stderr)
+        for line in hits:
+            print("  " + line, file=sys.stderr)
+        print("fix: delete that line, then commit again:", file=sys.stderr)
+        print("  git commit -F <message without the line>", file=sys.stderr)
+        return 1
+    # Chain to the repo's own commit-msg hook, which the global path hides.
+    git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
+    local = os.path.join(git_dir, "hooks", "commit-msg") if git_dir else ""
+    if local and os.access(local, os.X_OK) and os.path.realpath(local) != os.path.realpath(__file__):
+        return subprocess.run([local, argv[0]]).returncode
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

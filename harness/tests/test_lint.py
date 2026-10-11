@@ -216,6 +216,7 @@ def test_file_naming_exempts_the_names_a_tool_or_convention_fixes():
         "Makefile", "CMakeLists.txt", "package-lock.json", "Cargo.toml", "Cargo.lock",
         "Info.plist", "BUILD.bazel", ".markdownlint-cli2.jsonc",
         "README.txt", "CHANGELOG.md", "COPYING", "LICENSE.txt",
+        "Package.swift", "Package.resolved", "commit-msg", "pre-commit", "pre-push",
     ]
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)

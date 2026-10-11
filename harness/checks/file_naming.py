@@ -66,6 +66,9 @@ CANONICAL = {
 	"README.txt", "CHANGELOG.md", "COPYING", "LICENSE.txt",
 	# SwiftPM reads the manifest and writes the pin file by exact spelling
 	"Package.swift", "Package.resolved",
+	# git runs a hook only under its exact name (githooks(5))
+	"pre-commit", "prepare-commit-msg", "commit-msg", "post-commit", "pre-push",
+	"post-merge", "post-checkout", "pre-rebase", "post-rewrite", "pre-merge-commit",
 }
 
 # Swift names a file after its main type (SeverityWord.swift) and a module
