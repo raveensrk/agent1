@@ -4,7 +4,6 @@ Agent skills in the [Agent Skills](https://agentskills.io) format. Install them
 by registering this repo with [install.py](../install.py).
 
 - [agent-usage-report](./agent-usage-report/SKILL.md) - HTML report of every model used across agent harnesses, with tokens, cost and model rankings.
-- [artificial-analysis-report](./artificial-analysis-report/SKILL.md) - Stats-only Artificial Analysis page for the newest GLM, DeepSeek and Grok model, every published effort.
 - [determinize](./determinize/SKILL.md) - Turns a directory's agent rules into checks, guards and git hooks, then thins the instructions to decisions and routing.
 - [git-report](./git-report/SKILL.md) - Your commits across all your repos, local and remote, for any time window.
 - [html-explainer](./html-explainer/SKILL.md) - Explain any concept, config or error as a self-contained dark-mode HTML page in ~/tmp with numbered sections and a feedback loop.
