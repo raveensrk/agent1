@@ -498,7 +498,7 @@ def test_interpreter_check_reads_a_bare_code_span():
         assert "interpreter not on this machine: python3.99" in proc.stdout, proc.stdout
         # Names that only start like an interpreter are not interpreters.
         with open(doc, "w") as fh:
-            fh.write("Install `python3.99-pip`, keep it `pythonic`, see `sh.99x`.\n")
+            fh.write("Install `python3.99-pip`, keep it `pythonic`, see `sh.99x`, read `python/script`.\n")
         proc = subprocess.run([sys.executable, check, doc], capture_output=True, text=True)
         assert proc.stdout == "", proc.stdout
 

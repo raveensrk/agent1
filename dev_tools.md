@@ -17,6 +17,8 @@ more. This file is under development, so more tools will be added.
 - pi
 - Claude
 - Codex and ChatGPT
+- [models](https://github.com/reyamira/models) - TUI and CLI for browsing AI models and comparing benchmarks
+- [llmfit](https://github.com/AlexsJones/llmfit) - TUI and CLI for finding LLMs that fit local hardware
 
 ## Environment
 

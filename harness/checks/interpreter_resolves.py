@@ -29,7 +29,7 @@ if not FILES and not sys.stdin.isatty():
 INTERPRETER = re.compile(
     r"(?:#!/usr/bin/env\s+|#!/[\w/.-]+/|[\s(`])"
     r"((?:python|ruby|node|deno|bun|bash|zsh|sh|perl|lua|swift|elixir|php|uv)[0-9.]*)"
-    r"(?![-\w])"
+    r"(?![-\w/])"  # python/ is a path, not an interpreter
 )
 CODE_SPAN = re.compile(r"`[^`]*`")
 RESOLVES: dict[str, bool] = {}
