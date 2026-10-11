@@ -26,6 +26,9 @@ hyphens"), and skill_frontmatter.py already decides that pair. Anywhere else, a
 directory holding a SKILL.md may carry a kebab-case name for the same reason;
 the files inside it are still checked. Pi package prompt templates under
 prompts/ may use hyphens: Pi turns the filename into the slash-command name.
+In a Swift package (Package.swift at the repo root), Swift's own convention
+wins for its sources: UpperCamelCase .swift files, UpperCamelCase directories
+that hold them, and target directories under Sources/ and Tests/.
 
 Directories are validated as the ancestors of each file, up to the repo root.
 A directory with no files in it is invisible here; git does not track empty
@@ -61,7 +64,16 @@ CANONICAL = {
 	"Info.plist", "BUILD.bazel", ".markdownlint-cli2.jsonc",
 	# repo docs of the README and LICENSE kind: 11 findings on 2026-10-10
 	"README.txt", "CHANGELOG.md", "COPYING", "LICENSE.txt",
+	# SwiftPM reads the manifest and writes the pin file by exact spelling
+	"Package.swift", "Package.resolved",
 }
+
+# Swift names a file after its main type (SeverityWord.swift) and a module
+# directory after its target, so a Swift package keeps UpperCamelCase: 157 of
+# 172 findings in the two Swift repos under ~/repos on 2026-10-11.
+SWIFT_FILE = re.compile(r"^[A-Z][A-Za-z0-9]*(?:\+[A-Za-z0-9]+)?\.swift$")
+PASCAL = re.compile(r"^[A-Z][A-Za-z0-9]*$")
+SWIFTPM_ROOTS = {"Sources", "Tests"}
 
 # tool-recognized directories whose name the tool owns, not this repo
 CANONICAL_DIRS = {".claude-plugin"}
@@ -154,6 +166,22 @@ def tracked(root: str) -> frozenset[str]:
 	return frozenset(proc.stdout.split("\0")) if proc.returncode == 0 else frozenset()
 
 
+@functools.cache
+def holds_swift(path: str) -> bool:
+	"""True when a .swift file sits anywhere under PATH."""
+	return any(f.endswith(".swift") for _, _, files in os.walk(path) for f in files)
+
+
+def swift_dir(root: str, dirs: list[str], index: int) -> bool:
+	"""A Swift package directory that keeps Swift's spelling: a target directory
+	right under Sources/ or Tests/, which SwiftPM finds by the target's name
+	(Sources/contacts-organizer), or an UpperCamelCase directory holding Swift
+	sources (SymptomsCore, Models). Resources/ holds none, so it is still checked."""
+	if index == 1 and dirs[0] in SWIFTPM_ROOTS:
+		return True
+	return bool(PASCAL.match(dirs[index])) and holds_swift(os.path.join(root, *dirs[: index + 1]))
+
+
 def move(root: str, parent: str, name: str) -> str:
 	"""The rename steer, runnable from any cwd: git -C names the repo, and the
 	paths are absolute and quoted, since a name may hold a space. A name with
@@ -202,8 +230,11 @@ def check(path: str) -> list[str]:
 	if parts[0] == "skills" or allowed(path):
 		return findings
 	dirs, name = parts[:-1], parts[-1]
+	swift = os.path.isfile(os.path.join(root, "Package.swift"))
 	for index, directory in enumerate(dirs):
 		if directory in SKIP_DIRS or directory in CANONICAL_DIRS or SNAKE.match(directory):
+			continue
+		if swift and swift_dir(root, dirs, index):
 			continue
 		# a skill's directory carries the skill's kebab-case name, wherever it lives
 		if KEBAB.match(directory) and os.path.isfile(os.path.join(root, *dirs[: index + 1], "SKILL.md")):
@@ -218,7 +249,7 @@ def check(path: str) -> list[str]:
 	# Pi package prompt filenames become slash commands, such as /estimate-cost.
 	if dirs == ["prompts"] and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md", name):
 		return findings
-	if name in CANONICAL or SNAKE.match(name):
+	if name in CANONICAL or SNAKE.match(name) or (swift and SWIFT_FILE.match(name)):
 		return findings
 	# junk is deleted, not renamed: a rename keeps it, and Zone's keeps the colon
 	if name == FINDER or ZONE.search(name):

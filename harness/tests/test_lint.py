@@ -232,6 +232,39 @@ def test_file_naming_exempts_the_names_a_tool_or_convention_fixes():
         assert flagged == sorted(near), run.stdout
 
 
+def test_file_naming_lets_a_swift_package_keep_swift_names():
+    """Swift names a file after its type and a module directory after its target:
+    157 of 172 findings in the two Swift repos under ~/repos on 2026-10-11. Only
+    a repo with Package.swift at its root gets the exemption, and only for Swift
+    sources: Resources/ and a hyphenated doc are still findings."""
+    check = os.path.join(CHECKS, "file_naming.py")
+
+    def flagged(root, rels):
+        paths = []
+        for rel in rels:
+            path = os.path.join(root, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "w").close()
+            paths.append(path)
+        run = subprocess.run([sys.executable, check, *paths], capture_output=True, text=True)
+        assert run.returncode == 0, run.stderr
+        return sorted({os.path.relpath(line.split(":1: ")[0], root) for line in run.stdout.splitlines()})
+
+    swift = [
+        "SymptomsCore/Models/SeverityWord.swift",
+        "SymptomsCore/Models/Date+Format.swift",
+        "Sources/contacts-organizer/main.swift",
+        "tests/SymptomsCoreTests/SeverityWordTests.swift",
+    ]
+    still = ["Resources/AppIcon.icns", "docs/12-cli.md", "SymptomsCore/Models/bad-name.swift"]
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        root = os.path.realpath(tmp)
+        assert flagged(root, swift + still) == sorted(swift + still)  # no Package.swift yet
+        assert flagged(root, ["Package.swift", "Package.resolved"]) == []
+        assert flagged(root, swift + still) == sorted(still)
+
+
 def test_file_naming_steers_junk_to_a_delete_by_git_state():
     """A Windows Zone.Identifier copy keeps its colon in any snake_case spelling
     (276 under ~/repos on 2026-10-10, all tracked), and Finder writes .DS_Store
