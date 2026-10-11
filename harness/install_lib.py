@@ -8,7 +8,15 @@ its checkout, through each harness's own load path:
   claude  `claude plugin marketplace add REPO` registers the repo's
           .claude-plugin marketplace as a directory source, and
           `claude plugin install` enables its plugins at user scope. Claude
-          reads a directory plugin live from the checkout; no update step.
+          reads a directory plugin live from the checkout (`claude plugin
+          list --json` shows readFromFolder); an edit loads at the next
+          session start or /reload-plugins, with no update step. Install also
+          copies the plugin root, minus .git, to
+          ~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/. That
+          copy is not what loads and goes stale: only a version bump plus
+          `claude plugin update` writes a new one. It still costs disk, so
+          keep a plugin root small (~/repos/notes roots its plugin at
+          ./.agents). Measured with claude 2.1.293 and 2.1.294, 2026-10-09.
           Needs the claude CLI on PATH (or CLAUDE_BIN); the state is read from
           ~/.claude/plugins/*.json, so a dry run and --check need no CLI.
   codex   not wired yet; skipped with a note while ~/.codex exists.
