@@ -1,7 +1,7 @@
 ---
 id: "mhjmw17sxr"
 title: "Refuse to run while a board has duplicate task titles"
-state: "todo"
+state: "obsolete"
 due: ""
 priority: "D"
 tag: ["waypoint"]
@@ -9,7 +9,7 @@ repeat: ""
 effort: ""
 postpone: 0
 created: "2026-10-08"
-closed: ""
+closed: "2026-10-11T19:26"
 ---
 
 Rewritten 2026-10-10 for Waypoint (the org boards are gone).
@@ -18,3 +18,7 @@ Today Waypoint refuses a title only when a command names it and it matches more 
 
 - Scope: open tasks within one task/ folder. task/archive/ (done and dropped) is history and stays out of the check.
 - Tests: a read (list), a write (edit) and done all refuse while a duplicate exists, and run once it is renamed.
+
+## Log
+
+- obsolete 2026-10-11 19:26: moved into the task-router plan: ~/repos/waypoint/plan.md, Invalid task handling item 5 (reads warn, writes refuse)
