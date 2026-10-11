@@ -249,6 +249,10 @@ def check(path: str) -> list[str]:
 	# Pi package prompt filenames become slash commands, such as /estimate-cost.
 	if dirs == ["prompts"] and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md", name):
 		return findings
+	# a leading comma marks a personal command (,sync.py): it never collides with a
+	# system tool and `,<Tab>` lists them all; 11 in ~/dot/script on 2026-10-11
+	if name.startswith(",") and SNAKE.match(name[1:]):
+		return findings
 	if name in CANONICAL or SNAKE.match(name) or (swift and SWIFT_FILE.match(name)):
 		return findings
 	# junk is deleted, not renamed: a rename keeps it, and Zone's keeps the colon

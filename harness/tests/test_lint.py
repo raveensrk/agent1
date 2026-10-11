@@ -265,6 +265,20 @@ def test_file_naming_lets_a_swift_package_keep_swift_names():
         assert flagged(root, swift + still) == sorted(still)
 
 
+def test_file_naming_lets_a_comma_command_keep_its_comma():
+    """~/dot/script names personal commands with a leading comma (,sync.py), so they
+    never collide with a system tool: 11 there on 2026-10-11. The rest of the name
+    still has to be snake_case."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        good, bad = os.path.join(tmp, ",git_day.py"), os.path.join(tmp, ",Git-Day.py")
+        for path in (good, bad):
+            open(path, "w").close()
+        run = subprocess.run([sys.executable, check, good, bad], capture_output=True, text=True)
+        assert good + ":" not in run.stdout and bad + ":" in run.stdout, run.stdout
+
+
 def test_file_naming_steers_junk_to_a_delete_by_git_state():
     """A Windows Zone.Identifier copy keeps its colon in any snake_case spelling
     (276 under ~/repos on 2026-10-10, all tracked), and Finder writes .DS_Store
