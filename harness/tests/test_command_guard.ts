@@ -57,6 +57,13 @@ const BLOCKED = [
 	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/tmp/ff_cookies.sqlite 2>/dev/null && sqlite3 ~/tmp/ff_cookies.sqlite 'select 1'",
 	"cp ~/Library/Application Support/Google/Chrome/Default/Cookies ~/tmp/chrome_cookies.sqlite",
 	'cp /Users/raveen/Library/Application Support/Firefox/Profiles/x/cookies.sqlite "/tmp/cookies.sqlite"',
+	// a symlink: never create one (common.md); 8 installer links in dot, 2026-10-06
+	"ln -s ~/repos/agent1/skills/x ~/.agents/skills/x",
+	"ln -sf src dest",
+	"ln -sfn src dest",
+	"/bin/ln -s src dest",
+	"ln --symbolic src dest",
+	"cd ~/dot && ln -s a b",
 ];
 
 const ALLOWED = [
@@ -123,6 +130,11 @@ const ALLOWED = [
 	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/tmp/ff.sqlite && sqlite3 ~/tmp/ff.sqlite 'select 1'; rm -f ~/tmp/ff.sqlite",
 	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/backup/cookies.sqlite",
 	"cp ~/Library/Application Support/Firefox/Profiles/x/prefs.js ~/tmp/prefs.js",
+	// a hard link is no symlink, and ln -s quoted in an echo never runs
+	"ln src dest",
+	"ln -f src dest",
+	"echo 'ln -s a b'",
+	"find ~/.pi -type l",
 ];
 
 for (const command of BLOCKED) {

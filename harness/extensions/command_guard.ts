@@ -1,7 +1,7 @@
 /**
  * command guard: refuse the command shapes that hang before they run.
  *
- * Two shapes, both measured on this machine:
+ * Shapes measured on this machine, among them:
  *
  * - recursive grep. One `grep -rn` over ~/repos spent 111s of a 137s session
  *   (17 GB, 169,203 files) and had to be aborted; `rg -l` answered in 2.6s.
@@ -214,6 +214,24 @@ export function guardHit(command: string): Hit | null {
 					"common.md: BSD cat has no -A, and the flag aborts the call:",
 					"  cat -v -e FILE",
 					"  sed -n l FILE",
+				].join("\n"),
+			};
+		}
+		// A symlink: common.md forbids creating one, and no_symlinks.py only
+		// catches it after the fact. The 8 installer links in dot/config/pi
+		// (deleted 2026-10-06) were each one `ln -s`.
+		const lnAt = names.findIndex((name) => name === "ln");
+		if (
+			lnAt !== -1 &&
+			words.slice(lnAt + 1).some((word) => word === "--symbolic" || /^-[^-]*s/.test(word))
+		) {
+			return {
+				name: "ln -s, which creates a symlink",
+				fix: [
+					"common.md: never create a symlink. Pick the real alternative and say which:",
+					"  cp SRC DEST                      # a real file; an installer re-copies it",
+					'  "packages": ["~/repos/x"]        # pi loads a package in place',
+					"  use the real path                # point the caller at SRC itself",
 				].join("\n"),
 			};
 		}
