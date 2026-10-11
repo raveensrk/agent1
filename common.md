@@ -8,7 +8,7 @@ At session start, Read these files
 
 - [Emoji Legend](emoji_legend.md) - in the same directory as this file
 - [Experimental rules](experimental.md) - live trial rules; a keeper moves into common.md or another file, the rest are deleted
-- [Waypoint skill](~/repos/waypoint/skills/waypoint/SKILL.md) - tasks: one Markdown file per task, the `waypoint` CLI the only writer. The Waypoint repo's `install.py` installs it.
+- [task-router skill](~/repos/task-router/skills/task-router/SKILL.md) - tasks: one Markdown file per task, the `task-router` CLI the only writer. `task-router skill install` installs it.
 - [Code Style](code_style.md) - how to write code
 - [Git](git.md) - commits and pull requests
 - [Jobs](jobs.md) - ETA rules for long-running jobs
@@ -38,10 +38,10 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 
 - When I name a priority and a timeframe together - "B - next weekend", "C", "B
   it" - set both in one pass rather than asking again:
-  `waypoint edit <ref> --priority B --due <date>` on the date I mean. "Next weekend" is the coming Saturday unless
+  `task-router edit <ref> --priority B --due <date>` on the date I mean. "Next weekend" is the coming Saturday unless
   I say otherwise.
 
-- "Later" on a task means postpone it one week - `waypoint postpone <ref> +1w`,
+- "Later" on a task means postpone it one week - `task-router postpone <ref> +1w`,
   which works on an undated task too. Keep the task `todo`; the only states are
   `todo`, `in_progress`, `done` and `obsolete`.
 
@@ -163,7 +163,7 @@ Dark theme by default: HTML pages, reports, apps, GUIs, terminal output colors a
 
 Emacs, Org mode and Lisp: I tried them in 2026 and they did not fit me. If I
 start to install, configure or discuss Emacs, Org or a Lisp, warn me first in
-one plain sentence, point at Waypoint (plain Markdown tasks) and ask whether to
+one plain sentence, point at task-router (plain Markdown tasks) and ask whether to
 go on.
 
 ## Markdown

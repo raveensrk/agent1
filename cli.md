@@ -1,8 +1,8 @@
 # CLI apps
 
 A CLI I write tells me how to use it - the author six months later is the
-caller. The worked example is Waypoint's CLI,
-[src/cli.ts](~/repos/waypoint/src/cli.ts), help table and all.
+caller. The worked example is task-router's CLI,
+[internal/cli/cli.go](~/repos/task-router/internal/cli/cli.go), help table and all.
 
 - `-h` and `--help` are a hard rule: every CLI app has both, on the main command
   and on every subcommand. Usage line, what the app does, every option, one
@@ -22,7 +22,7 @@ caller. The worked example is Waypoint's CLI,
   the long flag stands alone.
 - One table drives the main help and every subcommand's help, and a test asserts
   every verb has an entry, so the two cannot drift (see `VERB` in
-  [src/cli.ts](~/repos/waypoint/src/cli.ts) and its help test).
+  [internal/cli/cli.go](~/repos/task-router/internal/cli/cli.go) and its help test in `cli_test.go`).
 
 `harness/checks/cli_help.py` decides the hard half: a runnable - options or
 not, per [experimental.md](experimental.md) - must handle `-h`, `--help`
