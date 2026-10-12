@@ -67,6 +67,7 @@ def test_ignored_hidden():
     scan.scan_leftovers = lambda installed_keys: []
     scan.scan_files = lambda: []
     scan.scan_big_files = lambda mb: ([], False)
+    scan.scan_docker = lambda: []
     out = io.StringIO()
     with tempfile.TemporaryDirectory() as td:
         scan.IGNORE_FILE = Path(td) / "ignored.json"
@@ -129,6 +130,67 @@ def test_parse_big_mb():
             raise AssertionError(bad)
         except SystemExit:
             pass
+
+
+def test_docker_bytes():
+    scan = load("scan")
+    assert scan.docker_bytes("4.43GB") == 4_430_000_000
+    assert scan.docker_bytes("258kB") == 258_000
+    assert scan.docker_bytes("0B") == 0
+    assert scan.docker_bytes("N/A") == 0
+
+
+def test_docker_rows():
+    scan = load("scan")
+    df = {
+        "Images": [
+            {"ID": "sha256:aaa", "Repository": "used", "Tag": "1", "Containers": "1", "Size": "1GB"},
+            {"ID": "sha256:bbb", "Repository": "old", "Tag": "2", "Containers": "0", "Size": "2GB"},
+            {"ID": "sha256:cccccccccccccccc", "Repository": "<none>", "Tag": "<none>",
+             "Containers": "0", "Size": "3MB"},
+        ],
+        "Containers": [
+            {"ID": "c1", "Names": "up", "State": "running", "Size": "1kB"},
+            {"ID": "c2", "Names": "down", "State": "exited", "Size": "5MB", "Status": "Exited (0)"},
+        ],
+        "Volumes": [
+            {"Name": "held", "Links": "1", "Size": "1GB"},
+            {"Name": "orphan", "Links": "0", "Size": "7MB"},
+        ],
+        "BuildCache": [{"Size": "10MB", "InUse": False}, {"Size": "1GB", "InUse": True}],
+    }
+    rows = {r["path"]: r for r in scan.docker_rows(df)}
+    assert set(rows) == {"docker://image/sha256:bbb", "docker://image/sha256:cccccccccccccccc",
+                         "docker://container/c2", "docker://volume/orphan",
+                         "docker://buildcache/unused"}
+    assert rows["docker://image/sha256:bbb"]["name"] == "old:2"
+    assert rows["docker://image/sha256:cccccccccccccccc"]["badge"] == "JUNK"
+    assert rows["docker://buildcache/unused"]["bytes"] == 10_000_000
+    assert all(r["kind"] == "docker" for r in rows.values())
+
+
+def test_plan_docker():
+    delete = load("delete")
+    assert delete.docker_ref("docker://volume/v1") == ("volume", "v1")
+    assert delete.docker_ref("docker://nope/x") is None
+    assert delete.docker_ref("/Users/x") is None
+    calls = []
+    users = {"held": "abc123\n"}
+
+    def fake_run(cmd):
+        calls.append(cmd)
+        if cmd[:3] == ["docker", "ps", "-aq"]:
+            return users.get(cmd[-1].split("=", 1)[1], "")
+        return "removed\n"
+    delete.run = fake_run
+    vol = lambda n: {"kind": "docker", "name": n, "path": f"docker://volume/{n}"}
+    assert delete.plan(vol("held"), execute=True).startswith("BLOCKED held: volume in use")
+    assert delete.plan(vol("free"), execute=False) == "would run (permanent): docker volume rm free"
+    assert not any(c[:3] == ["docker", "volume", "rm"] for c in calls)
+    assert delete.plan(vol("free"), execute=True) == "docker volume free: removed"
+    assert ["docker", "volume", "rm", "free"] in calls
+    bad = {"kind": "docker", "name": "x", "path": "docker://rootfs/"}
+    assert delete.plan(bad, execute=True).startswith("BLOCKED")
 
 
 def test_merge_ignore():

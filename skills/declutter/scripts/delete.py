@@ -6,7 +6,9 @@ Usage: delete.py SELECTION [--execute] [--log PATH] [--save-ignore]
 
 Successful program removals are verified and logged in
 ~/dot_local/app_cleanup.yaml (override with --log). Manual apps move to Trash;
-Homebrew uninstall permanently removes package files. Requires PyYAML.
+Homebrew uninstall permanently removes package files. Docker rows
+(docker://TYPE/REF) are removed with the docker CLI - also permanent - and
+refused while a container uses them. Requires PyYAML.
 --save-ignore changes only the persistent ignore list. Exit 1 when any selected
 removal fails, is blocked or cannot be verified; exit 0 otherwise.
 """
@@ -89,8 +91,54 @@ def trash(path):
         return f"FAILED {src}: Finder said {out.strip()[:120]}"
 
 
+DOCKER_CMDS = {
+    "image": lambda ref: ["docker", "rmi", ref],
+    "container": lambda ref: ["docker", "rm", ref],
+    "volume": lambda ref: ["docker", "volume", "rm", ref],
+    "buildcache": lambda ref: ["docker", "builder", "prune", "-f"],
+}
+
+
+def docker_ref(path):
+    """docker://TYPE/REF -> (TYPE, REF), or None."""
+    if not path.startswith("docker://"):
+        return None
+    dtype, _, ref = path.removeprefix("docker://").partition("/")
+    return (dtype, ref) if dtype in DOCKER_CMDS and ref else None
+
+
+def docker_users(dtype, ref):
+    """Containers (running or not) that still hold the image or volume."""
+    if dtype == "image":
+        return run(["docker", "ps", "-aq", "--filter", f"ancestor={ref}"]).split()
+    if dtype == "volume":
+        return run(["docker", "ps", "-aq", "--filter", f"volume={ref}"]).split()
+    if dtype == "container":
+        state = run(["docker", "inspect", "-f", "{{.State.Running}}", ref]).strip()
+        return [ref] if state == "true" else []
+    return []
+
+
+def plan_docker(item, execute):
+    name = item.get("name", "?")
+    parsed = docker_ref(item.get("path", ""))
+    if not parsed:
+        return f"BLOCKED {name}: bad docker path {item.get('path')}"
+    dtype, ref = parsed
+    users = docker_users(dtype, ref)
+    if users:
+        return f"BLOCKED {name}: {dtype} in use by container {' '.join(u[:12] for u in users[:3])}"
+    cmd = DOCKER_CMDS[dtype](ref)
+    if not execute:
+        return f"would run (permanent): {' '.join(cmd)}"
+    out = run(cmd)
+    return f"docker {dtype} {name}: {out.strip().splitlines()[-1] if out.strip() else 'ok'}"
+
+
 def plan(item, execute, log=ledger.LOG):
     kind, name = item["kind"], item.get("name", "?")
+    if kind == "docker":
+        return plan_docker(item, execute)
     if not safe(item.get("path", "/")):
         return f"BLOCKED {name}: unsafe path {item.get('path')}"
     tracked = execute and kind in {"app", "cask", "formula"}

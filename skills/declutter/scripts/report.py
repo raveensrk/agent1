@@ -67,7 +67,7 @@ HTML = """<!doctype html><html><head><meta charset="utf-8">
  <div class="card"><b>%(n_items)s</b><small>items scanned</small></div>
  <div class="card junk"><b>%(n_junk)s</b><small>JUNK badges</small></div>
  <div class="card"><b>%(reclaim)s</b><small>not KEEP, reclaimable</small></div>
- <div class="card"><b>%(apps)s apps / %(formulae)s brew / %(leftovers)s leftovers</b><small>by kind</small></div>
+ <div class="card"><b>%(apps)s apps / %(formulae)s brew / %(leftovers)s leftovers / %(docker)s docker</b><small>by kind</small></div>
 </div>
 <div class="chart"><h2>Top 10 by size</h2>%(top10)s</div>
 <div class="controls">
@@ -77,6 +77,7 @@ HTML = """<!doctype html><html><head><meta charset="utf-8">
  <span class="chip" data-k="formula">brew</span>
  <span class="chip" data-k="leftover">leftovers</span>
  <span class="chip" data-k="file">files</span>
+ <span class="chip" data-k="docker">docker</span>
  <button id="selmj">Select MAYBE+JUNK</button>
  <button id="clear">Clear</button>
  <button class="primary" id="export">Export selection (0)</button>
@@ -92,7 +93,9 @@ Deletion route: brew uninstall for brew items, rest moves to ~/.Trash (recoverab
 File rows are regenerable caches and logs (DerivedData, node_modules, brew/pip/yarn caches, ~/Library/Logs) -
 deleting them is safe, things rebuild on next use.
 Large-file rows (%(big_mb)s MB+) come from anywhere in your home folder outside ~/Library - not caches, so check each before ticking;
-last used is the newer of last read and last write.</div>
+last used is the newer of last read and last write.
+Docker rows (only when the daemon was running) are unused images, stopped containers, volumes no container uses and build cache;
+they are removed with the docker CLI, permanently - no Trash.</div>
 <script>const DATA=%(data)s;</script>
 <script>
 const tb=document.getElementById('tb'),q=document.getElementById('q');
@@ -184,6 +187,7 @@ def main():
         "apps": counts["apps"],
         "formulae": counts["formulae"],
         "leftovers": counts["leftovers"],
+        "docker": counts.get("docker", 0),
         "top10": top10_bars(data["items"]),
         "ignnote": (f" {counts['ignored_hidden']} item(s) hidden by your ignore list."
                     if counts.get("ignored_hidden") else ""),

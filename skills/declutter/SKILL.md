@@ -89,7 +89,7 @@ is unknown, not proof of absence; resolve it before claiming verification.
 - Headline cards: items scanned, JUNK count, reclaimable bytes.
 - Top-10 size bars.
 - Sortable, filterable table: badge (KEEP/MAYBE/JUNK), name, size, last used,
-  kind (app / formula / leftover). Locked rows: running apps, brew formulae
+  kind (app / formula / leftover / file / docker). Locked rows: running apps, brew formulae
   other formulae need. Duplicate installs flagged.
 - Badge rules: JUNK = unused 90+ days or never opened, MAYBE = 31-90 days,
   KEEP = used in the last 30 days.
@@ -123,3 +123,15 @@ on next use.
 (`counts.big_scan_truncated`). Age is the newer of atime and mtime, same
 badge rules. Unlike phase 2 these are not regenerable: tell the user to
 check each one before ticking. They go to Trash like other file rows.
+
+## Phase 3 - Docker (built)
+
+When `docker info` answers, `scan.py` adds `docker` rows from
+`docker system df -v`: unused images (JUNK when dangling, else MAYBE),
+stopped containers, volumes no container uses, and unused build cache as
+one row. It never starts Colima or Docker Desktop. Rows carry
+`docker://TYPE/REF` paths. `delete.py` removes them with `docker rmi`,
+`docker rm`, `docker volume rm` and `docker builder prune -f` - permanent,
+no Trash, so say so when showing the dry run. It refuses any image,
+volume or container a container still uses, checked again at delete time.
+Deleting rows does not shrink the VM disk file by itself.

@@ -13,7 +13,9 @@ Support, ~/Library/Caches, ~/Library/Logs, the Xcode caches under
 ~/Library/Developer, and ~/.config/declutter/ignored.json (paths to hide).
 Walks ~ with `find` for files over the big-file threshold, skipping
 ~/Library, ~/.Trash, .git, node_modules and VM disk images, capped at
-BIG_SCAN_SECONDS. Runs `mdls` and `brew list --cask`. Exit 0 with the JSON on stdout.
+BIG_SCAN_SECONDS. Runs `mdls` and `brew list --cask`. When the Docker daemon
+answers, runs `docker system df -v` for unused images, stopped containers,
+volumes no container uses and build cache; it never starts the daemon. Exit 0 with the JSON on stdout.
 Before scanning, reads ~/dot_local/app_cleanup.yaml and checks logged program
 removals through ledger.py. Includes returning programs as reinstall_check,
 independent of the ignore list. Requires PyYAML; an unverified log fails the scan.
@@ -21,6 +23,7 @@ independent of the ignore list. Requires PyYAML; an unverified log fails the sca
 import json
 import os
 import plistlib
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -344,6 +347,82 @@ def scan_big_files(mb):
     return out, truncated
 
 
+DOCKER_UNITS = {"B": 1, "kB": 1e3, "KB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12}
+
+
+def docker_bytes(text):
+    """docker's decimal size string ("4.43GB", "258kB", "N/A") -> bytes."""
+    text = (text or "").strip()
+    for unit in sorted(DOCKER_UNITS, key=len, reverse=True):
+        if text.endswith(unit):
+            try:
+                return int(float(text[:-len(unit)]) * DOCKER_UNITS[unit])
+            except ValueError:
+                return 0
+    return 0
+
+
+def docker_row(dtype, ref, name, size, badge_, note=""):
+    return {
+        "kind": "docker",
+        "name": name,
+        "path": f"docker://{dtype}/{ref}",
+        "bytes": size,
+        "days_unused": None,
+        "badge": badge_,
+        "running": False,
+        "duplicate": False,
+        "source": dtype,
+        "from": note,
+    }
+
+
+def docker_rows(df):
+    """Removable rows from `docker system df -v --format json` output."""
+    out = []
+    for img in df.get("Images") or []:
+        if str(img.get("Containers", "0")) != "0":
+            continue
+        repo, tag = img.get("Repository", ""), img.get("Tag", "")
+        dangling = repo in ("", "<none>")
+        name = img["ID"].removeprefix("sha256:")[:12] if dangling else f"{repo}:{tag}"
+        out.append(docker_row("image", img["ID"], name, docker_bytes(img.get("Size")),
+                              "JUNK" if dangling else "MAYBE",
+                              "dangling image" if dangling else "unused image"))
+    for c in df.get("Containers") or []:
+        if c.get("State") == "running":
+            continue
+        out.append(docker_row("container", c["ID"], c.get("Names") or c["ID"][:12],
+                              docker_bytes(c.get("Size")), "MAYBE",
+                              f"stopped container, {c.get('Status', '')}".strip(", ")))
+    for v in df.get("Volumes") or []:
+        if str(v.get("Links", "")) != "0":
+            continue
+        out.append(docker_row("volume", v["Name"], v["Name"], docker_bytes(v.get("Size")),
+                              "MAYBE", "volume no container uses - its data is lost on delete"))
+    cache = sum(docker_bytes(b.get("Size")) for b in df.get("BuildCache") or []
+                if not b.get("InUse"))
+    if cache:
+        out.append(docker_row("buildcache", "unused", "docker build cache", cache, "JUNK",
+                              "rebuilt on next docker build"))
+    return out
+
+
+def scan_docker():
+    if not shutil.which("docker"):
+        return []
+    try:
+        if subprocess.run(["docker", "info"], capture_output=True, timeout=15).returncode:
+            return []  # daemon down: say nothing rather than start a VM
+    except Exception:
+        return []
+    raw = run(["docker", "system", "df", "-v", "--format", "json"])
+    try:
+        return docker_rows(json.loads(raw))
+    except (json.JSONDecodeError, KeyError, TypeError):
+        return []
+
+
 def parse_big_mb(argv):
     if "--big-mb" not in argv:
         return BIG_MB_DEFAULT
@@ -376,7 +455,8 @@ def main():
     big, big_truncated = scan_big_files(big_mb)
     seen = {f["path"] for f in files}
     files += [b for b in big if b["path"] not in seen]
-    items = apps + formulae + leftovers + files
+    docker = scan_docker()
+    items = apps + formulae + leftovers + files + docker
     ignored = load_ignored()
     shown = [i for i in items if i["path"] not in ignored]
     json.dump({
@@ -387,6 +467,7 @@ def main():
             "formulae": len(formulae),
             "leftovers": len(leftovers),
             "files": len(files),
+            "docker": len(docker),
             "big_files": sum(1 for f in files if f["source"] == "large"),
             "big_mb": big_mb,
             "big_scan_truncated": big_truncated,
