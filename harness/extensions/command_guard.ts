@@ -85,7 +85,7 @@ function unboundedRunner(command: string): string | null {
 	return null;
 }
 
-type Hit = { name: string; fix: string };
+type Hit = { name: string; measured: string; fix: string };
 
 function isRecursiveFlag(word: string): boolean {
 	if (word === "--recursive") return true;
@@ -162,6 +162,8 @@ export function guardHit(command: string): Hit | null {
 	if (lsSuppressedThenPrint(command)) {
 		return {
 			name: "ls with a suppressed error, chained to a print",
+			measured:
+				"Measured 2026-10-04: 4 of 4612 agent bash commands had this shape, and one aborted a per-file plan mid-command.",
 			fix: [
 				"A missing path fails the ls, and the && then skips the print, so the",
 				"call exits 1 having printed nothing (common.md):",
@@ -174,6 +176,8 @@ export function guardHit(command: string): Hit | null {
 	if (copied) {
 		return {
 			name: `a browser cookie database copied to ${copied} and left there`,
+			measured:
+				"Measured 2026-10-04: a copied cookies.sqlite left a live console session in ~/tmp for 50 minutes.",
 			fix: [
 				"The copy is fine; leaving it is not. Delete it in the same command:",
 				'  D=~/tmp/cookies.sqlite; cp SRC "$D" && sqlite3 "$D" "select 1"; rm -f "$D"',
@@ -186,6 +190,8 @@ export function guardHit(command: string): Hit | null {
 		if (grepAt !== -1 && words.slice(grepAt + 1).some(isRecursiveFlag)) {
 			return {
 				name: "recursive grep",
+					measured:
+						"Measured here: one recursive grep over ~/repos ran 111s of a 137s session and was aborted; rg -l answered in 2.6s.",
 				fix: [
 					"Use rg, which skips hidden and gitignored paths:",
 					'  rg -n "pattern" ~/repos',
@@ -198,6 +204,8 @@ export function guardHit(command: string): Hit | null {
 			if (!TIMEOUT_FLAG.test(flags)) {
 				return {
 					name: "curl or wget with no maximum time",
+						measured:
+							"Measured here: ~/.bash_history holds 9 curl installs with no --max-time, and a dead host blocks one forever.",
 					fix: [
 						"A dead host blocks forever without one:",
 						"  curl -fsSL --max-time 60 URL | sh",
@@ -210,6 +218,7 @@ export function guardHit(command: string): Hit | null {
 		if (catAt !== -1 && words.slice(catAt + 1).some((word) => /^-[^-]*A/.test(word))) {
 			return {
 				name: "cat -A, which BSD cat does not have",
+				measured: "macOS ships BSD cat, which rejects -A and fails the call.",
 				fix: [
 					"common.md: BSD cat has no -A, and the flag aborts the call:",
 					"  cat -v -e FILE",
@@ -227,6 +236,7 @@ export function guardHit(command: string): Hit | null {
 		) {
 			return {
 				name: "ln -s, which creates a symlink",
+				measured: "The 8 installer symlinks in dot/config/pi, deleted 2026-10-06, were each one ln -s.",
 				fix: [
 					"common.md: never create a symlink. Pick the real alternative and say which:",
 					"  cp SRC DEST                      # a real file; an installer re-copies it",
@@ -243,6 +253,7 @@ export function guardHit(command: string): Hit | null {
 		if (tmpAt !== -1) {
 			return {
 				name: "a temp file written under /tmp",
+				measured: "common.md keeps temp files in ~/tmp, where they are found and cleaned up.",
 				fix: [
 					"Temp files go under ~/tmp, never /tmp (common.md):",
 					"  mkdir -p ~/tmp/review && cmd 2> ~/tmp/review/err.txt",
@@ -254,6 +265,8 @@ export function guardHit(command: string): Hit | null {
 	if (runner) {
 		return {
 			name: `unbounded test run (${runner})`,
+			measured:
+				"Measured 2026-10-03: one unbounded ert test run hung for the full 300s tool timeout plus 194s to abort; healthy, it takes 5s.",
 			fix: [
 				"Bound it, and state the ETA before starting it (jobs.md):",
 				"  timeout 180 bun test",
@@ -264,15 +277,11 @@ export function guardHit(command: string): Hit | null {
 	return null;
 }
 
-const MEASURED =
-	"Measured here: one recursive grep over ~/repos ran 111s of a 137s session and was " +
-	"aborted, and ~/.bash_history holds 9 curl installs with no --max-time.";
-
 /** The refusal for COMMAND, or null when it may run. Shared with harness/hook.ts. */
 export function commandBlock(command: string): string | null {
 	const hit = guardHit(command);
 	if (!hit) return null;
-	return `Blocked: ${hit.name}. ${MEASURED}\n${hit.fix}\nBound the path for a search, and keep the timeout on every fetch.`;
+	return `Blocked: ${hit.name}. ${hit.measured}\n${hit.fix}`;
 }
 
 export default function (pi: ExtensionAPI) {

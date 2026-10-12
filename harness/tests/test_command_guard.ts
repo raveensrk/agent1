@@ -3,7 +3,7 @@
  *   node --experimental-strip-types harness/tests/test_command_guard.ts
  */
 import assert from "node:assert/strict";
-import { executableText, guardHit } from "../extensions/command_guard.ts";
+import { commandBlock, executableText, guardHit } from "../extensions/command_guard.ts";
 
 const BLOCKED = [
 	// the call that cost this session 111s
@@ -156,3 +156,16 @@ assert.match(executableText("cat <<'EOF' > f\nbody\nEOF\nls"), /^cat <<.* > f\nl
 assert.equal(executableText("cat <<'EOF' > f\nunclosed"), "cat <<'' > f", "an unterminated heredoc swallows the rest");
 
 console.log(`command_guard ok: ${BLOCKED.length} blocked, ${ALLOWED.length} allowed`);
+
+// each block cites its own evidence: a pytest block once cited the grep and curl numbers
+{
+	const pytest = commandBlock("python3 -m pytest tests/") ?? "";
+	assert.match(pytest, /ert test run/);
+	assert.doesNotMatch(pytest, /grep|curl/);
+	const grep = commandBlock("grep -rn foo .") ?? "";
+	assert.match(grep, /111s/);
+	assert.doesNotMatch(grep, /curl/);
+	for (const command of BLOCKED) {
+		assert.equal(Boolean(guardHit(command)?.measured), true, command);
+	}
+}
