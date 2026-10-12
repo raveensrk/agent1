@@ -6,6 +6,8 @@ Commits and pull requests.
 
 Never add an AI co-author trailer. [commit-msg](harness/githooks/commit-msg) refuses one in every repo, through the global `core.hooksPath`.
 
+A repo holding private data opts in with `git config repo.private true` and one `git config --add repo.allowRemote <url>` per allowed remote. [pre-push](harness/githooks/pre-push) then refuses any other remote, and a GitHub remote that `gh` cannot confirm is private.
+
 ### Commit Conventions
 
 Use Conventional Commits for messages and PR titles: `type(scope): summary`. Omit scope when spanning multiple scopes.
