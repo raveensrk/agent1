@@ -162,6 +162,17 @@ def test_pi_prompt_filename_is_a_slash_command():
         assert run.stdout == "", run.stdout
 
 
+def test_file_naming_wants_the_plan_file_uppercase():
+    """Plan files are PLAN.md by the user's rule: snake_case plan.md is a finding."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        lower = os.path.join(tmp, "plan.md")
+        open(lower, "w").close()
+        run = subprocess.run([sys.executable, check, lower], capture_output=True, text=True)
+        assert "'plan.md' must be uppercase" in run.stdout and "PLAN.md" in run.stdout, run.stdout
+
+
 def test_file_naming_stops_at_a_linked_worktree_and_skips_deleted_files():
     """A worktree's .git is a file, and its folder name is the tool's, not the repo's.
 
@@ -217,6 +228,7 @@ def test_file_naming_exempts_the_names_a_tool_or_convention_fixes():
         "Info.plist", "BUILD.bazel", ".markdownlint-cli2.jsonc",
         "README.txt", "CHANGELOG.md", "COPYING", "LICENSE.txt",
         "Package.swift", "Package.resolved", "commit-msg", "pre-commit", "pre-push",
+        "PLAN.md",
     ]
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)

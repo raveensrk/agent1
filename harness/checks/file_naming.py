@@ -8,7 +8,9 @@ hyphens.
 
 Exempt, in CANONICAL: a name a tool reads by its exact spelling (Makefile,
 Cargo.toml, Info.plist), the agent files (AGENTS.md, CLAUDE.md, SKILL.md), and
-repo docs of the README and LICENSE kind (CHANGELOG.md, COPYING). A name joins
+repo docs of the README and LICENSE kind (CHANGELOG.md, COPYING), and the plan
+file, which is PLAN.md by the user's rule: a lowercase plan.md is a finding
+that steers to the uppercase spelling. A name joins
 when a rename would break a tool or the convention, not because a repo holds
 one. The .claude-plugin directory is exempt the same way: Claude Code discovers
 the plugin manifest only under that exact name.
@@ -64,6 +66,8 @@ CANONICAL = {
 	"Info.plist", "BUILD.bazel", ".markdownlint-cli2.jsonc",
 	# repo docs of the README and LICENSE kind: 11 findings on 2026-10-10
 	"README.txt", "CHANGELOG.md", "COPYING", "LICENSE.txt",
+	# plan files are uppercase by the user's rule, like README.md (2026-10-12)
+	"PLAN.md",
 	# SwiftPM reads the manifest and writes the pin file by exact spelling
 	"Package.swift", "Package.resolved",
 	# git runs a hook only under its exact name (githooks(5))
@@ -77,6 +81,9 @@ CANONICAL = {
 SWIFT_FILE = re.compile(r"^[A-Z][A-Za-z0-9]*(?:\+[A-Za-z0-9]+)?\.swift$")
 PASCAL = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 SWIFTPM_ROOTS = {"Sources", "Tests"}
+
+# names that must take an uppercase spelling: snake_case would pass them
+UPPER = {"plan.md": "PLAN.md"}
 
 # tool-recognized directories whose name the tool owns, not this repo
 CANONICAL_DIRS = {".claude-plugin"}
@@ -255,6 +262,14 @@ def check(path: str) -> list[str]:
 	# a leading comma marks a personal command (,sync.py): it never collides with a
 	# system tool and `,<Tab>` lists them all; 11 in ~/dot/script on 2026-10-11
 	if name.startswith(",") and SNAKE.match(name[1:]):
+		return findings
+	if name in UPPER:
+		old = shlex.quote(os.path.join(root, *dirs, name))
+		new = shlex.quote(os.path.join(root, *dirs, UPPER[name]))
+		findings.append(
+			f"{path}:1: file '{name}' must be uppercase - "
+			f"rename it: git -C {shlex.quote(root)} mv {old} {new}"
+		)
 		return findings
 	if name in CANONICAL or SNAKE.match(name) or (swift and SWIFT_FILE.match(name)):
 		return findings
