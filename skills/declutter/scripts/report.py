@@ -62,7 +62,7 @@ def fmt_bytes(b):
 HTML = """<!doctype html><html><head><meta charset="utf-8">
 <title>declutter report</title><style>%(css)s</style></head><body>
 <h1>declutter <span>- what can go</span></h1>
-<div class="sub">Scanned %(generated)s. Pick rows, hit Export selection, give the file to the agent. Nothing is deleted by this page.%(ignnote)s</div>
+<div class="sub">Scanned %(generated)s. Pick rows, hit Export selection, give the file to the agent. Nothing is deleted by this page.%(ignnote)s%(bignote)s</div>
 <div class="cards">
  <div class="card"><b>%(n_items)s</b><small>items scanned</small></div>
  <div class="card junk"><b>%(n_junk)s</b><small>JUNK badges</small></div>
@@ -90,7 +90,9 @@ HTML = """<!doctype html><html><head><meta charset="utf-8">
 brew formulae needed by others are locked. Apps marked <span style="color:var(--junk)">running</span> are locked until quit.
 Deletion route: brew uninstall for brew items, rest moves to ~/.Trash (recoverable, never rm).
 File rows are regenerable caches and logs (DerivedData, node_modules, brew/pip/yarn caches, ~/Library/Logs) -
-deleting them is safe, things rebuild on next use.</div>
+deleting them is safe, things rebuild on next use.
+Large-file rows (%(big_mb)s MB+) come from anywhere in your home folder outside ~/Library - not caches, so check each before ticking;
+last used is the newer of last read and last write.</div>
 <script>const DATA=%(data)s;</script>
 <script>
 const tb=document.getElementById('tb'),q=document.getElementById('q');
@@ -185,6 +187,9 @@ def main():
         "top10": top10_bars(data["items"]),
         "ignnote": (f" {counts['ignored_hidden']} item(s) hidden by your ignore list."
                     if counts.get("ignored_hidden") else ""),
+        "big_mb": counts.get("big_mb", 500),
+        "bignote": (" Large-file scan hit its time limit; some big files may be missing."
+                    if counts.get("big_scan_truncated") else ""),
         "data": json.dumps(data),
     }
     Path(args.out).write_text(html)

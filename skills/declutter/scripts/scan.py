@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Scan macOS for installed apps (GUI + brew), leftovers. Writes JSON to stdout.
 
-usage: scan.py [-h|--help|help]
+usage: scan.py [-h|--help|help] [--big-mb N]
 example: python3 scripts/scan.py > ~/tmp/declutter/scan.json
+example: python3 scripts/scan.py --big-mb 1000 > ~/tmp/declutter/scan.json
+
+--big-mb N   large-file threshold in MB (default 500); 0 skips the big-file scan
 
 Read-only. Reads /Applications, ~/Applications, the Homebrew Cellar and
 Caskroom under $HOMEBREW_PREFIX (default /opt/homebrew), ~/Library/Application
 Support, ~/Library/Caches, ~/Library/Logs, the Xcode caches under
 ~/Library/Developer, and ~/.config/declutter/ignored.json (paths to hide).
-Runs `mdls` and `brew list --cask`. Exit 0 with the JSON on stdout.
+Walks ~ with `find` for files over the big-file threshold, skipping
+~/Library, ~/.Trash, .git, node_modules and VM disk images, capped at
+BIG_SCAN_SECONDS. Runs `mdls` and `brew list --cask`. Exit 0 with the JSON on stdout.
 Before scanning, reads ~/dot_local/app_cleanup.yaml and checks logged program
 removals through ledger.py. Includes returning programs as reinstall_check,
 independent of the ignore list. Requires PyYAML; an unverified log fails the scan.
@@ -44,6 +49,17 @@ FILE_SCANS = {
     HOME / "Library/Logs": "children",
 }
 MIN_FILE_BYTES = 1_000_000  # hide sub-1MB cache crumbs
+
+BIG_MB_DEFAULT = 500
+BIG_SCAN_SECONDS = 120
+# app data, caches and trash belong to other scans; VM disks are live state,
+# like Docker.raw in the report footnote
+BIG_PRUNE_PATHS = [HOME / "Library", HOME / ".Trash"]
+# VM homes keep extensionless disks (colima's datadisk) that suffixes miss
+BIG_PRUNE_NAMES = [".git", "node_modules", ".colima", ".lima", ".orbstack",
+                   ".docker", ".vagrant.d", "VirtualBox VMs", "Parallels"]
+VM_SUFFIXES = (".raw", ".vmdk", ".vdi", ".qcow2", ".hdd", ".utm", ".pvm",
+               ".vmwarevm", ".sparseimage", ".sparsebundle")
 
 # ponytail: substring-based leftover filter, false positives land in report for human review
 GENERIC_DIRS = {"iCloud", "MobileSync", "Group Containers", "Containers", "Sync",
@@ -266,10 +282,86 @@ def scan_files():
     return out
 
 
+def big_file_cmd(mb):
+    prune = []
+    for path in BIG_PRUNE_PATHS:
+        prune += ["-path", str(path), "-o"]
+    for name in BIG_PRUNE_NAMES:
+        prune += ["-name", name, "-o"]
+    return (["find", str(HOME), "-xdev", "("] + prune[:-1]
+            + [")", "-prune", "-o", "-type", "f", "-size", f"+{mb}M", "-print"])
+
+
+def run_capped(cmd, seconds):
+    """stdout lines from cmd; on timeout, the complete lines found so far."""
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             text=True)
+    except OSError:
+        return [], False
+    try:
+        out, _ = p.communicate(timeout=seconds)
+        return out.splitlines(), False
+    except subprocess.TimeoutExpired:
+        p.kill()
+        out, _ = p.communicate()
+        lines = out.split("\n")[:-1]  # last piece may be cut mid-path
+        return lines, True
+
+
+def file_age_days(st):
+    # newest of read and write, so a large file opened lately counts as used
+    age = _time.time() - max(st.st_atime, st.st_mtime)
+    return max(0, int(age // 86400))
+
+
+def scan_big_files(mb):
+    if mb <= 0:
+        return [], False
+    found, truncated = run_capped(big_file_cmd(mb), BIG_SCAN_SECONDS)
+    out = []
+    for line in found:
+        path = Path(line)
+        if path.name.lower().endswith(VM_SUFFIXES) or any(
+                part.lower().endswith(VM_SUFFIXES) for part in path.parts[:-1]):
+            continue
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        days = file_age_days(st)
+        out.append({
+            "kind": "file",
+            "name": path.name,
+            "path": str(path),
+            "bytes": st.st_size,
+            "days_unused": days,
+            "badge": badge(days),
+            "running": False,
+            "duplicate": False,
+            "source": "large",
+        })
+    return out, truncated
+
+
+def parse_big_mb(argv):
+    if "--big-mb" not in argv:
+        return BIG_MB_DEFAULT
+    i = argv.index("--big-mb")
+    try:
+        mb = int(argv[i + 1])
+    except (IndexError, ValueError):
+        raise SystemExit("--big-mb needs a whole number of MB, e.g. --big-mb 1000")
+    if mb < 0:
+        raise SystemExit("--big-mb must be 0 or more")
+    return mb
+
+
 def main():
     if {"-h", "--help", "help"} & set(sys.argv[1:]):
         print(__doc__)
         return
+    big_mb = parse_big_mb(sys.argv[1:])
     history = ledger.check()
     if history["unknown"]:
         raise RuntimeError(f"cannot verify removal history: {history['unknown']}")
@@ -281,6 +373,9 @@ def main():
                       | {norm(f["name"]) for f in formulae})
     leftovers = scan_leftovers(installed_keys)
     files = scan_files()
+    big, big_truncated = scan_big_files(big_mb)
+    seen = {f["path"] for f in files}
+    files += [b for b in big if b["path"] not in seen]
     items = apps + formulae + leftovers + files
     ignored = load_ignored()
     shown = [i for i in items if i["path"] not in ignored]
@@ -292,6 +387,9 @@ def main():
             "formulae": len(formulae),
             "leftovers": len(leftovers),
             "files": len(files),
+            "big_files": sum(1 for f in files if f["source"] == "large"),
+            "big_mb": big_mb,
+            "big_scan_truncated": big_truncated,
             "junk": sum(1 for i in shown if i["badge"] == "JUNK"),
             "reclaimable_bytes": sum(i["bytes"] for i in shown if i["badge"] != "KEEP"),
             "ignored_hidden": len(items) - len(shown),

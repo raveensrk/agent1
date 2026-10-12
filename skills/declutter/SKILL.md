@@ -113,3 +113,13 @@ caches, `~/Library/Logs`, and `node_modules` dirs (home-wide find,
 depth 5). Sub-1MB crumbs are skipped. Age = directory mtime, so a
 cache used today shows KEEP. All file rows go to Trash, things rebuild
 on next use.
+
+## Phase 3 - big files (built)
+
+`scan.py` also lists any file in `~` over 500MB (`--big-mb N` changes it,
+`--big-mb 0` turns it off) as `file` rows with `source: large`. It skips
+`~/Library`, `~/.Trash`, `.git`, `node_modules`, VM homes (`.colima`, `.lima`,
+`.orbstack`, ...) and VM disk images (`.raw`, `.vmdk`, `.utm`, ...), and stops after 120s, keeping what it found
+(`counts.big_scan_truncated`). Age is the newer of atime and mtime, same
+badge rules. Unlike phase 2 these are not regenerable: tell the user to
+check each one before ticking. They go to Trash like other file rows.

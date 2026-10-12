@@ -66,6 +66,7 @@ def test_ignored_hidden():
     scan.scan_formulae = lambda: []
     scan.scan_leftovers = lambda installed_keys: []
     scan.scan_files = lambda: []
+    scan.scan_big_files = lambda mb: ([], False)
     out = io.StringIO()
     with tempfile.TemporaryDirectory() as td:
         scan.IGNORE_FILE = Path(td) / "ignored.json"
@@ -75,6 +76,59 @@ def test_ignored_hidden():
     data = json.loads(out.getvalue())
     assert [i["path"] for i in data["items"]] == [keep["path"]]
     assert data["counts"]["ignored_hidden"] == 1
+
+
+def test_big_file_cmd():
+    scan = load("scan")
+    cmd = scan.big_file_cmd(500)
+    assert cmd[:3] == ["find", str(scan.HOME), "-xdev"]
+    assert cmd[-3:] == ["-size", "+500M", "-print"]
+    assert str(scan.HOME / "Library") in cmd and "node_modules" in cmd
+    assert ".colima" in cmd                     # extensionless VM disks
+    assert cmd[cmd.index(")") - 1] != "-o"     # no dangling -o before )
+
+
+def test_scan_big_files():
+    import os
+    import tempfile
+    scan = load("scan")
+    assert scan.scan_big_files(0) == ([], False)
+    with tempfile.TemporaryDirectory() as td:
+        movie = Path(td) / "movie.mkv"
+        disk = Path(td) / "Docker.raw"
+        inside_vm = Path(td) / "Win.utm" / "data.img"
+        inside_vm.parent.mkdir()
+        for f in (movie, disk, inside_vm):
+            f.write_bytes(b"x" * 10)
+        old = scan._time.time() - 200 * 86400
+        os.utime(movie, (old, old))
+        scan.run_capped = lambda cmd, seconds: (
+            [str(movie), str(disk), str(inside_vm), str(Path(td) / "gone")], True)
+        rows, truncated = scan.scan_big_files(500)
+    assert truncated
+    assert [r["path"] for r in rows] == [str(movie)]
+    assert rows[0]["kind"] == "file" and rows[0]["source"] == "large"
+    assert rows[0]["bytes"] == 10 and rows[0]["badge"] == "JUNK"
+
+
+def test_run_capped_keeps_partial():
+    scan = load("scan")
+    lines, cut = scan.run_capped(["sh", "-c", "echo a; echo b; sleep 5"], 1)
+    assert cut and lines == ["a", "b"]
+    lines, cut = scan.run_capped(["echo", "x"], 5)
+    assert not cut and lines == ["x"]
+
+
+def test_parse_big_mb():
+    scan = load("scan")
+    assert scan.parse_big_mb([]) == 500
+    assert scan.parse_big_mb(["--big-mb", "1000"]) == 1000
+    for bad in (["--big-mb"], ["--big-mb", "x"], ["--big-mb", "-1"]):
+        try:
+            scan.parse_big_mb(bad)
+            raise AssertionError(bad)
+        except SystemExit:
+            pass
 
 
 def test_merge_ignore():
