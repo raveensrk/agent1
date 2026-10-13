@@ -36,6 +36,16 @@ Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.
 - Batch 2-4 questions in one call only when they are genuinely independent of each
   other; otherwise one at a time.
 
+- Never put more than one question on a line. Split them into numbered lines,
+  one question each.
+
+  Bad: "Do you want me to record it as a win, or add a task to check the ledger?"
+
+  Good:
+
+  1. Do you want me to record it as a win?
+  2. Do you want me to add a task to check the ledger?
+
 - When I name a priority and a timeframe together - "B - next weekend", "C", "B
   it" - set both in one pass rather than asking again:
   `task-router edit <ref> --priority B --due <date>` on the date I mean. "Next weekend" is the coming Saturday unless
