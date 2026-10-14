@@ -4,6 +4,10 @@ A CLI I write tells me how to use it - the author six months later is the
 caller. The worked example is task-router's CLI,
 [internal/cli/cli.go](~/repos/task-router/internal/cli/cli.go), help table and all.
 
+- A program's name says what it does, explicitly. Short is fine; vague is not.
+  A well-known acronym or abbreviation counts (`,reg_offsets`, `,ls_comma_cmds`);
+  a bare noun or a generic verb does not (`,path`, `,l`, `,update`). Read the name
+  alone, without its help: if it could mean two things, rename it.
 - `-h` and `--help` are a hard rule: every CLI app has both, on the main command
   and on every subcommand. Usage line, what the app does, every option, one
   runnable example. Exit 0, and nothing else runs - a help call never writes,
@@ -15,7 +19,7 @@ caller. The worked example is task-router's CLI,
   gives no `help` command: add `sub.add_parser("help")`, or test
   `sys.argv[1:2] == ["help"]` before `parse_args`.
 - A bare call prints the main help too, unless a bare call is itself a real
-  command (`bookmark` with no arguments lists).
+  command (`,bookmark` with no arguments lists).
 - Short flags are the optional half. The long flag is the default spelling, and
   a short alias goes in when a free letter exists: `--due|-d`, `--priority|-p`.
   A letter already taken in that app goes to the next free one; when none fits,
