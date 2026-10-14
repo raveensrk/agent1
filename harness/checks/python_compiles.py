@@ -8,7 +8,7 @@ fixture tests. compile() is free and catches the same class of edit in every
 file the session touched, tested or not.
 
 Extension globs hid the second half of that. `~/dot/script` holds extensionless
-commands with a python shebang - yt-wl, bookmark, pi-clear, pi-completion-gen -
+commands with a python shebang - ,yt_watch_later, ,bookmark, ,pi_data_wipe, pi-completion-gen -
 and `applies: ["*.py"]` never handed one to this check: a lint run over two
 extensionless scripts, one syntax-broken and one missing its exec bit, printed
 "5 checks, 2 files, 0 findings", while the same two files named .py printed

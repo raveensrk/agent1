@@ -503,10 +503,10 @@ def test_python_compiles_check_flags_a_broken_edit_and_clears_after_repair():
 
 
 def test_python_compiles_check_sees_an_extensionless_script():
-    """~/dot/script/yt-wl has a python shebang and no .py name; the globs hid it."""
+    """~/dot/script/,yt_watch_later has a python shebang and no .py name; the globs hid it."""
     check = os.path.join(CHECKS, "python_compiles.py")
     with tempfile.TemporaryDirectory() as tmp:
-        script = os.path.join(tmp, "yt-wl")
+        script = os.path.join(tmp, ",yt_watch_later")
         with open(script, "w") as fh:
             fh.write("#!/usr/bin/env python3\ndef broken(:\n    pass\n")
         broken = subprocess.run([sys.executable, check, script], capture_output=True, text=True)
@@ -525,7 +525,7 @@ def test_python_compiles_check_reaches_an_extensionless_script_through_the_dispa
     lint = load_lint()
     checks = {c["id"]: c for c in lint.load_checks()}
     check = checks["python_compiles"]
-    assert lint.applies(check, "script/yt-wl"), check
+    assert lint.applies(check, "script/,yt_watch_later"), check
     assert lint.applies(check, "harness/lint.py"), check
 
 
