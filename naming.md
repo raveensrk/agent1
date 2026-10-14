@@ -26,6 +26,8 @@ These do something, so the name is an action.
 
 These hold something, so the name is a noun phrase for what is inside: `naming.md`, `spam_rules.md`, `task/`. No verb. A tool prefix comes first when there is one: `mutt_spam_rules.md`.
 
+Folders are singular: `doc/`, `note/`, `script/`, `task/`. The exception is a name a tool requires, such as `docs/` for GitHub Pages, `node_modules/` or `.github/workflows/`.
+
 ## Existing names
 
 New names follow these rules. Rename an old name that breaks them only when you are already changing that thing for another reason.
@@ -40,3 +42,4 @@ New names follow these rules. Rename an old name that breaks them only when you 
 | `,update` | `,update_brew_packages` | A generic verb alone could mean anything. |
 | `define_naming.md` | `naming.md` | A file holds something; it does not act. |
 | `code-style.md` | `code_style.md` | Underscores, not hyphens. |
+| `notes/` | `note/` | Folders are singular. |

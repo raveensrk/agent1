@@ -14,7 +14,7 @@ At session start, Read these files
 - [Jobs](jobs.md) - ETA rules for long-running jobs
 - [agent2 AGENTS.md](~/repos/agent2/AGENTS.md) - only if the file exists
 
-Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
+Repo layout (`doc/`, `script/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
 
 - Tool configs live in `~/dot/config`, installed by `~/dot/script/install.py` (no symlinks). Read `~/dot/AGENTS.md` before searching for a tool's config.
 - Tool list: read [Dev Tools](dev_tools.md) before choosing a tool and prefer a tool listed there over an unlisted one.
@@ -139,7 +139,7 @@ Every session must reconstruct identical context from this repo alone, across pi
 
 ## Documentation
 
-Keep `docs/` and `AGENTS.md` in sync with the code. Cite sources when you can. Suggest new guidelines worth adding.
+Keep `doc/` and `AGENTS.md` in sync with the code. Cite sources when you can. Suggest new guidelines worth adding.
 
 - Follow code-as-doc wherever practical: use clear code and keep small program-specific documentation in the program itself (docstrings, comments, or `--help`). Ask me before creating a separate documentation file.
 
@@ -180,9 +180,9 @@ go on.
 
 1. Real file references use Markdown links. Inline and fenced code are for
    literal text and syntax examples, not navigable file references. A link label
-   may use inline code: `` [`guide.md`](docs/guide.md) ``.
+   may use inline code: `` [`guide.md`](doc/guide.md) ``.
 2. Prefer relative link destinations inside repo documents. For spaces, use
-   `%20` or an angle-bracket destination: `[Guide](<docs/my guide.md>)`.
+   `%20` or an angle-bracket destination: `[Guide](<doc/my guide.md>)`.
 3. Markdown does not expand `~`, `$VAR` or `${VAR}` in link destinations. Do not
    assume a renderer does; use them only when the consuming tool explicitly
    supports expansion. A leading `/` is a root-relative URL, not universally
