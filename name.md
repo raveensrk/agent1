@@ -1,12 +1,12 @@
 # Naming
 
-- A program's name says what it does, explicitly. 
+- A program's name says what it does, explicitly.
 - Short is fine; vague is not.
 - A bare noun or a generic verb does not count (`,path`, `,l`, `,update`).
 - Read the name alone, without its help: if it could mean two things, rename it.
-- A name must be easy to say and easy to read. 
-- An abbreviation and acronym allowed.
-- Subject first and Verb first, which ever maked more sense to read and say.
+- A name must be easy to say and easy to read.
+- Abbreviations and acronyms are allowed.
+- Subject first and Verb first, whichever makes more sense to read and say.
 
 ## Example 1
 
