@@ -77,7 +77,6 @@ answer means the import did not load.
 |---|---|
 | `browser.md` | Browser and computer use rules |
 | `cli.md` | CLI app conventions: help, flags, one help table |
-| `naming.md` | Naming programs, files and everything else |
 | `code_style.md` | How to write code |
 | `common.md` | Session start, working style, output style, and the pointer hub for topic rules |
 | `emoji_legend.md` | Status emoji vocabulary for agent reports |
@@ -91,6 +90,7 @@ answer means the import did not load.
 | [`index.md`](./index.md) | Index of model reviews, harness reviews, and usage records |
 | [`model_and_harness.yaml`](./model_and_harness.yaml) | Model and harness recommendations and dated reviews |
 | [`model_usage_history.md`](./model_usage_history.md) | Historical model usage across agent harnesses |
+| `naming.md` | Naming programs, files and everything else |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | `prompts/` | Reusable Pi slash commands loaded from the local package |
