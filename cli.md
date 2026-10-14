@@ -5,9 +5,12 @@ caller. The worked example is task-router's CLI,
 [internal/cli/cli.go](~/repos/task-router/internal/cli/cli.go), help table and all.
 
 - A program's name says what it does, explicitly. Short is fine; vague is not.
-  A well-known acronym or abbreviation counts (`,reg_offsets`, `,ls_comma_cmds`);
-  a bare noun or a generic verb does not (`,path`, `,l`, `,update`). Read the name
-  alone, without its help: if it could mean two things, rename it.
+  A bare noun or a generic verb does not count (`,path`, `,l`, `,update`). Read
+  the name alone, without its help: if it could mean two things, rename it.
+- A name is grammatical English, easy to say out loud, made of real words that
+  together carry a clear meaning: `,mutt_add_sender_to_spam`, not
+  `,mutt_spam_add_sender`. An abbreviation only where people say it that way
+  (`pdf`, `csv`, `url`, `git`); not `cmds`, `ls` or `reg`.
 - `-h` and `--help` are a hard rule: every CLI app has both, on the main command
   and on every subcommand. Usage line, what the app does, every option, one
   runnable example. Exit 0, and nothing else runs - a help call never writes,
