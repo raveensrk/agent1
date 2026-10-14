@@ -77,6 +77,7 @@ answer means the import did not load.
 |---|---|
 | `browser.md` | Browser and computer use rules |
 | `cli.md` | CLI app conventions: help, flags, one help table |
+| `naming.md` | Naming programs, files and everything else |
 | `code_style.md` | How to write code |
 | `common.md` | Session start, working style, output style, and the pointer hub for topic rules |
 | `emoji_legend.md` | Status emoji vocabulary for agent reports |
