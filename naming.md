@@ -2,6 +2,8 @@
 
 How to name programs, commands, skills, functions, variables, files and folders.
 
+Status: alpha. These rules change as I work. Follow them for new names, but when a rule seems wrong for a real case, say so instead of forcing it.
+
 ## Every name
 
 1. A name says what the thing is or does, explicitly. Short is fine; vague is not.
