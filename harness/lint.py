@@ -295,6 +295,10 @@ def collect_targets(args) -> list[tuple[str, list[str], str, bool]]:
             # not be told about the corpse it left there.
             if absolute.startswith(TRASH + os.sep):
                 continue
+            # Nor is a path the session renamed or deleted since editing it:
+            # handing it on crashes every check that opens it.
+            if not os.path.isfile(absolute):
+                continue
             root = repo_root(os.path.dirname(absolute) or ".") or os.getcwd()
             by_root.setdefault(root, []).append(absolute)
         return [(root, files, "", False) for root, files in sorted(by_root.items())]

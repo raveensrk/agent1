@@ -73,6 +73,22 @@ def test_edited_files_in_trash_are_ignored():
         assert kept in listed, listed
 
 
+def test_edited_files_since_renamed_are_ignored():
+    """A file the session edited and then renamed is gone; checks must not open it."""
+    lint = load_lint()
+    with tempfile.TemporaryDirectory() as tmp:
+        gone = os.path.join(tmp, ",update.py")
+        kept = os.path.join(tmp, ",update_tools")
+        with open(kept, "w") as fh:
+            fh.write("#!/usr/bin/env python3\n")
+        targets = lint.collect_targets(
+            argparse.Namespace(files=[gone, kept], repos=False, changed=False)
+        )
+        listed = [f for _, group, _, _ in targets for f in group]
+        assert gone not in listed, listed
+        assert kept in listed, listed
+
+
 def test_walker_reports_a_symlink_to_a_repo_in_a_plain_folder():
     """No repo owns such a link, so no check run reaches it - the walker does."""
     lint = load_lint()
