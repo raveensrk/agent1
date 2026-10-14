@@ -26,6 +26,8 @@ These do something, so the name is an action.
 
 These hold something, so the name is a noun phrase for what is inside: `naming.md`, `spam_rules.md`, `task/`. No verb. A tool prefix comes first when there is one: `mutt_spam_rules.md`.
 
+Name a file after its topic (`git.md`). When the file is a list of items, use the plural (`prompts.md`, `spam_rules.md`).
+
 Folders are singular: `doc/`, `note/`, `script/`, `task/`. The exception is a name a tool requires, such as `docs/` for GitHub Pages, `node_modules/` or `.github/workflows/`.
 
 ## Existing names
