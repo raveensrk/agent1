@@ -34,7 +34,10 @@ walks each up to its `.git` root, dedupes, and keeps roots whose
 Drops `--dry-run`, so it opens one lazygit per repo. Inside Herdr
 (`HERDR_ENV=1`), it creates an unfocused tab in the current workspace with the
 repo as cwd, then runs `exec lazygit`. This wins even if `TERM_PROGRAM=iTerm.app`.
-Outside Herdr it opens a tab in the front iTerm window, or a window in
+Inside Ghostty (`TERM_PROGRAM=ghostty`, Ghostty 1.3+ with AppleScript) it opens
+one tab per repo in the front Ghostty window and selects the tab you were on
+again; lazygit runs by absolute path, because Ghostty tabs get launchd's PATH.
+Otherwise it opens a tab in the front iTerm window, or a window in
 Terminal.app. Terminal.app gets printed `cd <repo> && exec lazygit` lines instead
 when an idle shell prompt sits in its front window - the script never types into
 a shell you already have open. Nothing steals focus - your current tab stays put.
@@ -47,7 +50,7 @@ Other flags, only when the answers need them:
 - `--repo <path>` - open that repo whether it is clean or not, skipping the
   session scan. Repeatable. Use it when the user names a repo: the scan answers
   "everything I touched", not "open this one".
-- `--terminal herdr`, `--terminal iterm`, or `--terminal terminal` - override auto-detection. Herdr requires a Herdr-managed pane; the opener never silently falls back.
+- `--terminal herdr`, `--terminal ghostty`, `--terminal iterm`, or `--terminal terminal` - override auto-detection. Herdr requires a Herdr-managed pane; the opener never silently falls back.
 - `--session-file <path.jsonl>` - read another session.
 
 ## 3. Report

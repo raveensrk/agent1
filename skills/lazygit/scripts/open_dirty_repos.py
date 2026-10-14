@@ -6,12 +6,12 @@ Reads the pi session jsonl ($PI_SESSION_FILE, or the newest session under
 tool calls, plus bash `>`, `>>` and `tee` targets), maps each to its git repo
 root, and keeps the roots whose `git status --porcelain` is non-empty.
 
-Then opens one lazygit per repo: an unfocused Herdr tab inside Herdr, an iTerm
-tab, or a Terminal.app window. Herdr takes precedence over an inherited
-TERM_PROGRAM=iTerm.app.
+Then opens one lazygit per repo: an unfocused Herdr tab inside Herdr, a Ghostty
+tab (the tab you are on stays selected), an iTerm tab, or a Terminal.app
+window. Herdr takes precedence over an inherited TERM_PROGRAM.
 
 Usage:
-  open_dirty_repos.py [--dry-run] [--terminal auto|herdr|iterm|terminal]
+  open_dirty_repos.py [--dry-run] [--terminal auto|herdr|ghostty|iterm|terminal]
                       [--session-file PATH] [--repo PATH]... [--self-test]
 
 `--repo PATH` skips the session scan and opens that repo whether it is clean or
@@ -162,11 +162,13 @@ def named_repo(target: str) -> tuple[str, Path, tuple[int, int, str]] | None:
 
 
 def pick_terminal(requested: str) -> str:
-    if requested in ("herdr", "iterm", "terminal"):
+    if requested in ("herdr", "ghostty", "iterm", "terminal"):
         return requested
     if os.environ.get("HERDR_ENV") == "1":
         return "herdr"
     program = os.environ.get("TERM_PROGRAM", "")
+    if program == "ghostty":
+        return "ghostty"
     if program == "iTerm.app":
         return "iterm"
     if program == "Apple_Terminal":
@@ -179,7 +181,7 @@ def applescript_string(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def shell_command(root: Path, name: str) -> str:
+def shell_command(root: Path, name: str, lazygit: str = "lazygit") -> str:
     """cd into the repo, title the tab after lazygit has set its own, run lazygit.
 
     lazygit overwrites the tab title at startup, so the title (OSC 1) is set
@@ -188,7 +190,7 @@ def shell_command(root: Path, name: str) -> str:
     title = shlex.quote(f"lazygit: {name}")
     return (
         f"cd {shlex.quote(str(root))} && "
-        f"{{ ( sleep 1; printf '\\033]1;%s\\007' {title} ) & exec lazygit; }}"
+        f"{{ ( sleep 1; printf '\\033]1;%s\\007' {title} ) & exec {shlex.quote(lazygit)}; }}"
     )
 
 
@@ -223,6 +225,45 @@ def open_herdr(rows: list[tuple[str, Path, tuple[int, int, str]]]) -> None:
             raise SystemExit(f"ERROR: herdr pane run failed for {pane}: {started.stderr.strip()}")
 
 
+def ghostty_script(rows: list[tuple[str, Path, tuple[int, int, str]]]) -> str:
+    """AppleScript for Ghostty 1.3+: one tab per repo in the front window (a new
+    window when none is open), each starting in the repo and running lazygit,
+    then the tab that was selected before is selected again, found by its id.
+
+    A tab's command runs with Ghostty's own environment, which as a GUI app has
+    launchd's PATH without Homebrew, so lazygit is given by absolute path.
+    """
+    lazygit = shutil.which("lazygit") or "lazygit"
+    records = ", ".join(
+        "{" + applescript_string(str(root)) + ", " + applescript_string(
+            "/bin/sh -c " + shlex.quote(shell_command(root, name, lazygit))
+        ) + "}"
+        for name, root, _ in rows
+    )
+    return f"""tell application "Ghostty"
+  set repos to {{{records}}}
+  set keep to missing value
+  if (count of windows) > 0 then
+    set w to front window
+    set keep to id of selected tab of w
+  end if
+  repeat with r in repos
+    set cfg to {{initial working directory:(item 1 of r), command:(item 2 of r)}}
+    if keep is missing value and (count of windows) is 0 then
+      set w to new window with configuration cfg
+    else
+      new tab in w with configuration cfg
+    end if
+  end repeat
+  if keep is not missing value then
+    repeat with t in tabs of w
+      if id of t is keep then select tab t
+    end repeat
+  end if
+end tell
+"""
+
+
 def terminal_has_idle_prompt() -> bool:
     """Whether Terminal.app's front window holds an idle shell prompt.
 
@@ -244,6 +285,11 @@ def terminal_has_idle_prompt() -> bool:
 def open_tabs(rows: list[tuple[str, Path, tuple[int, int, str]]], mode: str) -> None:
     if mode == "herdr":
         open_herdr(rows)
+        return
+    if mode == "ghostty":
+        done = subprocess.run(["osascript", "-e", ghostty_script(rows)], capture_output=True, text=True, check=False)
+        if done.returncode != 0:
+            raise SystemExit(f"ERROR: osascript failed: {done.stderr.strip()}")
         return
     records = ", ".join(
         "{" + applescript_string(name) + ", " + applescript_string(shell_command(root, name)) + "}"
@@ -301,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dry-run", action="store_true", help="list repos, open nothing")
     parser.add_argument(
-        "--terminal", choices=("auto", "herdr", "iterm", "terminal"), default="auto", help="which terminal to use"
+        "--terminal", choices=("auto", "herdr", "ghostty", "iterm", "terminal"), default="auto", help="which terminal to use"
     )
     parser.add_argument("--session-file", help="session jsonl to read instead of the current one")
     parser.add_argument(
@@ -334,6 +380,8 @@ def main(argv: list[str] | None = None) -> int:
     terminal = pick_terminal(args.terminal)
     if terminal == "herdr":
         mode, what = "herdr", "opening tabs in Herdr"
+    elif terminal == "ghostty":
+        mode, what = "ghostty", "opening tabs in Ghostty"
     elif terminal == "iterm":
         mode, what = "tabs", "opening tabs in iTerm"
     elif terminal_has_idle_prompt():
@@ -419,6 +467,14 @@ def self_test() -> int:
 
         with patch.dict(os.environ, {"HERDR_ENV": "", "TERM_PROGRAM": "Apple_Terminal"}):
             assert pick_terminal("auto") == "terminal", "outside Herdr, keep Terminal.app behavior"
+
+        with patch.dict(os.environ, {"HERDR_ENV": "", "TERM_PROGRAM": "ghostty"}):
+            assert pick_terminal("auto") == "ghostty", "inside Ghostty, open Ghostty tabs"
+        with patch.dict(os.environ, {"HERDR_ENV": "1", "TERM_PROGRAM": "ghostty"}):
+            assert pick_terminal("auto") == "herdr", "Herdr still wins inside Ghostty"
+        script = ghostty_script(rows)
+        assert f'initial working directory:(item 1 of r)' in script and str(repo) in script
+        assert "lazygit" in script and "if id of t is keep then select tab t" in script, "the tab you were on stays selected"
 
         with patch.dict(os.environ, {"HERDR_ENV": "1", "HERDR_WORKSPACE_ID": "w1"}), \
              patch("shutil.which", return_value="herdr"), \
