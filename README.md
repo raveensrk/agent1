@@ -83,11 +83,11 @@ answer means the import did not load.
 | `external.md` | Probes, live external accounts, credentials |
 | `git.md` | Commits and pull requests |
 | `harness/` | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
+| [`index.md`](./index.md) | Index of model reviews, harness reviews, and usage records |
 | `install.py` | Registers this repo with pi (package) and Claude Code (plugin) so both load it in place |
-| `Makefile` | Builds the shareable one-page HTML export |
 | `jobs.md` | ETA rules for long-running jobs |
 | `macos.md` | macOS command traps |
-| [`index.md`](./index.md) | Index of model reviews, harness reviews, and usage records |
+| `Makefile` | Builds the shareable one-page HTML export |
 | [`model_and_harness.yaml`](./model_and_harness.yaml) | Model and harness recommendations and dated reviews |
 | [`model_usage_history.md`](./model_usage_history.md) | Historical model usage across agent harnesses |
 | `naming.md` | Naming programs, files and everything else |
