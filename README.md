@@ -94,7 +94,7 @@ answer means the import did not load.
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | `prompts/` | Reusable Pi slash commands loaded from the local package |
-| [`quesion_types.yaml`](./quesion_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |
+| [`question_types.yaml`](./question_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |
 | `removal.md` | Removing apps, packages and harnesses |
 | `repos.md` | Nested git repo policy for `~/repos` |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
