@@ -83,8 +83,7 @@ switch is on, the extension appends the rule to the prompt; `/telegraph off`
 drops it from the next request, and off is persisted in
 `~/.local/state/agent1/telegraph.json`, one switch for every harness.
 
-`extensions/voice_score.ts` is the signal for that rule, asked for by hand and
-never on its own. `/voice-score` sends the last run's thinking blocks and reply
+`extensions/voice_score.ts` is the signal for that rule. `/voice-score` sends the last run's thinking blocks and reply
 to [Jev](https://docs.typesafe.ai); `/voice-score -0` walks every run of the
 session in turn. Each scored run draws two lines at the end of the transcript:
 `voice  think 2.8/3  reply 2.2/3` and `tokens think 1.4/3  reply 2.6/3`. Both
@@ -95,7 +94,7 @@ filler count, repeated spans, chars and estimated tokens. One row per scored
 block is appended to `~/.local/share/voice_score/scores.jsonl`, machine-local,
 for recalibration from real turns. The runs come from the session branch, so a
 turn that finished before the command was typed is scoreable, and a turn nobody
-asks about costs nothing. Display only: nothing is corrected, the entry never
+asks about costs nothing. Automatic scoring is off until `/voice-score on`, stored in `~/.pi/agent/voice_score.json`. Display only: nothing is corrected, the entry never
 reaches the model's context, and each run asked about costs one classifier call.
 Both threshold pairs, their measured gaps and the calibration behind them are
 documented in the extension.
@@ -105,8 +104,7 @@ the run gets Jev's necessity score times a result gate, drawn as a third line,
 `calls  1.5/3 2.8/3 0.4/3 +9`, with repeats, subsumed reads and oversized
 results measured from the transcript and shown in the expanded view. Its bands
 are parked: the 2026-10-04 calibration found no gap to sit them in, so the
-numbers draw dim until the ledger says otherwise. `/call-score off` stops the
-call; it shares the voice_score ledger and costs one classifier call per run.
+numbers draw dim until the ledger says otherwise. Automatic scoring is off until `/call-score on`, stored in `~/.pi/agent/call_score.json`. `/call-score` scores the last run by hand. It shares the voice_score ledger and costs one classifier call per scored run.
 
 ## Claude Code
 

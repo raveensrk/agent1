@@ -4,12 +4,13 @@ List of dev tools I prefer. The list is ordered: highest preference comes first.
 The configuration in this repo mostly revolves around these tools, and a few
 more. This file is under development, so more tools will be added.
 
+Only current tools and AI tools go here. Tools I tried, used before, or want to
+try go in [work dev_tools_archive.md](~/repos/work/deck/tools/dev_tools_archive.md).
+A tool lives in one file only.
+
 ## Text Editing
 
 - Vim / MacVim
-
-### Tags
-
 - universal-ctags
 
 ## AI
@@ -36,7 +37,8 @@ more. This file is under development, so more tools will be added.
 
 ## Finance
 
-- Hledger
+- hledger
+- Ledger-Cli
 
 ## Command Line
 
@@ -61,12 +63,6 @@ more. This file is under development, so more tools will be added.
 
 - newsboat
 
-## Note Taking
-
-### File Format
-
-- Markdown
-
 ## Network
 
 - WireGuard VPN
@@ -89,6 +85,19 @@ more. This file is under development, so more tools will be added.
 - pandoc
 - urlview
 
+### Productivity
+
+- zoxide
+- ranger
+- tmux
+
+## Semiconductor
+
+### SystemVerilog and UVM
+
+- verible
+- verilator
+
 ## Programming Languages
 
 These are my programming language preferences.
@@ -99,9 +108,11 @@ These are my programming language preferences.
 
 ### Systems and Native
 
+- Zig
 - Rust
 - C++
 - C
+- Go
 
 ### Apple Platforms
 
@@ -140,7 +151,6 @@ These are my programming language preferences.
 
 - Markdown
 - HTML
-- Org mode
 - Makefile
 - CSS
 - TOML

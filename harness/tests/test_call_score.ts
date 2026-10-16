@@ -25,6 +25,7 @@ import {
 	stateOf,
 	subsumed,
 	ledgerRows,
+	readEnabled,
 	type Call,
 	type CallScoreData,
 } from "../extensions/call_score.ts";
@@ -33,6 +34,7 @@ import { argLine, SHOWN } from "../extensions/voice_score.ts";
 const plain = (_color: string, text: string): string => text;
 
 // the bands: parked on this machine, so no colour is claimed
+assert.equal(readEnabled("/no/such/call_score.json"), false, "a missing switch must not spend a Jev call");
 assert.equal(CALL_PASS, 0, "the bands stay parked until a calibration finds a gap");
 assert.equal(CALL_GOOD, 0);
 assert.equal(callBand(0).color, "dim");

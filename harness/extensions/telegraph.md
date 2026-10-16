@@ -57,8 +57,8 @@ clipped to fit it.
 Thinking is prose, so it carries this rule too, and one check now reads it.
 `/telegraph on|off` injects or drops this file. The Jev score is asked for by
 hand: `/voice-score` sends the last run's thinking plus its reply to Jev,
-`/voice-score -0` walks the whole session, and a run nobody asks about is never
-scored. A scored run draws one line: `voice  think 2.8  reply 2.2`. Display only
+`/voice-score -0` walks the whole session. Automatic scoring is off unless
+`/voice-score on`. A run nobody asks about is not scored. A scored run draws one line: `voice  think 2.8  reply 2.2`. Display only
 
 - nothing is corrected yet. The line reads `voice score unavailable: ...` when
   Jev is unreachable. The threshold `1.8` sits in the measured gap: pre-rule

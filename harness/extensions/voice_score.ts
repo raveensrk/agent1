@@ -63,14 +63,17 @@
  * (LEDGER_PATH): one row per scored block, machine-local, never committed.
  *
  * Usage: /voice-score for the last turn, /voice-score -0 for the session.
+ * Automatic scoring is off. /voice-score on|off persists that switch to
+ * CONFIG_PATH. A missing file spends nothing.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { deflateSync } from "node:zlib";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 export const LEDGER_PATH = join(homedir(), ".local/share/voice_score/scores.jsonl");
+export const CONFIG_PATH = join(homedir(), ".pi/agent/voice_score.json");
 /** Shorter blocks carry no voice to judge, only a score to guess. */
 export const FLOOR = 200;
 export const PASS = 1.8;
@@ -632,12 +635,27 @@ export default function (pi: ExtensionAPI) {
 		};
 	});
 
+	let auto = readAuto();
+	pi.on("session_start", () => {
+		auto = readAuto();
+	});
+
 	pi.registerCommand("voice-score", {
-		description: "Score the last turn's voice and tokens with Jev, or every turn of this session with -0",
+		description: "Score the last turn's voice and tokens with Jev. on|off toggles automatic scoring. -0 scores the session",
 		handler: async (args, ctx) => {
-			const word = args.trim();
+			const word = args.trim().toLowerCase();
+			if (word === "on" || word === "off" || word === "auto on" || word === "auto off") {
+				auto = word.endsWith("on");
+				writeAuto(auto);
+				ctx.ui.notify(`voice score: auto ${auto ? "on" : "off"}`, "info");
+				return;
+			}
+			if (word === "auto" || word === "status") {
+				ctx.ui.notify(`voice score: auto ${auto ? "on" : "off"}`, "info");
+				return;
+			}
 			if (word !== "" && word !== "-0") {
-				ctx.ui.notify(`voice score: no argument scores the last turn, -0 the session, got ${word}`, "warning");
+				ctx.ui.notify(`voice score: no argument scores the last turn, -0 the session, on|off the automatic switch, got ${args.trim()}`, "warning");
 				return;
 			}
 			const runs = runsOf(ctx.sessionManager.getBranch());
@@ -653,6 +671,26 @@ export default function (pi: ExtensionAPI) {
 			ctx.ui.notify(`voice score: ${done} of ${wanted.length} runs scored by Jev`, "info");
 		},
 	});
+
+	pi.on("agent_before_settle", async (_event, ctx) => {
+		if (!auto) return;
+		const run = runsOf(ctx.sessionManager.getBranch()).at(-1);
+		if (run) await scoreRun(pi, ctx, run);
+	});
+}
+
+/** Automatic scoring. Absent or malformed means off. */
+export function readAuto(path = CONFIG_PATH): boolean {
+	try {
+		const config = JSON.parse(readFileSync(path, "utf8")) as { auto?: unknown };
+		return config.auto === true;
+	} catch {
+		return false;
+	}
+}
+
+function writeAuto(auto: boolean, path = CONFIG_PATH): void {
+	writeFileSync(path, `${JSON.stringify({ auto }, null, 2)}\n`);
 }
 
 /**

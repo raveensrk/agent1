@@ -37,6 +37,7 @@ import voiceScore, {
 	renderLines,
 	repeats,
 	REQUEST_MAX,
+	readAuto,
 	runsOf,
 	SHOWN,
 	stamp,
@@ -54,6 +55,7 @@ import voiceScore, {
 
 // a theme-free colour function: the raw text is what matters here
 const plain = (_color: string, text: string): string => text;
+assert.equal(readAuto("/no/such/voice_score.json"), false, "a missing switch must not spend a Jev call");
 
 // the display bands, at their boundaries
 assert.equal(band(PASS - 0.01).label, "verbose");
@@ -335,6 +337,7 @@ const notes: string[] = [];
 const entries: VoiceScoreData[] = [];
 const registered: Record<string, { handler: (args: string, ctx: unknown) => Promise<void> }> = {};
 const fakePi = {
+	on: () => {},
 	registerEntryRenderer: () => {},
 	registerCommand: (name: string, spec: { handler: (args: string, ctx: unknown) => Promise<void> }) => {
 		registered[name] = spec;
@@ -363,9 +366,9 @@ assert.equal(entries.length, 3, "-0 walks every run of the branch, surrounding s
 assert.equal(notes.at(-1), "voice score: 2 of 2 runs scored by Jev");
 
 notes.length = 0;
-await command.handler("on", commandCtx(branch));
+await command.handler("nope", commandCtx(branch));
 assert.equal(entries.length, 3, "a word that is not the switch spends nothing");
-assert.match(notes[0], /no argument scores the last turn, -0 the session, got on/);
+assert.match(notes[0], /got nope/);
 
 notes.length = 0;
 await command.handler("", commandCtx([]));

@@ -31,15 +31,15 @@
  * the ledger holds enough real rows to set the cuts.
  *
  * Display only: nothing is corrected, the entry never reaches the model, and
- * the whole feature costs one classifier call per run while it is on. Its own
- * switch, separate from /voice-score: `/call-score on|off|status`, persisted to
- * CONFIG_PATH. Off spends nothing. Rows share the voice_score ledger
+ * automatic scoring is off unless CONFIG_PATH says otherwise. `/call-score`
+ * scores the last run by hand. `/call-score on|off` is only the automatic
+ * switch. A missing file spends nothing. Rows share the voice_score ledger
  * (~/.local/share/voice_score/scores.jsonl) with kind "call".
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
 	appendLines,
 	argLine,
@@ -276,16 +276,13 @@ export function ledgerRows(data: CallScoreData, session: string, date = new Date
 	}));
 }
 
-/**
- * This switch is its own: absent or malformed means on, so a missing file never
- * silently drops the score. Read on every message_end, reset per run.
- */
-function readEnabled(path = CONFIG_PATH): boolean {
+/** Automatic scoring. Absent or malformed means off, so a missing file spends nothing. */
+export function readEnabled(path = CONFIG_PATH): boolean {
 	try {
 		const config = JSON.parse(readFileSync(path, "utf8")) as { enabled?: unknown };
-		return config.enabled !== false;
+		return config.enabled === true;
 	} catch {
-		return true;
+		return false;
 	}
 }
 
@@ -335,7 +332,6 @@ function factory(pi: ExtensionAPI) {
 	pi.on("agent_start", reset);
 
 	pi.on("message_end", (event) => {
-		if (!enabled) return;
 		const message = event.message as { role?: string; content?: unknown; toolCallId?: string; isError?: boolean };
 		if (message.role === "user") {
 			const text = textOf(message.content);
@@ -364,35 +360,16 @@ function factory(pi: ExtensionAPI) {
 		};
 	});
 
-	pi.registerCommand("call-score", {
-		description: "Turn Jev scoring of each tool call on or off, or show its state",
-		handler: async (args, ctx) => {
-			const word = args.trim().toLowerCase();
-			if (word === "on" || word === "off") {
-				enabled = word === "on";
-				writeEnabled(enabled, CONFIG_PATH);
-				if (!enabled) reset();
-			}
-			const bands = CALL_GOOD > 0 ? `pass ${CALL_PASS} necessary ${CALL_GOOD}` : "bands parked, numbers only";
-			const detail = enabled ? `${bands}, up to ${CALL_MAX} calls a run` : "no Jev call is spent";
-			ctx.ui.notify(`call score: ${enabled ? "on" : "off"} - ${detail}`, "info");
-		},
-	});
+	let last: { request: string; calls: Call[]; dropped: number } | undefined;
 
-	pi.on("agent_before_settle", async (_event, ctx) => {
-		if (!enabled) return;
-		const asked = { request, calls: calls.slice(), dropped };
-		reset();
+	async function scoreAsked(ctx: ExtensionContext, asked: { request: string; calls: Call[]; dropped: number }): Promise<void> {
 		if (asked.calls.length === 0) return;
-
 		if (process.env.PI_CALL_TRACE === "1") {
 			const lines = asked.calls.map((call, index) => `${index} ${callLine(call)}`);
 			process.stderr.write(`call trace: request ${JSON.stringify(asked.request)}\n${lines.join("\n")}\n`);
 		}
-
 		const jev = ctx.modelRegistry.findOfType("classifier", "typesafe", "jev-latest");
 		if (!jev) return;
-
 		const result = await ctx.modelRegistry.classify(jev, {
 			state: stateOf(asked.calls, asked.request),
 			questions: buildQuestions(asked.calls),
@@ -418,6 +395,37 @@ function factory(pi: ExtensionAPI) {
 		}
 		pi.appendEntry<CallScoreData>("call-score", data);
 		appendLines(ledgerRows(data, process.env.PI_SESSION_ID ?? ""), LEDGER_PATH);
+	}
+
+	pi.registerCommand("call-score", {
+		description: "Score the last run's tool calls with Jev. on|off toggles automatic scoring",
+		handler: async (args, ctx) => {
+			const word = args.trim().toLowerCase();
+			if (word === "on" || word === "off" || word === "auto on" || word === "auto off") {
+				enabled = word.endsWith("on");
+				writeEnabled(enabled, CONFIG_PATH);
+			}
+			if (word === "") {
+				if (!last || last.calls.length === 0) {
+					ctx.ui.notify("call score: no tool calls in the last run", "info");
+					return;
+				}
+				await scoreAsked(ctx, last);
+				ctx.ui.notify(`call score: scored ${last.calls.length} calls`, "info");
+				return;
+			}
+			const bands = CALL_GOOD > 0 ? `pass ${CALL_PASS} necessary ${CALL_GOOD}` : "bands parked, numbers only";
+			const detail = enabled ? `auto on, ${bands}, up to ${CALL_MAX} calls a run` : "auto off - /call-score scores the last run";
+			ctx.ui.notify(`call score: ${detail}`, "info");
+		},
+	});
+
+	pi.on("agent_before_settle", async (_event, ctx) => {
+		const asked = { request, calls: calls.slice(), dropped };
+		reset();
+		last = asked;
+		if (!enabled || asked.calls.length === 0) return;
+		await scoreAsked(ctx, asked);
 	});
 }
 
