@@ -5,7 +5,7 @@ The configuration in this repo mostly revolves around these tools, and a few
 more. This file is under development, so more tools will be added.
 
 Only current tools and AI tools go here. Tools I tried, used before, or want to
-try go in [work dev_tools_archive.md](~/repos/work/deck/tools/dev_tools_archive.md).
+try go in [work dev_tools_archive.md](https://github.com/raveensrk/work/blob/main/deck/tools/dev_tools_archive.md).
 A tool lives in one file only.
 
 ## Text Editing
@@ -38,7 +38,7 @@ A tool lives in one file only.
 ## Finance
 
 - hledger
-- Ledger-Cli
+- Ledger CLI
 
 ## Command Line
 
