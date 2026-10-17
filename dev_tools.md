@@ -48,12 +48,25 @@ A tool lives in one file only.
 - jq
 - rsync
 - GNU Stow
+- Homebrew
+- mpv
+- pandoc
+- urlview
+- zoxide
+- ranger
+- tmux
 
 ## Web Browser
 
 - Firefox
 - Chrome
 - Safari
+
+## E-Mail
+
+- [Himalaya](https://github.com/pimalaya/himalaya)
+- [Himalaya-Tui](https://github.com/pimalaya/himalaya-tui)
+- Mutt / Neomutt
 
 ## Password Managers
 
@@ -78,18 +91,6 @@ A tool lives in one file only.
 - Mermaid
 - SVG
 
-## Other Command Line Tools
-
-- Homebrew
-- mpv
-- pandoc
-- urlview
-
-### Productivity
-
-- zoxide
-- ranger
-- tmux
 
 ## Semiconductor
 

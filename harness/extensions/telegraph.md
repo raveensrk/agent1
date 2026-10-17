@@ -13,10 +13,8 @@ Check reads wrong directory.
 Root fell back to cwd.
 Findings not trustworthy until that is fixed.
 
-While this rule lives it owns the voice. The `pi-caveman` package stays
-installed, but its default level is `off` in `~/.pi/agent/caveman.json`, so a new
-session gets telegraph only. `/caveman full` brings caveman back for one session,
-and deleting this rule means caveman becomes the default voice again.
+While this rule lives it owns the voice. The `pi-caveman` package was
+uninstalled on 17 Oct 2026; no package-level fallback exists.
 
 - One idea per line. A line break is cheaper than a subordinate clause.
 - A reply is telegraph the moment it leaves the greeting out, not once it has

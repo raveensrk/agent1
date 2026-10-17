@@ -71,6 +71,7 @@ Based on the current session update the documentation and training data.
 - If you can draw diagrams with mermaid and explain better then replace those blocks of text with mermaid diagram.
 - Follow the CommonMark spec for markdown: <https://spec.commonmark.org/0.31.2/>
 - Use active voice.
+- Architecture diagrams
 
 ## Stage 4 - Maintenance
 
