@@ -111,9 +111,9 @@ These are my programming language preferences.
 
 - Zig
 - Rust
-- C++
-- C
 - Go
+- C
+
 
 ### Apple Platforms
 
@@ -145,6 +145,10 @@ These are my programming language preferences.
 
 - Lua
 - LÖVE (love2d)
+- Fennel
+- Bevy
+- Jai
+
 
 ## Formats
 
