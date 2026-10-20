@@ -40,6 +40,8 @@ This machine's exceptions live in the private repo, like nested_git_repo.py's:
 ~/repos/agent2/harness/data/file_naming_allow.txt holds one fnmatch glob per
 line, relative to ~/repos with the repo name first (`notes/*`), because a
 folder name such as requirements/ is fine in one repo and a finding in another.
+A glob starting with `~/` matches from the home directory instead
+(`~/repos_external/*`), for third-party checkouts outside ~/repos.
 
     file_naming.py FILE...      (or paths on stdin)
 """
@@ -54,6 +56,7 @@ import subprocess
 import sys
 import unicodedata
 
+HOME = os.path.expanduser("~")
 REPOS = os.path.expanduser("~/repos")
 ALLOW = os.path.join(REPOS, "agent2", "harness", "data", "file_naming_allow.txt")
 PATTERNS: dict[str, list[str]] = {}
@@ -128,10 +131,14 @@ def suggestion(name: str) -> str | None:
 
 
 def allowed(path: str) -> bool:
-	"""PATH sits under a glob in ALLOW, matched relative to REPOS; `#` lines are comments."""
-	rel = os.path.relpath(os.path.realpath(path), os.path.realpath(REPOS))
-	if rel.startswith(".."):
-		return False
+	"""PATH sits under a glob in ALLOW, matched relative to REPOS; `#` lines are comments.
+
+	A glob starting with `~/` matches from HOME instead, for trees outside ~/repos
+	such as third-party checkouts that keep their upstream names.
+	"""
+	real = os.path.realpath(path)
+	rel = os.path.relpath(real, os.path.realpath(REPOS))
+	home_rel = "~/" + os.path.relpath(real, os.path.realpath(HOME))
 	# read once per allowlist path; tests point ALLOW at a fixture after import
 	if ALLOW not in PATTERNS:
 		try:
@@ -140,7 +147,11 @@ def allowed(path: str) -> bool:
 		except OSError:
 			lines = []
 		PATTERNS[ALLOW] = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
-	return any(fnmatch.fnmatch(rel, pattern) for pattern in PATTERNS[ALLOW])
+	return any(
+		fnmatch.fnmatch(home_rel, pattern) if pattern.startswith("~/")
+		else not rel.startswith("..") and fnmatch.fnmatch(rel, pattern)
+		for pattern in PATTERNS[ALLOW]
+	)
 
 
 def repo_root(path: str) -> str | None:

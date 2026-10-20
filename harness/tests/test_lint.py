@@ -232,6 +232,16 @@ def test_file_naming_honours_the_allowlist():
         checked = os.path.join(repos, "code", "Study", "Old Note.md")
         assert module.check(skipped) == [], module.check(skipped)
         assert "directory 'Study' is not snake_case" in "".join(module.check(checked))
+        # A `~/` glob reaches a third-party checkout outside ~/repos, and only that tree.
+        for repo in ("repos_external/upstream", "elsewhere"):
+            os.makedirs(os.path.join(repos, repo, ".git"))
+            open(os.path.join(repos, repo, "kebab-name"), "w").close()
+        with open(allow, "a") as fh:
+            fh.write("~/repos_external/*\n")
+        module.PATTERNS.clear()
+        module.HOME, module.REPOS = repos, os.path.join(repos, "repos")
+        assert module.check(os.path.join(repos, "repos_external", "upstream", "kebab-name")) == []
+        assert "not snake_case" in "".join(module.check(os.path.join(repos, "elsewhere", "kebab-name")))
 
 
 def test_file_naming_exempts_the_names_a_tool_or_convention_fixes():
