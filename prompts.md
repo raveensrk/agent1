@@ -58,20 +58,21 @@ Based on this session,
 
 ## Stage 3 - Documentation
 
-Based on the current session update the documentation and training data.
+Based on the current session do the following,
 
-- Remove stale docs
-- Write and Update documentation
-- Reconcile docs and codebase.
-- Try to reduce token usage in the project by updating the docs.
-- Write docs like a book and wiki.
-- Based on this session update and reconcile the docs and codebase.
+- If `docs` directory does not exist create it.
+- All documentation goes in `docs`.
+- Remove stale docs and Reconcile docs and codebase.
+- Write docs like a book
 - If you learned anything new, add notes and instructions to the docs.
 - Update training data if any.
-- If you can draw diagrams with mermaid and explain better then replace those blocks of text with mermaid diagram.
-- Follow the CommonMark spec for markdown: <https://spec.commonmark.org/0.31.2/>
-- Use active voice.
-- Architecture diagrams
+- Reduce prose and draw more diagrams with mermaid when you can
+- Draw Architecture diagrams
+- Follow the latest CommonMark spec for markdown
+- Before starting research the web for all the required information and grill me until you understand the goal.
+- In root of the repository if there is any documentation or notes exists ask user if it can be moved to docs.
+- README.md and AGENTS.md are the only docs files allowed in root.
+- Keep the documentation minimal and unique. No duplicate information.
 
 ## Stage 4 - Maintenance
 
