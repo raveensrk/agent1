@@ -95,7 +95,6 @@ A tool lives in one file only.
 
 - [Excalidraw](https://github.com/excalidraw/excalidraw) - hand-drawn style whiteboard, self-hosted from [compose.yaml](~/dot/config/excalidraw/compose.yaml)
 
-
 ## Semiconductor
 
 ### SystemVerilog and UVM
@@ -117,7 +116,6 @@ These are my programming language preferences.
 - Rust
 - Go
 - C
-
 
 ### Apple Platforms
 
@@ -152,7 +150,6 @@ These are my programming language preferences.
 - Fennel
 - Bevy
 - Jai
-
 
 ## Formats
 
