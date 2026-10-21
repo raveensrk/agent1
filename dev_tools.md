@@ -91,6 +91,10 @@ A tool lives in one file only.
 - Mermaid
 - SVG
 
+### Drawing
+
+- [Excalidraw](https://github.com/excalidraw/excalidraw) - hand-drawn style whiteboard, self-hosted from [compose.yaml](~/dot/config/excalidraw/compose.yaml)
+
 
 ## Semiconductor
 
