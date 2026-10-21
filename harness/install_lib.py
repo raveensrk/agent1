@@ -110,7 +110,7 @@ class Run:
         if os.path.islink(path):
             self.conflicts += 1
             return self.say("conflict", path,
-                            "symlink; run ~/dot/script/install.py --apply first")
+                            "symlink; run ~/dot/install.sh --apply first")
         self.changes += 1
         self.say("update", path, note)
         if self.apply:
