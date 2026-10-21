@@ -40,9 +40,16 @@ assert.ok(!rulesSection("# Common\n", undefined, "  \n").includes("Experimental 
 // the file this reads in a real session is the canonical rules file
 const common = readFileSync(join(homedir(), "repos/agent1/common.md"), "utf8");
 const real = rulesSection(common);
-assert.match(real, /## Working style/, "common.md's sections must survive verbatim");
+assert.match(real, /## General/, "common.md's sections must survive verbatim");
 assert.ok(real.includes(common.trim()), "the rules body must be the file itself");
-assert.ok(real.split("\n").length > 200, `expected the whole file, got ${real.split("\n").length} lines`);
+const commonLines = common.trim().split("\n").length;
+assert.ok(
+	real.split("\n").length > commonLines,
+	`expected the whole file (${commonLines} lines) plus the topic list, got ${real.split("\n").length} lines`,
+);
+
+// the naming rules are offered whenever something gets a name
+assert.match(real, /- agent1\/naming\.md - naming a program/);
 
 // and the live trial rules file is the one a real session gets
 const experimental = readFileSync(join(homedir(), "repos/agent1/experimental.md"), "utf8");

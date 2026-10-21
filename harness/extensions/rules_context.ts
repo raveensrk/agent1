@@ -49,6 +49,7 @@ const TOPICS: [string, string][] = [
 	["browser.md", "browser and computer use rules"],
 	["macos.md", "macOS command traps"],
 	["cli.md", "writing a CLI app"],
+	["naming.md", "naming a program, command, skill, file or anything else"],
 	["pi.md", "pi package management"],
 	["removal.md", "removing apps, packages and harnesses"],
 ];
