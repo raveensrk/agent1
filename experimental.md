@@ -111,3 +111,13 @@ Every match on screen is highlighted while a search is active, the current
 match more strongly, and the footer shows `match 3 of 7` or `no match`.
 Search ignores case unless the pattern has a capital letter, as in vim's
 `smartcase`.
+
+## Diagrams: SVG, not Mermaid
+
+A diagram I ask for is a hand-drawn SVG file, not a Mermaid block, unless I name
+Mermaid. It follows the dark theme: its own dark background, so it reads the
+same in a light viewer. In a repo, the SVG sits next to the doc that shows it,
+linked as an image (`![Map](map.svg)`).
+
+Before handing one over, render it (headless Chrome `--screenshot` works) and
+look at it: no label over a line, no line through a box.
