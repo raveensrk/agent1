@@ -30,7 +30,9 @@ the files inside it are still checked. Pi package prompt templates under
 prompts/ may use hyphens: Pi turns the filename into the slash-command name.
 In a Swift package (Package.swift at the repo root), Swift's own convention
 wins for its sources: UpperCamelCase .swift files, UpperCamelCase directories
-that hold them, and target directories under Sources/ and Tests/.
+that hold them, and target directories under Sources/ and Tests/. Svelte's
+convention wins the same way for its files: UpperCamelCase components
+(Card.svelte) and SvelteKit route files (+page.svelte, +layout.ts).
 
 Directories are validated as the ancestors of each file, up to the repo root.
 A directory with no files in it is invisible here; git does not track empty
@@ -84,6 +86,12 @@ CANONICAL = {
 SWIFT_FILE = re.compile(r"^[A-Z][A-Za-z0-9]*(?:\+[A-Za-z0-9]+)?\.swift$")
 PASCAL = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 SWIFTPM_ROOTS = {"Sources", "Tests"}
+
+# Svelte names a component file after the component it exports (Card.svelte),
+# and SvelteKit finds a route file only by its + spelling (+page.svelte,
+# +layout.server.ts): 1,664 file findings in ~/repos on 2026-10-21.
+SVELTE_FILE = re.compile(r"^[A-Z][A-Za-z0-9]*\.svelte$")
+SVELTEKIT_ROUTE = re.compile(r"^\+(?:page|layout|error|server)(?:@[^/]*)?(?:\.server)?\.(?:svelte|ts|js)$")
 
 # names that must take an uppercase spelling: snake_case would pass them
 UPPER = {"plan.md": "PLAN.md"}
@@ -283,6 +291,8 @@ def check(path: str) -> list[str]:
 		)
 		return findings
 	if name in CANONICAL or SNAKE.match(name) or (swift and SWIFT_FILE.match(name)):
+		return findings
+	if SVELTE_FILE.match(name) or SVELTEKIT_ROUTE.match(name):
 		return findings
 	# junk is deleted, not renamed: a rename keeps it, and Zone's keeps the colon
 	if name == FINDER or ZONE.search(name):

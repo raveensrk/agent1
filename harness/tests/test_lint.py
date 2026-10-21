@@ -304,6 +304,37 @@ def test_file_naming_lets_a_swift_package_keep_swift_names():
         assert flagged(root, swift + still) == sorted(still)
 
 
+def test_file_naming_lets_svelte_keep_svelte_names():
+    """Svelte names a component file after its component and SvelteKit finds a
+    route file only by its + spelling: 1,664 file findings in ~/repos on
+    2026-10-21. Anything else in a Svelte app is still checked."""
+    check = os.path.join(CHECKS, "file_naming.py")
+    svelte = [
+        "src/lib/Card.svelte",
+        "src/lib/DetailSheet.svelte",
+        "src/routes/+page.svelte",
+        "src/routes/+layout.ts",
+        "src/routes/+layout.server.js",
+        "src/routes/+error.svelte",
+        "src/routes/api/+server.ts",
+        "src/routes/+page@.svelte",
+    ]
+    still = ["src/lib/Card.ts", "src/lib/detail-sheet.svelte", "src/routes/+other.svelte", "src/lib/card_View.svelte"]
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["git", "init", "-q", tmp], check=True)
+        root = os.path.realpath(tmp)
+        paths = []
+        for rel in svelte + still:
+            path = os.path.join(root, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "w").close()
+            paths.append(path)
+        run = subprocess.run([sys.executable, check, *paths], capture_output=True, text=True)
+        assert run.returncode == 0, run.stderr
+        flagged = sorted({os.path.relpath(line.split(":1: ")[0], root) for line in run.stdout.splitlines()})
+        assert flagged == sorted(still), run.stdout
+
+
 def test_file_naming_lets_a_comma_command_keep_its_comma():
     """~/dot/script names personal commands with a leading comma (,sync.py), so they
     never collide with a system tool: 11 there on 2026-10-11. The rest of the name
