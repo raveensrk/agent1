@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1650" viewBox="0 0 1298 1650" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif">
-<rect width="1298" height="1650" fill="#0f1115"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1632" viewBox="0 0 1298 1632" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif">
+<rect width="1298" height="1632" fill="#0f1115"/>
 <text x="24" y="48" fill="#e6e6e6" font-size="22" font-weight="600">Dev Tools by Level</text>
 <text x="24" y="68" fill="#9aa3b2" font-size="13">Generated from dev_tools.rec by dev_tools.py. Order within a cell is preference.</text>
 <rect x="278" y="84" width="192" height="32" rx="6" fill="#1f5f46"/>
@@ -100,8 +100,8 @@
 <text x="490" y="850.5" fill="#e6e6e6" font-size="13">Himalaya</text>
 <rect x="480" y="864" width="109" height="24" rx="12" fill="#1f4f6f"/>
 <text x="490" y="880.5" fill="#e6e6e6" font-size="13">Himalaya-Tui</text>
-<rect x="880" y="834" width="124" height="24" rx="12" fill="#6f341f"/>
-<text x="890" y="850.5" fill="#e6e6e6" font-size="13">Mutt / Neomutt</text>
+<rect x="1080" y="834" width="124" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="850.5" fill="#e6e6e6" font-size="13">Mutt / Neomutt</text>
 <line x1="24" y1="900" x2="1274" y2="900" stroke="#2a2f3a"/>
 <text x="24" y="923.0" fill="#e6e6e6" font-size="14" font-weight="600">Password Managers</text>
 <rect x="280" y="906" width="87" height="24" rx="12" fill="#1f5f46"/>
@@ -148,22 +148,18 @@
 <text x="490" y="1354.5" fill="#e6e6e6" font-size="13">LÖVE (love2d)</text>
 <rect x="680" y="1218" width="116" height="24" rx="12" fill="#5f4f1f"/>
 <text x="690" y="1234.5" fill="#e6e6e6" font-size="13">SystemVerilog</text>
-<rect x="680" y="1248" width="35" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1264.5" fill="#e6e6e6" font-size="13">Go</text>
-<rect x="680" y="1278" width="57" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1294.5" fill="#e6e6e6" font-size="13">Swift</text>
+<rect x="680" y="1248" width="57" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1264.5" fill="#e6e6e6" font-size="13">Swift</text>
+<rect x="680" y="1278" width="94" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1294.5" fill="#e6e6e6" font-size="13">JavaScript</text>
 <rect x="680" y="1308" width="94" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1324.5" fill="#e6e6e6" font-size="13">JavaScript</text>
+<text x="690" y="1324.5" fill="#e6e6e6" font-size="13">TypeScript</text>
 <rect x="680" y="1338" width="94" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1354.5" fill="#e6e6e6" font-size="13">TypeScript</text>
-<rect x="680" y="1368" width="94" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1384.5" fill="#e6e6e6" font-size="13">Vim script</text>
-<rect x="680" y="1398" width="42" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1414.5" fill="#e6e6e6" font-size="13">SQL</text>
-<rect x="680" y="1428" width="64" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1444.5" fill="#e6e6e6" font-size="13">SQLite</text>
-<rect x="680" y="1458" width="64" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1474.5" fill="#e6e6e6" font-size="13">Fennel</text>
+<text x="690" y="1354.5" fill="#e6e6e6" font-size="13">Vim script</text>
+<rect x="680" y="1368" width="42" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1384.5" fill="#e6e6e6" font-size="13">SQL</text>
+<rect x="680" y="1398" width="64" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1414.5" fill="#e6e6e6" font-size="13">SQLite</text>
 <rect x="880" y="1218" width="27" height="24" rx="12" fill="#6f341f"/>
 <text x="890" y="1234.5" fill="#e6e6e6" font-size="13">C</text>
 <rect x="880" y="1248" width="42" height="24" rx="12" fill="#6f341f"/>
@@ -172,33 +168,41 @@
 <text x="1090" y="1234.5" fill="#e6e6e6" font-size="13">Zig</text>
 <rect x="1080" y="1248" width="50" height="24" rx="12" fill="#5f1f4f"/>
 <text x="1090" y="1264.5" fill="#e6e6e6" font-size="13">Rust</text>
-<rect x="1080" y="1278" width="50" height="24" rx="12" fill="#5f1f4f"/>
-<text x="1090" y="1294.5" fill="#e6e6e6" font-size="13">Bevy</text>
-<line x1="24" y1="1494" x2="1274" y2="1494" stroke="#2a2f3a"/>
-<text x="24" y="1517.0" fill="#e6e6e6" font-size="14" font-weight="600">Formats</text>
-<rect x="280" y="1500" width="79" height="24" rx="12" fill="#1f5f46"/>
-<text x="290" y="1516.5" fill="#e6e6e6" font-size="13">Markdown</text>
-<rect x="280" y="1530" width="50" height="24" rx="12" fill="#1f5f46"/>
-<text x="290" y="1546.5" fill="#e6e6e6" font-size="13">TOML</text>
-<rect x="280" y="1560" width="94" height="24" rx="12" fill="#1f5f46"/>
-<text x="290" y="1576.5" fill="#e6e6e6" font-size="13">JSON Lines</text>
-<rect x="280" y="1590" width="42" height="24" rx="12" fill="#1f5f46"/>
-<text x="290" y="1606.5" fill="#e6e6e6" font-size="13">PDF</text>
-<rect x="480" y="1500" width="50" height="24" rx="12" fill="#1f4f6f"/>
-<text x="490" y="1516.5" fill="#e6e6e6" font-size="13">HTML</text>
-<rect x="480" y="1530" width="183" height="24" rx="12" fill="#1f4f6f"/>
-<text x="490" y="1546.5" fill="#e6e6e6" font-size="13">recfile (GNU recutils)</text>
-<rect x="680" y="1500" width="79" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1516.5" fill="#e6e6e6" font-size="13">Makefile</text>
-<rect x="680" y="1530" width="42" height="24" rx="12" fill="#5f4f1f"/>
-<text x="690" y="1546.5" fill="#e6e6e6" font-size="13">CSS</text>
-<rect x="880" y="1500" width="57" height="24" rx="12" fill="#6f341f"/>
-<text x="890" y="1516.5" fill="#e6e6e6" font-size="13">LaTeX</text>
-<line x1="274" y1="80" x2="274" y2="1626" stroke="#2a2f3a"/>
-<line x1="474" y1="80" x2="474" y2="1626" stroke="#2a2f3a"/>
-<line x1="674" y1="80" x2="674" y2="1626" stroke="#2a2f3a"/>
-<line x1="874" y1="80" x2="874" y2="1626" stroke="#2a2f3a"/>
-<line x1="1074" y1="80" x2="1074" y2="1626" stroke="#2a2f3a"/>
-<line x1="1274" y1="80" x2="1274" y2="1626" stroke="#2a2f3a"/>
-<line x1="24" y1="1626" x2="1274" y2="1626" stroke="#2a2f3a"/>
+<rect x="1080" y="1278" width="35" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="1294.5" fill="#e6e6e6" font-size="13">Go</text>
+<rect x="1080" y="1308" width="64" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="1324.5" fill="#e6e6e6" font-size="13">Fennel</text>
+<rect x="1080" y="1338" width="50" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="1354.5" fill="#e6e6e6" font-size="13">Bevy</text>
+<line x1="24" y1="1434" x2="1274" y2="1434" stroke="#2a2f3a"/>
+<text x="24" y="1457.0" fill="#e6e6e6" font-size="14" font-weight="600">Formats</text>
+<rect x="280" y="1440" width="79" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1456.5" fill="#e6e6e6" font-size="13">Markdown</text>
+<rect x="280" y="1470" width="50" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1486.5" fill="#e6e6e6" font-size="13">TOML</text>
+<rect x="280" y="1500" width="94" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1516.5" fill="#e6e6e6" font-size="13">JSON Lines</text>
+<rect x="280" y="1530" width="42" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1546.5" fill="#e6e6e6" font-size="13">PDF</text>
+<rect x="480" y="1440" width="50" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1456.5" fill="#e6e6e6" font-size="13">HTML</text>
+<rect x="480" y="1470" width="183" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1486.5" fill="#e6e6e6" font-size="13">recfile (GNU recutils)</text>
+<rect x="680" y="1440" width="79" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1456.5" fill="#e6e6e6" font-size="13">Makefile</text>
+<rect x="680" y="1470" width="42" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1486.5" fill="#e6e6e6" font-size="13">CSS</text>
+<rect x="880" y="1440" width="57" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1456.5" fill="#e6e6e6" font-size="13">LaTeX</text>
+<line x1="24" y1="1566" x2="1274" y2="1566" stroke="#2a2f3a"/>
+<text x="24" y="1589.0" fill="#e6e6e6" font-size="14" font-weight="600">ROOT</text>
+<rect x="280" y="1572" width="79" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1588.5" fill="#e6e6e6" font-size="13">Computer</text>
+<line x1="274" y1="80" x2="274" y2="1608" stroke="#2a2f3a"/>
+<line x1="474" y1="80" x2="474" y2="1608" stroke="#2a2f3a"/>
+<line x1="674" y1="80" x2="674" y2="1608" stroke="#2a2f3a"/>
+<line x1="874" y1="80" x2="874" y2="1608" stroke="#2a2f3a"/>
+<line x1="1074" y1="80" x2="1074" y2="1608" stroke="#2a2f3a"/>
+<line x1="1274" y1="80" x2="1274" y2="1608" stroke="#2a2f3a"/>
+<line x1="24" y1="1608" x2="1274" y2="1608" stroke="#2a2f3a"/>
 </svg>

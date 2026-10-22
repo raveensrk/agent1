@@ -29,13 +29,27 @@ dev_tools.html, one page with a Filter: Base / Extra / Max switch over the
 learning path. Tier is importance: each view adds a tier to the one before,
 and a tool never requires one of a higher tier.
 
+Edits go through the same checks as a hand edit of dev_tools.rec (recfix for
+the schema, then the arrow rules); a change that fails is not written, and one
+that passes is written and every chart redrawn.
+
 Usage:
-  ./dev_tools.py           validate, then write all three charts
-  ./dev_tools.py --check   exit 1 when the data is invalid or a chart is stale
-  ./dev_tools.py help      this text
+  ./dev_tools.py                      validate, then write all three charts
+  ./dev_tools.py --check              exit 1 when the data is invalid or a chart is stale
+  ./dev_tools.py add NAME --category C --level N --tier T [--subcategory S] [--url U] [--note N]
+  ./dev_tools.py set NAME [--level N] [--tier T] [--category C] [--subcategory S] [--url U] [--note N]
+  ./dev_tools.py rename NAME NEW
+  ./dev_tools.py link PRE NAME        PRE -> NAME; "A | B" for any one of
+  ./dev_tools.py unlink PRE NAME
+  ./dev_tools.py rm NAME              also drops every arrow from it
+  ./dev_tools.py serve [--port P]     node editor at http://127.0.0.1:P: drag, connect,
+                                      rename in place; positions saved as Pos
+  ./dev_tools.py help                 this text
 """
 import argparse
+import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -46,6 +60,18 @@ REC = os.path.join(ROOT, "dev_tools.rec")
 SVG = os.path.join(ROOT, "dev_tools.svg")
 PATH_SVG = os.path.join(ROOT, "dev_tools_path.svg")
 HTML = os.path.join(ROOT, "dev_tools.html")
+
+# The editor's port, on 127.0.0.1 only; 8765 is alduin's. The editor page
+# and the one library it loads, Cytoscape.js 3.30.2 (MIT), kept in the repo
+# so the editor works offline.
+PORT = 8766
+EDITOR = os.path.join(ROOT, "dev_tools_editor.html")
+VENDOR = {"/vendor/cytoscape.min.js": os.path.join(ROOT, "vendor", "cytoscape.min.js")}
+
+# Grid for tools off the path when the canvas places them, in px.
+GRIDX = 190
+GRIDY = 60
+GRIDCOLS = 6
 
 # Tiers in order: a view shows its tier and every tier before it.
 TIERS = {"base": "Base", "extra": "Extra", "max": "Max"}
@@ -76,31 +102,34 @@ FONT = "-apple-system, 'Helvetica Neue', Arial, sans-serif"
 
 
 def parse(path):
+    with open(path, encoding="utf-8") as f:
+        return parse_text(f.read())
+
+
+def parse_text(text):
     """Read Tool records: `Field: value` lines, a blank line between records.
 
     Comments (#) and the schema (%) are skipped; `+ ` continues a value.
     """
     records, rec, last = [], {}, None
-    with open(path, encoding="utf-8") as f:
-        for raw in f:
-            line = raw.rstrip("\n")
-            if line.startswith(("#", "%")):
-                continue
-            if not line.strip():
-                if rec:
-                    records.append(rec)
-                rec, last = {}, None
-                continue
-            if line.startswith("+") and last:
-                rec[last] += "\n" + line[2:]
-                continue
-            key, _, value = line.partition(":")
-            last = key.strip()
-            if last == "Requires":
-                rec.setdefault(last, []).append(value.strip())
-                last = None
-                continue
-            rec[last] = value.strip()
+    for line in text.split("\n"):
+        if line.startswith(("#", "%")):
+            continue
+        if not line.strip():
+            if rec:
+                records.append(rec)
+            rec, last = {}, None
+            continue
+        if line.startswith("+") and last:
+            rec[last] += "\n" + line[2:]
+            continue
+        key, _, value = line.partition(":")
+        last = key.strip()
+        if last == "Requires":
+            rec.setdefault(last, []).append(value.strip())
+            last = None
+            continue
+        rec[last] = value.strip()
     if rec:
         records.append(rec)
     return records
@@ -117,9 +146,32 @@ def rank(rec):
 
 
 def validate(records):
-    """Return the problems with the Requires lines, one string each."""
-    tools = {r["Name"]: r for r in records}
+    """Return the problems with the records, one string each."""
     problems = []
+
+    # Duplicates first: a second fzf would hide the first one below. Names
+    # match ignoring case and spaces, which recfix's %key does not.
+    seen = {}
+    for rec in records:
+        seen.setdefault(" ".join(rec["Name"].split()).casefold(), []).append(rec["Name"])
+    for names in seen.values():
+        if len(names) > 1:
+            problems.append("duplicate tool: " + ", ".join(repr(n) for n in names))
+    urls = {}
+    for rec in records:
+        if rec.get("Url"):
+            urls.setdefault(rec["Url"].rstrip("/").casefold(), []).append(rec["Name"])
+    for url, names in urls.items():
+        if len(names) > 1:
+            problems.append(f"duplicate Url {url} on " + ", ".join(names))
+    for rec in records:
+        for g in groups(rec):
+            if len(set(g)) < len(g):
+                problems.append(f"{rec['Name']}: Requires {' | '.join(g)} names a tool twice")
+    if problems:
+        return problems
+
+    tools = {r["Name"]: r for r in records}
 
     for rec in records:
         name, level = rec["Name"], int(rec["Level"])
@@ -181,7 +233,216 @@ def validate(records):
                 problems.append(
                     f"{rec['Name']}: Requires {pre} is implied through {via[0]} - drop it"
                 )
+
+        # An OR line is met already when one of its tools is required alone
+        # (Requires: Lua makes Requires: Python | Lua say nothing).
+        lines = [" | ".join(g) for g in groups(rec)]
+        for g in groups(rec):
+            met = [pre for pre in g if len(g) > 1 and pre in direct]
+            if met:
+                problems.append(
+                    f"{rec['Name']}: Requires {' | '.join(g)} is met by Requires {met[0]} - drop it"
+                )
+        for line in sorted({x for x in lines if lines.count(x) > 1}):
+            problems.append(f"{rec['Name']}: Requires {line} appears twice - drop one")
     return problems
+
+
+# Editing. Every change is made to the text of dev_tools.rec, checked by
+# recfix (the schema) and validate() (the arrows), and written only when both
+# pass; then the charts are redrawn. A record that changes is rewritten in
+# FIELDS order; every other line of the file is left as it was.
+FIELDS = ["Name", "Category", "Subcategory", "Level", "Tier", "Requires", "Url", "Note", "Pos"]
+REQUIRED = {"Name", "Category", "Level", "Tier"}
+
+
+def split(text):
+    """dev_tools.rec as (head, blocks): the comments and schema, then one
+    block of `Field: value` lines per record."""
+    at = text.index("\nName: ") + 1
+    return text[:at], text[at:].strip("\n").split("\n\n")
+
+
+def join(head, blocks):
+    return head + "\n\n".join(blocks) + "\n"
+
+
+def fields(block):
+    """A record block as [(field, value)], continuation lines folded in."""
+    out = []
+    for line in block.split("\n"):
+        if line.startswith("+") and out:
+            out[-1] = (out[-1][0], out[-1][1] + "\n" + line[2:])
+            continue
+        key, _, value = line.partition(":")
+        out.append((key.strip(), value.strip()))
+    return out
+
+
+def unfields(pairs):
+    pairs = sorted(pairs, key=lambda kv: FIELDS.index(kv[0]))
+    return "\n".join(f"{k}: {v}".replace("\n", "\n+ ") for k, v in pairs)
+
+
+def find(blocks, name):
+    for i, block in enumerate(blocks):
+        if dict(fields(block)).get("Name") == name:
+            return i
+    raise ValueError(f"no tool named {name!r}")
+
+
+def alternatives(line):
+    return [a.strip() for a in line.split("|") if a.strip()]
+
+
+def edit(text, op, args):
+    """Apply one change to the text of dev_tools.rec and return the new text.
+
+    op is add, set, rename, link, unlink or rm; args is a dict:
+      add     name, category, level, tier, [subcategory, url, note]
+      set     name, and any of category, subcategory, level, tier, url, note
+              ("" drops an optional field)
+      rename  name, to
+      link    pre, name     pre -> name; `A | B` makes an OR line
+      unlink  pre, name
+      rm      name          also drops every arrow from it
+      move    positions     {name: [x, y]}, the canvas Pos of each
+      layout                every Pos reset to auto_positions()
+    Raises ValueError for a change that cannot apply.
+    """
+    head, blocks = split(text)
+    names = [dict(fields(b))["Name"] for b in blocks]
+
+    if op in ("move", "layout"):
+        moves = args.get("positions") if op == "move" else auto_positions(parse_text(text))
+        if not isinstance(moves, dict) or not moves:
+            raise ValueError("move needs positions")
+        for name, xy in moves.items():
+            x, y = (round(float(v)) for v in xy)
+            i = find(blocks, name)
+            kept = [(k, v) for k, v in fields(blocks[i]) if k != "Pos"]
+            blocks[i] = unfields(kept + [("Pos", f"{x} {y}")])
+        return join(head, blocks)
+
+    if op == "add":
+        name = args["name"].strip()
+        if name in names:
+            raise ValueError(f"{name!r} already exists")
+        pairs = [("Name", name)]
+        for key in ("category", "subcategory", "level", "tier", "url", "note"):
+            value = str(args.get(key) or "").strip()
+            if value:
+                pairs.append((key.capitalize(), value))
+        if args.get("pos"):
+            pairs.append(("Pos", " ".join(str(round(float(v))) for v in args["pos"])))
+        missing = REQUIRED - {k for k, _ in pairs}
+        if missing:
+            raise ValueError("add needs " + ", ".join(sorted(missing)).lower())
+        # A new tool goes last in its category, the bottom of its preference.
+        cats = [dict(fields(b))["Category"] for b in blocks]
+        at = max((i for i, c in enumerate(cats) if c == args["category"].strip()), default=len(blocks) - 1)
+        blocks.insert(at + 1, unfields(pairs))
+        return join(head, blocks)
+
+    i = find(blocks, args["name"])
+    pairs = fields(blocks[i])
+
+    if op == "set":
+        for key, value in args.items():
+            if key == "name":
+                continue
+            field = key.capitalize()
+            if field not in FIELDS or field in ("Name", "Requires", "Pos"):
+                raise ValueError(f"set cannot change {key!r}")
+            value = str(value).strip()
+            if not value and field in REQUIRED:
+                raise ValueError(f"{key} cannot be empty")
+            pairs = [(k, v) for k, v in pairs if k != field]
+            if value:
+                pairs.append((field, value))
+        blocks[i] = unfields(pairs)
+        return join(head, blocks)
+
+    if op == "rename":
+        new = args["to"].strip()
+        if not new or new in names:
+            raise ValueError(f"cannot rename to {new!r}")
+        old = args["name"]
+        for j, block in enumerate(blocks):
+            renamed = [
+                (k, new if k == "Name" and v == old else
+                 " | ".join(new if a == old else a for a in alternatives(v)) if k == "Requires" else v)
+                for k, v in fields(block)
+            ]
+            blocks[j] = unfields(renamed) if renamed != fields(block) else block
+        return join(head, blocks)
+
+    if op == "link":
+        line = " | ".join(alternatives(args["pre"]))
+        if not line:
+            raise ValueError("link needs a prerequisite")
+        if ("Requires", line) in pairs:
+            raise ValueError(f"{args['name']} already requires {line}")
+        blocks[i] = unfields(pairs + [("Requires", line)])
+        return join(head, blocks)
+
+    if op == "unlink":
+        pre, out, found = args["pre"].strip(), [], False
+        for k, v in pairs:
+            if k == "Requires" and pre in alternatives(v):
+                found = True
+                rest = [a for a in alternatives(v) if a != pre]
+                if rest:
+                    out.append((k, " | ".join(rest)))
+                continue
+            out.append((k, v))
+        if not found:
+            raise ValueError(f"{args['name']} does not require {pre}")
+        blocks[i] = unfields(out)
+        return join(head, blocks)
+
+    if op == "rm":
+        gone = args["name"]
+        del blocks[i]
+        for j, block in enumerate(blocks):
+            kept = []
+            for k, v in fields(block):
+                if k == "Requires" and gone in alternatives(v):
+                    rest = [a for a in alternatives(v) if a != gone]
+                    if rest:
+                        kept.append((k, " | ".join(rest)))
+                    continue
+                kept.append((k, v))
+            if kept != fields(block):
+                blocks[j] = unfields(kept)
+        return join(head, blocks)
+
+    raise ValueError(f"unknown edit {op!r}")
+
+
+def apply(op, args):
+    """Edit dev_tools.rec, check it, write it and redraw. Returns problems."""
+    with open(REC, encoding="utf-8") as f:
+        text = f.read()
+    try:
+        new = edit(text, op, args)
+    except ValueError as err:
+        return [str(err)]
+    except KeyError as err:
+        return [f"missing {err.args[0]}"]
+
+    run = subprocess.run(["recfix", "--check"], input=new, capture_output=True, text=True)
+    if run.returncode:
+        return [line.replace("stdin:", "dev_tools.rec:") for line in run.stderr.splitlines()]
+    problems = validate(parse_text(new))
+    if problems:
+        return problems
+
+    with open(REC, "w", encoding="utf-8") as f:
+        f.write(new)
+    if op not in ("move", "layout"):
+        draw(parse_text(new))
+    return []
 
 
 def render(records):
@@ -267,6 +528,15 @@ def render_path(records, tier="max", title=True):
     Only tools up to `tier` are drawn; validate() guarantees their
     prerequisites are too. `title` adds the heading inside the SVG.
     """
+    run = subprocess.run(
+        ["dot", "-Tsvg"], input=path_dot(records, tier, title), capture_output=True, text=True, check=True
+    )
+    return run.stdout
+
+
+def path_dot(records, tier="max", title=True):
+    """The Graphviz source of the learning path, for render_path and
+    auto_positions."""
     records = [r for r in records if rank(r) <= list(TIERS).index(tier)]
     tools = {r["Name"]: r for r in records}
     edges = [
@@ -330,11 +600,130 @@ def render_path(records, tier="max", title=True):
     for pre, name, alt in edges:
         dot.append(f"  {quote(pre)} -> {quote(name)}" + (" [style=dashed];" if alt else ";"))
     dot.append("}")
+    return "\n".join(dot) + "\n"
 
+
+def auto_positions(records):
+    """Canvas positions for every tool, from Graphviz: tools on the path where
+    dot puts them, the rest in a grid below. {name: [x, y]}, y pointing down."""
     run = subprocess.run(
-        ["dot", "-Tsvg"], input="\n".join(dot) + "\n", capture_output=True, text=True, check=True
+        ["dot", "-Tplain"], input=path_dot(records), capture_output=True, text=True, check=True
     )
-    return run.stdout
+    names = {r["Name"] for r in records}
+    pos, height = {}, 0.0
+    for line in run.stdout.splitlines():
+        parts = shlex.split(line)
+        if parts[0] == "graph":
+            height = float(parts[3])
+        if parts[0] == "node" and parts[1] in names:
+            # dot measures inches from the bottom; the canvas, px from the top.
+            pos[parts[1]] = [round(float(parts[2]) * 96), round((height - float(parts[3])) * 96)]
+
+    loose = [r["Name"] for r in records if r["Name"] not in pos]
+    top = max((y for _, y in pos.values()), default=0) + 120
+    for i, name in enumerate(loose):
+        pos[name] = [GRIDX * (i % GRIDCOLS), top + GRIDY * (i // GRIDCOLS)]
+    return pos
+
+
+def positions(records):
+    """Saved Pos where a tool has one, auto_positions() for the rest."""
+    auto = None
+    out = {}
+    for rec in records:
+        if rec.get("Pos"):
+            x, y = rec["Pos"].split()
+            out[rec["Name"]] = [int(x), int(y)]
+            continue
+        auto = auto or auto_positions(records)
+        out[rec["Name"]] = auto[rec["Name"]]
+    return out
+
+
+def serve(port):
+    """Edit dev_tools.rec as a graph in a browser, on 127.0.0.1 only.
+
+    GET  /                  the node editor, dev_tools_editor.html
+    GET  /vendor/...        Cytoscape.js, from vendor/
+    GET  /api/graph         tools, canvas positions, levels and tiers as JSON
+    GET  /view              the Graphviz page, drawn fresh
+    POST /api/edit {op, args} runs apply()
+
+    A POST must carry the X-Dev-Tools header, which another site cannot send
+    without a CORS preflight this server never grants, and a Host of this
+    machine, which stops DNS rebinding.
+    """
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+
+    class Handler(BaseHTTPRequestHandler):
+        def reply(self, code, body, kind):
+            data = body if isinstance(body, bytes) else body.encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", kind)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self):
+            if self.headers.get("Host") not in hosts:
+                return self.reply(403, "forbidden host", "text/plain")
+            path = self.path.split("?")[0]
+            if path in VENDOR:
+                with open(VENDOR[path], "rb") as f:
+                    return self.reply(200, f.read(), "text/javascript")
+            if path == "/":
+                with open(EDITOR, "rb") as f:
+                    return self.reply(200, f.read(), "text/html; charset=utf-8")
+            if path not in ("/api/graph", "/view"):
+                return self.reply(404, "not found", "text/plain")
+            records = parse(REC)
+            problems = validate(records)
+            if problems:
+                return self.reply(500, "dev_tools.rec is invalid:\n" + "\n".join(problems), "text/plain")
+            if path == "/view":
+                return self.reply(200, render_html(records), "text/html; charset=utf-8")
+            graph = {
+                "tools": records,
+                "positions": positions(records),
+                "levels": {n: list(v) for n, v in LEVELS.items()},
+                "tiers": TIERS,
+            }
+            self.reply(200, json.dumps(graph), "application/json")
+
+        def do_POST(self):
+            if self.headers.get("Host") not in hosts or self.headers.get("X-Dev-Tools") != "1":
+                return self.reply(403, "forbidden", "text/plain")
+            if self.path != "/api/edit":
+                return self.reply(404, "not found", "text/plain")
+            try:
+                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or "{}")
+                op, args = body["op"], dict(body.get("args") or {})
+            except (ValueError, KeyError, TypeError):
+                return self.reply(400, json.dumps({"ok": False, "problems": ["bad request"]}), "application/json")
+            problems = apply(op, args)
+            print(json.dumps({"event": "edit", "op": op, "args": args, "ok": not problems,
+                              "problems": problems}), flush=True)
+            self.reply(400 if problems else 200, json.dumps({"ok": not problems, "problems": problems}),
+                       "application/json")
+
+        def log_request(self, code="-", size="-"):
+            print(json.dumps({"event": "request", "method": self.command, "path": self.path,
+                              "status": code}), flush=True)
+
+    try:
+        server = HTTPServer(("127.0.0.1", port), Handler)
+    except OSError as err:
+        print(f"dev_tools.py: cannot listen on 127.0.0.1:{port}: {err.strerror} - fix: --port N", file=sys.stderr)
+        return 1
+    print(f"editing {REC} at http://127.0.0.1:{port} - Ctrl-C to stop", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    return 0
 
 
 def render_html(records):
@@ -355,8 +744,8 @@ def render_html(records):
             p for r in shown for g in groups(r) for p in g
         }
         loose = "".join(
-            f'<span class="chip" style="background:{LEVELS[int(r["Level"])][1]}">'
-            f'{escape(r["Name"])}</span>'
+            f'<span class="chip" data-name="{escape(r["Name"])}" '
+            f'style="background:{LEVELS[int(r["Level"])][1]}">{escape(r["Name"])}</span>'
             for r in sorted(shown, key=lambda r: int(r["Level"]))
             if r["Name"] not in linked
         )
@@ -432,6 +821,17 @@ def render_html(records):
 """
 
 
+def charts(records):
+    return {SVG: render(records), PATH_SVG: render_path(records), HTML: render_html(records)}
+
+
+def draw(records, out=None):
+    for path, svg in (out or charts(records)).items():
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(svg)
+        print(f"wrote {path}")
+
+
 def main(argv):
     if argv[:1] == ["help"]:
         print(__doc__)
@@ -439,11 +839,45 @@ def main(argv):
 
     parser = argparse.ArgumentParser(description="Validate dev_tools.rec and draw its charts.")
     parser.add_argument("--check", action="store_true", help="exit 1 when the data is invalid or a chart is stale")
+    cmds = parser.add_subparsers(dest="cmd", metavar="command")
+
+    # Edits: each is checked like a hand edit, then written and redrawn.
+    fieldopts = ("category", "subcategory", "level", "tier", "url", "note")
+    add = cmds.add_parser("add", help="add a tool")
+    add.add_argument("name")
+    for key in fieldopts:
+        add.add_argument(f"--{key}", required=key in ("category", "level", "tier"))
+    edit_ = cmds.add_parser("set", help='change fields of a tool ("" drops an optional one)')
+    edit_.add_argument("name")
+    for key in fieldopts:
+        edit_.add_argument(f"--{key}")
+    ren = cmds.add_parser("rename", help="rename a tool and every arrow to it")
+    ren.add_argument("name")
+    ren.add_argument("to")
+    for op, text in (("link", "add the arrow PRE -> NAME"), ("unlink", "remove the arrow PRE -> NAME")):
+        cmd = cmds.add_parser(op, help=text)
+        cmd.add_argument("pre", help="prerequisite; `A | B` for any one of")
+        cmd.add_argument("name")
+    rm = cmds.add_parser("rm", help="delete a tool and every arrow from it")
+    rm.add_argument("name")
+    serve_ = cmds.add_parser("serve", help="edit the graph in a browser (node editor)")
+    serve_.add_argument("--port", type=int, default=PORT)
     opts = parser.parse_args(argv)
 
     if not shutil.which("dot"):
         print("dev_tools.py: Graphviz dot not found - fix: brew install graphviz", file=sys.stderr)
         return 2
+
+    if opts.cmd == "serve":
+        return serve(opts.port)
+    if opts.cmd:
+        args = {k: v for k, v in vars(opts).items() if k not in ("cmd", "check") and v is not None}
+        if opts.cmd == "set" and len(args) == 1:
+            parser.error("set needs at least one field")
+        problems = apply(opts.cmd, args)
+        for problem in problems:
+            print(f"dev_tools.py: {problem}", file=sys.stderr)
+        return 1 if problems else 0
 
     records = parse(REC)
     problems = validate(records)
@@ -452,20 +886,17 @@ def main(argv):
     if problems:
         return 1
 
-    charts = {SVG: render(records), PATH_SVG: render_path(records), HTML: render_html(records)}
+    out = charts(records)
     if opts.check:
         stale = 0
-        for path, svg in charts.items():
+        for path, svg in out.items():
             current = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
             if current != svg:
                 print(f"{os.path.basename(path)} is stale - fix: ./dev_tools.py", file=sys.stderr)
                 stale = 1
         return stale
 
-    for path, svg in charts.items():
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(svg)
-        print(f"wrote {path}")
+    draw(records, out)
     return 0
 
 

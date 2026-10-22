@@ -29,6 +29,10 @@
 #
 # Validate:  recfix --check dev_tools.rec
 # Query:     recsel -e 'Level = 1' -p Name dev_tools.rec
+# Edit:      ./dev_tools.py add|set|rename|link|unlink|rm ...  (checked, then redrawn)
+#            ./dev_tools.py serve   (node editor in a browser, http://127.0.0.1:8766)
+# Pos is where the node editor shows a tool, `x y` in px; it is layout only,
+# and the Graphviz charts ignore it. A tool without one is placed by dot.
 # Charts:    ./dev_tools.py   (writes dev_tools.svg, the level map,
 #                              dev_tools_path.svg, the prerequisites, and
 #                              dev_tools.html, the prerequisites by tier)
@@ -37,13 +41,16 @@
 %key: Name
 %type: Level range 1 5
 %type: Tier enum base extra max
+%type: Pos regexp /^-?[0-9]+ -?[0-9]+$/
 %mandatory: Name Category Level Tier
-%allowed: Name Category Subcategory Level Tier Requires Url Note
+%allowed: Name Category Subcategory Level Tier Requires Url Note Pos
 
 Name: Touch Typing
 Category: Skills
 Level: 1
 Tier: base
+Requires: Computer
+Pos: 279 1389
 
 Name: Ghostty
 Category: Terminal
@@ -51,36 +58,42 @@ Level: 1
 Tier: base
 Requires: Touch Typing
 Url: https://github.com/ghostty-org/ghostty
+Pos: 478 1389
 
 Name: Vim / MacVim
 Category: Text Editing
 Level: 1
 Tier: base
 Requires: Ghostty
+Pos: 677 237
 
 Name: universal-ctags
 Category: Text Editing
 Level: 2
 Tier: extra
 Requires: Vim / MacVim
+Pos: 1130 202
 
 Name: pi
 Category: AI
 Level: 2
 Tier: base
 Requires: Ghostty
+Pos: 1130 1321
 
 Name: Claude
 Category: AI
 Level: 2
 Tier: base
 Requires: Ghostty
+Pos: 1130 1389
 
 Name: Codex and ChatGPT
 Category: AI
 Level: 2
 Tier: extra
 Requires: Ghostty
+Pos: 1130 1457
 
 Name: Crush
 Category: AI
@@ -88,6 +101,7 @@ Level: 2
 Tier: extra
 Requires: Ghostty
 Url: https://github.com/charmbracelet/crush
+Pos: 1130 1525
 
 Name: Herdr
 Category: AI
@@ -98,6 +112,7 @@ Requires: Claude
 Requires: Codex and ChatGPT
 Requires: Crush
 Note: terminal multiplexer for coding agents
+Pos: 1813 1424
 
 Name: models
 Category: AI
@@ -105,6 +120,7 @@ Level: 1
 Tier: extra
 Url: https://github.com/reyamira/models
 Note: TUI and CLI for browsing AI models and comparing benchmarks
+Pos: 0 1777
 
 Name: llmfit
 Category: AI
@@ -112,6 +128,7 @@ Level: 1
 Tier: extra
 Url: https://github.com/AlexsJones/llmfit
 Note: TUI and CLI for finding LLMs that fit local hardware
+Pos: 190 1777
 
 Name: Bash
 Category: Environment
@@ -119,6 +136,7 @@ Level: 1
 Tier: base
 Requires: Ghostty
 Note: also stands for shell scripting; prefer Bash over POSIX sh
+Pos: 677 812
 
 Name: Git
 Category: Version Control
@@ -126,6 +144,7 @@ Subcategory: CLI
 Level: 1
 Tier: base
 Requires: Bash
+Pos: 888 336
 
 Name: lazygit
 Category: Version Control
@@ -133,115 +152,140 @@ Subcategory: TUI
 Level: 2
 Tier: extra
 Requires: Git
+Pos: 1130 336
 
 Name: hledger
 Category: Finance
 Level: 3
 Tier: extra
+Requires: Ledger CLI
+Pos: 2034 1185
 
 Name: Ledger CLI
 Category: Finance
 Level: 3
 Tier: extra
+Requires: Bash
+Pos: 1813 1185
 
 Name: fzf
 Category: Command Line
 Level: 2
 Tier: max
 Requires: Bash
+Pos: 1130 777
 
 Name: ripgrep
 Category: Command Line
 Level: 1
 Tier: base
 Requires: Bash
+Pos: 888 398
 
 Name: fd
 Category: Command Line
 Level: 1
 Tier: extra
 Requires: Bash
+Pos: 888 461
 
 Name: jq
 Category: Command Line
 Level: 3
 Tier: extra
 Requires: JSON
+Pos: 1813 510
 
 Name: rsync
 Category: Command Line
 Level: 2
 Tier: extra
 Requires: Bash
+Pos: 1130 845
 
 Name: GNU Stow
 Category: Command Line
 Level: 2
 Tier: extra
 Requires: Bash
+Pos: 1130 913
 
 Name: Homebrew
 Category: Command Line
 Level: 1
 Tier: base
 Requires: Bash
+Pos: 888 524
 
 Name: mpv
 Category: Command Line
 Level: 1
 Tier: extra
 Requires: Bash
+Pos: 888 586
 
 Name: pandoc
 Category: Command Line
 Level: 3
 Tier: extra
 Requires: Markdown
+Pos: 1813 137
 
 Name: urlview
 Category: Command Line
 Level: 1
 Tier: extra
 Requires: Bash
+Pos: 888 649
 
 Name: zoxide
 Category: Command Line
 Level: 1
 Tier: extra
 Requires: Bash
+Pos: 888 712
 
 Name: ranger
 Category: Command Line
 Level: 2
 Tier: extra
 Requires: Bash
+Pos: 1130 978
 
 Name: tmux
 Category: Command Line
 Level: 5
 Tier: extra
 Requires: Bash
+Pos: 2470 1253
 
 Name: Firefox
 Category: Web Browser
 Level: 1
 Tier: base
+Requires: Computer
+Pos: 279 1452
 
 Name: Chrome
 Category: Web Browser
 Level: 1
 Tier: extra
+Requires: Computer
+Pos: 279 1514
 
 Name: Safari
 Category: Web Browser
 Level: 1
 Tier: extra
+Pos: 380 1777
 
 Name: Himalaya
 Category: E-Mail
 Level: 2
 Tier: extra
+Requires: newsboat
 Url: https://github.com/pimalaya/himalaya
+Pos: 1365 1592
 
 Name: Himalaya-Tui
 Category: E-Mail
@@ -249,43 +293,56 @@ Level: 2
 Tier: extra
 Requires: Himalaya
 Url: https://github.com/pimalaya/himalaya-tui
+Pos: 1576 1592
 
 Name: Mutt / Neomutt
 Category: E-Mail
-Level: 4
+Level: 5
 Tier: extra
+Requires: newsboat
+Pos: 2470 1657
 
 Name: Bitwarden
 Category: Password Managers
 Level: 1
 Tier: base
+Requires: Computer
+Pos: 279 1577
 
 Name: newsboat
 Category: Reading and RSS
 Level: 2
 Tier: extra
+Requires: Ghostty
+Pos: 1130 1593
 
 Name: WireGuard VPN
 Category: Network
 Level: 3
 Tier: extra
+Pos: 570 1777
 
 Name: qBittorrent
 Category: Torrent
 Level: 1
 Tier: extra
+Requires: Computer
+Pos: 279 1640
 
 Name: Mermaid
 Category: Diagrams, Flowcharts and Drawings
 Subcategory: Diagram Formats
 Level: 2
 Tier: extra
+Requires: Markdown
+Pos: 1130 72
 
 Name: SVG
 Category: Diagrams, Flowcharts and Drawings
 Subcategory: Diagram Formats
 Level: 3
 Tier: extra
+Pos: 760 1777
 
 Name: Graphviz
 Category: Diagrams, Flowcharts and Drawings
@@ -294,6 +351,7 @@ Level: 3
 Tier: extra
 Url: https://graphviz.org
 Note: dot lays out dev_tools_path.svg
+Pos: 950 1777
 
 Name: Excalidraw
 Category: Diagrams, Flowcharts and Drawings
@@ -302,6 +360,7 @@ Level: 1
 Tier: extra
 Url: https://github.com/excalidraw/excalidraw
 Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
+Pos: 0 1837
 
 Name: verible
 Category: Semiconductor
@@ -309,6 +368,7 @@ Subcategory: SystemVerilog and UVM
 Level: 4
 Tier: base
 Requires: SystemVerilog
+Pos: 2244 845
 
 Name: verilator
 Category: Semiconductor
@@ -316,6 +376,7 @@ Subcategory: SystemVerilog and UVM
 Level: 4
 Tier: base
 Requires: SystemVerilog
+Pos: 2244 913
 
 Name: SystemVerilog
 Category: Programming Languages
@@ -323,6 +384,7 @@ Subcategory: Hardware Design and Verification
 Level: 3
 Tier: base
 Requires: Python
+Pos: 1813 913
 
 Name: Zig
 Category: Programming Languages
@@ -330,6 +392,7 @@ Subcategory: Systems and Native
 Level: 5
 Tier: max
 Requires: Python
+Pos: 2470 981
 
 Name: Rust
 Category: Programming Languages
@@ -337,24 +400,29 @@ Subcategory: Systems and Native
 Level: 5
 Tier: extra
 Requires: Python
+Pos: 2470 1049
 
 Name: Go
 Category: Programming Languages
 Subcategory: Systems and Native
-Level: 3
+Level: 5
 Tier: extra
+Requires: Python
+Pos: 2470 1117
 
 Name: C
 Category: Programming Languages
 Subcategory: Systems and Native
 Level: 4
 Tier: extra
+Pos: 190 1837
 
 Name: Swift
 Category: Programming Languages
 Subcategory: Apple Platforms
 Level: 3
 Tier: extra
+Pos: 380 1837
 
 Name: JavaScript
 Category: Programming Languages
@@ -362,6 +430,7 @@ Subcategory: Web
 Level: 3
 Tier: extra
 Requires: HTML
+Pos: 1813 777
 
 Name: TypeScript
 Category: Programming Languages
@@ -369,6 +438,7 @@ Subcategory: Web
 Level: 3
 Tier: extra
 Requires: JavaScript
+Pos: 2034 777
 
 Name: Python
 Category: Programming Languages
@@ -376,6 +446,7 @@ Subcategory: Automation and Scripting
 Level: 2
 Tier: base
 Requires: Bash
+Pos: 1130 1041
 
 Name: Vim script
 Category: Programming Languages
@@ -383,6 +454,7 @@ Subcategory: Editor and Tooling Extension
 Level: 3
 Tier: extra
 Requires: Vim / MacVim
+Pos: 1813 270
 
 Name: SQL
 Category: Programming Languages
@@ -390,6 +462,7 @@ Subcategory: Data and Query
 Level: 3
 Tier: extra
 Requires: JSON
+Pos: 1813 578
 
 Name: JSON
 Category: Programming Languages
@@ -397,12 +470,14 @@ Subcategory: Data and Query
 Level: 2
 Tier: base
 Requires: Python
+Pos: 1365 578
 
 Name: YAML
 Category: Programming Languages
 Subcategory: Data and Query
 Level: 2
 Tier: extra
+Pos: 570 1837
 
 Name: SQLite
 Category: Programming Languages
@@ -410,6 +485,7 @@ Subcategory: Data and Query
 Level: 3
 Tier: extra
 Requires: SQL
+Pos: 2034 578
 
 Name: Lua
 Category: Programming Languages
@@ -417,6 +493,7 @@ Subcategory: Games and 2D Graphics
 Level: 2
 Tier: extra
 Requires: Python
+Pos: 1365 709
 
 Name: LÖVE (love2d)
 Category: Programming Languages
@@ -424,13 +501,15 @@ Subcategory: Games and 2D Graphics
 Level: 2
 Tier: extra
 Requires: Lua
+Pos: 1576 644
 
 Name: Fennel
 Category: Programming Languages
 Subcategory: Games and 2D Graphics
-Level: 3
+Level: 5
 Tier: max
 Requires: Lua
+Pos: 2470 709
 
 Name: Bevy
 Category: Programming Languages
@@ -438,12 +517,14 @@ Subcategory: Games and 2D Graphics
 Level: 5
 Tier: max
 Requires: Rust
+Pos: 2665 1049
 
 Name: Jai
 Category: Programming Languages
 Subcategory: Games and 2D Graphics
 Level: 4
 Tier: max
+Pos: 760 1837
 
 Name: Markdown
 Category: Formats
@@ -451,6 +532,7 @@ Subcategory: Markup, Data and Config
 Level: 1
 Tier: base
 Requires: Vim / MacVim
+Pos: 888 137
 
 Name: HTML
 Category: Formats
@@ -458,12 +540,14 @@ Subcategory: Markup, Data and Config
 Level: 2
 Tier: extra
 Requires: Python
+Pos: 1365 845
 
 Name: Makefile
 Category: Formats
 Subcategory: Markup, Data and Config
 Level: 3
 Tier: extra
+Pos: 950 1837
 
 Name: CSS
 Category: Formats
@@ -471,34 +555,48 @@ Subcategory: Markup, Data and Config
 Level: 3
 Tier: extra
 Requires: HTML
+Pos: 1813 845
 
 Name: TOML
 Category: Formats
 Subcategory: Markup, Data and Config
 Level: 1
 Tier: extra
+Pos: 0 1897
 
 Name: JSON Lines
 Category: Formats
 Subcategory: Markup, Data and Config
 Level: 1
 Tier: extra
+Pos: 190 1897
 
 Name: recfile (GNU recutils)
 Category: Formats
 Subcategory: Markup, Data and Config
 Level: 2
 Tier: extra
+Requires: Bash
 Note: plain-text records; recsel, recfix, rec2csv
+Pos: 1130 1117
 
 Name: LaTeX
 Category: Formats
 Subcategory: Markup, Data and Config
 Level: 4
 Tier: max
+Pos: 380 1897
 
 Name: PDF
 Category: Formats
 Subcategory: Publish
 Level: 1
 Tier: extra
+Pos: 570 1897
+
+Name: Computer
+Category: ROOT
+Subcategory: GUI
+Level: 1
+Tier: base
+Pos: 63 1514

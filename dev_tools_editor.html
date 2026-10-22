@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev Tools Editor</title>
+<!--
+  The node editor for dev_tools.rec, served by `./dev_tools.py serve`.
+  Every change is a POST to /api/edit and goes through the same checks as a
+  hand edit; a refused change is undone on screen and its reason shown.
+-->
+<style>
+  :root { --bg: #0f1115; --panel: #161a22; --text: #e6e6e6; --muted: #9aa3b2;
+          --line: #2a2f3a; --bad: #ff8a80; --pick: #ffd166; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+               font: 14px/1.4 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 3; display: flex; flex-wrap: wrap;
+           gap: 8px; align-items: center; padding: 10px 16px; background: rgba(15,17,21,.92);
+           border-bottom: 1px solid var(--line); }
+  header b { font-size: 16px; margin-right: 8px; }
+  button, .link { font: inherit; color: var(--text); background: transparent; cursor: pointer;
+                  border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; text-decoration: none; }
+  button[aria-pressed="true"] { background: var(--line); border-color: var(--muted); }
+  .hint { color: var(--muted); font-size: 12px; flex-basis: 100%; }
+  .legend { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { border-radius: 10px; padding: 1px 9px; font-size: 12px; }
+  #cy { position: absolute; inset: 0; }
+  #handle { position: absolute; z-index: 2; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+            border-radius: 50%; background: var(--pick); border: 2px solid var(--bg); cursor: crosshair;
+            display: none; }
+  #ghost { position: absolute; inset: 0; z-index: 2; pointer-events: none; width: 100%; height: 100%; }
+  #inline { position: absolute; z-index: 4; font: 13px Helvetica, Arial, sans-serif; text-align: center;
+            color: var(--text); background: var(--bg); border: 2px solid var(--pick); border-radius: 8px; }
+  #panel { position: fixed; z-index: 3; top: 0; right: 0; bottom: 0; width: 320px; overflow-y: auto;
+           background: var(--panel); border-left: 1px solid var(--line); padding: 16px; }
+  #panel h2 { margin: 0 0 4px; font-size: 16px; }
+  #panel h3 { font-size: 12px; color: var(--muted); margin: 14px 0 4px; }
+  #panel label { display: block; color: var(--muted); font-size: 12px; margin-top: 8px; }
+  #panel input, #panel select { display: block; width: 100%; margin-top: 2px; font: inherit; color: var(--text);
+           background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+  .row { display: flex; gap: 6px; margin-top: 10px; }
+  .pill { display: inline-flex; align-items: center; margin: 2px 4px 2px 0; font-size: 12px;
+          border: 1px solid var(--line); border-radius: 10px; padding: 1px 2px 1px 10px; }
+  .pill button { border: 0; padding: 0 6px; }
+  #err { color: var(--bad); white-space: pre-wrap; margin: 10px 0 0; }
+  #toast { position: fixed; z-index: 5; left: 16px; bottom: 16px; max-width: 560px; padding: 8px 14px;
+           border-radius: 8px; background: var(--panel); border: 1px solid var(--line); white-space: pre-wrap;
+           display: none; }
+  #toast.bad { border-color: var(--bad); color: var(--bad); }
+  @media (max-width: 640px) { #panel { width: 100%; } }
+</style>
+</head>
+<body>
+<div id="cy"></div>
+<svg id="ghost"><line id="ghostline" stroke="#ffd166" stroke-width="2" stroke-dasharray="6 4"/></svg>
+<div id="handle" title="Drag to another tool to connect"></div>
+<input id="inline" hidden>
+
+<header>
+  <b>Dev Tools Editor</b>
+  <span id="filters"></span>
+  <button type="button" id="new">+ Tool</button>
+  <button type="button" id="fit">Fit</button>
+  <button type="button" id="arrange">Auto-arrange</button>
+  <a class="link" href="/view" target="_blank">Charts</a>
+  <span class="legend" id="legend"></span>
+  <span class="hint">Drag nodes to move &middot; drag the yellow dot to connect &middot;
+    double-click a node to rename &middot; double-click the canvas to add &middot;
+    select and press Delete to remove &middot; outline: solid = Base, dashed = Max &middot;
+    arrow: dashed = any one of</span>
+</header>
+
+<aside id="panel" hidden>
+  <form id="form">
+    <h2 id="ptitle"></h2>
+    <label>Name <input name="name" required></label>
+    <label>Category <input name="category" list="cats" required></label>
+    <label>Subcategory <input name="subcategory" list="subcats"></label>
+    <label>Level <select name="level" id="level"></select></label>
+    <label>Tier <select name="tier" id="tier"></select></label>
+    <label>Url <input name="url"></label>
+    <label>Note <input name="note"></label>
+    <div id="links">
+      <h3>Requires</h3><div id="reqs"></div>
+      <h3>Required by</h3><div id="deps"></div>
+    </div>
+    <p id="err"></p>
+    <div class="row">
+      <button type="submit">Save</button>
+      <button type="button" id="del">Delete</button>
+      <button type="button" id="close">Close</button>
+    </div>
+  </form>
+</aside>
+<div id="toast"></div>
+<datalist id="cats"></datalist><datalist id="subcats"></datalist>
+
+<script src="/vendor/cytoscape.min.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const FIELDS = ["name", "category", "subcategory", "level", "tier", "url", "note"];
+  const cap = k => k[0].toUpperCase() + k.slice(1);
+  const alts = line => line.split("|").map(a => a.trim()).filter(Boolean);
+  let tools = {}, levels = {}, tiers = {}, tier = "max", picked = null, adding = null;
+
+  // --- Server -------------------------------------------------------------
+  async function edit(op, args) {
+    const r = await fetch("/api/edit", { method: "POST",
+      headers: { "Content-Type": "application/json", "X-Dev-Tools": "1" },
+      body: JSON.stringify({ op, args }) });
+    const out = await r.json();
+    if (!out.ok) throw new Error(out.problems.join("\n"));
+  }
+  // Run edits in order, then redraw from the file; on a refusal, redraw too,
+  // so the screen never shows a change the file does not have.
+  async function run(steps, select) {
+    try {
+      for (const [op, args] of steps) await edit(op, args);
+      await load(true, select);
+      return true;
+    } catch (e) {
+      toast(e.message, true);
+      await load(true, picked);
+      return false;
+    }
+  }
+  function toast(msg, bad) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.className = bad ? "bad" : "";
+    t.style.display = "block";
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => t.style.display = "none", bad ? 8000 : 2500);
+  }
+
+  // --- Graph --------------------------------------------------------------
+  const measure = document.createElement("canvas").getContext("2d");
+  measure.font = "13px Helvetica, Arial, sans-serif";
+  const width = name => Math.ceil(measure.measureText(name).width) + 28;
+
+  const cy = cytoscape({
+    container: $("cy"),
+    wheelSensitivity: 0.3,
+    boxSelectionEnabled: true,
+    style: [
+      { selector: "node", style: {
+          shape: "round-rectangle", width: "data(w)", height: 28, label: "data(id)",
+          "background-color": "data(color)", color: "#e6e6e6", "font-size": 13,
+          "font-family": "Helvetica, Arial, sans-serif", "text-valign": "center", "text-halign": "center",
+          "border-width": e => e.data("tier") === "extra" ? 0 : 2, "border-color": "#e6e6e6",
+          "border-style": e => e.data("tier") === "max" ? "dashed" : "solid" } },
+      { selector: "node:selected", style: { "border-width": 3, "border-color": "#ffd166", "border-style": "solid" } },
+      { selector: "edge", style: {
+          width: 1.5, "curve-style": "bezier", "line-color": "#9aa3b2", "target-arrow-color": "#9aa3b2",
+          "target-arrow-shape": "triangle", "arrow-scale": 0.9,
+          "line-style": e => e.data("alt") ? "dashed" : "solid" } },
+      { selector: "edge:selected", style: { width: 3, "line-color": "#ff8a80", "target-arrow-color": "#ff8a80" } },
+      { selector: ".hidden", style: { display: "none" } },
+    ],
+  });
+
+  async function load(keep, select) {
+    const data = await (await fetch("/api/graph")).json();
+    levels = data.levels; tiers = data.tiers;
+    tools = Object.fromEntries(data.tools.map(t => [t.Name, t]));
+    const els = [];
+    for (const t of data.tools) {
+      const [x, y] = data.positions[t.Name];
+      els.push({ group: "nodes", position: { x, y }, data: {
+        id: t.Name, w: width(t.Name), tier: t.Tier, color: levels[t.Level][1] } });
+    }
+    for (const t of data.tools)
+      for (const line of t.Requires || [])
+        for (const pre of alts(line))
+          els.push({ group: "edges", data: {
+            id: `${pre}→${t.Name}`, source: pre, target: t.Name, alt: alts(line).length > 1 } });
+    const view = keep && cy.nodes().length ? { zoom: cy.zoom(), pan: { ...cy.pan() } } : null;
+    cy.batch(() => { cy.elements().remove(); cy.add(els); });
+    filter(tier);
+    if (view) { cy.zoom(view.zoom); cy.pan(view.pan); } else cy.fit(cy.elements(":visible"), 60);
+    options("cats", data.tools.map(t => t.Category));
+    options("subcats", data.tools.map(t => t.Subcategory));
+    hideHandle();
+    if (select && tools[select]) { cy.$id(select).select(); open(select); } else close();
+  }
+  function options(id, values) {
+    $(id).replaceChildren(...[...new Set(values.filter(Boolean))].sort().map(v => {
+      const o = document.createElement("option"); o.value = v; return o; }));
+  }
+
+  // Tier filter: a view shows its tier and every tier before it.
+  function filter(t) {
+    tier = t;
+    const keep = Object.keys(tiers).slice(0, Object.keys(tiers).indexOf(t) + 1);
+    cy.nodes().forEach(n => n.toggleClass("hidden", !keep.includes(n.data("tier"))));
+    document.querySelectorAll("#filters button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tier === t));
+    try { localStorage.setItem("editor-tier", t); } catch (e) {}
+  }
+
+  // --- Moving: save where nodes are dropped, a burst at a time ------------
+  const moved = {};
+  cy.on("dragfree", "node", e => {
+    moved[e.target.id()] = [e.target.position("x"), e.target.position("y")];
+    clearTimeout(moved.timer);
+    moved.timer = setTimeout(async () => {
+      const positions = { ...moved }; delete positions.timer;
+      for (const k of Object.keys(positions)) delete moved[k];
+      try { await edit("move", { positions }); } catch (err) { toast(err.message, true); }
+    }, 300);
+  });
+
+  // --- Connecting: drag the yellow dot from one node to another -----------
+  const handle = $("handle"), line = $("ghostline");
+  let hover = null, source = null;
+  function showHandle(node) {
+    if (source) return;
+    hover = node;
+    const bb = node.renderedBoundingBox();
+    handle.style.left = bb.x2 + "px";
+    handle.style.top = (bb.y1 + bb.y2) / 2 + "px";
+    handle.style.display = "block";
+  }
+  function hideHandle() { if (!source) { handle.style.display = "none"; hover = null; } }
+  cy.on("mouseover", "node", e => showHandle(e.target));
+  // Leaving a node hides its dot, unless the pointer went onto the dot or
+  // has already reached another node, which owns the dot now.
+  cy.on("mouseout", "node", e => {
+    const left = e.target;
+    setTimeout(() => { if (hover === left && !handle.matches(":hover")) hideHandle(); }, 120);
+  });
+  cy.on("viewport drag", hideHandle);
+  handle.addEventListener("mouseleave", () => { if (!source) hideHandle(); });
+  handle.addEventListener("mousedown", e => {
+    e.preventDefault();
+    source = hover;
+    const p = source.renderedPosition();
+    line.setAttribute("x1", p.x); line.setAttribute("y1", p.y);
+    line.setAttribute("x2", e.clientX); line.setAttribute("y2", e.clientY);
+  });
+  document.addEventListener("mousemove", e => {
+    if (!source) return;
+    line.setAttribute("x2", e.clientX); line.setAttribute("y2", e.clientY);
+    handle.style.left = e.clientX + "px"; handle.style.top = e.clientY + "px";
+  });
+  document.addEventListener("mouseup", e => {
+    if (!source) return;
+    const from = source; source = null;
+    line.setAttribute("x2", line.getAttribute("x1")); line.setAttribute("y2", line.getAttribute("y1"));
+    hideHandle();
+    const rect = $("cy").getBoundingClientRect();
+    const at = { x: (e.clientX - rect.left - cy.pan().x) / cy.zoom(), y: (e.clientY - rect.top - cy.pan().y) / cy.zoom() };
+    const target = cy.nodes(":visible").filter(n => {
+      const bb = n.boundingBox();
+      return at.x >= bb.x1 && at.x <= bb.x2 && at.y >= bb.y1 && at.y <= bb.y2;
+    })[0];
+    if (!target || target.id() === from.id()) return;
+    run([["link", { pre: from.id(), name: target.id() }]], picked)
+      .then(ok => ok && toast(`${from.id()} → ${target.id()}`));
+  });
+
+  // --- Renaming in place: double-click a node ----------------------------
+  const inline = $("inline");
+  cy.on("dbltap", "node", e => {
+    const node = e.target, bb = node.renderedBoundingBox();
+    inline.hidden = false;
+    Object.assign(inline.style, { left: bb.x1 - 20 + "px", top: bb.y1 - 2 + "px",
+      width: bb.w + 40 + "px", height: bb.h + 4 + "px" });
+    inline.value = node.id();
+    inline.dataset.name = node.id();
+    inline.focus(); inline.select();
+  });
+  inline.addEventListener("keydown", e => {
+    if (e.key === "Escape") { inline.hidden = true; return; }
+    if (e.key !== "Enter") return;
+    const from = inline.dataset.name, to = inline.value.trim();
+    inline.hidden = true;
+    if (to && to !== from) run([["rename", { name: from, to }]], to);
+  });
+  inline.addEventListener("blur", () => { inline.hidden = true; });
+
+  // --- Adding: double-click the canvas, or + Tool -------------------------
+  cy.on("dbltap", e => { if (e.target === cy) startAdd(e.position); });
+  $("new").onclick = () => {
+    const ext = cy.extent();
+    startAdd({ x: (ext.x1 + ext.x2) / 2, y: (ext.y1 + ext.y2) / 2 });
+  };
+  function startAdd(pos) {
+    cy.$(":selected").unselect();
+    adding = pos;
+    open(null);
+  }
+
+  // --- Deleting: select nodes or arrows, press Delete ---------------------
+  document.addEventListener("keydown", e => {
+    if (!["Delete", "Backspace"].includes(e.key)) return;
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    const edges = cy.$("edge:selected"), nodes = cy.$("node:selected");
+    if (!edges.length && !nodes.length) return;
+    e.preventDefault();
+    const steps = edges.map(x => ["unlink", { pre: x.data("source"), name: x.data("target") }]);
+    if (nodes.length) {
+      const names = nodes.map(n => n.id());
+      if (!confirm(`Delete ${names.join(", ")} and every arrow from ${names.length > 1 ? "them" : "it"}?`)) return;
+      steps.push(...names.map(name => ["rm", { name }]));
+    }
+    run(steps).then(ok => ok && toast(`removed ${steps.length}`));
+  });
+
+  // --- The panel: fields of one selected node, or a new tool --------------
+  cy.on("select unselect", "node", () => {
+    const sel = cy.$("node:selected");
+    if (sel.length === 1) { adding = null; open(sel.id()); } else if (!adding) close();
+  });
+  function open(name) {
+    picked = name;
+    const t = tools[name] || { Level: "1", Tier: "extra" };
+    $("ptitle").textContent = name || "New tool";
+    for (const k of FIELDS) form.elements[k].value = t[cap(k)] || "";
+    $("links").hidden = !name;
+    $("del").hidden = !name;
+    $("err").textContent = "";
+    if (name) {
+      $("reqs").replaceChildren(...(t.Requires || []).flatMap(l => alts(l).map(pre =>
+        pill(pre + (alts(l).length > 1 ? " (any)" : ""), () => run([["unlink", { pre, name }]], name)))));
+      $("deps").replaceChildren(...Object.values(tools)
+        .filter(o => (o.Requires || []).some(l => alts(l).includes(name)))
+        .map(o => pill(o.Name, () => run([["unlink", { pre: name, name: o.Name }]], name))));
+    }
+    $("panel").hidden = false;
+    if (!name) form.elements.name.focus();
+  }
+  function close() { picked = null; adding = null; $("panel").hidden = true; }
+  function pill(text, remove) {
+    const el = document.createElement("span");
+    el.className = "pill";
+    el.textContent = text;
+    const x = document.createElement("button");
+    x.type = "button"; x.textContent = "×"; x.title = "remove this arrow"; x.onclick = remove;
+    el.append(x);
+    return el;
+  }
+  const form = $("form");
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(form));
+    if (!picked) {
+      const pos = adding ? [adding.x, adding.y] : null;
+      return run([["add", { ...v, pos }]], v.name.trim());
+    }
+    const steps = [];
+    let name = picked;
+    if (v.name.trim() !== picked) { steps.push(["rename", { name: picked, to: v.name }]); name = v.name.trim(); }
+    const set = { name };
+    for (const k of FIELDS.slice(1)) if ((tools[picked][cap(k)] || "") !== v[k]) set[k] = v[k];
+    if (Object.keys(set).length > 1) steps.push(["set", set]);
+    if (steps.length) run(steps, name).then(ok => ok && toast("saved"));
+  });
+  // A name already taken offers to edit that tool instead of failing on Save.
+  const key = n => n.split(/\s+/).filter(Boolean).join(" ").toLowerCase();
+  form.elements.name.addEventListener("input", () => {
+    if (picked) return;
+    const taken = Object.keys(tools).find(n => key(n) === key(form.elements.name.value));
+    $("err").replaceChildren();
+    if (!taken) return;
+    const go = document.createElement("button");
+    go.type = "button"; go.textContent = `Edit ${taken}`;
+    go.onclick = () => { adding = null; cy.$id(taken).select(); };
+    $("err").append(`${taken} is already in the list. `, go);
+  });
+  $("del").onclick = () => confirm(`Delete ${picked} and every arrow from it?`) && run([["rm", { name: picked }]]);
+  $("close").onclick = () => { cy.$(":selected").unselect(); close(); };
+
+  // --- Header -------------------------------------------------------------
+  $("fit").onclick = () => cy.fit(cy.elements(":visible"), 60);
+  $("arrange").onclick = () =>
+    confirm("Reset every position to the Graphviz layout?") && run([["layout", {}]]).then(() => cy.fit(cy.elements(":visible"), 60));
+
+  (async () => {
+    await load(false);
+    $("filters").replaceChildren(...Object.entries(tiers).map(([t, label]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.dataset.tier = t; b.textContent = `Filter: ${label}`;
+      b.onclick = () => { filter(t); cy.fit(cy.elements(":visible"), 60); };
+      return b;
+    }));
+    $("legend").replaceChildren(...Object.entries(levels).map(([n, [name, color]]) => {
+      const s = document.createElement("span");
+      s.className = "chip"; s.style.background = color; s.textContent = `L${n} ${name}`;
+      return s;
+    }));
+    $("level").replaceChildren(...Object.entries(levels).map(([n, [name]]) => new Option(`L${n} ${name}`, n)));
+    $("tier").replaceChildren(...Object.entries(tiers).map(([t, label]) => new Option(label, t)));
+    let saved = null;
+    try { saved = localStorage.getItem("editor-tier"); } catch (e) {}
+    filter(saved && saved in tiers ? saved : "max");
+    cy.fit(cy.elements(":visible"), 60);
+  })();
+</script>
+</body>
+</html>

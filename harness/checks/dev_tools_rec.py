@@ -51,7 +51,7 @@ def main() -> int:
     run = subprocess.run([sys.executable, "dev_tools.py", "--check"], capture_output=True, text=True)
     for line in run.stderr.splitlines():
         if line.startswith("dev_tools.rec: "):
-            print(f"{REC}:1: {line.removeprefix('dev_tools.rec: ')} - fix: edit the Requires, Level or Tier line")
+            print(f"{REC}:1: {line.removeprefix('dev_tools.rec: ')} - fix: edit the record in {REC}, or use ./dev_tools.py set|link|unlink|rm")
         elif line.endswith("- fix: ./dev_tools.py"):
             svg = line.split(" ", 1)[0]
             print(f"{svg}:1: stale against {REC} - fix: ./dev_tools.py")
