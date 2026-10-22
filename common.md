@@ -15,7 +15,7 @@ At session start, Read these files
 - [agent2 AGENTS.md](~/repos/agent2/AGENTS.md) - only if the file exists
 - Repo layout (`doc/`, `script/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
 - Tool configs live in `~/dot/config`, installed by `~/dot/script/install.py` (no symlinks). Read `~/dot/AGENTS.md` before searching for a tool's config.
-- Tool list: read [Dev Tools](dev_tools.md) before choosing a tool and prefer a tool listed there over an unlisted one.
+- Tool list: read [Dev Tools](dev_tools.rec) before choosing a tool and prefer a tool listed there over an unlisted one.
 - [Working Style](working_style.md)
 - [browser.md](browser.md) - maximize first, browser order, one-tab rule, window frames.
 

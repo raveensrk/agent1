@@ -1,0 +1,504 @@
+# Dev Tools
+#
+# List of dev tools I prefer. The list is ordered: highest preference comes
+# first, within each Category. The configuration in this repo mostly revolves
+# around these tools, and a few more. This file is under development, so more
+# tools will be added.
+#
+# Only current tools and AI tools go here. Tools I tried, used before, or want
+# to try go in work dev_tools_archive.md:
+# https://github.com/raveensrk/work/blob/main/deck/tools/dev_tools_archive.md
+# A tool lives in one file only.
+#
+# Level is how hard a tool is to learn well, not how much I prefer it:
+#   1 Beginner      useful within minutes
+#   2 Easy          the basics take a few hours
+#   3 Intermediate  takes days; has its own concepts or config to learn
+#   4 Advanced      takes weeks; needs a deep mental model
+#   5 Expert        takes months or years to master
+#
+# Tier is how much a tool matters to me, not how hard it is: base is the
+# core kit, extra adds what I use often, max is everything. Views build on
+# each other (extra shows base too), so a tool never requires one of a higher
+# tier.
+#
+# Requires is my own learning path: the tool must be known before this one.
+# Each Requires line must be met (AND); `A | B` on one line means either one
+# (OR). A prerequisite never has a higher Level than the tool it unlocks, and
+# a prerequisite already implied through another one is not repeated.
+#
+# Validate:  recfix --check dev_tools.rec
+# Query:     recsel -e 'Level = 1' -p Name dev_tools.rec
+# Charts:    ./dev_tools.py   (writes dev_tools.svg, the level map,
+#                              dev_tools_path.svg, the prerequisites, and
+#                              dev_tools.html, the prerequisites by tier)
+
+%rec: Tool
+%key: Name
+%type: Level range 1 5
+%type: Tier enum base extra max
+%mandatory: Name Category Level Tier
+%allowed: Name Category Subcategory Level Tier Requires Url Note
+
+Name: Touch Typing
+Category: Skills
+Level: 1
+Tier: base
+
+Name: Ghostty
+Category: Terminal
+Level: 1
+Tier: base
+Requires: Touch Typing
+Url: https://github.com/ghostty-org/ghostty
+
+Name: Vim / MacVim
+Category: Text Editing
+Level: 1
+Tier: base
+Requires: Ghostty
+
+Name: universal-ctags
+Category: Text Editing
+Level: 2
+Tier: extra
+Requires: Vim / MacVim
+
+Name: pi
+Category: AI
+Level: 2
+Tier: base
+Requires: Ghostty
+
+Name: Claude
+Category: AI
+Level: 2
+Tier: base
+Requires: Ghostty
+
+Name: Codex and ChatGPT
+Category: AI
+Level: 2
+Tier: extra
+Requires: Ghostty
+
+Name: Crush
+Category: AI
+Level: 2
+Tier: extra
+Requires: Ghostty
+Url: https://github.com/charmbracelet/crush
+
+Name: Herdr
+Category: AI
+Level: 3
+Tier: extra
+Requires: pi
+Requires: Claude
+Requires: Codex and ChatGPT
+Requires: Crush
+Note: terminal multiplexer for coding agents
+
+Name: models
+Category: AI
+Level: 1
+Tier: extra
+Url: https://github.com/reyamira/models
+Note: TUI and CLI for browsing AI models and comparing benchmarks
+
+Name: llmfit
+Category: AI
+Level: 1
+Tier: extra
+Url: https://github.com/AlexsJones/llmfit
+Note: TUI and CLI for finding LLMs that fit local hardware
+
+Name: Bash
+Category: Environment
+Level: 1
+Tier: base
+Requires: Ghostty
+Note: also stands for shell scripting; prefer Bash over POSIX sh
+
+Name: Git
+Category: Version Control
+Subcategory: CLI
+Level: 1
+Tier: base
+Requires: Bash
+
+Name: lazygit
+Category: Version Control
+Subcategory: TUI
+Level: 2
+Tier: extra
+Requires: Git
+
+Name: hledger
+Category: Finance
+Level: 3
+Tier: extra
+
+Name: Ledger CLI
+Category: Finance
+Level: 3
+Tier: extra
+
+Name: fzf
+Category: Command Line
+Level: 2
+Tier: max
+Requires: Bash
+
+Name: ripgrep
+Category: Command Line
+Level: 1
+Tier: base
+Requires: Bash
+
+Name: fd
+Category: Command Line
+Level: 1
+Tier: extra
+Requires: Bash
+
+Name: jq
+Category: Command Line
+Level: 3
+Tier: extra
+Requires: JSON
+
+Name: rsync
+Category: Command Line
+Level: 2
+Tier: extra
+Requires: Bash
+
+Name: GNU Stow
+Category: Command Line
+Level: 2
+Tier: extra
+Requires: Bash
+
+Name: Homebrew
+Category: Command Line
+Level: 1
+Tier: base
+Requires: Bash
+
+Name: mpv
+Category: Command Line
+Level: 1
+Tier: extra
+Requires: Bash
+
+Name: pandoc
+Category: Command Line
+Level: 3
+Tier: extra
+Requires: Markdown
+
+Name: urlview
+Category: Command Line
+Level: 1
+Tier: extra
+Requires: Bash
+
+Name: zoxide
+Category: Command Line
+Level: 1
+Tier: extra
+Requires: Bash
+
+Name: ranger
+Category: Command Line
+Level: 2
+Tier: extra
+Requires: Bash
+
+Name: tmux
+Category: Command Line
+Level: 5
+Tier: extra
+Requires: Bash
+
+Name: Firefox
+Category: Web Browser
+Level: 1
+Tier: base
+
+Name: Chrome
+Category: Web Browser
+Level: 1
+Tier: extra
+
+Name: Safari
+Category: Web Browser
+Level: 1
+Tier: extra
+
+Name: Himalaya
+Category: E-Mail
+Level: 2
+Tier: extra
+Url: https://github.com/pimalaya/himalaya
+
+Name: Himalaya-Tui
+Category: E-Mail
+Level: 2
+Tier: extra
+Requires: Himalaya
+Url: https://github.com/pimalaya/himalaya-tui
+
+Name: Mutt / Neomutt
+Category: E-Mail
+Level: 4
+Tier: extra
+
+Name: Bitwarden
+Category: Password Managers
+Level: 1
+Tier: base
+
+Name: newsboat
+Category: Reading and RSS
+Level: 2
+Tier: extra
+
+Name: WireGuard VPN
+Category: Network
+Level: 3
+Tier: extra
+
+Name: qBittorrent
+Category: Torrent
+Level: 1
+Tier: extra
+
+Name: Mermaid
+Category: Diagrams, Flowcharts and Drawings
+Subcategory: Diagram Formats
+Level: 2
+Tier: extra
+
+Name: SVG
+Category: Diagrams, Flowcharts and Drawings
+Subcategory: Diagram Formats
+Level: 3
+Tier: extra
+
+Name: Graphviz
+Category: Diagrams, Flowcharts and Drawings
+Subcategory: Diagram Formats
+Level: 3
+Tier: extra
+Url: https://graphviz.org
+Note: dot lays out dev_tools_path.svg
+
+Name: Excalidraw
+Category: Diagrams, Flowcharts and Drawings
+Subcategory: Drawing
+Level: 1
+Tier: extra
+Url: https://github.com/excalidraw/excalidraw
+Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
+
+Name: verible
+Category: Semiconductor
+Subcategory: SystemVerilog and UVM
+Level: 4
+Tier: base
+Requires: SystemVerilog
+
+Name: verilator
+Category: Semiconductor
+Subcategory: SystemVerilog and UVM
+Level: 4
+Tier: base
+Requires: SystemVerilog
+
+Name: SystemVerilog
+Category: Programming Languages
+Subcategory: Hardware Design and Verification
+Level: 3
+Tier: base
+Requires: Python
+
+Name: Zig
+Category: Programming Languages
+Subcategory: Systems and Native
+Level: 5
+Tier: max
+Requires: Python
+
+Name: Rust
+Category: Programming Languages
+Subcategory: Systems and Native
+Level: 5
+Tier: extra
+Requires: Python
+
+Name: Go
+Category: Programming Languages
+Subcategory: Systems and Native
+Level: 3
+Tier: extra
+
+Name: C
+Category: Programming Languages
+Subcategory: Systems and Native
+Level: 4
+Tier: extra
+
+Name: Swift
+Category: Programming Languages
+Subcategory: Apple Platforms
+Level: 3
+Tier: extra
+
+Name: JavaScript
+Category: Programming Languages
+Subcategory: Web
+Level: 3
+Tier: extra
+Requires: HTML
+
+Name: TypeScript
+Category: Programming Languages
+Subcategory: Web
+Level: 3
+Tier: extra
+Requires: JavaScript
+
+Name: Python
+Category: Programming Languages
+Subcategory: Automation and Scripting
+Level: 2
+Tier: base
+Requires: Bash
+
+Name: Vim script
+Category: Programming Languages
+Subcategory: Editor and Tooling Extension
+Level: 3
+Tier: extra
+Requires: Vim / MacVim
+
+Name: SQL
+Category: Programming Languages
+Subcategory: Data and Query
+Level: 3
+Tier: extra
+Requires: JSON
+
+Name: JSON
+Category: Programming Languages
+Subcategory: Data and Query
+Level: 2
+Tier: base
+Requires: Python
+
+Name: YAML
+Category: Programming Languages
+Subcategory: Data and Query
+Level: 2
+Tier: extra
+
+Name: SQLite
+Category: Programming Languages
+Subcategory: Data and Query
+Level: 3
+Tier: extra
+Requires: SQL
+
+Name: Lua
+Category: Programming Languages
+Subcategory: Games and 2D Graphics
+Level: 2
+Tier: extra
+Requires: Python
+
+Name: LÖVE (love2d)
+Category: Programming Languages
+Subcategory: Games and 2D Graphics
+Level: 2
+Tier: extra
+Requires: Lua
+
+Name: Fennel
+Category: Programming Languages
+Subcategory: Games and 2D Graphics
+Level: 3
+Tier: max
+Requires: Lua
+
+Name: Bevy
+Category: Programming Languages
+Subcategory: Games and 2D Graphics
+Level: 5
+Tier: max
+Requires: Rust
+
+Name: Jai
+Category: Programming Languages
+Subcategory: Games and 2D Graphics
+Level: 4
+Tier: max
+
+Name: Markdown
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 1
+Tier: base
+Requires: Vim / MacVim
+
+Name: HTML
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 2
+Tier: extra
+Requires: Python
+
+Name: Makefile
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 3
+Tier: extra
+
+Name: CSS
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 3
+Tier: extra
+Requires: HTML
+
+Name: TOML
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 1
+Tier: extra
+
+Name: JSON Lines
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 1
+Tier: extra
+
+Name: recfile (GNU recutils)
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 2
+Tier: extra
+Note: plain-text records; recsel, recfix, rec2csv
+
+Name: LaTeX
+Category: Formats
+Subcategory: Markup, Data and Config
+Level: 4
+Tier: max
+
+Name: PDF
+Category: Formats
+Subcategory: Publish
+Level: 1
+Tier: extra

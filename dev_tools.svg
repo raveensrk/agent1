@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1650" viewBox="0 0 1298 1650" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif">
+<rect width="1298" height="1650" fill="#0f1115"/>
+<text x="24" y="48" fill="#e6e6e6" font-size="22" font-weight="600">Dev Tools by Level</text>
+<text x="24" y="68" fill="#9aa3b2" font-size="13">Generated from dev_tools.rec by dev_tools.py. Order within a cell is preference.</text>
+<rect x="278" y="84" width="192" height="32" rx="6" fill="#1f5f46"/>
+<text x="374.0" y="105.0" fill="#e6e6e6" font-size="14" font-weight="600" text-anchor="middle">L1 Beginner</text>
+<rect x="478" y="84" width="192" height="32" rx="6" fill="#1f4f6f"/>
+<text x="574.0" y="105.0" fill="#e6e6e6" font-size="14" font-weight="600" text-anchor="middle">L2 Easy</text>
+<rect x="678" y="84" width="192" height="32" rx="6" fill="#5f4f1f"/>
+<text x="774.0" y="105.0" fill="#e6e6e6" font-size="14" font-weight="600" text-anchor="middle">L3 Intermediate</text>
+<rect x="878" y="84" width="192" height="32" rx="6" fill="#6f341f"/>
+<text x="974.0" y="105.0" fill="#e6e6e6" font-size="14" font-weight="600" text-anchor="middle">L4 Advanced</text>
+<rect x="1078" y="84" width="192" height="32" rx="6" fill="#5f1f4f"/>
+<text x="1174.0" y="105.0" fill="#e6e6e6" font-size="14" font-weight="600" text-anchor="middle">L5 Expert</text>
+<line x1="24" y1="120" x2="1274" y2="120" stroke="#2a2f3a"/>
+<text x="24" y="143.0" fill="#e6e6e6" font-size="14" font-weight="600">Skills</text>
+<rect x="280" y="126" width="109" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="142.5" fill="#e6e6e6" font-size="13">Touch Typing</text>
+<line x1="24" y1="162" x2="1274" y2="162" stroke="#2a2f3a"/>
+<text x="24" y="185.0" fill="#e6e6e6" font-size="14" font-weight="600">Terminal</text>
+<rect x="280" y="168" width="72" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="184.5" fill="#e6e6e6" font-size="13">Ghostty</text>
+<line x1="24" y1="204" x2="1274" y2="204" stroke="#2a2f3a"/>
+<text x="24" y="227.0" fill="#e6e6e6" font-size="14" font-weight="600">Text Editing</text>
+<rect x="280" y="210" width="109" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="226.5" fill="#e6e6e6" font-size="13">Vim / MacVim</text>
+<rect x="480" y="210" width="131" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="226.5" fill="#e6e6e6" font-size="13">universal-ctags</text>
+<line x1="24" y1="246" x2="1274" y2="246" stroke="#2a2f3a"/>
+<text x="24" y="269.0" fill="#e6e6e6" font-size="14" font-weight="600">AI</text>
+<rect x="280" y="252" width="64" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="268.5" fill="#e6e6e6" font-size="13">models</text>
+<rect x="280" y="282" width="64" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="298.5" fill="#e6e6e6" font-size="13">llmfit</text>
+<rect x="480" y="252" width="35" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="268.5" fill="#e6e6e6" font-size="13">pi</text>
+<rect x="480" y="282" width="64" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="298.5" fill="#e6e6e6" font-size="13">Claude</text>
+<rect x="480" y="312" width="146" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="328.5" fill="#e6e6e6" font-size="13">Codex and ChatGPT</text>
+<rect x="480" y="342" width="57" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="358.5" fill="#e6e6e6" font-size="13">Crush</text>
+<rect x="680" y="252" width="57" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="268.5" fill="#e6e6e6" font-size="13">Herdr</text>
+<line x1="24" y1="378" x2="1274" y2="378" stroke="#2a2f3a"/>
+<text x="24" y="401.0" fill="#e6e6e6" font-size="14" font-weight="600">Environment</text>
+<rect x="280" y="384" width="50" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="400.5" fill="#e6e6e6" font-size="13">Bash</text>
+<line x1="24" y1="420" x2="1274" y2="420" stroke="#2a2f3a"/>
+<text x="24" y="443.0" fill="#e6e6e6" font-size="14" font-weight="600">Version Control</text>
+<rect x="280" y="426" width="42" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="442.5" fill="#e6e6e6" font-size="13">Git</text>
+<rect x="480" y="426" width="72" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="442.5" fill="#e6e6e6" font-size="13">lazygit</text>
+<line x1="24" y1="462" x2="1274" y2="462" stroke="#2a2f3a"/>
+<text x="24" y="485.0" fill="#e6e6e6" font-size="14" font-weight="600">Finance</text>
+<rect x="680" y="468" width="72" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="484.5" fill="#e6e6e6" font-size="13">hledger</text>
+<rect x="680" y="498" width="94" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="514.5" fill="#e6e6e6" font-size="13">Ledger CLI</text>
+<line x1="24" y1="534" x2="1274" y2="534" stroke="#2a2f3a"/>
+<text x="24" y="557.0" fill="#e6e6e6" font-size="14" font-weight="600">Command Line</text>
+<rect x="280" y="540" width="72" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="556.5" fill="#e6e6e6" font-size="13">ripgrep</text>
+<rect x="280" y="570" width="35" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="586.5" fill="#e6e6e6" font-size="13">fd</text>
+<rect x="280" y="600" width="79" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="616.5" fill="#e6e6e6" font-size="13">Homebrew</text>
+<rect x="280" y="630" width="42" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="646.5" fill="#e6e6e6" font-size="13">mpv</text>
+<rect x="280" y="660" width="72" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="676.5" fill="#e6e6e6" font-size="13">urlview</text>
+<rect x="280" y="690" width="64" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="706.5" fill="#e6e6e6" font-size="13">zoxide</text>
+<rect x="480" y="540" width="42" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="556.5" fill="#e6e6e6" font-size="13">fzf</text>
+<rect x="480" y="570" width="57" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="586.5" fill="#e6e6e6" font-size="13">rsync</text>
+<rect x="480" y="600" width="79" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="616.5" fill="#e6e6e6" font-size="13">GNU Stow</text>
+<rect x="480" y="630" width="64" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="646.5" fill="#e6e6e6" font-size="13">ranger</text>
+<rect x="680" y="540" width="35" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="556.5" fill="#e6e6e6" font-size="13">jq</text>
+<rect x="680" y="570" width="64" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="586.5" fill="#e6e6e6" font-size="13">pandoc</text>
+<rect x="1080" y="540" width="50" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="556.5" fill="#e6e6e6" font-size="13">tmux</text>
+<line x1="24" y1="726" x2="1274" y2="726" stroke="#2a2f3a"/>
+<text x="24" y="749.0" fill="#e6e6e6" font-size="14" font-weight="600">Web Browser</text>
+<rect x="280" y="732" width="72" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="748.5" fill="#e6e6e6" font-size="13">Firefox</text>
+<rect x="280" y="762" width="64" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="778.5" fill="#e6e6e6" font-size="13">Chrome</text>
+<rect x="280" y="792" width="64" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="808.5" fill="#e6e6e6" font-size="13">Safari</text>
+<line x1="24" y1="828" x2="1274" y2="828" stroke="#2a2f3a"/>
+<text x="24" y="851.0" fill="#e6e6e6" font-size="14" font-weight="600">E-Mail</text>
+<rect x="480" y="834" width="79" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="850.5" fill="#e6e6e6" font-size="13">Himalaya</text>
+<rect x="480" y="864" width="109" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="880.5" fill="#e6e6e6" font-size="13">Himalaya-Tui</text>
+<rect x="880" y="834" width="124" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="850.5" fill="#e6e6e6" font-size="13">Mutt / Neomutt</text>
+<line x1="24" y1="900" x2="1274" y2="900" stroke="#2a2f3a"/>
+<text x="24" y="923.0" fill="#e6e6e6" font-size="14" font-weight="600">Password Managers</text>
+<rect x="280" y="906" width="87" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="922.5" fill="#e6e6e6" font-size="13">Bitwarden</text>
+<line x1="24" y1="942" x2="1274" y2="942" stroke="#2a2f3a"/>
+<text x="24" y="965.0" fill="#e6e6e6" font-size="14" font-weight="600">Reading and RSS</text>
+<rect x="480" y="948" width="79" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="964.5" fill="#e6e6e6" font-size="13">newsboat</text>
+<line x1="24" y1="984" x2="1274" y2="984" stroke="#2a2f3a"/>
+<text x="24" y="1007.0" fill="#e6e6e6" font-size="14" font-weight="600">Network</text>
+<rect x="680" y="990" width="116" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1006.5" fill="#e6e6e6" font-size="13">WireGuard VPN</text>
+<line x1="24" y1="1026" x2="1274" y2="1026" stroke="#2a2f3a"/>
+<text x="24" y="1049.0" fill="#e6e6e6" font-size="14" font-weight="600">Torrent</text>
+<rect x="280" y="1032" width="101" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1048.5" fill="#e6e6e6" font-size="13">qBittorrent</text>
+<line x1="24" y1="1068" x2="1274" y2="1068" stroke="#2a2f3a"/>
+<text x="24" y="1091.0" fill="#e6e6e6" font-size="14" font-weight="600">Diagrams, Flowcharts and Drawings</text>
+<rect x="280" y="1074" width="94" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1090.5" fill="#e6e6e6" font-size="13">Excalidraw</text>
+<rect x="480" y="1074" width="72" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1090.5" fill="#e6e6e6" font-size="13">Mermaid</text>
+<rect x="680" y="1074" width="42" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1090.5" fill="#e6e6e6" font-size="13">SVG</text>
+<rect x="680" y="1104" width="79" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1120.5" fill="#e6e6e6" font-size="13">Graphviz</text>
+<line x1="24" y1="1140" x2="1274" y2="1140" stroke="#2a2f3a"/>
+<text x="24" y="1163.0" fill="#e6e6e6" font-size="14" font-weight="600">Semiconductor</text>
+<rect x="880" y="1146" width="72" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1162.5" fill="#e6e6e6" font-size="13">verible</text>
+<rect x="880" y="1176" width="87" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1192.5" fill="#e6e6e6" font-size="13">verilator</text>
+<line x1="24" y1="1212" x2="1274" y2="1212" stroke="#2a2f3a"/>
+<text x="24" y="1235.0" fill="#e6e6e6" font-size="14" font-weight="600">Programming Languages</text>
+<rect x="480" y="1218" width="64" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1234.5" fill="#e6e6e6" font-size="13">Python</text>
+<rect x="480" y="1248" width="50" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1264.5" fill="#e6e6e6" font-size="13">JSON</text>
+<rect x="480" y="1278" width="50" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1294.5" fill="#e6e6e6" font-size="13">YAML</text>
+<rect x="480" y="1308" width="42" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1324.5" fill="#e6e6e6" font-size="13">Lua</text>
+<rect x="480" y="1338" width="116" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1354.5" fill="#e6e6e6" font-size="13">LÖVE (love2d)</text>
+<rect x="680" y="1218" width="116" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1234.5" fill="#e6e6e6" font-size="13">SystemVerilog</text>
+<rect x="680" y="1248" width="35" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1264.5" fill="#e6e6e6" font-size="13">Go</text>
+<rect x="680" y="1278" width="57" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1294.5" fill="#e6e6e6" font-size="13">Swift</text>
+<rect x="680" y="1308" width="94" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1324.5" fill="#e6e6e6" font-size="13">JavaScript</text>
+<rect x="680" y="1338" width="94" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1354.5" fill="#e6e6e6" font-size="13">TypeScript</text>
+<rect x="680" y="1368" width="94" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1384.5" fill="#e6e6e6" font-size="13">Vim script</text>
+<rect x="680" y="1398" width="42" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1414.5" fill="#e6e6e6" font-size="13">SQL</text>
+<rect x="680" y="1428" width="64" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1444.5" fill="#e6e6e6" font-size="13">SQLite</text>
+<rect x="680" y="1458" width="64" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1474.5" fill="#e6e6e6" font-size="13">Fennel</text>
+<rect x="880" y="1218" width="27" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1234.5" fill="#e6e6e6" font-size="13">C</text>
+<rect x="880" y="1248" width="42" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1264.5" fill="#e6e6e6" font-size="13">Jai</text>
+<rect x="1080" y="1218" width="42" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="1234.5" fill="#e6e6e6" font-size="13">Zig</text>
+<rect x="1080" y="1248" width="50" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="1264.5" fill="#e6e6e6" font-size="13">Rust</text>
+<rect x="1080" y="1278" width="50" height="24" rx="12" fill="#5f1f4f"/>
+<text x="1090" y="1294.5" fill="#e6e6e6" font-size="13">Bevy</text>
+<line x1="24" y1="1494" x2="1274" y2="1494" stroke="#2a2f3a"/>
+<text x="24" y="1517.0" fill="#e6e6e6" font-size="14" font-weight="600">Formats</text>
+<rect x="280" y="1500" width="79" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1516.5" fill="#e6e6e6" font-size="13">Markdown</text>
+<rect x="280" y="1530" width="50" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1546.5" fill="#e6e6e6" font-size="13">TOML</text>
+<rect x="280" y="1560" width="94" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1576.5" fill="#e6e6e6" font-size="13">JSON Lines</text>
+<rect x="280" y="1590" width="42" height="24" rx="12" fill="#1f5f46"/>
+<text x="290" y="1606.5" fill="#e6e6e6" font-size="13">PDF</text>
+<rect x="480" y="1500" width="50" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1516.5" fill="#e6e6e6" font-size="13">HTML</text>
+<rect x="480" y="1530" width="183" height="24" rx="12" fill="#1f4f6f"/>
+<text x="490" y="1546.5" fill="#e6e6e6" font-size="13">recfile (GNU recutils)</text>
+<rect x="680" y="1500" width="79" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1516.5" fill="#e6e6e6" font-size="13">Makefile</text>
+<rect x="680" y="1530" width="42" height="24" rx="12" fill="#5f4f1f"/>
+<text x="690" y="1546.5" fill="#e6e6e6" font-size="13">CSS</text>
+<rect x="880" y="1500" width="57" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1516.5" fill="#e6e6e6" font-size="13">LaTeX</text>
+<line x1="274" y1="80" x2="274" y2="1626" stroke="#2a2f3a"/>
+<line x1="474" y1="80" x2="474" y2="1626" stroke="#2a2f3a"/>
+<line x1="674" y1="80" x2="674" y2="1626" stroke="#2a2f3a"/>
+<line x1="874" y1="80" x2="874" y2="1626" stroke="#2a2f3a"/>
+<line x1="1074" y1="80" x2="1074" y2="1626" stroke="#2a2f3a"/>
+<line x1="1274" y1="80" x2="1274" y2="1626" stroke="#2a2f3a"/>
+<line x1="24" y1="1626" x2="1274" y2="1626" stroke="#2a2f3a"/>
+</svg>
