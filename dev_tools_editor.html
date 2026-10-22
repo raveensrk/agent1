@@ -61,14 +61,16 @@
   <b>Dev Tools Editor</b>
   <span id="filters"></span>
   <button type="button" id="new">+ Tool</button>
+  <button type="button" id="group" title="Group the selected tools (G)">Group</button>
   <button type="button" id="fit">Fit</button>
   <button type="button" id="arrange">Auto-arrange</button>
   <a class="link" href="/view" target="_blank">Charts</a>
   <span class="legend" id="legend"></span>
   <span class="hint">Drag nodes to move &middot; drag the yellow dot to connect &middot;
-    double-click a node to rename &middot; double-click the canvas to add &middot;
-    select and press Delete to remove &middot; outline: solid = Base, dashed = Max &middot;
-    arrow: dashed = any one of</span>
+    double-click a node or box to rename &middot; double-click the canvas to add &middot;
+    shift-drag to select a box of nodes, then G to group &middot;
+    select and press Delete to remove (a box: ungroup) &middot; outline: solid = Base, dashed = Max &middot;
+    arrow: dashed = any one of &middot; an arrow to or from a box stands for every tool in it</span>
 </header>
 
 <aside id="panel" hidden>
@@ -81,6 +83,7 @@
     <label>Tier <select name="tier" id="tier"></select></label>
     <label>Url <input name="url"></label>
     <label>Note <input name="note"></label>
+    <label>Group <input name="group" list="groups" placeholder="none"></label>
     <div id="links">
       <h3>Requires</h3><div id="reqs"></div>
       <h3>Required by</h3><div id="deps"></div>
@@ -94,12 +97,13 @@
   </form>
 </aside>
 <div id="toast"></div>
-<datalist id="cats"></datalist><datalist id="subcats"></datalist>
+<datalist id="cats"></datalist><datalist id="subcats"></datalist><datalist id="groups"></datalist>
 
 <script src="/vendor/cytoscape.min.js"></script>
 <script>
   const $ = id => document.getElementById(id);
-  const FIELDS = ["name", "category", "subcategory", "level", "tier", "url", "note"];
+  const FIELDS = ["name", "category", "subcategory", "level", "tier", "url", "note", "group"];
+  const BOX = "group:";  // id prefix of a group box, so it never clashes with a tool
   const cap = k => k[0].toUpperCase() + k.slice(1);
   const alts = line => line.split("|").map(a => a.trim()).filter(Boolean);
   let tools = {}, levels = {}, tiers = {}, tier = "max", picked = null, adding = null;
@@ -112,11 +116,13 @@
     const out = await r.json();
     if (!out.ok) throw new Error(out.problems.join("\n"));
   }
-  // Run edits in order, then redraw from the file; on a refusal, redraw too,
-  // so the screen never shows a change the file does not have.
+  // Run a change, then redraw from the file; on a refusal, redraw too, so the
+  // screen never shows a change the file does not have. Several steps go as
+  // one batch, so they all apply or none do.
   async function run(steps, select) {
     try {
-      for (const [op, args] of steps) await edit(op, args);
+      if (steps.length === 1) await edit(...steps[0]);
+      else await edit("batch", { steps });
       await load(true, select);
       return true;
     } catch (e) {
@@ -145,12 +151,18 @@
     boxSelectionEnabled: true,
     style: [
       { selector: "node", style: {
-          shape: "round-rectangle", width: "data(w)", height: 28, label: "data(id)",
+          shape: "round-rectangle", width: "data(w)", height: 28, label: "data(label)",
           "background-color": "data(color)", color: "#e6e6e6", "font-size": 13,
           "font-family": "Helvetica, Arial, sans-serif", "text-valign": "center", "text-halign": "center",
           "border-width": e => e.data("tier") === "extra" ? 0 : 2, "border-color": "#e6e6e6",
           "border-style": e => e.data("tier") === "max" ? "dashed" : "solid" } },
       { selector: "node:selected", style: { "border-width": 3, "border-color": "#ffd166", "border-style": "solid" } },
+      { selector: "node[?box]", style: {
+          "background-color": "#1b2130", "background-opacity": 0.6, "border-width": 1.5,
+          "border-style": "dashed", "border-color": "#9aa3b2", color: "#9aa3b2", "font-size": 14,
+          "font-weight": "bold", "text-valign": "top", "text-halign": "center", "text-margin-y": -6,
+          padding: 18, "text-events": "yes" } },
+      { selector: "node[?box]:selected", style: { "border-color": "#ffd166", "border-width": 2 } },
       { selector: "edge", style: {
           width: 1.5, "curve-style": "bezier", "line-color": "#9aa3b2", "target-arrow-color": "#9aa3b2",
           "target-arrow-shape": "triangle", "arrow-scale": 0.9,
@@ -165,24 +177,55 @@
     levels = data.levels; tiers = data.tiers;
     tools = Object.fromEntries(data.tools.map(t => [t.Name, t]));
     const els = [];
+    for (const g of new Set(data.tools.map(t => t.Group).filter(Boolean)))
+      els.push({ group: "nodes", data: { id: BOX + g, label: g, box: true, w: 1 } });
     for (const t of data.tools) {
       const [x, y] = data.positions[t.Name];
       els.push({ group: "nodes", position: { x, y }, data: {
-        id: t.Name, w: width(t.Name), tier: t.Tier, color: levels[t.Level][1] } });
+        id: t.Name, label: t.Name, w: width(t.Name), tier: t.Tier, color: levels[t.Level][1],
+        ...(t.Group ? { parent: BOX + t.Group } : {}) } });
     }
-    for (const t of data.tools)
-      for (const line of t.Requires || [])
-        for (const pre of alts(line))
-          els.push({ group: "edges", data: {
-            id: `${pre}→${t.Name}`, source: pre, target: t.Name, alt: alts(line).length > 1 } });
+    // Arrows. When a tool points at every member of a group, or every member
+    // points at the same tool, one arrow to or from the box stands for them
+    // all; the file still holds one Requires per member.
+    const arrows = data.tools.flatMap(t => (t.Requires || []).flatMap(line =>
+      alts(line).map(pre => ({ pre, name: t.Name, alt: alts(line).length > 1 }))));
+    const solid = new Set(arrows.filter(a => !a.alt).map(a => `${a.pre}\n${a.name}`));
+    const bundled = new Set();
+    for (const [g, members] of Object.entries(groupsOf(data.tools))) {
+      if (members.length < 2) continue;
+      const inside = new Set(members);
+      for (const pre of new Set(arrows.map(a => a.pre)))
+        if (!inside.has(pre) && members.every(m => solid.has(`${pre}\n${m}`))) {
+          members.forEach(m => bundled.add(`${pre}\n${m}`));
+          els.push({ group: "edges", data: { id: `${pre}\u2192${BOX + g}`, source: pre, target: BOX + g,
+            bundle: members, dir: "in" } });
+        }
+      for (const name of new Set(arrows.map(a => a.name)))
+        if (!inside.has(name) && members.every(m => solid.has(`${m}\n${name}`))) {
+          members.forEach(m => bundled.add(`${m}\n${name}`));
+          els.push({ group: "edges", data: { id: `${BOX + g}\u2192${name}`, source: BOX + g, target: name,
+            bundle: members, dir: "out" } });
+        }
+    }
+    for (const a of arrows)
+      if (a.alt || !bundled.has(`${a.pre}\n${a.name}`))
+        els.push({ group: "edges", data: {
+          id: `${a.pre}\u2192${a.name}`, source: a.pre, target: a.name, alt: a.alt } });
     const view = keep && cy.nodes().length ? { zoom: cy.zoom(), pan: { ...cy.pan() } } : null;
     cy.batch(() => { cy.elements().remove(); cy.add(els); });
     filter(tier);
     if (view) { cy.zoom(view.zoom); cy.pan(view.pan); } else cy.fit(cy.elements(":visible"), 60);
     options("cats", data.tools.map(t => t.Category));
     options("subcats", data.tools.map(t => t.Subcategory));
+    options("groups", data.tools.map(t => t.Group));
     hideHandle();
     if (select && tools[select]) { cy.$id(select).select(); open(select); } else close();
+  }
+  function groupsOf(list) {
+    const out = {};
+    for (const t of list) if (t.Group) (out[t.Group] = out[t.Group] || []).push(t.Name);
+    return out;
   }
   function options(id, values) {
     $(id).replaceChildren(...[...new Set(values.filter(Boolean))].sort().map(v => {
@@ -193,7 +236,8 @@
   function filter(t) {
     tier = t;
     const keep = Object.keys(tiers).slice(0, Object.keys(tiers).indexOf(t) + 1);
-    cy.nodes().forEach(n => n.toggleClass("hidden", !keep.includes(n.data("tier"))));
+    cy.nodes("[!box]").forEach(n => n.toggleClass("hidden", !keep.includes(n.data("tier"))));
+    cy.nodes("[?box]").forEach(b => b.toggleClass("hidden", b.children(":visible").length === 0));
     document.querySelectorAll("#filters button").forEach(b => b.setAttribute("aria-pressed", b.dataset.tier === t));
     try { localStorage.setItem("editor-tier", t); } catch (e) {}
   }
@@ -201,7 +245,8 @@
   // --- Moving: save where nodes are dropped, a burst at a time ------------
   const moved = {};
   cy.on("dragfree", "node", e => {
-    moved[e.target.id()] = [e.target.position("x"), e.target.position("y")];
+    const nodes = e.target.data("box") ? e.target.children() : e.target;
+    nodes.forEach(n => { moved[n.id()] = [n.position("x"), n.position("y")]; });
     clearTimeout(moved.timer);
     moved.timer = setTimeout(async () => {
       const positions = { ...moved }; delete positions.timer;
@@ -216,7 +261,7 @@
   function showHandle(node) {
     if (source) return;
     hover = node;
-    const bb = node.renderedBoundingBox();
+    const bb = node.renderedBoundingBox({ includeLabels: false });
     handle.style.left = bb.x2 + "px";
     handle.style.top = (bb.y1 + bb.y2) / 2 + "px";
     handle.style.display = "block";
@@ -250,13 +295,24 @@
     hideHandle();
     const rect = $("cy").getBoundingClientRect();
     const at = { x: (e.clientX - rect.left - cy.pan().x) / cy.zoom(), y: (e.clientY - rect.top - cy.pan().y) / cy.zoom() };
-    const target = cy.nodes(":visible").filter(n => {
-      const bb = n.boundingBox();
+    const under = sel => cy.nodes(sel).filter(n => {
+      const bb = n.boundingBox({ includeLabels: false });
       return at.x >= bb.x1 && at.x <= bb.x2 && at.y >= bb.y1 && at.y <= bb.y2;
     })[0];
+    const target = under(":visible[!box]") || under(":visible[?box]");
     if (!target || target.id() === from.id()) return;
-    run([["link", { pre: from.id(), name: target.id() }]], picked)
-      .then(ok => ok && toast(`${from.id()} → ${target.id()}`));
+
+    // A box stands for its members: link each one, skipping arrows that
+    // exist already and arrows inside the group.
+    const members = n => n.data("box") ? n.children().map(c => c.id()) : [n.id()];
+    const has = (pre, name) => (tools[name].Requires || []).some(l => alts(l).length === 1 && alts(l)[0] === pre);
+    const steps = [];
+    for (const pre of members(from))
+      for (const name of members(target))
+        if (pre !== name && !members(from).includes(name) && !has(pre, name))
+          steps.push(["link", { pre, name }]);
+    if (!steps.length) return toast("Nothing to connect: those arrows exist already.", true);
+    run(steps, picked).then(ok => ok && toast(`${from.data("label")} \u2192 ${target.data("label")}`));
   });
 
   // --- Renaming in place: double-click a node ----------------------------
@@ -264,9 +320,11 @@
   cy.on("dbltap", "node", e => {
     const node = e.target, bb = node.renderedBoundingBox();
     inline.hidden = false;
-    Object.assign(inline.style, { left: bb.x1 - 20 + "px", top: bb.y1 - 2 + "px",
-      width: bb.w + 40 + "px", height: bb.h + 4 + "px" });
-    inline.value = node.id();
+    // A box's label sits on its top edge; a node's fills it.
+    const h = node.data("box") ? 28 : bb.h + 4;
+    Object.assign(inline.style, { left: bb.x1 - 20 + "px", top: (node.data("box") ? bb.y1 - 30 : bb.y1 - 2) + "px",
+      width: Math.max(bb.w + 40, 160) + "px", height: h + "px" });
+    inline.value = node.data("label");
     inline.dataset.name = node.id();
     inline.focus(); inline.select();
   });
@@ -275,6 +333,11 @@
     if (e.key !== "Enter") return;
     const from = inline.dataset.name, to = inline.value.trim();
     inline.hidden = true;
+    if (from.startsWith(BOX)) {
+      const group = from.slice(BOX.length);
+      if (to && to !== group) run([["regroup", { group, to }]], picked);
+      return;
+    }
     if (to && to !== from) run([["rename", { name: from, to }]], to);
   });
   inline.addEventListener("blur", () => { inline.hidden = true; });
@@ -295,10 +358,18 @@
   document.addEventListener("keydown", e => {
     if (!["Delete", "Backspace"].includes(e.key)) return;
     if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
-    const edges = cy.$("edge:selected"), nodes = cy.$("node:selected");
-    if (!edges.length && !nodes.length) return;
+    const edges = cy.$("edge:selected"), nodes = cy.$("node:selected[!box]"), boxes = cy.$("node:selected[?box]");
+    if (!edges.length && !nodes.length && !boxes.length) return;
     e.preventDefault();
-    const steps = edges.map(x => ["unlink", { pre: x.data("source"), name: x.data("target") }]);
+    const steps = edges.map(x => !x.data("bundle")
+      ? [["unlink", { pre: x.data("source"), name: x.data("target") }]]
+      : x.data("bundle").map(m => ["unlink", x.data("dir") === "in"
+          ? { pre: x.data("source"), name: m } : { pre: m, name: x.data("target") }])).flat();
+    if (boxes.length) {
+      const labels = boxes.map(b => b.data("label"));
+      if (!confirm(`Ungroup ${labels.join(", ")}? The tools stay.`)) return;
+      steps.push(...boxes.map(b => ["group", { names: b.children().map(c => c.id()), group: "" }]));
+    }
     if (nodes.length) {
       const names = nodes.map(n => n.id());
       if (!confirm(`Delete ${names.join(", ")} and every arrow from ${names.length > 1 ? "them" : "it"}?`)) return;
@@ -309,7 +380,7 @@
 
   // --- The panel: fields of one selected node, or a new tool --------------
   cy.on("select unselect", "node", () => {
-    const sel = cy.$("node:selected");
+    const sel = cy.$("node:selected[!box]");
     if (sel.length === 1) { adding = null; open(sel.id()); } else if (!adding) close();
   });
   function open(name) {
@@ -370,6 +441,24 @@
   });
   $("del").onclick = () => confirm(`Delete ${picked} and every arrow from it?`) && run([["rm", { name: picked }]]);
   $("close").onclick = () => { cy.$(":selected").unselect(); close(); };
+
+  // --- Grouping: select tools, then Group (or G) -------------------------
+  function groupSelected() {
+    const names = cy.$("node:selected[!box]").map(n => n.id());
+    if (!names.length) return toast("Select tools first: shift-drag a box around them, or shift-click.", true);
+    const known = [...new Set(Object.values(tools).map(t => t.Group).filter(Boolean))];
+    const name = prompt(`Group ${names.length} tool${names.length > 1 ? "s" : ""} as:` +
+      (known.length ? `\n(existing: ${known.join(", ")})` : ""), names.length ? (tools[names[0]].Group || "") : "");
+    if (name && name.trim()) run([["group", { names, group: name.trim() }]], null)
+      .then(ok => ok && toast(`grouped as ${name.trim()}`));
+  }
+  $("group").onclick = groupSelected;
+  document.addEventListener("keydown", e => {
+    if (e.key !== "g" || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+    groupSelected();
+  });
 
   // --- Header -------------------------------------------------------------
   $("fit").onclick = () => cy.fit(cy.elements(":visible"), 60);

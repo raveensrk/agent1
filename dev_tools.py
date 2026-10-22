@@ -42,6 +42,9 @@ Usage:
   ./dev_tools.py link PRE NAME        PRE -> NAME; "A | B" for any one of
   ./dev_tools.py unlink PRE NAME
   ./dev_tools.py rm NAME              also drops every arrow from it
+  ./dev_tools.py group GROUP NAME...  put tools in a group (a box in the editor)
+  ./dev_tools.py ungroup NAME...      take tools out of their group
+  ./dev_tools.py regroup GROUP NEW    rename a group
   ./dev_tools.py serve [--port P]     node editor at http://127.0.0.1:P: drag, connect,
                                       rename in place; positions saved as Pos
   ./dev_tools.py help                 this text
@@ -252,7 +255,7 @@ def validate(records):
 # recfix (the schema) and validate() (the arrows), and written only when both
 # pass; then the charts are redrawn. A record that changes is rewritten in
 # FIELDS order; every other line of the file is left as it was.
-FIELDS = ["Name", "Category", "Subcategory", "Level", "Tier", "Requires", "Url", "Note", "Pos"]
+FIELDS = ["Name", "Category", "Subcategory", "Level", "Tier", "Requires", "Url", "Note", "Group", "Pos"]
 REQUIRED = {"Name", "Category", "Level", "Tier"}
 
 
@@ -308,10 +311,47 @@ def edit(text, op, args):
       rm      name          also drops every arrow from it
       move    positions     {name: [x, y]}, the canvas Pos of each
       layout                every Pos reset to auto_positions()
+      group   names, group  put the tools in a group (a box in the editor);
+                            "" takes them out
+      regroup group, to     rename a group
+      batch   steps         [[op, args], ...] applied in order, checked as one
     Raises ValueError for a change that cannot apply.
     """
+    if op == "batch":
+        if not args.get("steps"):
+            raise ValueError("batch needs steps")
+        for step_op, step_args in args["steps"]:
+            if step_op == "batch":
+                raise ValueError("a batch cannot hold a batch")
+            text = edit(text, step_op, dict(step_args))
+        return text
+
     head, blocks = split(text)
     names = [dict(fields(b))["Name"] for b in blocks]
+
+    if op == "group":
+        group = " ".join(str(args.get("group") or "").split())
+        if not args.get("names"):
+            raise ValueError("group needs names")
+        for name in args["names"]:
+            i = find(blocks, name)
+            kept = [(k, v) for k, v in fields(blocks[i]) if k != "Group"]
+            blocks[i] = unfields(kept + ([("Group", group)] if group else []))
+        return join(head, blocks)
+
+    if op == "regroup":
+        old, new = args["group"], " ".join(str(args.get("to") or "").split())
+        if not new:
+            raise ValueError("regroup needs a new name")
+        hits = 0
+        for i, block in enumerate(blocks):
+            pairs = fields(block)
+            if ("Group", old) in pairs:
+                blocks[i] = unfields([(k, new if k == "Group" else v) for k, v in pairs])
+                hits += 1
+        if not hits:
+            raise ValueError(f"no group named {old!r}")
+        return join(head, blocks)
 
     if op in ("move", "layout"):
         moves = args.get("positions") if op == "move" else auto_positions(parse_text(text))
@@ -329,7 +369,7 @@ def edit(text, op, args):
         if name in names:
             raise ValueError(f"{name!r} already exists")
         pairs = [("Name", name)]
-        for key in ("category", "subcategory", "level", "tier", "url", "note"):
+        for key in ("category", "subcategory", "level", "tier", "url", "note", "group"):
             value = str(args.get(key) or "").strip()
             if value:
                 pairs.append((key.capitalize(), value))
@@ -440,7 +480,10 @@ def apply(op, args):
 
     with open(REC, "w", encoding="utf-8") as f:
         f.write(new)
-    if op not in ("move", "layout"):
+    # Layout-only edits leave the charts as they are.
+    layout = {"move", "layout", "group", "regroup"}
+    ops = [step[0] for step in args.get("steps", [])] if op == "batch" else [op]
+    if not set(ops) <= layout:
         draw(parse_text(new))
     return []
 
@@ -842,7 +885,7 @@ def main(argv):
     cmds = parser.add_subparsers(dest="cmd", metavar="command")
 
     # Edits: each is checked like a hand edit, then written and redrawn.
-    fieldopts = ("category", "subcategory", "level", "tier", "url", "note")
+    fieldopts = ("category", "subcategory", "level", "tier", "url", "note", "group")
     add = cmds.add_parser("add", help="add a tool")
     add.add_argument("name")
     for key in fieldopts:
@@ -860,6 +903,14 @@ def main(argv):
         cmd.add_argument("name")
     rm = cmds.add_parser("rm", help="delete a tool and every arrow from it")
     rm.add_argument("name")
+    grp = cmds.add_parser("group", help="put tools in a group, drawn as a box in the editor")
+    grp.add_argument("group")
+    grp.add_argument("names", nargs="+")
+    ungrp = cmds.add_parser("ungroup", help="take tools out of their group")
+    ungrp.add_argument("names", nargs="+")
+    regrp = cmds.add_parser("regroup", help="rename a group")
+    regrp.add_argument("group")
+    regrp.add_argument("to")
     serve_ = cmds.add_parser("serve", help="edit the graph in a browser (node editor)")
     serve_.add_argument("--port", type=int, default=PORT)
     opts = parser.parse_args(argv)
@@ -872,6 +923,8 @@ def main(argv):
         return serve(opts.port)
     if opts.cmd:
         args = {k: v for k, v in vars(opts).items() if k not in ("cmd", "check") and v is not None}
+        if opts.cmd == "ungroup":
+            opts.cmd, args["group"] = "group", ""
         if opts.cmd == "set" and len(args) == 1:
             parser.error("set needs at least one field")
         problems = apply(opts.cmd, args)
