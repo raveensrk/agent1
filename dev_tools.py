@@ -918,6 +918,9 @@ def main(argv):
     if not shutil.which("dot"):
         print("dev_tools.py: Graphviz dot not found - fix: brew install graphviz", file=sys.stderr)
         return 2
+    if not shutil.which("recfix"):
+        print("dev_tools.py: GNU recutils recfix not found - fix: brew install recutils", file=sys.stderr)
+        return 2
 
     if opts.cmd == "serve":
         return serve(opts.port)
