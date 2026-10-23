@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1632" viewBox="0 0 1298 1632" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif">
-<rect width="1298" height="1632" fill="#0f1115"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1704" viewBox="0 0 1298 1704" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif">
+<rect width="1298" height="1704" fill="#0f1115"/>
 <text x="24" y="48" fill="#e6e6e6" font-size="22" font-weight="600">Dev Tools by Level</text>
 <text x="24" y="68" fill="#9aa3b2" font-size="13">Generated from dev_tools.rec by dev_tools.py. Order within a cell is preference.</text>
 <rect x="278" y="84" width="192" height="32" rx="6" fill="#1f5f46"/>
@@ -200,11 +200,17 @@
 <text x="24" y="1589.0" fill="#e6e6e6" font-size="14" font-weight="600">ROOT</text>
 <rect x="280" y="1572" width="79" height="24" rx="12" fill="#1f5f46"/>
 <text x="290" y="1588.5" fill="#e6e6e6" font-size="13">Computer</text>
-<line x1="274" y1="80" x2="274" y2="1608" stroke="#2a2f3a"/>
-<line x1="474" y1="80" x2="474" y2="1608" stroke="#2a2f3a"/>
-<line x1="674" y1="80" x2="674" y2="1608" stroke="#2a2f3a"/>
-<line x1="874" y1="80" x2="874" y2="1608" stroke="#2a2f3a"/>
-<line x1="1074" y1="80" x2="1074" y2="1608" stroke="#2a2f3a"/>
-<line x1="1274" y1="80" x2="1274" y2="1608" stroke="#2a2f3a"/>
 <line x1="24" y1="1608" x2="1274" y2="1608" stroke="#2a2f3a"/>
+<text x="24" y="1631.0" fill="#e6e6e6" font-size="14" font-weight="600">Code Forge</text>
+<rect x="880" y="1614" width="72" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1630.5" fill="#e6e6e6" font-size="13">Forgejo</text>
+<rect x="880" y="1644" width="35" height="24" rx="12" fill="#6f341f"/>
+<text x="890" y="1660.5" fill="#e6e6e6" font-size="13">fj</text>
+<line x1="274" y1="80" x2="274" y2="1680" stroke="#2a2f3a"/>
+<line x1="474" y1="80" x2="474" y2="1680" stroke="#2a2f3a"/>
+<line x1="674" y1="80" x2="674" y2="1680" stroke="#2a2f3a"/>
+<line x1="874" y1="80" x2="874" y2="1680" stroke="#2a2f3a"/>
+<line x1="1074" y1="80" x2="1074" y2="1680" stroke="#2a2f3a"/>
+<line x1="1274" y1="80" x2="1274" y2="1680" stroke="#2a2f3a"/>
+<line x1="24" y1="1680" x2="1274" y2="1680" stroke="#2a2f3a"/>
 </svg>
