@@ -1,37 +1,35 @@
 # Dev Tools
 #
-# List of dev tools I prefer. The list is ordered: highest preference comes
-# first, within each Category. The configuration in this repo mostly revolves
-# around these tools, and a few more. This file is under development, so more
-# tools will be added.
+# List of dev tools I prefer. The list is ordered: of two tools that share a
+# tag, the one written first is preferred. The configuration in this repo
+# mostly revolves around these tools, and a few more. This file is under
+# development, so more tools will be added.
 #
 # Only current tools and AI tools go here. Tools I tried, used before, or want
 # to try go in work dev_tools_archive.md:
 # https://github.com/raveensrk/work/blob/main/deck/tools/dev_tools_archive.md
 # A tool lives in one file only.
 #
-# Level is how hard a tool is to learn well, not how much I prefer it:
-#   1 Beginner      useful within minutes
-#   2 Easy          the basics take a few hours
-#   3 Intermediate  takes days; has its own concepts or config to learn
-#   4 Advanced      takes weeks; needs a deep mental model
-#   5 Expert        takes months or years to master
-#
-# Tier is how much a tool matters to me, not how hard it is: base is the
-# core kit, extra adds what I use often, max is everything. Views build on
-# each other (extra shows base too), so a tool never requires one of a higher
-# tier.
+# Tags say what a tool is; any word or phrase, one Tag line each. They began
+# as the old fields, so these mean what they meant:
+#   base, extra, max       how much a tool matters: the core kit, what I use
+#                          often, everything (the first tag; it sets the colour)
+#   beginner               useful within minutes
+#   easy                   the basics take a few hours
+#   intermediate           takes days; has its own concepts or config to learn
+#   advanced               takes weeks; needs a deep mental model
+#   expert                 takes months or years to master
+#   Terminal, AI, ...      what kind of tool it is
 #
 # The learning path is the Edge records: From must be known before To. Every
 # edge into a tool is required (AND); edges that share an Any value are
-# either-one (OR). A prerequisite never has a higher Level or Tier than the
-# tool it unlocks, there are no loops, and a prerequisite already implied
+# either-one (OR). There are no loops, and a prerequisite already implied
 # through another one is not repeated. The %graph lines say so, and
 # draw_graph enforces them.
 #
 # Edit:   draw_graph dev_tools.rec   (a graph editor: https://github.com/raveensrk/draw_graph)
 # Check:  draw_graph check dev_tools.rec
-# Query:  recsel -t Node -e 'Level = 1' -p Name dev_tools.rec
+# Query:  recsel -t Node -e 'Tag = "base"' -p Name dev_tools.rec
 #         recsel -t Edge -e 'To = "Rust"' -p From dev_tools.rec
 # Pos is where draw_graph shows a tool, `x y` in px; layout only. Group puts
 # a tool in a named box (Group: Browser).
@@ -51,539 +49,537 @@ Name: VPN
 
 %rec: Node
 %key: Name
-%type: Level range 1 5
-%type: Tier enum base extra max
 %type: Group rec Group
 %type: Pos regexp /^-?[0-9]+ -?[0-9]+$/
-%mandatory: Name Category Level Tier
-%allowed: Name Category Subcategory Level Tier Url Note Group Pos
+%mandatory: Name
+%allowed: Name Tag Url Note Group Pos
 %graph: label Name
-%graph: color Level
-%graph: filter Tier
+%graph: tag Tag
+%graph: color Tag
 %graph: group Group
 %graph: pos Pos
 
 Name: Touch Typing
-Category: Skills
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Skills
 Pos: 279 1960
 
 Name: Ghostty
-Category: Terminal
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Terminal
 Url: https://github.com/ghostty-org/ghostty
-Pos: 478 1960
+Pos: 466 1932
 
 Name: Vim / MacVim
-Category: Text Editing
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Text Editing
 Pos: 677 305
 
 Name: universal-ctags
-Category: Text Editing
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Text Editing
 Pos: 1130 270
 
 Name: pi
-Category: AI
-Level: 2
-Tier: base
+Tag: base
+Tag: easy
+Tag: AI
 Pos: 1130 1892
 
 Name: Claude
-Category: AI
-Level: 2
-Tier: base
-Pos: 1130 1960
+Tag: base
+Tag: easy
+Tag: AI
+Pos: 1144 1958
 
 Name: Codex and ChatGPT
-Category: AI
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: AI
 Pos: 1130 2028
 
 Name: Crush
-Category: AI
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: AI
 Url: https://github.com/charmbracelet/crush
 Pos: 1130 2096
 
 Name: Herdr
-Category: AI
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: AI
 Note: terminal multiplexer for coding agents
 Pos: 1814 1994
 
 Name: models
-Category: AI
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: AI
 Url: https://github.com/reyamira/models
 Note: TUI and CLI for browsing AI models and comparing benchmarks
 Group: LLM data
 Pos: 888 432
 
 Name: llmfit
-Category: AI
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: AI
 Url: https://github.com/AlexsJones/llmfit
 Note: TUI and CLI for finding LLMs that fit local hardware
 Group: LLM data
 Pos: 888 494
 
 Name: Bash
-Category: Environment
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Environment
 Note: also stands for shell scripting; prefer Bash over POSIX sh
 Pos: 677 1094
 
 Name: Git
-Category: Version Control
-Subcategory: CLI
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Version Control
+Tag: CLI
 Pos: 888 557
 
 Name: lazygit
-Category: Version Control
-Subcategory: TUI
-Level: 2
-Tier: base
+Tag: base
+Tag: easy
+Tag: Version Control
+Tag: TUI
 Pos: 1130 482
 
 Name: hledger
-Category: Finance
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Finance
 Pos: 2035 1620
 
 Name: Ledger CLI
-Category: Finance
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Finance
 Pos: 1814 1620
 
 Name: fzf
-Category: Command Line
-Level: 2
-Tier: max
+Tag: max
+Tag: easy
+Tag: Command Line
 Pos: 1130 1061
 
 Name: ripgrep
-Category: Command Line
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Command Line
 Pos: 888 620
 
 Name: fd
-Category: Command Line
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Command Line
 Pos: 888 682
 
 Name: jq
-Category: Command Line
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Command Line
 Pos: 1814 537
 
 Name: rsync
-Category: Command Line
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Command Line
 Pos: 1130 1129
 
 Name: GNU Stow
-Category: Command Line
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Command Line
 Pos: 1130 1197
 
 Name: Homebrew
-Category: Command Line
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Command Line
 Pos: 888 745
 
 Name: mpv
-Category: Command Line
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Command Line
 Pos: 888 808
 
 Name: pandoc
-Category: Command Line
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Command Line
 Pos: 1814 137
 
 Name: urlview
-Category: Command Line
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Command Line
 Pos: 888 870
 
 Name: zoxide
-Category: Command Line
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Command Line
 Pos: 888 933
 
 Name: ranger
-Category: Command Line
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Command Line
 Pos: 1130 1262
 
 Name: tmux
-Category: Command Line
-Level: 5
-Tier: extra
+Tag: extra
+Tag: expert
+Tag: Command Line
 Pos: 2629 1824
 
 Name: Firefox
-Category: Web Browser
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Web Browser
 Group: Browser
 Pos: 300 2045
 
 Name: Chrome
-Category: Web Browser
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Web Browser
 Group: Browser
 Pos: 279 2085
 
 Name: Safari
-Category: Web Browser
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Web Browser
 Group: Browser
 Pos: 279 2148
 
 Name: Himalaya
-Category: E-Mail
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya
 Pos: 1327 2134
 
 Name: Himalaya-Tui
-Category: E-Mail
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya-tui
 Pos: 1576 2162
 
 Name: Mutt / Neomutt
-Category: E-Mail
-Level: 5
-Tier: extra
+Tag: extra
+Tag: expert
+Tag: E-Mail
 Pos: 2629 2228
 
 Name: Bitwarden
-Category: Password Managers
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Password Managers
 Pos: 279 2210
 
 Name: newsboat
-Category: Reading and RSS
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Reading and RSS
 Pos: 1130 2164
 
 Name: WireGuard VPN
-Category: Network
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Network
 Group: VPN
 Pos: 1814 1688
 
 Name: Tailscale
-Category: Network
-Subcategory: Web
-Level: 3
-Tier: base
+Tag: base
+Tag: intermediate
+Tag: Network
+Tag: Web
 Group: VPN
 Pos: 1814 1756
 
 Name: qBittorrent
-Category: Torrent
-Level: 1
-Tier: extra
+Tag: extra
+Tag: beginner
+Tag: Torrent
 Pos: 279 2273
 
 Name: Mermaid
-Category: Diagrams, Flowcharts and Drawings
-Subcategory: Diagram Formats
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Diagrams, Flowcharts and Drawings
+Tag: Diagram Formats
 Pos: 1130 72
 
 Name: SVG
-Category: Diagrams, Flowcharts and Drawings
-Subcategory: Diagram Formats
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Diagrams, Flowcharts and Drawings
+Tag: Diagram Formats
 Pos: 1814 473
 
 Name: Graphviz
-Category: Diagrams, Flowcharts and Drawings
-Subcategory: Diagram Formats
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Diagrams, Flowcharts and Drawings
+Tag: Diagram Formats
 Url: https://graphviz.org
 Note: dot lays out dev_tools_path.svg
 Pos: 1814 640
 
 Name: Excalidraw
-Category: Diagrams, Flowcharts and Drawings
-Subcategory: Drawing
-Level: 4
-Tier: extra
+Tag: extra
+Tag: advanced
+Tag: Diagrams, Flowcharts and Drawings
+Tag: Drawing
 Url: https://github.com/excalidraw/excalidraw
 Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
 Pos: 2245 474
 
 Name: verible
-Category: Semiconductor
-Subcategory: SystemVerilog and UVM
-Level: 4
-Tier: base
+Tag: base
+Tag: advanced
+Tag: Semiconductor
+Tag: SystemVerilog and UVM
 Pos: 2245 1144
 
 Name: verilator
-Category: Semiconductor
-Subcategory: SystemVerilog and UVM
-Level: 4
-Tier: base
+Tag: base
+Tag: advanced
+Tag: Semiconductor
+Tag: SystemVerilog and UVM
 Pos: 2245 1212
 
 Name: SystemVerilog
-Category: Programming Languages
-Subcategory: Hardware Design and Verification
-Level: 3
-Tier: base
+Tag: base
+Tag: intermediate
+Tag: Programming Languages
+Tag: Hardware Design and Verification
 Pos: 1814 1212
 
 Name: Zig
-Category: Programming Languages
-Subcategory: Systems and Native
-Level: 5
-Tier: max
+Tag: max
+Tag: expert
+Tag: Programming Languages
+Tag: Systems and Native
 Pos: 2629 1348
 
 Name: Rust
-Category: Programming Languages
-Subcategory: Systems and Native
-Level: 5
-Tier: extra
+Tag: extra
+Tag: expert
+Tag: Programming Languages
+Tag: Systems and Native
 Pos: 2629 1416
 
 Name: Go
-Category: Programming Languages
-Subcategory: Systems and Native
-Level: 5
-Tier: extra
+Tag: extra
+Tag: expert
+Tag: Programming Languages
+Tag: Systems and Native
 Pos: 2629 1484
 
 Name: C
-Category: Programming Languages
-Subcategory: Systems and Native
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Programming Languages
+Tag: Systems and Native
 Pos: 792 1359
 
 Name: Swift
-Category: Programming Languages
-Subcategory: Apple Platforms
-Level: 5
-Tier: max
+Tag: max
+Tag: expert
+Tag: Programming Languages
+Tag: Apple Platforms
 Pos: 2629 1552
 
 Name: JavaScript
-Category: Programming Languages
-Subcategory: Web
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Programming Languages
+Tag: Web
 Pos: 1814 1076
 
 Name: TypeScript
-Category: Programming Languages
-Subcategory: Web
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Programming Languages
+Tag: Web
 Pos: 2035 1076
 
 Name: Python
-Category: Programming Languages
-Subcategory: Automation and Scripting
-Level: 2
-Tier: base
+Tag: base
+Tag: easy
+Tag: Programming Languages
+Tag: Automation and Scripting
 Pos: 1130 1388
 
 Name: Vim script
-Category: Programming Languages
-Subcategory: Editor and Tooling Extension
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Programming Languages
+Tag: Editor and Tooling Extension
 Pos: 1814 338
 
 Name: SQL
-Category: Programming Languages
-Subcategory: Data and Query
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Programming Languages
+Tag: Data and Query
 Pos: 1814 741
 
 Name: JSON
-Category: Programming Languages
-Subcategory: Data and Query
-Level: 2
-Tier: base
+Tag: base
+Tag: easy
+Tag: Programming Languages
+Tag: Data and Query
 Pos: 1365 741
 
 Name: YAML
-Category: Programming Languages
-Subcategory: Data and Query
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Programming Languages
+Tag: Data and Query
 Pos: 1576 472
 
 Name: SQLite
-Category: Programming Languages
-Subcategory: Data and Query
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Programming Languages
+Tag: Data and Query
 Pos: 2035 741
 
 Name: Lua
-Category: Programming Languages
-Subcategory: Games and 2D Graphics
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Programming Languages
+Tag: Games and 2D Graphics
 Pos: 1365 1008
 
 Name: LÖVE (love2d)
-Category: Programming Languages
-Subcategory: Games and 2D Graphics
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Programming Languages
+Tag: Games and 2D Graphics
 Pos: 1576 942
 
 Name: Fennel
-Category: Programming Languages
-Subcategory: Games and 2D Graphics
-Level: 5
-Tier: max
+Tag: max
+Tag: expert
+Tag: Programming Languages
+Tag: Games and 2D Graphics
 Pos: 2629 1008
 
 Name: Bevy
-Category: Programming Languages
-Subcategory: Games and 2D Graphics
-Level: 5
-Tier: max
+Tag: max
+Tag: expert
+Tag: Programming Languages
+Tag: Games and 2D Graphics
 Pos: 2824 1416
 
 Name: Jai
-Category: Programming Languages
-Subcategory: Games and 2D Graphics
-Level: 4
-Tier: max
+Tag: max
+Tag: advanced
+Tag: Programming Languages
+Tag: Games and 2D Graphics
 Pos: 2245 1280
 
 Name: Markdown
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 888 172
 
 Name: HTML
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 1365 1144
 
 Name: Makefile
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 2
-Tier: base
+Tag: base
+Tag: easy
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 1130 1469
 
 Name: CSS
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 1814 1144
 
 Name: TOML
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 1814 809
 
 Name: JSON Lines
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 3
-Tier: extra
+Tag: extra
+Tag: intermediate
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 1814 877
 
 Name: recfile (GNU recutils)
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 2
-Tier: extra
+Tag: extra
+Tag: easy
+Tag: Formats
+Tag: Markup, Data and Config
 Note: plain-text records; recsel, recfix, rec2csv
 Pos: 1130 1325
 
 Name: LaTeX
-Category: Formats
-Subcategory: Markup, Data and Config
-Level: 3
-Tier: max
+Tag: max
+Tag: intermediate
+Tag: Formats
+Tag: Markup, Data and Config
 Pos: 1886 202
 
 Name: PDF
-Category: Formats
-Subcategory: Publish
-Level: 4
-Tier: max
+Tag: max
+Tag: advanced
+Tag: Formats
+Tag: Publish
 Pos: 2245 205
 
 Name: Computer
-Category: ROOT
-Subcategory: GUI
-Level: 1
-Tier: base
+Tag: base
+Tag: beginner
+Tag: ROOT
+Tag: GUI
 Pos: 63 2117
 
 Name: Forgejo
-Category: Code Forge
-Level: 4
-Tier: base
+Tag: base
+Tag: advanced
+Tag: Code Forge
 Pos: 2245 406
 
 Name: fj
-Category: Code Forge
-Subcategory: CLI
-Level: 4
-Tier: base
+Tag: base
+Tag: advanced
+Tag: Code Forge
+Tag: CLI
 Pos: 2434 406
 
 %rec: Edge
@@ -591,7 +587,6 @@ Pos: 2434 406
 %mandatory: From To
 %allowed: From To Any Note
 %graph: acyclic
-%graph: rise Level Tier
 %graph: no_implied
 
 From: Computer
