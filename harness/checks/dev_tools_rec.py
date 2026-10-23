@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-# harness-check: {"id": "dev_tools_rec", "applies": ["dev_tools.rec", "dev_tools.svg", "dev_tools_path.svg", "dev_tools.html", "dev_tools.py"], "quadrant": "feedback/computational"}
-"""dev_tools.rec obeys its schema and its learning path, and both charts are drawn from it.
+# harness-check: {"id": "dev_tools_rec", "applies": ["dev_tools.rec"], "quadrant": "feedback/computational"}
+"""dev_tools.rec obeys its schema and its learning path.
 
-dev_tools.rec is the one file that lists the tools; its %type, %mandatory and
-%allowed lines are the rules (Level 1-5, no unknown or misspelt fields, unique
-names), and recfix decides them. The Requires lines carry rules recfix cannot
-see - known names, no prerequisite above its tool's level or tier, no loops,
-no arrow implied through another - and dev_tools.py --check decides those.
-The charts (dev_tools.svg, dev_tools_path.svg, dev_tools.html) are generated
-by dev_tools.py, so a hand edit to either side, or a record edit without a
-redraw, is a finding.
+dev_tools.rec is the one file that lists the tools, as a draw_graph document:
+Node records for the tools, Edge records for the learning path, Group records
+for the boxes. recfix decides the schema (%type, %mandatory, %allowed);
+draw_graph check decides what recfix cannot see - edge ends that name real
+tools, no prerequisite above its tool's Level or Tier, no loops, no edge
+implied through another - from the file's own %graph lines.
 
-Runs once per repo however many of these files changed: the findings are
-about the data and its charts together, not about one path.
+Runs once per repo however many files changed: the findings are about the
+data, not about one path.
 
     dev_tools_rec.py FILE...      (or paths on stdin)
 """
@@ -24,6 +22,7 @@ import subprocess
 import sys
 
 REC = "dev_tools.rec"
+INSTALL = "cd ~/repos/draw_graph/app && cargo tauri build --no-bundle && cp ../target/release/draw_graph ~/.local/bin/"
 
 # Paths arrive on stdin from the dispatcher, or as arguments when run by hand.
 FILES = sys.argv[1:]
@@ -46,17 +45,17 @@ def main() -> int:
         print(f"{REC}:1: recfix --check failed: {err} - fix: correct the record, then recfix --check {REC}")
         return 0
 
-    # Learning path and freshness: the generator validates the Requires lines,
-    # then compares its charts with the files on disk, one stderr line each.
-    run = subprocess.run([sys.executable, "dev_tools.py", "--check"], capture_output=True, text=True)
-    for line in run.stderr.splitlines():
-        if line.startswith("dev_tools.rec: "):
-            print(f"{REC}:1: {line.removeprefix('dev_tools.rec: ')} - fix: edit the record in {REC}, or use ./dev_tools.py set|link|unlink|rm")
-        elif line.endswith("- fix: ./dev_tools.py"):
-            svg = line.split(" ", 1)[0]
-            print(f"{svg}:1: stale against {REC} - fix: ./dev_tools.py")
-        elif line.startswith("dev_tools.py: "):
-            print(f"dev_tools.py:1: {line.removeprefix('dev_tools.py: ')}")
+    # The graph rules: draw_graph prints `FILE:LINE: SUBJECT: PROBLEM - fix: HOW`
+    # on stdout, already the finding shape; a count goes to stderr.
+    draw_graph = shutil.which("draw_graph")
+    if not draw_graph:
+        print(f"{REC}:1: draw_graph not found - fix: {INSTALL}")
+        return 0
+    run = subprocess.run([draw_graph, "check", REC], capture_output=True, text=True)
+    for line in run.stdout.splitlines():
+        print(line if " - fix: " in line else f"{line} - fix: edit {REC} in draw_graph, or by hand")
+    if run.returncode not in (0, 1):
+        print(f"{REC}:1: draw_graph check failed: {' '.join(run.stderr.split())} - fix: draw_graph check {REC}")
     return 0
 
 

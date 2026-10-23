@@ -22,42 +22,57 @@
 # each other (extra shows base too), so a tool never requires one of a higher
 # tier.
 #
-# Requires is my own learning path: the tool must be known before this one.
-# Each Requires line must be met (AND); `A | B` on one line means either one
-# (OR). A prerequisite never has a higher Level than the tool it unlocks, and
-# a prerequisite already implied through another one is not repeated.
+# The learning path is the Edge records: From must be known before To. Every
+# edge into a tool is required (AND); edges that share an Any value are
+# either-one (OR). A prerequisite never has a higher Level or Tier than the
+# tool it unlocks, there are no loops, and a prerequisite already implied
+# through another one is not repeated. The %graph lines say so, and
+# draw_graph enforces them.
 #
-# Validate:  recfix --check dev_tools.rec
-# Query:     recsel -e 'Level = 1' -p Name dev_tools.rec
-# Edit:      ./dev_tools.py add|set|rename|link|unlink|rm ...  (checked, then redrawn)
-#            ./dev_tools.py serve   (node editor in a browser, http://127.0.0.1:8766)
-# Pos is where the node editor shows a tool, `x y` in px; it is layout only,
-# and the Graphviz charts ignore it. A tool without one is placed by dot.
-# Group puts a tool in a named box in the editor (Group: Browser); layout too.
-# Charts:    ./dev_tools.py   (writes dev_tools.svg, the level map,
-#                              dev_tools_path.svg, the prerequisites, and
-#                              dev_tools.html, the prerequisites by tier)
+# Edit:   draw_graph dev_tools.rec   (a graph editor: https://github.com/raveensrk/draw_graph)
+# Check:  draw_graph check dev_tools.rec
+# Query:  recsel -t Node -e 'Level = 1' -p Name dev_tools.rec
+#         recsel -t Edge -e 'To = "Rust"' -p From dev_tools.rec
+# Pos is where draw_graph shows a tool, `x y` in px; layout only. Group puts
+# a tool in a named box (Group: Browser).
 
-%rec: Tool
+%rec: Group
+%key: Name
+%type: Parent rec Group
+%type: Collapsed enum yes no
+%allowed: Name Label Parent Color Collapsed Note
+%graph: parent Parent
+
+Name: LLM data
+
+Name: Browser
+
+Name: VPN
+
+%rec: Node
 %key: Name
 %type: Level range 1 5
 %type: Tier enum base extra max
+%type: Group rec Group
 %type: Pos regexp /^-?[0-9]+ -?[0-9]+$/
 %mandatory: Name Category Level Tier
-%allowed: Name Category Subcategory Level Tier Requires Url Note Group Pos
+%allowed: Name Category Subcategory Level Tier Url Note Group Pos
+%graph: label Name
+%graph: color Level
+%graph: filter Tier
+%graph: group Group
+%graph: pos Pos
 
 Name: Touch Typing
 Category: Skills
 Level: 1
 Tier: base
-Requires: Computer
 Pos: 279 1960
 
 Name: Ghostty
 Category: Terminal
 Level: 1
 Tier: base
-Requires: Touch Typing
 Url: https://github.com/ghostty-org/ghostty
 Pos: 478 1960
 
@@ -65,42 +80,36 @@ Name: Vim / MacVim
 Category: Text Editing
 Level: 1
 Tier: base
-Requires: Ghostty
 Pos: 677 305
 
 Name: universal-ctags
 Category: Text Editing
 Level: 2
 Tier: extra
-Requires: Vim / MacVim
 Pos: 1130 270
 
 Name: pi
 Category: AI
 Level: 2
 Tier: base
-Requires: Ghostty
 Pos: 1130 1892
 
 Name: Claude
 Category: AI
 Level: 2
 Tier: base
-Requires: Ghostty
 Pos: 1130 1960
 
 Name: Codex and ChatGPT
 Category: AI
 Level: 2
 Tier: extra
-Requires: Ghostty
 Pos: 1130 2028
 
 Name: Crush
 Category: AI
 Level: 2
 Tier: extra
-Requires: Ghostty
 Url: https://github.com/charmbracelet/crush
 Pos: 1130 2096
 
@@ -108,10 +117,6 @@ Name: Herdr
 Category: AI
 Level: 3
 Tier: extra
-Requires: pi
-Requires: Claude
-Requires: Codex and ChatGPT
-Requires: Crush
 Note: terminal multiplexer for coding agents
 Pos: 1814 1994
 
@@ -119,7 +124,6 @@ Name: models
 Category: AI
 Level: 1
 Tier: extra
-Requires: Bash
 Url: https://github.com/reyamira/models
 Note: TUI and CLI for browsing AI models and comparing benchmarks
 Group: LLM data
@@ -129,7 +133,6 @@ Name: llmfit
 Category: AI
 Level: 1
 Tier: extra
-Requires: Bash
 Url: https://github.com/AlexsJones/llmfit
 Note: TUI and CLI for finding LLMs that fit local hardware
 Group: LLM data
@@ -139,7 +142,6 @@ Name: Bash
 Category: Environment
 Level: 1
 Tier: base
-Requires: Ghostty
 Note: also stands for shell scripting; prefer Bash over POSIX sh
 Pos: 677 1094
 
@@ -148,7 +150,6 @@ Category: Version Control
 Subcategory: CLI
 Level: 1
 Tier: base
-Requires: Bash
 Pos: 888 557
 
 Name: lazygit
@@ -156,119 +157,102 @@ Category: Version Control
 Subcategory: TUI
 Level: 2
 Tier: base
-Requires: Git
 Pos: 1130 482
 
 Name: hledger
 Category: Finance
 Level: 3
 Tier: extra
-Requires: Ledger CLI
 Pos: 2035 1620
 
 Name: Ledger CLI
 Category: Finance
 Level: 3
 Tier: extra
-Requires: Bash
 Pos: 1814 1620
 
 Name: fzf
 Category: Command Line
 Level: 2
 Tier: max
-Requires: Bash
 Pos: 1130 1061
 
 Name: ripgrep
 Category: Command Line
 Level: 1
 Tier: base
-Requires: Bash
 Pos: 888 620
 
 Name: fd
 Category: Command Line
 Level: 1
 Tier: extra
-Requires: Bash
 Pos: 888 682
 
 Name: jq
 Category: Command Line
 Level: 3
 Tier: extra
-Requires: JSON
 Pos: 1814 537
 
 Name: rsync
 Category: Command Line
 Level: 2
 Tier: extra
-Requires: Bash
 Pos: 1130 1129
 
 Name: GNU Stow
 Category: Command Line
 Level: 2
 Tier: extra
-Requires: Bash
 Pos: 1130 1197
 
 Name: Homebrew
 Category: Command Line
 Level: 1
 Tier: base
-Requires: Bash
 Pos: 888 745
 
 Name: mpv
 Category: Command Line
 Level: 1
 Tier: extra
-Requires: Bash
 Pos: 888 808
 
 Name: pandoc
 Category: Command Line
 Level: 3
 Tier: extra
-Requires: Markdown
 Pos: 1814 137
 
 Name: urlview
 Category: Command Line
 Level: 1
 Tier: extra
-Requires: Bash
 Pos: 888 870
 
 Name: zoxide
 Category: Command Line
 Level: 1
 Tier: extra
-Requires: Bash
 Pos: 888 933
 
 Name: ranger
 Category: Command Line
 Level: 2
 Tier: extra
-Requires: Bash
 Pos: 1130 1262
 
 Name: tmux
 Category: Command Line
 Level: 5
 Tier: extra
-Requires: Bash
 Pos: 2629 1824
 
 Name: Firefox
 Category: Web Browser
 Level: 1
 Tier: base
-Requires: Computer
 Group: Browser
 Pos: 300 2045
 
@@ -276,7 +260,6 @@ Name: Chrome
 Category: Web Browser
 Level: 1
 Tier: extra
-Requires: Computer
 Group: Browser
 Pos: 279 2085
 
@@ -284,7 +267,6 @@ Name: Safari
 Category: Web Browser
 Level: 1
 Tier: extra
-Requires: Computer
 Group: Browser
 Pos: 279 2148
 
@@ -292,7 +274,6 @@ Name: Himalaya
 Category: E-Mail
 Level: 2
 Tier: extra
-Requires: newsboat
 Url: https://github.com/pimalaya/himalaya
 Pos: 1327 2134
 
@@ -300,7 +281,6 @@ Name: Himalaya-Tui
 Category: E-Mail
 Level: 2
 Tier: extra
-Requires: Himalaya
 Url: https://github.com/pimalaya/himalaya-tui
 Pos: 1576 2162
 
@@ -308,28 +288,24 @@ Name: Mutt / Neomutt
 Category: E-Mail
 Level: 5
 Tier: extra
-Requires: newsboat
 Pos: 2629 2228
 
 Name: Bitwarden
 Category: Password Managers
 Level: 1
 Tier: base
-Requires: Computer
 Pos: 279 2210
 
 Name: newsboat
 Category: Reading and RSS
 Level: 2
 Tier: extra
-Requires: Ghostty
 Pos: 1130 2164
 
 Name: WireGuard VPN
 Category: Network
 Level: 3
 Tier: extra
-Requires: Bash
 Group: VPN
 Pos: 1814 1688
 
@@ -338,7 +314,6 @@ Category: Network
 Subcategory: Web
 Level: 3
 Tier: base
-Requires: Bash
 Group: VPN
 Pos: 1814 1756
 
@@ -346,7 +321,6 @@ Name: qBittorrent
 Category: Torrent
 Level: 1
 Tier: extra
-Requires: Computer
 Pos: 279 2273
 
 Name: Mermaid
@@ -354,7 +328,6 @@ Category: Diagrams, Flowcharts and Drawings
 Subcategory: Diagram Formats
 Level: 2
 Tier: extra
-Requires: Markdown
 Pos: 1130 72
 
 Name: SVG
@@ -362,7 +335,6 @@ Category: Diagrams, Flowcharts and Drawings
 Subcategory: Diagram Formats
 Level: 3
 Tier: extra
-Requires: YAML
 Pos: 1814 473
 
 Name: Graphviz
@@ -370,8 +342,6 @@ Category: Diagrams, Flowcharts and Drawings
 Subcategory: Diagram Formats
 Level: 3
 Tier: extra
-Requires: JSON
-Requires: recfile (GNU recutils)
 Url: https://graphviz.org
 Note: dot lays out dev_tools_path.svg
 Pos: 1814 640
@@ -381,7 +351,6 @@ Category: Diagrams, Flowcharts and Drawings
 Subcategory: Drawing
 Level: 4
 Tier: extra
-Requires: SVG
 Url: https://github.com/excalidraw/excalidraw
 Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
 Pos: 2245 474
@@ -391,7 +360,6 @@ Category: Semiconductor
 Subcategory: SystemVerilog and UVM
 Level: 4
 Tier: base
-Requires: SystemVerilog
 Pos: 2245 1144
 
 Name: verilator
@@ -399,7 +367,6 @@ Category: Semiconductor
 Subcategory: SystemVerilog and UVM
 Level: 4
 Tier: base
-Requires: SystemVerilog
 Pos: 2245 1212
 
 Name: SystemVerilog
@@ -407,7 +374,6 @@ Category: Programming Languages
 Subcategory: Hardware Design and Verification
 Level: 3
 Tier: base
-Requires: Python
 Pos: 1814 1212
 
 Name: Zig
@@ -415,7 +381,6 @@ Category: Programming Languages
 Subcategory: Systems and Native
 Level: 5
 Tier: max
-Requires: Python
 Pos: 2629 1348
 
 Name: Rust
@@ -423,7 +388,6 @@ Category: Programming Languages
 Subcategory: Systems and Native
 Level: 5
 Tier: extra
-Requires: Python
 Pos: 2629 1416
 
 Name: Go
@@ -431,7 +395,6 @@ Category: Programming Languages
 Subcategory: Systems and Native
 Level: 5
 Tier: extra
-Requires: Python
 Pos: 2629 1484
 
 Name: C
@@ -439,7 +402,6 @@ Category: Programming Languages
 Subcategory: Systems and Native
 Level: 1
 Tier: base
-Requires: Bash
 Pos: 792 1359
 
 Name: Swift
@@ -447,7 +409,6 @@ Category: Programming Languages
 Subcategory: Apple Platforms
 Level: 5
 Tier: max
-Requires: Python
 Pos: 2629 1552
 
 Name: JavaScript
@@ -455,7 +416,6 @@ Category: Programming Languages
 Subcategory: Web
 Level: 3
 Tier: extra
-Requires: HTML
 Pos: 1814 1076
 
 Name: TypeScript
@@ -463,7 +423,6 @@ Category: Programming Languages
 Subcategory: Web
 Level: 3
 Tier: extra
-Requires: JavaScript
 Pos: 2035 1076
 
 Name: Python
@@ -471,7 +430,6 @@ Category: Programming Languages
 Subcategory: Automation and Scripting
 Level: 2
 Tier: base
-Requires: Bash
 Pos: 1130 1388
 
 Name: Vim script
@@ -479,7 +437,6 @@ Category: Programming Languages
 Subcategory: Editor and Tooling Extension
 Level: 3
 Tier: extra
-Requires: Vim / MacVim
 Pos: 1814 338
 
 Name: SQL
@@ -487,7 +444,6 @@ Category: Programming Languages
 Subcategory: Data and Query
 Level: 3
 Tier: extra
-Requires: JSON
 Pos: 1814 741
 
 Name: JSON
@@ -495,7 +451,6 @@ Category: Programming Languages
 Subcategory: Data and Query
 Level: 2
 Tier: base
-Requires: Python
 Pos: 1365 741
 
 Name: YAML
@@ -503,7 +458,6 @@ Category: Programming Languages
 Subcategory: Data and Query
 Level: 2
 Tier: extra
-Requires: JSON
 Pos: 1576 472
 
 Name: SQLite
@@ -511,7 +465,6 @@ Category: Programming Languages
 Subcategory: Data and Query
 Level: 3
 Tier: extra
-Requires: SQL
 Pos: 2035 741
 
 Name: Lua
@@ -519,7 +472,6 @@ Category: Programming Languages
 Subcategory: Games and 2D Graphics
 Level: 2
 Tier: extra
-Requires: Python
 Pos: 1365 1008
 
 Name: LÖVE (love2d)
@@ -527,7 +479,6 @@ Category: Programming Languages
 Subcategory: Games and 2D Graphics
 Level: 2
 Tier: extra
-Requires: Lua
 Pos: 1576 942
 
 Name: Fennel
@@ -535,7 +486,6 @@ Category: Programming Languages
 Subcategory: Games and 2D Graphics
 Level: 5
 Tier: max
-Requires: Lua
 Pos: 2629 1008
 
 Name: Bevy
@@ -543,7 +493,6 @@ Category: Programming Languages
 Subcategory: Games and 2D Graphics
 Level: 5
 Tier: max
-Requires: Rust
 Pos: 2824 1416
 
 Name: Jai
@@ -551,7 +500,6 @@ Category: Programming Languages
 Subcategory: Games and 2D Graphics
 Level: 4
 Tier: max
-Requires: Python
 Pos: 2245 1280
 
 Name: Markdown
@@ -559,7 +507,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 1
 Tier: base
-Requires: Vim / MacVim
 Pos: 888 172
 
 Name: HTML
@@ -567,7 +514,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 2
 Tier: extra
-Requires: Python
 Pos: 1365 1144
 
 Name: Makefile
@@ -575,7 +521,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 2
 Tier: base
-Requires: Bash
 Pos: 1130 1469
 
 Name: CSS
@@ -583,7 +528,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 3
 Tier: extra
-Requires: HTML
 Pos: 1814 1144
 
 Name: TOML
@@ -591,7 +535,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 3
 Tier: extra
-Requires: JSON
 Pos: 1814 809
 
 Name: JSON Lines
@@ -599,7 +542,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 3
 Tier: extra
-Requires: JSON
 Pos: 1814 877
 
 Name: recfile (GNU recutils)
@@ -607,7 +549,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 2
 Tier: extra
-Requires: Bash
 Note: plain-text records; recsel, recfix, rec2csv
 Pos: 1130 1325
 
@@ -616,7 +557,6 @@ Category: Formats
 Subcategory: Markup, Data and Config
 Level: 3
 Tier: max
-Requires: Markdown
 Pos: 1886 202
 
 Name: PDF
@@ -624,7 +564,6 @@ Category: Formats
 Subcategory: Publish
 Level: 4
 Tier: max
-Requires: LaTeX
 Pos: 2245 205
 
 Name: Computer
@@ -638,7 +577,6 @@ Name: Forgejo
 Category: Code Forge
 Level: 4
 Tier: base
-Requires: lazygit
 Pos: 2245 406
 
 Name: fj
@@ -646,5 +584,252 @@ Category: Code Forge
 Subcategory: CLI
 Level: 4
 Tier: base
-Requires: Forgejo
 Pos: 2434 406
+
+%rec: Edge
+%type: From,To line
+%mandatory: From To
+%allowed: From To Any Note
+%graph: acyclic
+%graph: rise Level Tier
+%graph: no_implied
+
+From: Computer
+To: Touch Typing
+
+From: Touch Typing
+To: Ghostty
+
+From: Ghostty
+To: Vim / MacVim
+
+From: Vim / MacVim
+To: universal-ctags
+
+From: Ghostty
+To: pi
+
+From: Ghostty
+To: Claude
+
+From: Ghostty
+To: Codex and ChatGPT
+
+From: Ghostty
+To: Crush
+
+From: pi
+To: Herdr
+
+From: Claude
+To: Herdr
+
+From: Codex and ChatGPT
+To: Herdr
+
+From: Crush
+To: Herdr
+
+From: Bash
+To: models
+
+From: Bash
+To: llmfit
+
+From: Ghostty
+To: Bash
+
+From: Bash
+To: Git
+
+From: Git
+To: lazygit
+
+From: Ledger CLI
+To: hledger
+
+From: Bash
+To: Ledger CLI
+
+From: Bash
+To: fzf
+
+From: Bash
+To: ripgrep
+
+From: Bash
+To: fd
+
+From: JSON
+To: jq
+
+From: Bash
+To: rsync
+
+From: Bash
+To: GNU Stow
+
+From: Bash
+To: Homebrew
+
+From: Bash
+To: mpv
+
+From: Markdown
+To: pandoc
+
+From: Bash
+To: urlview
+
+From: Bash
+To: zoxide
+
+From: Bash
+To: ranger
+
+From: Bash
+To: tmux
+
+From: Computer
+To: Firefox
+
+From: Computer
+To: Chrome
+
+From: Computer
+To: Safari
+
+From: newsboat
+To: Himalaya
+
+From: Himalaya
+To: Himalaya-Tui
+
+From: newsboat
+To: Mutt / Neomutt
+
+From: Computer
+To: Bitwarden
+
+From: Ghostty
+To: newsboat
+
+From: Bash
+To: WireGuard VPN
+
+From: Bash
+To: Tailscale
+
+From: Computer
+To: qBittorrent
+
+From: Markdown
+To: Mermaid
+
+From: YAML
+To: SVG
+
+From: JSON
+To: Graphviz
+
+From: recfile (GNU recutils)
+To: Graphviz
+
+From: SVG
+To: Excalidraw
+
+From: SystemVerilog
+To: verible
+
+From: SystemVerilog
+To: verilator
+
+From: Python
+To: SystemVerilog
+
+From: Python
+To: Zig
+
+From: Python
+To: Rust
+
+From: Python
+To: Go
+
+From: Bash
+To: C
+
+From: Python
+To: Swift
+
+From: HTML
+To: JavaScript
+
+From: JavaScript
+To: TypeScript
+
+From: Bash
+To: Python
+
+From: Vim / MacVim
+To: Vim script
+
+From: JSON
+To: SQL
+
+From: Python
+To: JSON
+
+From: JSON
+To: YAML
+
+From: SQL
+To: SQLite
+
+From: Python
+To: Lua
+
+From: Lua
+To: LÖVE (love2d)
+
+From: Lua
+To: Fennel
+
+From: Rust
+To: Bevy
+
+From: Python
+To: Jai
+
+From: Vim / MacVim
+To: Markdown
+
+From: Python
+To: HTML
+
+From: Bash
+To: Makefile
+
+From: HTML
+To: CSS
+
+From: JSON
+To: TOML
+
+From: JSON
+To: JSON Lines
+
+From: Bash
+To: recfile (GNU recutils)
+
+From: Markdown
+To: LaTeX
+
+From: LaTeX
+To: PDF
+
+From: lazygit
+To: Forgejo
+
+From: Forgejo
+To: fj
