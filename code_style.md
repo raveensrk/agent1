@@ -1,14 +1,5 @@
 # Code Style
 
-## Naming Enforcement
-
-- Use single word names by default for new locals, params, and helper functions.
-- Multi-word names are allowed only when a single word would be unclear or ambiguous.
-- Do not introduce new camelCase compounds when a short single-word alternative is clear.
-- Before finishing edits, review touched lines and shorten newly introduced identifiers where possible.
-- Good short names to prefer: pid, cfg, err, opts, dir, root, child, state, timeout.
-- Examples to avoid unless truly required: inputPID, existingClient, connectTimeout, workerPath.
-
 ## Avoid else statements
 
 Prefer early returns over else. After an `if` that returns/throws, the else is redundant.

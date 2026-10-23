@@ -2,7 +2,9 @@
 
 How to name programs, commands, skills, functions, variables, files and folders.
 
-Status: alpha. These rules change as I work. Follow them for new names, but when a rule seems wrong for a real case, say so instead of forcing it.
+Status: disabled on 2026-10-23. Nothing loads this file, and the file_naming check is switched off (renamed `harness/checks/_file_naming.py`). Rename it back and restore the line in `harness/extensions/rules_context.ts` to turn them on again.
+
+Former status: alpha. These rules change as I work. Follow them for new names, but when a rule seems wrong for a real case, say so instead of forcing it.
 
 ## Every name
 

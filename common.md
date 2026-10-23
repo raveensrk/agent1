@@ -77,12 +77,6 @@ For multi-step, ambiguous, or high-impact work, say how you could verify it befo
 
 After installing or removing pi packages, verify with `timeout 90 pi -p "reply with just: ok"` and check stderr for warnings.
 
-## Naming
-
-Files and directories use `snake_case` - lowercase words joined by underscores. [file_naming.py](harness/checks/file_naming.py) decides it: lowercase letters, digits, underscores and dots only. Exempt: a name a tool reads by its exact spelling (`Makefile`, `Cargo.toml`, `.claude-plugin/`), the agent files (`AGENTS.md`, `CLAUDE.md`, `SKILL.md`) repo docs of the README and LICENSE kind (`README.md`, `LICENSE`, `CHANGELOG.md`) and the plan file, which is always `PLAN.md` (a lowercase `plan.md` is a finding); the full list is `CANONICAL` in the check. OS junk (`.DS_Store`, a Windows `*:Zone.Identifier` copy) is deleted, not renamed. Skill directories are kebab-case by the Agent Skills format, decided by [skill_frontmatter.py](harness/checks/skill_frontmatter.py): the whole `skills/` subtree, and anywhere else the directory that holds a `SKILL.md`. Pi package prompts under `prompts/` may use kebab-case `.md` filenames: Pi uses them as slash-command names. A Swift package (`Package.swift` at the repo root) keeps Swift's UpperCamelCase for its sources and the directories that hold them.
-
-Names are singular: files, directories, fields, keys, tables, variables and CLI verbs (`tag` not `tags`, `task/` not `tasks/`). Use the plural only when the singular is already taken or would read wrong.
-
 ## Theme
 
 Dark theme by default: HTML pages, reports, apps, GUIs, terminal output colors and tool configs. Do not follow the system's light setting. Offer light only as an explicit option the user switches to.

@@ -48,8 +48,8 @@ assert.ok(
 	`expected the whole file (${commonLines} lines) plus the topic list, got ${real.split("\n").length} lines`,
 );
 
-// the naming rules are offered whenever something gets a name
-assert.match(real, /- agent1\/naming\.md - naming a program/);
+// the naming rules are switched off, so nothing offers them
+assert.doesNotMatch(real, /naming\.md/);
 
 // and the live trial rules file is the one a real session gets
 const experimental = readFileSync(join(homedir(), "repos/agent1/experimental.md"), "utf8");

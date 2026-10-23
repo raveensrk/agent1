@@ -90,7 +90,7 @@ answer means the import did not load.
 | `Makefile` | Builds the shareable one-page HTML export |
 | [`model_and_harness.yaml`](./model_and_harness.yaml) | Model and harness recommendations and dated reviews |
 | [`model_usage_history.md`](./model_usage_history.md) | Historical model usage across agent harnesses |
-| `naming.md` | Naming programs, files and everything else |
+| `naming.md` | Naming rules, disabled |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
 | `prompts/` | Reusable Pi slash commands loaded from the local package |

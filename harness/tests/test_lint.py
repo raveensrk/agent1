@@ -150,7 +150,7 @@ def test_discovers_every_check_with_a_header():
         for directory in lint.CHECK_DIRS
         if os.path.isdir(directory)
         for f in os.listdir(directory)
-        if f.endswith(".py")
+        if f.endswith(".py") and not f.startswith("_")
     )
     assert ids == files, ids
     for check in checks:
@@ -158,7 +158,7 @@ def test_discovers_every_check_with_a_header():
 
 
 def test_pi_prompt_filename_is_a_slash_command():
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as root:
         os.makedirs(os.path.join(root, ".git"))
         os.makedirs(os.path.join(root, "prompts"))
@@ -180,7 +180,7 @@ def test_pi_prompt_filename_is_a_slash_command():
 
 def test_file_naming_wants_the_plan_file_uppercase():
     """Plan files are PLAN.md by the user's rule: snake_case plan.md is a finding."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)
         lower = os.path.join(tmp, "plan.md")
@@ -196,7 +196,7 @@ def test_file_naming_stops_at_a_linked_worktree_and_skips_deleted_files():
     after the worktree was removed: nothing marked a root on the way up, so the
     walk reached the main repo and judged the app-chosen worktree name.
     """
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as root:
         os.makedirs(os.path.join(root, ".git"))
         tree = os.path.join(root, ".claude", "worktrees", "silly-bohr-0702b5")
@@ -213,7 +213,7 @@ def test_file_naming_stops_at_a_linked_worktree_and_skips_deleted_files():
 
 def test_file_naming_honours_the_allowlist():
     """A glob relative to ~/repos, repo name first, skips that tree and no other."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         repos = os.path.realpath(tmp)
         for repo in ("notes", "code"):
@@ -248,7 +248,7 @@ def test_file_naming_exempts_the_names_a_tool_or_convention_fixes():
     """75 findings under ~/repos on 2026-10-10 named a file a build tool reads by
     its exact spelling (Makefile x47) or a doc of the README and LICENSE kind.
     The exemption is the exact spelling: a near miss is still a finding."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     names = [
         "Makefile", "CMakeLists.txt", "package-lock.json", "Cargo.toml", "Cargo.lock",
         "Info.plist", "BUILD.bazel", ".markdownlint-cli2.jsonc",
@@ -276,7 +276,7 @@ def test_file_naming_lets_a_swift_package_keep_swift_names():
     157 of 172 findings in the two Swift repos under ~/repos on 2026-10-11. Only
     a repo with Package.swift at its root gets the exemption, and only for Swift
     sources: Resources/ and a hyphenated doc are still findings."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
 
     def flagged(root, rels):
         paths = []
@@ -308,7 +308,7 @@ def test_file_naming_lets_svelte_keep_svelte_names():
     """Svelte names a component file after its component and SvelteKit finds a
     route file only by its + spelling: 1,664 file findings in ~/repos on
     2026-10-21. Anything else in a Svelte app is still checked."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     svelte = [
         "src/lib/Card.svelte",
         "src/lib/DetailSheet.svelte",
@@ -339,7 +339,7 @@ def test_file_naming_lets_a_comma_command_keep_its_comma():
     """~/dot/script names personal commands with a leading comma (,sync.py), so they
     never collide with a system tool: 11 there on 2026-10-11. The rest of the name
     still has to be snake_case."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)
         good, bad = os.path.join(tmp, ",git_day.py"), os.path.join(tmp, ",Git-Day.py")
@@ -354,7 +354,7 @@ def test_file_naming_steers_junk_to_a_delete_by_git_state():
     (276 under ~/repos on 2026-10-10, all tracked), and Finder writes .DS_Store
     again after a delete. Both steer to a delete, never a rename: git rm when
     tracked, trash when not, and .DS_Store also into the repo's .gitignore."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)
         root = os.path.realpath(tmp)
@@ -404,7 +404,7 @@ def test_file_naming_lets_a_skill_directory_carry_its_kebab_name():
     name, so a snake_case rename traded one finding for another: 12 under
     ~/repos on 2026-10-10, in .agents/skills/, .claude/skills/ and a repo root.
     The files inside the directory are still checked."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)
         root = os.path.realpath(tmp)
@@ -787,7 +787,7 @@ def test_file_naming_suggestion_always_passes_the_rule():
     """suggestion() turned only spaces and hyphens into underscores, so 331 rename
     targets under ~/repos on 2026-10-10 still failed the rule: `…`, `,`, `(`,
     `#`, `’`, `@`, emoji, Tamil. Names from that population."""
-    spec = importlib.util.spec_from_file_location("file_naming", os.path.join(CHECKS, "file_naming.py"))
+    spec = importlib.util.spec_from_file_location("file_naming", os.path.join(CHECKS, "_file_naming.py"))
     naming = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(naming)
     cases = {
@@ -825,7 +825,7 @@ def test_file_naming_rename_works_as_printed_from_another_repo():
     """The rename printed `git mv <abs> <abs>` with no -C and no quoting: from a
     cwd outside the repo git says 'is outside repository', and a name with a
     space split in two. 8,914 rename findings under ~/repos on 2026-10-10."""
-    check = os.path.join(CHECKS, "file_naming.py")
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)
         root = os.path.realpath(tmp)

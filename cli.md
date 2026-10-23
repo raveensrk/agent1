@@ -4,7 +4,6 @@ A CLI I write tells me how to use it - the author six months later is the
 caller. The worked example is task-router's CLI,
 [internal/cli/cli.go](~/repos/task-router/internal/cli/cli.go), help table and all.
 
-- Naming: [naming.md](naming.md).
 - `-h` and `--help` are a hard rule: every CLI app has both, on the main command
   and on every subcommand. Usage line, what the app does, every option, one
   runnable example. Exit 0, and nothing else runs - a help call never writes,
