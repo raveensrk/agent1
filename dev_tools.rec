@@ -52,7 +52,7 @@ Name: VPN
 %type: Group rec Group
 %type: Pos regexp /^-?[0-9]+ -?[0-9]+$/
 %mandatory: Name
-%allowed: Name Tag Url Note Group Pos
+%allowed: Name Tag Url Note Group Pos Kind Size
 %graph: label Name
 %graph: tag Tag
 %graph: color Tag
@@ -63,67 +63,67 @@ Name: Touch Typing
 Tag: base
 Tag: beginner
 Tag: Skills
-Pos: 279 1960
+Pos: 219 924
 
 Name: Ghostty
 Tag: base
 Tag: beginner
 Tag: Terminal
 Url: https://github.com/ghostty-org/ghostty
-Pos: 466 1932
+Pos: 458 924
 
 Name: Vim / MacVim
 Tag: base
 Tag: beginner
 Tag: Text Editing
-Pos: 677 305
+Pos: 722 70
 
 Name: universal-ctags
+Tag: beginner
 Tag: extra
-Tag: easy
 Tag: Text Editing
-Pos: 1130 270
+Pos: 1035 -58
 
 Name: pi
 Tag: base
 Tag: easy
 Tag: AI
-Pos: 1130 1892
+Pos: 722 1326
 
 Name: Claude
 Tag: base
 Tag: easy
 Tag: AI
-Pos: 1144 1958
+Pos: 722 1396
 
 Name: Codex and ChatGPT
 Tag: extra
 Tag: easy
 Tag: AI
-Pos: 1130 2028
+Pos: 722 1464
 
 Name: Crush
 Tag: extra
 Tag: easy
 Tag: AI
 Url: https://github.com/charmbracelet/crush
-Pos: 1130 2096
+Pos: 722 1534
 
 Name: Herdr
 Tag: extra
 Tag: intermediate
 Tag: AI
 Note: terminal multiplexer for coding agents
-Pos: 1814 1994
+Pos: 1035 1730
 
 Name: models
-Tag: extra
 Tag: beginner
+Tag: extra
 Tag: AI
 Url: https://github.com/reyamira/models
 Note: TUI and CLI for browsing AI models and comparing benchmarks
 Group: LLM data
-Pos: 888 432
+Pos: 1034 212
 
 Name: llmfit
 Tag: extra
@@ -132,178 +132,178 @@ Tag: AI
 Url: https://github.com/AlexsJones/llmfit
 Note: TUI and CLI for finding LLMs that fit local hardware
 Group: LLM data
-Pos: 888 494
+Pos: 1035 902
 
 Name: Bash
 Tag: base
 Tag: beginner
 Tag: Environment
 Note: also stands for shell scripting; prefer Bash over POSIX sh
-Pos: 677 1094
+Pos: 722 892
 
 Name: Git
 Tag: base
 Tag: beginner
 Tag: Version Control
 Tag: CLI
-Pos: 888 557
+Pos: 1035 144
 
 Name: lazygit
 Tag: base
 Tag: easy
 Tag: Version Control
 Tag: TUI
-Pos: 1130 482
+Pos: 1326 156
 
 Name: hledger
 Tag: extra
 Tag: intermediate
 Tag: Finance
-Pos: 2035 1620
+Pos: 1326 922
 
 Name: Ledger CLI
 Tag: extra
 Tag: intermediate
 Tag: Finance
-Pos: 1814 1620
+Pos: 1035 834
 
 Name: fzf
 Tag: max
 Tag: easy
 Tag: Command Line
-Pos: 1130 1061
+Pos: 1035 972
 
 Name: ripgrep
 Tag: base
 Tag: beginner
 Tag: Command Line
-Pos: 888 620
+Pos: 1034 282
 
 Name: fd
-Tag: extra
 Tag: beginner
+Tag: extra
 Tag: Command Line
-Pos: 888 682
+Pos: 1035 350
 
 Name: jq
 Tag: extra
 Tag: intermediate
 Tag: Command Line
-Pos: 1814 537
+Pos: 1590 98
 
 Name: rsync
 Tag: extra
 Tag: easy
 Tag: Command Line
-Pos: 1130 1129
+Pos: 1034 1040
 
 Name: GNU Stow
 Tag: extra
 Tag: easy
 Tag: Command Line
-Pos: 1130 1197
+Pos: 1035 1110
 
 Name: Homebrew
 Tag: base
 Tag: beginner
 Tag: Command Line
-Pos: 888 745
+Pos: 1036 420
 
 Name: mpv
-Tag: extra
 Tag: beginner
+Tag: extra
 Tag: Command Line
-Pos: 888 808
+Pos: 1034 558
 
 Name: pandoc
 Tag: extra
 Tag: intermediate
 Tag: Command Line
-Pos: 1814 137
+Pos: 1326 50
 
 Name: urlview
 Tag: extra
 Tag: beginner
 Tag: Command Line
-Pos: 888 870
+Pos: 1036 696
 
 Name: zoxide
 Tag: extra
 Tag: beginner
 Tag: Command Line
-Pos: 888 933
+Pos: 1035 626
 
 Name: ranger
 Tag: extra
 Tag: easy
 Tag: Command Line
-Pos: 1130 1262
+Pos: 1036 1178
 
 Name: tmux
-Tag: extra
 Tag: expert
+Tag: extra
 Tag: Command Line
-Pos: 2629 1824
+Pos: 1034 764
 
 Name: Firefox
 Tag: base
 Tag: beginner
 Tag: Web Browser
 Group: Browser
-Pos: 300 2045
+Pos: 219 994
 
 Name: Chrome
 Tag: extra
 Tag: beginner
 Tag: Web Browser
 Group: Browser
-Pos: 279 2085
+Pos: 220 1062
 
 Name: Safari
 Tag: extra
 Tag: beginner
 Tag: Web Browser
 Group: Browser
-Pos: 279 2148
+Pos: 220 1132
 
 Name: Himalaya
 Tag: extra
 Tag: easy
 Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya
-Pos: 1327 2134
+Pos: 1036 1592
 
 Name: Himalaya-Tui
 Tag: extra
 Tag: easy
 Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya-tui
-Pos: 1576 2162
+Pos: 1326 1592
 
 Name: Mutt / Neomutt
 Tag: extra
 Tag: expert
 Tag: E-Mail
-Pos: 2629 2228
+Pos: 1035 1662
 
 Name: Bitwarden
 Tag: base
 Tag: beginner
 Tag: Password Managers
-Pos: 279 2210
+Pos: 220 1200
 
 Name: newsboat
 Tag: extra
 Tag: easy
 Tag: Reading and RSS
-Pos: 1130 2164
+Pos: 722 1258
 
 Name: WireGuard VPN
 Tag: extra
 Tag: intermediate
 Tag: Network
 Group: VPN
-Pos: 1814 1688
+Pos: 1034 1454
 
 Name: Tailscale
 Tag: base
@@ -311,27 +311,27 @@ Tag: intermediate
 Tag: Network
 Tag: Web
 Group: VPN
-Pos: 1814 1756
+Pos: 1036 1524
 
 Name: qBittorrent
 Tag: extra
 Tag: beginner
 Tag: Torrent
-Pos: 279 2273
+Pos: 220 1270
 
 Name: Mermaid
 Tag: extra
 Tag: easy
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
-Pos: 1130 72
+Pos: 1326 -20
 
 Name: SVG
 Tag: extra
 Tag: intermediate
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
-Pos: 1814 473
+Pos: 1840 -38
 
 Name: Graphviz
 Tag: extra
@@ -340,7 +340,7 @@ Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
 Url: https://graphviz.org
 Note: dot lays out dev_tools_path.svg
-Pos: 1814 640
+Pos: 1590 236
 
 Name: Excalidraw
 Tag: extra
@@ -349,196 +349,195 @@ Tag: Diagrams, Flowcharts and Drawings
 Tag: Drawing
 Url: https://github.com/excalidraw/excalidraw
 Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
-Pos: 2245 474
+Pos: 2080 -38
 
 Name: verible
 Tag: base
 Tag: advanced
 Tag: Semiconductor
 Tag: SystemVerilog and UVM
-Pos: 2245 1144
+Pos: 1590 788
 
 Name: verilator
 Tag: base
 Tag: advanced
 Tag: Semiconductor
 Tag: SystemVerilog and UVM
-Pos: 2245 1212
+Pos: 1590 858
 
 Name: SystemVerilog
 Tag: base
 Tag: intermediate
 Tag: Programming Languages
 Tag: Hardware Design and Verification
-Pos: 1814 1212
+Pos: 1325 784
 
 Name: Zig
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 2629 1348
+Pos: 1326 432
 
 Name: Rust
 Tag: extra
 Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 2629 1416
+Pos: 1325 852
 
 Name: Go
 Tag: extra
 Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 2629 1484
+Pos: 1326 502
 
 Name: C
 Tag: base
 Tag: beginner
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 792 1359
+Pos: 1035 1316
 
 Name: Swift
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Apple Platforms
-Pos: 2629 1552
+Pos: 1326 570
 
 Name: JavaScript
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Web
-Pos: 1814 1076
+Pos: 1590 374
 
 Name: TypeScript
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Web
-Pos: 2035 1076
+Pos: 1841 374
 
 Name: Python
 Tag: base
 Tag: easy
 Tag: Programming Languages
 Tag: Automation and Scripting
-Pos: 1130 1388
+Pos: 1034 488
 
 Name: Vim script
-Tag: extra
 Tag: intermediate
+Tag: extra
 Tag: Programming Languages
 Tag: Editor and Tooling Extension
-Pos: 1814 338
+Pos: 1036 80
 
 Name: SQL
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Data and Query
-Pos: 1814 741
+Pos: 1590 30
 
 Name: JSON
 Tag: base
 Tag: easy
 Tag: Programming Languages
 Tag: Data and Query
-Pos: 1365 741
+Pos: 1325 226
 
 Name: YAML
 Tag: extra
 Tag: easy
 Tag: Programming Languages
 Tag: Data and Query
-Pos: 1576 472
+Pos: 1590 -40
 
 Name: SQLite
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Data and Query
-Pos: 2035 741
+Pos: 1840 30
 
 Name: Lua
 Tag: extra
 Tag: easy
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 1365 1008
+Pos: 1326 640
 
 Name: LÖVE (love2d)
 Tag: extra
 Tag: easy
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 1576 942
+Pos: 1590 582
 
 Name: Fennel
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 2629 1008
+Pos: 1590 650
 
 Name: Bevy
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 2824 1416
+Pos: 1590 996
 
 Name: Jai
 Tag: max
 Tag: advanced
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 2245 1280
+Pos: 1326 364
 
 Name: Markdown
 Tag: base
-Tag: beginner
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 888 172
+Pos: 1034 12
 
 Name: HTML
 Tag: extra
 Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1365 1144
+Pos: 1326 294
 
 Name: Makefile
 Tag: base
 Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1130 1469
+Pos: 1034 1386
 
 Name: CSS
 Tag: extra
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1814 1144
+Pos: 1590 444
 
 Name: TOML
 Tag: extra
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1814 809
+Pos: 1590 168
 
 Name: JSON Lines
 Tag: extra
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1814 877
+Pos: 1590 306
 
 Name: recfile (GNU recutils)
 Tag: extra
@@ -546,285 +545,504 @@ Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
 Note: plain-text records; recsel, recfix, rec2csv
-Pos: 1130 1325
+Pos: 1036 1248
 
 Name: LaTeX
 Tag: max
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1886 202
+Pos: 1325 -88
 
 Name: PDF
 Tag: max
 Tag: advanced
 Tag: Formats
 Tag: Publish
-Pos: 2245 205
+Pos: 1590 -178
 
 Name: Computer
 Tag: base
 Tag: beginner
 Tag: ROOT
 Tag: GUI
-Pos: 63 2117
+Pos: -28 1112
 
 Name: Forgejo
 Tag: base
 Tag: advanced
 Tag: Code Forge
-Pos: 2245 406
+Pos: 1590 -108
 
 Name: fj
 Tag: base
 Tag: advanced
 Tag: Code Forge
 Tag: CLI
-Pos: 2434 406
+Pos: 1840 -108
+
+Name: egui
+Tag: expert
+Tag: gui
+Pos: 1590 926
+
+Name: Lisp
+Tag: adv
+Pos: 1326 708
+Kind: rounded-rectangle
+
+Name: Racket
+Tag: expert
+Pos: 1590 720
+Kind: rounded-rectangle
+
+Name: Emacs Lisp
+Tag: expert
+Pos: 1590 512
+Kind: rounded-rectangle
+
+Name: Emacs
+Tag: adv
+Pos: 722 530
+Kind: rounded-rectangle
+Size: 111 58
 
 %rec: Edge
 %type: From,To line
 %mandatory: From To
-%allowed: From To Any Note
+%allowed: From To Any Note FromSide ToSide
 %graph: acyclic
 %graph: no_implied
 
 From: Computer
 To: Touch Typing
+FromSide: e
+ToSide: w
+Note: Hello
 
 From: Touch Typing
 To: Ghostty
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: Vim / MacVim
+FromSide: e
+ToSide: w
 
 From: Vim / MacVim
 To: universal-ctags
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: pi
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: Claude
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: Codex and ChatGPT
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: Crush
+FromSide: e
+ToSide: w
 
 From: pi
 To: Herdr
+FromSide: e
+ToSide: w
 
 From: Claude
 To: Herdr
+FromSide: e
+ToSide: w
 
 From: Codex and ChatGPT
 To: Herdr
+FromSide: e
+ToSide: w
 
 From: Crush
 To: Herdr
+FromSide: e
+ToSide: w
 
 From: Bash
 To: models
+FromSide: e
+ToSide: w
 
 From: Bash
 To: llmfit
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: Bash
+FromSide: e
+ToSide: w
 
 From: Bash
 To: Git
+FromSide: e
+ToSide: w
 
 From: Git
 To: lazygit
+FromSide: e
+ToSide: w
 
 From: Ledger CLI
 To: hledger
+FromSide: e
+ToSide: w
 
 From: Bash
 To: Ledger CLI
-
-From: Bash
-To: fzf
+FromSide: e
+ToSide: w
 
 From: Bash
 To: ripgrep
+FromSide: e
+ToSide: w
 
 From: Bash
 To: fd
+FromSide: e
+ToSide: w
 
 From: JSON
 To: jq
+FromSide: e
+ToSide: w
 
 From: Bash
 To: rsync
+FromSide: e
+ToSide: w
 
 From: Bash
 To: GNU Stow
+FromSide: e
+ToSide: w
 
 From: Bash
 To: Homebrew
+FromSide: e
+ToSide: w
 
 From: Bash
 To: mpv
+FromSide: e
+ToSide: w
 
 From: Markdown
 To: pandoc
+FromSide: e
+ToSide: w
 
 From: Bash
 To: urlview
+FromSide: e
+ToSide: w
 
 From: Bash
 To: zoxide
+FromSide: e
+ToSide: w
 
 From: Bash
 To: ranger
+FromSide: e
+ToSide: w
 
 From: Bash
 To: tmux
+FromSide: e
+ToSide: w
 
 From: Computer
 To: Firefox
+FromSide: e
+ToSide: w
 
 From: Computer
 To: Chrome
+FromSide: e
+ToSide: w
 
 From: Computer
 To: Safari
+FromSide: e
+ToSide: w
 
 From: newsboat
 To: Himalaya
+FromSide: e
+ToSide: w
 
 From: Himalaya
 To: Himalaya-Tui
+FromSide: e
+ToSide: w
 
 From: newsboat
 To: Mutt / Neomutt
+FromSide: e
+ToSide: w
 
 From: Computer
 To: Bitwarden
+FromSide: e
+ToSide: w
 
 From: Ghostty
 To: newsboat
+FromSide: e
+ToSide: w
 
 From: Bash
 To: WireGuard VPN
+FromSide: e
+ToSide: w
 
 From: Bash
 To: Tailscale
+FromSide: e
+ToSide: w
 
 From: Computer
 To: qBittorrent
+FromSide: e
+ToSide: w
 
 From: Markdown
 To: Mermaid
+FromSide: e
+ToSide: w
 
 From: YAML
 To: SVG
+FromSide: e
+ToSide: w
 
 From: JSON
 To: Graphviz
-
-From: recfile (GNU recutils)
-To: Graphviz
+FromSide: e
+ToSide: w
 
 From: SVG
 To: Excalidraw
+FromSide: e
+ToSide: w
 
 From: SystemVerilog
 To: verible
+FromSide: e
+ToSide: w
 
 From: SystemVerilog
 To: verilator
+FromSide: e
+ToSide: w
 
 From: Python
 To: SystemVerilog
+FromSide: e
+ToSide: w
 
 From: Python
 To: Zig
+FromSide: e
+ToSide: w
 
 From: Python
 To: Rust
+FromSide: e
+ToSide: w
 
 From: Python
 To: Go
+FromSide: e
+ToSide: w
 
 From: Bash
 To: C
+FromSide: e
+ToSide: w
 
 From: Python
 To: Swift
+FromSide: e
+ToSide: w
 
 From: HTML
 To: JavaScript
+FromSide: e
+ToSide: w
 
 From: JavaScript
 To: TypeScript
+FromSide: e
+ToSide: w
 
 From: Bash
 To: Python
+FromSide: e
+ToSide: w
 
 From: Vim / MacVim
 To: Vim script
+FromSide: e
+ToSide: w
 
 From: JSON
 To: SQL
+FromSide: e
+ToSide: w
 
 From: Python
 To: JSON
+FromSide: e
+ToSide: w
 
 From: JSON
 To: YAML
+FromSide: e
+ToSide: w
 
 From: SQL
 To: SQLite
+FromSide: e
+ToSide: w
 
 From: Python
 To: Lua
+FromSide: e
+ToSide: w
 
 From: Lua
 To: LÖVE (love2d)
+FromSide: e
+ToSide: w
 
 From: Lua
 To: Fennel
+FromSide: e
+ToSide: w
 
 From: Rust
 To: Bevy
+FromSide: e
+ToSide: w
 
 From: Python
 To: Jai
+FromSide: e
+ToSide: w
 
 From: Vim / MacVim
 To: Markdown
+FromSide: e
+ToSide: w
 
 From: Python
 To: HTML
+FromSide: e
+ToSide: w
 
 From: Bash
 To: Makefile
+FromSide: e
+ToSide: w
 
 From: HTML
 To: CSS
+FromSide: e
+ToSide: w
 
 From: JSON
 To: TOML
+FromSide: e
+ToSide: w
 
 From: JSON
 To: JSON Lines
+FromSide: e
+ToSide: w
 
 From: Bash
 To: recfile (GNU recutils)
+FromSide: e
+ToSide: w
 
 From: Markdown
 To: LaTeX
+FromSide: e
+ToSide: w
 
 From: LaTeX
 To: PDF
+FromSide: e
+ToSide: w
 
 From: lazygit
 To: Forgejo
+FromSide: e
+ToSide: w
 
 From: Forgejo
 To: fj
+FromSide: e
+ToSide: w
+
+From: Rust
+To: egui
+FromSide: e
+ToSide: w
+
+From: Bash
+To: fzf
+FromSide: e
+ToSide: w
+
+From: Python
+To: Lisp
+FromSide: e
+ToSide: w
+
+From: Lisp
+To: Racket
+FromSide: e
+ToSide: w
+
+From: Lisp
+To: Emacs Lisp
+FromSide: e
+ToSide: w
+
+From: Ghostty
+To: Emacs
+FromSide: e
+ToSide: w
+
+From: Emacs
+To: Emacs Lisp
+FromSide: e
+ToSide: w
+
+%rec: View
+%type: Zoom real
+%type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
+
+TopLeft: 674 -357
+Zoom: 0.682
