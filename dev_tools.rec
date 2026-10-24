@@ -25,13 +25,13 @@
 # edge into a tool is required (AND); edges that share an Any value are
 # either-one (OR). There are no loops, and a prerequisite already implied
 # through another one is not repeated. The %graph lines say so, and
-# draw_graph enforces them.
+# Draw Graph enforces them.
 #
-# Edit:   draw_graph dev_tools.rec   (a graph editor: https://github.com/raveensrk/draw_graph)
-# Check:  draw_graph check dev_tools.rec
+# Edit:   ~/repos/draw_graph_2/gui.rkt dev_tools.rec   (Draw Graph, a graph editor)
+# Check:  ~/repos/draw_graph_2/cli.rkt check dev_tools.rec
 # Query:  recsel -t Node -e 'Tag = "base"' -p Name dev_tools.rec
 #         recsel -t Edge -e 'To = "Rust"' -p From dev_tools.rec
-# Pos is where draw_graph shows a tool, `x y` in px; layout only. Group puts
+# Pos is where Draw Graph shows a tool, `x y` in px; layout only. Group puts
 # a tool in a named box (Group: Browser).
 
 %rec: Group
