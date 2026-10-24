@@ -114,6 +114,16 @@ Scripts meant to be run are executable: a line-1 shebang naming an installed int
 ## CLI apps
 
 Topic file: [cli.md](cli.md) - help shape, bare calls, short flags, one help table. [cli_help.py](harness/checks/cli_help.py) decides the hard half: a runnable, options or not, must handle `-h` and `--help` (short help) and a `help` command (long help).
+## Racket
+
+Before any Racket work (writing, reviewing or debugging `.rkt` or `.scrbl` files,
+or answering a Racket question), read the relevant parts of the Markdown Racket
+docs in [Racket docs](~/.local/share/doc/racket). Start from the Guide for
+concepts and the Reference for exact bindings, and find a binding with `rg`
+instead of reading a whole manual. When the folder is missing,
+`~/dot/install.sh --apply` builds it (`raco setup --doc-markdown`); say so
+instead of working from memory.
+
 
 ## macOS
 
