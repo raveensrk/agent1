@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""post-commit: run the repo's own post-commit hook, which the global path hides.
+
+No check of its own: a commit is already made, so nothing here can refuse it.
+A repo that wants work after each commit (draw_graph_2 rebuilds and installs
+its app) puts an executable .git/hooks/post-commit, and this runs it.
+
+Runs for every repo through the global core.hooksPath, which points here:
+  git config --global core.hooksPath ~/repos/agent1/harness/githooks
+A global hooksPath hides each repo's .git/hooks, so a repo's own
+.git/hooks/post-commit, when there is one, is run from here.
+
+  post-commit            (git passes no arguments)
+  post-commit -h | --help | help
+Skip once, deliberately: git commit --no-verify does not skip post-commit;
+the repo's own hook decides (draw_graph_2: DRGRAPH_NO_INSTALL=1).
+"""
+import os
+import subprocess
+import sys
+
+
+def main(argv):
+    if argv[:1] in (["-h"], ["--help"], ["help"]):
+        print(__doc__.strip() if argv[0] == "help" else __doc__.split("\n\n")[0])
+        return 0
+    # Chain to the repo's own post-commit hook, which the global path hides.
+    git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
+    local = os.path.join(git_dir, "hooks", "post-commit") if git_dir else ""
+    if local and os.access(local, os.X_OK) and os.path.realpath(local) != os.path.realpath(__file__):
+        return subprocess.run([local]).returncode
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
