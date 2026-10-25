@@ -42,28 +42,108 @@
 %graph: parent Parent
 
 Name: LLM data
+Color: #53c674
 
 Name: Browser
+Color: #9653c6
 
 Name: VPN
+Color: #c6b753
+
+Name: Editor
+Color: #53b2c6
+
+Name: Productivity
+Color: #c65391
+
+Name: Data interchange File Format
+Color: #6fc653
+
+Name: SCM
+Color: #5853c6
+
+Name: Structured Query Language
+Color: #2e6b4a
+
+Name: Game Engine
+Color: #53c69b
+
+Name: Lisp Family of Languages
+Color: #bc53c6
+
+Name: HDL
+Color: #aec653
+
+Name: Systems Programming Languages
+Color: #53c66d
+
+Name: Finance
+Color: #8f53c6
+
+Name: AI Coding Agents
+Color: #c6b053
+
+Name: System Admin
+Color: #53b9c6
+
+Name: Entertainment
+Color: #c65398
+
+Name: E-Mailaa
+Parent: Productivity
+Color: #76c653
+
+Name: Security
+Color: #5355c6
+
+Name: Documentation
+Color: #c67253
+
+Name: GUI Framework
+Color: #53c694
+
+Name: Data Visualization
+Color: #b553c6
+
+Name: Scripting Languages
+Color: #b4c653
+
+Name: Experimental Programming Languages
+Color: #5393c6
+
+Name: Web
+Color: #c65372
+
+Name: General Purpose Programming Language
+Color: #53c656
 
 %rec: Node
 %key: Name
 %type: Group rec Group
 %type: Pos regexp /^-?[0-9]+ -?[0-9]+$/
 %mandatory: Name
-%allowed: Name Tag Url Note Group Pos Kind Size
+%allowed: Name Tag Url Note Group Pos Kind Size Fit Text
 %graph: label Name
 %graph: tag Tag
 %graph: color Tag
 %graph: group Group
 %graph: pos Pos
+%graph: color-of base #1e4a3e
+%graph: color-of beginner #224e54
+%graph: color-of extra #4a4820
+%graph: color-of max #32325c
+%graph: color-of expert #462852
+%graph: color-of intermediate #4a4820
+%graph: color-of adv #542234
 
 Name: Touch Typing
 Tag: base
 Tag: beginner
 Tag: Skills
 Pos: 219 924
+Kind: rectangle
+Size: 142 39
+Fit: yes
 
 Name: Ghostty
 Tag: base
@@ -71,50 +151,80 @@ Tag: beginner
 Tag: Terminal
 Url: https://github.com/ghostty-org/ghostty
 Pos: 458 924
+Kind: rectangle
+Size: 96 39
+Fit: yes
 
-Name: Vim / MacVim
+Name: Vim
 Tag: base
 Tag: beginner
 Tag: Text Editing
-Pos: 722 70
+Group: Editor
+Pos: 813 98
+Kind: rectangle
+Size: 66 39
+Fit: yes
 
 Name: universal-ctags
 Tag: beginner
 Tag: extra
 Tag: Text Editing
-Pos: 1035 -58
+Group: Editor
+Pos: 575 82
+Kind: rounded-rectangle
+Size: 170 52
 
 Name: pi
 Tag: base
 Tag: easy
 Tag: AI
-Pos: 722 1326
+Group: AI Coding Agents
+Pos: 600 1395
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: Claude
 Tag: base
 Tag: easy
 Tag: AI
-Pos: 722 1396
+Group: AI Coding Agents
+Pos: 705 1395
+Kind: rectangle
+Size: 89 39
+Fit: yes
 
 Name: Codex and ChatGPT
 Tag: extra
 Tag: easy
 Tag: AI
-Pos: 722 1464
+Group: AI Coding Agents
+Pos: 666 1464
+Kind: rectangle
+Size: 191 39
+Fit: yes
 
 Name: Crush
 Tag: extra
 Tag: easy
 Tag: AI
 Url: https://github.com/charmbracelet/crush
-Pos: 722 1534
+Group: AI Coding Agents
+Pos: 832 1464
+Kind: rectangle
+Size: 82 39
+Fit: yes
 
 Name: Herdr
 Tag: extra
 Tag: intermediate
 Tag: AI
 Note: terminal multiplexer for coding agents
-Pos: 1035 1730
+Group: AI Coding Agents
+Pos: 610 1533
+Kind: rectangle
+Size: 80 39
+Fit: yes
 
 Name: models
 Tag: beginner
@@ -123,7 +233,10 @@ Tag: AI
 Url: https://github.com/reyamira/models
 Note: TUI and CLI for browsing AI models and comparing benchmarks
 Group: LLM data
-Pos: 1034 212
+Pos: 1238 1120
+Kind: rectangle
+Size: 93 39
+Fit: yes
 
 Name: llmfit
 Tag: extra
@@ -132,7 +245,10 @@ Tag: AI
 Url: https://github.com/AlexsJones/llmfit
 Note: TUI and CLI for finding LLMs that fit local hardware
 Group: LLM data
-Pos: 1035 902
+Pos: 1352 1120
+Kind: rectangle
+Size: 76 39
+Fit: yes
 
 Name: Bash
 Tag: base
@@ -140,110 +256,181 @@ Tag: beginner
 Tag: Environment
 Note: also stands for shell scripting; prefer Bash over POSIX sh
 Pos: 722 892
+Kind: diamond
+Size: 120 78
+Fit: yes
 
 Name: Git
 Tag: base
 Tag: beginner
 Tag: Version Control
 Tag: CLI
-Pos: 1035 144
+Group: SCM
+Pos: 1137 -250
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: lazygit
 Tag: base
 Tag: easy
 Tag: Version Control
 Tag: TUI
-Pos: 1326 156
+Group: SCM
+Pos: 936 -181
+Kind: rectangle
+Size: 88 39
+Fit: yes
 
 Name: hledger
 Tag: extra
 Tag: intermediate
 Tag: Finance
+Group: Finance
 Pos: 1326 922
+Kind: ellipse
+Size: 134 39
+Fit: yes
 
 Name: Ledger CLI
 Tag: extra
 Tag: intermediate
 Tag: Finance
+Group: Finance
 Pos: 1035 834
+Kind: ellipse
+Size: 167 39
+Fit: yes
 
 Name: fzf
 Tag: max
 Tag: easy
 Tag: Command Line
-Pos: 1035 972
+Group: Productivity
+Pos: 905 470
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: ripgrep
 Tag: base
 Tag: beginner
 Tag: Command Line
-Pos: 1034 282
+Group: Productivity
+Pos: 484 470
+Kind: rectangle
+Size: 93 39
+Fit: yes
 
 Name: fd
 Tag: beginner
 Tag: extra
 Tag: Command Line
-Pos: 1035 350
+Group: Productivity
+Pos: 590 470
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: jq
 Tag: extra
 Tag: intermediate
 Tag: Command Line
-Pos: 1590 98
+Group: Structured Query Language
+Pos: 1635 93
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: rsync
 Tag: extra
 Tag: easy
 Tag: Command Line
-Pos: 1034 1040
+Group: System Admin
+Pos: 1038 1040
+Kind: rectangle
+Size: 77 39
+Fit: yes
 
 Name: GNU Stow
 Tag: extra
 Tag: easy
 Tag: Command Line
-Pos: 1035 1110
+Group: System Admin
+Pos: 1163 1040
+Kind: rectangle
+Size: 112 39
+Fit: yes
 
 Name: Homebrew
 Tag: base
 Tag: beginner
 Tag: Command Line
-Pos: 1036 420
+Group: System Admin
+Pos: 910 1040
+Kind: rectangle
+Size: 119 39
+Fit: yes
 
 Name: mpv
 Tag: beginner
 Tag: extra
 Tag: Command Line
-Pos: 1034 558
+Group: Entertainment
+Pos: 959 1270
+Kind: rectangle
+Size: 69 39
+Fit: yes
 
 Name: pandoc
 Tag: extra
 Tag: intermediate
 Tag: Command Line
-Pos: 1326 50
+Group: Documentation
+Pos: 1364 14
+Kind: rectangle
+Size: 93 39
+Fit: yes
 
 Name: urlview
 Tag: extra
 Tag: beginner
 Tag: Command Line
-Pos: 1036 696
+Group: Productivity
+Pos: 482 540
+Kind: rectangle
+Size: 91 39
+Fit: yes
 
 Name: zoxide
 Tag: extra
 Tag: beginner
 Tag: Command Line
-Pos: 1035 626
+Group: Productivity
+Pos: 694 470
+Kind: rectangle
+Size: 88 39
+Fit: yes
 
 Name: ranger
 Tag: extra
 Tag: easy
 Tag: Command Line
-Pos: 1036 1178
+Group: Productivity
+Pos: 602 540
+Kind: rectangle
+Size: 87 39
+Fit: yes
 
 Name: tmux
 Tag: expert
 Tag: extra
 Tag: Command Line
-Pos: 1034 764
+Group: Productivity
+Pos: 806 470
+Kind: rectangle
+Size: 77 39
+Fit: yes
 
 Name: Firefox
 Tag: base
@@ -251,6 +438,9 @@ Tag: beginner
 Tag: Web Browser
 Group: Browser
 Pos: 219 994
+Kind: rectangle
+Size: 90 39
+Fit: yes
 
 Name: Chrome
 Tag: extra
@@ -258,6 +448,9 @@ Tag: beginner
 Tag: Web Browser
 Group: Browser
 Pos: 220 1062
+Kind: rectangle
+Size: 97 39
+Fit: yes
 
 Name: Safari
 Tag: extra
@@ -265,38 +458,61 @@ Tag: beginner
 Tag: Web Browser
 Group: Browser
 Pos: 220 1132
+Kind: rectangle
+Size: 79 39
+Fit: yes
 
 Name: Himalaya
 Tag: extra
 Tag: easy
 Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya
-Pos: 1036 1592
+Group: E-Mailaa
+Pos: 616 650
+Kind: rectangle
+Size: 107 39
+Fit: yes
 
 Name: Himalaya-Tui
 Tag: extra
 Tag: easy
 Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya-tui
-Pos: 1326 1592
+Group: E-Mailaa
+Pos: 770 650
+Kind: rectangle
+Size: 141 39
+Fit: yes
 
 Name: Mutt / Neomutt
 Tag: extra
 Tag: expert
 Tag: E-Mail
-Pos: 1035 1662
+Group: E-Mailaa
+Pos: 950 650
+Kind: rectangle
+Size: 158 39
+Fit: yes
 
 Name: Bitwarden
 Tag: base
 Tag: beginner
 Tag: Password Managers
+Group: Security
 Pos: 220 1200
+Kind: rectangle
+Size: 112 39
+Fit: yes
 
 Name: newsboat
 Tag: extra
 Tag: easy
 Tag: Reading and RSS
-Pos: 722 1258
+Group: Productivity
+Pos: 730 540
+Kind: rectangle
+Size: 110 39
+Fit: yes
 
 Name: WireGuard VPN
 Tag: extra
@@ -304,6 +520,9 @@ Tag: intermediate
 Tag: Network
 Group: VPN
 Pos: 1034 1454
+Kind: rectangle
+Size: 153 39
+Fit: yes
 
 Name: Tailscale
 Tag: base
@@ -312,26 +531,41 @@ Tag: Network
 Tag: Web
 Group: VPN
 Pos: 1036 1524
+Kind: rectangle
+Size: 103 39
+Fit: yes
 
 Name: qBittorrent
 Tag: extra
 Tag: beginner
 Tag: Torrent
-Pos: 220 1270
+Group: Entertainment
+Pos: 1084 1270
+Kind: rectangle
+Size: 120 39
+Fit: yes
 
 Name: Mermaid
 Tag: extra
 Tag: easy
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
-Pos: 1326 -20
+Group: Documentation
+Pos: 1430 -54
+Kind: rectangle
+Size: 104 39
+Fit: yes
 
 Name: SVG
 Tag: extra
 Tag: intermediate
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
-Pos: 1840 -38
+Group: Data interchange File Format
+Pos: 2071 184
+Kind: rectangle
+Size: 67 39
+Fit: yes
 
 Name: Graphviz
 Tag: extra
@@ -340,7 +574,11 @@ Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
 Url: https://graphviz.org
 Note: dot lays out dev_tools_path.svg
-Pos: 1590 236
+Group: Data Visualization
+Pos: 2224 429
+Kind: rectangle
+Size: 105 39
+Fit: yes
 
 Name: Excalidraw
 Tag: extra
@@ -349,195 +587,307 @@ Tag: Diagrams, Flowcharts and Drawings
 Tag: Drawing
 Url: https://github.com/excalidraw/excalidraw
 Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
-Pos: 2080 -38
+Group: Data Visualization
+Pos: 2082 429
+Kind: rectangle
+Size: 119 39
+Fit: yes
 
 Name: verible
 Tag: base
 Tag: advanced
 Tag: Semiconductor
 Tag: SystemVerilog and UVM
-Pos: 1590 788
+Group: HDL
+Pos: 1613 788
+Kind: rectangle
+Size: 88 39
+Fit: yes
 
 Name: verilator
 Tag: base
 Tag: advanced
 Tag: Semiconductor
 Tag: SystemVerilog and UVM
-Pos: 1590 858
+Group: HDL
+Pos: 1737 788
+Kind: rectangle
+Size: 100 39
+Fit: yes
 
 Name: SystemVerilog
 Tag: base
 Tag: intermediate
 Tag: Programming Languages
 Tag: Hardware Design and Verification
-Pos: 1325 784
+Group: HDL
+Pos: 1466 788
+Kind: rectangle
+Size: 146 39
+Fit: yes
 
 Name: Zig
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 1326 432
+Group: Systems Programming Languages
+Pos: 1633 1236
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: Rust
 Tag: extra
 Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 1325 852
+Group: Systems Programming Languages
+Pos: 1548 1304
+Kind: rectangle
+Size: 70 39
+Fit: yes
 
 Name: Go
 Tag: extra
 Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 1326 502
+Group: Systems Programming Languages
+Pos: 1543 1236
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: C
 Tag: base
 Tag: beginner
 Tag: Programming Languages
 Tag: Systems and Native
-Pos: 1035 1316
+Group: Systems Programming Languages
+Pos: 1643 1304
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: Swift
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Apple Platforms
+Group: General Purpose Programming Language
 Pos: 1326 570
+Kind: rectangle
+Size: 73 39
+Fit: yes
 
 Name: JavaScript
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Web
-Pos: 1590 374
+Group: Web
+Pos: 1507 219
+Kind: rectangle
+Size: 111 39
+Fit: yes
 
 Name: TypeScript
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Web
-Pos: 1841 374
+Group: Web
+Pos: 1750 219
+Kind: rectangle
+Size: 118 39
+Fit: yes
 
 Name: Python
 Tag: base
 Tag: easy
 Tag: Programming Languages
 Tag: Automation and Scripting
+Group: General Purpose Programming Language
 Pos: 1034 488
+Kind: rectangle
+Size: 89 39
+Fit: yes
 
 Name: Vim script
 Tag: intermediate
 Tag: extra
 Tag: Programming Languages
 Tag: Editor and Tooling Extension
-Pos: 1036 80
+Group: Editor
+Pos: 997 124
+Kind: rectangle
+Size: 115 39
+Fit: yes
 
 Name: SQL
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Data and Query
+Group: Structured Query Language
 Pos: 1590 30
+Kind: rectangle
+Size: 66 39
+Fit: yes
 
 Name: JSON
 Tag: base
 Tag: easy
 Tag: Programming Languages
 Tag: Data and Query
-Pos: 1325 226
+Group: Data interchange File Format
+Pos: 2282 184
+Kind: rectangle
+Size: 74 39
+Fit: yes
 
 Name: YAML
 Tag: extra
 Tag: easy
 Tag: Programming Languages
 Tag: Data and Query
-Pos: 1590 -40
+Group: Data interchange File Format
+Pos: 1968 184
+Kind: rectangle
+Size: 79 39
+Fit: yes
 
 Name: SQLite
 Tag: extra
 Tag: intermediate
 Tag: Programming Languages
 Tag: Data and Query
+Group: Structured Query Language
 Pos: 1840 30
+Kind: rectangle
+Size: 85 39
+Fit: yes
 
 Name: Lua
 Tag: extra
 Tag: easy
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 1326 640
+Group: Scripting Languages
+Pos: 1518 584
+Kind: rectangle
+Size: 63 39
+Fit: yes
 
 Name: LÖVE (love2d)
 Tag: extra
 Tag: easy
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 1590 582
+Group: Game Engine
+Pos: 1540 996
+Kind: rectangle
+Size: 143 39
+Fit: yes
 
 Name: Fennel
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 1590 650
+Group: Lisp Family of Languages
+Pos: 2291 716
+Kind: rectangle
+Size: 87 39
+Fit: yes
 
 Name: Bevy
 Tag: max
 Tag: expert
 Tag: Programming Languages
 Tag: Games and 2D Graphics
-Pos: 1590 996
+Group: Game Engine
+Pos: 1676 996
+Kind: rectangle
+Size: 71 39
+Fit: yes
 
 Name: Jai
 Tag: max
 Tag: advanced
 Tag: Programming Languages
 Tag: Games and 2D Graphics
+Group: Experimental Programming Languages
 Pos: 1326 364
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: Markdown
 Tag: base
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1034 12
+Group: Documentation
+Pos: 1229 14
+Kind: rectangle
+Size: 117 39
+Fit: yes
 
 Name: HTML
 Tag: extra
 Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1326 294
+Group: Web
+Pos: 1381 219
+Kind: rectangle
+Size: 80 39
+Fit: yes
 
 Name: Makefile
 Tag: base
 Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1034 1386
+Group: Systems Programming Languages
+Pos: 1278 1388
+Kind: rectangle
+Size: 101 39
+Fit: yes
 
 Name: CSS
 Tag: extra
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1590 444
+Group: Web
+Pos: 1625 219
+Kind: rectangle
+Size: 64 39
+Fit: yes
 
 Name: TOML
 Tag: extra
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1590 168
+Group: Data interchange File Format
+Pos: 2175 184
+Kind: rectangle
+Size: 81 39
+Fit: yes
 
 Name: JSON Lines
 Tag: extra
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1590 306
+Group: Data interchange File Format
+Pos: 1988 252
+Kind: rectangle
+Size: 119 39
+Fit: yes
 
 Name: recfile (GNU recutils)
 Tag: extra
@@ -545,21 +895,33 @@ Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
 Note: plain-text records; recsel, recfix, rec2csv
-Pos: 1036 1248
+Group: Data interchange File Format
+Pos: 2175 252
+Kind: rectangle
+Size: 195 39
+Fit: yes
 
 Name: LaTeX
 Tag: max
 Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
-Pos: 1325 -88
+Group: Documentation
+Pos: 1306 -54
+Kind: rectangle
+Size: 82 39
+Fit: yes
 
 Name: PDF
 Tag: max
 Tag: advanced
 Tag: Formats
 Tag: Publish
-Pos: 1590 -178
+Group: Documentation
+Pos: 1203 -54
+Kind: rectangle
+Size: 65 39
+Fit: yes
 
 Name: Computer
 Tag: base
@@ -567,50 +929,93 @@ Tag: beginner
 Tag: ROOT
 Tag: GUI
 Pos: -28 1112
+Kind: rectangle
+Size: 113 39
+Fit: yes
 
 Name: Forgejo
 Tag: base
 Tag: advanced
 Tag: Code Forge
-Pos: 1590 -108
+Group: SCM
+Pos: 940 -250
+Kind: rectangle
+Size: 95 39
+Fit: yes
 
 Name: fj
 Tag: base
 Tag: advanced
 Tag: Code Forge
 Tag: CLI
-Pos: 1840 -108
+Group: SCM
+Pos: 1047 -250
+Kind: rectangle
+Size: 60 39
+Fit: yes
 
 Name: egui
 Tag: expert
 Tag: gui
+Group: GUI Framework
 Pos: 1590 926
+Kind: rectangle
+Size: 69 39
+Fit: yes
 
 Name: Lisp
 Tag: adv
-Pos: 1326 708
+Group: Lisp Family of Languages
+Pos: 2129 784
 Kind: rounded-rectangle
+Size: 67 39
+Fit: yes
 
 Name: Racket
 Tag: expert
-Pos: 1590 720
+Group: Lisp Family of Languages
+Pos: 2237 784
 Kind: rounded-rectangle
+Size: 87 39
+Fit: yes
 
 Name: Emacs Lisp
 Tag: expert
-Pos: 1590 512
+Group: Lisp Family of Languages
+Pos: 2157 716
 Kind: rounded-rectangle
+Size: 121 39
+Fit: yes
 
 Name: Emacs
 Tag: adv
-Pos: 722 530
+Group: Editor
+Pos: 813 171
 Kind: rounded-rectangle
 Size: 111 58
+
+Name: abc
+Text: in: a
++ in: b
++ out: x
++ out: y
+Pos: 763 -457
+Kind: card
+Size: 93 132
+
+Name: xyz
+Text: in: a
++ in: b
++ out: x
++ out: y
+Pos: 597 -454
+Kind: card
+Size: 120 149
 
 %rec: Edge
 %type: From,To line
 %mandatory: From To
-%allowed: From To Any Note FromSide ToSide
+%allowed: From To Any Note FromSide ToSide Route FromPort ToPort
 %graph: acyclic
 %graph: no_implied
 
@@ -618,431 +1023,542 @@ From: Computer
 To: Touch Typing
 FromSide: e
 ToSide: w
+Route: elbow
 Note: Hello
 
 From: Touch Typing
 To: Ghostty
 FromSide: e
 ToSide: w
-
-From: Ghostty
-To: Vim / MacVim
-FromSide: e
-ToSide: w
-
-From: Vim / MacVim
-To: universal-ctags
-FromSide: e
-ToSide: w
+Route: elbow
 
 From: Ghostty
 To: pi
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Ghostty
 To: Claude
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Ghostty
 To: Codex and ChatGPT
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Ghostty
 To: Crush
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: pi
 To: Herdr
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Claude
 To: Herdr
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Codex and ChatGPT
 To: Herdr
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Crush
 To: Herdr
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: models
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: llmfit
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Ghostty
 To: Bash
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: Git
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Git
 To: lazygit
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Ledger CLI
 To: hledger
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: Ledger CLI
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: ripgrep
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: fd
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JSON
 To: jq
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: rsync
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: GNU Stow
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: Homebrew
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: mpv
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Markdown
 To: pandoc
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: urlview
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: zoxide
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: ranger
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: tmux
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Computer
 To: Firefox
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Computer
 To: Chrome
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Computer
 To: Safari
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: newsboat
 To: Himalaya
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Himalaya
 To: Himalaya-Tui
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: newsboat
 To: Mutt / Neomutt
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Computer
 To: Bitwarden
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Ghostty
 To: newsboat
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: WireGuard VPN
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: Tailscale
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Computer
 To: qBittorrent
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Markdown
 To: Mermaid
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: YAML
 To: SVG
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JSON
 To: Graphviz
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: SVG
 To: Excalidraw
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: SystemVerilog
 To: verible
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: SystemVerilog
 To: verilator
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: SystemVerilog
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Zig
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Rust
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Go
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: C
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Swift
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: HTML
 To: JavaScript
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JavaScript
 To: TypeScript
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: Python
 FromSide: e
 ToSide: w
+Route: elbow
 
-From: Vim / MacVim
+From: Vim
 To: Vim script
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JSON
 To: SQL
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: JSON
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JSON
 To: YAML
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: SQL
 To: SQLite
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Lua
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Lua
 To: LÖVE (love2d)
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Lua
 To: Fennel
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Rust
 To: Bevy
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Jai
 FromSide: e
 ToSide: w
+Route: elbow
 
-From: Vim / MacVim
+From: Vim
 To: Markdown
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: HTML
 FromSide: e
 ToSide: w
-
-From: Bash
-To: Makefile
-FromSide: e
-ToSide: w
+Route: elbow
 
 From: HTML
 To: CSS
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JSON
 To: TOML
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: JSON
 To: JSON Lines
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: recfile (GNU recutils)
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Markdown
 To: LaTeX
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: LaTeX
 To: PDF
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: lazygit
 To: Forgejo
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Forgejo
 To: fj
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Rust
 To: egui
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Bash
 To: fzf
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Python
 To: Lisp
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Lisp
 To: Racket
 FromSide: e
 ToSide: w
+Route: elbow
 
 From: Lisp
 To: Emacs Lisp
 FromSide: e
 ToSide: w
-
-From: Ghostty
-To: Emacs
-FromSide: e
-ToSide: w
+Route: elbow
 
 From: Emacs
 To: Emacs Lisp
 FromSide: e
 ToSide: w
+Route: elbow
+
+From: universal-ctags
+To: Vim
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: universal-ctags
+To: Emacs
+Route: elbow
+
+From: Bash
+To: universal-ctags
+Route: elbow
+
+From: C
+To: Makefile
+Route: elbow
+
+From: abc
+To: xyz
+FromSide: e
+ToSide: w
+FromPort: x
+ToPort: a
+Route: curved
+
+From: abc
+To: xyz
+FromSide: e
+ToSide: w
+FromPort: y
+ToPort: b
+Route: curved
+
+From: xyz
+To: abc
+FromSide: e
+ToSide: w
+FromPort: y
+ToPort: b
+Route: curved
+
+From: xyz
+To: abc
+FromSide: e
+ToSide: w
+FromPort: x
+ToPort: a
+Route: curved
 
 %rec: View
 %type: Zoom real
 %type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
 
-TopLeft: 674 -357
-Zoom: 0.682
+TopLeft: 375 -617
+Zoom: 1.214
