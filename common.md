@@ -8,7 +8,7 @@ At session start, Read these files
 
 - [Emoji Legend](emoji_legend.md) - in the same directory as this file
 - [Experimental rules](experimental.md) - live trial rules; a keeper moves into common.md or another file, the rest are deleted
-- [task-router skill](~/repos/task-router/skills/task-router/SKILL.md) - tasks: one Markdown file per task, the `task-router` CLI the only writer. `task-router skill install` installs it.
+- [task-router-2 skill](~/repos/task-router-2/resources/skills/task-router-2/SKILL.md) - tasks: one Markdown file per task, the `task-router-2` CLI the only writer. `task-router-2 skill install` installs it.
 - [Code Style](code_style.md) - how to write code
 - [Git](git.md) - commits and pull requests
 - [Jobs](jobs.md) - ETA rules for long-running jobs

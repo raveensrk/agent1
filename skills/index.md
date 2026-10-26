@@ -14,4 +14,4 @@ by registering this repo with [install.py](../install.py).
 - [privacy-scan](./privacy-scan/SKILL.md) - Scans files or a diff for PII, privacy and security issues.
 - [session-name](./session-name/SKILL.md) - Names the current Pi session from its goal, as a short label the user picks.
 - [skill-creator](./skill-creator/SKILL.md) - Authors or improves an agent skill: interview, scaffold, write, validate, install, test.
-- [task-router](~/repos/task-router/skills/task-router/SKILL.md) - Tasks as one Markdown file each, written by the `task-router` CLI. Lives in the task-router repo; `task-router skill install` installs it.
+- [task-router-2](~/repos/task-router-2/resources/skills/task-router-2/SKILL.md) - Tasks as one Markdown file each, written by the `task-router-2` CLI. Lives in the task-router-2 repo; `task-router-2 skill install` installs it.
