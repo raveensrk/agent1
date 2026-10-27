@@ -135,6 +135,8 @@ Color: #53c656
 %graph: color-of expert #462852
 %graph: color-of intermediate #4a4820
 %graph: color-of adv #542234
+%graph: color-of gui #5a2c46
+%graph: color-of library #244658
 
 Name: Touch Typing
 Tag: base
@@ -575,7 +577,7 @@ Tag: Diagram Formats
 Url: https://graphviz.org
 Note: dot lays out dev_tools_path.svg
 Group: Data Visualization
-Pos: 2224 429
+Pos: 2054 420
 Kind: rectangle
 Size: 105 39
 Fit: yes
@@ -588,7 +590,7 @@ Tag: Drawing
 Url: https://github.com/excalidraw/excalidraw
 Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
 Group: Data Visualization
-Pos: 2082 429
+Pos: 1912 420
 Kind: rectangle
 Size: 119 39
 Fit: yes
@@ -994,23 +996,52 @@ Pos: 813 171
 Kind: rounded-rectangle
 Size: 111 58
 
-Name: abc
-Text: in: a
-+ in: b
-+ out: x
-+ out: y
-Pos: 763 -457
-Kind: card
-Size: 93 132
+Name: GUI
+Pos: 2178 1128
+Kind: rounded-rectangle
+Size: 63 39
+Fit: yes
 
-Name: xyz
-Text: in: a
-+ in: b
-+ out: x
-+ out: y
-Pos: 597 -454
-Kind: card
-Size: 120 149
+Name: cljfx
+Tag: gui
+Tag: library
+Group: Lisp Family of Languages
+Pos: 2773 969
+Kind: rounded-rectangle
+Size: 69 39
+Fit: yes
+
+Name: HumbleUI
+Tag: library
+Tag: gui
+Group: Lisp Family of Languages
+Pos: 2756 1058
+Kind: rounded-rectangle
+Size: 112 39
+Fit: yes
+
+Name: Clojure
+Group: Lisp Family of Languages
+Pos: 2532 878
+Kind: rounded-rectangle
+Size: 92 39
+Fit: yes
+
+Name: d3
+Tag: library
+Group: Data Visualization
+Pos: 2224 429
+Kind: rounded-rectangle
+Size: 60 39
+Fit: yes
+
+Name: Note 1
+Text: Reduce Abstractions
++
++ https://www.youtube.com/watch?v=48DqkAx86Vg
+Pos: 2598 492
+Kind: note
+Size: 447 142
 
 %rec: Edge
 %type: From,To line
@@ -1019,17 +1050,14 @@ Size: 120 149
 %graph: acyclic
 %graph: no_implied
 
-From: Computer
-To: Touch Typing
-FromSide: e
-ToSide: w
-Route: elbow
-Note: Hello
-
 From: Touch Typing
 To: Ghostty
 FromSide: e
 ToSide: w
+Route: elbow
+
+From: Touch Typing
+To: GUI
 Route: elbow
 
 From: Ghostty
@@ -1054,6 +1082,40 @@ From: Ghostty
 To: Crush
 FromSide: e
 ToSide: w
+Route: elbow
+
+From: Ghostty
+To: Bash
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Ghostty
+To: newsboat
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Vim
+To: Vim script
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Vim
+To: Markdown
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: universal-ctags
+To: Vim
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: universal-ctags
+To: Emacs
 Route: elbow
 
 From: pi
@@ -1092,26 +1154,8 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Ghostty
-To: Bash
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: Bash
 To: Git
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Git
-To: lazygit
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Ledger CLI
-To: hledger
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1130,12 +1174,6 @@ Route: elbow
 
 From: Bash
 To: fd
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: JSON
-To: jq
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1164,12 +1202,6 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Markdown
-To: pandoc
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: Bash
 To: urlview
 FromSide: e
@@ -1194,54 +1226,6 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Computer
-To: Firefox
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Computer
-To: Chrome
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Computer
-To: Safari
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: newsboat
-To: Himalaya
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Himalaya
-To: Himalaya-Tui
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: newsboat
-To: Mutt / Neomutt
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Computer
-To: Bitwarden
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Ghostty
-To: newsboat
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: Bash
 To: WireGuard VPN
 FromSide: e
@@ -1254,26 +1238,66 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Computer
-To: qBittorrent
+From: Bash
+To: C
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: Markdown
-To: Mermaid
+From: Bash
+To: Python
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: YAML
-To: SVG
+From: Bash
+To: recfile (GNU recutils)
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: JSON
-To: Graphviz
+From: Bash
+To: fzf
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Bash
+To: universal-ctags
+Route: elbow
+
+From: Git
+To: lazygit
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: lazygit
+To: Forgejo
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Ledger CLI
+To: hledger
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Himalaya
+To: Himalaya-Tui
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: newsboat
+To: Himalaya
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: newsboat
+To: Mutt / Neomutt
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1294,6 +1318,36 @@ From: SystemVerilog
 To: verilator
 FromSide: e
 ToSide: w
+Route: elbow
+
+From: Rust
+To: Bevy
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Rust
+To: egui
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: C
+To: Makefile
+Route: elbow
+
+From: C
+To: Lisp
+Route: elbow
+
+From: JavaScript
+To: TypeScript
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: JavaScript
+To: d3
 Route: elbow
 
 From: Python
@@ -1320,44 +1374,8 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Bash
-To: C
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: Python
 To: Swift
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: HTML
-To: JavaScript
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: JavaScript
-To: TypeScript
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: Python
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Vim
-To: Vim script
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: JSON
-To: SQL
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1368,38 +1386,8 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: JSON
-To: YAML
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: SQL
-To: SQLite
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: Python
 To: Lua
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Lua
-To: LÖVE (love2d)
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Lua
-To: Fennel
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Rust
-To: Bevy
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1410,20 +1398,38 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Vim
-To: Markdown
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: Python
 To: HTML
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: HTML
-To: CSS
+From: SQL
+To: SQLite
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: JSON
+To: jq
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: JSON
+To: Graphviz
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: JSON
+To: SQL
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: JSON
+To: YAML
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1440,8 +1446,32 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: Bash
-To: recfile (GNU recutils)
+From: YAML
+To: SVG
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Lua
+To: LÖVE (love2d)
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Lua
+To: Fennel
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Markdown
+To: pandoc
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Markdown
+To: Mermaid
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1452,38 +1482,63 @@ FromSide: e
 ToSide: w
 Route: elbow
 
+From: HTML
+To: JavaScript
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: HTML
+To: CSS
+FromSide: e
+ToSide: w
+Route: elbow
+
 From: LaTeX
 To: PDF
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: lazygit
-To: Forgejo
+From: Computer
+To: Touch Typing
+FromSide: e
+ToSide: w
+Route: elbow
+Note: Hello
+
+From: Computer
+To: Firefox
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Computer
+To: Chrome
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Computer
+To: Safari
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Computer
+To: Bitwarden
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Computer
+To: qBittorrent
 FromSide: e
 ToSide: w
 Route: elbow
 
 From: Forgejo
 To: fj
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Rust
-To: egui
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: fzf
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Lisp
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1500,65 +1555,31 @@ FromSide: e
 ToSide: w
 Route: elbow
 
+From: Lisp
+To: Clojure
+Route: elbow
+
 From: Emacs
 To: Emacs Lisp
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: universal-ctags
-To: Vim
+From: Clojure
+To: cljfx
 FromSide: e
 ToSide: w
 Route: elbow
 
-From: universal-ctags
-To: Emacs
+From: Clojure
+To: HumbleUI
+FromSide: s
+ToSide: w
 Route: elbow
-
-From: Bash
-To: universal-ctags
-Route: elbow
-
-From: C
-To: Makefile
-Route: elbow
-
-From: abc
-To: xyz
-FromSide: e
-ToSide: w
-FromPort: x
-ToPort: a
-Route: curved
-
-From: abc
-To: xyz
-FromSide: e
-ToSide: w
-FromPort: y
-ToPort: b
-Route: curved
-
-From: xyz
-To: abc
-FromSide: e
-ToSide: w
-FromPort: y
-ToPort: b
-Route: curved
-
-From: xyz
-To: abc
-FromSide: e
-ToSide: w
-FromPort: x
-ToPort: a
-Route: curved
 
 %rec: View
 %type: Zoom real
 %type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
 
-TopLeft: 375 -617
-Zoom: 1.214
+TopLeft: 1879 -357
+Zoom: 0.387
