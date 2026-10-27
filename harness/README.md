@@ -120,9 +120,8 @@ per Claude hook event, wired by the plugin's [hooks/hooks.json](../hooks/hooks.j
 
 The rule lives in the extension; `hook.ts` only translates the event. Change a
 rule there and both harnesses enforce it. Each hook costs ~0.1 s of node
-startup (measured 2026-10-08). Claude's `/telegraph` command
-([commands/telegraph.md](../commands/telegraph.md)) flips the same switch as
-pi's. Check: `node --experimental-strip-types harness/tests/test_hook.ts`.
+startup (measured 2026-10-08). Claude's `/telegraph` command is archived in
+[archive/commands/telegraph.md](../archive/commands/telegraph.md). Check: `node --experimental-strip-types harness/tests/test_hook.ts`.
 
 ## Guards
 

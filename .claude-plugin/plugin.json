@@ -4,9 +4,5 @@
   "version": "0.1.0",
   "author": {
     "name": "Raveen Kumar"
-  },
-  "commands": [
-    "./commands",
-    "./prompts"
-  ]
+  }
 }

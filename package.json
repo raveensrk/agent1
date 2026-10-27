@@ -12,9 +12,6 @@
       "harness/extensions/*.ts",
       "!harness/extensions/model_pick.ts"
     ],
-    "prompts": [
-      "prompts/estimate-cost.md"
-    ],
     "skills": [
       "skills",
       "!skills/index.md"

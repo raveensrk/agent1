@@ -93,11 +93,11 @@ answer means the import did not load.
 | `naming.md` | Naming rules, disabled |
 | `pi.md` | pi package management |
 | `prompts.md` | Personal paste-bin of chat prompts |
-| `prompts/` | Reusable Pi slash commands loaded from the local package |
 | [`question_types.yaml`](./question_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |
 | `removal.md` | Removing apps, packages and harnesses |
 | `repos.md` | Nested git repo policy for `~/repos` |
 | `skills/` | Installable agent skills (see [Skills](#skills)) |
+| `archive/` | Uninstalled skills and commands, kept out of the load paths |
 | `terminologies.md` | Personal prompt-vocab notes |
 | `use_case.md` | Personal notes: what I use agents for |
 
@@ -115,11 +115,7 @@ directory name to match the skill `name`.
 
 | Skill | What it does |
 |---|---|
-| `agent-usage-report` | HTML report of every model used across agent harnesses (pi, Claude Code, Codex, opencode): tokens, cost, and the most intelligent and most efficient model |
 | `determinize` | Scans a directory's agent instructions, turns every decidable rule into a check, a guard or a git hook, and thins the prose to decisions and routing |
-| `git-report` | Your commits across all your repos, local and remote, for any time window |
-| `model-price-report` | Dark HTML report of subscription plans, first-party API prices, and Artificial Analysis scores |
-| `privacy-scan` | Scans files or a diff for PII, privacy and security issues |
 
 ### Install
 
