@@ -147,12 +147,13 @@ def repo_check_dirs(root: str) -> list[str]:
 
 
 def applies(check: dict, rel: str) -> bool:
-    """`applies` globs select the files a check sees; a leading `!` drops them."""
+    """`applies` globs select the files a check sees; a leading `!` drops them.
+    With only `!` globs, every other file is kept."""
     patterns = check["applies"]
     if not patterns:
         return True
     base = os.path.basename(rel)
-    keep = False
+    keep = all(pattern.startswith("!") for pattern in patterns)
     for pattern in patterns:
         drop = pattern.startswith("!")
         glob = pattern[1:] if drop else pattern

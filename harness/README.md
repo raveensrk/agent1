@@ -45,7 +45,8 @@ reads its header and decides which files it sees.
 ```
 
 - `applies` are fnmatch globs against the repo-relative path or the basename;
-  a leading `!` drops a path. No `applies` means every file.
+  a leading `!` drops a path. No `applies`, or only `!` globs, means every
+  file not dropped.
 - The dispatcher passes the candidate file paths on stdin, one per line, and
   runs the check with the repo root as the working directory.
 - Print findings as `path:line: message` and exit 0, with line 1 for a

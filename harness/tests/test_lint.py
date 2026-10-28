@@ -493,6 +493,11 @@ def test_applies_globs_and_negation():
     assert lint.applies(check, "deep/archive/old.md") is False
     assert lint.applies(check, "harness/lint.py") is False
     assert lint.applies({"applies": []}, "anything") is True
+    # only drops: everything else is kept, not silently nothing
+    drops = {"applies": ["!**/archive/**", "!*.json"]}
+    assert lint.applies(drops, "script/install") is True
+    assert lint.applies(drops, "archive/old.md") is False
+    assert lint.applies(drops, "data.json") is False
 
 
 def test_convert_parses_findings_and_returns_the_rest():
