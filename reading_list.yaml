@@ -1,3 +1,0 @@
-# reading_list.yaml - one link per line: state to_read|read, rating 1-10 once read, tag, url, title
-- {state: to_read, rating: null, tag: [], url: "https://openrouter.ai/workspaces/default/guardrails", title: "OpenRouter Guardrails"}
-- {state: to_read, rating: null, tag: [], url: "https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/configuration.md", title: "Pi configuration: custom system prompt (SYSTEM.md)"}
