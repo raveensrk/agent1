@@ -384,13 +384,6 @@ def test_file_naming_steers_junk_to_a_delete_by_git_state():
             f"ignore it: trash {shlex.quote(finder)} && printf '\\n.DS_Store\\n' >> {ignore}"
         ], run.stdout
 
-        # Through the dispatcher: a colon inside the path still parses.
-        proc = subprocess.run([sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp)
-        report = json.loads(proc.stdout)
-        assert report["failures"] == [], report
-        paths = sorted(f["path"] for f in report["findings"] if f["check"] == "file_naming")
-        assert paths == sorted(os.path.relpath(p, root) for p in tracked + [finder]), report
-
         # The steer works as printed, from a cwd in another repo.
         command = run.stdout.splitlines()[0].split("do not rename it: ", 1)[1]
         subprocess.run(command, shell=True, check=True, cwd=HERE, capture_output=True)
@@ -758,34 +751,36 @@ def test_dispatcher_end_to_end_in_a_temp_repo():
         assert "0 findings" in proc.stdout, proc.stdout
 
 
-def test_dispatcher_reports_a_name_that_is_not_snake_case():
-    """Until 2026-10-09 file_naming printed `path: message` with no line number
-    and the dispatcher dropped every one, so the rule never fired through lint."""
+def test_dispatcher_skips_the_switched_off_naming_check():
+    """The naming rules were switched off on 2026-10-23 by renaming the check to
+    _file_naming.py: lint must not run it, while the check itself still steers
+    a rename to the offending directory, with absolute paths on both sides."""
+    check = os.path.join(CHECKS, "_file_naming.py")
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["git", "init", "-q", tmp], check=True)
-        for rel in ("script/find-link.py", "docs/Old-Drafts/v1/note.txt"):
-            os.makedirs(os.path.join(tmp, os.path.dirname(rel)))
-            with open(os.path.join(tmp, rel), "w") as fh:
+        root = os.path.realpath(tmp)
+        rels = ("script/find-link.py", "docs/Old-Drafts/v1/note.txt")
+        for rel in rels:
+            os.makedirs(os.path.join(root, os.path.dirname(rel)))
+            with open(os.path.join(root, rel), "w") as fh:
                 fh.write("x = 1\n")
         proc = subprocess.run(
-            [sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=tmp
+            [sys.executable, LINT, "--json"], capture_output=True, text=True, cwd=root
         )
-        assert proc.returncode == 1, proc.stderr
         report = json.loads(proc.stdout)
         assert report["failures"] == [], report
-        found = sorted((f["check"], f["path"], f["line"]) for f in report["findings"])
-        assert found == [
-            ("file_naming", "docs/Old-Drafts/v1/note.txt", 1),
-            ("file_naming", "script/find-link.py", 1),
-        ], report
-        # The rename steers to the offending directory itself, not the file's
-        # own directory, and to absolute paths on both sides.
-        root = os.path.realpath(tmp)
-        messages = {f["path"]: f["message"] for f in report["findings"]}
-        assert messages["docs/Old-Drafts/v1/note.txt"].endswith(
+        assert [f for f in report["findings"] if f["check"] == "file_naming"] == [], report
+
+        run = subprocess.run(
+            [sys.executable, check, *(os.path.join(root, r) for r in rels)],
+            capture_output=True, text=True, cwd=root,
+        )
+        assert run.returncode == 0, run.stderr
+        messages = {line.split(":1: ", 1)[0]: line for line in run.stdout.splitlines()}
+        assert messages[f"{root}/docs/Old-Drafts/v1/note.txt"].endswith(
             f"git -C {root} mv {root}/docs/Old-Drafts {root}/docs/old_drafts"
         ), messages
-        assert messages["script/find-link.py"].endswith(f"{root}/script/find_link.py"), messages
+        assert messages[f"{root}/script/find-link.py"].endswith(f"{root}/script/find_link.py"), messages
 
 
 def test_file_naming_suggestion_always_passes_the_rule():
