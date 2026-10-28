@@ -121,3 +121,17 @@ linked as an image (`![Map](map.svg)`).
 
 Before handing one over, render it (headless Chrome `--screenshot` works) and
 look at it: no label over a line, no line through a box.
+
+## Apps go in `~/Applications/My_Apps`
+
+Every app a project in `~/repos` builds and installs goes in
+`~/Applications/My_Apps` (`/Users/raveen_kumar_personal/Applications/My_Apps`).
+Not `~/Applications` itself and not `/Applications`. This covers the
+installer, the post-commit hook that reinstalls the app, any Dock tile it
+pins, and any code that launches or looks up the app by its path.
+
+An install updates the bundle in place (`rsync -a --delete NEW.app/ DEST.app/`).
+It never moves the old bundle away first, because the Dock follows a moved
+app: bookmark2's Trash-and-copy install left its Dock tile pointing at a copy
+in the Trash. When an app moves into `My_Apps`, repoint its existing Dock tile
+where it stands instead of adding a second one.
