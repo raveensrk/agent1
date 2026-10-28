@@ -121,21 +121,3 @@ linked as an image (`![Map](map.svg)`).
 
 Before handing one over, render it (headless Chrome `--screenshot` works) and
 look at it: no label over a line, no line through a box.
-
-## Apps go in `~/Applications/My_Apps`, never in the Dock
-
-Every app a project in `~/repos` builds and installs goes in
-`~/Applications/My_Apps` (`/Users/raveen_kumar_personal/Applications/My_Apps`).
-Not `~/Applications` itself and not `/Applications`. This covers the
-installer, the post-commit hook that reinstalls the app, and any code that
-launches or looks up the app by its path.
-
-No installer touches the Dock: no pinning, no repointing, no `killall Dock`,
-and on Linux no GNOME favourites. The user pins an app by hand if they want it
-there.
-
-An install replaces the bundle at its own path: rsync over it in place, or
-build beside it and swap the new one in after deleting the old one. It never
-moves the old bundle somewhere else first, such as the Trash, because macOS
-follows a moved app: anything that holds the bundle's path (a pinned tile, an
-alias, Open With) then follows the old copy.

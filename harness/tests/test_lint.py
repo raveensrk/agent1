@@ -1264,6 +1264,41 @@ def test_mdformat_check_refuses_a_binary_without_the_plugin():
         assert proc.stdout.strip() == "", proc.stdout
 
 
+def test_app_install_dir_flags_installs_outside_my_apps_and_the_dock():
+    check = os.path.join(CHECKS, "app_install_dir.py")
+    bad = {
+        "Makefile": "install: app\n\tcp -R X.app /Applications/\n",
+        "build_app": 'app_dir="${app_dir:-$HOME/Applications}"\n',
+        "dock.py": 'APP = Path.home() / "Applications" / "X.app"\n'
+                   'subprocess.run(["killall", "Dock"])\n',
+        "AGENTS.md": "Run:\n\n```sh\nditto dist/X.app ~/Applications/X.app\n```\n",
+    }
+    good = {
+        "Makefile": "install: app\n\trsync -a X.app/ $(HOME)/Applications/My_Apps/X.app/\n",
+        "build_app": 'app_dir="${app_dir:-$HOME/Applications/My_Apps}"\n',
+        "dock.py": 'APP = Path.home() / "Applications" / "My_Apps" / "X.app"\n'
+                   'CHROME = "/Applications/Google Chrome.app"\n',
+        # prose explaining the rule, and a lookup that is not an install
+        "AGENTS.md": "Never `cp` into /Applications or run `killall Dock`.\n\n"
+                     "```sh\nfor base in /Applications ~/Applications; do ls $base; done\n```\n",
+        "ok.sh": "cp -R X.app /Applications/  # lint:ignore\n",
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, files in (("bad", bad), ("good", good)):
+            os.mkdir(os.path.join(tmp, name))
+            for fname, text in files.items():
+                with open(os.path.join(tmp, name, fname), "w") as fh:
+                    fh.write(text)
+        paths = lambda name: [os.path.join(tmp, name, f) for f in sorted(os.listdir(os.path.join(tmp, name)))]
+        out = subprocess.run([sys.executable, check, *paths("bad")], capture_output=True, text=True)
+        assert out.returncode == 0, out.stderr
+        flagged = {line.split(":")[0].rsplit("/", 1)[1] + ":" + line.split(":")[1] for line in out.stdout.splitlines()}
+        assert flagged == {"AGENTS.md:4", "Makefile:2", "build_app:1", "dock.py:1", "dock.py:2"}, out.stdout
+        assert "My_Apps" in out.stdout and "never pinned" in out.stdout, out.stdout
+        clean = subprocess.run([sys.executable, check, *paths("good")], capture_output=True, text=True)
+        assert clean.stdout == "", clean.stdout
+
+
 if __name__ == "__main__":
     failures = 0
     for name, func in sorted(globals().items()):

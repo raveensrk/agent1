@@ -126,7 +126,7 @@ instead of working from memory.
 
 ## macOS
 
-Topic file: [macos.md](macos.md) - iTerm2 tabs, BSD tool traps, PlistBuddy, screenshots, hung processes.
+Topic file: [macos.md](macos.md) - iTerm2 tabs, BSD tool traps, PlistBuddy, screenshots, hung processes, where apps from `~/repos` install.
 
 ## Confirmation
 
