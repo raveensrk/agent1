@@ -48,6 +48,16 @@ Based on this session,
 - Multi window and tabs support.
 - Help should be inside app
 
+------------------------------------------------------------------------------
+
+Add a git hook.
+
+If the current OS is MacOS,
+    when a commit is made,
+        automatically install the app and add it to the dock.
+
+------------------------------------------------------------------------------
+
 ## Stage 2.2 - CLI
 
 - If there is any improvements that can be made to the cli, do it.
