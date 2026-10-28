@@ -15,7 +15,7 @@ caller. The worked example is task-router's CLI,
   gives no `help` command: add `sub.add_parser("help")`, or test
   `sys.argv[1:2] == ["help"]` before `parse_args`.
 - A bare call prints the main help too, unless a bare call is itself a real
-  command (`,bookmark` with no arguments lists).
+  command (`bookmark2` with no arguments opens its window).
 - Short flags are the optional half. The long flag is the default spelling, and
   a short alias goes in when a free letter exists: `--due|-d`, `--priority|-p`.
   A letter already taken in that app goes to the next free one; when none fits,
