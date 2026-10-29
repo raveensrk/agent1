@@ -26,6 +26,11 @@ Every app a project in `~/repos` builds and installs goes in
 This covers the installer, the post-commit hook that reinstalls the app, and
 any code that launches or looks up the app by its path.
 
+A repo that builds an app ships an executable, tracked `script/post-commit`
+that rebuilds and reinstalls it in the background. The global
+[post-commit](harness/githooks/post-commit) runs it on macOS for every repo,
+so a clone needs no setup; a repo's own `.git/hooks/post-commit` wins over it.
+
 No installer touches the Dock: no pinning, no repointing, no `killall Dock`,
 and on Linux no GNOME favourites. The user pins an app by hand if they want it
 there.

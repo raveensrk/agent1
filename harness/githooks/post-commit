@@ -2,8 +2,11 @@
 """post-commit: run the repo's own post-commit hook, which the global path hides.
 
 No check of its own: a commit is already made, so nothing here can refuse it.
-A repo that wants work after each commit (draw_graph_2 rebuilds and installs
-its app) puts an executable .git/hooks/post-commit, and this runs it.
+A repo that wants work after each commit puts an executable .git/hooks/post-commit,
+and this runs it. Failing that, on macOS, it runs the repo's tracked
+script/post-commit, so an app repo (requirements_graph, task-router-2) rebuilds
+and installs its app into ~/Applications/My_Apps on every commit, in every
+clone, with nothing to set up per clone (macos.md: Apps from ~/repos).
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks
@@ -13,11 +16,15 @@ A global hooksPath hides each repo's .git/hooks, so a repo's own
   post-commit            (git passes no arguments)
   post-commit -h | --help | help
 Skip once, deliberately: git commit --no-verify does not skip post-commit;
-the repo's own hook decides (draw_graph_2: DRGRAPH_NO_INSTALL=1).
+the repo's own hook decides (requirements_graph: REQGRAPH_NO_INSTALL=1).
 """
 import os
+import platform
 import subprocess
 import sys
+
+# The tracked hook an app repo ships; run only on macOS, where the apps live.
+TRACKED = os.path.join("script", "post-commit")
 
 
 def main(argv):
@@ -29,6 +36,12 @@ def main(argv):
     local = os.path.join(git_dir, "hooks", "post-commit") if git_dir else ""
     if local and os.access(local, os.X_OK) and os.path.realpath(local) != os.path.realpath(__file__):
         return subprocess.run([local]).returncode
+
+    # No local hook: on macOS, the repo's tracked script/post-commit installs its app.
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+    tracked = os.path.join(top, TRACKED) if top else ""
+    if platform.system() == "Darwin" and tracked and os.access(tracked, os.X_OK):
+        return subprocess.run([tracked]).returncode
     return 0
 
 
