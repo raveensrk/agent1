@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # harness-check: {"id": "svg_lint", "applies": ["*.svg"], "quadrant": "feedback/computational"}
-"""Every SVG an agent writes must parse and pass svglint.
+"""Every SVG an agent writes must parse, pass svglint and be Prettier-formatted.
 
 Caught live: prompt-collection/design/mockup.svg had `y="571"width="1.5"` twice,
 a missing space between attributes. That is not XML, so a browser refuses the
@@ -12,9 +12,16 @@ svglint only reports "Attribute 'width' has no space in starting". Then svglint
 `.svglintrc.js` when the repo has one. svglint gives no line, so its findings
 land on line 1.
 
+A file that passes both is then held to Prettier's XML plugin with `--check`.
+Checks report, they never write, so the finding carries the `--write` command
+and the agent runs it. Plain `npx -p` cannot find the plugin from the package
+it adds; `npx -c` runs with both packages on the path, and works.
+
     svg_lint.py FILE...      (or paths on stdin)
 """
+import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -60,12 +67,45 @@ def svglint(path: str) -> list[str]:
     return out
 
 
+PRETTIER = "prettier --plugin=@prettier/plugin-xml --parser=xml"
+PRETTIER_NPX = ["npx", "-y", "-p", "prettier@3", "-p", "@prettier/plugin-xml@3", "-c"]
+
+
+def prettier(paths: list[str]) -> list[str]:
+    """One finding per file Prettier would reformat, with the command that does it."""
+    if not paths:
+        return []
+    command = f"{PRETTIER} --check " + " ".join(shlex.quote(p) for p in paths)
+    result = subprocess.run([*PRETTIER_NPX, command], capture_output=True, text=True, timeout=120)
+    if result.returncode == 0:
+        return []
+    wanted = {os.path.realpath(p): p for p in paths}
+    out = []
+    for line in (result.stdout + result.stderr).splitlines():
+        if not line.startswith("[warn] ") or line.startswith("[warn] Code style"):
+            continue
+        path = wanted.get(os.path.realpath(line[len("[warn] "):].strip()))
+        if path:
+            out.append(f"{path}:1: not formatted by Prettier; fix: npx -y -p prettier@3 "
+                       f"-p @prettier/plugin-xml@3 -c '{PRETTIER} --write {path}'")
+    if not out:
+        sys.exit(f"svg_lint: prettier failed: {result.stderr.strip()[:300]}")
+    return out
+
+
 if not shutil.which("xmllint"):
     sys.exit("svg_lint: xmllint not found")
+clean = []
 for path in FILES:
     found = xmllint(path)
     # A file that does not parse would only repeat the same error under svglint.
     if not found and shutil.which("npx"):
         found = svglint(path)
     for finding in found:
+        print(finding)
+    if not found:
+        clean.append(path)
+# Formatting is judged only on files that are already valid.
+if clean and shutil.which("npx"):
+    for finding in prettier(clean):
         print(finding)
