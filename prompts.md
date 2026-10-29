@@ -97,6 +97,11 @@ Based on this current session do the following,
 - Suggest an idea, improvement, tweak, or optimization for this project.
 - Finally, Critic this project.
 
+### Skills
+
+- List all installed skills in this computer for all AI Agent Harnesses.
+- List all installed skills in this computer for this current AI Agent Harness.
+
 ## Stage 4.1 - Publish
 
 - Create a script called `publish.py` in `scripts/` directory.
