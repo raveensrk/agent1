@@ -32,6 +32,10 @@ Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as ru
 - Tell me next steps.
 - Lessons from this run become <skill> rules
 
+### Visual Explanation
+
+Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills.
+
 ## Stage 2 - Review
 
 Based on this session,
@@ -48,15 +52,27 @@ Based on this session,
 - Multi window and tabs support.
 - Help should be inside app
 
-------------------------------------------------------------------------------
+______________________________________________________________________
 
-Add a git hook.
+Add a git hook local.
 
+```text
 If the current OS is MacOS,
     when a commit is made,
         automatically install the app and add it to the dock.
+```
 
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------ 
+
+Add a git hook for all the repos under ~/repos.
+
+If the current OS is MacOS, when a commit is made, automatically install the app to `~/Applications/My_Apps`.
+
+All gui apps installed from `~/repos` must install into `~/Applications/My_Apps`.
+
+Fix already existing apps.
+
+______________________________________________________________________
 
 ## Stage 2.2 - CLI
 
@@ -101,6 +117,69 @@ Based on this current session do the following,
 
 - List all installed skills in this computer for all AI Agent Harnesses.
 - List all installed skills in this computer for this current AI Agent Harness.
+
+______________________________________________________________________
+
+List all installed ai related apps / skills / configs / ai agent harness / data in this computer for all AI Agent Harnesses. Create a live webserver. The list must be a check box ill select and a button called delete - for you to act on. Use clojure.
+
+______________________________________________________________________
+
+### AI data scrub
+
+Scrub what AI agent harnesses leave on this Mac: sessions, caches, telemetry,
+logs and memories. Keep configs and logins unless I pick a bigger tier.
+
+1. Scan. Look in each harness's folders and list what exists, with size:
+   - Claude Code: `~/.claude`, `~/.claude.json`, `~/.claude.json.tmp.*`
+   - Claude Desktop: `~/Library/Application Support/Claude`,
+     `~/Library/Caches/com.anthropic.claudefordesktop*`,
+     `~/Library/Caches/claude-cli-nodejs`
+   - Codex: `~/.codex`, `~/Library/Caches/com.openai.codex`; CodexBar:
+     `~/.codexbar`, `com.steipete.codexbar`
+   - ChatGPT Desktop: `~/Library/Application Support/ChatGPT`, `com.openai.chat`
+   - Cursor: `~/.cursor`, `~/Library/Application Support/Cursor`
+   - VS Code: `~/.vscode`, `~/Library/Application Support/Code`
+   - Gemini CLI: `~/.gemini`; Grok CLI: `~/.grok`; Pi: `~/.pi`
+   - opencode: `~/.config/opencode`, `~/.local/share/opencode`,
+     `~/.local/state/opencode`, `~/.cache/opencode`, `~/.opencode`
+   - Ollama: `~/.ollama`; Hermes: `~/.hermes`; OpenClaw: `~/.openclaw`
+   - Shared: `~/.cache/huggingface`, `~/.cache/puppeteer`
+   - Any other AI app in `/Applications`, plus its bundle id's leftovers in
+     `~/Library` (Preferences, Caches, WebKit, Saved Application State,
+     Application Scripts, Containers, HTTPStorages, Group Containers).
+2. Sort every path into cache, history, data, auth or config, and mark it
+   delete or keep:
+   - Delete: session transcripts, history logs, file-history, plans,
+     telemetry, backups, caches, shell snapshots, paste caches, crash and
+     sentry dirs, Chromium storage (Cache, GPUCache, IndexedDB, Local
+     Storage, …), memory/log/state sqlite databases, installation ids, and
+     temp litter.
+   - Keep: settings and config files, `AGENTS.md`, rules, hooks, skills,
+     plugins, extensions, automations, `auth.json`, OAuth/identity files and
+     Claude Desktop's `Cookies` (keeps me signed in), and Codex's
+     `chrome-native-hosts*.json` (deleting it breaks the browser extension).
+   - Keep and flag for me to review: Ollama model weights (huge, a re-download),
+     opencode `repos` (may hold unpushed work), and Hermes/OpenClaw agent
+     installs, tools and workspaces.
+3. Show the plan as a numbered table: harness, path, category, size, delete or
+   keep, and why. Total the space it frees. Then stop and wait for my yes.
+4. Before deleting, check that no harness is running (`pgrep -x claude codex opencode pi Claude ChatGPT Cursor ollama`). Deleting a live sqlite or its
+   `-wal`/`-shm` files corrupts it. Tell me to quit what is running.
+5. Move the delete rows to the Trash with `trash`, never `rm`. Take each sqlite
+   file's `-wal` and `-shm` with it.
+6. Re-run the same scan and show what is left and what was freed.
+
+Bigger tiers, only when I ask, per harness:
+
+- All: also configs, skills, plugins and auth.
+- Be gone: also the app bundle, its `~/Library` leftovers, its keychain items
+  (`security delete-generic-password -l <name>`), LaunchAgents that mention
+  it, `defaults delete <bundle id>`, and its CLI (`npm uninstall -g` or `brew uninstall`, whichever installed it).
+
+Never touch `~/dot` or `~/.dot`, in any tier. Never touch a path you did not
+list in the plan.
+
+______________________________________________________________________
 
 ## Stage 4.1 - Publish
 
