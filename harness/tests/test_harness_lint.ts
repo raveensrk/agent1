@@ -76,5 +76,17 @@ assert.match(why({ code: "ENOENT", message: "spawn python3 ENOENT" }).error, /^s
 assert.match(why(null).error, /^no JSON on stdout - see it: /);
 assert.deepEqual([why(null).check, why(null).root], ["lint.py", "/r"]);
 
+// a removed worktree: the session's cwd and the file it edited are both gone.
+// Nothing is left to lint, so nothing fails; spawning python3 in a missing cwd
+// read "spawn python3 ENOENT" until 2026-10-29
+const gone = realpathSync(mkdtempSync(join(tmpdir(), "harness_lint_gone_")));
+writeFileSync(join(gone, "app.clj"), "(ns x)\n");
+rmSync(gone, { recursive: true, force: true });
+assert.deepEqual(await lint([join(gone, "app.clj")], gone), { findings: [], failures: [] });
+
+// a file that still exists is linted from a cwd that does not
+const kept = await lint([note], gone);
+assert.deepEqual(kept.failures.filter((f) => f.check === "lint.py"), [], JSON.stringify(kept.failures));
+
 rmSync(dir, { recursive: true, force: true });
 console.log("ok - harness_lint");

@@ -13,6 +13,7 @@
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -35,11 +36,17 @@ export function key(entry: Finding | Failure): string {
 }
 
 export function lint(files: string[], cwd: string): Promise<Report> {
+	// A file deleted since it was edited (a removed worktree) has nothing to
+	// lint, and python3 cannot start in a cwd that is gone: spawn says ENOENT.
+	const present = files.filter((file) => existsSync(file));
+	if (present.length === 0) return Promise.resolve({ findings: [], failures: [] });
+	const root = existsSync(cwd) ? cwd : homedir();
+
 	return new Promise((resolve) => {
 		execFile(
 			"python3",
-			[LINT, "--json", ...files],
-			{ cwd, timeout: TIMEOUT_MS, maxBuffer: 1 << 22 },
+			[LINT, "--json", ...present],
+			{ cwd: root, timeout: TIMEOUT_MS, maxBuffer: 1 << 22 },
 			(error, stdout, stderr) => {
 				// lint exits 1 on findings and 2 on a failed check, and prints the JSON
 				// either way; only unparsable output is a failure - of lint.py itself
@@ -47,7 +54,7 @@ export function lint(files: string[], cwd: string): Promise<Report> {
 					const report = JSON.parse(stdout) as Partial<Report>;
 					resolve({ findings: report.findings ?? [], failures: report.failures ?? [] });
 				} catch {
-					resolve({ findings: [], failures: [crash(error, stderr, cwd)] });
+					resolve({ findings: [], failures: [crash(error, stderr, root)] });
 				}
 			},
 		);
