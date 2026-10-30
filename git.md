@@ -47,4 +47,4 @@ Open a PR only when asked. PR descriptions should explain what changed, why the 
 
 ## Push and Pull Rhythm
 
-Commit freely; do not ask to push after each commit. Pushing is batched at the end of the day (about 23:00) and pulling at the start (about 07:00). [`,git_day.py`](~/dot/script/,git_day.py) decides which repos need either: launchd runs it at both times and posts a notification, and nothing pulls or pushes on its own. When a session ends near one of those times, or I ask what is left, run `,git_day.py` and report its lines. Push only when I say so, and name any commit another session made before pushing it.
+Commit freely; do not ask to push after each commit. Pushing is batched at the end of the day (about 23:00) and pulling at the start (about 07:00). Nothing pulls or pushes on its own. Push only when I say so, and name any commit another session made before pushing it.
