@@ -23,13 +23,21 @@
 
 Every app a project in `~/repos` builds and installs goes in
 `~/Applications/My_Apps`. Not `~/Applications` itself and not `/Applications`.
+One exception: Felis goes in `~/Applications/MosaixDesign_Apps/Felis`.
 This covers the installer, the post-commit hook that reinstalls the app, and
 any code that launches or looks up the app by its path.
 
 A repo that builds an app ships an executable, tracked `script/post-commit`
-that rebuilds and reinstalls it in the background. The global
-[post-commit](harness/githooks/post-commit) runs it on macOS for every repo,
-so a clone needs no setup; a repo's own `.git/hooks/post-commit` wins over it.
+that rebuilds and reinstalls it in the background, from `main` only. The global
+[post-commit](harness/githooks/post-commit), [post-merge](harness/githooks/post-merge)
+and [post-rewrite](harness/githooks/post-rewrite) run it on macOS for every repo,
+so a clone needs no setup; a repo's own `.git/hooks/<hook>` wins over it.
+
+git has no post-pull hook. A fast-forward or merge pull fires `post-merge`, a
+rebase pull fires `post-rewrite`. A pull with new commits always installs
+(`--pull`). A local merge, rebase or amend installs only if it touches the app's
+files (`--range OLD NEW`). An install never quits a running app, except a
+background helper, which restarts itself.
 
 No installer touches the Dock: no pinning, no repointing, no `killall Dock`,
 and on Linux no GNOME favourites. The user pins an app by hand if they want it

@@ -2,6 +2,8 @@
 # harness-check: {"id": "app_install_dir", "applies": ["*", "!**/archive/**", "!harness/checks/app_install_dir.py", "!harness/tests/**", "!**/node_modules/**", "!**/target/**", "!**/build/**", "!**/.build/**", "!**/_site/**", "!**/venv/**", "!**/zig-pkg/**", "!**/notes/**", "!**/content/**", "!**/deck/**", "!*.html", "!*.json", "!*.rec", "!*.elim", "!*.txt", "!*.lock"], "quadrant": "feedback/computational"}
 """Apps from ~/repos install in ~/Applications/My_Apps and never touch the Dock.
 
+Felis is the one exception: ~/Applications/MosaixDesign_Apps/Felis.
+
 macos.md: not ~/Applications itself, not /Applications, no pinning, no
 `killall Dock`. A line is an install when it copies, moves or assigns an app
 folder (cp, ditto, rsync, mv, copytree, an `app`/`dest` variable) and names an
@@ -24,7 +26,7 @@ if not FILES and not sys.stdin.isatty():
 DOCK = re.compile(r"killall\W+Dock\b|persistent-apps|favorite-apps|\bdockutil\b")
 # A path-like Applications: after / " ' or ~, and not /System/Applications.
 APPS = re.compile(r"""(?<!/System)(?<=[/"'~])Applications\b""")
-MY_APPS = re.compile(r"""\s*(/|"\s*/\s*"|",\s*"|'\s*/\s*'|',\s*')My_Apps\b""")
+MY_APPS = re.compile(r"""\s*(/|"\s*/\s*"|",\s*"|'\s*/\s*'|',\s*')(My_Apps|MosaixDesign_Apps/Felis)\b""")
 INSTALL = re.compile(
     r"\b(cp|ditto|rsync|mv|install|copytree|copy2|rename)\b|-app\b"
     r"|\b(app|apps|dest|app_dir|apps_dir|app-dir|stage|target)\w*\s*:?=",

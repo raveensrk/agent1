@@ -1272,6 +1272,7 @@ def test_app_install_dir_flags_installs_outside_my_apps_and_the_dock():
         "dock.py": 'APP = Path.home() / "Applications" / "X.app"\n'
                    'subprocess.run(["killall", "Dock"])\n',
         "AGENTS.md": "Run:\n\n```sh\nditto dist/X.app ~/Applications/X.app\n```\n",
+        "other.sh": 'ditto X.app "$HOME/Applications/MosaixDesign_Apps/Other/X.app"\n',
     }
     good = {
         "Makefile": "install: app\n\trsync -a X.app/ $(HOME)/Applications/My_Apps/X.app/\n",
@@ -1282,6 +1283,7 @@ def test_app_install_dir_flags_installs_outside_my_apps_and_the_dock():
         "AGENTS.md": "Never `cp` into /Applications or run `killall Dock`.\n\n"
                      "```sh\nfor base in /Applications ~/Applications; do ls $base; done\n```\n",
         "ok.sh": "cp -R X.app /Applications/  # lint:ignore\n",
+        "felis.sh": 'ditto X.app "$HOME/Applications/MosaixDesign_Apps/Felis/X.app"\n',
     }
     with tempfile.TemporaryDirectory() as tmp:
         for name, files in (("bad", bad), ("good", good)):
@@ -1293,7 +1295,7 @@ def test_app_install_dir_flags_installs_outside_my_apps_and_the_dock():
         out = subprocess.run([sys.executable, check, *paths("bad")], capture_output=True, text=True)
         assert out.returncode == 0, out.stderr
         flagged = {line.split(":")[0].rsplit("/", 1)[1] + ":" + line.split(":")[1] for line in out.stdout.splitlines()}
-        assert flagged == {"AGENTS.md:4", "Makefile:2", "build_app:1", "dock.py:1", "dock.py:2"}, out.stdout
+        assert flagged == {"AGENTS.md:4", "Makefile:2", "build_app:1", "dock.py:1", "dock.py:2", "other.sh:1"}, out.stdout
         assert "My_Apps" in out.stdout and "never pinned" in out.stdout, out.stdout
         clean = subprocess.run([sys.executable, check, *paths("good")], capture_output=True, text=True)
         assert clean.stdout == "", clean.stdout

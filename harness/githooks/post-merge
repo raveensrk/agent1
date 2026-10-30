@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""post-merge: after a pull or merge, let an app repo reinstall its app.
+
+No check of its own: the merge is already done, so nothing here can refuse it.
+git has no post-pull hook. A fast-forward or merge pull fires this one; a rebase
+pull fires post-rewrite. A pull that brings nothing fires neither.
+
+A repo's own .git/hooks/post-merge wins, as in post-commit. Failing that, on
+macOS, it runs the repo's tracked script/post-commit (macos.md: Apps from ~/repos):
+  pull           script/post-commit --pull             always installs
+  local merge    script/post-commit --range OLD HEAD   installs if it touches the app
+
+  post-merge SQUASH_FLAG   (git passes 1 for a squash merge, else 0)
+  post-merge -h | --help | help
+Exit: 0 always; git ignores it, and a failed install never fails a merge.
+"""
+import os
+import platform
+import subprocess
+import sys
+
+TRACKED = os.path.join("script", "post-commit")
+PULL_ACTION = "pull"  # git sets GIT_REFLOG_ACTION to "pull ..." for its hooks
+
+
+def main(argv):
+    if argv[:1] in (["-h"], ["--help"], ["help"]):
+        print(__doc__.strip() if argv[0] == "help" else __doc__.split("\n\n")[0])
+        return 0
+
+    # Chain to the repo's own hook, which the global path hides.
+    git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
+    local = os.path.join(git_dir, "hooks", "post-merge") if git_dir else ""
+    if local and os.access(local, os.X_OK) and os.path.realpath(local) != os.path.realpath(__file__):
+        subprocess.run([local, *argv])
+        return 0
+
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+    tracked = os.path.join(top, TRACKED) if top else ""
+    if platform.system() != "Darwin" or not tracked or not os.access(tracked, os.X_OK):
+        return 0
+
+    if os.environ.get("GIT_REFLOG_ACTION", "").startswith(PULL_ACTION):
+        subprocess.run([tracked, "--pull"])
+        return 0
+    subprocess.run([tracked, "--range", "ORIG_HEAD", "HEAD"])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
