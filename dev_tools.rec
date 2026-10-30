@@ -1043,6 +1043,12 @@ Pos: 2598 492
 Kind: note
 Size: 447 142
 
+Name: Avoid
+Text: c++, python, go, c#, dart, kotlin
+Pos: 718 2055
+Kind: card
+Size: 755 556
+
 %rec: Edge
 %type: From,To line
 %mandatory: From To
@@ -1581,5 +1587,5 @@ Route: elbow
 %type: Zoom real
 %type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
 
-TopLeft: 1879 -357
+TopLeft: -129 -401
 Zoom: 0.387

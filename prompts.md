@@ -38,33 +38,28 @@ Create a presentation and draw an animated diagram and visually explain. Use htt
 
 ## Stage 2 - Review
 
+------------------------------------------------------------------------------
+
 Based on this session,
 
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
 
+------------------------------------------------------------------------------ 
+
 ## Stage 2.1 - UI/UX, GUI, Web UI
-
-- If there is any improvements that can be made to the user interface, do it.
-- Refer: https://lawsofux.com/
-- Each element in the UI must be named correctly in a way the user can refer to them in claude code chat.
-- Comfort over dense.
-- Multi window and tabs support.
-- Help should be inside app
-
-______________________________________________________________________
-
-Add a git hook local.
-
-```text
-If the current OS is MacOS,
-    when a commit is made,
-        automatically install the app and add it to the dock.
-```
 
 ------------------------------------------------------------------------------ 
 
-Add a git hook for all the repos under ~/repos.
+- Review this whole repo
+- Are there any improvements that can be made?
+- Refer: https://lawsofux.com/
+- Comfort over dense.
+- Help should be available inside app
+- Must have multi window and tabs support.
+- Must be cross-platform: MacOS and Linux
+
+------------------------------------------------------------------------------ 
 
 If the current OS is MacOS, when a commit is made, automatically install the app to `~/Applications/My_Apps`.
 
@@ -76,11 +71,17 @@ ______________________________________________________________________
 
 ## Stage 2.2 - CLI
 
-- If there is any improvements that can be made to the cli, do it.
-- Refer
-  - https://clig.dev/
-  - https://github.com/cli-guidelines/cli-guidelines
-  - https://github.com/cli-guidelines/cli-guidelines/blob/main/content/\_index.md
+------------------------------------------------------------------------------ 
+
+Are there any improvements that can be made?
+
+Refer:
+
+- https://clig.dev/
+- https://github.com/cli-guidelines/cli-guidelines
+- https://github.com/cli-guidelines/cli-guidelines/blob/main/content/\_index.md
+
+------------------------------------------------------------------------------ 
 
 ## Stage 3 - Documentation
 
@@ -193,6 +194,16 @@ ______________________________________________________________________
 ## Stage 5 - Release
 
 - Commit with a sensible message. Tag. Push the changes to the repository.
+
+
+
+### Prepare repo for public release
+
+Prepare this repo for public release. Refactor and organize and rewrite the repo in a way that it is ready to go public at any time. But keep the repo private. I will want to review before making public.
+
+After that scrub this repo of any private data.
+
+Private data must be handled by moving it into a different location.
 
 ## Stage 6 - Archive chat
 
