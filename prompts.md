@@ -34,7 +34,7 @@ Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as ru
 
 ### Visual Explanation
 
-Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills.
+Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions.
 
 ## Stage 2 - Review
 
@@ -59,9 +59,35 @@ Based on this session,
 - Must have multi window and tabs support.
 - Must be cross-platform: MacOS and Linux
 
+- [Auto-Install Git Hook](auto-install_git_hook.md)
+
 ------------------------------------------------------------------------------ 
 
-If the current OS is MacOS, when a commit is made, automatically install the app to `~/Applications/My_Apps`.
+
+Goal: on macOS, this repos GUI apps stay current in ~/Applications/My_Apps after commits and pulls. Automatically install the app to `~/Applications/My_Apps`.
+
+Triggers:
+- post-commit, as today: install only if the commit touches the app's paths.
+- post-merge and post-rewrite, so fast-forward, merge and rebase pulls all count.
+  git has no post-pull hook.
+- Pull with new commits: always install, even if no app files changed.
+- Pull with no new commits: nothing.
+- Amend and manual rebase on main: install, same path filter as post-commit.
+
+Rules:
+- Wire the new hooks in ~/repos/agent1/harness/githooks, like post-commit.
+- Install from main only, in every repo.
+- Build the committed tree in the background. Keep coalescing and notifications.
+- A pull or commit never quits a running app. App changes to match;
+  the new version starts on next launch.
+- Exception: Background helpers - it restarts itself.
+- Never fail the git operation. Non-macOS does nothing.
+
+Verify: in a scratch clone, test fast-forward, merge, rebase, up to date,
+non-main, amend, and a commit with no app change. Then run one real pull per
+repo with new commits, and confirm the bundle's timestamp changed.
+
+
 
 All gui apps installed from `~/repos` must install into `~/Applications/My_Apps`.
 
