@@ -1,56 +1,45 @@
-# Prompts
-
-## Purpose
+#+title: Prompts
 
 Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as rules.
 
-## Stage 0 - Planning
+* Stage 0 - Planning
+** Interview me.
+** Interview me until you uncover the goal of this project.
+** Interview me about the core problem
+Before we start building, interview me about this: What is the core problem this solves? Who is this for? What does success look like? What should this NOT do? Summarize it back to me before we write any code.
+** Import @file
+** I am thinking to `do this thing`. Brainstorm with me until we uncover the goal.
+** Does a project already exist for this?
+Is there a project in the internet available that does this exactly? Or any alternative. I dont want to implement a new project if there is something that exists online.
+** Refactor
+*** Go over this entire project and critic it.
+*** Tell me which parts of the project we can refactor.
+*** Should we replace the backend or frontend?
+Should we replace the backend or frontend or both? The codebase of the project must align with the docs. Which framework would be be suited for this kind of work? I want the project to be highly expressive so the programming languages used must also be highly expressive.
 
-- Interview me.
-- Interview me until you uncover the goal of this project.
-- Before we start building, interview me about this: What is the core problem this solves? Who is this for? What does success look like? What should this NOT do? Summarize it back to me before we write any code.
-- Import @file
-- I am thinking to `do this thing`. Brainstorm with me until we uncover the goal.
-- Is there a project in the internet available that does this exactly? Or any alternative. I dont want to implement a new project if there is something that exists online.
+* Stage 0.1 - Optional
+** Do /init and add to @AGENTS.md. Refer @AGENTS.md in @CLAUDE.md.
 
-### Refactor
-
-- Go over this entire project and critic it.
-- Tell me which parts of the project we can refactor.
-- Should we replace the backend or frontend or both? The codebase of the project must align with the docs. Which framework would be be suited for this kind of work? I want the project to be highly expressive so the programming languages used must also be highly expressive.
-
-## Stage 0.1 - Optional
-
-- Do /init and add to @AGENTS.md. Refer @AGENTS.md in @CLAUDE.md.
-
-## Stage 1 - Vibe Coding
-
-- Review all TODO comments in the codebase, group by priority, and propose a step-by-step plan to resolve each.
-- Improve these prompts. Make them concise without losing information.
-- Follow these conventions <https://www.conventionalcommits.org/en/v1.0.0/>
-- What do do next?
-- Tell me next steps.
-- Lessons from this run become <skill> rules
-
-### Visual Explanation
-
+* Stage 1 - Vibe Coding
+** Plan the TODO comments
+Review all TODO comments in the codebase, group by priority, and propose a step-by-step plan to resolve each.
+** Improve these prompts. Make them concise without losing information.
+** Follow these conventions <https://www.conventionalcommits.org/en/v1.0.0/>
+** What do do next?
+** Tell me next steps.
+** Lessons from this run become <skill> rules
+** Visual Explanation
 Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions.
 
-## Stage 2 - Review
-
-------------------------------------------------------------------------------
-
+* Stage 2 - Review
+** Verify this session's work
 Based on this session,
 
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
 
------------------------------------------------------------------------------- 
-
-## Stage 2.1 - UI/UX, GUI, Web UI
-
------------------------------------------------------------------------------- 
-
+* Stage 2.1 - UI/UX, GUI, Web UI
+** Review the repo's UI
 - Review this whole repo
 - Are there any improvements that can be made?
 - Refer: https://lawsofux.com/
@@ -58,12 +47,9 @@ Based on this session,
 - Help should be available inside app
 - Must have multi window and tabs support.
 - Must be cross-platform: MacOS and Linux
-
-- [Auto-Install Git Hook](auto-install_git_hook.md)
-
------------------------------------------------------------------------------- 
-
-
+** Auto-Install Git Hook
+[[file:auto-install_git_hook.md][Auto-Install Git Hook]]
+** Keep GUI apps current after commits and pulls
 Goal: on macOS, this repos GUI apps stay current in ~/Applications/My_Apps after commits and pulls. Automatically install the app to `~/Applications/My_Apps`.
 
 Triggers:
@@ -86,31 +72,23 @@ Rules:
 Verify: in a scratch clone, test fast-forward, merge, rebase, up to date,
 non-main, amend, and a commit with no app change. Then run one real pull per
 repo with new commits, and confirm the bundle's timestamp changed.
-
-
-
+** Install GUI apps into My_Apps
 All gui apps installed from `~/repos` must install into `~/Applications/My_Apps`.
 
 Fix already existing apps.
 
-______________________________________________________________________
-
-## Stage 2.2 - CLI
-
------------------------------------------------------------------------------- 
-
+* Stage 2.2 - CLI
+** Review the CLI
 Are there any improvements that can be made?
 
 Refer:
 
 - https://clig.dev/
 - https://github.com/cli-guidelines/cli-guidelines
-- https://github.com/cli-guidelines/cli-guidelines/blob/main/content/\_index.md
+- https://github.com/cli-guidelines/cli-guidelines/blob/main/content/_index.md
 
------------------------------------------------------------------------------- 
-
-## Stage 3 - Documentation
-
+* Stage 3 - Documentation
+** Reconcile the docs
 Based on the current session do the following,
 
 - If `docs` directory does not exist create it.
@@ -127,8 +105,8 @@ Based on the current session do the following,
 - README.md and AGENTS.md are the only docs files allowed in root.
 - Keep the documentation minimal and unique. No duplicate information.
 
-## Stage 4 - Maintenance
-
+* Stage 4 - Maintenance
+** Maintain this project
 Based on this current session do the following,
 
 - Find dead code and remove it.
@@ -139,20 +117,14 @@ Based on this current session do the following,
 - Add helper scripts if they reduce token usage or improve task quality.
 - Suggest an idea, improvement, tweak, or optimization for this project.
 - Finally, Critic this project.
-
-### Skills
-
-- List all installed skills in this computer for all AI Agent Harnesses.
-- List all installed skills in this computer for this current AI Agent Harness.
-
-______________________________________________________________________
-
+** Skills
+*** List installed skills for all harnesses
+List all installed skills in this computer for all AI Agent Harnesses.
+*** List installed skills for this harness
+List all installed skills in this computer for this current AI Agent Harness.
+** List and delete AI apps from a live webserver
 List all installed ai related apps / skills / configs / ai agent harness / data in this computer for all AI Agent Harnesses. Create a live webserver. The list must be a check box ill select and a button called delete - for you to act on. Use clojure.
-
-______________________________________________________________________
-
-### AI data scrub
-
+** AI data scrub
 Scrub what AI agent harnesses leave on this Mac: sessions, caches, telemetry,
 logs and memories. Keep configs and logins unless I pick a bigger tier.
 
@@ -206,10 +178,8 @@ Bigger tiers, only when I ask, per harness:
 Never touch `~/dot` or `~/.dot`, in any tier. Never touch a path you did not
 list in the plan.
 
-______________________________________________________________________
-
-## Stage 4.1 - Publish
-
+* Stage 4.1 - Publish
+** Publish a website with pandoc
 - Create a script called `publish.py` in `scripts/` directory.
 - It must read the entire project and create a website using pandoc. It must also support mermaid diagram rendering. The website must be published under a directory called `publish/`.
 - The website must be dark mode.
@@ -217,34 +187,26 @@ ______________________________________________________________________
 - Keep the website simple, minimal and functional. No bloat. KISS Philosophy.
 - One page html document with all assets under `assets` directory.
 
-## Stage 5 - Release
-
-- Commit with a sensible message. Tag. Push the changes to the repository.
-
-
-
-### Prepare repo for public release
-
+* Stage 5 - Release
+** Commit with a sensible message. Tag. Push the changes to the repository.
+** Prepare repo for public release
 Prepare this repo for public release. Refactor and organize and rewrite the repo in a way that it is ready to go public at any time. But keep the repo private. I will want to review before making public.
 
 After that scrub this repo of any private data.
 
 Private data must be handled by moving it into a different location.
 
-## Stage 6 - Archive chat
+* Stage 6 - Archive chat
+** Archive chat
 
-- Archive chat
+* General
+** Remove dead code with regression tests
+Find dead code, explain why, ask the user to remove it, then run regression tests to confirm.
+** I want to install and try out this app privately, anonymously and securly.
 
-## General
-
-- Find dead code, explain why, ask the user to remove it, then run regression tests to confirm.
-
-## Skills
-
-- Based on the project I'm working on, what Claude Skills should I create?
-
-### Self-updating skill
-
+* Skills
+** Based on the project I'm working on, what Claude Skills should I create?
+** Self-updating skill
 Create a skill for `<task>`. Write `SKILL.md` with the goal, the steps, and the
 criteria for a good result.
 
@@ -261,8 +223,8 @@ The skill must maintain itself as I use it:
 - Never widen the scope on your own. A deviation changes the skill only after I
   confirm it.
 
-## Init
-
+* Init
+** Write an AGENTS.md for a fresh session
 Write an AGENTS.md in the repo root that lets a fresh agent session (Claude Code
 or Codex) pick up this project with no other context.
 

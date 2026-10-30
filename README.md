@@ -92,7 +92,7 @@ answer means the import did not load.
 | [`model_usage_history.md`](./model_usage_history.md) | Historical model usage across agent harnesses |
 | `naming.md` | Naming rules, disabled |
 | `pi.md` | pi package management |
-| `prompts.md` | Personal paste-bin of chat prompts |
+| `prompts.org` | Personal paste-bin of chat prompts |
 | [`question_types.yaml`](./question_types.yaml) | Question formats grouped into AI and non-AI categories for vibe coding |
 | `removal.md` | Removing apps, packages and harnesses |
 | `repos.md` | Nested git repo policy for `~/repos` |

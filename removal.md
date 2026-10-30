@@ -2,7 +2,7 @@
 
 Split from [common.md](common.md); routed by [rules_context.ts](harness/extensions/rules_context.ts).
 
-- Check `~/dot/script` for an existing tool before writing a scanner. The AI data scrub prompt in [prompts.md](prompts.md) lists each AI harness's folders, what to keep, and the uninstall tiers.
+- Check `~/dot/script` for an existing tool before writing a scanner. The AI data scrub prompt in [prompts.org](prompts.org) lists each AI harness's folders, what to keep, and the uninstall tiers.
 - Print the numbered per-file plan first, then apply. Removals are destructive.
 - Removals go to Trash by default. The plan names anything that deletes permanently (`brew uninstall`, `npm uninstall -g`, keychain deletes, TCC paths that need `sudo rm`) and gets explicit confirmation for it. Empty the Trash only on explicit request; report what it holds and print the one-line purge command.
 - Verify a removal by re-running the same scan that found the items and diffing the result. If the scan was ad hoc, save it before removing anything.
