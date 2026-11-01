@@ -38,83 +38,133 @@
 %key: Name
 %type: Parent rec Group
 %type: Collapsed enum yes no
-%allowed: Name Label Parent Color Collapsed Note
+%allowed: Name Label Parent Color Collapsed Note Pos Size
 %graph: parent Parent
 
 Name: LLM data
+Pos: 1291 1107
+Size: 230 97
 Color: #53c674
 
 Name: Browser
+Pos: 220 1050
+Size: 129 235
 Color: #9653c6
 
 Name: VPN
+Pos: 1540 1672
+Size: 268 212
 Color: #c6b753
 
 Name: Editor
+Pos: 772 115
+Size: 596 202
 Color: #53b2c6
 
 Name: Productivity
+Pos: 741 555
+Size: 640 293
 Color: #c65391
 
 Name: Data interchange File Format
+Pos: 2413 -26
+Size: 422 165
 Color: #6fc653
 
 Name: SCM
+Pos: 1030 -228
+Size: 307 166
 Color: #5853c6
 
 Name: Structured Query Language
+Pos: 1720 48
+Size: 358 160
 Color: #2e6b4a
 
 Name: Game Engine
+Pos: 1590 983
+Size: 275 97
 Color: #53c69b
 
 Name: Lisp Family of Languages
+Pos: 2882 1130
+Size: 748 439
 Color: #bc53c6
 
 Name: HDL
+Pos: 1590 775
+Size: 426 97
 Color: #aec653
 
 Name: Systems Programming Languages
+Pos: 2643 1968
+Size: 478 249
 Color: #53c66d
 
 Name: Finance
+Pos: 1172 865
+Size: 474 185
 Color: #8f53c6
 
 Name: AI Coding Agents
+Pos: 722 1451
+Size: 335 235
 Color: #c6b053
 
 Name: System Admin
+Pos: 1035 1027
+Size: 400 97
 Color: #53b9c6
 
 Name: Entertainment
+Pos: 1034 1257
+Size: 252 97
 Color: #c65398
 
 Name: E-Mailaa
 Parent: Productivity
+Pos: 796 637
+Size: 498 97
 Color: #76c653
 
 Name: Security
+Pos: 220 1187
+Size: 144 97
 Color: #5355c6
 
 Name: Documentation
+Pos: 1326 -33
+Size: 344 165
 Color: #c67253
 
 Name: GUI Framework
+Pos: 1608 913
+Size: 138 97
 Color: #53c694
 
 Name: Data Visualization
+Pos: 2194 229
+Size: 434 106
 Color: #b553c6
 
 Name: Scripting Languages
+Pos: 1559 571
+Size: 177 97
 Color: #b4c653
 
 Name: Experimental Programming Languages
+Pos: 1440 351
+Size: 320 97
 Color: #5393c6
 
 Name: Web
+Pos: 1617 258
+Size: 584 202
 Color: #c65372
 
 Name: General Purpose Programming Language
+Pos: 1176 516
+Size: 405 179
 Color: #53c656
 
 %rec: Node
@@ -218,10 +268,10 @@ Size: 82 39
 Fit: yes
 
 Name: Herdr
+Text: terminal multiplexer for coding agents
 Tag: extra
 Tag: intermediate
 Tag: AI
-Note: terminal multiplexer for coding agents
 Group: AI Coding Agents
 Pos: 610 1533
 Kind: rectangle
@@ -229,11 +279,11 @@ Size: 80 39
 Fit: yes
 
 Name: models
+Text: TUI and CLI for browsing AI models and comparing benchmarks
 Tag: beginner
 Tag: extra
 Tag: AI
 Url: https://github.com/reyamira/models
-Note: TUI and CLI for browsing AI models and comparing benchmarks
 Group: LLM data
 Pos: 1238 1120
 Kind: rectangle
@@ -241,11 +291,11 @@ Size: 93 39
 Fit: yes
 
 Name: llmfit
+Text: TUI and CLI for finding LLMs that fit local hardware
 Tag: extra
 Tag: beginner
 Tag: AI
 Url: https://github.com/AlexsJones/llmfit
-Note: TUI and CLI for finding LLMs that fit local hardware
 Group: LLM data
 Pos: 1352 1120
 Kind: rectangle
@@ -253,10 +303,10 @@ Size: 76 39
 Fit: yes
 
 Name: Bash
+Text: also stands for shell scripting; prefer Bash over POSIX sh
 Tag: base
 Tag: beginner
 Tag: Environment
-Note: also stands for shell scripting; prefer Bash over POSIX sh
 Pos: 722 892
 Kind: diamond
 Size: 120 78
@@ -516,14 +566,14 @@ Kind: rectangle
 Size: 110 39
 Fit: yes
 
-Name: WireGuard VPN
+Name: WireGuard
 Tag: extra
 Tag: intermediate
 Tag: Network
 Group: VPN
-Pos: 1034 1454
+Pos: 1599 1692
 Kind: rectangle
-Size: 153 39
+Size: 117 39
 Fit: yes
 
 Name: Tailscale
@@ -532,7 +582,7 @@ Tag: intermediate
 Tag: Network
 Tag: Web
 Group: VPN
-Pos: 1036 1524
+Pos: 1563 1627
 Kind: rectangle
 Size: 103 39
 Fit: yes
@@ -564,33 +614,33 @@ Tag: intermediate
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
 Group: Data interchange File Format
-Pos: 2071 184
+Pos: 2360 -47
 Kind: rectangle
 Size: 67 39
 Fit: yes
 
 Name: Graphviz
+Text: dot lays out dev_tools_path.svg
 Tag: extra
 Tag: intermediate
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Diagram Formats
 Url: https://graphviz.org
-Note: dot lays out dev_tools_path.svg
 Group: Data Visualization
-Pos: 2054 420
+Pos: 2195 237
 Kind: rectangle
 Size: 105 39
 Fit: yes
 
 Name: Excalidraw
+Text: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
 Tag: extra
 Tag: advanced
 Tag: Diagrams, Flowcharts and Drawings
 Tag: Drawing
 Url: https://github.com/excalidraw/excalidraw
-Note: hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.yaml
 Group: Data Visualization
-Pos: 1912 420
+Pos: 2053 237
 Kind: rectangle
 Size: 119 39
 Fit: yes
@@ -634,7 +684,7 @@ Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
 Group: Systems Programming Languages
-Pos: 1633 1236
+Pos: 2826 1905
 Kind: rectangle
 Size: 60 39
 Fit: yes
@@ -645,7 +695,7 @@ Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
 Group: Systems Programming Languages
-Pos: 1548 1304
+Pos: 2741 1973
 Kind: rectangle
 Size: 70 39
 Fit: yes
@@ -656,7 +706,7 @@ Tag: expert
 Tag: Programming Languages
 Tag: Systems and Native
 Group: Systems Programming Languages
-Pos: 1543 1236
+Pos: 2736 1905
 Kind: rectangle
 Size: 60 39
 Fit: yes
@@ -667,7 +717,7 @@ Tag: beginner
 Tag: Programming Languages
 Tag: Systems and Native
 Group: Systems Programming Languages
-Pos: 1643 1304
+Pos: 2836 1973
 Kind: rectangle
 Size: 60 39
 Fit: yes
@@ -744,7 +794,7 @@ Tag: easy
 Tag: Programming Languages
 Tag: Data and Query
 Group: Data interchange File Format
-Pos: 2282 184
+Pos: 2571 -47
 Kind: rectangle
 Size: 74 39
 Fit: yes
@@ -755,7 +805,7 @@ Tag: easy
 Tag: Programming Languages
 Tag: Data and Query
 Group: Data interchange File Format
-Pos: 1968 184
+Pos: 2257 -47
 Kind: rectangle
 Size: 79 39
 Fit: yes
@@ -799,7 +849,7 @@ Tag: expert
 Tag: Programming Languages
 Tag: Games and 2D Graphics
 Group: Lisp Family of Languages
-Pos: 2291 716
+Pos: 2719 972
 Kind: rectangle
 Size: 87 39
 Fit: yes
@@ -853,7 +903,7 @@ Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
 Group: Systems Programming Languages
-Pos: 1278 1388
+Pos: 2471 2057
 Kind: rectangle
 Size: 101 39
 Fit: yes
@@ -875,7 +925,7 @@ Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
 Group: Data interchange File Format
-Pos: 2175 184
+Pos: 2464 -47
 Kind: rectangle
 Size: 81 39
 Fit: yes
@@ -886,19 +936,19 @@ Tag: intermediate
 Tag: Formats
 Tag: Markup, Data and Config
 Group: Data interchange File Format
-Pos: 1988 252
+Pos: 2277 21
 Kind: rectangle
 Size: 119 39
 Fit: yes
 
 Name: recfile (GNU recutils)
+Text: plain-text records; recsel, recfix, rec2csv
 Tag: extra
 Tag: easy
 Tag: Formats
 Tag: Markup, Data and Config
-Note: plain-text records; recsel, recfix, rec2csv
 Group: Data interchange File Format
-Pos: 2175 252
+Pos: 2464 21
 Kind: rectangle
 Size: 195 39
 Fit: yes
@@ -968,7 +1018,7 @@ Fit: yes
 Name: Lisp
 Tag: adv
 Group: Lisp Family of Languages
-Pos: 2129 784
+Pos: 2557 1040
 Kind: rounded-rectangle
 Size: 67 39
 Fit: yes
@@ -976,7 +1026,7 @@ Fit: yes
 Name: Racket
 Tag: expert
 Group: Lisp Family of Languages
-Pos: 2237 784
+Pos: 2665 1040
 Kind: rounded-rectangle
 Size: 87 39
 Fit: yes
@@ -984,7 +1034,7 @@ Fit: yes
 Name: Emacs Lisp
 Tag: expert
 Group: Lisp Family of Languages
-Pos: 2157 716
+Pos: 2578 979
 Kind: rounded-rectangle
 Size: 121 39
 Fit: yes
@@ -997,7 +1047,7 @@ Kind: rounded-rectangle
 Size: 111 58
 
 Name: GUI
-Pos: 2178 1128
+Pos: 2082 1316
 Kind: rounded-rectangle
 Size: 63 39
 Fit: yes
@@ -1006,7 +1056,7 @@ Name: cljfx
 Tag: gui
 Tag: library
 Group: Lisp Family of Languages
-Pos: 2773 969
+Pos: 3201 1225
 Kind: rounded-rectangle
 Size: 69 39
 Fit: yes
@@ -1015,14 +1065,14 @@ Name: HumbleUI
 Tag: library
 Tag: gui
 Group: Lisp Family of Languages
-Pos: 2756 1058
+Pos: 3184 1314
 Kind: rounded-rectangle
 Size: 112 39
 Fit: yes
 
 Name: Clojure
 Group: Lisp Family of Languages
-Pos: 2532 878
+Pos: 2960 1134
 Kind: rounded-rectangle
 Size: 92 39
 Fit: yes
@@ -1030,7 +1080,7 @@ Fit: yes
 Name: d3
 Tag: library
 Group: Data Visualization
-Pos: 2224 429
+Pos: 2365 246
 Kind: rounded-rectangle
 Size: 60 39
 Fit: yes
@@ -1044,15 +1094,35 @@ Kind: note
 Size: 447 142
 
 Name: Avoid
-Text: c++, python, go, c#, dart, kotlin
-Pos: 718 2055
+Text: Programming Languages to avoid:
++
++ c++, go, c#, dart, kotlin
+Pos: 509 2066
 Kind: card
 Size: 755 556
+
+Name: Mullvad
+Url: https://mullvad.net/en
+Group: VPN
+Pos: 1470 1742
+Kind: rounded-rectangle
+Size: 96 39
+Fit: yes
+
+Name: video.js
+Text: Video.js v10 - open source media player framework for HTML and React.
+Tag: library
+Url: https://videojs.org/
+Group: Web
+Pos: 1717 305
+Kind: rounded-rectangle
+Size: 351 77
+Fit: yes
 
 %rec: Edge
 %type: From,To line
 %mandatory: From To
-%allowed: From To Any Note FromSide ToSide Route FromPort ToPort
+%allowed: From To Any Note FromSide ToSide Route FromPort ToPort Label
 %graph: acyclic
 %graph: no_implied
 
@@ -1233,7 +1303,7 @@ ToSide: w
 Route: elbow
 
 From: Bash
-To: WireGuard VPN
+To: WireGuard
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1270,6 +1340,12 @@ Route: elbow
 
 From: Bash
 To: universal-ctags
+Route: elbow
+
+From: Bash
+To: Mullvad
+FromSide: s
+ToSide: w
 Route: elbow
 
 From: Git
@@ -1356,20 +1432,30 @@ From: JavaScript
 To: d3
 Route: elbow
 
+From: JavaScript
+To: video.js
+Route: elbow
+
 From: Python
-To: SystemVerilog
+To: HTML
 FromSide: e
 ToSide: w
 Route: elbow
 
 From: Python
-To: Zig
+To: JSON
 FromSide: e
 ToSide: w
 Route: elbow
 
 From: Python
 To: Rust
+FromSide: e
+ToSide: w
+Route: elbow
+
+From: Python
+To: Zig
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1387,7 +1473,7 @@ ToSide: w
 Route: elbow
 
 From: Python
-To: JSON
+To: SystemVerilog
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1400,12 +1486,6 @@ Route: elbow
 
 From: Python
 To: Jai
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: HTML
 FromSide: e
 ToSide: w
 Route: elbow
@@ -1511,7 +1591,7 @@ To: Touch Typing
 FromSide: e
 ToSide: w
 Route: elbow
-Note: Hello
+Label: Hello
 
 From: Computer
 To: Firefox
@@ -1587,5 +1667,5 @@ Route: elbow
 %type: Zoom real
 %type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
 
-TopLeft: -129 -401
-Zoom: 0.387
+TopLeft: -143 -617
+Zoom: 0.295

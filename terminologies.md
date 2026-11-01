@@ -43,4 +43,5 @@ Personal notes. Copy terms into prompts. Agents do not treat this file as rules.
 - bulletproof
 - calibrate
 - vulnerabilities
-    
+- polish - to improve the appearance
+- please advice - need help

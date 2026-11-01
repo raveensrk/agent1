@@ -6,18 +6,17 @@ Agent1 is for everyone. Public rules, written for any agent and any harness.
 
 At session start, Read these files
 
-- [Emoji Legend](emoji_legend.md) - in the same directory as this file
 - [Experimental rules](experimental.md) - live trial rules; a keeper moves into common.md or another file, the rest are deleted
-- [task-router-2 skill](~/repos/task-router-2/resources/skills/task-router-2/SKILL.md) - tasks: one Markdown file per task, the `task-router-2` CLI the only writer. `task-router-2 skill install` installs it.
-- [Code Style](code_style.md) - how to write code
+- [task-router-2 skill](~/repos/task-router-2/resources/skills/task-router-2/SKILL.md) - tasks: one GNU recfile, the `task-router-2` CLI the only agent writer. `task-router-2 skill install` installs it.
 - [Git](git.md) - commits and pull requests
 - [Jobs](jobs.md) - ETA rules for long-running jobs
 - [agent2 AGENTS.md](~/repos/agent2/AGENTS.md) - only if the file exists
-- Repo layout (`doc/`, `script/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
+- Repo layout (`docs/`, `scripts/`, `inbox.md`, …) lives in that repo's `AGENTS.md`.
 - Tool configs live in `~/dot/config`, installed by `~/dot/script/install.py` (no symlinks). Read `~/dot/AGENTS.md` before searching for a tool's config.
 - Tool list: read [Dev Tools](dev_tools.rec) before choosing a tool and prefer a tool listed there over an unlisted one.
 - [Working Style](working_style.md)
 - [browser.md](browser.md) - maximize first, browser order, one-tab rule, window frames.
+- The user also works with org-mode text sometimes.
 
 ## Harness
 
@@ -40,53 +39,13 @@ The harness is everything around the model that turns a rule into a signal: chec
   run `/worktree` in that session before it edits anything. One branch per
   worktree; land it on main when the task ends ([Landing a Branch](git.md#landing-a-branch)).
 
-## Plan mode and Brainstorming
-
-Remind me to brainstorm and plan depending on the prompt and task. Decide based on your best judgement - for multi-step, ambiguous, or high-impact work; skip it for small, well-defined changes.
-
-## Effort level
-
-High effort is the default. Before executing **any** prompt:
-
-1. Analyse the prompt and task.
-2. Determine the best effort level for it (low / medium / high / extra / max).
-3. Proceed at that level. Do not wait for confirmation.
-
-## Repeatability
-
-Every session must reconstruct identical context from this repo alone, across pi and any future harness. Store durable rules, conventions, context, and memories in version-controlled files. Never in agent-private memory. If it is worth remembering, commit it. Agent-private memory may hold only pointers back to the repo.
-
-## Documentation
-
-Keep `doc/` and `AGENTS.md` in sync with the code. Cite sources when you can. Suggest new guidelines worth adding.
-
-- Follow code-as-doc wherever practical: use clear code and keep small program-specific documentation in the program itself (docstrings, comments, or `--help`). Ask me before creating a separate documentation file.
-
-- Before removing a path or a symlink, search the docs that reference it and update them in the same change.
-
-## Verification
-
-For multi-step, ambiguous, or high-impact work, say how you could verify it before starting. Skip it for small, well-defined changes.
-
-- Verify a config change through the real entry point - the alias, the full startup - not a minimal load. A minimal load skips startup options and hides the failure until I hit it.
-- A mechanism whose only real test is me pressing a key or looking at a window: ask for that one probe before building the rest of it. An Automator service passed `automator run`, then did nothing for three real key presses, and the route cost 25 minutes.
-- Never report a keybind, hotkey or shortcut as working from a log line that merely correlated with my press. The evidence is the press, or a mechanism that answers to a synthetic event in the same session - skhd fires on `osascript -e 'tell application "System Events" to key code 105'`, a service shortcut never does.
-- A poll loop that finds no process is not evidence that nothing fired. After a negative poll, read the target's own artifact (its log file) and say "not observed", not "did not fire".
-- When a value you display mirrors one the vendor's own UI shows, fetch the endpoint that reproduces that exact number and compare it before shipping the field. A plausible field name is not the number.
-- Run a new checker or validator over the whole existing population, not only the target it was written for. Its first run must pass on every instance, or it is reporting its own bugs.
-- Error paths are verified by the offline unit tests. A live network command is for the happy path, once, bounded with a limit flag; a live call to prove a rejection costs a full fetch and an interruption.
-
-After installing or removing pi packages, verify with `timeout 90 pi -p "reply with just: ok"` and check stderr for warnings.
-
 ## Theme
 
-Dark theme by default: HTML pages, reports, apps, GUIs, terminal output colors and tool configs. Do not follow the system's light setting. Offer light only as an explicit option the user switches to.
+Dark theme by default: HTML pages, reports, apps, GUIs, terminal output colors and tool configs. Do not follow the system's light setting. Offer light only as an explicit option the user switches to. This rule can be overridden by the user.
 
 ## Ruled out
 
-Emacs and Org mode: I tried them in 2026 and they did not fit me. If I start
-to install, configure or discuss Emacs or Org, warn me first in one plain
-sentence, point at task-router (plain Markdown tasks) and ask whether to go on.
+If I start to install, configure or discuss the following stop and ask whether to go on. Refer Avoid card in `dev_tools.rec`.
 
 ## Markdown
 
@@ -115,16 +74,6 @@ Scripts meant to be run are executable: a line-1 shebang naming an installed int
 
 Topic file: [cli.md](cli.md) - help shape, bare calls, short flags, one help table. [cli_help.py](harness/checks/cli_help.py) decides the hard half: a runnable, options or not, must handle `-h` and `--help` (short help) and a `help` command (long help).
 
-## Racket
-
-Before any Racket work (writing, reviewing or debugging `.rkt` or `.scrbl` files,
-or answering a Racket question), read the relevant parts of the Markdown Racket
-docs in [Racket docs](~/.local/share/doc/racket). Start from the Guide for
-concepts and the Reference for exact bindings, and find a binding with `rg`
-instead of reading a whole manual. When the folder is missing,
-`~/dot/install.sh --apply` builds it (`raco setup --doc-markdown`); say so
-instead of working from memory.
-
 ## macOS
 
 Topic file: [macos.md](macos.md) - iTerm2 tabs, BSD tool traps, PlistBuddy, screenshots, hung processes, where apps from `~/repos` install.
@@ -147,6 +96,3 @@ Topic file: [repos.md](repos.md) - no nested git repos, no symlinks to one, the 
 
 Topic file: [removal.md](removal.md) - plan first, Trash by default, casks one at a time, TCC leftovers.
 
-## Agent context files
-
-- Pi loads `CLAUDE.md` and `CLAUDE.MD` alongside `AGENTS.md`. Never rename or convert `CLAUDE.md` for pi.

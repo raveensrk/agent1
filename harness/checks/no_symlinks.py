@@ -39,7 +39,7 @@ import os
 import subprocess
 import sys
 
-SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".build", ".mypy_cache"}
+SKIP_DIRS = {".git", "node_modules", "zig-pkg", ".venv", "venv", "__pycache__", ".build", ".mypy_cache"}
 LINK_DEPTH = 4
 
 # Paths arrive on stdin from the dispatcher, or as arguments when run by hand.

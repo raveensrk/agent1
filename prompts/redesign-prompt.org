@@ -1,0 +1,306 @@
+#+TITLE: GUI Redesign Prompt
+#+STARTUP: showall
+
+* Goal
+Redesign the GUI of this desktop app from scratch. Don't keep the current
+layout or visual style. You have full creative freedom over the design,
+within the requirements below. The result must look modern, feel polished and
+comfortable to use, and come alive with smooth animations. Consistency and
+alignment are a top priority.
+
+* Tech stack
+- Keep the app's current programming language, GUI framework, and main
+  libraries.
+- You may add new libraries or frameworks on top of the current stack when
+  they help (e.g., for theming, icons, layout, or tabs).
+- If you think a different library or framework would give a clearly better
+  result, don't switch on your own. Explain the trade-offs (benefits, migration
+  cost, risks) and ask me first.
+- Whatever stack is used must run on both macOS and Linux (see
+  Cross-platform below). If the current stack can't meet a requirement on one
+  of them, tell me before working around it.
+
+* Version control and data safety
+- Work on a new branch and commit at the end of each phase.
+- Existing user settings and data must keep working after the redesign, or be
+  migrated automatically.
+
+* Design principles: Laws of UX
+Before designing anything, read https://lawsofux.com/ thoroughly: the main
+page and every individual law's page linked from it. Apply these laws to all
+design decisions.
+
+In the design brief and in each mockup review round, name the laws behind
+your main decisions.
+
+* Phase 1: Discovery (ask me questions before designing anything)
+Before designing, interview me until you're confident you understand the goal.
+- First read the codebase to learn what the app does, its current UI, its
+  tech stack, and what the backend can do.
+- Then ask questions, a few at a time, about: who uses it, the main tasks and
+  workflows, pain points with the current UI, how people would use multiple
+  windows and tabs, and any designs I like or dislike (including apps I
+  consider modern-looking).
+- Challenge my assumptions and point out contradictions.
+- When you're done, write a short design brief (goals, users, key screens,
+  window and tab model, constraints, tech stack decisions, guiding Laws of UX)
+  to =docs/design-brief.md= and get my approval before moving on.
+
+* Phase 2: SVG mockup review loop
+- Put mockups in =docs/mockups/=, with one SVG per screen or state, named like
+  =01-main-window-dark.svg=, and versioned (=-v2=, =-v3=) instead of
+  overwritten.
+- Start with 2–3 clearly different design directions for the main screen,
+  so I can choose one before you go into detail.
+- Draw detailed screens in one dark and one light theme only. Add a single
+  theme preview sheet that shows all 8 themes.
+- Draw mockups on the same layout grid and spacing scale as the final app.
+- Mockups must also show: the visible keyboard focus state, the in-app help
+  screen, a window with several tabs open, and two windows side by side.
+- Show at least one screen as it looks on macOS and on Linux, so platform
+  differences (window controls, menu bar, shortcut labels) are visible.
+- Alongside the mockups, write =docs/keyboard-map.md=: for each screen, list
+  tab order, focus groups, and keyboard shortcuts (macOS and Linux versions).
+- SVGs can't show motion, so also write =docs/motion-spec.md=: list every
+  animation (what moves, trigger, duration, easing). For key animations, add
+  a before/after frame sequence to the mockups.
+- Each round: show the mockups, say what changed and why (including which
+  Laws of UX apply), and ask for specific feedback (layout, hierarchy,
+  comfort, modern look, color, typography, animation, keyboard flow). Also
+  check that alignment and
+  component use are consistent across every screen, and point out any
+  intentional exceptions.
+- Keep iterating until I explicitly say I'm satisfied. Don't start
+  implementation without that approval.
+
+* Requirements
+** Proper desktop GUI app
+Clear visual hierarchy, responsive resizing, and sensible
+empty/loading/error states.
+- Use a themed in-app menu bar (drawn by the app, not the native OS menu), so
+  it matches every theme. On macOS, also fill the system menu bar with the
+  same commands, because macOS always shows it.
+
+** Modern look
+- The app must look like a current, modern desktop app, not a dated one:
+  clean flat surfaces, subtle depth (soft shadows, layered surfaces) used
+  sparingly, consistent rounded corners, and a modern UI font.
+- Strong typographic hierarchy and plenty of whitespace do the work, not
+  borders and boxes everywhere.
+- No dated styling: no bevels, heavy gradients, thick outlines, or crowded
+  toolbars full of small icons.
+- Use one consistent, modern icon set with a single style and stroke weight.
+
+** Animations
+- The app uses animations throughout to make it feel smooth and alive:
+  opening and closing panels, dialogs, and menus; switching, opening,
+  closing, and reordering tabs; list items being added or removed; theme
+  changes; hover and press feedback; and loading/progress indicators.
+- Every animation has a purpose: it shows where something came from or went,
+  what changed, or that the app is working. No decorative motion that
+  distracts.
+- Keep animations fast: about 100–250ms for most transitions, using natural
+  easing (ease-out for entering, ease-in for leaving). Nothing should make
+  the user wait.
+- Animations never block input: the user can keep typing, clicking, or using
+  shortcuts while an animation runs.
+- Smooth on both macOS and Linux: aim for 60fps, with no stutter or dropped
+  frames, including on high-DPI screens.
+- Use one shared set of motion tokens (durations and easing curves), like
+  the spacing and color tokens, so motion stays consistent everywhere.
+- Respect the OS "reduce motion" setting, and add an in-app setting to turn
+  animations off or reduce them. Both replace motion with instant changes or
+  simple fades.
+
+** Polish
+- Every interactive element has clear hover, pressed, focused, selected, and
+  disabled states, in every theme.
+- Design empty states, loading states, and error messages with care: they
+  explain what happened and what to do next, in plain language.
+- No visual glitches: no flicker, layout jumps, clipped text, or misaligned
+  pixels at any size, scale, or theme.
+
+** Comfort over density
+Favor a comfortable, calm layout over packing in as much as possible.
+- Generous spacing and padding, from the upper end of the spacing scale.
+- Comfortable control sizes: interactive elements are at least 32px tall, and
+  never smaller than 24×24px.
+- Readable text: a comfortable base font size (around 14–15px), good line
+  height, and limited line length for long text.
+- Show only what's needed for the current task; put secondary information
+  behind tabs, panels, or disclosure toggles instead of crowding the screen.
+- If some users need dense views (e.g., large tables), offer an optional
+  compact mode, but comfortable is the default.
+
+** Consistency and alignment (high priority)
+- Use one spacing scale based on a 4px grid (e.g. 4, 8, 12, 16, 24, 32).
+  No one-off spacing values.
+- Align every element to a shared layout grid: left edges, baselines, and
+  column widths line up across all screens.
+- Use one type scale (a small set of sizes and weights) and one icon size set,
+  used the same way everywhere.
+- Each component (buttons, inputs, lists, dialogs, tabs) has one design and one
+  set of sizes, reused across all screens. No slightly different copies.
+- The same action always looks and behaves the same: same label, icon,
+  shortcut, and position (e.g. dialog buttons always in the same order and
+  place).
+- Use the same terms and capitalization style throughout the UI, the menus,
+  and the help content.
+- Spacing, sizes, and colors come only from design tokens. No hardcoded values
+  in components.
+
+** Multiple windows and tabs
+- The app supports multiple windows, each with its own set of tabs.
+- Standard actions with standard shortcuts: new window, new tab, close tab,
+  close window, reopen closed tab, next/previous tab, and jump to tab 1–9.
+- Tabs can be reordered and moved to another window or into a new window,
+  with both the mouse (drag and drop) and the keyboard.
+- Long tab titles are truncated cleanly, with the full title in a tooltip.
+  Many open tabs stay usable (scrolling or overflow menu).
+- Closing a tab or window with unsaved work asks for confirmation.
+- Windows and tabs are restored on restart (size, position, open tabs, and
+  the active tab).
+- Settings like theme and font size apply to all windows immediately.
+
+** Cross-platform: macOS and Linux
+- The app must work fully on both macOS and Linux. On Linux, support both
+  Wayland and X11, and both GNOME and KDE.
+- Use each platform's conventions: Cmd on macOS and Ctrl on Linux for
+  shortcuts, macOS-style shortcut labels (⌘ ⇧ ⌥) on macOS, and the right
+  window controls on each platform.
+- Store settings and data in each platform's standard location
+  (=~/Library/Application Support/= on macOS, XDG directories on Linux).
+- Keep platform-specific code in one small, clearly separated layer.
+- Test every workflow on both platforms.
+
+** Keyboard-only accessibility
+Every feature can be reached and operated without a mouse.
+- Logical tab order and a clearly visible focus indicator
+- Shortcuts for common actions, shown in menus and tooltips
+- Keyboard switching between windows and tabs
+- No keyboard traps; Esc closes dialogs and popovers
+- WCAG 2.2 AA contrast for text and focus indicators in every theme
+
+** Display and text scaling
+- Sharp rendering on high-DPI and Retina screens and at OS scaling levels
+  like 125%, 150%, and 200%.
+- An in-app font size setting that enlarges text without breaking the layout
+  (no clipping or overlapping) and keeps alignment intact. The setting
+  persists across restarts.
+
+** Theming (8 themes: 4 dark, 4 light)
+- Required: *Gruvbox Dark Hard* (dark), *Ayu Dark* (dark), and
+  *Ayu Light* (light).
+- Propose the remaining 2 dark and 3 light themes in the mockup phase, so I
+  can approve or swap them.
+- Follow each theme's official palette. If an official color fails AA
+  contrast, adjust it as little as needed to pass, and list every change in
+  the design system note.
+- Build themes on design tokens (colors, spacing, typography), so adding a
+  new theme means adding tokens only, not changing components.
+- Default to the OS light/dark setting, with a manual theme picker.
+  The choice persists across restarts.
+
+** Built-in help (inside the app)
+- Help is shown inside the app, in its own panel, tab, or window. It must not
+  open an external browser or need an internet connection.
+- Open it with F1 and from the Help menu, plus Cmd+? on macOS (the standard
+  macOS help shortcut, since F1 needs the Fn key on most Mac keyboards).
+- Contextual help: F1 opens the help topic for the current screen or focused
+  control.
+- Short inline hints and tooltips next to complex controls, with a link to
+  the full help topic.
+- Searchable help topics covering every feature and workflow.
+- Store help topics as Markdown files in a =help/= folder that the app loads,
+  not text hardcoded in the UI.
+- A keyboard shortcut reference, opened with Ctrl+/ (Cmd+/ on macOS) from
+  anywhere, or with =?= when no text field has focus. It shows the shortcuts
+  for the current platform.
+- A short getting-started guide shown on first launch, which can be dismissed
+  and reopened from Help.
+- The help itself is fully keyboard-navigable, follows the active theme and
+  font size, and uses the same components, spacing, and terms as the rest of
+  the app.
+
+* Phase 3: Implementation
+** Step 1: Define the frontend–backend contract
+Before writing any UI code:
+- Go through the current backend and list everything it can do: functions,
+  data models, events, errors, and long-running operations.
+- Map each approved mockup screen to the backend calls and data it needs.
+- Include what multiple windows and tabs need from the backend: shared state
+  between windows, concurrent requests, and saving/restoring sessions.
+- Write the contract to =docs/interface-contract.md=. For each call, give:
+  name, inputs, outputs, error cases, whether it's sync or async, and
+  progress/cancel behavior where relevant.
+- Mark each call as *existing* (the backend already supports it),
+  *changed* (needs backend changes), or *new* (doesn't exist yet).
+  Flag anything marked new or changed that looks risky or expensive.
+- Get my approval on the contract before starting the frontend.
+
+** Step 2: Frontend first
+- Build the design tokens (including motion tokens) and shared components
+  first, with their animations built in, then build every screen only from
+  those.
+- Build the window and tab system next, since every screen lives inside it.
+- Build the full UI (all themes, font scaling, multiple windows and tabs, and
+  the help system included) to match the approved mockups and keyboard map.
+- The UI may only talk to the backend through the contract. No direct calls
+  into backend internals.
+- Implement the contract with a stub/mock layer that returns realistic data,
+  including errors, empty results, and slow responses, so every UI state can
+  be tested.
+- If the UI needs something the contract doesn't have, stop and propose a
+  contract change. Don't work around it.
+- Show me the finished frontend for review.
+
+** Step 3: Backend second
+- Implement or adapt the backend to fulfill the contract exactly.
+- Write contract tests that run the same checks against the stub and the
+  real backend, so any mismatch shows up immediately.
+- Replace the stubs with the real backend once the tests pass.
+
+** Step 4: Verify
+- Write automated UI tests that drive every workflow using only simulated
+  key presses, wherever the framework allows.
+- For anything that can't be automated, write a keyboard-only test checklist
+  in =docs/keyboard-checklist.md= (one entry per workflow), and run through it.
+- Run the tests and the checklist on both macOS and Linux.
+- Test multiple windows and tabs: many tabs open, moving tabs between
+  windows, closing with unsaved work, and restoring after restart.
+- Check the layout at the largest font size and at 200% OS scaling.
+- Check animations on both platforms: smooth (no dropped frames), never
+  blocking input, matching =docs/motion-spec.md=, and correctly reduced when
+  "reduce motion" is on.
+- Do a consistency and polish pass: compare all screens side by side and fix
+  any misaligned elements, off-scale spacing, duplicate component variants,
+  missing interaction states, crowded areas, or inconsistent labels and terms.
+- Keep existing functionality working. List anything you removed or changed.
+- Confirm that existing settings and data load correctly (or migrate), and
+  that no stub code is left in the production path.
+
+* Definition of done
+- [ ] The UI matches the approved mockups, and all 8 themes are implemented
+- [ ] The UI looks modern and polished: every interactive element has all
+      its states, and there are no visual glitches
+- [ ] Animations match =docs/motion-spec.md=, run smoothly on both platforms,
+      never block input, and respect "reduce motion" and the in-app setting
+- [ ] Layouts are comfortable, not dense, and meet the minimum control sizes
+- [ ] Every screen uses the shared grid, spacing scale, type scale, and
+      components, with no hardcoded spacing or color values in the code
+- [ ] Multiple windows and tabs work fully, including moving tabs and
+      restoring sessions
+- [ ] Every workflow works on both macOS and Linux (Wayland and X11)
+- [ ] Every feature, including help, works end-to-end with the keyboard alone;
+      the automated keyboard tests pass and the checklist is complete
+- [ ] Text stays readable and the layout holds at the largest font size and
+      at 200% scaling
+- [ ] Help works inside the app, offline, and covers every feature
+- [ ] =docs/interface-contract.md= matches the final code, and the contract
+      tests pass
+- [ ] Any new libraries are listed with a one-line reason for each
+- [ ] =docs/= contains the design brief, the final mockups, the keyboard map,
+      the keyboard checklist, the motion spec, the interface contract, and a
+      short design system note (tokens, spacing and layout grid, type scale,
+      motion tokens, themes and any contrast adjustments, components,
+      shortcuts, terminology, and the Laws of UX applied)

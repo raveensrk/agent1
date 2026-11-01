@@ -2,12 +2,15 @@
 
 Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as rules.
 
+* Stage -1 - Prepare the repo (Manual)
+** Add AGENTS.md
+** Create Git hooks and Harness hooks if any
 * Stage 0 - Planning
-** Interview me.
-** Interview me until you uncover the goal of this project.
-** Interview me about the core problem
-Before we start building, interview me about this: What is the core problem this solves? Who is this for? What does success look like? What should this NOT do? Summarize it back to me before we write any code.
-** Import @file
+** Interview/Grill
+- Grill me until you uncover the goal of this project.
+- Grill me until you understand the goal.
+- Interview me and expand this idea
+- Before starting research the web for all the required information and grill me until you understand the goal.
 ** I am thinking to `do this thing`. Brainstorm with me until we uncover the goal.
 ** Does a project already exist for this?
 Is there a project in the internet available that does this exactly? Or any alternative. I dont want to implement a new project if there is something that exists online.
@@ -15,68 +18,38 @@ Is there a project in the internet available that does this exactly? Or any alte
 *** Go over this entire project and critic it.
 *** Tell me which parts of the project we can refactor.
 *** Should we replace the backend or frontend?
-Should we replace the backend or frontend or both? The codebase of the project must align with the docs. Which framework would be be suited for this kind of work? I want the project to be highly expressive so the programming languages used must also be highly expressive.
+- Should we replace the backend or frontend or both?
+- The codebase of the project must align with the docs.
+- Which framework would be be suited for this kind of work?
+- I want the project to be highly expressive so the programming languages used must also be highly expressive.
 
-* Stage 0.1 - Optional
-** Do /init and add to @AGENTS.md. Refer @AGENTS.md in @CLAUDE.md.
-
-* Stage 1 - Vibe Coding
-** Plan the TODO comments
-Review all TODO comments in the codebase, group by priority, and propose a step-by-step plan to resolve each.
 ** Improve these prompts. Make them concise without losing information.
+* Stage 1 - Vibe Coding
+** TODOs/FIXMEs comments
+- Review all TODO and FIXME in the codebase
 ** Follow these conventions <https://www.conventionalcommits.org/en/v1.0.0/>
-** What do do next?
-** Tell me next steps.
-** Lessons from this run become <skill> rules
+** Follow up 
+- What do do next?
+- Tell me next steps.
 ** Visual Explanation
 Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions.
-
-* Stage 2 - Review
-** Verify this session's work
-Based on this session,
-
-- Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
-- If you can verify the work so far with a test, create it.
-
+** Import @file
 * Stage 2.1 - UI/UX, GUI, Web UI
 ** Review the repo's UI
 - Review this whole repo
 - Are there any improvements that can be made?
+- Polish the UI
 - Refer: https://lawsofux.com/
 - Comfort over dense.
 - Help should be available inside app
 - Must have multi window and tabs support.
 - Must be cross-platform: MacOS and Linux
-** Auto-Install Git Hook
-[[file:auto-install_git_hook.md][Auto-Install Git Hook]]
-** Keep GUI apps current after commits and pulls
-Goal: on macOS, this repos GUI apps stay current in ~/Applications/My_Apps after commits and pulls. Automatically install the app to `~/Applications/My_Apps`.
-
-Triggers:
-- post-commit, as today: install only if the commit touches the app's paths.
-- post-merge and post-rewrite, so fast-forward, merge and rebase pulls all count.
-  git has no post-pull hook.
-- Pull with new commits: always install, even if no app files changed.
-- Pull with no new commits: nothing.
-- Amend and manual rebase on main: install, same path filter as post-commit.
-
-Rules:
-- Wire the new hooks in ~/repos/agent1/harness/githooks, like post-commit.
-- Install from main only, in every repo.
-- Build the committed tree in the background. Keep coalescing and notifications.
-- A pull or commit never quits a running app. App changes to match;
-  the new version starts on next launch.
-- Exception: Background helpers - it restarts itself.
-- Never fail the git operation. Non-macOS does nothing.
-
-Verify: in a scratch clone, test fast-forward, merge, rebase, up to date,
-non-main, amend, and a commit with no app change. Then run one real pull per
-repo with new commits, and confirm the bundle's timestamp changed.
-** Install GUI apps into My_Apps
-All gui apps installed from `~/repos` must install into `~/Applications/My_Apps`.
-
-Fix already existing apps.
-
+** Polish the UI/UX
+I like what we have now. But It needs a bit more polish.
+** Redesign
+I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
+** [[./prompts/redesign-prompt.org][Redesign full]]
+** [[file:auto-install_git_hook.org][Auto-Install Git Hook]]
 * Stage 2.2 - CLI
 ** Review the CLI
 Are there any improvements that can be made?
@@ -87,43 +60,43 @@ Refer:
 - https://github.com/cli-guidelines/cli-guidelines
 - https://github.com/cli-guidelines/cli-guidelines/blob/main/content/_index.md
 
+* Stage 2 - Review
+** Review the gui app visually
+Can you record a video of yourself using the app with example data. Try out all the app. The analyse the video. Then report your findings.
+** Review and verify everything
+- Review everything.
+- Make sure you used best practices, were efficient, and didn't introduce any issues.
+- If you can verify the work so far with a test, create it.
+** Review this session's work
+Based on this session,
+- Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
+- If you can verify the work so far with a test, create it.
 * Stage 3 - Documentation
-** Reconcile the docs
+** [[./prompts/create_docs.org][Create docs]]
+** Session Reconcile the existing docs
 Based on the current session do the following,
 
-- If `docs` directory does not exist create it.
-- All documentation goes in `docs`.
 - Remove stale docs and Reconcile docs and codebase.
-- Write docs like a book
-- If you learned anything new, add notes and instructions to the docs.
+- If you learned anything new, update the docs.
 - Update training data if any.
-- Reduce prose and draw more diagrams with mermaid when you can
-- Draw Architecture diagrams
-- Follow the latest CommonMark spec for markdown
-- Before starting research the web for all the required information and grill me until you understand the goal.
-- In root of the repository if there is any documentation or notes exists ask user if it can be moved to docs.
-- README.md and AGENTS.md are the only docs files allowed in root.
 - Keep the documentation minimal and unique. No duplicate information.
 
-* Stage 4 - Maintenance
-** Maintain this project
-Based on this current session do the following,
+* Stage 3.9 - Performance
+** Make performance improvements to the project.
 
+* Stage 4 - Maintenance
+** Perform maintenance for this project
 - Find dead code and remove it.
 - Try to reduce bloat in the project.
-- Make performance improvements to the project.
 - Perform maintenance and clean up redundancies in this project.
 - Break large code blocks into smaller, focused components to improve usability and maintainability.
 - Add helper scripts if they reduce token usage or improve task quality.
 - Suggest an idea, improvement, tweak, or optimization for this project.
 - Finally, Critic this project.
 ** Skills
-*** List installed skills for all harnesses
-List all installed skills in this computer for all AI Agent Harnesses.
-*** List installed skills for this harness
-List all installed skills in this computer for this current AI Agent Harness.
-** List and delete AI apps from a live webserver
-List all installed ai related apps / skills / configs / ai agent harness / data in this computer for all AI Agent Harnesses. Create a live webserver. The list must be a check box ill select and a button called delete - for you to act on. Use clojure.
+- List all installed skills in this computer for all AI Agent Harnesses.
+- List all installed skills in this computer for this current AI Agent Harness.
+- List all installed ai related apps / skills / configs / ai agent harness / data in this computer for all AI Agent Harnesses. 
 ** AI data scrub
 Scrub what AI agent harnesses leave on this Mac: sessions, caches, telemetry,
 logs and memories. Keep configs and logins unless I pick a bigger tier.
