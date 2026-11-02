@@ -2,7 +2,7 @@
 # harness-check: {"id": "mdformat_check", "applies": ["*.md"], "quadrant": "feedback/computational"}
 """Markdown must satisfy mdformat, pinned so it cannot mangle a file.
 
-common.md pins the falsifier for the markup rule: `mdformat --check`. As
+rules/harness.md pins the falsifier for the markup rule: `mdformat --check`. As
 installed on this machine two traps sit under that bare command, both measured
 on 04 Oct 2026:
 

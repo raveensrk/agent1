@@ -12,7 +12,7 @@ A rule a program can decide is the program, not prose. This skill scans one
 directory's instruction files, classifies every rule, builds what is missing,
 and leaves the prose carrying only decisions and routing.
 
-The rule itself lives in [common.md](../../common.md). The check and guard
+The rule itself lives in [rules/harness.md](../../rules/harness.md). The check and guard
 contracts, and the wiring for every harness, live in
 [harness/README.md](../../harness/README.md) and
 [references/harness_wiring.md](references/harness_wiring.md).
@@ -35,13 +35,13 @@ the script only removes the hand-rolled discovery.
 
 For each rule, ask: can a program decide this?
 
-| Shape | When | Home |
-| --- | --- | --- |
-| Check | decidable after the work | `scripts/checks/` in the repo, or agent1/agent2 `harness/checks/` |
-| Guard | a prohibition that must never happen | a guard script, reached through the hook contract |
-| Generator | a fixed file shape the agent hand-rolls | a small script or template |
-| Jev | a semantic answer that is a label or a score, with a threshold | the typesafe-ai skill |
-| Prose | taste, judgement, or no falsifier | stays, with a pointer line |
+| Shape     | When                                                           | Home                                                              |
+| --------- | -------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Check     | decidable after the work                                       | `scripts/checks/` in the repo, or agent1/agent2 `harness/checks/` |
+| Guard     | a prohibition that must never happen                           | a guard script, reached through the hook contract                 |
+| Generator | a fixed file shape the agent hand-rolls                        | a small script or template                                        |
+| Jev       | a semantic answer that is a label or a score, with a threshold | the typesafe-ai skill                                             |
+| Prose     | taste, judgement, or no falsifier                              | stays, with a pointer line                                        |
 
 Hard rules:
 

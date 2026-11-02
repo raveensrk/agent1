@@ -1,6 +1,10 @@
+---
+last_reviewed: 2026-11-02
+---
+
 # Repos
 
-Loaded only when `~/repos` exists - the condition is a filesystem test decided in [rules_context.ts](harness/extensions/rules_context.ts).
+Loaded only when `~/repos` exists - the condition is a filesystem test decided in [rules_context.ts](../harness/extensions/rules_context.ts).
 
 Never use a nested git repo for my projects, and never a symlink to one. A clone from the internet is the
 exception: it goes in the allowlist that [nested_git_repo](~/repos/agent1/harness/checks/nested_git_repo.py)
@@ -13,4 +17,4 @@ that no repo owns.
 Every symlink, not only one that points at a repo, is a finding now: [no_symlinks](~/repos/agent1/harness/checks/no_symlinks.py)
 scans the working tree and the index of the repo it runs in, exempts the same `SKIP_DIRS`, and prints one
 finding per link naming the alternative to use instead. There is no allowlist: a repo holds no link. The
-warn-before-creating half of the rule lives in `common.md` Working style.
+warn-before-creating half of the rule lives in [working_style.md](working_style.md).

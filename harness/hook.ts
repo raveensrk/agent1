@@ -20,7 +20,7 @@
  * Per-session state (lint nudges, failure streak) is in
  * ~/.local/state/agent1/sessions/<session_id>.json.
  *
- * Reads the event on stdin, the transcript it names, common.md, experimental.md
+ * Reads the event on stdin, the transcript it names, common.md, rules/experimental.md
  * and harness/extensions/telegraph.md under ~/repos/agent1, and the switch in
  * ~/.local/state/agent1/telegraph.json; lint runs ~/repos/agent1/harness/lint.py.
  * Writes the session state above and, for telegraph on|off, the switch. HOME

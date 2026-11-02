@@ -1,6 +1,10 @@
+---
+last_reviewed: 2026-11-02
+---
+
 # External systems and accounts
 
-Split from [common.md](common.md); routed by [rules_context.ts](harness/extensions/rules_context.ts).
+Split from [common.md](../common.md); routed by [rules_context.ts](../harness/extensions/rules_context.ts).
 
 - A probe of an external system is one script taking the query as an argument; a
   second near-identical script is a rewrite, not a probe. Six CDP probe scripts

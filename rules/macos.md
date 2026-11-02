@@ -1,4 +1,10 @@
+---
+last_reviewed: 2026-11-02
+---
+
 # macOS
+
+- I use ghostty
 
 - iTerm2: to open a tab that runs a command, create a plain tab, then `write text "cd DIR && cmd"`. `create tab with default profile command "..."` skips the login shell, so PATH misses `/opt/homebrew/bin` and the tab dies. While pi is open, address the bash window by `id`, never `current window`: `current window` is the pi TUI and the text becomes a user message. Do not `write text` into a tab that is waiting at a password prompt, and never redirect that prompt's stderr; the tab looks hung and the first characters are eaten as the answer.
 
@@ -29,8 +35,8 @@ any code that launches or looks up the app by its path.
 
 A repo that builds an app ships an executable, tracked `script/post-commit`
 that rebuilds and reinstalls it in the background, from `main` only. The global
-[post-commit](harness/githooks/post-commit), [post-merge](harness/githooks/post-merge)
-and [post-rewrite](harness/githooks/post-rewrite) run it on macOS for every repo,
+[post-commit](../harness/githooks/post-commit), [post-merge](../harness/githooks/post-merge)
+and [post-rewrite](../harness/githooks/post-rewrite) run it on macOS for every repo,
 so a clone needs no setup; a repo's own `.git/hooks/<hook>` wins over it.
 
 git has no post-pull hook. A fast-forward or merge pull fires `post-merge`, a
@@ -43,7 +49,7 @@ No installer touches the Dock: no pinning, no repointing, no `killall Dock`,
 and on Linux no GNOME favourites. The user pins an app by hand if they want it
 there.
 
-[app_install_dir.py](harness/checks/app_install_dir.py) decides the folder and
+[app_install_dir.py](../harness/checks/app_install_dir.py) decides the folder and
 the Dock half. What it cannot see: an install replaces the bundle at its own
 path - rsync over it in place, or build beside it and swap the new one in after
 deleting the old one. It never moves the old bundle somewhere else first, such

@@ -8,10 +8,10 @@ Engineering on Rails" ([slides](https://speakerdeck.com/joelq/harness-engineerin
 an agent is a reactive system, and it reacts to signals. Rubocop is the shape
 to copy - one command, every rule, language-agnostic here. The talk's grid:
 
-| | computational | inferential |
-| --- | --- | --- |
-| **feedback** (after the work) | linters, tests, this directory | agentic review, the learn-from-session skill |
-| **feedforward** (before the work) | generators, templates, guards | `AGENTS.md` prose, a `SKILL.md` |
+|                                   | computational                  | inferential                                  |
+| --------------------------------- | ------------------------------ | -------------------------------------------- |
+| **feedback** (after the work)     | linters, tests, this directory | agentic review, the learn-from-session skill |
+| **feedforward** (before the work) | generators, templates, guards  | `AGENTS.md` prose, a `SKILL.md`              |
 
 The rule that makes it pay: anything in `AGENTS.md` that a check can decide
 belongs in a check. Prose is for what only judgement can decide.
@@ -112,12 +112,12 @@ numbers draw dim until the ledger says otherwise. Automatic scoring is off until
 [hook.ts](hook.ts) runs the same exported functions as the pi extensions, once
 per Claude hook event, wired by the plugin's [hooks/hooks.json](../hooks/hooks.json):
 
-| Event | `hook.ts` | pi extension |
-| --- | --- | --- |
-| `SessionStart` | `rules` | `rules_context.ts` + `telegraph.ts` |
-| `PreToolUse` Bash, Edit | `guard` | `command_guard.ts`, `edit_guard.ts` |
-| `PostToolUse`, `PostToolUseFailure` | `nudge` | `failure_nudge.ts` |
-| `Stop` | `lint` | `harness_lint.ts` |
+| Event                               | `hook.ts` | pi extension                        |
+| ----------------------------------- | --------- | ----------------------------------- |
+| `SessionStart`                      | `rules`   | `rules_context.ts` + `telegraph.ts` |
+| `PreToolUse` Bash, Edit             | `guard`   | `command_guard.ts`, `edit_guard.ts` |
+| `PostToolUse`, `PostToolUseFailure` | `nudge`   | `failure_nudge.ts`                  |
+| `Stop`                              | `lint`    | `harness_lint.ts`                   |
 
 The rule lives in the extension; `hook.ts` only translates the event. Change a
 rule there and both harnesses enforce it. Each hook costs ~0.1 s of node
@@ -150,7 +150,7 @@ to a check's message, and to a guard's.
 
 Checks that encode machine-specific rules belong in `~/repos/agent2/harness/checks/`
 (private repo), not here. The dispatcher picks that directory up only when it
-exists, the same conditional rule `common.md` uses for `agent2/AGENTS.md`.
+exists, the same conditional rule `rules/index.md` uses for `agent2/AGENTS.md`.
 
 The reverse split is `nested_git_repo.py`: the rule is general, so the check is
 public here, while the allowlist of internet clones it reads names this

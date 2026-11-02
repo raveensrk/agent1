@@ -38,12 +38,12 @@ New names follow these rules. Rename an old name that breaks them only when you 
 
 ## Examples
 
-| Bad | Good | Why |
-|---|---|---|
-| `,mutt_spam_add_sender` | `,mutt_add_sender_to_spam` | Tool first, then verb + object. |
-| `,comma_cmds_ls` | `,ls_comma_cmds` | No tool, so the verb comes first. |
-| `,convert_md_pdf` | `,convert_md_to_pdf` | `to` shows the direction. |
-| `,update` | `,update_brew_packages` | A generic verb alone could mean anything. |
-| `define_naming.md` | `naming.md` | A file holds something; it does not act. |
-| `code-style.md` | `code_style.md` | Underscores, not hyphens. |
-| `notes/` | `note/` | Folders are singular. |
+| Bad                     | Good                       | Why                                       |
+| ----------------------- | -------------------------- | ----------------------------------------- |
+| `,mutt_spam_add_sender` | `,mutt_add_sender_to_spam` | Tool first, then verb + object.           |
+| `,comma_cmds_ls`        | `,ls_comma_cmds`           | No tool, so the verb comes first.         |
+| `,convert_md_pdf`       | `,convert_md_to_pdf`       | `to` shows the direction.                 |
+| `,update`               | `,update_brew_packages`    | A generic verb alone could mean anything. |
+| `define_naming.md`      | `naming.md`                | A file holds something; it does not act.  |
+| `code-style.md`         | `code_style.md`            | Underscores, not hyphens.                 |
+| `notes/`                | `note/`                    | Folders are singular.                     |

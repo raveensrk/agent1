@@ -1,6 +1,6 @@
 # Output style
 
-Split from [common.md](common.md); intentionally unlinked - no router, index or pointer names this file.
+Split from [common.md](../../common.md); intentionally unlinked - no router, index or pointer names this file.
 
 This is experimental.
 

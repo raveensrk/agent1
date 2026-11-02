@@ -268,7 +268,7 @@ export function guardHit(command: string): Hit | null {
 			measured:
 				"Measured 2026-10-03: one unbounded ert test run hung for the full 300s tool timeout plus 194s to abort; healthy, it takes 5s.",
 			fix: [
-				"Bound it, and state the ETA before starting it (jobs.md):",
+				"Bound it, and state the ETA before starting it (rules/jobs.md):",
 				"  timeout 180 bun test",
 				"  timeout 900 swift test",
 			].join("\n"),

@@ -2,7 +2,7 @@
 # harness-check: {"id": "markdown_bare_path", "applies": ["*.md", "!**/archive/**", "!**/deck/**", "!**/content/**", "!**/notes/**"], "quadrant": "feedback/computational"}
 """File paths in markdown prose must be markdown links.
 
-common.md: a path is written as [name](path), not as bare text. Fenced code
+rules/markdown.md: a path is written as [name](path), not as bare text. Fenced code
 blocks, indented blocks and inline code spans are skipped - a path inside a
 command example is not prose. Directories are skipped too: the rule is about
 files you can open. Notes and content archives are out of scope; the rule is
@@ -22,7 +22,7 @@ if not FILES and not sys.stdin.isatty():
 
 # A path only counts when it is the whole token, so a link target or a path
 # inside a word does not trip it. Trailing punctuation is stripped afterwards.
-# A leading @ is an import line in an agent startup file - common.md sanctions
+# A leading @ is an import line in an agent startup file - rules/markdown.md sanctions
 # `@~/path/to/rules.md` in AGENTS.md - and a markdown link there would stop being an
 # import, so the @ form is not prose and not rewritten.
 BARE = re.compile(r"(?<![\w(`/~@-])(~|/Users/raveen_kumar_personal)/[\w./~-]+")

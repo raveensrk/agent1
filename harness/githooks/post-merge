@@ -6,7 +6,7 @@ git has no post-pull hook. A fast-forward or merge pull fires this one; a rebase
 pull fires post-rewrite. A pull that brings nothing fires neither.
 
 A repo's own .git/hooks/post-merge wins, as in post-commit. Failing that, on
-macOS, it runs the repo's tracked script/post-commit (macos.md: Apps from ~/repos):
+macOS, it runs the repo's tracked script/post-commit (rules/macos.md: Apps from ~/repos):
   pull           script/post-commit --pull             always installs
   local merge    script/post-commit --range OLD HEAD   installs if it touches the app
 

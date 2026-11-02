@@ -2,7 +2,7 @@
 # harness-check: {"id": "script_exec_bit", "applies": ["*.py", "*.sh", "*.bash", "*.zsh", "*.rb", "*.pl", "*.lua", "**/.githooks/*"], "quadrant": "feedback/computational"}
 """A file with a shebang is a script somebody runs, so it needs the exec bit.
 
-common.md: "Scripts meant to be run must always be executable. Add a shebang on
+rules/scripts.md, earlier wording: "Scripts meant to be run must always be executable. Add a shebang on
 line 1, then chmod +x it." This checks both halves of that rule, and both halves
 have two remedies: a shebang is either made executable, or dropped when the file
 is never run directly - an imported module, a pasted fragment in ~/tmp, a file

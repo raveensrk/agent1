@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import datetime
 import importlib.util
 import io
 import json
@@ -602,7 +603,7 @@ def test_interpreter_check_reads_a_rule_and_a_shebang():
 
 
 def test_interpreter_check_reads_a_bare_code_span():
-    """common.md names interpreters as bare spans: (`python3` is 3.14; `python3.15` ...)."""
+    """rules/scripts.md names interpreters as bare spans: (`python3` is 3.14; `python3.15` ...)."""
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
         assert shutil.which("python3.99") is None, "python3.99 is installed; pick another made-up name"
@@ -700,7 +701,7 @@ def test_markdown_check_skips_a_code_span_that_wraps_a_line():
 
 
 def test_markdown_check_leaves_at_imports_alone():
-    """common.md sanctions `@~/path` in AGENTS.md; a link there stops being an import."""
+    """rules/markdown.md sanctions `@~/path` in AGENTS.md; a link there stops being an import."""
     check = os.path.join(CHECKS, "markdown_bare_path.py")
     with tempfile.TemporaryDirectory() as tmp:
         doc = os.path.join(tmp, "AGENTS.md")
@@ -912,7 +913,7 @@ def test_cli_help_check_wants_both_flags_and_names_the_missing_one():
 
 
 def test_cli_help_check_wants_help_from_a_no_arg_runnable_but_not_a_hook_or_test():
-    """experimental.md: a program's docs live inside it, behind -h and --help,
+    """rules/docs.md: a program's docs live inside it, behind -h and --help,
     options or not. A no-arg git hook or test is called, not typed."""
     check = os.path.join(CHECKS, "cli_help.py")
     with tempfile.TemporaryDirectory() as tmp:
@@ -1002,7 +1003,7 @@ def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
 
 
 def test_cli_help_check_wants_a_help_command():
-    """experimental.md: -h and --help print short help, `<program> help` the long
+    """rules/docs.md: -h and --help print short help, `<program> help` the long
     help. argparse's action="help" is the flag binding, not the command."""
     check = os.path.join(CHECKS, "cli_help.py")
     with tempfile.TemporaryDirectory() as tmp:
@@ -1136,6 +1137,30 @@ def test_cli_help_check_skips_the_scratch_dir():
             assert "mentions neither -h nor --help" in buf.getvalue(), buf.getvalue()
         finally:
             sys.argv = old_argv
+
+
+def run_rule_review(text):
+    check = os.path.join(CHECKS, "rule_review.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        rule = os.path.join(tmp, "rule.md")
+        with open(rule, "w") as fh:
+            fh.write(text)
+        proc = subprocess.run([sys.executable, check, rule], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+    return proc.stdout
+
+
+def test_rule_review_wants_a_date_at_most_30_days_old():
+    day = lambda n: datetime.date.today() - datetime.timedelta(days=n)
+    dated = lambda value: f"---\nlast_reviewed: {value}\n---\n\n# Rule\n"
+    assert run_rule_review(dated(day(0))) == ""
+    assert run_rule_review(dated(day(30))) == ""
+    assert "31 days ago" in run_rule_review(dated(day(31)))
+    assert "in the future" in run_rule_review(dated(day(-1)))
+    assert "not a YYYY-MM-DD" in run_rule_review(dated("soon"))
+    assert "not a YYYY-MM-DD" in run_rule_review(dated("2026-13-40"))
+    assert "no last_reviewed" in run_rule_review("---\nname: x\n---\n\n# Rule\n")
+    assert "no YAML frontmatter" in run_rule_review("# Rule\n")
 
 
 def test_skill_frontmatter_flags_a_missing_block():

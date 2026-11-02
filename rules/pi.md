@@ -1,3 +1,7 @@
+---
+last_reviewed: 2026-11-02
+---
+
 # Pi packages
 
 - Manual npm commands in `~/.pi/agent/npm` need `--legacy-peer-deps`; without it npm fails with ERESOLVE. Pi's own package manager passes the same flag.

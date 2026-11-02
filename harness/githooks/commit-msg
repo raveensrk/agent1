@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """commit-msg: refuse a commit message with an AI co-author trailer.
 
-git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
+rules/git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
 off (2026-10-08), but pi and other harnesses can still write one, so git
 itself refuses it. A human co-author passes. Comment lines (#) are ignored.
 
@@ -51,7 +51,7 @@ def main(argv):
     with open(argv[0], encoding="utf-8", errors="replace") as fh:
         hits = offending(fh.read())
     if hits:
-        print("commit refused: AI co-author trailer (git.md: never add one)", file=sys.stderr)
+        print("commit refused: AI co-author trailer (rules/git.md: never add one)", file=sys.stderr)
         for line in hits:
             print("  " + line, file=sys.stderr)
         print("fix: delete that line, then commit again:", file=sys.stderr)

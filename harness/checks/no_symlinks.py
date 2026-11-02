@@ -4,7 +4,7 @@
 
 Raveen's rules, verbatim: "No git repo should have symlinks inside them. this
 is a global rule." and "Warn me when using symlinks for anything. Find
-alternative way to solve the problem." The rule text lives in common.md's
+alternative way to solve the problem." The rule text lives in rules/working_style.md's
 Working style; this check decides the repo half.
 
 Two scans, because the incident this check exists for had both shapes. On

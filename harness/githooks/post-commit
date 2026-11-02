@@ -6,7 +6,7 @@ A repo that wants work after each commit puts an executable .git/hooks/post-comm
 and this runs it. Failing that, on macOS, it runs the repo's tracked
 script/post-commit, so an app repo (requirements_graph, task-router-2) rebuilds
 and installs its app into ~/Applications/My_Apps on every commit, in every
-clone, with nothing to set up per clone (macos.md: Apps from ~/repos).
+clone, with nothing to set up per clone (rules/macos.md: Apps from ~/repos).
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks

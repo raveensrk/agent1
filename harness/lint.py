@@ -46,7 +46,7 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 REPOS = os.path.expanduser("~/repos")
 # Public checks live with this file. agent2 is the private machine config, so
 # its checks are picked up only when that directory exists - the same rule
-# common.md uses for agent2/AGENTS.md.
+# rules/index.md uses for agent2/AGENTS.md.
 CHECK_DIRS = [os.path.join(HERE, "checks"), os.path.join(REPOS, "agent2", "harness", "checks")]
 HEADER = re.compile(r"^#\s*harness-check:\s*(\{.*\})\s*$")
 # A path may hold a colon - `x.sv:Zone - Copy.Identifier`, a Windows copy's

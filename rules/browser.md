@@ -1,3 +1,7 @@
+---
+last_reviewed: 2026-11-02
+---
+
 # Browser and computer use
 
 When you drive any application with browser use or computer use, maximize that window before you start, and keep it maximized until the work is done. That way the contents stay fully visible.
