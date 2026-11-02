@@ -2,6 +2,8 @@
 
 Migrate this existing codebase to a **shared core with a CLI and a native macOS GUI**, plus optional extra apps. You don't need to keep a working app or version during the migration. Breakage is acceptable. The final version must be well tested and working.
 
+**Goal: the best possible user experience on every platform.** Each app must feel like it was made for its platform: follow that platform's conventions (for example the Apple Human Interface Guidelines on macOS, the GNOME HIG on Linux, and standard flags, help and exit codes for the CLI). When you weigh stack choices, user experience comes first.
+
 - **Targets.** CLI app and native macOS GUI app. Both are mandatory and both use the shared core. The mandatory macOS GUI must use a native macOS toolkit; a cross-platform GUI does not count.
 - **Optional.** Any number of extra apps on the same core: a TUI, a native Linux GUI, more GUIs on the same platform (for example a Swift, a Clojure and a Rust app on macOS), or cross-platform apps. Extra apps may use any toolkit. After both mandatory targets are done and tested, ask me which extra apps to build.
 - **Full feature parity.** Before starting, list the current app's features. Each GUI and TUI app you build must have every feature. The CLI must have every feature that fits a command; list the features it skips and why. Check each feature off when it works.
