@@ -1,7 +1,7 @@
--- publish.lua - pandoc filter: model_and_harness.yaml becomes the shared page.
+-- publish.lua - pandoc filter: notes/model_and_harness.yaml becomes the shared page.
 --
 --   pandoc -f markdown -t html5 -s --embed-resources --css publish.css \
---     --metadata-file model_and_harness.yaml --lua-filter publish.lua /dev/null
+--     --metadata-file notes/model_and_harness.yaml --lua-filter publish.lua /dev/null
 --
 -- The YAML arrives as metadata. This filter writes the page as pandoc markdown
 -- (fenced divs carry the outline-N classes publish.css styles) and reads it

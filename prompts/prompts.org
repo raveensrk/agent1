@@ -48,8 +48,8 @@ Create a presentation and draw an animated diagram and visually explain. Use htt
 I like what we have now. But It needs a bit more polish.
 ** Redesign
 I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
-** [[./prompts/redesign-prompt.org][Redesign full]]
-** [[file:auto-install_git_hook.org][Auto-Install Git Hook]]
+** [[redesign-prompt.org][Redesign full]]
+** [[auto_install_git_hook.org][Auto-Install Git Hook]]
 * Stage 2.2 - CLI
 ** Review the CLI
 Are there any improvements that can be made?
@@ -72,7 +72,7 @@ Based on this session,
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
 * Stage 3 - Documentation
-** [[./prompts/create_docs.org][Create docs]]
+** [[create_docs.org][Create docs]]
 ** Session Reconcile the existing docs
 Based on the current session do the following,
 
