@@ -45,3 +45,17 @@ Personal notes. Copy terms into prompts. Agents do not treat this file as rules.
 - vulnerabilities
 - polish - to improve the appearance
 - please advice - need help
+
+## GUI
+
+- animation
+- motion
+- transition
+- click
+- hover
+- menu
+
+
+## Theme
+
+- liquid glass
