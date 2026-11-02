@@ -138,8 +138,8 @@ Size: 344 165
 Color: #c67253
 
 Name: GUI Framework
-Pos: 1608 913
-Size: 138 97
+Pos: 1810 1332
+Size: 639 156
 Color: #53c694
 
 Name: Data Visualization
@@ -1010,7 +1010,7 @@ Name: egui
 Tag: expert
 Tag: gui
 Group: GUI Framework
-Pos: 1590 926
+Pos: 1541 1375
 Kind: rectangle
 Size: 69 39
 Fit: yes
@@ -1047,6 +1047,8 @@ Kind: rounded-rectangle
 Size: 111 58
 
 Name: GUI
+Tag: gui
+Group: GUI Framework
 Pos: 2082 1316
 Kind: rounded-rectangle
 Size: 63 39
@@ -1117,6 +1119,15 @@ Group: Web
 Pos: 1717 305
 Kind: rounded-rectangle
 Size: 351 77
+Fit: yes
+
+Name: GTK
+Tag: library
+Tag: gui
+Group: GUI Framework
+Pos: 1640 1375
+Kind: rounded-rectangle
+Size: 68 39
 Fit: yes
 
 %rec: Edge
@@ -1651,6 +1662,10 @@ FromSide: e
 ToSide: w
 Route: elbow
 
+From: GUI
+To: GTK
+Route: elbow
+
 From: Clojure
 To: cljfx
 FromSide: e
@@ -1667,5 +1682,5 @@ Route: elbow
 %type: Zoom real
 %type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
 
-TopLeft: -143 -617
+TopLeft: -646 -273
 Zoom: 0.295
