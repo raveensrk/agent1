@@ -1,0 +1,34 @@
+STRICT NO LLM / NO AI POLICY
+
+Owner: [name]
+Effective: [date]
+Reviewed every 12 months.
+
+Applies to anything marked NO-AI.
+Mark an item by adding NO-AI to its name or header, or listing it below.
+When an item is marked, check its existing content and remove any AI content.
+
+AI means any tool that generates, rewrites or suggests content using a trained model.
+
+No AI-generated content, whether code, prose, images or data.
+No paraphrasing AI-generated content.
+No AI for editing, including spelling and grammar fixes.
+No AI for translation.
+No AI for brainstorming, even if you write the final words yourself.
+No AI for research, answers or advice.
+No AI for finding bugs or reviewing.
+It must not use or call AI.
+No giving any part of it to an AI tool.
+No storing it where it may be used to train AI.
+No libraries, assets or stock material unless confirmed not AI-made by the owner.
+No AI note-takers or transcription in meetings about it.
+Turn off AI features in editors, IDEs, office apps and browsers while working on it.
+
+If you find AI content, remove it and report it to the owner.
+Breaking this policy means the work is removed and may mean loss of access.
+
+Applies to staff, contractors and vendors.
+No exceptions.
+
+NO-AI items:
+- [item]
