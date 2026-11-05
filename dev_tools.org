@@ -32,13 +32,13 @@ another one is not repeated.
 *** models :beginner:extra:AI:
 :PROPERTIES:
 :URL: https://github.com/reyamira/models
-:NEEDS: [[*AI][AI]]
+:NEEDS: [[*Ghostty][Ghostty]]
 :END:
 TUI and CLI for browsing AI models and comparing benchmarks
 *** llmfit :extra:beginner:AI:
 :PROPERTIES:
 :URL: https://github.com/AlexsJones/llmfit
-:NEEDS: [[*AI][AI]]
+:NEEDS: [[*Ghostty][Ghostty]]
 :END:
 TUI and CLI for finding LLMs that fit local hardware
 ** Browser
@@ -279,20 +279,20 @@ Clojure Dialect with c++ interop
 ** AI Coding Agents
 *** pi :base:easy:AI:
 :PROPERTIES:
-:NEEDS: [[*AI][AI]]
+:NEEDS: [[*Ghostty][Ghostty]]
 :END:
 *** Claude :base:easy:AI:
 :PROPERTIES:
-:NEEDS: [[*AI][AI]]
+:NEEDS: [[*Ghostty][Ghostty]]
 :END:
 *** Codex and ChatGPT :extra:easy:AI:
 :PROPERTIES:
-:NEEDS: [[*AI][AI]]
+:NEEDS: [[*Ghostty][Ghostty]]
 :END:
 *** Crush :extra:easy:AI:
 :PROPERTIES:
 :URL: https://github.com/charmbracelet/crush
-:NEEDS: [[*AI][AI]]
+:NEEDS: [[*Ghostty][Ghostty]]
 :END:
 *** Herdr :extra:intermediate:AI:
 :PROPERTIES:
@@ -456,10 +456,6 @@ also stands for shell scripting; prefer Bash over POSIX sh
 :NEEDS: [[*Bash][Bash]]
 :END:
 ** Database
-:PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
-:END:
-** AI
 :PROPERTIES:
 :NEEDS: [[*Ghostty][Ghostty]]
 :END:
