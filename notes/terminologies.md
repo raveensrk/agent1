@@ -60,6 +60,7 @@ Personal notes. Copy terms into prompts. Agents do not treat this file as rules.
 - acceleration
 - bounce
 - flickering
+- chips - a button or filter used for tags and filters mainly
 
 ## Theme
 

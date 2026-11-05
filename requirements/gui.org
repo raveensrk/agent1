@@ -9,14 +9,20 @@ Before starting read this book about UI/UX design and follow those principles - 
 * General
 - Research the web when you plan
 - Plan before implementation
+* Coding Guidelines
+- Follow KISS (Keep it simple stupid) philosophy
+- Less code better than more code
+- Fast code is better than slow code
+- No code is better than bad code
 * App
 ** The app must have a Window
 *** A window must have multiple Tabs feature
 *** Multi window support
-** [#A] Performance
+*** If the window have panes then it must be resizable
+** Performance
 *** App must run at 60 fps
 *** Scrolling must be smooth
-** [#B] Appearance
+** Appearance
 *** Dark Theme
 ** Animation types
 *** Glide
@@ -26,11 +32,10 @@ Before starting read this book about UI/UX design and follow those principles - 
 *** Pop-up
 *** Spinner
 *** Progress bar
+*** Lift
 ** The progress bar and spinners must be smooth
-** Allow rebind of keys and shortcuts in settings
-** The app must have keyboard shortcuts
 ** The app must react to my actions
-** [#C] Animation where possible
+** Animation where possible
 *** On hover
 *** pop-up
 *** Drop down menu
@@ -55,7 +60,34 @@ Don't cache on every app start or you may hit bandwidth or api issues
 ** Cut, Copy and Paste text where applicable
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable
-** Clickable things needs to look like buttons
+For example:
+- Between panes
+- Between sections
+** Settings page must have side bars where the settings are organized by category
+** Things
+*** Need clear distinction between things that i can click or do action on and things i cant
+*** Interaction things in the app must be clear and distinct
+*** Clickable things needs to look like buttons
+** Fonts
+*** Use diffrent fonts as needed
+*** Use different sizes as needed
+- I should be able to adjust font size with keybinding
+- I should be able to set default font size in settings page
+- Autosave current font size as default font size on quit
+*** Use different styles like bold, italics, headings, comments etc. as needed.
+*** Choose font based on function and purpose.
+*** Monospace for code and plain text.
+*** Syntax highlight code always
+*** Pick colors that enhance readability
+*** Default font size for app is 20
+** Keyboard
+*** Allow rebind of keys and shortcuts in settings
+*** The app must have keyboard shortcuts
+** Mouse
+*** The mouse pointer appearance should change based on the thing below it while hovering, clicking or acting on that thing
+*** Must support multi thing selection when applicable
+*** Must support drag and drop when applicable
+*** The pointer should animate when applicable
 * Data
 ** Data lives seperately from the code
 ** Try not not to store data unless it is necessary and performance critical

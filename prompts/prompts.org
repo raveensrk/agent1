@@ -168,7 +168,12 @@ Prepare this repo for public release. Refactor and organize and rewrite the repo
 After that scrub this repo of any private data.
 
 Private data must be handled by moving it into a different location.
-
+** Refactor this repo if needed
+Refactor this repo: reorganize the layout and rename files and symbols so they read clearly.
+Delete dead code. That means unused files, functions, exports, deps and commented-out blocks.
+Keep behavior the same. Run the tests and build before and after, and both must pass.
+Print the planned moves, renames and deletions first. Wait for my yes before applying.
+Commit one logical step at a time, and summarize what changed and why at the end.
 * Stage 6 - Archive chat
 ** Archive chat
 

@@ -11,3 +11,6 @@ Ai agents read epub better than pdf. Mobi file format is worst.
 - `/color`
 - `/goal`
 - `/focus`
+- `/batch` migration
+- `/simplify`
+- `/loop`
