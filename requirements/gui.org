@@ -2,8 +2,13 @@
 
 Not all of this is applicable to all apps. So pick and choose which is necessary for a well designed and performant app.
 
-Befor starting read this book about UI/UX design and follow those principles - [[file:~/Library/Mobile Documents/com~apple~CloudDocs/Shared_Documents/Work/Books/Design/Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - \[2nd Ed \], 2024.epub][Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - [2nd Ed ], 2024]]. You can convert it to markdown with pandoc in a temporary area and read it. Make sure you read all the images and diagrams too. Don't miss a single detail.
+#+begin_example
+Before starting read this book about UI/UX design and follow those principles - [[file:~/Library/Mobile Documents/com~apple~CloudDocs/Shared_Documents/Work/Books/Design/Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - \[2nd Ed \], 2024.epub][Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - [2nd Ed ], 2024]]. You can convert it to markdown with pandoc in a temporary area and read it. Make sure you read all the images and diagrams too. Don't miss a single detail.
+#+end_example
 
+* General
+- Research the web when you plan
+- Plan before implementation
 * App
 ** The app must have a Window
 *** A window must have multiple Tabs feature
@@ -13,10 +18,27 @@ Befor starting read this book about UI/UX design and follow those principles - [
 *** Scrolling must be smooth
 ** [#B] Appearance
 *** Dark Theme
+** Animation types
+*** Glide
+*** Smooth
+*** Bounce
+*** Rubber Band
+*** Pop-up
+*** Spinner
+*** Progress bar
+** The progress bar and spinners must be smooth
+** Allow rebind of keys and shortcuts in settings
+** The app must have keyboard shortcuts
+** The app must react to my actions
 ** [#C] Animation where possible
 *** On hover
 *** pop-up
 *** Drop down menu
+*** Button
+- Hover
+- Press
+- Hold
+- Release
 *** etc...
 ** Cache locally when possible
 *** Cache all data which can be to be cached
@@ -28,7 +50,12 @@ Don't cache on every app start or you may hit bandwidth or api issues
 ** Alignment, positioning and centering must be proper
 ** Stability of the app is important
 ** Never compromise performance for visuals
-
+** Context menu where needed
+** File menu - Bare minimum
+** Cut, Copy and Paste text where applicable
+** Try to follow native os style.
+** Use dividers and seperators where applicable
+** Clickable things needs to look like buttons
 * Data
 ** Data lives seperately from the code
 ** Try not not to store data unless it is necessary and performance critical

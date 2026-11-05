@@ -1,44 +1,30 @@
 #+TITLE: Dev Tools
 
-List of dev tools I prefer. This file is the source; edit it in Emacs.
-It started as a copy of dev_tools.rec, which is no longer kept in step.
+Simple org copy of [[file:dev_tools.rec][dev_tools.rec]]. The recfile is the source;
+layout fields (Pos, Size, Kind, Fit, Color) are left out.
 
-The list is ordered: of two tools that share a tag, the one written first is
-preferred. The configuration in this repo mostly revolves around these tools,
-and a few more.
-
-Only current tools and AI tools go here. Tools I tried, used before, or want
-to try go in work dev_tools_archive.md:
-https://github.com/raveensrk/work/blob/main/deck/tools/dev_tools_archive.md
-A tool lives in one file only.
-
-Tags say what a tool is:
-- base, extra, max :: how much a tool matters: the core kit, what I use often,
-  everything
-- beginner :: useful within minutes
-- easy :: the basics take a few hours
-- intermediate :: takes days; has its own concepts or config to learn
-- advanced :: takes weeks; needs a deep mental model
-- expert :: takes months or years to master
-- Terminal, AI, ... :: what kind of tool it is (spaces and commas become _)
-
-The learning path is the NEEDS property: each linked heading must be known
-before this one. Comma-separated items are all needed; "a or b" needs only
-one of them. There are no loops, and a prerequisite already implied through
-another one is not repeated.
+The list is ordered: of two tools that share a tag, the one written first
+is preferred. The NEEDS property lists the prerequisites (edges into a tool):
+all of the comma-separated items are needed; "a or b" (an Any group in the
+rec file) needs only one of them.
 
 * Tools by group
+** Ghostty :base:beginner:Terminal:
+:PROPERTIES:
+:URL: https://github.com/ghostty-org/ghostty
+:NEEDS: [[*Touch Typing][Touch Typing]]
+:END:
 ** LLM data
 *** models :beginner:extra:AI:
 :PROPERTIES:
 :URL: https://github.com/reyamira/models
-:NEEDS: [[*Ghostty][Ghostty]]
+:NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for browsing AI models and comparing benchmarks
 *** llmfit :extra:beginner:AI:
 :PROPERTIES:
 :URL: https://github.com/AlexsJones/llmfit
-:NEEDS: [[*Ghostty][Ghostty]]
+:NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for finding LLMs that fit local hardware
 ** Browser
@@ -198,41 +184,6 @@ plain-text records; recsel, recfix, rec2csv
 :PROPERTIES:
 :NEEDS: [[*Rust][Rust]]
 :END:
-** Lisp Family of Languages
-*** Fennel :max:expert:Programming_Languages:Games_and_2D_Graphics:
-:PROPERTIES:
-:NEEDS: [[*Lua][Lua]]
-:END:
-*** Lisp :adv:
-:PROPERTIES:
-:NEEDS: [[*Software][Software]]
-:END:
-*** Racket :expert:
-:PROPERTIES:
-:NEEDS: [[*Lisp][Lisp]]
-:END:
-*** Emacs Lisp :expert:
-:PROPERTIES:
-:NEEDS: [[*Lisp][Lisp]], [[*Emacs][Emacs]]
-:END:
-*** cljfx :gui:library:
-:PROPERTIES:
-:NEEDS: [[*Clojure][Clojure]]
-:END:
-*** HumbleUI :library:gui:
-:PROPERTIES:
-:NEEDS: [[*Clojure][Clojure]]
-:END:
-*** Clojure
-:PROPERTIES:
-:NEEDS: [[*Lisp][Lisp]]
-:END:
-*** Jank :lisp:
-:PROPERTIES:
-:URL: https://youtu.be/tHgApFhevrQ
-:NEEDS: [[*Clojure][Clojure]]
-:END:
-Clojure Dialect with c++ interop
 ** HDL
 *** verible :base:advanced:Semiconductor:SystemVerilog_and_UVM:
 :PROPERTIES:
@@ -246,27 +197,6 @@ Clojure Dialect with c++ interop
 :PROPERTIES:
 :NEEDS: [[*Hardware][Hardware]]
 :END:
-** Systems Programming Languages
-*** Zig :max:expert:Programming_Languages:Systems_and_Native:
-:PROPERTIES:
-:NEEDS: [[*Software][Software]]
-:END:
-*** Rust :extra:expert:Programming_Languages:Systems_and_Native:
-:PROPERTIES:
-:NEEDS: [[*Software][Software]]
-:END:
-*** Go :extra:expert:Programming_Languages:Systems_and_Native:
-:PROPERTIES:
-:NEEDS: [[*Software][Software]]
-:END:
-*** C :base:beginner:Programming_Languages:Systems_and_Native:
-:PROPERTIES:
-:NEEDS: [[*Software][Software]]
-:END:
-*** Makefile :base:easy:Formats:Markup_Data_and_Config:
-:PROPERTIES:
-:NEEDS: [[*Build systems][Build systems]]
-:END:
 ** Finance
 *** hledger :extra:intermediate:Finance:
 :PROPERTIES:
@@ -279,20 +209,20 @@ Clojure Dialect with c++ interop
 ** AI Coding Agents
 *** pi :base:easy:AI:
 :PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
+:NEEDS: [[*AI][AI]]
 :END:
 *** Claude :base:easy:AI:
 :PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
+:NEEDS: [[*AI][AI]]
 :END:
 *** Codex and ChatGPT :extra:easy:AI:
 :PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
+:NEEDS: [[*AI][AI]]
 :END:
 *** Crush :extra:easy:AI:
 :PROPERTIES:
 :URL: https://github.com/charmbracelet/crush
-:NEEDS: [[*Ghostty][Ghostty]]
+:NEEDS: [[*AI][AI]]
 :END:
 *** Herdr :extra:intermediate:AI:
 :PROPERTIES:
@@ -377,57 +307,109 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :PROPERTIES:
 :NEEDS: [[*JavaScript][JavaScript]]
 :END:
-** Scripting Languages
-*** Lua :extra:easy:Programming_Languages:Games_and_2D_Graphics:
+** Programming Languages
+*** Systems Programming Languages
+**** Zig :max:expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-** Experimental Programming Languages
-*** Jai :max:advanced:Programming_Languages:Games_and_2D_Graphics:
+**** Rust :extra:expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-** Web
-*** JavaScript :extra:intermediate:Programming_Languages:Web:
+**** Go :extra:expert:Programming_Languages:Systems_and_Native:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+**** C :base:beginner:Programming_Languages:Systems_and_Native:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+**** Makefile :base:easy:Formats:Markup_Data_and_Config:
+:PROPERTIES:
+:NEEDS: [[*Build systems][Build systems]]
+:END:
+*** General Purpose Programming Language
+**** Swift :max:expert:Programming_Languages:Apple_Platforms:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+**** Python :base:easy:Programming_Languages:Automation_and_Scripting:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+*** Scripting Languages
+**** Lua :extra:easy:Programming_Languages:Games_and_2D_Graphics:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+*** Experimental Programming Languages
+**** Jai :max:advanced:Programming_Languages:Games_and_2D_Graphics:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+*** Web
+**** JavaScript :extra:intermediate:Programming_Languages:Web:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-*** TypeScript :extra:intermediate:Programming_Languages:Web:
+**** TypeScript :extra:intermediate:Programming_Languages:Web:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-*** HTML :extra:easy:Formats:Markup_Data_and_Config:
+**** HTML :extra:easy:Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-*** CSS :extra:intermediate:Formats:Markup_Data_and_Config:
+**** CSS :extra:intermediate:Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-*** video.js :library:
+**** video.js :library:
 :PROPERTIES:
 :URL: https://videojs.org/
 :NEEDS: [[*JavaScript][JavaScript]]
 :END:
 Video.js v10 - open source media player framework for HTML and React.
-** General Purpose Programming Language
-*** Swift :max:expert:Programming_Languages:Apple_Platforms:
+** Lisp Family of Languages
+*** Fennel :max:expert:Programming_Languages:Games_and_2D_Graphics:
+:PROPERTIES:
+:NEEDS: [[*Lua][Lua]]
+:END:
+*** Lisp :adv:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-*** Python :base:easy:Programming_Languages:Automation_and_Scripting:
+*** Racket :expert:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Lisp][Lisp]]
 :END:
+*** Emacs Lisp :expert:
+:PROPERTIES:
+:NEEDS: [[*Lisp][Lisp]], [[*Emacs][Emacs]]
+:END:
+*** cljfx :gui:library:
+:PROPERTIES:
+:NEEDS: [[*Clojure][Clojure]]
+:END:
+*** HumbleUI :library:gui:
+:PROPERTIES:
+:NEEDS: [[*Clojure][Clojure]]
+:END:
+*** Clojure
+:PROPERTIES:
+:NEEDS: [[*Lisp][Lisp]]
+:END:
+*** Jank :lisp:
+:PROPERTIES:
+:URL: https://youtu.be/tHgApFhevrQ
+:NEEDS: [[*Clojure][Clojure]]
+:END:
+Clojure Dialect with c++ interop
 * Ungrouped
 ** Touch Typing :base:beginner:Skills:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]] (Hello)
-:END:
-** Ghostty :base:beginner:Terminal:
-:PROPERTIES:
-:URL: https://github.com/ghostty-org/ghostty
-:NEEDS: [[*Touch Typing][Touch Typing]]
 :END:
 ** Bash :base:beginner:Environment:
 :PROPERTIES:
@@ -456,6 +438,10 @@ also stands for shell scripting; prefer Bash over POSIX sh
 :NEEDS: [[*Bash][Bash]]
 :END:
 ** Database
+:PROPERTIES:
+:NEEDS: [[*Ghostty][Ghostty]]
+:END:
+** AI
 :PROPERTIES:
 :NEEDS: [[*Ghostty][Ghostty]]
 :END:
