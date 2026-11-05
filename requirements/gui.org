@@ -1,0 +1,42 @@
+#+TITLE: GUI
+
+Not all of this is applicable to all apps. So pick and choose which is necessary for a well designed and performant app.
+
+Befor starting read this book about UI/UX design and follow those principles - [[file:~/Library/Mobile Documents/com~apple~CloudDocs/Shared_Documents/Work/Books/Design/Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - \[2nd Ed \], 2024.epub][Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - [2nd Ed ], 2024]]. You can convert it to markdown with pandoc in a temporary area and read it. Make sure you read all the images and diagrams too. Don't miss a single detail.
+
+* App
+** The app must have a Window
+*** A window must have multiple Tabs feature
+*** Multi window support
+** [#A] Performance
+*** App must run at 60 fps
+*** Scrolling must be smooth
+** [#B] Appearance
+*** Dark Theme
+** [#C] Animation where possible
+*** On hover
+*** pop-up
+*** Drop down menu
+*** etc...
+** Cache locally when possible
+*** Cache all data which can be to be cached
+*** Show loading screen during caching and wait till all data is cached locally.
+*** Allow force refresh of cache
+*** If caching involves downloading from internet then decide at what intervals.
+Don't cache on every app start or you may hit bandwidth or api issues
+** A way to restart the app
+** Alignment, positioning and centering must be proper
+** Stability of the app is important
+** Never compromise performance for visuals
+
+* Data
+** Data lives seperately from the code
+** Try not not to store data unless it is necessary and performance critical
+** Data that can be computed should be computer
+** Compute rather than store
+For example: Age. It can be calculated from date of birth. So no need seperate field for age.
+* Testing
+** Write automated tests where sensible
+** Take screenshots or record a video of yourself for testing the app when automated test is not possible.
+Use this as a last resort.
+** Testing should not hinder development speed

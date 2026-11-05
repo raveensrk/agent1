@@ -54,7 +54,12 @@ Personal notes. Copy terms into prompts. Agents do not treat this file as rules.
 - click
 - hover
 - menu
-
+- stutter
+- hitches
+- momentum
+- acceleration
+- bounce
+- flickering
 
 ## Theme
 

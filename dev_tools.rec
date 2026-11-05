@@ -87,8 +87,8 @@ Size: 275 97
 Color: #53c69b
 
 Name: Lisp Family of Languages
-Pos: 2882 1130
-Size: 748 439
+Pos: 2905 1211
+Size: 855 435
 Color: #bc53c6
 
 Name: HDL
@@ -121,7 +121,7 @@ Pos: 1034 1257
 Size: 252 97
 Color: #c65398
 
-Name: E-Mailaa
+Name: E-Mail
 Parent: Productivity
 Pos: 796 637
 Size: 498 97
@@ -187,6 +187,7 @@ Color: #53c656
 %graph: color-of adv #542234
 %graph: color-of gui #5a2c46
 %graph: color-of library #244658
+%graph: color-of lisp #4a4820
 
 Name: Touch Typing
 Tag: base
@@ -519,7 +520,7 @@ Tag: extra
 Tag: easy
 Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya
-Group: E-Mailaa
+Group: E-Mail
 Pos: 616 650
 Kind: rectangle
 Size: 107 39
@@ -530,7 +531,7 @@ Tag: extra
 Tag: easy
 Tag: E-Mail
 Url: https://github.com/pimalaya/himalaya-tui
-Group: E-Mailaa
+Group: E-Mail
 Pos: 770 650
 Kind: rectangle
 Size: 141 39
@@ -540,7 +541,7 @@ Name: Mutt / Neomutt
 Tag: extra
 Tag: expert
 Tag: E-Mail
-Group: E-Mailaa
+Group: E-Mail
 Pos: 950 650
 Kind: rectangle
 Size: 158 39
@@ -849,7 +850,7 @@ Tag: expert
 Tag: Programming Languages
 Tag: Games and 2D Graphics
 Group: Lisp Family of Languages
-Pos: 2719 972
+Pos: 2697 1363
 Kind: rectangle
 Size: 87 39
 Fit: yes
@@ -1018,7 +1019,7 @@ Fit: yes
 Name: Lisp
 Tag: adv
 Group: Lisp Family of Languages
-Pos: 2557 1040
+Pos: 2574 1158
 Kind: rounded-rectangle
 Size: 67 39
 Fit: yes
@@ -1026,7 +1027,7 @@ Fit: yes
 Name: Racket
 Tag: expert
 Group: Lisp Family of Languages
-Pos: 2665 1040
+Pos: 3232 1049
 Kind: rounded-rectangle
 Size: 87 39
 Fit: yes
@@ -1034,7 +1035,7 @@ Fit: yes
 Name: Emacs Lisp
 Tag: expert
 Group: Lisp Family of Languages
-Pos: 2578 979
+Pos: 2754 1066
 Kind: rounded-rectangle
 Size: 121 39
 Fit: yes
@@ -1058,7 +1059,7 @@ Name: cljfx
 Tag: gui
 Tag: library
 Group: Lisp Family of Languages
-Pos: 3201 1225
+Pos: 3190 1177
 Kind: rounded-rectangle
 Size: 69 39
 Fit: yes
@@ -1067,14 +1068,14 @@ Name: HumbleUI
 Tag: library
 Tag: gui
 Group: Lisp Family of Languages
-Pos: 3184 1314
+Pos: 3182 1265
 Kind: rounded-rectangle
 Size: 112 39
 Fit: yes
 
 Name: Clojure
 Group: Lisp Family of Languages
-Pos: 2960 1134
+Pos: 2779 1196
 Kind: rounded-rectangle
 Size: 92 39
 Fit: yes
@@ -1130,6 +1131,132 @@ Kind: rounded-rectangle
 Size: 68 39
 Fit: yes
 
+Name: Jank
+Text: Clojure Dialect with c++ interop
+Tag: lisp
+Url: https://youtu.be/tHgApFhevrQ
+Group: Lisp Family of Languages
+Pos: 3169 1360
+Kind: rounded-rectangle
+Size: 288 58
+Fit: yes
+
+Name: Build systems
+Pos: 936 2032
+Kind: rounded-rectangle
+Size: 142 39
+Fit: yes
+
+Name: VPN
+Pos: 936 2091
+Kind: rounded-rectangle
+Size: 67 39
+Fit: yes
+
+Name: Productivity
+Pos: 660 1523
+Kind: rounded-rectangle
+Size: 127 39
+Fit: yes
+
+Name: Package Managers
+Pos: 936 2150
+Kind: rounded-rectangle
+Size: 179 39
+Fit: yes
+
+Name: Programming Languages
+Pos: 936 2209
+Kind: rounded-rectangle
+Size: 229 39
+Fit: yes
+
+Name: Database
+Pos: 1206 2032
+Kind: rounded-rectangle
+Size: 108 39
+Fit: yes
+
+Name: AI
+Pos: 660 2091
+Kind: rounded-rectangle
+Size: 60 39
+Fit: yes
+
+Name: Version Control
+Pos: 936 2268
+Kind: rounded-rectangle
+Size: 157 39
+Fit: yes
+
+Name: Finance
+Pos: 936 2327
+Kind: rounded-rectangle
+Size: 95 39
+Fit: yes
+
+Name: Sys Admin
+Pos: 936 2386
+Kind: rounded-rectangle
+Size: 117 39
+Fit: yes
+
+Name: Text Editor
+Pos: 936 2445
+Kind: rounded-rectangle
+Size: 122 39
+Fit: yes
+
+Name: Hardware
+Pos: 1233 2032
+Kind: rounded-rectangle
+Size: 110 39
+Fit: yes
+
+Name: Software
+Pos: 1233 2091
+Kind: rounded-rectangle
+Size: 103 39
+Fit: yes
+
+Name: Web
+Pos: 1205 2150
+Kind: rounded-rectangle
+Size: 69 39
+Fit: yes
+
+Name: C++
+Pos: 1439 2032
+Kind: rounded-rectangle
+Size: 73 39
+Fit: yes
+
+Name: imgui
+Pos: 1439 2091
+Kind: rounded-rectangle
+Size: 80 39
+Fit: yes
+
+Name: Fonts
+Pos: 2268 1434
+Kind: rounded-rectangle
+Size: 78 39
+Fit: yes
+
+Name: Freetype
+Url: https://freetype.org/index.html
+Pos: 2268 1493
+Kind: rounded-rectangle
+Size: 102 39
+Fit: yes
+
+Name: Nuklear
+Url: https://immediate-mode-ui.github.io/Nuklear/index.html
+Pos: 1439 2091
+Kind: rounded-rectangle
+Size: 96 39
+Fit: yes
+
 %rec: Edge
 %type: From,To line
 %mandatory: From To
@@ -1148,39 +1275,17 @@ To: GUI
 Route: elbow
 
 From: Ghostty
-To: pi
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Ghostty
-To: Claude
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Ghostty
-To: Codex and ChatGPT
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Ghostty
-To: Crush
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Ghostty
 To: Bash
 FromSide: e
 ToSide: w
 Route: elbow
 
 From: Ghostty
-To: newsboat
-FromSide: e
-ToSide: w
+To: AI
+Route: elbow
+
+From: Ghostty
+To: Database
 Route: elbow
 
 From: Vim
@@ -1193,16 +1298,6 @@ From: Vim
 To: Markdown
 FromSide: e
 ToSide: w
-Route: elbow
-
-From: universal-ctags
-To: Vim
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: universal-ctags
-To: Emacs
 Route: elbow
 
 From: pi
@@ -1230,133 +1325,39 @@ ToSide: w
 Route: elbow
 
 From: Bash
-To: models
-FromSide: e
-ToSide: w
+To: Version Control
 Route: elbow
 
 From: Bash
-To: llmfit
-FromSide: e
-ToSide: w
+To: Finance
 Route: elbow
 
 From: Bash
-To: Git
-FromSide: e
-ToSide: w
+To: Sys Admin
 Route: elbow
 
 From: Bash
-To: Ledger CLI
-FromSide: e
-ToSide: w
+To: VPN
 Route: elbow
 
 From: Bash
-To: ripgrep
-FromSide: e
-ToSide: w
+To: Build systems
 Route: elbow
 
 From: Bash
-To: fd
-FromSide: e
-ToSide: w
+To: Programming Languages
 Route: elbow
 
 From: Bash
-To: rsync
-FromSide: e
-ToSide: w
+To: Text Editor
 Route: elbow
 
 From: Bash
-To: GNU Stow
-FromSide: e
-ToSide: w
+To: Package Managers
 Route: elbow
 
 From: Bash
-To: Homebrew
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: mpv
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: urlview
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: zoxide
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: ranger
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: tmux
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: WireGuard
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: Tailscale
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: C
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: Python
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: recfile (GNU recutils)
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: fzf
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Bash
-To: universal-ctags
-Route: elbow
-
-From: Bash
-To: Mullvad
-FromSide: s
-ToSide: w
+To: Productivity
 Route: elbow
 
 From: Git
@@ -1426,17 +1427,7 @@ ToSide: w
 Route: elbow
 
 From: C
-To: Makefile
-Route: elbow
-
-From: C
-To: Lisp
-Route: elbow
-
-From: JavaScript
-To: TypeScript
-FromSide: e
-ToSide: w
+To: Nuklear
 Route: elbow
 
 From: JavaScript
@@ -1445,60 +1436,6 @@ Route: elbow
 
 From: JavaScript
 To: video.js
-Route: elbow
-
-From: Python
-To: HTML
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: JSON
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Rust
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Zig
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Go
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Swift
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: SystemVerilog
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Lua
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: Python
-To: Jai
-FromSide: e
-ToSide: w
 Route: elbow
 
 From: SQL
@@ -1579,18 +1516,6 @@ FromSide: e
 ToSide: w
 Route: elbow
 
-From: HTML
-To: JavaScript
-FromSide: e
-ToSide: w
-Route: elbow
-
-From: HTML
-To: CSS
-FromSide: e
-ToSide: w
-Route: elbow
-
 From: LaTeX
 To: PDF
 FromSide: e
@@ -1666,6 +1591,10 @@ From: GUI
 To: GTK
 Route: elbow
 
+From: GUI
+To: Fonts
+Route: elbow
+
 From: Clojure
 To: cljfx
 FromSide: e
@@ -1678,9 +1607,248 @@ FromSide: s
 ToSide: w
 Route: elbow
 
+From: Clojure
+To: Jank
+Route: elbow
+
+From: Build systems
+To: Makefile
+Route: elbow
+
+From: VPN
+To: WireGuard
+ToSide: w
+Route: elbow
+
+From: VPN
+To: Tailscale
+ToSide: w
+Route: elbow
+
+From: VPN
+To: Mullvad
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: tmux
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: ranger
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: zoxide
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: urlview
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: fzf
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: fd
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: ripgrep
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: mpv
+ToSide: w
+Route: elbow
+
+From: Productivity
+To: newsboat
+ToSide: w
+Route: elbow
+
+From: Package Managers
+To: Homebrew
+ToSide: w
+Route: elbow
+
+From: Programming Languages
+To: Hardware
+Route: elbow
+
+From: Programming Languages
+To: JSON
+ToSide: w
+Route: elbow
+
+From: Programming Languages
+To: Software
+Route: elbow
+
+From: Programming Languages
+To: Web
+Route: elbow
+
+From: Database
+To: recfile (GNU recutils)
+ToSide: w
+Route: elbow
+
+From: AI
+To: llmfit
+ToSide: w
+Route: elbow
+
+From: AI
+To: models
+ToSide: w
+Route: elbow
+
+From: AI
+To: Crush
+ToSide: w
+Route: elbow
+
+From: AI
+To: pi
+ToSide: w
+Route: elbow
+
+From: AI
+To: Claude
+ToSide: w
+Route: elbow
+
+From: AI
+To: Codex and ChatGPT
+ToSide: w
+Route: elbow
+
+From: Version Control
+To: Git
+ToSide: w
+Route: elbow
+
+From: Finance
+To: Ledger CLI
+ToSide: w
+Route: elbow
+
+From: Sys Admin
+To: GNU Stow
+ToSide: w
+Route: elbow
+
+From: Sys Admin
+To: rsync
+ToSide: w
+Route: elbow
+
+From: Text Editor
+To: Vim
+ToSide: w
+Route: elbow
+
+From: Text Editor
+To: Emacs
+Route: elbow
+
+From: Text Editor
+To: universal-ctags
+Route: elbow
+
+From: Hardware
+To: SystemVerilog
+ToSide: w
+Route: elbow
+
+From: Software
+To: Zig
+ToSide: w
+Route: elbow
+
+From: Software
+To: Go
+ToSide: w
+Route: elbow
+
+From: Software
+To: Swift
+ToSide: w
+Route: elbow
+
+From: Software
+To: Lua
+ToSide: w
+Route: elbow
+
+From: Software
+To: Jai
+ToSide: w
+Route: elbow
+
+From: Software
+To: Rust
+ToSide: w
+Route: elbow
+
+From: Software
+To: C
+ToSide: w
+Route: elbow
+
+From: Software
+To: C++
+Route: elbow
+
+From: Software
+To: Lisp
+Route: elbow
+
+From: Software
+To: Python
+ToSide: w
+Route: elbow
+
+From: Web
+To: HTML
+ToSide: w
+Route: elbow
+
+From: Web
+To: CSS
+ToSide: w
+Route: elbow
+
+From: Web
+To: JavaScript
+ToSide: w
+Route: elbow
+
+From: Web
+To: TypeScript
+ToSide: w
+Route: elbow
+
+From: C++
+To: imgui
+Route: elbow
+
+From: Fonts
+To: Freetype
+Route: elbow
+
 %rec: View
 %type: Zoom real
 %type: TopLeft regexp /^-?[0-9]+ -?[0-9]+$/
 
-TopLeft: -646 -273
-Zoom: 0.295
+TopLeft: -2072 -152
+Zoom: 0.244

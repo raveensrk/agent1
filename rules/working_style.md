@@ -45,6 +45,10 @@ ______________________________________________________________________
 
 A bulk or destructive change prints a per-file plan first, then applies, and a formatter or rewriter is proven on copies before it sweeps: run it on one or two representative files in `~/tmp`, diff the result, then apply it across the tree. The sweep that skipped that step rewrote 15 `SKILL.md` frontmatter blocks on 04 Oct 2026.
 
+------------------------------------------------------------------------------ 
+
+Temporary files go in `~/tmp`. Do not write them under `/tmp` or into a repo.
+
 ______________________________________________________________________
 
 Minimal fix - the smallest change that solves the problem. Do not expand scope across layers unless each layer is load-bearing.
