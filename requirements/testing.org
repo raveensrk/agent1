@@ -1,0 +1,9 @@
+#+title: Testing
+
+Testing requires these rules. You are allowed to bypass these rules with user permission if you want to test a feature or a fix but these rules become a bottleneck.
+
+* Tests muse be small and simple.
+* Tests must run fast.
+* Prefer combining small tests to test a feature or a fix rather than writing one big test.
+* Long or time consuming tests must be clearly marked.
+* Don't write or run tests that run multiple times. One run is enough unless explicitly asked by me.

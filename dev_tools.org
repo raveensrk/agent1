@@ -9,11 +9,13 @@ all of the comma-separated items are needed; "a or b" (an Any group in the
 rec file) needs only one of them.
 
 * Tools by group
-** Ghostty :base:beginner:Terminal:
+** Terminal
+*** Ghostty :base:beginner:Terminal:
 :PROPERTIES:
 :URL: https://github.com/ghostty-org/ghostty
 :NEEDS: [[*Touch Typing][Touch Typing]]
 :END:
+*** iterm2
 ** LLM data
 *** models :beginner:extra:AI:
 :PROPERTIES:
@@ -96,10 +98,6 @@ TUI and CLI for finding LLMs that fit local hardware
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** tmux :expert:extra:Command_Line:
-:PROPERTIES:
-:NEEDS: [[*Productivity][Productivity]]
-:END:
 *** newsboat :extra:easy:Reading_and_RSS:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
@@ -119,6 +117,17 @@ TUI and CLI for finding LLMs that fit local hardware
 :PROPERTIES:
 :NEEDS: [[*newsboat][newsboat]]
 :END:
+*** Multiplexer
+**** tmux :expert:extra:Command_Line:
+:PROPERTIES:
+:NEEDS: [[*Productivity][Productivity]]
+:END:
+**** Rex
+**** Herdr :extra:intermediate:AI:
+:PROPERTIES:
+:NEEDS: [[*pi][pi]] or [[*Claude][Claude]] or [[*Codex and ChatGPT][Codex and ChatGPT]] or [[*Crush][Crush]]
+:END:
+terminal multiplexer for coding agents
 ** Data interchange File Format
 *** SVG :extra:intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
 :PROPERTIES:
@@ -224,11 +233,6 @@ plain-text records; recsel, recfix, rec2csv
 :URL: https://github.com/charmbracelet/crush
 :NEEDS: [[*AI][AI]]
 :END:
-*** Herdr :extra:intermediate:AI:
-:PROPERTIES:
-:NEEDS: [[*pi][pi]] or [[*Claude][Claude]] or [[*Codex and ChatGPT][Codex and ChatGPT]] or [[*Crush][Crush]]
-:END:
-terminal multiplexer for coding agents
 ** System Admin
 *** rsync :extra:easy:Command_Line:
 :PROPERTIES:
@@ -406,6 +410,8 @@ Video.js v10 - open source media player framework for HTML and React.
 :NEEDS: [[*Clojure][Clojure]]
 :END:
 Clojure Dialect with c++ interop
+
+
 * Ungrouped
 ** Touch Typing :base:beginner:Skills:
 :PROPERTIES:

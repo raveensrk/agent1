@@ -2,9 +2,7 @@
 
 Not all of this is applicable to all apps. So pick and choose which is necessary for a well designed and performant app.
 
-#+begin_example
-Before starting read this book about UI/UX design and follow those principles - [[file:~/Library/Mobile Documents/com~apple~CloudDocs/Shared_Documents/Work/Books/Design/Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - \[2nd Ed \], 2024.epub][Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - [2nd Ed ], 2024]]. You can convert it to markdown with pandoc in a temporary area and read it. Make sure you read all the images and diagrams too. Don't miss a single detail.
-#+end_example
+Before starting UI/UX design follow the principles mentioned in this book - [[file:~/Library/Mobile Documents/com~apple~CloudDocs/Shared_Documents/Work/Books/Design/Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - \[2nd Ed \], 2024.epub][Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - [2nd Ed ], 2024]].
 
 * General
 - Research the web when you plan
@@ -67,7 +65,11 @@ For example:
 ** Things
 *** Need clear distinction between things that i can click or do action on and things i cant
 *** Interaction things in the app must be clear and distinct
-*** Clickable things needs to look like buttons
+*** Buttons
+- Clickable things needs to look like buttons
+- Ideas
+  - Read: [[file:buttons.png][Button Ideas]]
+
 ** Fonts
 *** Use diffrent fonts as needed
 *** Use different sizes as needed
