@@ -124,9 +124,10 @@ format: one directory per skill, with a `SKILL.md` and its `scripts/`. Skill
 directories use hyphens (`git-report`) because the format requires the
 directory name to match the skill `name`.
 
-| Skill         | What it does                                                                                                                                         |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `determinize` | Scans a directory's agent instructions, turns every decidable rule into a check, a guard or a git hook, and thins the prose to decisions and routing |
+| Skill                           | What it does                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `determinize`                   | Scans a directory's agent instructions, turns every decidable rule into a check, a guard or a git hook, and thins the prose to decisions and routing |
+| `test-cua-driver-with-freeform` | Smoke-tests cua-driver by drawing a house on a new Freeform board, then reports each capability as pass or fail                                      |
 
 ### Install
 
