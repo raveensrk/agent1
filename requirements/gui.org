@@ -2,6 +2,8 @@
 
 Not all of this is applicable to all apps. So pick and choose which is necessary for a well designed and performant app.
 
+Every feature implemented must have atleast 1 test for it. 1 test can cover more than 1 feature.
+
 Before starting UI/UX design follow the principles mentioned in this book - [[file:~/Library/Mobile Documents/com~apple~CloudDocs/Shared_Documents/Work/Books/Design/Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - \[2nd Ed \], 2024.epub][Laws of UX - Using Psychology to Design Better Products - Jon Yablonski - [2nd Ed ], 2024]].
 
 * General
@@ -12,16 +14,18 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Less code better than more code
 - Fast code is better than slow code
 - No code is better than bad code
-* App
-** The app must have a Window
-*** A window must have multiple Tabs feature
-*** Multi window support
-*** If the window have panes then it must be resizable
-** Performance
-*** App must run at 60 fps
-*** Scrolling must be smooth
-** Appearance
-*** Dark Theme
+* The app must have a Window
+** A window can have multiple Tabs feature
+** Can have Multi window support
+** If the window have panes then it must be resizable
+* Performance
+** App must run at 60 fps
+** Scrolling must be smooth
+** Stability of the app is important
+** Never compromise performance for visuals
+* Appearance
+** Dark Theme
+* Animation
 ** Animation types
 *** Glide
 *** Smooth
@@ -31,8 +35,6 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 *** Spinner
 *** Progress bar
 *** Lift
-** The progress bar and spinners must be smooth
-** The app must react to my actions
 ** Animation where possible
 *** On hover
 *** pop-up
@@ -43,59 +45,65 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Hold
 - Release
 *** etc...
-** Cache locally when possible
-*** Cache all data which can be to be cached
-*** Show loading screen during caching and wait till all data is cached locally.
-*** Allow force refresh of cache
-*** If caching involves downloading from internet then decide at what intervals.
-Don't cache on every app start or you may hit bandwidth or api issues
+** The progress bar and spinners must be smooth
+* Behaviour
+** The app must react to my actions
+* Features
 ** A way to restart the app
+* UI/UX
 ** Alignment, positioning and centering must be proper
-** Stability of the app is important
-** Never compromise performance for visuals
-** Context menu where needed
-** File menu - Bare minimum
-** Cut, Copy and Paste text where applicable
+** Add a native file menu
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable
 For example:
 - Between panes
 - Between sections
-** Settings page must have side bars where the settings are organized by category
-** Things
-*** Need clear distinction between things that i can click or do action on and things i cant
-*** Interaction things in the app must be clear and distinct
-*** Buttons
+** Use icons when possible
+* Editing
+** Cut, Copy and Paste text where applicable
+* Settings page must have side bars where the settings are organized by category
+* Things
+** Need clear distinction between things that i can click or do action on and things i cant
+** Interaction things in the app must be clear and distinct
+** Buttons
 - Clickable things needs to look like buttons
 - Ideas
   - Read: [[file:buttons.png][Button Ideas]]
-
-** Fonts
-*** Use diffrent fonts as needed
-*** Use different sizes as needed
+** Status bar at the bottom :optional:
+** Message bar at the bottom :optional:
+* Fonts
+** Use diffrent fonts as needed
+** Use different sizes as needed
 - I should be able to adjust font size with keybinding
 - I should be able to set default font size in settings page
 - Autosave current font size as default font size on quit
-*** Use different styles like bold, italics, headings, comments etc. as needed.
-*** Choose font based on function and purpose.
-*** Monospace for code and plain text.
-*** Syntax highlight code always
-*** Pick colors that enhance readability
-*** Default font size for app is 20
-** Keyboard
-*** Allow rebind of keys and shortcuts in settings
-*** The app must have keyboard shortcuts
-** Mouse
-*** The mouse pointer appearance should change based on the thing below it while hovering, clicking or acting on that thing
-*** Must support multi thing selection when applicable
-*** Must support drag and drop when applicable
-*** The pointer should animate when applicable
+** Use different styles like bold, italics, headings, comments etc. as needed.
+** Choose font based on function and purpose.
+** Monospace for code and plain text.
+** Syntax highlight code always
+** Pick colors that enhance readability
+** Default font size for app is 20
+* Keyboard
+** Allow rebind of keys and shortcuts in settings
+** The app must have keyboard shortcuts
+* Mouse
+** The mouse pointer appearance should change based on the thing below it while hovering, clicking or acting on that thing
+** Must support multi thing selection when applicable
+** Must support drag and drop when applicable
+** The pointer should animate when applicable
+** Context menu where needed
 * Data
 ** Data lives seperately from the code
 ** Try not not to store data unless it is necessary and performance critical
 ** Data that can be computed should be computer
 ** Compute rather than store
 For example: Age. It can be calculated from date of birth. So no need seperate field for age.
+** Cache locally when possible
+*** Cache all data which can be to be cached
+*** Show loading screen during caching and wait till all data is cached locally.
+*** Allow force refresh of cache
+*** If caching involves downloading from internet then decide at what intervals.
+Don't cache on every app start or you may hit bandwidth or api issues
 * Testing
 ** Write automated tests where sensible
 ** Take screenshots or record a video of yourself for testing the app when automated test is not possible.

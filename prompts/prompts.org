@@ -1,11 +1,12 @@
 #+title: Prompts
+#+STARTUP: fold
 
 Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as rules.
 
-* Stage -1 - Prepare the repo (Manual)
+* Prepare the repo (Manual)
 ** Add AGENTS.md
 ** Create Git hooks and Harness hooks if any
-* Stage 0 - Planning
+* Planning
 ** Interview/Grill
 - Grill me until you uncover the goal of this project.
 - Grill me until you understand the goal.
@@ -24,7 +25,7 @@ Is there a project in the internet available that does this exactly? Or any alte
 - I want the project to be highly expressive so the programming languages used must also be highly expressive.
 
 ** Improve these prompts. Make them concise without losing information.
-* Stage 1 - Vibe Coding
+* Vibe Coding
 ** TODOs/FIXMEs comments
 - Review all TODO and FIXME in the codebase
 ** Follow these conventions <https://www.conventionalcommits.org/en/v1.0.0/>
@@ -34,7 +35,7 @@ Is there a project in the internet available that does this exactly? Or any alte
 ** Visual Explanation
 Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions.
 ** Import @file
-* Stage 2.1 - UI/UX, GUI, Web UI
+* UI/UX, GUI, Web UI
 ** Review the repo's UI
 - Review this whole repo
 - Are there any improvements that can be made?
@@ -50,7 +51,7 @@ I like what we have now. But It needs a bit more polish.
 I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
 ** [[redesign-prompt.org][Redesign full]]
 ** [[auto_install_git_hook.org][Auto-Install Git Hook]]
-* Stage 2.2 - CLI
+* CLI
 ** Review the CLI
 Are there any improvements that can be made?
 
@@ -60,7 +61,7 @@ Refer:
 - https://github.com/cli-guidelines/cli-guidelines
 - https://github.com/cli-guidelines/cli-guidelines/blob/main/content/_index.md
 
-* Stage 2 - Review
+* Review
 ** Review the gui app visually
 Can you record a video of yourself using the app with example data. Try out all the app. The analyse the video. Then report your findings.
 ** Review and verify everything
@@ -71,8 +72,8 @@ Can you record a video of yourself using the app with example data. Try out all 
 Based on this session,
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
-* Stage 3 - Documentation
-** [[create_docs.org][Create docs]]
+* Documentation
+** [[file:create_docs.org][Create docs]]
 ** Session Reconcile the existing docs
 Based on the current session do the following,
 
@@ -81,10 +82,10 @@ Based on the current session do the following,
 - Update training data if any.
 - Keep the documentation minimal and unique. No duplicate information.
 
-* Stage 3.9 - Performance
+* Performance
 ** Make performance improvements to the project.
 
-* Stage 4 - Maintenance
+* Maintenance
 ** Perform maintenance for this project
 - Find dead code and remove it.
 - Try to reduce bloat in the project.
@@ -151,7 +152,7 @@ Bigger tiers, only when I ask, per harness:
 Never touch `~/dot` or `~/.dot`, in any tier. Never touch a path you did not
 list in the plan.
 
-* Stage 4.1 - Publish
+* Publish
 ** Publish a website with pandoc
 - Create a script called `publish.py` in `scripts/` directory.
 - It must read the entire project and create a website using pandoc. It must also support mermaid diagram rendering. The website must be published under a directory called `publish/`.
@@ -160,7 +161,7 @@ list in the plan.
 - Keep the website simple, minimal and functional. No bloat. KISS Philosophy.
 - One page html document with all assets under `assets` directory.
 
-* Stage 5 - Release
+* Release
 ** Commit with a sensible message. Tag. Push the changes to the repository.
 ** Prepare repo for public release
 Prepare this repo for public release. Refactor and organize and rewrite the repo in a way that it is ready to go public at any time. But keep the repo private. I will want to review before making public.
@@ -174,7 +175,7 @@ Delete dead code. That means unused files, functions, exports, deps and commente
 Keep behavior the same. Run the tests and build before and after, and both must pass.
 Print the planned moves, renames and deletions first. Wait for my yes before applying.
 Commit one logical step at a time, and summarize what changed and why at the end.
-* Stage 6 - Archive chat
+* Archive chat
 ** Archive chat
 
 * General
