@@ -4,7 +4,7 @@
 No check of its own: a commit is already made, so nothing here can refuse it.
 A repo that wants work after each commit puts an executable .git/hooks/post-commit,
 and this runs it. Failing that, on macOS, it runs the repo's tracked
-script/post-commit, so an older app repo (my_horoscope) rebuilds and
+script/post-commit, so an older app repo, if any is left, rebuilds and
 installs its app into ~/Applications/My_Apps on every commit, in every clone,
 with nothing to set up per clone (rules/macos.md: Apps from ~/repos).
 
@@ -12,8 +12,8 @@ A build there fails after the commit, unseen. New app hooks build in
 pre-commit and refuse the commit on a failed build (rules/experimental.md:
 Auto build and install hooks); task-router-2, find_link, sync2,
 ai_model_and_harness_journal, bookmark2, diet_tracker, elimination_tracker,
-journal, Library, medicine_tracker, symptoms_tracker and tatami do, from
-their own .githooks with core.hooksPath set to it.
+journal, Library, medicine_tracker, my_horoscope, symptoms_tracker and
+tatami do, from their own .githooks with core.hooksPath set to it.
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks
