@@ -35,11 +35,16 @@ hook was given, so `git commit -a` and `git commit <paths>` count), and a
 failed build exits non-zero and refuses the commit, printing the build's last
 lines. A build that fails in the background after the commit goes unnoticed.
 
+- Install in `post-commit`, not in `pre-commit`: hold the build, and install it
+  once the commit holds the built tree. A commit refused later, by
+  `commit-msg` say, then installs nothing.
 - Merges and rebases skip `pre-commit`; `post-merge` and `post-rewrite` may
-  still build in the background for them.
+  still build in the background for them, and so may `post-commit` for a
+  `--no-verify` commit that built nothing.
 - Key builds by tree id, so a tree already built is not built again.
 - Give a skip-once variable, for example `<APP>_NO_INSTALL=1 git commit ...`.
 
 Example: task-router-2's
-[.githooks/pre-commit](~/repos/task-router-2/.githooks/pre-commit) and
+[.githooks/pre-commit](~/repos/task-router-2/.githooks/pre-commit),
+[.githooks/post-commit](~/repos/task-router-2/.githooks/post-commit) and
 [.githooks/app-install](~/repos/task-router-2/.githooks/app-install).
