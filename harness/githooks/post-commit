@@ -12,7 +12,7 @@ A build there fails after the commit, unseen. New app hooks build in
 pre-commit and refuse the commit on a failed build (rules/experimental.md:
 Auto build and install hooks); task-router-2, find_link, sync2,
 ai_model_and_harness_journal, bookmark2, diet_tracker, elimination_tracker,
-journal, Library, medicine_tracker, my_horoscope, symptoms_tracker and
+journal, Library, medicine_tracker, symptoms_tracker and
 tatami do, from their own .githooks with core.hooksPath set to it.
 
 Runs for every repo through the global core.hooksPath, which points here:
