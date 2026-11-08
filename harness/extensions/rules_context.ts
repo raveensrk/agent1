@@ -46,7 +46,7 @@ const TOPICS: [string, string][] = [
 	["rules/external.md", "probing external systems, live accounts, credentials on disk"],
 	["rules/browser.md", "browser and computer use rules"],
 	["rules/macos.md", "macOS command traps"],
-	["rules/cli.md", "writing a CLI app"],
+	["requirements/cli.org", "writing a CLI app"],
 	["rules/markdown.md", "writing Markdown"],
 	["rules/pi.md", "pi package management"],
 	["rules/removal.md", "removing apps, packages and harnesses"],

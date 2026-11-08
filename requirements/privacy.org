@@ -1,0 +1,12 @@
+#+title: Privacy requirements
+
+* No personal data in code, tests, docs, logs or commit messages
+Real details about real people never go into anything committed, shared or printed.
+Use invented data instead.
+
+| Where  | Bad                                    | Good                                                 |
+|--------+----------------------------------------+------------------------------------------------------|
+| Test   | =name = "Priya Raman"= (a real person) | =name = "Test Person 1"= (invented)                  |
+| Log    | =Saved Priya Raman, phone 98765 43210= | =Saved record 42=                                    |
+| Commit | =fix: Priya's birth date parsed wrong= | =fix: birth dates with a two-digit year parse wrong= |
+| Docs   | A screenshot showing real records      | A screenshot of the example data                     |

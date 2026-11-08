@@ -18,11 +18,13 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 ** A window can have multiple Tabs feature
 ** Can have Multi window support
 ** If the window have panes then it must be resizable
+** In a narrow window the sidebar shrinks to icons only and side panels hide
 * Performance
 ** App must run at 60 fps
 ** Scrolling must be smooth
 ** Stability of the app is important
 ** Never compromise performance for visuals
+** Slow work runs off the UI thread
 * Appearance
 ** Dark Theme
 * Animation
@@ -50,6 +52,11 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 ** The app must react to my actions
 * Features
 ** A way to restart the app
+- Restarts the way it was started, on the same data
+- Unsaved scratch work is saved first
+** Save and restore state/session
+- Reopens at the same window position and size
+- Same tabs, screen and page as when it was left
 * UI/UX
 ** Alignment, positioning and centering must be proper
 ** Add a native file menu
@@ -59,9 +66,21 @@ For example:
 - Between panes
 - Between sections
 ** Use icons when possible
+** Lists
+- Each page remembers its view and sort between runs
+- Any sort can be reversed
+- Rows with no value sort last, whichever way the sort runs
 * Editing
-** Cut, Copy and Paste text where applicable
-* Settings page must have side bars where the settings are organized by category
+** Cut, Copy and Paste text
+** Undo and Redo
+- Undo reverses the newest change, file writes included
+- Redo makes again what undo took back, until a new change is made
+** Text boxes need to have full featured editor support
+** A field error blocks Save, and invalid input is never written
+* Pages
+** Settings page must have side bars where the settings are organized by category
+** History page that shows the pages navigated recently
+** Back and forward retrace pages visited, like a browser: keys, menu and mouse side buttons
 * Things
 ** Need clear distinction between things that i can click or do action on and things i cant
 ** Interaction things in the app must be clear and distinct
@@ -82,10 +101,15 @@ For example:
 ** Monospace for code and plain text.
 ** Syntax highlight code always
 ** Pick colors that enhance readability
-** Default font size for app is 20
+** Default font size for app is 16
+** Widths sized for text grow with the font size, so no label clips
+** Fonts need to look crisp and clear and easy to read.
 * Keyboard
 ** Allow rebind of keys and shortcuts in settings
 ** The app must have keyboard shortcuts
+- Every common action has a key
+- Unmodified keys work only when no text box has focus
+** A command palette (⌘K) reaches every action, screen and item
 * Mouse
 ** The mouse pointer appearance should change based on the thing below it while hovering, clicking or acting on that thing
 ** Must support multi thing selection when applicable
@@ -94,6 +118,9 @@ For example:
 ** Context menu where needed
 * Data
 ** Data lives seperately from the code
+- Code and data live in separate repositories
+- The data folder is configurable
+** Changes made to the data files outside the app show live, after 150 ms of quiet, with no restart
 ** Try not not to store data unless it is necessary and performance critical
 ** Data that can be computed should be computer
 ** Compute rather than store

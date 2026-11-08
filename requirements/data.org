@@ -1,0 +1,19 @@
+#+title: Data requirements
+
+* Plain text data
+- The data is plain text that an editor, command-line tools, git and agents can read and change without the app
+* Unreadable file never saved over
+- A bad line gives an error with its line number, never an empty state a save could write
+* Every write is a plan
+- Each write checks its precondition, writes atomically and returns its inverse, so undo can reverse it
+* Stale writes refused
+- A write whose file hash no longer matches writes nothing, and the app reloads the file
+* Ids are permanent
+- A new record gets one above the highest id, and a gap in ids stays a gap
+* Commits
+- The app writes files; a human commits them
+- Checks pass before anything is committed
+* Errors name no values
+- An error names the record and field, never the value, so it is safe to print or log
+- Bad: =Record 42: phone "98765 43210" is not a valid number=
+- Good: =Record 42: field phone is not a valid number=

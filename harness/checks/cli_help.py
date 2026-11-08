@@ -246,7 +246,7 @@ def findings(rel: str, text: str) -> list[str]:
         return [
             f"{rel}:1: runnable mentions {lacks} - fix: every runnable answers -h "
             "and --help with short help and `help` with its full docs (content: "
-            "~/repos/agent1/rules/cli.md), exits 0 and does nothing else; python, from "
+            "~/repos/agent1/requirements/cli.org), exits 0 and does nothing else; python, from "
             "the module docstring: `if sys.argv[1:2] in ([\"-h\"], [\"--help\"], "
             "[\"help\"]): print(__doc__ if sys.argv[1] == \"help\" else "
             "__doc__.split(\"\\n\\n\")[0]); sys.exit(0)`, shell, from the header "

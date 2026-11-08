@@ -7,3 +7,5 @@ Testing requires these rules. You are allowed to bypass these rules with user pe
 * Prefer combining small tests to test a feature or a fix rather than writing one big test.
 * Long or time consuming tests must be clearly marked.
 * Don't write or run tests that run multiple times. One run is enough unless explicitly asked by me.
+* Perfer headless tests as much as possible
+* Tests run only on generated, invented data. Never real data, never a copy of it.

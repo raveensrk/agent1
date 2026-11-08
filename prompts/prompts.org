@@ -33,7 +33,12 @@ Is there a project in the internet available that does this exactly? Or any alte
 - What do do next?
 - Tell me next steps.
 ** Visual Explanation
-Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions.
+
+I don't understand. Explain in a simple and clear way.
+
+Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions. Open in default web browser.
+
+Dark theme
 ** Import @file
 * UI/UX, GUI, Web UI
 ** Review the repo's UI
@@ -72,6 +77,8 @@ Can you record a video of yourself using the app with example data. Try out all 
 Based on this session,
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
+** Review requirements
+Read the [[file:~/repos/agent1/requirements/index.org][Requirements]] throughly and report me if anything can be improved from this repo based on it.
 * Documentation
 ** [[file:create_docs.org][Create docs]]
 ** Session Reconcile the existing docs

@@ -128,11 +128,11 @@ TUI and CLI for finding LLMs that fit local hardware
 :NEEDS: [[*pi][pi]] or [[*Claude][Claude]] or [[*Codex and ChatGPT][Codex and ChatGPT]] or [[*Crush][Crush]]
 :END:
 terminal multiplexer for coding agents
+** Communication
+*** Chat
+**** Whatsapp
+***** wacli
 ** Data interchange File Format
-*** SVG :extra:intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
-:PROPERTIES:
-:NEEDS: [[*YAML][YAML]]
-:END:
 *** JSON :base:easy:Programming_Languages:Data_and_Query:
 :PROPERTIES:
 :NEEDS: [[*Programming Languages][Programming Languages]]
@@ -310,6 +310,15 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 *** d3 :library:
 :PROPERTIES:
 :NEEDS: [[*JavaScript][JavaScript]]
+:END:
+*** SVG :extra:intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
+:PROPERTIES:
+:NEEDS: [[*YAML][YAML]]
+:END:
+**** SVG with Animation
+:PROPERTIES:
+:URL:      https://en.wikipedia.org/wiki/SVG_animation
+:NEEDS:    [[*SVG][SVG]]
 :END:
 ** Programming Languages
 *** Systems Programming Languages
