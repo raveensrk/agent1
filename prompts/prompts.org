@@ -39,6 +39,13 @@ I don't understand. Explain in a simple and clear way.
 Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions. Open in default web browser.
 
 Dark theme
+** Design Workflow
+- Prompt -> Design mockup with SVG (Animated if needed) -> Review and Approve -> Design mockup with code -> Review and Approve -> Next
+- Ask questions like,
+  - Is this good?
+  - How can we improve this?
+  - Did we miss anything?
+  - Review and uncover any gaps
 ** Import @file
 * UI/UX, GUI, Web UI
 ** Review the repo's UI

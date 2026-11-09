@@ -70,6 +70,7 @@ For example:
 - Each page remembers its view and sort between runs
 - Any sort can be reversed
 - Rows with no value sort last, whichever way the sort runs
+** Tooltip as needed
 * Editing
 ** Cut, Copy and Paste text
 ** Undo and Redo
@@ -90,7 +91,7 @@ For example:
   - Read: [[file:buttons.png][Button Ideas]]
 ** Status bar at the bottom :optional:
 ** Message bar at the bottom :optional:
-* Fonts
+* Text and Fonts
 ** Use diffrent fonts as needed
 ** Use different sizes as needed
 - I should be able to adjust font size with keybinding
@@ -104,6 +105,7 @@ For example:
 ** Default font size for app is 16
 ** Widths sized for text grow with the font size, so no label clips
 ** Fonts need to look crisp and clear and easy to read.
+** Text must fit entirely within its container, with no clipping.
 * Keyboard
 ** Allow rebind of keys and shortcuts in settings
 ** The app must have keyboard shortcuts
@@ -136,3 +138,5 @@ Don't cache on every app start or you may hit bandwidth or api issues
 ** Take screenshots or record a video of yourself for testing the app when automated test is not possible.
 Use this as a last resort.
 ** Testing should not hinder development speed
+* Development
+- When applicable use REPL during development

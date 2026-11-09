@@ -385,6 +385,7 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :END:
 Video.js v10 - open source media player framework for HTML and React.
 ** Lisp Family of Languages
+*** REPL
 *** Fennel :max:expert:Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
 :NEEDS: [[*Lua][Lua]]
@@ -419,8 +420,6 @@ Video.js v10 - open source media player framework for HTML and React.
 :NEEDS: [[*Clojure][Clojure]]
 :END:
 Clojure Dialect with c++ interop
-
-
 * Ungrouped
 ** Touch Typing :base:beginner:Skills:
 :PROPERTIES:
