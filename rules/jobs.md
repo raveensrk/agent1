@@ -31,8 +31,11 @@ Before launching:
 3. Estimate the duration in minutes as a range, e.g. `12-18 min`. State the basis: prior run, sample benchmark, or extrapolation.
 4. State the completion time as 12-hour local time with AM/PM, e.g. `ETA 2:35-2:41 PM`. If the range crosses noon or midnight, mark both ends, e.g. `ETA 11:50 AM-12:10 PM`.
 5. If the upper bound is 60 min or more: ⚠️ warn me and wait for confirmation before launching.
+6. Open a progress window with the `progress-timer` skill: `progress-timer start --eta <upper bound> --label "<job>" --pid <pid>` prints a run id. State the id with the ETA.
 
 If the job runs past the upper bound: report once with a new estimate and ETA, and keep running.
+
+When the job ends, early or late, stop its window at once: `progress-timer stop <id>`, or `progress-timer stop <id> --failed` when it failed.
 
 After the job finishes, append one line to `tmp/job_timings.jsonl`:
 
