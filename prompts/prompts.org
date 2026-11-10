@@ -86,6 +86,21 @@ Based on this session,
 - If you can verify the work so far with a test, create it.
 ** Review requirements
 Read the [[file:~/repos/agent1/requirements/index.org][Requirements]] throughly and report me if anything can be improved from this repo based on it.
+** Critic
+- Critic this project/repo/app.
+- Categories
+  - Requirements
+  - Documentation
+  - Data
+  - Design
+  - Testing and Verification (Usually my AI agent gets stuck here running long tests, I dont know why.)
+  - Performance
+  - Development (I want my project to be able to develop, and test fast)
+  - Structure
+  - Gaps if any
+  - Simplicity and Ease of Use
+  - Conclusion
+** Critic this project fast and suggest me a quick improvement or fix.
 * Documentation
 ** [[file:create_docs.org][Create docs]]
 ** Session Reconcile the existing docs

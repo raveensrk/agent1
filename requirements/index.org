@@ -6,3 +6,4 @@
 - [[file:data.org][Data]]
 - [[file:cli.org][CLI]]
 - [[file:privacy.org][Privacy]]
+- [[file:requirements.org][Requirements]]

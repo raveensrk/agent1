@@ -1,0 +1,40 @@
+#+title: Requirements requirements
+#+STARTUP: overview
+#+TODO: OPEN(o) | DONE(d) DROPPED(x)
+
+* Each Requirement must be an org mode heading
+* A requirement file can be 1 file or multiple files
+* Requirements can be scheduled.
+If a requirement is written but becomes valid only after 2 weeks. =:SCHEDULED:= Property.
+* Data format = =YYYY-MM-DD=
+* Properties
+Properties are optional for a small design. For larger design the following fields becomes mandatory.
+** =:CREATED:= - date
+** =:EDITED:= - date
+** =:APPROVED:= - date
+** =:COMPLETED:= - date
+** =:NEEDS:= - Parent requirement link
+** =:ID:= - Unique reference id of a requirement
+** =:VERIFY:= - A link to verification requirement item
+* Verification requirement item
+This will be child of a design requirement item explaining how it is verified
+* Design requirement item
+Any new design idea must have this requiremen item.
+* As the requirements file is developed. During sensible time it must be split and follow a strict hierarchy.
+* =Tags= and =priorities= can be use to organize and prioritize.
+Priorites: A, B, C.
+Tags: As needed
+* Requirement types
+** Hard Requirements: This requirement must always be needed
+** Soft Requirements: This requirement needed but flexible
+** Optional Rquirement: This requirement may or may not be needed
+* Task tracking :optional:
+Follow these states
+#+begin_example
+,#+TODO: OPEN(o) | DONE(d) DROPPED(x)
+#+end_example
+* Appearance :optional:
+Follow this
+#+begin_example
+,#+STARTUP: overview
+#+end_example
