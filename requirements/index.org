@@ -1,5 +1,6 @@
 #+title: Index
 
+- [[file:architecture.org][Architecture]]
 - [[file:gui.org][GUI]]
 - [[file:testing.org][Testing]]
 - [[file:docs.org][Docs]]

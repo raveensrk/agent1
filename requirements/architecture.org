@@ -1,0 +1,7 @@
+#+title: Architecture requirements
+
+* Core and UI are decoupled
+- Every app is a core (back end) and one or more UIs (front end: GUI, CLI, TUI, web)
+- Core and UI are separate programs that talk only by messages, so a UI can be in any language
+- The core has no UI, and the UI has no business logic and never touches the data files
+- The core tests headless, and adding a UI changes no core file
