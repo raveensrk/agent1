@@ -2,17 +2,27 @@
 
 * Plain text data
 - The data is plain text that an editor, command-line tools, git and agents can read and change without the app
+* The file round-trips byte for byte
+- A data file read and written back with no change is the same bytes; comments survive
+* An edit touches only what it names
+- Changing one field changes only that line; the other lines and the order of fields stay
 * Unreadable file never saved over
 - A bad line gives an error with its line number, never an empty state a save could write
 * Every write is a plan
 - Each write checks its precondition, writes atomically and returns its inverse, so undo can reverse it
+* Undo and redo last the session
+- They cover every change made since the app opened; a commit, from any tool, clears nothing
+- Quitting the app ends the session and its undo list
 * Stale writes refused
 - A write whose file hash no longer matches writes nothing, and the app reloads the file
+* One set of ranges
+- The edit forms and the commit checks read the same table of allowed ranges, so a form never saves what a check rejects
 * Ids are permanent
 - A new record gets one above the highest id, and a gap in ids stays a gap
 * Commits
 - The app writes files; a human commits them
 - Checks pass before anything is committed
+- Refuse commit if data is broken
 * Errors name no values
 - An error names the record and field, never the value, so it is safe to print or log
 - Bad: =Record 42: phone "98765 43210" is not a valid number=

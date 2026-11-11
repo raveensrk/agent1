@@ -1,4 +1,5 @@
 #+TITLE: Dev Tools
+#+STARTUP: fold
 
 Simple org copy of [[file:dev_tools.rec][dev_tools.rec]]. The recfile is the source;
 layout fields (Pos, Size, Kind, Fit, Color) are left out.
@@ -193,6 +194,7 @@ plain-text records; recsel, recfix, rec2csv
 :PROPERTIES:
 :NEEDS: [[*Rust][Rust]]
 :END:
+*** Gadot
 ** HDL
 *** verible :base:advanced:Semiconductor:SystemVerilog_and_UVM:
 :PROPERTIES:
@@ -281,18 +283,20 @@ plain-text records; recsel, recfix, rec2csv
 :PROPERTIES:
 :NEEDS: [[*LaTeX][LaTeX]]
 :END:
-** GUI Framework
+** GUI Library
 *** egui :expert:gui:
 :PROPERTIES:
 :NEEDS: [[*Rust][Rust]]
 :END:
-*** GUI :gui:
-:PROPERTIES:
-:NEEDS: [[*Touch Typing][Touch Typing]]
-:END:
 *** GTK :library:gui:
+*** imgui :gui:library:
 :PROPERTIES:
-:NEEDS: [[*GUI][GUI]]
+:NEEDS: [[*C++][C++]]
+:END:
+*** Nuklear :gui:library:
+:PROPERTIES:
+:URL: https://immediate-mode-ui.github.io/Nuklear/index.html
+:NEEDS: [[*C][C]]
 :END:
 ** Data Visualization
 *** Graphviz :extra:intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
@@ -491,10 +495,6 @@ also stands for shell scripting; prefer Bash over POSIX sh
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-** imgui
-:PROPERTIES:
-:NEEDS: [[*C++][C++]]
-:END:
 ** Fonts
 :PROPERTIES:
 :NEEDS: [[*GUI][GUI]]
@@ -503,11 +503,6 @@ also stands for shell scripting; prefer Bash over POSIX sh
 :PROPERTIES:
 :URL: https://freetype.org/index.html
 :NEEDS: [[*Fonts][Fonts]]
-:END:
-** Nuklear
-:PROPERTIES:
-:URL: https://immediate-mode-ui.github.io/Nuklear/index.html
-:NEEDS: [[*C][C]]
 :END:
 * Notes
 ** Note 1

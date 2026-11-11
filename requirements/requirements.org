@@ -10,12 +10,12 @@ If a requirement is written but becomes valid only after 2 weeks. =:SCHEDULED:= 
 * Properties
 Properties are optional for a small design. For larger design the following fields becomes mandatory.
 ** =:CREATED:= - date
-** =:EDITED:= - date
+** =:LAST_EDITED:= - date
 ** =:APPROVED:= - date
-** =:COMPLETED:= - date
+** =:IMPLEMENTED:= - date
 ** =:NEEDS:= - Parent requirement link
 ** =:ID:= - Unique reference id of a requirement
-** =:VERIFY:= - A link to verification requirement item
+** =:VERIFY:= - Names the checks that run
 * Verification requirement item
 This will be child of a design requirement item explaining how it is verified
 * Design requirement item
@@ -28,6 +28,41 @@ Tags: As needed
 ** Hard Requirements: This requirement must always be needed
 ** Soft Requirements: This requirement needed but flexible
 ** Optional Rquirement: This requirement may or may not be needed
+* Process
+Every change to what the app does is a requirement first; the code follows it, and the docs follow the code.
+=Idea -> requirement -> approved -> built -> verified -> docs -> DONE=; an issue found while building goes back to approval.
+** Every change starts as a requirement
+An idea that changes what the app does, shows or stores becomes an OPEN requirement at once; there is no other inbox.
+- Chores that change no behaviour live in a notes file.
+- Every app commit names the requirement it builds: =(S-8)=.
+- A =commit-msg= hook refuses a source or test commit that names no existing id.
+** The owner approves a requirement before it is built
+A new or edited requirement is drafted, shown to the owner, and built only after their yes.
+- For visual work a mockup is approved with the requirement, never as part of =:VERIFY:=.
+- On approval it is committed, still OPEN, before any code; =:APPROVED:= holds the date of the yes.
+- A check refuses an OPEN requirement with no =:APPROVED:= date.
+** Issues found while building come back
+Building stops and the issue goes back to the owner when the requirement is wrong, ambiguous, in conflict or cannot be built.
+- It is edited, approved again, and building resumes; an edited requirement is OPEN until it has a new =:APPROVED:= date.
+- A detail it is silent on, such as a name or a spacing, is decided while building and added to it in the same change.
+** A DONE requirement changes in place
+Changing what a DONE requirement says keeps its id, edits its text, and makes it OPEN until the change is built.
+- A dated line says what changed: =Changed on <date>: <what>.=
+- An id is never reused; a requirement given up is DROPPED and kept, saying why.
+- A =pre-commit= hook refuses a changed DONE text that is not made OPEN, and a check refuses an id used twice.
+** VERIFY is automated
+Every =:VERIFY:= names checks that run: unit tests, window checks or acceptance checks.
+- No dev session, look or approval counts; a requirement whose =:VERIFY:= has one is OPEN until that part is a check.
+- A check refuses a DONE requirement whose =:VERIFY:= names no check, or asks for one of those.
+** DONE means built, verified and in the docs
+A requirement is DONE when it is built, every check its =:VERIFY:= names passes, and the docs say what changed in the design ([[file:docs.org::*Requirements and the docs][Requirements and the docs]]).
+- One commit then marks it DONE.
+- A check refuses a DONE requirement whose =:VERIFY:= names a test the app repo does not have.
+** Every requirement carries its dates
+Three dates, as =2026-11-09=: =:CREATED:= the day it was added, =:LAST_EDITED:= the day of its last change of any kind, =:IMPLEMENTED:= the day it turned DONE.
+- Only a DONE requirement has =:IMPLEMENTED:=; a check refuses any other, and a missing date.
+- A commit that leaves a date wrong is refused, naming the requirement and the date; nothing fills them in on its own.
+- A change to a date is a change like any other.
 * Task tracking :optional:
 Follow these states
 #+begin_example

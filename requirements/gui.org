@@ -18,6 +18,9 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 ** A window can have multiple Tabs feature
 ** Can have Multi window support
 ** If the window have panes then it must be resizable
+- The divider between two panes drags to resize them, whether they sit side by side (width) or one above the other (height)
+- Each pane has a smallest and a largest size
+- The size is remembered between runs; one kept outside the limits comes back within them
 ** In a narrow window the sidebar shrinks to icons only and side panels hide
 * Performance
 ** App must run at 60 fps
@@ -48,8 +51,15 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Release
 *** etc...
 ** The progress bar and spinners must be smooth
+** Buttons answer a press
+- A button eases its colour on hover, sinks slightly on press and springs back on release
+- Every button answers, but not a disabled one
+- Under Reduce Motion it only changes colour
+** Reduce Motion is respected
+- With the system's Reduce Motion setting on, things fade and never slide
 * Behaviour
 ** The app must react to my actions
+** Whatever is running shows a spinner beside the words that say what it does
 * Features
 ** A way to restart the app
 - Restarts the way it was started, on the same data
@@ -60,6 +70,10 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 * UI/UX
 ** Alignment, positioning and centering must be proper
 ** Add a native file menu
+** The menu bar and the sidebar are each one list in the requirements
+- Each is written down once, as a tree in its own requirement, in order
+- A change that adds, moves, renames or removes an item updates that tree in the same change, so it always says what is there
+- The sidebar's groups are the menu's, in the same order, so the two never disagree
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable
 For example:
@@ -70,6 +84,13 @@ For example:
 - Each page remembers its view and sort between runs
 - Any sort can be reversed
 - Rows with no value sort last, whichever way the sort runs
+- In a table, a click on a column heading sorts by that column: first click its natural way, second click reversed, third click back to no sort
+- The sorted heading shows an arrow, ↓ its natural way and ↑ reversed; a click on another heading starts that column at its first click
+** A wide table scrolls sideways in its own area
+- A table wider than its room scrolls sideways inside its own area, and never draws over the sidebar or another panel
+- The first column stays in place; the other columns and their headings slide under it, together
+- A scroll bar shows along the table's foot only while the table is wider than its room; a sideways swipe, or Shift and the wheel, scrolls it too
+- Sorting and choosing a row still work wherever it is scrolled to, and keep the sideways position
 ** Tooltip as needed
 * Editing
 ** Cut, Copy and Paste text
@@ -77,6 +98,10 @@ For example:
 - Undo reverses the newest change, file writes included
 - Redo makes again what undo took back, until a new change is made
 ** Text boxes need to have full featured editor support
+** Delete asks first
+- A sheet says what will be deleted, with Delete and Cancel; Delete is red, and Return does not press it
+- Deleted files go to the Trash, not away for good
+- A delete is one change, so one undo brings everything back
 ** A field error blocks Save, and invalid input is never written
 * Pages
 ** Settings page must have side bars where the settings are organized by category
@@ -87,6 +112,7 @@ For example:
 ** Interaction things in the app must be clear and distinct
 ** Buttons
 - Clickable things needs to look like buttons
+- One filled, coloured button a page, the main action; every other button is outlined
 - Ideas
   - Read: [[file:buttons.png][Button Ideas]]
 ** Status bar at the bottom :optional:
@@ -115,6 +141,8 @@ For example:
 * Mouse
 ** The mouse pointer appearance should change based on the thing below it while hovering, clicking or acting on that thing
 ** Must support multi thing selection when applicable
+- ⌘-click adds or removes one thing from the selection; ⇧-click selects a run
+- An action on everything selected is one change, so one undo takes it all back
 ** Must support drag and drop when applicable
 ** The pointer should animate when applicable
 ** Context menu where needed

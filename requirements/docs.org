@@ -13,6 +13,14 @@
 - All documentation goes in =docs/=. Create it if it's missing. If it exists, build on it: keep what's correct, fix what's stale, fold in the rest.
 - No secrets, tokens, personal data or internal hostnames. Document config keys, not their values.
 
+* Requirements and the docs
+
+When a repo has a requirements file, it says what must be true and how it is verified; the chapters say how the app works and why. Each links to the other and never restates it.
+
+- What the user sees and does is written once, in its requirement.
+- A chapter changes only when building a requirement changed how the app works or why.
+- A requirement's =:SOURCE:= names its chapter; a check refuses a =:SOURCE:= or a chapter link that does not resolve.
+
 * References
 
 Official sources for the rules in this document.

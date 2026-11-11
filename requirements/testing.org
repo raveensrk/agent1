@@ -9,3 +9,20 @@ Testing requires these rules. You are allowed to bypass these rules with user pe
 * Don't write or run tests that run multiple times. One run is enough unless explicitly asked by me.
 * Perfer headless tests as much as possible
 * Tests run only on generated, invented data. Never real data, never a copy of it.
+* Automated checks only
+- A new check is a unit test first; a check on the live window only when the behaviour needs it: layout, focus, drag, frames.
+- An agent may open the app on invented data and drive it; it never opens the real data.
+- A look, at a snapshot or a window, is a self-check while building and never verifies anything.
+- To show the owner something live, an agent asks in one message: what to open, numbered steps, what to look for.
+* The commit hook runs related tests only
+The commit hook runs the tests related to the staged files, never the full suite.
+* One command runs every test, in parallel, each suite in a clean room
+- One regression command, run by hand only, runs every suite in parallel, each in a clean room: a new directory under =~/tmp= with a throwaway home, a scrubbed environment and fresh invented data.
+- =--only= and =--skip= take suite names, =--only= also one test as =unit/NAME=; =--list= prints each test with its one-line description, =--plan= prints what would run, =--fail-fast= stops at the first failure.
+- Timing checks run in a serial lane after the parallel suites; each suite has a fixed timeout, so the command always ends.
+- It prints a table of suite, result, seconds and count, writes its timings to a file kept out of git, and exits 0, 1 on any failure, 2 on a usage error.
+* Every test has a timeout
+Every test has a timeout, so no test hangs a run.
+- Over it, a test is stopped and reported as =timeout=; the tests after it still run.
+- Each suite has a default; a test that needs longer says so where it is defined, in seconds.
+- It holds however the test is run, and =--list= prints it; a test with none is a fault.
