@@ -96,7 +96,64 @@
 .hold-fill { -fx-background-color: rgba(255, 255, 255, 0.24); -fx-background-radius: 999; }
 .button .progress-indicator { -fx-progress-color: white; }
 
+/* A slider: 44 px to take hold of, with a 4 px track to look at. The track is
+   plain, and filled in the accent colour up to the thumb. */
+.slider-box:disabled { -fx-opacity: 0.45; }
+.slider-track { -fx-background-color: rgba(255, 255, 255, 0.22); -fx-background-radius: 999; }
+.slider-fill { -fx-background-color: #2f8cff; -fx-background-radius: 999; }
+/* The notch: where the default value is. */
+.slider-notch { -fx-background-color: rgba(255, 255, 255, 0.55); -fx-background-radius: 1; }
+/* The thumb: a capsule of glass, 28 by 20 px. */
+.slider-thumb {
+    -fx-background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0.78), rgba(232, 232, 242, 0.64));
+    -fx-background-radius: 999;
+    -fx-border-color: linear-gradient(to bottom right,
+        rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 45%, rgba(255, 255, 255, 0.70) 100%);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 6, 0, 0, 2);
+    -fx-cursor: open-hand;
+    transition: -fx-background-color 0.12s ease-out, -fx-border-color 0.12s ease-out;
+}
+.slider-thumb:hover { -fx-background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0.92), rgba(240, 240, 248, 0.80)); }
+/* Held, the glass clears: the track shows through it. */
+.slider-box:dragging .slider-thumb {
+    -fx-background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0.42), rgba(232, 232, 242, 0.30));
+    -fx-cursor: closed-hand;
+}
+/* A ring in the accent colour, on keyboard focus only. */
+.slider-box:focus-visible .slider-thumb { -fx-border-color: #4aa3ff; -fx-border-width: 2; }
+/* The bubble: the value, over the thumb, while it changes. White on it is 4.5:1 or more. */
+.slider-bubble {
+    -fx-background-color: linear-gradient(to bottom, rgba(74, 74, 88, 0.78), rgba(44, 44, 56, 0.76));
+    -fx-background-radius: 999;
+    -fx-border-color: linear-gradient(to bottom right,
+        rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.12) 42%,
+        rgba(255, 255, 255, 0.06) 60%, rgba(255, 255, 255, 0.30) 100%);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+    -fx-padding: 3 10 3 10;
+    -fx-min-width: 48;
+    -fx-alignment: center;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.30), 10, 0, 0, 3);
+}
+.slider-label { -fx-text-fill: rgba(255, 255, 255, 0.92); }
+/* A page that scrolls shows what is under it. */
+.scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; }
+.scroll-pane .scroll-bar { -fx-background-color: transparent; }
+.scroll-pane .scroll-bar .thumb { -fx-background-color: rgba(255, 255, 255, 0.28); -fx-background-radius: 999; }
+.scroll-pane .scroll-bar .track, .scroll-pane .scroll-bar .increment-button, .scroll-pane .scroll-bar .decrement-button,
+.scroll-pane .corner { -fx-background-color: transparent; -fx-border-color: transparent; }
+.scroll-pane .scroll-bar .increment-arrow, .scroll-pane .scroll-bar .decrement-arrow { -fx-shape: ""; -fx-padding: 0; }
+/* The slider demo: the square that Brightness lights, and its notes. */
+.square { -fx-background-color: white; -fx-background-radius: 18; -fx-min-width: 72; -fx-min-height: 72; -fx-max-width: 72; -fx-max-height: 72; }
+.label.note { -fx-text-fill: rgba(255, 255, 255, 0.62); -fx-font-size: 13px; }
+
 /* Reduce Transparency: the glass turns solid. */
+.solid .slider-thumb, .solid .slider-box:dragging .slider-thumb { -fx-background-color: #e9e9ef; }
+.solid .slider-bubble { -fx-background-color: #3a3a3e; -fx-border-color: #5a5a5e; }
 .solid .glass-group { -fx-background-color: #3a3a3e; -fx-border-color: #5a5a5e; }
 .solid .glass-group.tinted { -fx-background-color: #1f6fd6; -fx-border-color: #1f6fd6; }
 /* Increase Contrast: a plain edge all the way round. */

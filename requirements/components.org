@@ -85,6 +85,12 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** Ideas
 - Read: [[file:buttons.png][Button Ideas]]
 * Sliders
+** A reference shows one way to build them
+- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:demo/cljfx/src/demo/slider.clj][slider.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/slider_page.clj][slider_page.clj]] is the demo's own page
+- Its window checks, [[file:demo/cljfx/test/demo/slider_check.clj][slider_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- The reference passes its own checks: =clojure -M:test= and =clojure -M:check-slider=, run in =demo/cljfx=; =clojure -M:slider= opens it
+- This requirement decides, not the reference: where the two differ, the reference is wrong
 ** A slider sets one value between two ends
 - One thumb on a level track; the value is continuous, any point between the two ends
 - A slider has a label that names what it sets, and a default value
@@ -99,7 +105,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** The thumb answers a press
 - Hover: the thumb eases to its hover shade in 120 ms
 - Press: the thumb grows to 110% of its size in 120 ms, and stays so for as long as it is held
-- Moving, the thumb stretches along the track, up to 36 px wide, and more the faster it moves
+- Moving, the thumb stretches along the track, up to 36 px wide, and more the faster it moves; still again, it eases back in 220 ms
 - Release: it springs back to 28 by 20 px in 420 ms, overshooting a little before it settles
 - Under Reduce Motion it neither grows nor stretches; it only changes colour
 ** A drag moves the thumb
@@ -109,7 +115,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Within 4 px of the notch the thumb snaps to the default value
 - A press on the track, away from the thumb, glides the thumb to the pointer in 120 ms, and the same press goes on as a drag
 - Under Reduce Motion the thumb lands there at once
-- A double click puts the slider back to its default value
+- A double click puts the slider back to its default value; the thumb glides there in 120 ms, and at once under Reduce Motion
 - Scrolling over a slider does not move it: the page under it scrolls
 ** A bubble shows the value while it changes
 - At rest a slider shows no number
@@ -117,13 +123,15 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - The bubble fades in over 120 ms on the press and out over 120 ms on the release
 - After a key press it shows for 1 s
 - The bubble is glass, and its words read at 4.5:1
-- It is never clipped by the window's edge: near one it slides sideways and stays whole
+- It is never clipped by the window's edge, nor by the edge of a scrolling area the slider is in: near one it slides sideways and stays whole, 4 px clear
+- Faded out, it is not there for a screen reader either
 - The slider's tooltip says the value too, so it is read without a change
 ** The value is written when the drag ends
 - What the slider sets follows the thumb live, through the whole drag
 - The value is written once, on the release, not at every move
 - Escape during a drag puts the thumb and what it sets back to where the drag began, and writes nothing; the rest of that press does nothing
 - One drag is one step for Undo, and so is a double click
+- A double click on the track is one step too: its first click moves the thumb and is written, and the second, within 500 ms, joins that step
 ** The keyboard moves a focused slider
 - Left and Down lower it by 1% of the range, Right and Up raise it by 1%
 - With Shift they move it 10%
@@ -140,6 +148,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - The name carries the value, "Volume, 40%", for as long as macOS is given a name and a role and nothing else
 - A disabled slider is called dimmed, and its name says why it is off
 - What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
+- Read so on 2026-11-13: macOS is given a slider's name, its role, its value as a bare number, "30", and two actions, raise and lower
 ** Verification
 - A window check sends its events the way a pointer does
 - It drags the thumb to the middle and reads the value: half the range, and the thumb under the pointer
@@ -148,17 +157,23 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It drags past each end and reads the value: the low end, the high end, and no further
 - It drags, sends Escape and lets go: the value from before the drag, and nothing written
 - It presses the track away from the thumb and reads the thumb 60 ms later: left its place, not yet under the pointer; then it drags on and the thumb follows
-- It drags to 3 px from the notch and reads the value: the default
+- It drags to 3 px from the notch and reads the value: the default; and to 6 px from it: not the default
+- It reads the notch's place and the fill's width: at the default, and up to the thumb
 - It double clicks and reads the value: the default, written once
 - It scrolls over the slider and reads the value and the page: the value as before, the page moved
 - It reads the thumb's size at rest, held, 1.5 s held and once released: 100%, 110%, 110%, 100%
 - It reads the thumb's width in a fast drag and once settled: wider than 28 px, then 28 px
 - It reads the bubble at rest, held, and after the release: none, the value in its unit, none
-- It drags to each end and reads the bubble's edges: inside the window
+- It drags to each end and reads the bubble's edges: inside the window, and at the low end no longer centred on the thumb
 - It sends Right, Shift+Right, Home and End to a focused slider and reads the value after each: up 1%, up 10%, the low end, the high end
 - It sends Left at the low end and counts nothing written
+- It sends Right down five times and up once: moved 5%, written nothing until the key is up, then once
+- It sends Right three times and reads the steps for Undo: one; it sends Undo and reads the value from before them
 - It drags once, sends Undo and reads the value: the one before the drag
-- It presses, drags and sends keys to a disabled slider: the value as before, no bubble, the thumb at 100%
+- It presses, drags and sends keys to a disabled slider: the value as before, no bubble, the thumb at 100%; and reads its opacity: 45%
+- It reads the pointer over the thumb and during a drag: an open hand, a closed hand
+- It reads the thumb's colour under the pointer, and its edge on keyboard focus: changed, and the accent colour
+- It reads each slider's label: what it sets
 - With Reduce Motion on, it presses the thumb and reads its size: 100%; it presses the track and reads the thumb 20 ms later: already under the pointer
 - It reads the heights, the track's thickness, the thumb's size and the slider's width
 - It reads each slider's role and name, and the name again after a change: the new value in it

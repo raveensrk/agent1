@@ -17,10 +17,20 @@
            :check-window {:extra-paths ["test"]
                           :main-opts ["-m" "demo.window-page-check"]
                           :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
+           ;; The slider demo: two sliders over what one of them sets.
+           :slider {:main-opts ["-m" "demo.slider-page"]
+                    :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
+           ;; The slider's window checks: opens the real window for 40 s, behind
+           ;; whatever is in front; it takes neither the keyboard nor the pointer.
+           :check-slider {:extra-paths ["test"]
+                          :main-opts ["-m" "demo.slider-check"]
+                          :jvm-opts ["--enable-native-access=ALL-UNNAMED"
+                                     "-Dglass.taskbarApplication=false"]}
            ;; No test draws, so JavaFX is never started: no Dock icon, no toolkit.
            :test {:extra-paths ["test"]
                   :extra-deps {io.github.cognitect-labs/test-runner
                                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
-                  :main-opts ["-m" "cognitect.test-runner" "-n" "demo.button-test" "-n" "demo.window-test"]
+                  :main-opts ["-m" "cognitect.test-runner" "-n" "demo.button-test" "-n" "demo.window-test"
+                              "-n" "demo.slider-test"]
                   :jvm-opts ["-Dcljfx.skip-javafx-initialization=true"
                              "--enable-native-access=ALL-UNNAMED"]}}}

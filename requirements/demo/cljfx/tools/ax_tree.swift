@@ -8,7 +8,7 @@ func attr(_ e: AXUIElement, _ name: String) -> AnyObject? {
 }
 func walk(_ e: AXUIElement, _ depth: Int) {
     let role = attr(e, "AXRole") as? String ?? "?"
-    if ["AXButton", "AXCheckBox", "AXStaticText", "AXTabGroup", "AXRadioButton", "AXGroup"].contains(role) && depth > 1 {
+    if ["AXButton", "AXCheckBox", "AXStaticText", "AXTabGroup", "AXRadioButton", "AXGroup", "AXSlider"].contains(role) && depth > 1 {
         var names: CFArray?
         AXUIElementCopyActionNames(e, &names)
         let title = attr(e, "AXTitle") as? String ?? ""
