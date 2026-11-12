@@ -6,14 +6,21 @@
         org.openjfx/javafx-controls {:mvn/version "27.0.1"}}
  :aliases {:run {:main-opts ["-m" "demo.button"]
                  :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
+           ;; The window demo: tabs, several windows, panes.
+           :window {:main-opts ["-m" "demo.window"]
+                    :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
            ;; The window checks: opens the real window for 8 s.
            :check {:extra-paths ["test"]
                    :main-opts ["-m" "demo.window-check"]
                    :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
+           ;; The window demo's checks: opens real windows for 15 s.
+           :check-window {:extra-paths ["test"]
+                          :main-opts ["-m" "demo.window-page-check"]
+                          :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
            ;; No test draws, so JavaFX is never started: no Dock icon, no toolkit.
            :test {:extra-paths ["test"]
                   :extra-deps {io.github.cognitect-labs/test-runner
                                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
-                  :main-opts ["-m" "cognitect.test-runner" "-n" "demo.button-test"]
+                  :main-opts ["-m" "cognitect.test-runner" "-n" "demo.button-test" "-n" "demo.window-test"]
                   :jvm-opts ["-Dcljfx.skip-javafx-initialization=true"
                              "--enable-native-access=ALL-UNNAMED"]}}}

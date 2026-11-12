@@ -1,0 +1,73 @@
+/* The window demo's own styles, on top of glass.css. */
+
+/* The sidebar: regular glass that floats beside the content. */
+.glass-pane {
+    -fx-background-color: linear-gradient(to bottom, rgba(74, 74, 88, 0.62), rgba(44, 44, 56, 0.60));
+    -fx-background-radius: 16;
+    -fx-border-color: linear-gradient(to bottom right,
+        rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.10) 42%,
+        rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0.24) 100%);
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.30), 14, 0, 0, 4);
+}
+.solid .glass-pane { -fx-background-color: #2e2e34; -fx-border-color: #55555c; }
+.contrast .glass-pane { -fx-border-color: white; }
+
+/* A row of the sidebar: it lies on the glass, as a toolbar's buttons do. */
+.glass-pane .button.sidebar-item {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-min-width: 0;
+    -fx-min-height: 36; -fx-pref-height: 36;
+    -fx-padding: 0 10 0 10;
+    -fx-graphic-text-gap: 10;
+}
+.glass-pane .button.sidebar-item.icons { -fx-padding: 0; }
+.glass-pane .button.sidebar-item:hover { -fx-background-color: rgba(255, 255, 255, 0.10); }
+.glass-pane .button.sidebar-item:armed { -fx-background-color: rgba(255, 255, 255, 0.20); }
+/* The page a tab is on stays marked. */
+.glass-pane .button.sidebar-item.on { -fx-background-color: rgba(255, 255, 255, 0.18); }
+.glass-pane .button.sidebar-item:focus-visible { -fx-border-color: #4aa3ff; }
+
+/* A divider: one pixel to look at, nine to take hold of. */
+.divider-h { -fx-background-color: transparent, rgba(255, 255, 255, 0.16); -fx-background-insets: 0, 0 4 0 4; }
+.divider-v { -fx-background-color: transparent, rgba(255, 255, 255, 0.16); -fx-background-insets: 0, 4 0 4 0; }
+.divider-h:hover, .divider-v:hover, .divider-h.dragging, .divider-v.dragging {
+    -fx-background-color: transparent, #4aa3ff;
+}
+
+/* Side panels are content: solid, never glass. */
+.panel { -fx-background-color: #17171d; -fx-background-radius: 12; -fx-padding: 14; }
+.panel .heading { -fx-font-weight: bold; -fx-text-fill: white; }
+.page-title { -fx-font-size: 34px; -fx-font-weight: 300; -fx-text-fill: white; }
+
+/* Tabs: one bar under the toolbar, shown once there are two. */
+.tab-bar { -fx-background-color: rgba(18, 18, 24, 0.55); -fx-background-radius: 999; -fx-padding: 3; }
+.tab-item { -fx-background-radius: 999; -fx-padding: 0 4 0 14; -fx-min-height: 30; }
+.tab-item .label { -fx-text-fill: rgba(255, 255, 255, 0.70); }
+.tab-item:hover { -fx-background-color: rgba(255, 255, 255, 0.08); }
+.tab-item.on { -fx-background-color: rgba(255, 255, 255, 0.18); }
+.tab-item.on .label { -fx-text-fill: white; }
+.button.tab-close {
+    -fx-background-color: transparent; -fx-border-color: transparent;
+    -fx-min-width: 22; -fx-pref-width: 22; -fx-min-height: 22; -fx-pref-height: 22;
+    -fx-padding: 0; -fx-text-fill: rgba(255, 255, 255, 0.70);
+}
+.button.tab-close:hover { -fx-background-color: rgba(255, 255, 255, 0.16); -fx-text-fill: white; }
+
+/* A floating window: glass, and thick enough to read over anything under it. */
+.glass-pane.floater {
+    -fx-background-color: linear-gradient(to bottom, rgba(58, 58, 70, 0.92), rgba(36, 36, 46, 0.92));
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 24, 0, 0, 8);
+}
+.solid .glass-pane.floater { -fx-background-color: #2e2e34; }
+.floater-bar { -fx-padding: 6 6 6 12; -fx-border-color: transparent transparent rgba(255, 255, 255, 0.12) transparent; }
+.floater .heading { -fx-font-weight: bold; -fx-text-fill: white; }
+/* The corner that resizes it. */
+.float-grip { -fx-shape: "M12 0v12H0z"; -fx-background-color: rgba(255, 255, 255, 0.28); -fx-background-insets: 3; }
+.float-grip:hover { -fx-background-color: #4aa3ff; }

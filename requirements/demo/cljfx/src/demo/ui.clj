@@ -85,7 +85,7 @@
 (defn- handler ^EventHandler [f]
   (reify EventHandler (handle [_ e] (f e))))
 
-(defn- tween!
+(defn tween!
   "Animates each [property target] pair over `ms`, after `delay` ms. Whatever is
   still running under `k` on `node` stops first, so the new tween starts from
   where things are now."
