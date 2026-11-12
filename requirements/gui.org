@@ -22,14 +22,6 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Less code better than more code
 - Fast code is better than slow code
 - No code is better than bad code
-* The app must have a Window
-** A window can have multiple Tabs feature
-** Can have Multi window support
-** If the window have panes then it must be resizable
-- The divider between two panes drags to resize them, whether they sit side by side (width) or one above the other (height)
-- Each pane has a smallest and a largest size
-- The size is remembered between runs; one kept outside the limits comes back within them
-** In a narrow window the sidebar shrinks to icons only and side panels hide
 * Performance
 ** App must run at 60 fps
 ** Scrolling must be smooth
@@ -102,14 +94,96 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 - Restarts the way it was started, on the same data
 - Unsaved scratch work is saved first
 ** Save and restore state/session
-- Reopens at the same window position and size
-- Same tabs, screen and page as when it was left
+- See [[*A window comes back as it was left][A window comes back as it was left]]
 * UI/UX
 ** The app must have a Window
-*** A window can have multiple Tabs feature
-*** Can have Multi window support
-*** If the window have panes then it must be resizable
+*** A reference shows one way to build it
+- [[file:demo/cljfx/src/demo/window.clj][window.clj]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- Its rules are plain functions, tested without a window: =step=, =clamp-float=, =session= and =restore=
+- Its window checks, [[file:demo/cljfx/test/demo/window_page_check.clj][window_page_check.clj]], are the Verification lines below as code
+- The reference passes its own checks: =clojure -M:test= and =clojure -M:check-window=, run in =demo/cljfx=
+- This requirement decides, not the reference: where the two differ, the reference is wrong
+*** A window has a size it starts at and a smallest size
+- It opens at 960 by 600 px, and is never smaller than 480 by 400 px
+- It is named for the page it shows
+- A new window opens a step down and across from the last, so none hides another
+*** A window can have tabs
+- A new tab opens from the toolbar, the File menu and Cmd T, and becomes the one in front
+- Each tab keeps its own page
+- The tab bar shows once there are two tabs; with one tab there is none
+- A tab closes from its own close button, the File menu and Cmd W
+- Closing the tab in front moves to the one that takes its place, else the one before it; closing another leaves the one in front alone
+- Closing a window's last tab closes the window
+- Show Next Tab and Show Previous Tab are in the Window menu, each with a key, and go round at the ends
+*** An app can have several windows
+- A new window opens from the File menu and Cmd N
+- Each window has its own tabs and its own floating windows
+- [[*Panes][Panes]] are the same in every window: their sizes, and which are hidden
+- Closing the last window quits the app
+*** Floating windows open inside the window
+- A floating window opens from the toolbar, the Window menu and Cmd Shift F
+- It opens over the page, clear of the sidebar and under the toolbar; each next one a step down and across
+- It is named for the page it opened on, and keeps that page when the tab moves on
+- It has a title bar and a close button, and no minimise
+- Its title bar drags it; its bottom right corner resizes it, from 200 by 120 px to 480 by 360 px
+- It never leaves the window: it stops at every edge, and when the window shrinks it is drawn back inside
+- The place it was left at is kept: it goes back there when there is room again
+- A press anywhere on it brings it to the front
+- It does not block the page: a click beside it reaches what is under
+- It fades in and grows slightly as it opens; under Reduce Motion it only fades
+*** A window comes back as it was left
+- The app reopens with the same windows, each at the same place and size
+- Each with the same tabs, on the same pages, the same tab in front, and its floating windows where they were
+- What is kept is plain text, one file, written whole or not at all
+- It is written once things have been still for 400 ms, off the UI thread, and once more at quit; never at every change
+- Closing the last window quits, and does not empty what is kept: the app comes back to the windows it had before
+- Nothing kept is trusted: a window off every screen comes back where a first window opens, one too small at the smallest size, a page no longer known as the first page
+- A file that cannot be read is moved aside, never written over, and the app opens as new
+*** Verification
+- Unit tests, with no window: tabs opening, closing and going round, each tab's own page, a window closing with its last tab, each window's own tabs, a floating window kept inside and its place kept, a session the same after a trip through text, and each untrusted thing in one coming back safe
+- A window check reads the File menu's commands, and that every command has a key
+- It opens a tab, moves it to another page, goes back to the first and reads the first tab's own page; it closes a tab from its button, and reads the tab bar gone
+- It opens a second window, gives it a tab and reads each window's own; it closes that window's tabs and reads one window left
+- It opens a floating window and reads its place and size; drags it by its bar, past every edge; resizes it past both limits; opens a second and presses the first to the front
+- It narrows the window with a floating window at its far corner and reads both inside; it clicks the page beside them and reads the click taken
+- It moves and resizes the window, opens a tab and a floating window, writes the session, closes every window and opens what was kept: the same place, size, tabs, page and floating window
+- It changes a page and reads the file: unchanged at once, changed 700 ms later; it closes every window and reads one window still kept
+- It writes a file that cannot be read, and reads it moved aside and the session as none
+** Panes
+*** A reference shows one way to build them
+- The panes of [[file:demo/cljfx/src/demo/window.clj][window.clj]], the reference of [[*The app must have a Window][The app must have a Window]]: a sidebar, a side panel and a pane under the page
+- Their rules are plain functions, tested without a window: =layout=, =fit= and =clamp-size=
+- This requirement decides, not the reference: where the two differ, the reference is wrong
+*** Panes resize
+- The divider between two panes drags to resize them, whether they sit side by side (width) or one above the other (height)
+- A divider is 1 px to look at and 9 px to take hold of; over it the pointer shows which way it drags
+- The divider is marked while it is dragged
+- Each pane has a smallest and a largest size, and a size it starts at; a double click on its divider puts it back to that
+- The size is remembered between runs; one kept outside the limits comes back within them
+- A size is written when the drag ends, not at every move of it
+- The page keeps a smallest room of its own, 280 px wide: when a window has no room for the panes at their kept sizes, the side panel gives way first and then the sidebar, each down to its smallest; the kept sizes do not change
+*** A pane can be hidden
+- The sidebar and each side panel hide and show from a toolbar button, the View menu and a key: three ways, so a hidden pane is never lost
+- The menu and the button say what they will do: Hide Sidebar, Show Sidebar
+- A pane the user hid stays hidden at any width
+- Which panes are hidden is remembered between runs
 *** In a narrow window the sidebar shrinks to icons only and side panels hide
+- A window under 720 px wide is narrow
+- The sidebar shrinks to 56 px, icons only; each icon keeps its name as a tooltip
+- Side panels hide, their dividers with them; a side panel's button is off meanwhile, and its tooltip says why
+- Wide again, each comes back at its kept size
+- The change glides in 200 ms; under Reduce Motion it happens at once
+- A drag, or the window being resized, never glides: the pane follows at once
+*** Verification
+- Unit tests, with no window: the narrow rule at 719 and 720 px, a hidden pane at any width, the page's room at 760 px, a pane's limits, a divider following the pointer
+- A window check drags each divider and reads the pane: following the pointer, stopping at its smallest and its largest, and back to its start on a double click
+- It reads the kept size while dragging and after letting go: nothing, then the size; and a size kept outside the limits read back within them
+- It sets both side panes to their largest at 760 px and reads the page: 280 px or more
+- It narrows the window to 600 px and reads the sidebar 100 ms later, between 56 px and its full width, then at 56 px with no words and a tooltip; the side panel at 0 and its button off
+- It widens the window and reads both back at their kept sizes; with Reduce Motion on, it reads the sidebar at 56 px 70 ms after narrowing
+- It hides the sidebar from the toolbar, reads the View menu's "Show Sidebar", and fires it
+- It hides a side panel, closes every window and opens what was kept: still hidden
+- It counts frames through two glides each way and a divider drag: 55 a second or more
 ** Alignment, positioning and centering must be proper
 ** Add a native file menu
 ** The menu bar and the sidebar are each one list in the requirements
@@ -119,7 +193,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable
 For example:
-- Between panes
+- Between panes, as [[*Panes resize][Panes resize]] says
 - Between sections
 ** Use icons when possible
 ** Lists
