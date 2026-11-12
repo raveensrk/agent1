@@ -12,6 +12,11 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Plan before implementation
 ** Follow Apple Design as much as possible
 - The AI agent must consult [[https://developer.apple.com/design/][Apple Design]] before designing anything
+** The GUI toolkit is JavaFX, through cljfx
+- Chosen on 2026-11-13 over a native SwiftUI window, for its checks: a window check runs inside the app, reads any control mid-animation and sends clicks and keys without moving the pointer
+- Given up for it: true Liquid Glass. JavaFX cannot blur or bend what is behind a control, so glass is drawn as [[*Glass shows what is behind it][Glass shows what is behind it]] says
+- Everything the system would have given is built and checked by hand: the press, the glass, Reduce Motion, Reduce Transparency, Increase Contrast and the screen reader's names
+- To be looked at again if native window checks prove to run from one command, with no pointer taken over
 * Coding Guidelines
 - Follow KISS (Keep it simple stupid) philosophy
 - Less code better than more code
