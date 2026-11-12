@@ -58,8 +58,10 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Buttons in a pair, as Cancel and Delete, are equal width: that of the wider
 ** Buttons and the screen reader
 - Every button has the role of a button and a name; an icon alone is named in words
-- A second action is said with the name, and is reached without holding, from the right-click menu
-- A disabled button says why it is off
+- macOS is given a JavaFX control's name, role and the word for its kind, and nothing else: no help text, and not whether it is on. What must be said goes in those
+- A second action is said in the name, "Add 1. Hold: Add 10", and is reached without holding, from the right-click menu
+- A disabled button is called a dimmed button, and its name says why it is off
+- What macOS is given is read from macOS itself, not from the toolkit: [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]] prints it for a running app
 ** Verification
 - A window check presses a button and reads its size: 100% at rest, 97% pressed, 97% after 1.5 s held, 100% once released
 - It holds a button with a second action for 500 ms and counts one second action and no click

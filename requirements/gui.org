@@ -40,6 +40,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 *** Glass shows what is behind it
 - What is behind a glass control shows through it, softened
 - A bright rim follows its top left edge, and a soft shadow lies under it
+- A shadow takes no click: glass is picked on its shape, and a container on what it holds, never on bounds that a shadow has widened
 - Where the toolkit cannot blur or bend what is behind, glass is a see-through fill with the rim and the shadow, and the docs say so
 *** Shapes are capsules and concentric
 - A control is a capsule: its corner radius is half its height
@@ -195,6 +196,11 @@ Don't cache on every app start or you may hit bandwidth or api issues
 ** Take screenshots or record a video of yourself for testing the app when automated test is not possible.
 Use this as a last resort.
 ** Testing should not hinder development speed
+** A window check sends its events the way a pointer does
+- A mouse or key event goes to the scene, which picks what is under it; never straight to a control
+- Sent straight to a control, an event reaches it even when something covers it, and the check passes on an app nobody can use: a divider that no real drag could move passed 83 such checks
+- A check that sends a press where a control is, and reads that the control took it, proves the control can be reached
+- A real-pointer proof exists beside the checks, [[file:demo/cljfx/tools/real_pointer.clj][real_pointer.clj]]: it moves the pointer, so it is run by hand, and after any change to what lies over what
 * Development
 - When applicable use REPL during development
 - Follow Mockup based development for design
