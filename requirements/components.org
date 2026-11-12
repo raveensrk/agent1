@@ -84,5 +84,86 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - With Reduce Motion on, it clicks a button that goes busy and reads its width 80 ms later: already settled
 ** Ideas
 - Read: [[file:buttons.png][Button Ideas]]
+* Sliders
+** A slider sets one value between two ends
+- One thumb on a level track; the value is continuous, any point between the two ends
+- A slider has a label that names what it sets, and a default value
+- No stepped slider and no slider with two thumbs: a need for one is a new requirement
+** A slider looks like a track and a glass capsule
+- The track is 4 px to look at and 44 px to take hold of, the height of a button
+- The thumb is a glass capsule, 28 by 20 px
+- The track is filled in the accent colour from its start up to the thumb; the rest is plain
+- A slider is 120 px wide or wider
+- A notch on the track marks the default value
+- Over the thumb the pointer is an open hand, and a closed hand while it drags
+** The thumb answers a press
+- Hover: the thumb eases to its hover shade in 120 ms
+- Press: the thumb grows to 110% of its size in 120 ms, and stays so for as long as it is held
+- Moving, the thumb stretches along the track, up to 36 px wide, and more the faster it moves
+- Release: it springs back to 28 by 20 px in 420 ms, overshooting a little before it settles
+- Under Reduce Motion it neither grows nor stretches; it only changes colour
+** A drag moves the thumb
+- The thumb follows the pointer at once; a drag never glides
+- The drag goes on with the pointer above or below the slider, and off the window
+- Past an end the thumb stops at that end, and takes up again when the pointer comes back
+- Within 4 px of the notch the thumb snaps to the default value
+- A press on the track, away from the thumb, glides the thumb to the pointer in 120 ms, and the same press goes on as a drag
+- Under Reduce Motion the thumb lands there at once
+- A double click puts the slider back to its default value
+- Scrolling over a slider does not move it: the page under it scrolls
+** A bubble shows the value while it changes
+- At rest a slider shows no number
+- While the thumb is held a bubble sits over it with the value in its unit, "40%", and follows it
+- The bubble fades in over 120 ms on the press and out over 120 ms on the release
+- After a key press it shows for 1 s
+- The bubble is glass, and its words read at 4.5:1
+- It is never clipped by the window's edge: near one it slides sideways and stays whole
+- The slider's tooltip says the value too, so it is read without a change
+** The value is written when the drag ends
+- What the slider sets follows the thumb live, through the whole drag
+- The value is written once, on the release, not at every move
+- Escape during a drag puts the thumb and what it sets back to where the drag began, and writes nothing; the rest of that press does nothing
+- One drag is one step for Undo, and so is a double click
+** The keyboard moves a focused slider
+- Left and Down lower it by 1% of the range, Right and Up raise it by 1%
+- With Shift they move it 10%
+- Home goes to the low end and End to the high end
+- Each key press writes the value; a held key writes once, when it is let go
+- Key presses less than 1 s apart are one step for Undo
+- A key at an end does nothing, and nothing is written
+** Slider states
+- Focused: a ring in the accent colour round the thumb, on keyboard focus
+- Disabled: 45% opacity; it answers no hover, press, drag or key, and shows no bubble
+- A disabled slider's tooltip says why it is off
+** Sliders and the screen reader
+- Every slider has the role of a slider and a name
+- The name carries the value, "Volume, 40%", for as long as macOS is given a name and a role and nothing else
+- A disabled slider is called dimmed, and its name says why it is off
+- What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
+** Verification
+- A window check sends its events the way a pointer does
+- It drags the thumb to the middle and reads the value: half the range, and the thumb under the pointer
+- It reads the value written during the drag and after letting go: nothing, then the value
+- It reads what the slider sets halfway through a drag: already following
+- It drags past each end and reads the value: the low end, the high end, and no further
+- It drags, sends Escape and lets go: the value from before the drag, and nothing written
+- It presses the track away from the thumb and reads the thumb 60 ms later: left its place, not yet under the pointer; then it drags on and the thumb follows
+- It drags to 3 px from the notch and reads the value: the default
+- It double clicks and reads the value: the default, written once
+- It scrolls over the slider and reads the value and the page: the value as before, the page moved
+- It reads the thumb's size at rest, held, 1.5 s held and once released: 100%, 110%, 110%, 100%
+- It reads the thumb's width in a fast drag and once settled: wider than 28 px, then 28 px
+- It reads the bubble at rest, held, and after the release: none, the value in its unit, none
+- It drags to each end and reads the bubble's edges: inside the window
+- It sends Right, Shift+Right, Home and End to a focused slider and reads the value after each: up 1%, up 10%, the low end, the high end
+- It sends Left at the low end and counts nothing written
+- It drags once, sends Undo and reads the value: the one before the drag
+- It presses, drags and sends keys to a disabled slider: the value as before, no bubble, the thumb at 100%
+- With Reduce Motion on, it presses the thumb and reads its size: 100%; it presses the track and reads the thumb 20 ms later: already under the pointer
+- It reads the heights, the track's thickness, the thumb's size and the slider's width
+- It reads each slider's role and name, and the name again after a change: the new value in it
+- It reads the tooltip of a slider and of a disabled one
+- It draws the bubble without its words and reads the contrast of the words over the middle of it: 4.5 or more
+- It counts frames through three drags and three track presses: 55 a second or more
 * Status bar at the bottom :optional:
 * Message bar at the bottom :optional:
