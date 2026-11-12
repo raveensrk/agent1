@@ -14,6 +14,9 @@ Testing requires these rules. You are allowed to bypass these rules with user pe
 - An agent may open the app on invented data and drive it; it never opens the real data.
 - A look, at a snapshot or a window, is a self-check while building and never verifies anything.
 - To show the owner something live, an agent asks in one message: what to open, numbered steps, what to look for.
+* A GUI app opened for automated testing launches in the background
+When a GUI app is opened for an automated test or check, it is always launched in the background.
+- It does not come to the front, and it does not take the keyboard or the pointer from what the owner is doing.
 * The commit hook runs related tests only
 The commit hook runs the tests related to the staged files, never the full suite.
 * One command runs every test, in parallel, each suite in a clean room
