@@ -112,12 +112,11 @@
 
 (defn said
   "What a screen reader says for a slider, as its name and the kind of thing it
-  is. The value goes in the name, and so does the reason a slider is off; one
-  that is off is called dimmed, as macOS calls its own."
-  [{:keys [name disabled tip] :as model} value]
-  {:name (if (and disabled tip)
-           (str name ". " tip)
-           (str name ", " (value-text model value)))
+  is. The name is what the slider sets and nothing more: macOS is given the
+  value itself, and says it. The reason a slider is off goes in the name, and
+  one that is off is called dimmed, as macOS calls its own."
+  [{:keys [name disabled tip]}]
+  {:name (if (and disabled tip) (str name ". " tip) name)
    :kind (when disabled "dimmed slider")})
 
 (defn tip-text
@@ -232,7 +231,7 @@
                      (.resizeRelocate bubble (bubble-left x bw lo hi)
                                       (- cy (/ thumb-h 2.0) bubble-gap bh) bw bh))))
         say! (fn []
-               (let [{:keys [name kind]} (said @model (.get value))]
+               (let [{:keys [name kind]} (said @model)]
                  (.setAccessibleText pane name)
                  (.setAccessibleRoleDescription pane kind)))
         tell! (fn [k extra]
@@ -363,7 +362,8 @@
     (.addListener value (listener (fn []
                                     (.setText bubble (value-text @model (.get value)))
                                     (place!)
-                                    (say!)
+                                    ;; A screen reader is told the value has changed.
+                                    (.notifyAccessibleAttributeChanged pane AccessibleAttribute/VALUE)
                                     (when-not @quiet (tell! :live {:value (.get value)})))))
     (.addListener stretch (listener place!))
     (.addListener (.widthProperty pane) (listener place!))

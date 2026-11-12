@@ -145,7 +145,9 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - A disabled slider's tooltip says why it is off
 ** Sliders and the screen reader
 - Every slider has the role of a slider and a name
-- The name carries the value, "Volume, 40%", for as long as macOS is given a name and a role and nothing else
+- The name is what the slider sets, "Volume", with no value in it: macOS is given the value and says it, so in the name it would be said twice
+- The value is given as a bare number, without its unit
+- A screen reader is told when the value changes, and its raise and lower move the slider 1% and write it
 - A disabled slider is called dimmed, and its name says why it is off
 - What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
 - Read so on 2026-11-13: macOS is given a slider's name, its role, its value as a bare number, "30", and two actions, raise and lower
@@ -176,7 +178,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It reads each slider's label: what it sets
 - With Reduce Motion on, it presses the thumb and reads its size: 100%; it presses the track and reads the thumb 20 ms later: already under the pointer
 - It reads the heights, the track's thickness, the thumb's size and the slider's width
-- It reads each slider's role and name, and the name again after a change: the new value in it
+- It reads each slider's role, name and value as a screen reader asks for them, and again after a change: the same name, the new value
 - It reads the tooltip of a slider and of a disabled one
 - It draws the bubble without its words and reads the contrast of the words over the middle of it: 4.5 or more
 - It counts frames through three drags and three track presses: 55 a second or more

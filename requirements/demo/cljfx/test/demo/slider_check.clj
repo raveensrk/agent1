@@ -396,13 +396,15 @@
            (on-fx #(mapv (fn [^Node n] (.getText ^Label (first (.getChildrenUnmodifiable (.getParent n))))) [b v])))
     (check "each is a slider to a screen reader" [AccessibleRole/SLIDER AccessibleRole/SLIDER]
            (on-fx #(mapv (fn [^Node n] (.getAccessibleRole n)) [b v])))
-    (check "its name carries the value" "Brightness, 20%" (on-fx #(.getAccessibleText b)))
+    (check "its name is what it sets, with no value in it" "Brightness" (on-fx #(.getAccessibleText b)))
     (check "and a screen reader can ask for the value itself" 20.0
            (on-fx #(.queryAccessibleAttribute b AccessibleAttribute/VALUE (object-array 0))))
     (on-fx #(.requestFocus b))
     (tap! KeyCode/RIGHT)
     (Thread/sleep 200)
-    (check "after a change, the new value is in the name" "Brightness, 21%" (on-fx #(.getAccessibleText b)))
+    (check "after a change, it is asked again: the new value, and the same name" [21.0 "Brightness"]
+           (on-fx #(vector (.queryAccessibleAttribute b AccessibleAttribute/VALUE (object-array 0))
+                           (.getAccessibleText b))))
     (check "off, it is called dimmed and says why, in its name"
            ["Volume. Muted: untick Mute to change the volume." "dimmed slider"]
            (on-fx #(vector (.getAccessibleText v) (.getAccessibleRoleDescription v))))
