@@ -196,6 +196,13 @@ For example:
 - Between panes, as [[*Panes resize][Panes resize]] says
 - Between sections
 ** Use icons when possible
+- Icons come from [[https://phosphoricons.com][Phosphor Icons]], regular weight; one set, so every icon is drawn the same way
+- Each is one filled path on a 256 px box, copied unchanged from [[https://github.com/phosphor-icons/core][its repo]] and named for its file there
+- Its colour comes from the stylesheet, never from the path
+- Its licence, MIT, is kept beside the icons and goes wherever they go
+- [[https://developer.apple.com/sf-symbols/][SF Symbols]] are not used: their licence covers apps on Apple platforms, not a public repo or another platform
+- The reference is [[file:demo/cljfx/src/demo/icons.clj][icons.clj]], drawn by =icon-view= in [[file:demo/cljfx/src/demo/ui.clj][ui.clj]]
+- A unit test reads every icon as one path, and an unknown name as an error
 ** Lists
 - Each page remembers its view and sort between runs
 - Any sort can be reversed
