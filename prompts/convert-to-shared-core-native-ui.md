@@ -1,14 +1,29 @@
-# Convert an existing app to a shared core + CLI + native apps
+# Convert an existing app to a shared core + CLI + GUI apps
 
-Migrate this existing codebase to a **shared core with a CLI and a native macOS GUI**, plus optional extra apps. You don't need to keep a working app or version during the migration. Breakage is acceptable. The final version must be well tested and working.
+Migrate this existing codebase to a **shared core with a CLI and a macOS GUI**,
+plus optional extra apps. You don't need to keep a working app or version during
+the migration. Breakage is acceptable. The final version must be well tested and
+working.
 
 **Goal: the best possible user experience on every platform.** Each app must feel like it was made for its platform: follow that platform's conventions (for example the Apple Human Interface Guidelines on macOS, the GNOME HIG on Linux, and standard flags, help and exit codes for the CLI). When you weigh stack choices, user experience comes first.
 
-- **Targets.** CLI app and native macOS GUI app. Both are mandatory and both use the shared core. The mandatory macOS GUI must use a native macOS toolkit; a cross-platform GUI does not count.
-- **Optional.** Any number of extra apps on the same core: a TUI, a native Linux GUI, more GUIs on the same platform (for example a Swift, a Clojure and a Rust app on macOS), or cross-platform apps. Extra apps may use any toolkit. After both mandatory targets are done and tested, ask me which extra apps to build.
+- **Targets.** CLI app and macOS GUI app. Both are mandatory and both use the
+  shared core. The mandatory macOS GUI uses JavaFX, through cljfx: the toolkit
+  [gui.org](../requirements/gui.org) chose for its window checks, which run
+  inside the app. Read that requirement before starting. A native macOS toolkit
+  is an optional extra, not the mandatory GUI.
+- **Optional.** Any number of extra apps on the same core: a TUI, a native macOS
+  GUI, a native Linux GUI, more GUIs on the same platform (for example a Swift,
+  a Clojure and a Rust app on macOS), or cross-platform apps. Extra apps may use
+  any toolkit. After both mandatory targets are done and tested, ask me which
+  extra apps to build.
 - **Full feature parity.** Before starting, list the current app's features. Each GUI and TUI app you build must have every feature. The CLI must have every feature that fits a command; list the features it skips and why. Check each feature off when it works.
 - **Tests.** Unit tests for `core`, integration tests for the CLI, UI tests for every other app you build. A cross-platform app is tested on each platform it supports. On each platform, one command runs every test for the apps `apps.rec` lists for that platform, and all must pass.
-- **Stack choices.** You choose the core language, the CLI language, the macOS UI framework and the bridge to `core`. Tell me each choice and why before starting. For each extra app, you also choose its language and toolkit; tell me those choices and why when I approve building it.
+- **Stack choices.** You choose the core language, the CLI language and the
+  bridge to `core`. The mandatory macOS GUI's toolkit is already chosen, above.
+  Tell me each choice and why before starting. For each extra app, you also
+  choose its language and toolkit; tell me those choices and why when I approve
+  building it.
 - **One repo.** All apps and the core live in the same repo, even when they use different programming languages. Layout at the repo root:
   - `core/`: shared logic with one public API.
   - `core/bindings/<lang>/`: one binding per language, shared by every app in that language.
