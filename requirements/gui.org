@@ -1,4 +1,5 @@
 #+TITLE: GUI
+#+STARTUP: fold
 
 Not all of this is applicable to all apps. So pick and choose which is necessary for a well designed and performant app.
 
@@ -68,6 +69,11 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Reopens at the same window position and size
 - Same tabs, screen and page as when it was left
 * UI/UX
+** The app must have a Window
+*** A window can have multiple Tabs feature
+*** Can have Multi window support
+*** If the window have panes then it must be resizable
+*** In a narrow window the sidebar shrinks to icons only and side panels hide
 ** Alignment, positioning and centering must be proper
 ** Add a native file menu
 ** The menu bar and the sidebar are each one list in the requirements
@@ -168,3 +174,5 @@ Use this as a last resort.
 ** Testing should not hinder development speed
 * Development
 - When applicable use REPL during development
+- Follow Mockup based development for design
+Design Idea -> Design Requirement -> Code Design Mockup -> Code Deisgn Approval -> Approve Requirement -> Start Implementation -> Review and Confirm if the output matches the mockups
