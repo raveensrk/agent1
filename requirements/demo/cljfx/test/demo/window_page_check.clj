@@ -1,6 +1,7 @@
 (ns demo.window-page-check
   "The window checks of requirements/windows.org: The app must have a Window,
-  and Panes. Opens the real windows and sends them mouse events; nothing moves the pointer.
+  and Panes. Opens the real windows and sends them mouse events through the scene, which picks
+  what is under each as it does for a real pointer; nothing moves the pointer.
 
       clojure -M:check-window"
   (:require [cljfx.api :as fx]
@@ -13,7 +14,8 @@
            [javafx.scene.control Button ButtonBase Labeled MenuBar MenuItem Tooltip]
            [javafx.scene.input MouseButton MouseEvent]
            [javafx.scene.layout Region]
-           [javafx.stage Stage Window]))
+           [javafx.stage Stage Window]
+           [com.sun.javafx.scene SceneHelper]))
 
 (defn- on-fx [f]
   (let [p (promise)]
@@ -42,21 +44,52 @@
 (defn- width [id] (Math/round (double (on-fx #(.getWidth ^Region (node* id))))))
 (defn- height [id] (Math/round (double (on-fx #(.getHeight ^Region (node* id))))))
 
-(defn- mouse! [^Node target type x y clicks]
-  (on-fx #(Event/fireEvent target (MouseEvent. type x y x y MouseButton/PRIMARY clicks
-                                               false false false false
-                                               (= type MouseEvent/MOUSE_DRAGGED) false false
-                                               true false false nil))))
+(defn- pointer!
+  "One mouse event at a place in the first window, sent the way a real pointer's
+  is: the scene picks what is under it. Nothing is sent to a node directly, so
+  a control that something else covers is found out. The pointer itself is not
+  moved."
+  [type x y]
+  (on-fx #(SceneHelper/processMouseEvent
+            (.getScene ^Stage (first (stages*)))
+            (MouseEvent. type x y x y MouseButton/PRIMARY 1
+                         false false false false
+                         (not= type MouseEvent/MOUSE_RELEASED) false false
+                         false false false nil))))
+
+(defn- centre
+  "The middle of a node, as a place in the window. On the FX thread."
+  [^Node n]
+  (let [b (.localToScene n (.getLayoutBounds n))]
+    [(/ (+ (.getMinX b) (.getMaxX b)) 2.0) (/ (+ (.getMinY b) (.getMaxY b)) 2.0)]))
+
+(defn- mouse!
+  "A mouse event at x, y in the window, or at the middle of `target` when they
+  are nil. `target` is only where it is meant to land: the scene picks. A click
+  is a press and a release, `clicks` times."
+  [^Node target type x y clicks]
+  (let [[x y] (if x [x y] (on-fx #(centre target)))]
+    (if (= type MouseEvent/MOUSE_CLICKED)
+      (dotimes [_ clicks]
+        (pointer! MouseEvent/MOUSE_PRESSED x y)
+        (pointer! MouseEvent/MOUSE_RELEASED x y))
+      (pointer! type x y))))
+
+(def held (atom nil))
 
 (defn- drag!
-  "Drags the divider of `pane` to a place in the window, and lets go."
+  "Drags the divider of `pane` to a place in the window: a press on the middle
+  of the divider first, if it is not held already."
   [pane x y]
-  (let [d (node (str "divider-" (name pane)))]
-    (mouse! d MouseEvent/MOUSE_DRAGGED x y 0)
-    (Thread/sleep 150)))
+  (when (not= pane @held)
+    (mouse! (node (str "divider-" (name pane))) MouseEvent/MOUSE_PRESSED nil nil 1)
+    (reset! held pane))
+  (pointer! MouseEvent/MOUSE_DRAGGED x y)
+  (Thread/sleep 150))
 
-(defn- let-go! [pane]
-  (mouse! (node (str "divider-" (name pane))) MouseEvent/MOUSE_RELEASED 0 0 0)
+(defn- let-go! [_pane]
+  (pointer! MouseEvent/MOUSE_RELEASED 0 0)
+  (reset! held nil)
   (Thread/sleep 150))
 
 (defn- scene-size [] (on-fx #(let [s (.getScene ^Stage (first (stages*)))] [(.getWidth s) (.getHeight s)])))
@@ -140,7 +173,7 @@
     (let-go! :bottom)
     (Thread/sleep 700)
     (check "a height is kept too" 80.0 (kept :bottom))
-    (mouse! (node "divider-sidebar") MouseEvent/MOUSE_CLICKED 0 0 2)
+    (mouse! (node "divider-sidebar") MouseEvent/MOUSE_CLICKED nil nil 2)
     (Thread/sleep 200)
     (check "a double click puts the pane back" 220 (width "sidebar"))
 
@@ -218,7 +251,7 @@
     (Thread/sleep 300)
     (check "the new tab goes to Notes" "Notes" (on-fx #(.getText ^Labeled (node* "page-title"))))
     (check "the window is named for the page" "Notes" (on-fx #(.getTitle ^Stage (first (stages*)))))
-    (mouse! (on-fx #(first (.getChildrenUnmodifiable ^Parent (node* "tab-bar")))) MouseEvent/MOUSE_CLICKED 5 5 1)
+    (mouse! (on-fx #(first (.getChildrenUnmodifiable ^Parent (node* "tab-bar")))) MouseEvent/MOUSE_CLICKED nil nil 1)
     (Thread/sleep 300)
     (check "the first tab kept its own page" "Inbox" (on-fx #(.getText ^Labeled (node* "page-title"))))
     (on-fx #(.fire ^ButtonBase (second (.getChildrenUnmodifiable ^Parent (first (.getChildrenUnmodifiable ^Parent (node* "tab-bar")))))))
@@ -279,6 +312,7 @@
         (check "at every edge" [0 0] (subvec (place "float-1") 0 2))
         (mouse! (bar "float-1") MouseEvent/MOUSE_RELEASED 0 0 0))
       (let [[x y] (point "float-1" 340 200)]
+        (mouse! (grip "float-1") MouseEvent/MOUSE_PRESSED nil nil 1)
         (mouse! (grip "float-1") MouseEvent/MOUSE_DRAGGED x y 0)
         (Thread/sleep 200)
         (check "its corner resizes it" [340 200] (subvec (place "float-1") 2 4)))
@@ -296,7 +330,9 @@
       (check "a second opens a step away, in front"
              ["float-2" [(+ 28 (Math/round (/ (- (first (layer-size)) 260.0) 2.0))) 118]]
              [(front) (subvec (place "float-2") 0 2)])
-      (mouse! (node "float-1") MouseEvent/MOUSE_PRESSED 5 5 1)
+      (let [[x y] (point "float-1" 10 60)]
+        (mouse! (node "float-1") MouseEvent/MOUSE_PRESSED x y 1)
+        (mouse! (node "float-1") MouseEvent/MOUSE_RELEASED x y 1))
       (Thread/sleep 200)
       (check "a press brings the first to the front" "float-1" (front))
       (let [[x y] (point "float-2" 30 12)]

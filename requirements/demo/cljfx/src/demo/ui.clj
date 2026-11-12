@@ -321,6 +321,29 @@
 
 ;;; The views
 
+(defn said
+  "What a screen reader says for a button, as its name and the kind of thing it
+  is. macOS is given a JavaFX control's name, role and role description and
+  nothing else: no help text, and not whether it is enabled. So a second
+  action and the reason a button is off go into the name, and a button that is
+  off is called dimmed, as macOS calls its own."
+  [{:keys [name text hold-text disabled tip]}]
+  (let [base (or name text)]
+    {:name (cond
+             (and disabled tip (not= tip base)) (str base ". " tip)
+             hold-text (str base ". Hold: " hold-text)
+             :else base)
+     :kind (when disabled "dimmed button")}))
+
+(defn- say!
+  [^Button button {:keys [name kind]}]
+  (.setAccessibleText button name)
+  (.setAccessibleRoleDescription button kind))
+
+(def ext-said
+  (fx/make-ext-with-props
+    {::said (prop/make (mutator/setter say!) lifecycle/scalar)}))
+
 (def icon-size 18.0)
 
 (defn icon-view
@@ -361,7 +384,6 @@
   {:fx/type fx/ext-on-instance-lifecycle
    :on-created (fn [^Pane box]
                  (let [[^Button button & more] (.getChildren box)]
-                   (.setAccessibleText button (or name text))
                    (answer-press! box button (when hold (first more))
                                   (when hold #(dispatch hold)))))
    :desc
@@ -374,6 +396,7 @@
                     :regular ["glass-group"]
                     [])
      :padding (if glass glass-padding 0)
+     :pick-on-bounds false
      :max-width (if fill Double/MAX_VALUE :use-pref-size)
      :max-height :use-pref-size
      :children
@@ -412,7 +435,10 @@
                                                     :pref-width spinner-size
                                                     :pref-height spinner-size}]
                                             mark (conj {:fx/type icon-view :icon mark
-                                                        :size spinner-size}))}))))]
+                                                        :size spinner-size}))})))
+                ;; What a screen reader says, kept in step with the button.
+                true
+                (#(hash-map :fx/type ext-said :props {::said (said props)} :desc %)))]
        hold (conj {:fx/type :region
                    :style-class "hold-fill"
                    :mouse-transparent true
@@ -433,6 +459,9 @@
   [{:keys [tinted children]}]
   {:fx/type :h-box
    :style-class (cond-> ["glass-group"] tinted (conj "tinted"))
+   ;; Picked on its shape: glass has a shadow, and a shadow is part of a node's
+   ;; bounds in JavaFX, so on its bounds it would take the clicks around it.
+   :pick-on-bounds false
    :alignment :center
    :spacing 2
    :padding glass-padding

@@ -1,6 +1,8 @@
 (ns demo.window-check
   "The window checks of Buttons, in requirements/components.org, and of Liquid
-  Glass, in requirements/gui.org. Opens the real window and sends it mouse and key events; nothing moves the pointer.
+  Glass, in requirements/gui.org. Opens the real window and sends it mouse and
+  key events through the scene, which picks what is under each as it does for a
+  real pointer; nothing moves the pointer.
 
       clojure -M:check"
   (:require [cljfx.api :as fx]
@@ -15,7 +17,8 @@
            [javafx.scene.control Button Tooltip]
            [javafx.scene.input KeyCode KeyEvent MouseButton MouseEvent]
            [javafx.scene.paint Color]
-           [javafx.stage Window]))
+           [javafx.stage Window]
+           [com.sun.javafx.scene SceneHelper]))
 
 (defn- on-fx [f]
   (let [p (promise)]
@@ -25,17 +28,48 @@
 (defn- button ^Button [id]
   (on-fx #(.lookup (.getRoot (.getScene ^Window (first (Window/getWindows)))) (str "#" id))))
 
-(defn- mouse! [^Button btn type]
-  (on-fx #(Event/fireEvent btn (MouseEvent. type 10 10 10 10 MouseButton/PRIMARY 1
-                                            false false false false
-                                            (not= type MouseEvent/MOUSE_RELEASED) false false
-                                            true false false nil))))
+(def ^:private at
+  "Where the simulated pointer last was, in the window."
+  (atom [0.0 0.0]))
+
+(defn- pointer!
+  "One mouse event at a place in the window, sent the way a real pointer's is:
+  the scene picks what is under it. Nothing is sent to a button directly, so a
+  button that something else covers is found out. The pointer is not moved."
+  [type [x y]]
+  (reset! at [x y])
+  (on-fx #(SceneHelper/processMouseEvent
+            (.getScene ^Window (first (Window/getWindows)))
+            (MouseEvent. type x y x y MouseButton/PRIMARY 1
+                         false false false false
+                         (not= type MouseEvent/MOUSE_RELEASED) false false
+                         false false false nil))))
+
+(defn- centre [^Button btn]
+  (on-fx #(let [b (.localToScene btn (.getLayoutBounds btn))]
+            [(/ (+ (.getMinX b) (.getMaxX b)) 2.0) (/ (+ (.getMinY b) (.getMaxY b)) 2.0)])))
+
+(defn- mouse!
+  "A press on the middle of the button; a release wherever the pointer is; a
+  leave as a drag to 150 px under the button, and an enter as a drag back."
+  [^Button btn type]
+  (condp = type
+    MouseEvent/MOUSE_PRESSED (pointer! type (centre btn))
+    MouseEvent/MOUSE_RELEASED (pointer! type @at)
+    MouseEvent/MOUSE_EXITED (pointer! MouseEvent/MOUSE_DRAGGED (update (centre btn) 1 + 150.0))
+    MouseEvent/MOUSE_ENTERED (pointer! MouseEvent/MOUSE_DRAGGED (centre btn))))
 
 (defn- press! [btn] (mouse! btn MouseEvent/MOUSE_PRESSED))
 (defn- release! [btn] (mouse! btn MouseEvent/MOUSE_RELEASED))
 
-(defn- key! [^Button btn type ^KeyCode code]
-  (on-fx #(Event/fireEvent btn (KeyEvent. type "" "" code false false false false))))
+(defn- key!
+  "A key, sent to the scene as a real one is: whatever has the focus gets it.
+  The button is given the focus first, as Tab would give it."
+  [^Button btn type ^KeyCode code]
+  (on-fx #(do (.requestFocus btn)
+              (SceneHelper/processKeyEvent
+                (.getScene btn)
+                (KeyEvent. type "" "" code false false false false)))))
 
 (defn- size
   "The size of the box that moves, as a percentage."
@@ -211,11 +245,16 @@
     (swap! b/*state assoc :count 0)
     (Thread/sleep 200)
     (check "disabled" true (on-fx #(.isDisabled subtract)))
-    ;; No picked mouse event reaches a disabled button, so it is fired directly.
-    (on-fx #(.fire subtract))
+    ;; A press on it, as a real pointer's: picking passes a disabled button by.
+    (press! subtract)
+    (Thread/sleep 100)
+    (release! subtract)
     (Thread/sleep 100)
     (check "a disabled button counts nothing" 0 (:count (state)))
     (check "disabled size" 100 (size subtract))
+    (check "off, it is called dimmed and says why, in its name"
+           ["Subtract 1. Nothing to subtract: the count is 0." "dimmed button"]
+           (on-fx #(vector (.getAccessibleText subtract) (.getAccessibleRoleDescription subtract))))
     (let [tip #(on-fx (fn [] (some-> ^Tooltip (.get (.getProperties (.getParent ^Button %))
                                                     "javafx.scene.control.Tooltip")
                                      .getText)))]
@@ -227,7 +266,9 @@
     (check "every button is a button to a screen reader" true
            (every? #(= AccessibleRole/BUTTON (on-fx (fn [] (.getAccessibleRole ^Button %))))
                    [add save subtract delete]))
-    (check "the icon button has a name" "Subtract 1" (on-fx #(.getAccessibleText subtract)))
+    (check "the icon button has a name; on again, it is no longer called dimmed" ["Subtract 1" nil]
+           (on-fx #(vector (.getAccessibleText subtract) (.getAccessibleRoleDescription subtract))))
+    (check "the second action is said with the name" "Add 1. Hold: Add 10" (on-fx #(.getAccessibleText add)))
     (check "the hold is said out loud" "Click or Return: add 1. Hold: add 10." (on-fx #(.getAccessibleHelp add)))
 
     (println "Kinds and sizes")

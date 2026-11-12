@@ -37,3 +37,15 @@
   ;; Every page's icon is one there is, and an unknown name fails at once.
   (is (every? #(string? (icons/path (:icon %))) window/pages))
   (is (thrown? clojure.lang.ExceptionInfo (icons/path :no-such-icon))))
+
+(deftest a-screen-reader-is-told-what-macos-will-pass-on
+  ;; A plain button: its name, and no word for its kind but the system's.
+  (is (= {:name "Save" :kind nil} (ui/said {:text "Save"})))
+  ;; An icon alone is named in words.
+  (is (= {:name "Subtract 1" :kind nil} (ui/said {:name "Subtract 1" :tip "Subtract 1"})))
+  ;; A second action is said with the name.
+  (is (= {:name "Add 1. Hold: Add 10" :kind nil}
+         (ui/said {:text "Add 1" :hold-text "Add 10" :tip "Click or Return: add 1. Hold: add 10."})))
+  ;; A button that is off is called dimmed, and says why.
+  (is (= {:name "Subtract 1. Nothing to subtract: the count is 0." :kind "dimmed button"}
+         (ui/said {:name "Subtract 1" :disabled true :tip "Nothing to subtract: the count is 0."}))))

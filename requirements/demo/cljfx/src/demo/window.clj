@@ -486,6 +486,8 @@
      :desc {:fx/type :v-box
             :id "sidebar"
             :style-class ["glass-pane"]
+            ;; On its shape, not its bounds: its shadow takes no click.
+            :pick-on-bounds false
             :spacing 2
             :padding 8
             :children
@@ -508,6 +510,7 @@
   "The window's glass: a way to hide each side pane, and a new tab."
   [{:keys [window sidebar-shown inspector-shown narrow]}]
   {:fx/type :h-box
+   :pick-on-bounds false
    :alignment :center-left
    :spacing 10
    :children
@@ -572,6 +575,8 @@
      {:fx/type :stack-pane
       :id (str "float-" id)
       :style-class ["glass-pane" "floater"]
+      ;; On its shape, not its bounds: a click in its shadow reaches the page.
+      :pick-on-bounds false
       :layout-x x
       :layout-y y
       :pref-width w
@@ -709,6 +714,10 @@
            true
            (conj
              {:fx/type :v-box
+              ;; A shadow is part of a node's bounds in JavaFX, so a node picked on its
+              ;; bounds takes the clicks that fall in its shadow, and a column takes
+              ;; those in the shadow of anything it holds. Picked on its shape instead.
+              :pick-on-bounds false
               :h-box/hgrow :always
               :min-width 0
               :spacing 10
@@ -721,10 +730,12 @@
                 true
                 (conj
                   {:fx/type :h-box
+                   :pick-on-bounds false
                    :v-box/vgrow :always
                    :children
                    (cond->
                      [{:fx/type :v-box
+                       :pick-on-bounds false
                        :h-box/hgrow :always
                        :min-width 0
                        :children
