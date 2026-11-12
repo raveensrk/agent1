@@ -30,9 +30,6 @@
 
 (declare handle)
 
-(def plus-icon "M5 0h2v5h5v2H7v5H5V7H0V5h5z")
-(def minus-icon "M0 5h12v2H0z")
-
 (defn toolbar
   "The layer of glass: it floats above the page, and only it is glass."
   [{:keys [count save confirm]}]
@@ -49,7 +46,7 @@
                         :click {:event :save}}
                        (save-look save))
                 {:fx/type button-view :dispatch handle
-                 :id "subtract" :name "Subtract 1" :icon minus-icon
+                 :id "subtract" :name "Subtract 1" :icon :minus
                  :disabled (zero? count)
                  :tip (if (zero? count)
                         "Nothing to subtract: the count is 0."
@@ -61,7 +58,7 @@
                  :tip (if confirm "Answer the question below first." "Delete the count and its saves")
                  :click {:event :ask-delete}}]}
     {:fx/type button-view :dispatch handle
-     :id "add" :text "Add 1" :icon plus-icon :primary true :glass :tinted
+     :id "add" :text "Add 1" :icon :plus :primary true :glass :tinted
      ;; While a delete is being asked, Return presses nothing.
      :default (not confirm)
      :click {:event :add :n 1}

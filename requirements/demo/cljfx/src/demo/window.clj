@@ -80,11 +80,11 @@
   (into {} (for [[pane {:keys [default]}] limits] [pane (double default)])))
 
 (def pages
-  [{:id :inbox :title "Inbox" :icon "M0 2h14v10H0zM1 3v5h3l1 2h4l1-2h3V3z"}
-   {:id :today :title "Today" :icon "M0 1h14v12H0zM1 4v8h12V4z"}
-   {:id :notes :title "Notes" :icon "M0 1h14v2H0zM0 6h14v2H0zM0 11h9v2H0z"}
-   {:id :tags :title "Tags" :icon "M7 0l7 7-7 7-7-7z"}
-   {:id :archive :title "Archive" :icon "M0 0h14v4H0zM1 5h12v9H1zM5 7v2h4V7z"}])
+  [{:id :inbox :title "Inbox" :icon :tray}
+   {:id :today :title "Today" :icon :calendar-blank}
+   {:id :notes :title "Notes" :icon :note}
+   {:id :tags :title "Tags" :icon :tag}
+   {:id :archive :title "Archive" :icon :archive}])
 
 (defn page-title [page]
   (:title (first (filter #(= page (:id %)) pages))))
@@ -479,11 +479,6 @@
 (def edge 8)
 (def divider-size 9)
 
-(def sidebar-icon "M0 0h16v12H0zM1 1v10h14V1zM1 1h4v10H1z")
-(def inspector-icon "M0 0h16v12H0zM1 1v10h14V1zM11 1h4v10h-4z")
-(def plus-icon "M5 0h2v5h5v2H7v5H5V7H0V5h5z")
-(def float-icon "M0 4h10v8H0zM1 5v6h8V5zM4 0h10v8h-3V7h2V1H5v2H4z")
-
 (defn divider
   "One pixel to look at, nine to take hold of. It drags to resize `pane`, and a
   double click puts the pane back to the size it started at."
@@ -520,7 +515,7 @@
                                      icons (conj "icons"))
                       :text (when-not icons title)
                       :accessible-help title
-                      :graphic {:fx/type :svg-path :style-class "icon" :content icon}
+                      :graphic {:fx/type ui/icon-view :icon icon}
                       :alignment (if icons :center :center-left)
                       :max-width Double/MAX_VALUE
                       :on-action {:event :select-page :window window :page id}}})}}))
@@ -534,21 +529,21 @@
    :children
    [{:fx/type glass-group
      :children [{:fx/type button-view :dispatch handle
-                 :id "toggle-sidebar" :icon sidebar-icon
+                 :id "toggle-sidebar" :icon :sidebar-simple
                  :name (if sidebar-shown "Hide Sidebar" "Show Sidebar")
                  :tip (if sidebar-shown "Hide the sidebar" "Show the sidebar")
                  :click {:event :toggle-sidebar}}]}
     {:fx/type :region :h-box/hgrow :always}
     {:fx/type glass-group
      :children [{:fx/type button-view :dispatch handle
-                 :id "new-tab" :icon plus-icon :name "New Tab" :tip "New tab"
+                 :id "new-tab" :icon :plus :name "New Tab" :tip "New tab"
                  :click {:event :new-tab :window window}}
                 {:fx/type button-view :dispatch handle
-                 :id "new-float" :icon float-icon :name "New Floating Window"
+                 :id "new-float" :icon :picture-in-picture :name "New Floating Window"
                  :tip "New floating window, on this page"
                  :click {:event :new-float :window window}}
                 {:fx/type button-view :dispatch handle
-                 :id "toggle-inspector" :icon inspector-icon
+                 :id "toggle-inspector" :icon :sidebar-simple :icon-flip true
                  :name (if inspector-shown "Hide Inspector" "Show Inspector")
                  :disabled narrow
                  :tip (cond narrow "The window is too narrow for the inspector."
@@ -576,7 +571,7 @@
       :children [{:fx/type :label :text (page-title page) :max-width Double/MAX_VALUE :h-box/hgrow :always}
                  {:fx/type :button
                   :style-class ["button" "tab-close"]
-                  :text "×"
+                  :graphic {:fx/type ui/icon-view :icon :x :size 12.0}
                   :accessible-help (str "Close the tab " (page-title page))
                   :on-action {:event :close-tab :window window :tab id}}]})})
 
@@ -611,7 +606,7 @@
                                 :max-width Double/MAX_VALUE :h-box/hgrow :always}
                                {:fx/type :button
                                 :style-class ["button" "tab-close"]
-                                :text "×"
+                                :graphic {:fx/type ui/icon-view :icon :x :size 12.0}
                                 :accessible-help (str "Close the floating window " (page-title page))
                                 :on-action (on :close-float)}]}
                    {:fx/type :v-box

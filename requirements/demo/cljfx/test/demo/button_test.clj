@@ -1,7 +1,9 @@
 (ns demo.button-test
   (:require [clojure.test :refer [deftest is]]
             [demo.button :as button]
-            [demo.ui :as ui]))
+            [demo.icons :as icons]
+            [demo.ui :as ui]
+            [demo.window :as window]))
 
 (deftest sinks-while-pressed-or-held
   (is (= {:scale 0.97 :y 1.0} (ui/press-look {:pressed true :reduce false})))
@@ -28,3 +30,10 @@
 
 (deftest the-fill-waits-out-a-quick-click
   (is (< ui/charge-delay-ms ui/hold-ms)))
+
+(deftest every-icon-is-one-phosphor-path
+  (is (= 256.0 icons/box))
+  (is (every? #(re-matches #"M[-0-9A-Za-z,. ]+Z" %) (vals icons/paths)))
+  ;; Every page's icon is one there is, and an unknown name fails at once.
+  (is (every? #(string? (icons/path (:icon %))) window/pages))
+  (is (thrown? clojure.lang.ExceptionInfo (icons/path :no-such-icon))))

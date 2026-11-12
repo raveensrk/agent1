@@ -27,7 +27,8 @@
             [cljfx.mutator :as mutator]
             [cljfx.prop :as prop]
             [clojure.java.shell :as shell]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [demo.icons :as icons])
   (:import [javafx.animation Interpolator KeyFrame KeyValue PauseTransition Timeline]
            [javafx.application Platform]
            [javafx.beans.value ChangeListener WritableValue]
@@ -316,6 +317,22 @@
 
 ;;; The views
 
+(def icon-size 18.0)
+
+(defn icon-view
+  "One icon, by name, `size` px square. It keeps the whole box it was drawn on,
+  so icons of different shapes line up, and its colour comes from the
+  stylesheet (`.icon`). `flip` mirrors it left to right."
+  [{:keys [icon size flip] :or {size icon-size}}]
+  (let [scale (/ size icons/box)]
+    ;; The outer group has the scaled size; a group's own scale is not in its own.
+    {:fx/type :group
+     :children [{:fx/type :group
+                 :scale-x (if flip (- scale) scale)
+                 :scale-y scale
+                 :children [{:fx/type :rectangle :width icons/box :height icons/box :fill :transparent}
+                            {:fx/type :svg-path :style-class "icon" :content (icons/path icon)}]}]}))
+
 (def glass-padding 4)
 
 (defn button-view
@@ -325,7 +342,8 @@
   shows a mark at its trailing edge, a fill that grows while it is held, and
   offers the second action on its right-click menu as well.
 
-  `icon` is an SVG path; with no `text` the button is a circle, and `name` is
+  `icon` is the name of an icon in demo.icons, and `icon-flip` mirrors it; with
+  no `text` the button is a circle, and `name` is
   what a screen reader calls it. `tip` is the tooltip, on the box so that a
   disabled button still shows why it is off. `fill` makes the button as wide as
   its place, for a pair of equal width. A button given `:busy` can be busy.
@@ -334,7 +352,7 @@
   action. The glass is then the box: all of it sinks, lightens and fills, so no
   smaller shape ever shows inside it."
   [{:keys [id text name icon primary destructive failed click hold hold-text tip
-           disabled busy inert fill default glass dispatch] :as props}]
+           disabled busy inert fill default glass dispatch icon-flip] :as props}]
   {:fx/type fx/ext-on-instance-lifecycle
    :on-created (fn [^Pane box]
                  (let [[^Button button & more] (.getChildren box)]
@@ -370,7 +388,7 @@
                        :default-button (boolean default)
                        :on-action click}
                 tip (assoc :accessible-help tip)
-                icon (assoc :graphic {:fx/type :svg-path :style-class "icon" :content icon})
+                icon (assoc :graphic {:fx/type icon-view :icon icon :flip icon-flip})
                 hold (assoc :context-menu
                             {:fx/type :context-menu
                              :items [{:fx/type :menu-item :text hold-text :on-action hold}]})
