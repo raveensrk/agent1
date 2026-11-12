@@ -1,0 +1,30 @@
+(ns demo.button-test
+  (:require [clojure.test :refer [deftest is]]
+            [demo.button :as button]
+            [demo.ui :as ui]))
+
+(deftest sinks-while-pressed-or-held
+  (is (= {:scale 0.97 :y 1.0} (ui/press-look {:pressed true :reduce false})))
+  (is (= {:scale 1.0 :y 0.0} (ui/press-look {:pressed false :reduce false}))))
+
+(deftest reduce-motion-never-moves
+  (is (= {:scale 1.0 :y 0.0} (ui/press-look {:pressed true :reduce true})))
+  (is (= {:ms 0 :spring false} (ui/press-timing {:pressed true :reduce true})))
+  (is (= {:ms 0 :spring false} (ui/press-timing {:pressed false :reduce true}))))
+
+(deftest a-busy-button-never-moves
+  (is (= {:scale 1.0 :y 0.0} (ui/press-look {:pressed true :reduce false :inert true}))))
+
+(deftest press-is-fast-and-release-springs
+  (is (= {:ms 120 :spring false} (ui/press-timing {:pressed true :reduce false})))
+  (is (= {:ms 420 :spring true} (ui/press-timing {:pressed false :reduce false}))))
+
+(deftest a-save-ends-in-saved-or-retry
+  (is (= "Save" (:text (button/save-look :idle))))
+  (is (= {:text "Saving…" :busy true :inert true} (button/save-look :saving)))
+  (is (= {:text "✓ Saved" :busy false :inert true} (button/save-look :saved)))
+  (is (= "Retry" (:text (button/save-look :failed))))
+  (is (false? (:inert (button/save-look :failed)))))
+
+(deftest the-fill-waits-out-a-quick-click
+  (is (< ui/charge-delay-ms ui/hold-ms)))
