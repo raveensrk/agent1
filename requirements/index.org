@@ -2,6 +2,8 @@
 
 - [[file:architecture.org][Architecture]]
 - [[file:gui.org][GUI]]
+- [[file:windows.org][Windows]]
+- [[file:components.org][Components]]
 - [[file:testing.org][Testing]]
 - [[file:docs.org][Docs]]
 - [[file:data.org][Data]]

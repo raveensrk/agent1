@@ -54,7 +54,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 - Tinted glass lightens only as far as its words stay at 4.5:1; past that a press brightens its rim
 - Glass that holds one button answers as one piece: all of it lightens, sinks and fills, and no smaller shape or edge shows inside it
 - Glass that several buttons share lightens only under the button the pointer is on, a capsule on the same centre
-- It sinks and springs back as [[*Buttons answer a press][Buttons answer a press]] says
+- It sinks and springs back as [[file:components.org::*Buttons answer a press][Buttons answer a press]] says
 *** The system's settings are respected
 - Reduce Transparency: glass turns solid, and nothing shows through
 - Increase Contrast: every control gets a plain edge all the way round
@@ -81,7 +81,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 *** pop-up
 *** Drop down menu
 *** Button
-- See [[*Buttons][Buttons]]
+- See [[file:components.org::*Buttons][Buttons]]
 *** etc...
 ** The progress bar and spinners must be smooth
 ** Reduce Motion is respected
@@ -94,96 +94,10 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 - Restarts the way it was started, on the same data
 - Unsaved scratch work is saved first
 ** Save and restore state/session
-- See [[*A window comes back as it was left][A window comes back as it was left]]
+- See [[file:windows.org::*A window comes back as it was left][A window comes back as it was left]]
 * UI/UX
-** The app must have a Window
-*** A reference shows one way to build it
-- [[file:demo/cljfx/src/demo/window.clj][window.clj]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- Its rules are plain functions, tested without a window: =step=, =clamp-float=, =session= and =restore=
-- Its window checks, [[file:demo/cljfx/test/demo/window_page_check.clj][window_page_check.clj]], are the Verification lines below as code
-- The reference passes its own checks: =clojure -M:test= and =clojure -M:check-window=, run in =demo/cljfx=
-- This requirement decides, not the reference: where the two differ, the reference is wrong
-*** A window has a size it starts at and a smallest size
-- It opens at 960 by 600 px, and is never smaller than 480 by 400 px
-- It is named for the page it shows
-- A new window opens a step down and across from the last, so none hides another
-*** A window can have tabs
-- A new tab opens from the toolbar, the File menu and Cmd T, and becomes the one in front
-- Each tab keeps its own page
-- The tab bar shows once there are two tabs; with one tab there is none
-- A tab closes from its own close button, the File menu and Cmd W
-- Closing the tab in front moves to the one that takes its place, else the one before it; closing another leaves the one in front alone
-- Closing a window's last tab closes the window
-- Show Next Tab and Show Previous Tab are in the Window menu, each with a key, and go round at the ends
-*** An app can have several windows
-- A new window opens from the File menu and Cmd N
-- Each window has its own tabs and its own floating windows
-- [[*Panes][Panes]] are the same in every window: their sizes, and which are hidden
-- Closing the last window quits the app
-*** Floating windows open inside the window
-- A floating window opens from the toolbar, the Window menu and Cmd Shift F
-- It opens over the page, clear of the sidebar and under the toolbar; each next one a step down and across
-- It is named for the page it opened on, and keeps that page when the tab moves on
-- It has a title bar and a close button, and no minimise
-- Its title bar drags it; its bottom right corner resizes it, from 200 by 120 px to 480 by 360 px
-- It never leaves the window: it stops at every edge, and when the window shrinks it is drawn back inside
-- The place it was left at is kept: it goes back there when there is room again
-- A press anywhere on it brings it to the front
-- It does not block the page: a click beside it reaches what is under
-- It fades in and grows slightly as it opens; under Reduce Motion it only fades
-*** A window comes back as it was left
-- The app reopens with the same windows, each at the same place and size
-- Each with the same tabs, on the same pages, the same tab in front, and its floating windows where they were
-- What is kept is plain text, one file, written whole or not at all
-- It is written once things have been still for 400 ms, off the UI thread, and once more at quit; never at every change
-- Closing the last window quits, and does not empty what is kept: the app comes back to the windows it had before
-- Nothing kept is trusted: a window off every screen comes back where a first window opens, one too small at the smallest size, a page no longer known as the first page
-- A file that cannot be read is moved aside, never written over, and the app opens as new
-*** Verification
-- Unit tests, with no window: tabs opening, closing and going round, each tab's own page, a window closing with its last tab, each window's own tabs, a floating window kept inside and its place kept, a session the same after a trip through text, and each untrusted thing in one coming back safe
-- A window check reads the File menu's commands, and that every command has a key
-- It opens a tab, moves it to another page, goes back to the first and reads the first tab's own page; it closes a tab from its button, and reads the tab bar gone
-- It opens a second window, gives it a tab and reads each window's own; it closes that window's tabs and reads one window left
-- It opens a floating window and reads its place and size; drags it by its bar, past every edge; resizes it past both limits; opens a second and presses the first to the front
-- It narrows the window with a floating window at its far corner and reads both inside; it clicks the page beside them and reads the click taken
-- It moves and resizes the window, opens a tab and a floating window, writes the session, closes every window and opens what was kept: the same place, size, tabs, page and floating window
-- It changes a page and reads the file: unchanged at once, changed 700 ms later; it closes every window and reads one window still kept
-- It writes a file that cannot be read, and reads it moved aside and the session as none
-** Panes
-*** A reference shows one way to build them
-- The panes of [[file:demo/cljfx/src/demo/window.clj][window.clj]], the reference of [[*The app must have a Window][The app must have a Window]]: a sidebar, a side panel and a pane under the page
-- Their rules are plain functions, tested without a window: =layout=, =fit= and =clamp-size=
-- This requirement decides, not the reference: where the two differ, the reference is wrong
-*** Panes resize
-- The divider between two panes drags to resize them, whether they sit side by side (width) or one above the other (height)
-- A divider is 1 px to look at and 9 px to take hold of; over it the pointer shows which way it drags
-- The divider is marked while it is dragged
-- Each pane has a smallest and a largest size, and a size it starts at; a double click on its divider puts it back to that
-- The size is remembered between runs; one kept outside the limits comes back within them
-- A size is written when the drag ends, not at every move of it
-- The page keeps a smallest room of its own, 280 px wide: when a window has no room for the panes at their kept sizes, the side panel gives way first and then the sidebar, each down to its smallest; the kept sizes do not change
-*** A pane can be hidden
-- The sidebar and each side panel hide and show from a toolbar button, the View menu and a key: three ways, so a hidden pane is never lost
-- The menu and the button say what they will do: Hide Sidebar, Show Sidebar
-- A pane the user hid stays hidden at any width
-- Which panes are hidden is remembered between runs
-*** In a narrow window the sidebar shrinks to icons only and side panels hide
-- A window under 720 px wide is narrow
-- The sidebar shrinks to 56 px, icons only; each icon keeps its name as a tooltip
-- Side panels hide, their dividers with them; a side panel's button is off meanwhile, and its tooltip says why
-- Wide again, each comes back at its kept size
-- The change glides in 200 ms; under Reduce Motion it happens at once
-- A drag, or the window being resized, never glides: the pane follows at once
-*** Verification
-- Unit tests, with no window: the narrow rule at 719 and 720 px, a hidden pane at any width, the page's room at 760 px, a pane's limits, a divider following the pointer
-- A window check drags each divider and reads the pane: following the pointer, stopping at its smallest and its largest, and back to its start on a double click
-- It reads the kept size while dragging and after letting go: nothing, then the size; and a size kept outside the limits read back within them
-- It sets both side panes to their largest at 760 px and reads the page: 280 px or more
-- It narrows the window to 600 px and reads the sidebar 100 ms later, between 56 px and its full width, then at 56 px with no words and a tooltip; the side panel at 0 and its button off
-- It widens the window and reads both back at their kept sizes; with Reduce Motion on, it reads the sidebar at 56 px 70 ms after narrowing
-- It hides the sidebar from the toolbar, reads the View menu's "Show Sidebar", and fires it
-- It hides a side panel, closes every window and opens what was kept: still hidden
-- It counts frames through two glides each way and a divider drag: 55 a second or more
+** Windows and panes
+- See [[file:windows.org][Window requirements]]: tabs, several windows, floating windows, a session that comes back, and panes
 ** Alignment, positioning and centering must be proper
 ** Add a native file menu
 ** The menu bar and the sidebar are each one list in the requirements
@@ -193,7 +107,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable
 For example:
-- Between panes, as [[*Panes resize][Panes resize]] says
+- Between panes, as [[file:windows.org::*Panes resize][Panes resize]] says
 - Between sections
 ** Use icons when possible
 - Icons come from [[https://phosphoricons.com][Phosphor Icons]], regular weight; one set, so every icon is drawn the same way
@@ -231,86 +145,7 @@ For example:
 ** History page that shows the pages navigated recently
 ** Back and forward retrace pages visited, like a browser: keys, menu and mouse side buttons
 * Things
-** Need clear distinction between things that i can click or do action on and things i cant
-** Interaction things in the app must be clear and distinct
-** Buttons
-*** A reference shows one way to build them
-- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [[file:demo/cljfx/src/demo/ui.clj][ui.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/button.clj][button.clj]] is the demo's own page
-- Its window checks, [[file:demo/cljfx/test/demo/window_check.clj][window_check.clj]], are the Verification lines below as code; an app's own checks ask the same
-- The reference passes its own checks: =clojure -M:test= and =clojure -M:check=, run in =demo/cljfx=
-- This requirement decides, not the reference: where the two differ, the reference is wrong
-*** Clickable things look like buttons
-*** One tinted glass button a page, the main action; every other toolbar button is regular glass, and a button in the page is plain
-*** Buttons answer a press
-- Hover: the colour eases to its hover shade in 120 ms
-- Press: the button sinks to 97% of its size and 1 px down, in 120 ms
-- Hold: it stays sunk for as long as it is held
-- Release: it springs back in 420 ms, overshooting a little before it settles
-- Space on a focused button answers the same way as the mouse
-- Return presses the main button, wherever the focus is; it sinks once and springs back
-- While a question is open, as before a delete, Return presses nothing
-- Dragged off while held it rises, and back over the button it sinks again; let go off the button, nothing fires
-- Escape lets go of a held press: the button rises and nothing fires, until the mouse or the key is up
-- Under Reduce Motion it only changes colour
-*** A held button fires its second action
-- A button may have a second action, different from its click; a button with none only stays sunk
-- Held for 500 ms, the second action fires, and letting go then does not fire the click as well
-- A fill grows across the button while the hold counts, from 150 ms to 500 ms, so the second action is seen coming; a quick click is over before it shows
-- Let go early and the fill fades away; under Reduce Motion it fades in where it would have grown
-- A button with a second action shows a small mark at its trailing edge, so the action is not found by accident
-- Its tooltip names both: what a click does and what a hold does
-- The second action is also on the button's right-click menu, so the keyboard and a trackpad reach it
-- A second action never deletes or overwrites; those stay a click that asks first
-*** Button states
-- Focused: a ring in the accent colour, on keyboard focus
-- Disabled: 45% opacity; it answers no hover, press or hold
-- A disabled button's tooltip says why it is off
-- Busy: while its action runs it shows a spinner beside its words and does not fire again; the words end in an ellipsis, "Saving…"
-- A busy button does not sink or change colour on a press: it never looks as if it took one
-- Done: the button says so with a tick for 1 s, "Saved", and takes no press meanwhile
-- Failed: the button turns into "Retry" in red and stays so until pressed; its tooltip says what failed
-- Going busy and back is smooth: the button glides to its new width in 220 ms while the spinner opens beside the words and fades in
-- The words never blank, and neither the button nor its neighbours jump
-- Under Reduce Motion the width changes at once and the spinner only fades
-*** Button kinds
-- Main: tinted glass, one a page
-- Plain: regular glass in a toolbar, a solid fill in the page
-- Destructive: red words, never tinted and never the main one; they read at 4.5:1 like any others
-- Icon and words: the icon leads
-- Icon alone: a circle, with a tooltip that names it
-*** Button sizes
-- Every button on a page is one height, 44 px
-- A button with words is 76 px wide or wider
-- Buttons in a pair, as Cancel and Delete, are equal width: that of the wider
-*** Buttons and the screen reader
-- Every button has the role of a button and a name; an icon alone is named in words
-- A second action is said with the name, and is reached without holding, from the right-click menu
-- A disabled button says why it is off
-*** Verification
-- A window check presses a button and reads its size: 100% at rest, 97% pressed, 97% after 1.5 s held, 100% once released
-- It holds a button with a second action for 500 ms and counts one second action and no click
-- It holds a button with no second action for 500 ms, lets go, and counts one click
-- It presses a disabled button and counts nothing, with the size still 100%
-- With Reduce Motion on, a press leaves the size at 100%
-- It clicks a button that goes busy and reads its width 110 ms later: wider than at rest, narrower than once settled
-- It reads the hold fill 300 ms into a hold: started, and not yet full
-- It presses, sends a leave, an enter and a leave, and lets go: 100%, 97%, and nothing fired
-- It presses, sends Escape and lets go: 100%, and nothing fired
-- With the focus on another button it sends Return: the main button sinks and counts one click, and the focused one counts none
-- It sends Space down, Escape, and Space up to a button: 97%, then nothing fired
-- It presses a busy button: 100%. It waits out the save: "Saved", then "Save"
-- It makes a save fail: "Retry", nothing saved; it presses Retry and the save is counted
-- It reads the tooltip of a disabled button and of one with a second action, and fires the right-click menu's item
-- It reads each button's role and name, and the second action's spoken help
-- It reads the heights, the icon button's width, the words buttons' widths and a pair's two widths
-- It draws each button without its words and reads the contrast of the words over the middle of it, at rest and under the pointer: 4.5 or more
-- It counts frames through three presses and three busy glides: 55 a second or more
-- With Reduce Motion on, it clicks a button that goes busy and reads its width 80 ms later: already settled
-*** Ideas
-- Read: [[file:buttons.png][Button Ideas]]
-** Status bar at the bottom :optional:
-** Message bar at the bottom :optional:
+- See [[file:components.org][Component requirements]]: what can be acted on, and buttons
 * Text and Fonts
 ** Use diffrent fonts as needed
 ** Use different sizes as needed
