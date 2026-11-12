@@ -1,6 +1,6 @@
 (ns demo.window-check
-  "The window checks of requirements/gui.org: Buttons and Liquid Glass. Opens
-  the real window and sends it mouse and key events; nothing moves the pointer.
+  "The window checks of Buttons, in requirements/components.org, and of Liquid
+  Glass, in requirements/gui.org. Opens the real window and sends it mouse and key events; nothing moves the pointer.
 
       clojure -M:check"
   (:require [cljfx.api :as fx]
@@ -188,7 +188,11 @@
     (check "a busy button does not sink" 100 (size save))
     (release! save)
     (Thread/sleep (+ 200 (long b/save-ms)))
-    (check "it says Saved" "✓ Saved" (on-fx #(.getText save)))
+    (check "it says Saved" "Saved" (on-fx #(.getText save)))
+    (check "with a tick in the spinner's place, and the spinner at rest" [2 false 1.0]
+           (on-fx #(let [slot ^javafx.scene.Parent (.getGraphic save)
+                         kids (.getChildrenUnmodifiable slot)]
+                     [(count kids) (.isVisible ^Node (.get kids 0)) (.getOpacity slot)])))
     (check "a busy button fires once" 1 (:saves (state)))
     (Thread/sleep (+ 300 (long b/saved-ms)))
     (check "then Save again" "Save" (on-fx #(.getText save)))

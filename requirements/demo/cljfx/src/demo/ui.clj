@@ -1,6 +1,7 @@
 (ns demo.ui
-  "The part worth copying: buttons that answer a press, as requirements/gui.org,
-  Buttons and Liquid Glass, ask. A reference, not a library: follow what it
+  "The part worth copying: buttons that answer a press, as Buttons in
+  requirements/components.org and Liquid Glass in requirements/gui.org ask. A
+  reference, not a library: follow what it
   does, and take the code as one way to do it. Nothing here knows about the
   demo's page or its state (demo.button).
 
@@ -227,15 +228,18 @@
 
 (defn- content!
   "Makes a change of the button's words smooth: Save, Saving, Saved. The button
-  always holds its spinner; idle, the spinner has no width and cannot be seen.
+  always holds a slot for its spinner; idle, the slot has no width and cannot
+  be seen. The slot also holds the mark of a save just done, a tick.
   Going busy, the button glides to its new width while the spinner opens beside
   the words and fades in, so the words never blank and neither the button nor
   its neighbours jump. Each frame has room for the words it had, so they are
   never cut shorter. Under Reduce Motion the sizes change at once and the
   spinner only fades."
-  [^Button button {:keys [busy inert]}]
+  [^Button button {:keys [busy inert mark]}]
   (let [props (.getProperties button)
         first? (not (.containsKey props ::busy))
+        ;; Open while there is a spinner or a mark to show in it.
+        busy (boolean (or busy mark))
         ^Region spinner (.getGraphic button)
         size (if busy spinner-size 0.0)
         gap (if busy spinner-gap 0.0)
@@ -346,13 +350,14 @@
   no `text` the button is a circle, and `name` is
   what a screen reader calls it. `tip` is the tooltip, on the box so that a
   disabled button still shows why it is off. `fill` makes the button as wide as
-  its place, for a pair of equal width. A button given `:busy` can be busy.
+  its place, for a pair of equal width. A button given `:busy` can be busy, and
+  `mark` names the icon it shows in the spinner's place once done.
 
   `glass` gives the button a capsule of glass to itself, `:tinted` for the main
   action. The glass is then the box: all of it sinks, lightens and fills, so no
   smaller shape ever shows inside it."
   [{:keys [id text name icon primary destructive failed click hold hold-text tip
-           disabled busy inert fill default glass dispatch icon-flip] :as props}]
+           disabled busy inert fill default glass dispatch icon-flip mark] :as props}]
   {:fx/type fx/ext-on-instance-lifecycle
    :on-created (fn [^Pane box]
                  (let [[^Button button & more] (.getChildren box)]
@@ -395,9 +400,19 @@
                 ;; A button that can be busy always holds its spinner.
                 (contains? props :busy)
                 (#(hash-map :fx/type ext-content
-                            :props {::content {:busy (boolean busy) :inert (boolean inert) :text text}}
-                            :desc (assoc % :graphic {:fx/type :progress-indicator
-                                                     :pref-height spinner-size}))))]
+                            :props {::content {:busy (boolean busy) :inert (boolean inert)
+                                               :text text :mark mark}}
+                            ;; The slot: the spinner while busy, the mark once done.
+                            :desc (assoc % :graphic
+                                         {:fx/type :stack-pane
+                                          :pref-height spinner-size
+                                          :children
+                                          (cond-> [{:fx/type :progress-indicator
+                                                    :visible (boolean busy)
+                                                    :pref-width spinner-size
+                                                    :pref-height spinner-size}]
+                                            mark (conj {:fx/type icon-view :icon mark
+                                                        :size spinner-size}))}))))]
        hold (conj {:fx/type :region
                    :style-class "hold-fill"
                    :mouse-transparent true

@@ -1,5 +1,5 @@
 (ns demo.window
-  "A window, as requirements/gui.org, The app must have a Window, asks: tabs,
+  "A window, as requirements/windows.org asks, The app must have a Window: tabs,
   several windows, panes that resize, and a narrow window that keeps its room.
   A reference, like demo.ui, whose buttons and glass it is built from.
 
@@ -11,7 +11,8 @@
   the sidebar shrinks to icons and the inspector hides.
 
   A window comes back as it was left: its place and size, its tabs and their
-  pages, its floating windows, and which panes were hidden.
+  pages, its floating windows, the panes' sizes and which were hidden. All of
+  it is kept in one file.
 
   The rules are plain data and pure functions - `layout`, `fit`, `clamp-size`,
   `clamp-float`, `step`, `session` and `restore` - so they are tested without a
@@ -28,7 +29,6 @@
             [demo.ui :as ui :refer [button-view glass-group]])
   (:import [java.nio.file Files StandardCopyOption]
            [java.util Timer TimerTask]
-           [java.util.prefs Preferences]
            [javafx.application Platform]
            [javafx.scene Node]
            [javafx.scene.input MouseEvent]
@@ -305,10 +305,11 @@
 
 (defn session
   "What is kept of the state between runs, as plain data: each window's place
-  and size, its tabs' pages and which is in front, its floating windows, and
-  which panes are hidden. Ids are not kept; a run makes its own."
+  and size, its tabs' pages and which is in front, its floating windows, the
+  panes' sizes and which are hidden. Ids are not kept; a run makes its own."
   [state]
   {:version 1
+   :sizes (:sizes state)
    :sidebar-shown (:sidebar-shown state)
    :inspector-shown (:inspector-shown state)
    :windows (vec (for [id (:order state)
@@ -331,8 +332,8 @@
   "The state a kept session opens as, or nil if it holds no window to open.
   Nothing in it is trusted: a window off every screen comes back at the place
   a first window opens, one too small comes back at the smallest size, a page
-  no longer known becomes the first page, and a floating window comes back
-  within its limits. `screens` are the screens there are now, as maps of :x :y
+  no longer known becomes the first page, a floating window comes back within
+  its limits, and a pane's size within its own, or the size it starts at. `screens` are the screens there are now, as maps of :x :y
   :width :height."
   [data screens]
   (let [known (set (map :id pages))
@@ -369,6 +370,8 @@
                 (update :next-float + (count floats)))))
         (assoc start-state
                :windows {} :order [] :next-window 1 :next-tab 1 :next-float 1
+               :sizes (into {} (for [[pane {:keys [default]}] limits]
+                                 [pane (clamp-size pane (number (get (:sizes data) pane) (double default)))]))
                :sidebar-shown (not (false? (:sidebar-shown data)))
                :inspector-shown (not (false? (:inspector-shown data))))
         (map-indexed vector windows)))))
@@ -405,25 +408,6 @@
     (Files/move (.toPath part) (.toPath file)
                 (into-array StandardCopyOption [StandardCopyOption/ATOMIC_MOVE
                                                 StandardCopyOption/REPLACE_EXISTING]))))
-
-;;; Sizes kept between runs
-
-(defonce *prefs-node (atom "agent1/demo/window"))
-
-(defn- prefs ^Preferences [] (.node (Preferences/userRoot) @*prefs-node))
-
-(defn load-sizes
-  "The sizes kept from the last run. One kept outside the limits comes back
-  within them; one never kept is the size the pane starts at."
-  []
-  (let [p (prefs)]
-    (into {} (for [[pane {:keys [default]}] limits]
-               [pane (clamp-size pane (.getDouble p (name pane) (double default)))]))))
-
-(defn save-sizes! [sizes]
-  (let [p (prefs)]
-    (doseq [[pane size] sizes] (.putDouble p (name pane) (double size)))
-    (.flush p)))
 
 ;;; Motion
 
@@ -787,8 +771,8 @@
             :state state})})
 
 (defn handle
-  "Reads what an event needs from the window, then steps the state. Sizes are
-  written when a drag ends, not at every move of it."
+  "Reads what an event needs from the window, then steps the state. Nothing is
+  written here: `keep-session!` watches the state and writes what is kept."
   [event]
   (let [e (:fx/event event)]
     (case (:event event)
@@ -798,9 +782,8 @@
                                         :x (.getSceneX m) :y (.getSceneY m)
                                         :w (.getWidth scene) :h (.getHeight scene)
                                         :edge (+ edge (/ divider-size 2.0)))))
-      :drag-end (save-sizes! (:sizes (swap! *state step event)))
       :reset-size (when (= 2 (.getClickCount ^MouseEvent e))
-                    (save-sizes! (:sizes (swap! *state step event))))
+                    (swap! *state step event))
       :resized (swap! *state step (assoc event :value (double e)))
       ;; Where the pointer is in the room the floating windows are in.
       (:float-press :float-drag :float-resize)
@@ -819,20 +802,22 @@
 
 (defn keep-session!
   "Writes the session whenever it has been still for 400 ms, off the UI thread,
-  and once more at quit. A state with no window is never kept: closing the last
-  window quits, and the session to come back to is the one before it."
+  and once more at quit. Nothing is written while a divider is dragged: a
+  pane's size is kept when the drag ends. A state with no window is never
+  kept: closing the last window quits, and the session to come back to is the
+  one before it."
   []
-  (let [wanted (atom nil)
-        written (atom nil)
+  (let [wanted (atom (session @*state))
+        written (atom @wanted)
         timer (Timer. "session" true)
         flush! (fn [] (let [data @wanted]
                         (when (and data (not= data @written))
                           (write-session! data)
                           (reset! written data))))]
     (add-watch *state ::session
-               (fn [_ _ old new]
-                 (let [before (session old) after (session new)]
-                   (when (and (not= before after) (seq (:windows after)))
+               (fn [_ _ _ new]
+                 (let [after (session new)]
+                   (when (and (not (:dragging new)) (not= after @wanted) (seq (:windows after)))
                      (reset! wanted after)
                      (.schedule timer (proxy [TimerTask] []
                                         (run [] (when (= after @wanted) (flush!))))
@@ -851,7 +836,7 @@
     ;; The screens are read on the UI thread; the windows open after.
     (Platform/runLater
       (fn []
-        (reset! *state (assoc (or (restore kept (screens)) start-state) :sizes (load-sizes)))
+        (reset! *state (or (restore kept (screens)) start-state))
         (ui/follow-system! #(swap! *state assoc :solid %))
         (deliver opened true)))
     @opened

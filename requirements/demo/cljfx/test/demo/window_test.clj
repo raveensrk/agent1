@@ -153,6 +153,8 @@
                                         (get-in back [:windows 1 :tabs]))))))
     (is (= 1 (count (get-in back [:windows 1 :floats]))))
     (is (false? (:inspector-shown back)))
+    ;; The panes' sizes are part of it: one file, not two.
+    (is (= w/default-sizes (:sizes kept) (:sizes back)))
     ;; Ids are the run's own, and none is used twice.
     (is (apply distinct? (mapcat #(map :id (:tabs %)) (vals (:windows back)))))))
 
@@ -171,6 +173,9 @@
     (is (= [:inbox] (mapv :page (get-in (w/restore {:windows [{}]} one-screen) [:windows 1 :tabs]))))
     (is (= [480.0 360.0] ((juxt :w :h) (first (get-in (w/restore {:windows [{:floats [{:w 9999 :h 9999}]}]} one-screen)
                                                       [:windows 1 :floats])))))
+    ;; A pane's size outside its limits, not a number, or not kept at all.
+    (is (= {:sidebar 320.0 :inspector 260.0 :bottom 140.0}
+           (:sizes (w/restore {:windows [{}] :sizes {:sidebar 999 :inspector "wide"}} one-screen))))
     ;; No window to open, or not a session at all: nothing to restore.
     (is (nil? (w/restore {:windows []} one-screen)))
     (is (nil? (w/restore "nonsense" one-screen)))

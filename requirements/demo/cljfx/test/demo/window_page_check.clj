@@ -1,13 +1,12 @@
 (ns demo.window-page-check
-  "The window checks of requirements/gui.org, The app must have a Window. Opens
-  the real windows and sends them mouse events; nothing moves the pointer.
+  "The window checks of requirements/windows.org: The app must have a Window,
+  and Panes. Opens the real windows and sends them mouse events; nothing moves the pointer.
 
       clojure -M:check-window"
   (:require [cljfx.api :as fx]
             [demo.ui :as ui]
             [demo.window :as w])
-  (:import [java.util.prefs Preferences]
-           [javafx.animation AnimationTimer]
+  (:import [javafx.animation AnimationTimer]
            [javafx.application Platform]
            [javafx.event Event]
            [javafx.scene Cursor Node Parent]
@@ -66,8 +65,14 @@
 
 (defn- send! [event] (on-fx #(w/handle event)) (Thread/sleep 250))
 
-(defn- kept [pane]
-  (.getDouble (.node (Preferences/userRoot) @w/*prefs-node) (name pane) -1.0))
+(def session-file
+  "The checks' own kept session, so a run neither reads nor spoils the demo's."
+  (clojure.java.io/file (System/getProperty "user.home") "tmp" "agent1-window-check" "session.edn"))
+
+(defn- kept
+  "The size of `pane` in the kept session, or nil if nothing is kept."
+  [pane]
+  (get-in (w/read-session) [:sizes pane]))
 
 (def failures (atom 0))
 
@@ -91,10 +96,10 @@
   (Platform/setImplicitExit false)
   (reset! ui/*follow-system false)
   (reset! ui/*reduce false)
-  ;; Its own kept sizes, so a run neither reads nor spoils the demo's.
-  (reset! w/*prefs-node "agent1/demo/window-check")
-  (.removeNode (.node (Preferences/userRoot) @w/*prefs-node))
-  (reset! w/*state (assoc w/start-state :sizes (w/load-sizes)))
+  (doseq [^java.io.File f [session-file (clojure.java.io/file (str session-file ".bad"))]] (.delete f))
+  (reset! w/*session-file session-file)
+  (reset! w/*state w/start-state)
+  (w/keep-session!)
   (fx/mount-renderer w/*state w/renderer)
   (Thread/sleep 1800)
   (let [state #(deref w/*state)
@@ -118,8 +123,10 @@
     (check "no wider than its largest" 320 (width "sidebar"))
     (drag! :sidebar 10 200)
     (check "no narrower than its smallest" 160 (width "sidebar"))
-    (check "nothing is kept while it is dragged" -1.0 (kept :sidebar))
+    (Thread/sleep 700)
+    (check "nothing is kept while it is dragged, however long" nil (kept :sidebar))
     (let-go! :sidebar)
+    (Thread/sleep 700)
     (check "the size is kept when let go" 160.0 (kept :sidebar))
     (drag! :inspector 700 200)
     (check "the inspector follows the pointer" (Math/round (- scene-w 700 half)) (width "inspector"))
@@ -131,16 +138,21 @@
     (drag! :bottom 400 (- scene-h 10))
     (check "no shorter than its smallest" 80 (height "bottom"))
     (let-go! :bottom)
+    (Thread/sleep 700)
     (check "a height is kept too" 80.0 (kept :bottom))
     (mouse! (node "divider-sidebar") MouseEvent/MOUSE_CLICKED 0 0 2)
     (Thread/sleep 200)
     (check "a double click puts the pane back" 220 (width "sidebar"))
 
     (println "Sizes between runs")
-    (check "the next run starts with the kept sizes" {:sidebar 220.0 :inspector 360.0 :bottom 80.0} (w/load-sizes))
-    (.putDouble (.node (Preferences/userRoot) @w/*prefs-node) "sidebar" 999.0)
-    (.putDouble (.node (Preferences/userRoot) @w/*prefs-node) "bottom" 5.0)
-    (check "one kept outside the limits comes back within them" {:sidebar 320.0 :inspector 360.0 :bottom 80.0} (w/load-sizes))
+    (Thread/sleep 700)
+    (check "the next run starts with the kept sizes" {:sidebar 220.0 :inspector 360.0 :bottom 80.0}
+           (:sizes (w/restore (w/read-session) (on-fx w/screens))))
+    (check "one kept outside the limits comes back within them" {:sidebar 320.0 :inspector 360.0 :bottom 80.0}
+           (:sizes (w/restore (assoc-in (assoc-in (w/read-session) [:sizes :sidebar] 999.0) [:sizes :bottom] 5.0)
+                              (on-fx w/screens))))
+    (check "sizes and windows are kept in one file" [true true]
+           [(contains? (w/read-session) :sizes) (contains? (w/read-session) :windows)])
 
     (println "The page keeps its room")
     (swap! w/*state assoc :sizes {:sidebar 320.0 :inspector 360.0 :bottom 140.0})
@@ -325,12 +337,13 @@
                   (format "%.1f" fps) ", slowest frame " (format "%.1f" slowest-ms) " ms)")
              true (>= fps 55.0))))
   (println "A window comes back as it was left")
-  (let [file (clojure.java.io/file (System/getProperty "user.home") "tmp" "agent1-window-check" "session.edn")
+  (let [file session-file
         bad (clojure.java.io/file (str file ".bad"))
         stage-box #(on-fx (fn [] (let [^Stage st (first (stages*))]
                                    (mapv (fn [v] (Math/round (double v))) [(.getX st) (.getY st) (.getWidth st) (.getHeight st)]))))]
+    ;; Let any write on its way land, then start from nothing kept.
+    (Thread/sleep 700)
     (doseq [^java.io.File f [file bad]] (.delete f))
-    (reset! w/*session-file file)
     (check "no kept session: nothing to restore" nil (w/read-session))
     ;; Leave the window somewhere else, another size, two tabs, a floating window.
     (on-fx #(doto ^Stage (first (stages*)) (.setX 300) (.setY 180) (.setWidth 1000) (.setHeight 640)))
@@ -350,7 +363,7 @@
       (reset! w/*state (assoc w/start-state :windows {} :order []))
       (Thread/sleep 600)
       (check "every window closed" 0 (count (stages)))
-      (reset! w/*state (assoc (w/restore (w/read-session) (on-fx w/screens)) :sizes w/default-sizes))
+      (reset! w/*state (w/restore (w/read-session) (on-fx w/screens)))
       (Thread/sleep 1200)
       (check "it reopens at the same place and size" [300 180 1000 640] (stage-box))
       (check "with the same tabs" 2 (on-fx #(count (.getChildrenUnmodifiable ^Parent (node* "tab-bar")))))
@@ -360,7 +373,7 @@
              [(width "inspector") (on-fx #(.isVisible ^Node (node* "inspector")))])
       (check "nothing lost on the way" left (w/session @w/*state)))
     ;; Kept while it runs: after 400 ms of quiet, not at every change.
-    (w/keep-session!)
+    (Thread/sleep 700)
     (send! {:event :select-page :window 1 :page :tags})
     (check "a change is not written at once" :archive (last (:pages (first (:windows (w/read-session))))))
     (Thread/sleep 700)
@@ -375,8 +388,10 @@
     (spit file "{{{ not a session")
     (check "a file that cannot be read counts as none" nil (w/read-session))
     (check "and is moved aside, not written over" [false "{{{ not a session"] [(.exists file) (slurp bad)])
+    ;; Leave nothing behind, and nothing for the write at quit to put back.
+    (remove-watch w/*state :demo.window/session)
+    (Thread/sleep 600)
     (doseq [^java.io.File f [file bad]] (.delete f))
     (.delete (.getParentFile file)))
-  (.removeNode (.node (Preferences/userRoot) @w/*prefs-node))
   (println (if (zero? @failures) "All checks passed." (str @failures " checks failed.")))
   (System/exit (if (zero? @failures) 0 1)))

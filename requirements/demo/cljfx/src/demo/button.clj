@@ -19,7 +19,7 @@
   (case save
     :idle {:text "Save" :busy false :inert false}
     :saving {:text "Saving…" :busy true :inert true}
-    :saved {:text "✓ Saved" :busy false :inert true}
+    :saved {:text "Saved" :busy false :inert true :mark :check}
     :failed {:text "Retry" :busy false :inert false :failed true
              :tip "The save failed. Click to try again."}))
 

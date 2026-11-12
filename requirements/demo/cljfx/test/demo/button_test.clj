@@ -24,7 +24,7 @@
 (deftest a-save-ends-in-saved-or-retry
   (is (= "Save" (:text (button/save-look :idle))))
   (is (= {:text "Saving…" :busy true :inert true} (button/save-look :saving)))
-  (is (= {:text "✓ Saved" :busy false :inert true} (button/save-look :saved)))
+  (is (= {:text "Saved" :busy false :inert true :mark :check} (button/save-look :saved)))
   (is (= "Retry" (:text (button/save-look :failed))))
   (is (false? (:inert (button/save-look :failed)))))
 
