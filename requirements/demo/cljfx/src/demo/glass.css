@@ -188,6 +188,30 @@
 .scroll-pane .scroll-bar .track, .scroll-pane .scroll-bar .increment-button, .scroll-pane .scroll-bar .decrement-button,
 .scroll-pane .corner { -fx-background-color: transparent; -fx-border-color: transparent; }
 .scroll-pane .scroll-bar .increment-arrow, .scroll-pane .scroll-bar .decrement-arrow { -fx-shape: ""; -fx-padding: 0; }
+/* A scroll area's own bars, as macOS draws them. The knob is light on dark,
+   with a dark edge, so it reads at 3:1 over light content and dark. */
+.scroll-knob {
+    -fx-background-color: rgba(0, 0, 0, 0.62), rgba(236, 236, 242, 0.80);
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 999;
+}
+/* The track: under a floating bar with the pointer over it, and always beside a bar that takes room. */
+.scroll-track { -fx-background-color: rgba(30, 30, 36, 0.72); -fx-border-color: transparent transparent transparent rgba(255, 255, 255, 0.10); }
+.scroll-bar-x.x .scroll-track { -fx-border-color: rgba(255, 255, 255, 0.10) transparent transparent transparent; }
+.scroll-corner { -fx-background-color: rgba(30, 30, 36, 0.72); }
+.scroll-area:focus-visible { -fx-border-color: #4aa3ff; -fx-border-width: 2; -fx-border-radius: 10; }
+/* Rows that only the ones in view are built of. */
+.scroll-row { -fx-text-fill: rgba(255, 255, 255, 0.86); -fx-padding: 0 12 0 12; -fx-border-color: transparent transparent rgba(255, 255, 255, 0.06) transparent; }
+.scroll-row:pending { -fx-text-fill: rgba(255, 255, 255, 0.38); }
+.scroll-row:chosen { -fx-background-color: rgba(31, 111, 214, 0.55); }
+.scroll-row:marked { -fx-background-color: rgba(31, 111, 214, 0.96); -fx-text-fill: white; }
+.scroll-box { -fx-background-color: rgba(20, 20, 26, 0.70); -fx-background-radius: 12; -fx-border-color: rgba(255, 255, 255, 0.10); -fx-border-radius: 12; }
+.scroll-cell { -fx-text-fill: rgba(255, 255, 255, 0.86); -fx-padding: 8 14 8 14; -fx-min-width: 110; }
+.scroll-cell.head { -fx-text-fill: white; -fx-font-weight: bold; }
+.log-line { -fx-text-fill: rgba(255, 255, 255, 0.70); -fx-font-family: "Menlo"; -fx-font-size: 13px; -fx-padding: 1 12 1 12; }
+.light-block { -fx-background-color: #f2f2f6; -fx-background-radius: 12; -fx-min-height: 120; }
+.light-block .label { -fx-text-fill: #1c1c22; }
+.section-head { -fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold; }
 /* The slider demo: the square that Brightness lights, and its notes. */
 .square { -fx-background-color: white; -fx-background-radius: 18; -fx-min-width: 72; -fx-min-height: 72; -fx-max-width: 72; -fx-max-height: 72; }
 .label.note { -fx-text-fill: rgba(255, 255, 255, 0.62); -fx-font-size: 13px; }

@@ -392,7 +392,8 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - A bar faded out is still there for a screen reader, so the place can be read
 - A screen reader's scroll by a page moves the area a page, and the place is said after
 - What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
-- Not read from macOS yet: what JavaFX gives macOS for a scroll area and its bars
+- Read so on 2026-11-14: macOS is given each area as a scroll area with its name, "Rows", and each bar it shows as a scroll bar with its place, "0.14", the log's at "1"; a bar gets no raise or lower action, only the menu
+- Not heard with VoiceOver yet: its scroll by a page, which reaches the reference's bars only as JavaFX's increment, not from macOS
 ** Verification
 - A window check sends its scrolls, presses and keys the way a pointer and a keyboard do
 - It reads an area whose content fits: no bar, and a scroll moves nothing
