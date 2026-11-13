@@ -305,7 +305,15 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** Ideas
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
-* Scroll areas and scroll bars
+* DONE Scroll areas and scroll bars
+:PROPERTIES:
+:ID: scroll-areas
+:CREATED: 2026-11-14
+:LAST_EDITED: 2026-11-14
+:APPROVED: 2026-11-14
+:IMPLEMENTED: 2026-11-14
+:VERIFY: clojure -M:test (demo.scroll-test), clojure -M:check-scroll (demo.scroll-check), run in demo/cljfx
+:END:
 ** A reference shows one way to build them
 - [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
 - The part worth copying is [[file:demo/cljfx/src/demo/scroll.clj][scroll.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/scroll_page.clj][scroll_page.clj]] is the demo's own page
@@ -322,7 +330,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - System Settings, Appearance, "Show scroll bars" decides when the bars show: on scrolling only, always, or by what is plugged in, as macOS decides it
 - "Click in the scroll bar to" decides what a click in the track does: go a page, or go to the spot clicked; Option and a click does the other
 - The scroll direction is macOS's, natural or not; the app never turns it round
-- A change to any of these takes hold at once, with no restart
+- A change to any of these takes hold within 1 s, with no restart
 ** A scroll bar looks like a thin capsule
 - The knob is a capsule, its length the room's share of the content, and never shorter than 24 px
 - Its place along the track is the room's place along the content
@@ -387,13 +395,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Only the rows in view, and a screen's worth either side, are built; a list of 100,000 rows scrolls as a list of 100 does
 - Scrolling never waits on loading: a row whose data is not yet there shows its place, and fills when it comes, off the UI thread
 - Images and heavy rows that come into view draw without a stutter
-** Scroll areas and the screen reader
-- Every scroll area has the role of a scroll area, and each bar it shows the role of a scroll bar with its axis and its place as a value from 0 to 1
-- A bar faded out is still there for a screen reader, so the place can be read
-- A screen reader's scroll by a page moves the area a page, and the place is said after
-- What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
-- Read so on 2026-11-14: macOS is given each area as a scroll area with its name, "Rows", and each bar it shows as a scroll bar with its place, "0.14", the log's at "1"; a bar gets no raise or lower action, only the menu
-- Not heard with VoiceOver yet: its scroll by a page, which reaches the reference's bars only as JavaFX's increment, not from macOS
 ** Verification
 - A window check sends its scrolls, presses and keys the way a pointer and a keyboard do
 - It reads an area whose content fits: no bar, and a scroll moves nothing
@@ -420,7 +421,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It scrolls content under the glass toolbar and reads the pixels under it: content seen, fading at the glass's edge
 - With Reduce Motion on, it sends Page Down and reads the place 20 ms later: already a page on; it sends a glide into the end: no bounce
 - It reads the knob's contrast over light and dark content: 3 or more
-- It reads each scroll area's role and its bars' roles, axes and values as a screen reader asks, before and after a scroll: the new place
 - It counts frames through three swipes and three glides over a 100,000 row list: 55 a second or more
 - It counts rows built while a 100,000 row list scrolls: a screen's worth and the rows either side, never all
 ** Decided
@@ -429,6 +429,8 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - The scroll place is kept between runs, not only while the app is open
 - A log stays at its newest line while it is at the bottom, and that is part of this requirement, not one of its own
 - The sizes and times stand: a 7 px bar, 11 px under the pointer, 15 px when always shown, a fade after 1 s, 40 px a wheel notch
+- No screen reader or VoiceOver support: it is not in the owner's use case
+- A change to macOS's scroll settings takes hold within 1 s, not at once: the app is not told of the change, and looks for it every 500 ms
 - On 2026-11-14 the owner tried the reference by hand with a real trackpad, its swipes, glides, edges and bars, and found it good: what the window checks send as a trackpad's events holds for a real one
 ** Ideas
 - [[https://developer.apple.com/design/human-interface-guidelines/scroll-views][Apple's scroll views guidance]]

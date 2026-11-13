@@ -509,27 +509,6 @@
       (check (str "over light: 3 or more (" (format "%.1f" light) ")") true (>= light 3.0)))
     (on-fx #(.setStyle ^Region (.get (.getChildren page) 0) ""))
 
-    (println "The screen reader")
-    (check "a scroll area is a scroll area" AccessibleRole/SCROLL_PANE (on-fx #(.getAccessibleRole page)))
-    (let [ask (fn [^Node n attr] (on-fx #(.queryAccessibleAttribute n attr (object-array 0))))
-          bar (ask page AccessibleAttribute/VERTICAL_SCROLLBAR)]
-      (check "its bar is a scroll bar, up and down" [AccessibleRole/SCROLL_BAR Orientation/VERTICAL]
-             [(on-fx #(.getAccessibleRole ^Node bar)) (ask bar AccessibleAttribute/ORIENTATION)])
-      (check "a page that scrolls only up and down has no sideways bar" nil
-             (ask page AccessibleAttribute/HORIZONTAL_SCROLLBAR))
-      (check "the grid has both" [Orientation/HORIZONTAL Orientation/VERTICAL]
-             [(ask (ask grid AccessibleAttribute/HORIZONTAL_SCROLLBAR) AccessibleAttribute/ORIENTATION)
-              (ask (ask grid AccessibleAttribute/VERTICAL_SCROLLBAR) AccessibleAttribute/ORIENTATION)])
-      (set-off! page :y 0.0)
-      (Thread/sleep 1500)
-      (check "faded out, its place is still read: the top" 0.0 (ask bar AccessibleAttribute/VALUE))
-      (set-off! page :y (/ (most page :y) 2.0))
-      (check "after a scroll: halfway" 0.5 (ask bar AccessibleAttribute/VALUE))
-      (on-fx #(.executeAccessibleAction ^Node bar javafx.scene.AccessibleAction/INCREMENT (object-array 0)))
-      (Thread/sleep 250)
-      (check "a screen reader's page down moves it a page" (whole (+ (/ (most page :y) 2.0) (s/page-px room)))
-             (whole (off page :y))))
-
     (println "Reduce Motion")
     (reset! ui/*reduce true)
     (on-fx #(.requestFocus page))
