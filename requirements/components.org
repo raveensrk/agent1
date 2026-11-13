@@ -184,3 +184,112 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It counts frames through three drags and three track presses: 55 a second or more
 * Status bar at the bottom :optional:
 * Message bar at the bottom :optional:
+* Time pickers
+** A reference shows one way to build them
+- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:demo/cljfx/src/demo/time_picker.clj][time_picker.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/time_picker_page.clj][time_picker_page.clj]] is the demo's own page
+- Its window checks, [[file:demo/cljfx/test/demo/time_picker_check.clj][time_picker_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- The reference passes its own checks: =clojure -M:test= and =clojure -M:check-time-picker=, run in =demo/cljfx=; =clojure -M:time-picker= opens it
+- This requirement decides, not the reference: where the two differ, the reference is wrong
+** A time picker sets one time of day
+- One field that is typed into, with a list of times under it; the value is an hour and a minute, any minute of the day
+- A time picker has a label that names what it sets
+- Where the time is optional the field may be empty, and then shows a hint in grey, "9:30 AM"
+- Where it is not, an emptied field is not taken: the line under it says "Not a time. Try 9:30 or 2130"
+- No date, no seconds, no time zone, no pair of a start and an end, no ready-made choices such as "In 1 hour", no clock face and no wheels: a need for one is a new requirement
+** A time picker looks like a field
+- The field is 44 px tall, the height of a button, and 120 px wide or wider
+- The time is shown the way macOS is set to show it: "9:30 AM", or "09:30" on a 24-hour clock
+- macOS's own 24-hour switch decides; with it unset, the region's habit does
+- On a 12-hour clock twelve o'clock is shown with its word, "12:00 PM, noon" and "12:00 AM, midnight", in the field and in the list
+- Over the field the pointer is a text cursor
+** Typing sets the time
+- Focus selects all of the field's text, so typing replaces it
+- These are all taken: "9a", "930a", "9:30 am", "9.30p", "9p", "2130", "21:30", "noon", "midnight"; in either case, with or without a space
+- Both the 12-hour and the 24-hour forms are taken, whatever macOS is set to show
+- An hour from 1 to 12 with no AM or PM is never guessed at: "3", "3:30", "930" and "12" are not taken, and the line under the field asks "AM or PM? Type 3a or 3p"
+- An hour from 13 to 23, and 0, is taken as it stands on the 24-hour clock
+- Where macOS shows a 24-hour clock every hour is taken as it stands: "3" is 03:00
+- Return, Tab or a click elsewhere takes what is typed, and the field then shows it in full: "930a" becomes "9:30 AM"
+- Minutes past 59, hours past 23, and AM or PM after an hour of the 24-hour clock, "13p", are not a time
+- What cannot be read as a time is not guessed at: the text stays, the field's edge turns red, a line under it says "Not a time. Try 9:30 or 2130", and nothing is written
+- Typing again clears the red edge and the line
+** A list offers times
+- The list opens under the field on a click in it, on typing, and on Down; Tab into the field does not open it
+- It holds the day in 15 minute steps, eight rows to be seen and the rest scrolled to
+- It opens with the field's time marked and in the middle; from an empty field, with the step after now
+- Typing narrows it: "2" leaves 2:00 PM, 2:15 PM, 2:30 PM and 2:45 PM, then the same four in the AM, with no row marked, so either half of the day is two keys away
+- Text that is a whole time is the first row, and marked: "207p" shows "2:07 PM" first, though it is on no step
+- Up and Down move the mark, Return takes the marked row, and a click takes the row under it
+- With no row marked, Down marks the first row and Up the last, and Return takes what is typed
+- Up and Down never step the time by a minute: an exact minute is typed
+- Text that offers nothing, "abc", closes the list
+- The list is as wide as the field, and never narrower than "12:00 AM, midnight" needs
+- Escape closes an open list and leaves the typed text; a second Escape puts the field back to the time it had
+- The list is glass, and its words read at 4.5:1
+- It is never clipped by the window's edge: with no room under the field it opens over it, and it stays whole, 4 px clear
+- Scrolling over the open list scrolls the list; over the field alone, the page under it scrolls and the time does not change
+- The list opens and closes with a 120 ms fade, and at once under Reduce Motion
+** The time is written when it is taken
+- The time is written once, when it is taken, not at every key
+- Taking the time the field already had writes nothing
+- Escape writes nothing
+- One taken time is one step for Undo
+- Command-Z while text is typed undoes the typing, in the field; with nothing typed it is the app's Undo
+** Time picker states
+- Focused: a ring in the accent colour, on keyboard focus
+- Disabled: 45% opacity; it answers no click and no key, and opens no list
+- A disabled time picker's tooltip says why it is off
+- Not a time: a red edge and the line under it, until the text changes or Escape puts the old time back
+** Time pickers and the screen reader
+- Every time picker has the role of a text field and a name; the name is what it sets, "Starts", with no time in it
+- The name is spoken from the field's label, and is never set on the field: a name set on a JavaFX text field is given to macOS in place of its text, and the time is lost
+- Its value is the time as the field shows it, "9:30 AM"; an empty field is given as empty, not as its hint
+- The line under the field is said in the name while it shows, "Starts. Not a time. Try 9:30 or 2130"
+- A screen reader is sent to a row as the mark moves to it
+- A disabled time picker is called dimmed, and its name says why it is off
+- What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
+- Read so on 2026-11-13: macOS is given a time picker's label, "Starts", its role, the word for its kind, and its value, "9:30 AM"
+- Not heard with VoiceOver yet: what it says as the mark moves from row to row
+** Verification
+- A window check sends its keys and clicks the way a person does
+- It gives the field the focus and reads what is selected: all of its text
+- It types each of "9a", "930a", "9:30 am", "9.30p", "9p", "2130", "21:30", "noon" and "midnight", sends Return, and reads the field and the written time after each
+- It types "3" and sends Return, and again with "3:30": the text still there, a red edge, "AM or PM? Type 3a or 3p", nothing written
+- It empties a field that is not optional and sends Return: the line under it, nothing written
+- It types "13" and "0" and reads the times: 1:00 PM and midnight
+- It reads what is written while it types and after Return: nothing, then the time, once
+- It types "abc" and sends Return: the text still there, a red edge, the line under it, nothing written; it types a digit and the edge and the line are gone
+- It types, sends Escape twice, and reads the field: the time from before, nothing written
+- It takes the time the field already had and counts nothing written
+- It types "6p" and clicks elsewhere on the page: 6:00 PM, written
+- It clicks the field and reads the list: open, eight rows to be seen, the field's time marked and in the middle
+- It sends Tab into the field and reads the list: closed; it sends Down: open
+- It types "2" and reads the rows: 2:00 PM first, eight rows in all, none marked; it types "207p" and reads the first row: 2:07 PM, marked
+- It types "2" and sends Up: the last row is marked
+- It types "2", sends Down three times and Return and reads the time: the third row's, 2:30 PM
+- It clicks a row and reads the time, and the list: that row's, and closed
+- It puts the field at the window's bottom edge, opens the list and reads its edges: inside the window, over the field
+- It scrolls over the open list and over the field alone: the list moved, then the page moved and the time as before
+- It sets a 24-hour clock and reads the field: "09:30"; it types "9p" and reads "21:00"; it types "3" and reads "03:00"
+- It reads the field and the list's row at twelve: "12:00 PM, noon" and "12:00 AM, midnight"
+- It empties an optional field and reads the hint and what is written: "9:30 AM" in grey, and no time
+- It takes a time, sends Undo and reads the field: the time from before
+- It clicks and sends keys to a disabled time picker: the time as before, no list; and reads its opacity: 45%
+- It reads the field's height and width, and its edge on keyboard focus: the accent colour
+- It reads each time picker's role, name and value as a screen reader asks for them, and again after a change: the same name, the new time
+- It reads an empty field's value as a screen reader asks for it: empty; and the name while "Not a time" shows: the line is in it
+- It moves the mark and reads the row a screen reader is sent to: the marked one
+- It reads the tooltip of a disabled time picker
+- It draws the list without its words and reads the contrast of the words over the middle of it: 4.5 or more
+- It opens the list and reads it 40 ms later: fading in; with Reduce Motion on, 20 ms later: fully there
+- It counts frames through three openings of the list: 55 a second or more
+** Decided
+- On 2026-11-13, by the owner, from three choices:
+- An hour alone is asked about, not guessed: chosen over a daytime guess, 7 to 11 AM and 12 to 6 PM, and over whichever comes next on the clock, which gives a different answer at different times of day
+- One time only: a start and an end together is a new requirement
+- No quick buttons such as "Now" or "In 1 hour": they can be added later as a new requirement
+- Up and Down move through the list, and do not step the minute
+** Ideas
+- Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
+- Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
