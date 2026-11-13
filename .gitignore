@@ -5,3 +5,6 @@ __pycache__/
 /policies/ai_policy.html
 /policies/no_ai_policy.pdf
 /policies/no_ai_policy.tex
+# Emacs auto-save and lock files
+\#*#
+.#*
