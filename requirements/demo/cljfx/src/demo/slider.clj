@@ -5,8 +5,11 @@
   demo's page or its state (demo.slider-page).
 
   One glass capsule on a level track. The thumb follows a drag at once, grows
-  while it is held and stretches while it moves. A press on the track glides
-  the thumb to the pointer and goes on as a drag. What the slider sets follows
+  while it is held and stretches while it moves. Stopped or let go while it
+  moves, it swings past where it stopped, back short of it, and settles in a
+  few turns, as a pendulum, by a tenth of how far it moved. A press on the
+  track glides the thumb to the pointer, swings there, and goes on as a drag.
+  What the slider sets follows
   the thumb live; the value is written once, when the drag ends. Escape puts it
   back, a double click puts it at its default, and the keyboard moves it. A
   bubble shows the value while it changes.
@@ -15,7 +18,7 @@
 
       slider-view     one slider: its label, its tooltip and the control
       make-slider     the control itself, a Pane, for use without cljfx
-      value-at, x-of, key-value, stretch-for, thumb-look, said
+      value-at, x-of, key-value, stretch-for, carry-for, thumb-look, said
                       the numbers and the rules, as plain data
 
   The look is in demo/glass.css, under `.slider-box`. Motion comes from
@@ -26,7 +29,7 @@
             [cljfx.mutator :as mutator]
             [cljfx.prop :as prop]
             [demo.ui :as ui])
-  (:import [javafx.animation PauseTransition]
+  (:import [javafx.animation Interpolator PauseTransition]
            [javafx.beans.property SimpleDoubleProperty]
            [javafx.beans.value ChangeListener]
            [javafx.css PseudoClass]
@@ -47,6 +50,28 @@
 ;; Moving, the thumb is up to this much wider.
 (def stretch-max 8.0)
 (def stretch-ms 220)
+;; Stopped or let go while it moves, the thumb swings past where
+;; it stopped by this part of how far it moved, then settles. Only the thumb:
+;; the value stays with the pointer.
+(def carry-ratio 0.1)
+(def carry-ms 1400)
+;; Over, under, over, under, over: each swing ends where the value puts the
+;; thumb, and the last ends with `carry-ms`.
+(def carry-swings 5)
+;; How fast the swings die away: each is this much smaller than the one
+;; before, as e to the minus (carry-damp / carry-swings), about half.
+(def carry-damp 3.74)
+(def ^:private carry-w (* Math/PI carry-swings))
+;; How far into `carry-ms` the thumb is furthest out, on its first swing.
+(def carry-peak (/ (Math/atan (/ carry-w carry-damp)) carry-w))
+(def ^:private carry-top
+  (* (Math/exp (- (* carry-damp carry-peak))) (Math/sin (* carry-w carry-peak))))
+;; A held pointer that has not moved for this long has stopped.
+(def still-ms 40)
+;; A carry under this many px is not worth showing.
+(def carry-least 0.5)
+;; A carry cut short by a new one fades over this much of the new one.
+(def carry-fade 0.3)
 (def min-width 120.0)
 (def snap-px 4.0)
 (def held-scale 1.1)
@@ -98,6 +123,32 @@
   faster, and nothing under Reduce Motion."
   [speed reduce]
   (if reduce 0.0 (min stretch-max (* stretch-max speed))))
+
+(defn carry-for
+  "How far the thumb swings past where it stopped, after it moved `px`, to the
+  right or to the left: in proportion to how far it moved, the same way, and
+  nothing under Reduce Motion."
+  [px reduce]
+  (if reduce 0.0 (* carry-ratio (double px))))
+
+(defn carry-curve
+  "The part of its carry the thumb is at, `t` of the way through: out fast,
+  furthest at `carry-peak`, then back past 0 to the other side, and so on, each
+  swing about half the one before, as a pendulum given a push. 1 at its
+  furthest, 0 at both ends."
+  [t]
+  (let [t (double t)]
+    (if (>= t 1.0)
+      0.0
+      (/ (* (Math/exp (- (* carry-damp t))) (Math/sin (* carry-w t))) carry-top))))
+
+(defn carry-at
+  "Where a carry of `px` has the thumb, `t` of the way through, when it began
+  with the thumb still `from` px out from the carry before: no jump at the
+  start, and 0 at the end."
+  [px from t]
+  (+ (* px (carry-curve t))
+     (* from (max 0.0 (- 1.0 (/ (double t) carry-fade))))))
 
 (defn thumb-look
   "How the thumb sits: grown a little while held. Under Reduce Motion it never
@@ -164,6 +215,12 @@
   (let [model (atom {:min 0.0 :max 100.0 :value 0.0 :unit ""})
         value (SimpleDoubleProperty. 0.0)
         stretch (SimpleDoubleProperty. 0.0)
+        ;; How far the thumb is drawn from where the value puts it.
+        carry (SimpleDoubleProperty. 0.0)
+        ;; The carry under way: how far through it is, its size, and how far
+        ;; out the thumb still was when it began.
+        phase (SimpleDoubleProperty. 0.0)
+        push (volatile! {:px 0.0 :from 0.0})
         ;; A press in progress: where it began and how it holds the thumb.
         ;; {:dead true} is a press that Escape or a double click has ended.
         drag (atom nil)
@@ -197,6 +254,7 @@
                    (let [^Pane this this]
                      (proxy-super executeAccessibleAction action params)))))
         hide (PauseTransition. (Duration/millis bubble-ms))
+        still (PauseTransition. (Duration/millis still-ms))
         ;; Between which two places the bubble stays whole: the window, or the
         ;; scrolling area the slider is in.
         edges (fn []
@@ -216,7 +274,9 @@
                  (let [m @model
                        w (.getWidth pane)
                        cy (/ (.getHeight pane) 2.0)
-                       x (x-of m w (.get value))
+                       x (-> (+ (x-of m w (.get value)) (.get carry))
+                             (max (/ thumb-w 2.0))
+                             (min (max (/ thumb-w 2.0) (- w (/ thumb-w 2.0)))))
                        tw (+ thumb-w (.get stretch))
                        top (- cy (/ track-px 2.0))]
                    (.resizeRelocate track 0.0 top w track-px)
@@ -252,8 +312,6 @@
                      (swap! model assoc :value v)
                      (reset! last-write {:at now :by by})
                      (tell! :write {:value v :same-step (boolean same)}))))
-        glide! (fn [to]
-                 (ui/tween! pane ::glide {:ms (if @ui/*reduce 0 ui/press-ms)} [[value (double to)]]))
         ;; Faded out it is not there at all: a screen reader finds no number at rest.
         bubble! (fn [on]
                   (when on (.setVisible bubble true))
@@ -280,6 +338,33 @@
                      (.set stretch (max (.get stretch)
                                         (stretch-for (/ (Math/abs (double px)) ms) @ui/*reduce)))
                      (ui/tween! thumb ::stretch {:ms stretch-ms} [[stretch 0.0]])))
+        ;; Let go while it moves, the thumb carries on and settles back.
+        ;; A carry too small to show still eases a thumb that is out back home.
+        carry! (fn [px]
+                 (when (or (>= (Math/abs (double px)) carry-least) (not (zero? (.get carry))))
+                   (stop! pane ::carry)
+                   (vreset! push {:px (double px) :from (.get carry)})
+                   (.set phase 0.0)
+                   (ui/tween! pane ::carry {:ms carry-ms :easing Interpolator/LINEAR}
+                              [[phase 1.0]])))
+        ;; The thumb is where the value puts it, at once.
+        home! (fn []
+                (.stop still)
+                (stop! pane ::carry)
+                (vreset! push {:px 0.0 :from 0.0})
+                (.set carry 0.0))
+        ;; With `then`, called once the thumb has got there.
+        glide! (fn [to & [then]]
+                 (ui/tween! pane ::glide {:ms (if @ui/*reduce 0 ui/press-ms) :on-done then}
+                            [[value (double to)]]))
+        ;; How far the thumb has moved since the value was `from`, in px.
+        moved (fn [from]
+                (let [m @model w (.getWidth pane)]
+                  (- (x-of m w (.get value)) (x-of m w from))))
+        ;; A swing after a move, if there is one worth showing.
+        swing! (fn [px]
+                 (let [c (carry-for px @ui/*reduce)]
+                   (when (>= (Math/abs (double c)) carry-least) (carry! c))))
         local-x (fn [^MouseEvent e] (.getX (.sceneToLocal pane (.getSceneX e) (.getSceneY e))))
         on-press (fn [^MouseEvent e]
                    (when (= MouseButton/PRIMARY (.getButton e))
@@ -289,23 +374,32 @@
                            w (.getWidth pane)
                            px (local-x e)
                            tx (x-of m w (.get value))
+                           ;; Where the thumb is drawn: out from `tx` while it swings.
+                           drawn (+ (.getLayoutX thumb) (/ (.getWidth thumb) 2.0))
                            now (System/nanoTime)]
+                       ;; A swing stops where it is: the thumb is caught as it is seen.
+                       (.stop still)
+                       (stop! pane ::carry)
                        (cond
                          ;; A double click: back to the default.
                          (and (= 2 (.getClickCount e)) (:default m))
-                         (do (reset! drag {:dead true})
+                         (do (home!)
+                             (reset! drag {:dead true})
                              (glide! (:default m))
                              (write! (:default m) :reset))
                          ;; On the thumb: it is held where it was taken.
-                         (<= (Math/abs (double (- px tx))) (/ (+ thumb-w (.get stretch)) 2.0))
-                         (do (reset! drag {:start (.get value) :grab (- px tx) :x px :t now})
+                         (<= (Math/abs (double (- px drawn))) (/ (+ thumb-w (.get stretch)) 2.0))
+                         (do (reset! drag {:start (.get value) :from (.get value) :grab (- px drawn) :x px :t now})
                              (look! true)
                              (bubble! true))
                          ;; On the track: the thumb glides to the pointer.
                          :else
-                         (let [to (value-at m w px)]
-                           (reset! drag {:start (.get value) :grab 0.0 :x px :t now :to to})
-                           (glide! to)
+                         ;; Once there, it swings by how far it glided.
+                         (let [to (value-at m w px)
+                               glided (- (x-of m w to) tx)]
+                           (home!)
+                           (reset! drag {:start (.get value) :from to :grab 0.0 :x px :t now :to to})
+                           (glide! to #(swing! glided))
                            (look! true)
                            (bubble! true))))))
         on-drag (fn [^MouseEvent e]
@@ -317,14 +411,23 @@
                         (stop! pane ::glide)
                         (stretch! (- px (:x d)) (:t d) now)
                         (swap! drag assoc :x px :t now :to nil :moved true)
+                        ;; A thumb caught mid-swing: from now it is where the value puts it.
+                        (when-not (zero? (.get carry)) (home!))
+                        (.playFromStart still)
                         (.set value (double (value-at @model (.getWidth pane) (- px (:grab d)))))))))
         on-release (fn [^MouseEvent e]
                      (when-let [d @drag]
                        (.consume e)
                        (reset! drag nil)
+                       (.stop still)
                        (when-not (:dead d)
                          ;; A click on the track is written where the glide ends.
                          (write! (or (:to d) (.get value)) (if (:moved d) :drag :click))
+                         (cond
+                           ;; By how far it moved since it was last still.
+                           (:moved d) (swing! (moved (:from d)))
+                           ;; Caught mid-swing and let go unmoved: it eases home.
+                           (not (:to d)) (carry! 0.0))
                          (look! false)
                          (bubble! false))))
         on-key (fn [^KeyEvent e]
@@ -335,6 +438,7 @@
                      (and (= KeyCode/ESCAPE code) d (not (:dead d)))
                      (do (.consume e)
                          (stop! pane ::glide)
+                         (home!)
                          (reset! drag {:dead true})
                          (.set value (double (:start d)))
                          (look! false)
@@ -358,6 +462,16 @@
                      (when-not (.isDisabled pane)
                        (.set value (double (key-value @model (.get value) key false)))
                        (write! (.get value) :key))))
+    ;; Stopped while still held: the thumb carries on, as when it is let go.
+    (.setOnFinished still (handler (fn [_]
+                                     (when-let [d @drag]
+                                       (when (and (:moved d) (not (:dead d)))
+                                         (swing! (moved (:from d)))
+                                         ;; The next move is measured from here.
+                                         (swap! drag assoc :from (.get value)))))))
+    (.addListener phase (listener (fn []
+                                    (let [{:keys [px from]} @push]
+                                      (.set carry (carry-at px from (.get phase)))))))
     (.setOnFinished hide (handler (fn [_] (when-not @drag (bubble! false)))))
     (.addListener value (listener (fn []
                                     (.setText bubble (value-text @model (.get value)))
@@ -366,6 +480,7 @@
                                     (.notifyAccessibleAttributeChanged pane AccessibleAttribute/VALUE)
                                     (when-not @quiet (tell! :live {:value (.get value)})))))
     (.addListener stretch (listener place!))
+    (.addListener carry (listener place!))
     (.addListener (.widthProperty pane) (listener place!))
     (.addListener (.heightProperty pane) (listener place!))
     (.addEventHandler pane MouseEvent/MOUSE_PRESSED (handler on-press))

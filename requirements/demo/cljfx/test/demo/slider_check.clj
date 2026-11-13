@@ -188,14 +188,18 @@
       (drag! middle)
       (Thread/sleep 100)
       (check "dragged to the middle: half the range" 50 (whole (live :brightness)))
-      (check "the thumb is under the pointer" (whole (first middle)) (whole (first (thumb-place b))))
-      (check "the fill reaches the thumb" (whole (- (first middle) (first (place-of b 0.0)) (- (/ s/thumb-w 2.0))))
-             (whole (on-fx #(.getWidth (fill b)))))
+      ;; Stopped while it moves, the thumb swings past the pointer and settles.
+      (check "stopped, the thumb has carried on past the pointer, by no more than its part of the move" true
+             (< 2.0 (- (first (thumb-place b)) (first middle))
+                (+ 0.5 (* s/carry-ratio (- (first middle) (first (place-of b 20.0)))))))
       (check "the bubble follows" "50%" (words b))
       (check "what it sets follows live: the square" 0.5 (let [square (node "square")] (on-fx #(.getOpacity square))))
       (check "nothing is written during the drag" [20.0 0] [(value :brightness) (writes)])
       (Thread/sleep 1100)
       (check "size after 1.5 s held" 110 (size b))
+      (check "settled, the thumb is under the pointer" (whole (first middle)) (whole (first (thumb-place b))))
+      (check "the fill reaches the thumb" (whole (- (first middle) (first (place-of b 0.0)) (- (/ s/thumb-w 2.0))))
+             (whole (on-fx #(.getWidth (fill b)))))
       (release! middle))
     (Thread/sleep 700)
     (check "size once released" 100 (size b))
@@ -244,6 +248,10 @@
         (check "30 ms on, the thumb has left its place and is not yet under the pointer" true
                (< (first to) early from)))
       (Thread/sleep 250)
+      ;; There, the thumb swings past the pointer, then settles.
+      (check "then it has carried on past the pointer, by no more than its part of the glide" true
+             (< 2.0 (- (first to) (first (thumb-place b))) (+ 0.5 (* s/carry-ratio (- from (first to))))))
+      (Thread/sleep 1500)
       (check "then it is under the pointer" (whole (first to)) (whole (first (thumb-place b))))
       (drag! (place-of b 25.0))
       (Thread/sleep 50)
@@ -354,7 +362,7 @@
     (press! (thumb-place b))
     (drag! (place-of b 70.0))
     (release! (place-of b 70.0))
-    (Thread/sleep 700)
+    (Thread/sleep 1500)
     (check "one drag" 70 (whole (value :brightness)))
     (tap! KeyCode/Z :shortcut true)
     (Thread/sleep 300)

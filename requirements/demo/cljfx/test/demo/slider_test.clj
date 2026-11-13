@@ -49,6 +49,26 @@
   (is (= 8.0 (s/stretch-for 50.0 false)))
   (is (= 36.0 (+ s/thumb-w s/stretch-max))))
 
+(deftest let-go-moving-the-thumb-carries-on-and-settles
+  ;; The swing is in proportion to how far the thumb moved, the same way.
+  (is (= 0.0 (s/carry-for 0.0 false)))
+  (is (= 10.0 (s/carry-for 100.0 false)))
+  (is (= (* 2 (s/carry-for 100.0 false)) (s/carry-for 200.0 false)))
+  (is (= (* 4 (s/carry-for 50.0 false)) (s/carry-for 200.0 false)))
+  (is (= -10.0 (s/carry-for -100.0 false)))
+  (is (= 0.0 (s/carry-for 200.0 true)))
+  (is (= 0.0 (s/carry-curve 0.0)))
+  (is (= 1.0 (s/carry-curve s/carry-peak)))
+  ;; A pendulum: over, then under by about half, then over by less again.
+  (is (< -0.6 (s/carry-curve 0.3) -0.3))
+  (is (< 0.1 (s/carry-curve 0.5) (- (s/carry-curve 0.3))))
+  (is (> 0.05 (Math/abs (double (s/carry-curve 0.9)))))
+  (is (= 0.0 (s/carry-curve 1.0)))
+  ;; A carry that cuts one short begins where the thumb was, and ends at home.
+  (is (= 5.0 (s/carry-at 12.0 5.0 0.0)))
+  (is (= 12.0 (s/carry-at 12.0 0.0 s/carry-peak)))
+  (is (= 0.0 (s/carry-at 12.0 5.0 1.0))))
+
 (deftest reduce-motion-neither-grows-nor-stretches
   (is (= {:scale 1.0} (s/thumb-look {:held true :reduce true})))
   (is (= 0.0 (s/stretch-for 50.0 true))))

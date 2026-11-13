@@ -108,12 +108,26 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Moving, the thumb stretches along the track, up to 36 px wide, and more the faster it moves; still again, it eases back in 220 ms
 - Release: it springs back to 28 by 20 px in 420 ms, overshooting a little before it settles
 - Under Reduce Motion it neither grows nor stretches; it only changes colour
+** The thumb swings where it stops
+- Stopped after a move, the thumb swings on past where it stopped, back short of it, and settles there, as a pendulum
+- It stops when it is let go while moving, when it is held still for 40 ms in a drag, and at the end of its glide to a press on the track
+- The first swing is 10% of how far the thumb moved, the same way: 100 px moved swings 10 px, 200 px swings 20 px; there is no most
+- How far it moved is counted from the press or from the last stop, whichever is later, and is how far the thumb went: past an end, the pointer adds nothing
+- A glide to a press on the track has moved the thumb as far as it glided
+- Five swings, each about half the one before; the first is furthest out at 120 ms, and the last ends where the thumb rests, 1400 ms on
+- The swing is only the thumb, its fill and its bubble: the value stays where the pointer put it, and so does what is written
+- The thumb swings no further than either end
+- A swing under 0.5 px is not shown, and let go after a stop, with no move since, it does not swing again
+- A press on a swinging thumb catches it where it is drawn, and a drag goes on from there; let go without a move, it eases home in 420 ms
+- A move, a press on the track, a double click or Escape ends a swing, and the thumb is where the value puts it
+- A double click and the keyboard move the thumb without a swing
+- Under Reduce Motion the thumb never swings
 ** A drag moves the thumb
-- The thumb follows the pointer at once; a drag never glides
+- The thumb follows the pointer at once; a drag never glides, and swings only where it stops
 - The drag goes on with the pointer above or below the slider, and off the window
 - Past an end the thumb stops at that end, and takes up again when the pointer comes back
 - Within 4 px of the notch the thumb snaps to the default value
-- A press on the track, away from the thumb, glides the thumb to the pointer in 120 ms, and the same press goes on as a drag
+- A press on the track, away from the thumb, glides the thumb to the pointer in 120 ms, swings there, and the same press goes on as a drag
 - Under Reduce Motion the thumb lands there at once
 - A double click puts the slider back to its default value; the thumb glides there in 120 ms, and at once under Reduce Motion
 - Scrolling over a slider does not move it: the page under it scrolls
@@ -153,12 +167,12 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Read so on 2026-11-13: macOS is given a slider's name, its role, its value as a bare number, "30", and two actions, raise and lower
 ** Verification
 - A window check sends its events the way a pointer does
-- It drags the thumb to the middle and reads the value: half the range, and the thumb under the pointer
+- It drags the thumb to the middle, holds it still and reads the value: half the range; and the thumb 100 ms later: past the pointer, by no more than 10% of the move; and 1.1 s on: under the pointer
 - It reads the value written during the drag and after letting go: nothing, then the value
 - It reads what the slider sets halfway through a drag: already following
 - It drags past each end and reads the value: the low end, the high end, and no further
 - It drags, sends Escape and lets go: the value from before the drag, and nothing written
-- It presses the track away from the thumb and reads the thumb 60 ms later: left its place, not yet under the pointer; then it drags on and the thumb follows
+- It presses the track away from the thumb and reads the thumb 30 ms later: left its place, not yet under the pointer; 280 ms on: past the pointer, by no more than 10% of the glide; 1.8 s on: under the pointer; then it drags on and the thumb follows
 - It drags to 3 px from the notch and reads the value: the default; and to 6 px from it: not the default
 - It reads the notch's place and the fill's width: at the default, and up to the thumb
 - It double clicks and reads the value: the default, written once
@@ -182,8 +196,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It reads the tooltip of a slider and of a disabled one
 - It draws the bubble without its words and reads the contrast of the words over the middle of it: 4.5 or more
 - It counts frames through three drags and three track presses: 55 a second or more
-* Status bar at the bottom :optional:
-* Message bar at the bottom :optional:
 * Time pickers
 ** A reference shows one way to build them
 - [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
@@ -293,3 +305,5 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** Ideas
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
+* Status bar at the bottom :optional:
+* Message bar at the bottom :optional:
