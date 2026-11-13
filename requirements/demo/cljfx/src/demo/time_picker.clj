@@ -14,7 +14,7 @@
 
       time-picker-view   one time picker: its label, its tooltip and the control
       make-time-picker   the control itself, a VBox, for use without cljfx
-      parse, show, offer, error-text, list-place, offset-for, said
+      parse, show, offer, error-text, list-place, offset-for
                          the reading, the wording and the rules, as plain data
       clock-24?          whether macOS shows a 24-hour clock
 
@@ -43,7 +43,7 @@
            [javafx.beans.value ChangeListener]
            [javafx.css PseudoClass]
            [javafx.event Event EventHandler]
-           [javafx.scene AccessibleAttribute Node Scene]
+           [javafx.scene Node Scene]
            [javafx.scene.control Label TextField]
            [javafx.scene.input KeyCode KeyEvent MouseEvent ScrollEvent]
            [javafx.scene.layout Pane StackPane VBox]
@@ -203,21 +203,6 @@
      :y (if fits under (max edge-gap (- top gap list-h)))
      :over (not fits)}))
 
-(defn said
-  "What a screen reader says for a time picker, as its name and the kind of
-  thing it is. The name is what the picker sets, with no time in it: macOS is
-  given the field's text as its value, and says it. The name is spoken from
-  the field's label, never set on the field: a name set on a JavaFX text field
-  is given to macOS in place of its text, and the time is lost. macOS is given
-  no help text, so the line under the field and the reason a picker is off go
-  in the name; one that is off is called dimmed."
-  [{:keys [name disabled tip error]}]
-  {:name (cond
-           (and disabled tip) (str name ". " tip)
-           error (str name ". " error)
-           :else name)
-   :kind (when disabled "dimmed text field")})
-
 (defn current-minute []
   (let [now (LocalTime/now)]
     (+ (* 60 (.getHour now)) (.getMinute now))))
@@ -259,18 +244,8 @@
         open (atom false)
         offered (atom {:rows [] :mark nil})
         offset (SimpleDoubleProperty. 0.0)
-        said-row (volatile! nil)
-        ;; The marked row is what a screen reader is sent to, as in a combo box.
-        ;; An empty field is given as empty: JavaFX would give its hint as the
-        ;; time, and a screen reader would say a time that is not set.
-        field (proxy [TextField] []
-                (queryAccessibleAttribute [attr params]
-                  (let [^TextField this this]
-                    (cond
-                      (and (= AccessibleAttribute/FOCUS_ITEM attr) @said-row) @said-row
-                      (and (= AccessibleAttribute/TEXT attr) (empty? (.getText this))) ""
-                      :else (proxy-super queryAccessibleAttribute attr params)))))
-        ;; The label names the field, to the eye and to a screen reader.
+        field (TextField.)
+        ;; The label names the field.
         label (doto (Label.)
                 (-> .getStyleClass (.add "time-label")))
         line (doto (Label.)
@@ -290,10 +265,6 @@
         box (VBox.)
         seen #(min rows-seen (count (:rows @offered)))
         value-text #(let [{:keys [value h24]} @model] (if value (show value h24) ""))
-        say! (fn []
-               (let [{:keys [name kind]} (said @model)]
-                 (.setAccessibleText label name)
-                 (.setAccessibleRoleDescription field kind)))
         set-text! (fn [s]
                     (reset! quiet true)
                     (.setText field s)
@@ -304,8 +275,7 @@
                (.setText line (or text ""))
                (.setVisible line (boolean text))
                (.setManaged line (boolean text))
-               (.pseudoClassStateChanged field invalid (boolean text))
-               (say!))
+               (.pseudoClassStateChanged field invalid (boolean text)))
         ;; The rows sit in the port, moved up by how far the list is scrolled.
         lay! (fn []
                (let [w (.getWidth port)]
@@ -334,7 +304,6 @@
         close! (fn []
                  (when @open
                    (reset! open false)
-                   (vreset! said-row nil)
                    (.setMouseTransparent lst true)
                    (ui/tween! lst ::fade {:ms (fade-ms) :on-done #(when-not @open (leave!))}
                               [[(.opacityProperty lst) 0.0]])))
@@ -360,9 +329,7 @@
                           view (* (seen) row-h)
                           o (.get offset)]
                       (cond (< top o) (scroll! top)
-                            (> (+ top row-h) (+ o view)) (scroll! (- (+ top row-h) view))))
-                    (vreset! said-row (.get kids i))
-                    (.notifyAccessibleAttributeChanged field AccessibleAttribute/FOCUS_ITEM))))
+                            (> (+ top row-h) (+ o view)) (scroll! (- (+ top row-h) view)))))))
         ;; Written once, and only a time that changed.
         write! (fn [m]
                  (let [{:keys [dispatch write value]} @model]
@@ -512,7 +479,7 @@
     (.setLabelFor label field)
     (.put (.getProperties box) ::parts
           {:model model :field field :label label :line line :lst lst :typed typed
-           :value-text value-text :set-text! set-text! :say! say! :close! close!})
+           :value-text value-text :set-text! set-text! :close! close!})
     (doto box
       (.setFillWidth false)
       (.setSpacing 2.0)
@@ -525,7 +492,7 @@
   `:dispatch` with the `:write` event it sends through it. The field's text
   follows only a value that has changed, as after an Undo: never under typing."
   [^VBox box m]
-  (let [{:keys [model ^TextField field ^Label label ^Label line ^Node lst typed value-text set-text! say! close!]}
+  (let [{:keys [model ^TextField field ^Label label ^Label line ^Node lst typed value-text set-text! close!]}
         (.get (.getProperties box) ::parts)
         old @model
         given (:value m)
@@ -544,8 +511,7 @@
       (set-text! (value-text))
       ;; Under the focus, the new text is ready to be typed over.
       (when (some-> (.getScene field) .getFocusOwner (identical? field))
-        (.selectAll field)))
-    (say!)))
+        (.selectAll field)))))
 
 (def ext-model
   (fx/make-ext-with-props

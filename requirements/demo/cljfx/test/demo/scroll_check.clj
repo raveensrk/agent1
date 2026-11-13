@@ -17,7 +17,7 @@
            [javafx.beans.property SimpleDoubleProperty]
            [javafx.event Event EventHandler]
            [javafx.geometry Orientation Rectangle2D]
-           [javafx.scene AccessibleAttribute AccessibleRole Cursor Node Scene SnapshotParameters]
+           [javafx.scene Cursor Node Scene SnapshotParameters]
            [javafx.scene.control Label]
            [javafx.scene.input KeyCode KeyEvent MouseButton MouseEvent ScrollEvent
             ScrollEvent$HorizontalTextScrollUnits ScrollEvent$VerticalTextScrollUnits]

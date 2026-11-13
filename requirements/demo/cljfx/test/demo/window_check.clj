@@ -13,7 +13,7 @@
            [javafx.css PseudoClass]
            [javafx.event Event]
            [javafx.geometry Rectangle2D]
-           [javafx.scene AccessibleRole Node SnapshotParameters]
+           [javafx.scene Node SnapshotParameters]
            [javafx.scene.control Button Tooltip]
            [javafx.scene.input KeyCode KeyEvent MouseButton MouseEvent]
            [javafx.scene.paint Color]
@@ -241,7 +241,7 @@
     (Thread/sleep (+ 300 (long b/save-ms) (long b/saved-ms)))
     (check "the retry saved" 2 (:saves (state)))
 
-    (println "Disabled, tooltips, the menu, the screen reader")
+    (println "Disabled, tooltips, the menu")
     (swap! b/*state assoc :count 0)
     (Thread/sleep 200)
     (check "disabled" true (on-fx #(.isDisabled subtract)))
@@ -252,9 +252,6 @@
     (Thread/sleep 100)
     (check "a disabled button counts nothing" 0 (:count (state)))
     (check "disabled size" 100 (size subtract))
-    (check "off, it is called dimmed and says why, in its name"
-           ["Subtract 1. Nothing to subtract: the count is 0." "dimmed button"]
-           (on-fx #(vector (.getAccessibleText subtract) (.getAccessibleRoleDescription subtract))))
     (let [tip #(on-fx (fn [] (some-> ^Tooltip (.get (.getProperties (.getParent ^Button %))
                                                     "javafx.scene.control.Tooltip")
                                      .getText)))]
@@ -263,13 +260,6 @@
     (on-fx #(.fire ^javafx.scene.control.MenuItem (first (.getItems (.getContextMenu add)))))
     (Thread/sleep 100)
     (check "the second action is on the right-click menu" 10 (:count (state)))
-    (check "every button is a button to a screen reader" true
-           (every? #(= AccessibleRole/BUTTON (on-fx (fn [] (.getAccessibleRole ^Button %))))
-                   [add save subtract delete]))
-    (check "the icon button has a name; on again, it is no longer called dimmed" ["Subtract 1" nil]
-           (on-fx #(vector (.getAccessibleText subtract) (.getAccessibleRoleDescription subtract))))
-    (check "the second action is said with the name" "Add 1. Hold: Add 10" (on-fx #(.getAccessibleText add)))
-    (check "the hold is said out loud" "Click or Return: add 1. Hold: add 10." (on-fx #(.getAccessibleHelp add)))
 
     (println "Kinds and sizes")
     (check "one height" 1 (count (set (map #(on-fx (fn [] (.getHeight ^Button %))) [add save subtract delete]))))

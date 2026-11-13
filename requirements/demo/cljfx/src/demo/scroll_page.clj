@@ -168,7 +168,7 @@
                                 :on-place #(handle {:event :place :id id :place %})}
                                m))]
     (area "page"
-          {:axes #{:y} :name "Page" :glass 72
+          {:axes #{:y} :glass 72
            :content
            {:fx/type :v-box
             :spacing 14
@@ -178,13 +178,13 @@
               (for [note notes]
                 {:fx/type :label :style-class ["label" "note"] :wrap-text true :text note})
               [(head "A wide table")
-               (area "table" {:axes #{:x} :name "Table" :width 400
+               (area "table" {:axes #{:x} :width 400
                               :content {:fx/type table}})
                (head "Both ways")
-               (area "grid" {:axes #{:x :y} :name "Grid" :width 400 :height 220
+               (area "grid" {:axes #{:x :y} :width 400 :height 220
                              :content {:fx/type grid}})
                (head "100,000 rows")
-               (area "rows" {:axes #{:y} :name "Rows" :height 280
+               (area "rows" {:axes #{:y} :height 280
                              :content {:fx/type rows-view :id "row-list"
                                        :n n :row-h 32.0
                                        ;; Read again when a row comes in.
@@ -196,7 +196,7 @@
                                        :on-mark #(handle {:event :mark :key (+ lo %)})
                                        :on-choose #(handle {:event :choose :from (+ lo %1) :to (+ lo %2)})}})
                (head "A log")
-               (area "log" {:axes #{:y} :name "Log" :height 160 :follow-end true
+               (area "log" {:axes #{:y} :height 160 :follow-end true
                             :content (assoc state :fx/type log-view)})
                (head "Light content")
                {:fx/type :v-box :style-class ["light-block"] :padding 16
@@ -212,7 +212,7 @@
                {:fx/type :label :style-class ["label" "note"] :text "The end of the page."}])}})))
 
 (defn about-page [{:keys [places]}]
-  {:fx/type scroll-view :id "about" :axes #{:y} :name "About" :glass 72
+  {:fx/type scroll-view :id "about" :axes #{:y} :glass 72
    :place (get places "about")
    :on-place #(handle {:event :place :id "about" :place %})
    :content {:fx/type :v-box

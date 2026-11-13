@@ -12,10 +12,13 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Plan before implementation
 ** Follow Apple Design as much as possible
 - The AI agent must consult [[https://developer.apple.com/design/][Apple Design]] before designing anything
+** No screen reader or VoiceOver support
+- Not in the owner's use case, decided on 2026-11-14: no control is built, named or checked for a screen reader, and no code tells macOS what a control is for one
+- Reduce Motion, Reduce Transparency, Increase Contrast and the contrast of words stay: they are for the eye
 ** The GUI toolkit is JavaFX, through cljfx
 - Chosen on 2026-11-13 over a native SwiftUI window, for its checks: a window check runs inside the app, reads any control mid-animation and sends clicks and keys without moving the pointer
 - Given up for it: true Liquid Glass. JavaFX cannot blur or bend what is behind a control, so glass is drawn as [[*Glass shows what is behind it][Glass shows what is behind it]] says
-- Everything the system would have given is built and checked by hand: the press, the glass, Reduce Motion, Reduce Transparency, Increase Contrast and the screen reader's names
+- Everything the system would have given is built and checked by hand: the press, the glass, Reduce Motion, Reduce Transparency and Increase Contrast
 - To be looked at again if native window checks prove to run from one command, with no pointer taken over
 * Coding Guidelines
 - Follow KISS (Keep it simple stupid) philosophy
@@ -112,7 +115,6 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 - With a header focused, ← folds it and → unfolds it; the View menu has Fold All Sections and Unfold All Sections; all are keys Settings can rebind
 - A selected row inside a folded section stays selected, and its folded header shows as selected, so the selection is never lost from sight
 - Rows slide closed and open and the chevron turns in about 200 ms; with Reduce Motion or the app's animations off, it happens at once
-- The screen reader names a header with its state: folded or unfolded
 - Which sections are folded is saved with the app's prefs and comes back on the next run
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable

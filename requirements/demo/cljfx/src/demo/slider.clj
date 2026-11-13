@@ -18,7 +18,7 @@
 
       slider-view     one slider: its label, its tooltip and the control
       make-slider     the control itself, a Pane, for use without cljfx
-      value-at, x-of, key-value, stretch-for, carry-for, thumb-look, said
+      value-at, x-of, key-value, stretch-for, carry-for, thumb-look
                       the numbers and the rules, as plain data
 
   The look is in demo/glass.css, under `.slider-box`. Motion comes from
@@ -34,7 +34,7 @@
            [javafx.beans.value ChangeListener]
            [javafx.css PseudoClass]
            [javafx.event EventHandler]
-           [javafx.scene AccessibleAction AccessibleAttribute AccessibleRole Cursor Node]
+           [javafx.scene Cursor Node]
            [javafx.scene.control Label]
            [javafx.scene.input KeyCode KeyEvent MouseButton MouseEvent]
            [javafx.scene.layout Pane Region]
@@ -161,15 +161,6 @@
   [{:keys [unit]} value]
   (str (Math/round (double value)) unit))
 
-(defn said
-  "What a screen reader says for a slider, as its name and the kind of thing it
-  is. The name is what the slider sets and nothing more: macOS is given the
-  value itself, and says it. The reason a slider is off goes in the name, and
-  one that is off is called dimmed, as macOS calls its own."
-  [{:keys [name disabled tip]}]
-  {:name (if (and disabled tip) (str name ". " tip) name)
-   :kind (when disabled "dimmed slider")})
-
 (defn tip-text
   "The tooltip: the value, since a slider at rest shows no number, or why the
   slider is off."
@@ -227,7 +218,6 @@
         keyed (atom false)
         quiet (atom false)
         last-write (atom {:at 0 :by nil})
-        nudge (volatile! nil)
         track (part "slider-track")
         fill (part "slider-fill")
         notch (part "slider-notch")
@@ -238,21 +228,7 @@
                  (.setOpacity 0.0)
                  (.setVisible false)
                  (-> .getStyleClass (.add "slider-bubble")))
-        ;; The value, its ends and its two actions, for a screen reader.
-        pane (proxy [Pane] []
-               (queryAccessibleAttribute [attr params]
-                 (condp = attr
-                   AccessibleAttribute/VALUE (.get value)
-                   AccessibleAttribute/MIN_VALUE (double (:min @model))
-                   AccessibleAttribute/MAX_VALUE (double (:max @model))
-                   (let [^Pane this this]
-                     (proxy-super queryAccessibleAttribute attr params))))
-               (executeAccessibleAction [action params]
-                 (condp = action
-                   AccessibleAction/INCREMENT (@nudge :right)
-                   AccessibleAction/DECREMENT (@nudge :left)
-                   (let [^Pane this this]
-                     (proxy-super executeAccessibleAction action params)))))
+        pane (Pane.)
         hide (PauseTransition. (Duration/millis bubble-ms))
         still (PauseTransition. (Duration/millis still-ms))
         ;; Between which two places the bubble stays whole: the window, or the
@@ -290,10 +266,6 @@
                          [lo hi] (edges)]
                      (.resizeRelocate bubble (bubble-left x bw lo hi)
                                       (- cy (/ thumb-h 2.0) bubble-gap bh) bw bh))))
-        say! (fn []
-               (let [{:keys [name kind]} (said @model)]
-                 (.setAccessibleText pane name)
-                 (.setAccessibleRoleDescription pane kind)))
         tell! (fn [k extra]
                 (let [{:keys [dispatch] :as m} @model]
                   (when (and dispatch (k m))
@@ -312,7 +284,7 @@
                      (swap! model assoc :value v)
                      (reset! last-write {:at now :by by})
                      (tell! :write {:value v :same-step (boolean same)}))))
-        ;; Faded out it is not there at all: a screen reader finds no number at rest.
+        ;; Faded out it is not there at all.
         bubble! (fn [on]
                   (when on (.setVisible bubble true))
                   (ui/tween! bubble ::fade
@@ -458,10 +430,6 @@
                       (when @keyed
                         (reset! keyed false)
                         (write! (.get value) :key))))]
-    (vreset! nudge (fn [key]
-                     (when-not (.isDisabled pane)
-                       (.set value (double (key-value @model (.get value) key false)))
-                       (write! (.get value) :key))))
     ;; Stopped while still held: the thumb carries on, as when it is let go.
     (.setOnFinished still (handler (fn [_]
                                      (when-let [d @drag]
@@ -476,8 +444,6 @@
     (.addListener value (listener (fn []
                                     (.setText bubble (value-text @model (.get value)))
                                     (place!)
-                                    ;; A screen reader is told the value has changed.
-                                    (.notifyAccessibleAttributeChanged pane AccessibleAttribute/VALUE)
                                     (when-not @quiet (tell! :live {:value (.get value)})))))
     (.addListener stretch (listener place!))
     (.addListener carry (listener place!))
@@ -489,11 +455,10 @@
     (.addEventHandler pane KeyEvent/KEY_PRESSED (handler on-key))
     (.addEventHandler pane KeyEvent/KEY_RELEASED (handler on-key-up))
     (.put (.getProperties pane) ::parts
-          {:model model :value value :quiet quiet :drag drag :place! place! :say! say!})
+          {:model model :value value :quiet quiet :drag drag :place! place!})
     (doto pane
       (-> .getStyleClass (.add "slider-box"))
       (-> .getChildren (.addAll ^java.util.Collection [track fill notch thumb bubble]))
-      (.setAccessibleRole AccessibleRole/SLIDER)
       (.setFocusTraversable true)
       (.setMinHeight hold-px)
       (.setPrefHeight hold-px)
@@ -508,7 +473,7 @@
   `:live` and `:write` events it sends through it. The thumb moves only when
   the value given has changed, as after an Undo: never under a drag."
   [^Pane pane m]
-  (let [{:keys [model ^SimpleDoubleProperty value quiet drag place! say!]}
+  (let [{:keys [model ^SimpleDoubleProperty value quiet drag place!]}
         (.get (.getProperties pane) ::parts)
         m (-> (merge {:min 0.0 :max 100.0 :unit ""} m)
               (update :min double) (update :max double) (update :value double))
@@ -523,8 +488,7 @@
       (.set value (double given))
       (reset! quiet false))
     (.setText ^Label (last (.getChildren pane)) (value-text m (.get value)))
-    (place!)
-    (say!)))
+    (place!)))
 
 (def ext-model
   (fx/make-ext-with-props

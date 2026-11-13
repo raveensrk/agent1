@@ -321,29 +321,6 @@
 
 ;;; The views
 
-(defn said
-  "What a screen reader says for a button, as its name and the kind of thing it
-  is. macOS is given a JavaFX control's name, role and role description and
-  nothing else: no help text, and not whether it is enabled. So a second
-  action and the reason a button is off go into the name, and a button that is
-  off is called dimmed, as macOS calls its own."
-  [{:keys [name text hold-text disabled tip]}]
-  (let [base (or name text)]
-    {:name (cond
-             (and disabled tip (not= tip base)) (str base ". " tip)
-             hold-text (str base ". Hold: " hold-text)
-             :else base)
-     :kind (when disabled "dimmed button")}))
-
-(defn- say!
-  [^Button button {:keys [name kind]}]
-  (.setAccessibleText button name)
-  (.setAccessibleRoleDescription button kind))
-
-(def ext-said
-  (fx/make-ext-with-props
-    {::said (prop/make (mutator/setter say!) lifecycle/scalar)}))
-
 (def icon-size 18.0)
 
 (defn icon-view
@@ -370,8 +347,7 @@
   offers the second action on its right-click menu as well.
 
   `icon` is the name of an icon in demo.icons, and `icon-flip` mirrors it; with
-  no `text` the button is a circle, and `name` is
-  what a screen reader calls it. `tip` is the tooltip, on the box so that a
+  no `text` the button is a circle. `tip` is the tooltip, on the box so that a
   disabled button still shows why it is off. `fill` makes the button as wide as
   its place, for a pair of equal width. A button given `:busy` can be busy, and
   `mark` names the icon it shows in the spinner's place once done.
@@ -415,7 +391,6 @@
                        ;; The main button: Return presses it, wherever the focus is.
                        :default-button (boolean default)
                        :on-action click}
-                tip (assoc :accessible-help tip)
                 icon (assoc :graphic {:fx/type icon-view :icon icon :flip icon-flip})
                 hold (assoc :context-menu
                             {:fx/type :context-menu
@@ -435,10 +410,7 @@
                                                     :pref-width spinner-size
                                                     :pref-height spinner-size}]
                                             mark (conj {:fx/type icon-view :icon mark
-                                                        :size spinner-size}))})))
-                ;; What a screen reader says, kept in step with the button.
-                true
-                (#(hash-map :fx/type ext-said :props {::said (said props)} :desc %)))]
+                                                        :size spinner-size}))}))))]
        hold (conj {:fx/type :region
                    :style-class "hold-fill"
                    :mouse-transparent true

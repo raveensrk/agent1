@@ -80,12 +80,7 @@
   (is (= 4.0 (s/bubble-left 10.0 48.0 0.0 500.0)))
   (is (= 448.0 (s/bubble-left 495.0 48.0 0.0 500.0))))
 
-(deftest a-screen-reader-is-told-the-name-alone
-  ;; The value is not in the name: macOS is given it, and says it.
-  (is (= {:name "Volume" :kind nil} (s/said {:name "Volume" :unit "%"})))
-  ;; A slider that is off is called dimmed, and says why.
-  (is (= {:name "Volume. Muted." :kind "dimmed slider"}
-         (s/said {:name "Volume" :unit "%" :disabled true :tip "Muted."})))
+(deftest the-tooltip-says-the-value
   ;; The tooltip says the value, or why the slider is off.
   (is (= "Volume: 40%" (s/tip-text {:name "Volume" :unit "%"} 40.0)))
   (is (= "Muted." (s/tip-text {:name "Volume" :unit "%" :disabled true :tip "Muted."} 40.0))))

@@ -14,7 +14,7 @@
            [javafx.css PseudoClass]
            [javafx.event Event EventHandler]
            [javafx.geometry Rectangle2D]
-           [javafx.scene AccessibleAttribute AccessibleRole Cursor Node Parent Scene SnapshotParameters]
+           [javafx.scene Cursor Node Parent Scene SnapshotParameters]
            [javafx.scene.control Label ScrollPane Tooltip]
            [javafx.scene.input KeyCode KeyEvent MouseButton MouseEvent ScrollEvent
             ScrollEvent$HorizontalTextScrollUnits ScrollEvent$VerticalTextScrollUnits]
@@ -383,7 +383,7 @@
     (Thread/sleep 200)
     (check "a disabled slider answers no drag and no key" [30.0 30.0 0] [(value :volume) (live :volume) (writes)])
 
-    (println "States, sizes and the screen reader")
+    (println "States and sizes")
     (check "its height is that of a button" s/hold-px (on-fx #(.getHeight b)))
     (check "the track is 4 px" s/track-px (on-fx #(.getHeight (fill b))))
     (check "the thumb is 28 by 20 px" [s/thumb-w s/thumb-h] (on-fx #(vector (.getWidth (thumb b)) (.getHeight (thumb b)))))
@@ -402,20 +402,9 @@
     (pseudo! b "focus-visible" false)
     (check "each has a label that names it" ["Brightness" "Volume"]
            (on-fx #(mapv (fn [^Node n] (.getText ^Label (first (.getChildrenUnmodifiable (.getParent n))))) [b v])))
-    (check "each is a slider to a screen reader" [AccessibleRole/SLIDER AccessibleRole/SLIDER]
-           (on-fx #(mapv (fn [^Node n] (.getAccessibleRole n)) [b v])))
-    (check "its name is what it sets, with no value in it" "Brightness" (on-fx #(.getAccessibleText b)))
-    (check "and a screen reader can ask for the value itself" 20.0
-           (on-fx #(.queryAccessibleAttribute b AccessibleAttribute/VALUE (object-array 0))))
     (on-fx #(.requestFocus b))
     (tap! KeyCode/RIGHT)
     (Thread/sleep 200)
-    (check "after a change, it is asked again: the new value, and the same name" [21.0 "Brightness"]
-           (on-fx #(vector (.queryAccessibleAttribute b AccessibleAttribute/VALUE (object-array 0))
-                           (.getAccessibleText b))))
-    (check "off, it is called dimmed and says why, in its name"
-           ["Volume. Muted: untick Mute to change the volume." "dimmed slider"]
-           (on-fx #(vector (.getAccessibleText v) (.getAccessibleRoleDescription v))))
     (let [tip #(on-fx (fn [] (some-> ^Tooltip (.get (.getProperties (.getParent ^Node %))
                                                     "javafx.scene.control.Tooltip")
                                      .getText)))]

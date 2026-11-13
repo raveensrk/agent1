@@ -114,13 +114,6 @@
     ;; Near the side it slides in, 4 px clear.
     (is (= 366.0 (:x (t/list-place (assoc field :x 500.0) 190.0 264.0 560.0 520.0))))))
 
-(deftest a-screen-reader-is-told-the-name-alone
-  (is (= {:name "Starts" :kind nil} (t/said {:name "Starts" :value 570})))
-  (is (= {:name "Starts. Not a time. Try 9:30 or 2130" :kind nil}
-         (t/said {:name "Starts" :error "Not a time. Try 9:30 or 2130"})))
-  (is (= {:name "Reminder. Off." :kind "dimmed text field"}
-         (t/said {:name "Reminder" :disabled true :tip "Off."}))))
-
 (deftest one-taken-time-is-one-step-for-undo
   (let [once (p/write p/start-state :starts 600)]
     (is (= 600 (get-in once [:times :starts])))

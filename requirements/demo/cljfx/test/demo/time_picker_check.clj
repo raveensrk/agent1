@@ -14,7 +14,7 @@
            [javafx.css PseudoClass]
            [javafx.event Event EventHandler]
            [javafx.geometry Bounds Rectangle2D]
-           [javafx.scene AccessibleAttribute AccessibleRole Cursor Node Parent Scene SnapshotParameters]
+           [javafx.scene Cursor Node Parent Scene SnapshotParameters]
            [javafx.scene.control Label ScrollPane TextField Tooltip]
            [javafx.scene.input KeyCode KeyEvent MouseButton MouseEvent ScrollEvent
             ScrollEvent$HorizontalTextScrollUnits ScrollEvent$VerticalTextScrollUnits]
@@ -141,12 +141,6 @@
   "The label that names a field: the first thing in its box."
   ^Label [^Node f]
   (on-fx #(first (.getChildrenUnmodifiable (.getParent f)))))
-
-(defn- spoken-name
-  "A field's name, as a screen reader is given it: what its label says."
-  [^Node f]
-  (let [l (label-of f)]
-    (on-fx #(when (identical? f (.getLabelFor l)) (.getAccessibleText l)))))
 
 (defn- whole [x] (Math/round (double x)))
 
@@ -281,8 +275,6 @@
       (check "\"abc\": the text stays, a red edge, the line says so, nothing written"
              ["abc" red "Not a time. Try 9:30 or 2130" before]
              [(text s) (edge s) (line "starts") (writes)])
-      (check "and a screen reader hears it, in the name" "Starts. Not a time. Try 9:30 or 2130"
-             (spoken-name s))
       (type! "1")
       (wait 300)
       (check "typing again clears the red edge and the line" [false nil] [(= red (edge s)) (line "starts")])
@@ -350,8 +342,6 @@
     (wait 300)
     (dotimes [_ 3] (tap! KeyCode/DOWN))
     (check "Down three times marks the third row" 2 (marked "starts"))
-    (check "and a screen reader is sent to it" "2:30 PM"
-           (on-fx #(.getText ^Label (.queryAccessibleAttribute s AccessibleAttribute/FOCUS_ITEM (object-array 0)))))
     (tap! KeyCode/ENTER)
     (wait 300)
     (check "Return takes the marked row" ["2:30 PM" 870 nil] [(text s) (time-of :starts) (lst "starts")])
@@ -444,7 +434,7 @@
       (check "it answers no click and no key, and opens no list" ["9:00 AM" 540 nil before]
              [(text r) (time-of :reminder) (lst "reminder") (writes)]))
 
-    (println "States, sizes and the screen reader")
+    (println "States and sizes")
     (check "its height is that of a button" t/field-h (on-fx #(.getHeight s)))
     (check "120 px wide or wider" true (>= (double (on-fx #(.getWidth s))) t/min-width))
     (check "over the field the pointer is a text cursor" Cursor/TEXT (on-fx #(.getCursor s)))
@@ -457,19 +447,9 @@
     (check "a disabled time picker's tooltip says why" "Off: tick Remind me to set a time."
            (on-fx #(some-> ^Tooltip (.get (.getProperties (.getParent r)) "javafx.scene.control.Tooltip")
                            .getText)))
-    (check "each is a text field to a screen reader" (repeat 3 AccessibleRole/TEXT_FIELD)
-           (on-fx #(mapv (fn [^Node n] (.getAccessibleRole n)) [s e r])))
-    (check "an empty field is given as empty, not as its hint" ""
-           (on-fx #(.queryAccessibleAttribute e AccessibleAttribute/TEXT (object-array 0))))
-    (let [spoken #(vector (spoken-name s)
-                          (on-fx (fn [] (.queryAccessibleAttribute s AccessibleAttribute/TEXT (object-array 0)))))]
-      (check "its name is what it sets, and its value the time as shown" ["Starts" "9:30 AM"] (spoken))
-      (focus! s)
-      (enter! "10a")
-      (check "after a change: the same name, the new time" ["Starts" "10:00 AM"] (spoken)))
-    (check "off, it is called dimmed and says why, in its name"
-           ["Reminder. Off: tick Remind me to set a time." "dimmed text field"]
-           [(spoken-name r) (on-fx #(.getAccessibleRoleDescription r))])
+    ;; Later checks start from 10:00 AM.
+    (focus! s)
+    (enter! "10a")
 
     (println "The list's words")
     (click! (centre s))

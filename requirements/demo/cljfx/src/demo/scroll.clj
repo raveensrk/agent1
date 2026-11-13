@@ -41,8 +41,7 @@
            [javafx.beans.property SimpleDoubleProperty]
            [javafx.beans.value ChangeListener]
            [javafx.event Event EventHandler]
-           [javafx.geometry Orientation]
-           [javafx.scene AccessibleAction AccessibleAttribute AccessibleRole Cursor Node Parent Scene]
+           [javafx.scene Cursor Node Parent Scene]
            [javafx.scene.control Label TextInputControl]
            [javafx.scene.input DragEvent KeyCode KeyEvent MouseButton MouseEvent ScrollEvent
             ScrollEvent$VerticalTextScrollUnits ScrollEvent$HorizontalTextScrollUnits]
@@ -358,33 +357,13 @@
         clip (Rectangle.)
         thick {:x (SimpleDoubleProperty. bar-thin) :y (SimpleDoubleProperty. bar-thin)}
         seen {:x (SimpleDoubleProperty. 0.0) :y (SimpleDoubleProperty. 0.0)}
-        area-ref (volatile! nil)
         bar (fn [axis]
               (let [track (part "scroll-track")
                     k (part "scroll-knob")
-                    holder (proxy [Pane] []
-                             (queryAccessibleAttribute [attr params]
-                               (let [{:keys [rw rh cw ch]} @geo
-                                     [room c] (if (= axis :y) [rh ch] [rw cw])
-                                     hi (most c room)]
-                                 (condp = attr
-                                   AccessibleAttribute/ORIENTATION
-                                   (if (= axis :y) Orientation/VERTICAL Orientation/HORIZONTAL)
-                                   AccessibleAttribute/VALUE (if (pos? hi) (/ (.get ^SimpleDoubleProperty (off axis)) hi) 0.0)
-                                   AccessibleAttribute/MIN_VALUE 0.0
-                                   AccessibleAttribute/MAX_VALUE 1.0
-                                   AccessibleAttribute/VISIBLE true
-                                   (let [^Pane this this] (proxy-super queryAccessibleAttribute attr params)))))
-                             (executeAccessibleAction [action params]
-                               (condp = action
-                                 AccessibleAction/INCREMENT ((:page! (parts @area-ref)) axis 1)
-                                 AccessibleAction/DECREMENT ((:page! (parts @area-ref)) axis -1)
-                                 (let [^Pane this this] (proxy-super executeAccessibleAction action params)))))]
+                    holder (Pane.)]
                 (doto holder
                   (.setManaged false)
                   (.setCursor Cursor/DEFAULT)
-                  (.setAccessibleRole AccessibleRole/SCROLL_BAR)
-                  (.setAccessibleText (if (= axis :y) "Vertical scroll bar" "Horizontal scroll bar"))
                   (-> .getStyleClass (.addAll ^java.util.Collection ["scroll-bar-x" (name axis)]))
                   (-> .getChildren (.addAll ^java.util.Collection [track k])))
                 {:holder holder :track track :knob k}))
@@ -412,13 +391,7 @@
                (computePrefWidth [_] (pref-w))
                (computePrefHeight [_] (pref-h))
                (computeMinWidth [_] (if (:x (:axes @model)) 0.0 (pref-w)))
-               (computeMinHeight [_] (if (:y (:axes @model)) 0.0 (pref-h)))
-               (queryAccessibleAttribute [attr params]
-                 (condp = attr
-                   AccessibleAttribute/VERTICAL_SCROLLBAR (when ((:need @geo) :y) (:holder (:y bars)))
-                   AccessibleAttribute/HORIZONTAL_SCROLLBAR (when ((:need @geo) :x) (:holder (:x bars)))
-                   AccessibleAttribute/CONTENTS @content
-                   (let [^Pane this this] (proxy-super queryAccessibleAttribute attr params)))))
+               (computeMinHeight [_] (if (:y (:axes @model)) 0.0 (pref-h))))
         g (fn [k] (get @geo k))
         room-of (fn [axis] (g (if (= axis :y) :rh :rw)))
         size-of (fn [axis] (g (if (= axis :y) :ch :cw)))
@@ -818,9 +791,7 @@
                  (place!)
                  (show! axis)
                  (note-anchor!)
-                 (.notifyAccessibleAttributeChanged ^Pane (:holder (bars axis)) AccessibleAttribute/VALUE)
                  (.playFromStart keep-timer))]
-    (vreset! area-ref area)
     (doseq [axis axes]
       (.addListener ^SimpleDoubleProperty (off axis) (listener #(moved! axis)))
       (.addListener ^SimpleDoubleProperty (drawn axis) (listener place!))
@@ -873,7 +844,6 @@
     (doto area
       (.setClip clip)
       (-> .getStyleClass (.add "scroll-area"))
-      (.setAccessibleRole AccessibleRole/SCROLL_PANE)
       (.setFocusTraversable true)
       (-> .getChildren (.addAll ^java.util.Collection
                                 [band corner (:holder (:x bars)) (:holder (:y bars))])))))
@@ -890,8 +860,8 @@
 
 (defn set-model!
   "Tells the area what it is: `:id`; `:axes`, the set of :x and :y it scrolls
-  along; `:width` and `:height`, its size along an axis it scrolls; `:name`,
-  what a screen reader calls it; `:follow-end`, a log's: it stays at its
+  along; `:width` and `:height`, its size along an axis it scrolls;
+  `:follow-end`, a log's: it stays at its
   newest line while it is at the bottom; `:glass`, how far down from its top
   glass floats over it; `:place`, the [x y] it opens at, used once; and
   `:on-place`, called with [x y] once the place has been still for `keep-ms`."
@@ -901,7 +871,6 @@
         old @model]
     (reset! model m)
     (.setId area (:id m))
-    (.setAccessibleText area (:name m))
     (when-let [glass (:glass m)]
       (.setStyle band (format "-fx-background-color: linear-gradient(to bottom, rgba(14,14,18,0.62) 0%%, rgba(14,14,18,0.62) %.1f%%, transparent 100%%);"
                               (* 100.0 (/ glass (+ glass glass-fade))))))

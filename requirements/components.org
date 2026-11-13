@@ -56,12 +56,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Every button on a page is one height, 44 px
 - A button with words is 76 px wide or wider
 - Buttons in a pair, as Cancel and Delete, are equal width: that of the wider
-** Buttons and the screen reader
-- Every button has the role of a button and a name; an icon alone is named in words
-- macOS is given a JavaFX control's name, role and the word for its kind, and nothing else: no help text, and not whether it is on. What must be said goes in those
-- A second action is said in the name, "Add 1. Hold: Add 10", and is reached without holding, from the right-click menu
-- A disabled button is called a dimmed button, and its name says why it is off
-- What macOS is given is read from macOS itself, not from the toolkit: [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]] prints it for a running app
 ** Verification
 - A window check presses a button and reads its size: 100% at rest, 97% pressed, 97% after 1.5 s held, 100% once released
 - It holds a button with a second action for 500 ms and counts one second action and no click
@@ -77,7 +71,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It presses a busy button: 100%. It waits out the save: "Saved", then "Save"
 - It makes a save fail: "Retry", nothing saved; it presses Retry and the save is counted
 - It reads the tooltip of a disabled button and of one with a second action, and fires the right-click menu's item
-- It reads each button's role and name, and the second action's spoken help
 - It reads the heights, the icon button's width, the words buttons' widths and a pair's two widths
 - It draws each button without its words and reads the contrast of the words over the middle of it, at rest and under the pointer: 4.5 or more
 - It counts frames through three presses and three busy glides: 55 a second or more
@@ -138,7 +131,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - After a key press it shows for 1 s
 - The bubble is glass, and its words read at 4.5:1
 - It is never clipped by the window's edge, nor by the edge of a scrolling area the slider is in: near one it slides sideways and stays whole, 4 px clear
-- Faded out, it is not there for a screen reader either
 - The slider's tooltip says the value too, so it is read without a change
 ** The value is written when the drag ends
 - What the slider sets follows the thumb live, through the whole drag
@@ -157,14 +149,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Focused: a ring in the accent colour round the thumb, on keyboard focus
 - Disabled: 45% opacity; it answers no hover, press, drag or key, and shows no bubble
 - A disabled slider's tooltip says why it is off
-** Sliders and the screen reader
-- Every slider has the role of a slider and a name
-- The name is what the slider sets, "Volume", with no value in it: macOS is given the value and says it, so in the name it would be said twice
-- The value is given as a bare number, without its unit
-- A screen reader is told when the value changes, and its raise and lower move the slider 1% and write it
-- A disabled slider is called dimmed, and its name says why it is off
-- What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
-- Read so on 2026-11-13: macOS is given a slider's name, its role, its value as a bare number, "30", and two actions, raise and lower
 ** Verification
 - A window check sends its events the way a pointer does
 - It drags the thumb to the middle, holds it still and reads the value: half the range; and the thumb 100 ms later: past the pointer, by no more than 10% of the move; and 1.1 s on: under the pointer
@@ -192,7 +176,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It reads each slider's label: what it sets
 - With Reduce Motion on, it presses the thumb and reads its size: 100%; it presses the track and reads the thumb 20 ms later: already under the pointer
 - It reads the heights, the track's thickness, the thumb's size and the slider's width
-- It reads each slider's role, name and value as a screen reader asks for them, and again after a change: the same name, the new value
 - It reads the tooltip of a slider and of a disabled one
 - It draws the bubble without its words and reads the contrast of the words over the middle of it: 4.5 or more
 - It counts frames through three drags and three track presses: 55 a second or more
@@ -253,16 +236,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Disabled: 45% opacity; it answers no click and no key, and opens no list
 - A disabled time picker's tooltip says why it is off
 - Not a time: a red edge and the line under it, until the text changes or Escape puts the old time back
-** Time pickers and the screen reader
-- Every time picker has the role of a text field and a name; the name is what it sets, "Starts", with no time in it
-- The name is spoken from the field's label, and is never set on the field: a name set on a JavaFX text field is given to macOS in place of its text, and the time is lost
-- Its value is the time as the field shows it, "9:30 AM"; an empty field is given as empty, not as its hint
-- The line under the field is said in the name while it shows, "Starts. Not a time. Try 9:30 or 2130"
-- A screen reader is sent to a row as the mark moves to it
-- A disabled time picker is called dimmed, and its name says why it is off
-- What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
-- Read so on 2026-11-13: macOS is given a time picker's label, "Starts", its role, the word for its kind, and its value, "9:30 AM"
-- Not heard with VoiceOver yet: what it says as the mark moves from row to row
 ** Verification
 - A window check sends its keys and clicks the way a person does
 - It gives the field the focus and reads what is selected: all of its text
@@ -289,9 +262,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It takes a time, sends Undo and reads the field: the time from before
 - It clicks and sends keys to a disabled time picker: the time as before, no list; and reads its opacity: 45%
 - It reads the field's height and width, and its edge on keyboard focus: the accent colour
-- It reads each time picker's role, name and value as a screen reader asks for them, and again after a change: the same name, the new time
-- It reads an empty field's value as a screen reader asks for it: empty; and the name while "Not a time" shows: the line is in it
-- It moves the mark and reads the row a screen reader is sent to: the marked one
 - It reads the tooltip of a disabled time picker
 - It draws the list without its words and reads the contrast of the words over the middle of it: 4.5 or more
 - It opens the list and reads it 40 ms later: fading in; with Reduce Motion on, 20 ms later: fully there
@@ -429,7 +399,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - The scroll place is kept between runs, not only while the app is open
 - A log stays at its newest line while it is at the bottom, and that is part of this requirement, not one of its own
 - The sizes and times stand: a 7 px bar, 11 px under the pointer, 15 px when always shown, a fade after 1 s, 40 px a wheel notch
-- No screen reader or VoiceOver support: it is not in the owner's use case
+- No screen reader or VoiceOver support, as [[file:gui.org::*No screen reader or VoiceOver support][the GUI requirements]] say
 - A change to macOS's scroll settings takes hold within 1 s, not at once: the app is not told of the change, and looks for it every 500 ms
 - On 2026-11-14 the owner tried the reference by hand with a real trackpad, its swipes, glides, edges and bars, and found it good: what the window checks send as a trackpad's events holds for a real one
 ** Ideas

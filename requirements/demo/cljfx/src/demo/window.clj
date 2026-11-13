@@ -500,7 +500,6 @@
                                      (= id page) (conj "on")
                                      icons (conj "icons"))
                       :text (when-not icons title)
-                      :accessible-help title
                       :graphic {:fx/type ui/icon-view :icon icon}
                       :alignment (if icons :center :center-left)
                       :max-width Double/MAX_VALUE
@@ -553,13 +552,11 @@
       :alignment :center-left
       :spacing 6
       :h-box/hgrow :always
-      :accessible-role :tab-item
       :on-mouse-clicked {:event :select-tab :window window :tab id}
       :children [{:fx/type :label :text (page-title page) :max-width Double/MAX_VALUE :h-box/hgrow :always}
                  {:fx/type :button
                   :style-class ["button" "tab-close"]
                   :graphic {:fx/type ui/icon-view :icon :x :size 12.0}
-                  :accessible-help (str "Close the tab " (page-title page))
                   :on-action {:event :close-tab :window window :tab id}}]})})
 
 (defn float-view
@@ -596,7 +593,6 @@
                                {:fx/type :button
                                 :style-class ["button" "tab-close"]
                                 :graphic {:fx/type ui/icon-view :icon :x :size 12.0}
-                                :accessible-help (str "Close the floating window " (page-title page))
                                 :on-action (on :close-float)}]}
                    {:fx/type :v-box
                     :v-box/vgrow :always
