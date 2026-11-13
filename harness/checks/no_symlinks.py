@@ -23,6 +23,11 @@ exempt in both scans: a committed `diagrams/.venv/bin/python` in the third-party
 Examples clone is not this rule's job. There is no allowlist yet; if a real
 need appears, mirror the private `nested_repo_allow.txt` pattern.
 
+An Emacs lock file is no link and is exempt: Emacs marks a buffer with unsaved
+edits by a dangling symlink `.#NAME -> user@host.pid:boot` beside the file, and
+removes it on save or revert. Deleting it would only drop Emacs's guard against
+two editors. `emacs_lock` tells it by both the name and the target shape.
+
 The warning half of the rule is prose, not a check: before creating any link,
 name the alternative you chose instead - a copy installed by a script, a
 package or settings declaration, or the real file.
@@ -36,11 +41,13 @@ install a copy, or declare the source as a package (pi reads
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 
 SKIP_DIRS = {".git", "node_modules", "zig-pkg", ".venv", "venv", "__pycache__", ".build", ".mypy_cache"}
 LINK_DEPTH = 4
+EMACS_LOCK_TARGET = re.compile(r"^[^/\s]+@[^/\s]+\.\d+(:\d+)?$")
 
 # Paths arrive on stdin from the dispatcher, or as arguments when run by hand.
 FILES = sys.argv[1:]
@@ -58,6 +65,11 @@ def repo_root() -> str | None:
 def skipped(rel: str) -> bool:
     """True when any path segment of REL is in SKIP_DIRS (.git included)."""
     return any(part in SKIP_DIRS for part in rel.split(os.sep))
+
+
+def emacs_lock(name: str, target: str) -> bool:
+    """True for an Emacs lock: `.#NAME -> user@host.pid` or `user@host.pid:boot`."""
+    return name.startswith(".#") and bool(EMACS_LOCK_TARGET.match(target))
 
 
 def tree_links(root: str) -> list[tuple[str, str]]:
@@ -81,7 +93,9 @@ def tree_links(root: str) -> list[tuple[str, str]]:
             if skipped(rel):
                 continue
             if os.path.islink(path):
-                found.append((rel, os.readlink(path)))
+                target = os.readlink(path)
+                if not emacs_lock(name, target):
+                    found.append((rel, target))
     return found
 
 
