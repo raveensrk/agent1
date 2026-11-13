@@ -429,6 +429,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - The scroll place is kept between runs, not only while the app is open
 - A log stays at its newest line while it is at the bottom, and that is part of this requirement, not one of its own
 - The sizes and times stand: a 7 px bar, 11 px under the pointer, 15 px when always shown, a fade after 1 s, 40 px a wheel notch
+- On 2026-11-14 the owner tried the reference by hand with a real trackpad, its swipes, glides, edges and bars, and found it good: what the window checks send as a trackpad's events holds for a real one
 ** Ideas
 - [[https://developer.apple.com/design/human-interface-guidelines/scroll-views][Apple's scroll views guidance]]
 - A way to jump far, such as a letter index or a date strip beside a long list, is a new requirement
