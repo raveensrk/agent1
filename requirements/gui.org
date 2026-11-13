@@ -105,6 +105,15 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 - Each is written down once, as a tree in its own requirement, in order
 - A change that adds, moves, renames or removes an item updates that tree in the same change, so it always says what is there
 - The sidebar's groups are the menu's, in the same order, so the two never disagree
+** Each titled sidebar section folds and unfolds
+- Every section with a header folds; the top group, which has no header, always shows
+- A chevron shows beside the header's name while the pointer is over the header; a click anywhere on the header folds or unfolds it
+- A folded header keeps its name and shows the count of the rows it hides
+- With a header focused, ← folds it and → unfolds it; the View menu has Fold All Sections and Unfold All Sections; all are keys Settings can rebind
+- A selected row inside a folded section stays selected, and its folded header shows as selected, so the selection is never lost from sight
+- Rows slide closed and open and the chevron turns in about 200 ms; with Reduce Motion or the app's animations off, it happens at once
+- The screen reader names a header with its state: folded or unfolded
+- Which sections are folded is saved with the app's prefs and comes back on the next run
 ** Try to follow native os style.
 ** Use dividers and seperators where applicable
 For example:
