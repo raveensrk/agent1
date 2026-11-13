@@ -318,6 +318,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** The trackpad and the wheel scroll the area under the pointer
 - A swipe or the wheel scrolls the area under the pointer, not the one with the focus
 - The content follows the fingers at once, one to one, with no lag and no smoothing added
+- A trackpad scroll moves by the pixel and stops wherever the fingers leave it, never snapping to a line or a row
 - Let go with speed, it glides on and slows to a stop, as macOS's own areas do; a touch on the trackpad stops the glide where it is
 - A notched wheel moves the content a line, 40 px, a notch, eased over 100 ms; at once under Reduce Motion
 - A sideways swipe scrolls sideways; Shift and the wheel do too
@@ -372,6 +373,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It scrolls and reads the bar: there at once; and 1 s on with no scroll: still there; and 1.4 s on: gone
 - It moves the pointer over the bar's edge and reads the knob: 11 px, a track under it; it reads it 2 s on: still there
 - It reads the knob's length against the room's share of the content, for a short and a very long content: in step, and never under 24 px
+- It sends a slow trackpad swipe of 7 px over a list of 32 px rows and reads the place once still: moved 7 px, not on a row's edge
 - It sends a trackpad swipe with speed and reads the place as it glides and once still: moving on, then stopped further than the swipe went
 - It sends a swipe past the bottom and reads the place: past the end by no more than a third of the room; and 400 ms after the lift: at the end
 - It sends a wheel notch at the bottom: no give

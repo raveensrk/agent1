@@ -339,6 +339,14 @@
       (check "a new swipe there, pushing on, scrolls the page" [(+ before 60.0) (most rows :y)]
              [(off page :y) (off rows :y)]))
 
+    (println "A swipe moves by the pixel")
+    (bring-into-view! page rows 120.0)
+    (set-off! rows :y 0.0)
+    (swipe! (mid rows) [[0.0 -3.0] [0.0 -4.0]])
+    (Thread/sleep 400)
+    (check "a slow 7 px swipe over 32 px rows: 7 px on once still, not on a row's edge" [7.0 true]
+           [(off rows :y) (not (zero? (mod (off rows :y) 32.0)))])
+
     (println "A drag on the knob")
     (set-off! page :y 0.0)
     (move! edge-place)
