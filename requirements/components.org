@@ -305,5 +305,132 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** Ideas
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
+* Scroll areas and scroll bars
+** A reference shows one way to build them
+- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:demo/cljfx/src/demo/scroll.clj][scroll.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/scroll_page.clj][scroll_page.clj]] is the demo's own page
+- Its window checks, [[file:demo/cljfx/test/demo/scroll_check.clj][scroll_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- The reference passes its own checks: =clojure -M:test= and =clojure -M:check-scroll=, run in =demo/cljfx=; =clojure -M:scroll= opens it
+- This requirement decides, not the reference: where the two differ, the reference is wrong
+** A scroll area shows content larger than its room
+- A scroll area is a fixed room with content that moves inside it, up and down, sideways, or both
+- It scrolls only along an axis where the content is larger than the room; along the other it does not move, and shows no bar
+- Content never draws outside its scroll area, over a sidebar, a toolbar or another panel
+- The window scrolls nothing as a whole: each panel that can overflow is its own scroll area, and the sidebar, the toolbar and the page each scroll on their own
+- [[file:gui.org::*A wide table scrolls sideways in its own area][A wide table scrolls sideways in its own area]] is one of these, and holds to all of this
+** macOS's scroll settings are followed
+- System Settings, Appearance, "Show scroll bars" decides when the bars show: on scrolling only, always, or by what is plugged in, as macOS decides it
+- "Click in the scroll bar to" decides what a click in the track does: go a page, or go to the spot clicked; Option and a click does the other
+- The scroll direction is macOS's, natural or not; the app never turns it round
+- A change to any of these takes hold at once, with no restart
+** A scroll bar looks like a thin capsule
+- The knob is a capsule, its length the room's share of the content, and never shorter than 24 px
+- Its place along the track is the room's place along the content
+- Shown only when scrolling, the bar floats over the content at its edge, with no track: the knob is 7 px thick, 3 px in from the edge
+- With the pointer over the bar, the knob grows to 11 px and a track shows under it, in 120 ms
+- Shown always, the bar takes its own 15 px beside the content, with a track, and the content is that much narrower; where both bars show, a square fills the corner
+- In the dark theme the knob is light on dark, and reads at 3:1 or more against what is under it
+- No arrow buttons at the ends of a bar
+- Over a bar the pointer is the arrow, not a hand
+** A scroll bar shows while it is needed
+- Shown only when scrolling, a bar shows the moment its area scrolls, and fades out over 300 ms once 1 s has passed with no scroll and no pointer over it
+- It shows too, for 1 s, when its area first appears or its content grows, so it is seen that there is more
+- With the pointer over the bar's 16 px edge it stays, and fades 1 s after the pointer leaves
+- Faded out, a bar is not there for a click; its 16 px edge is, and brings it back
+** The trackpad and the wheel scroll the area under the pointer
+- A swipe or the wheel scrolls the area under the pointer, not the one with the focus
+- The content follows the fingers at once, one to one, with no lag and no smoothing added
+- Let go with speed, it glides on and slows to a stop, as macOS's own areas do; a touch on the trackpad stops the glide where it is
+- A notched wheel moves the content a line, 40 px, a notch, eased over 100 ms; at once under Reduce Motion
+- A sideways swipe scrolls sideways; Shift and the wheel do too
+- A swipe more along one axis than the other keeps to that axis for the rest of the gesture, so a down swipe does not drift sideways
+** The edge gives, then springs back
+- A trackpad swipe past an end pulls the content on, less and less the further it goes, and lets go back to the end in 300 ms, as a rubber band
+- A glide that reaches an end bounces there in the same way
+- A notched wheel stops at the end, with no give
+- The pull is never more than a third of the room
+- Under Reduce Motion the pull still follows the fingers, since they move it, but a glide stops at the end with no bounce
+** A scroll inside a scroll goes to the right one
+- A gesture stays with the area it started in until the fingers lift and its glide ends, even when that area reaches its end
+- A new gesture over an inner area that is at its end, pushing on past it, scrolls the area round it
+- A gesture along an axis an inner area cannot scroll goes at once to the area round it: an up swipe over a wide table scrolls the page
+- Over a control that is not a scroll area, a slider or a closed time picker, the area under it scrolls
+** A drag on the knob moves the content
+- A press on the knob holds it, and the content follows the pointer at once, keeping where on the knob it was taken
+- The drag goes on with the pointer off the bar and off the window, and never jumps back
+- Past an end the knob stops, and takes up again when the pointer comes back
+- Escape during a drag puts the content back where the drag began
+- A press in the track, away from the knob, goes a page that way, or to the spot clicked, as macOS is set; held, it goes on a page each 100 ms until the knob is under the pointer
+- A page is the room less one line, 40 px, so the last line seen is still there
+** The keyboard scrolls a focused area
+- With the focus in an area and not in a text field, Up and Down scroll a line, Left and Right a line sideways
+- Page Up and Page Down, Space and Shift and Space go a page; Option and Up or Down go a page too
+- Home and End go to the top and the bottom; Command and Up or Down do too
+- A key scroll eases over 150 ms, and is at once under Reduce Motion; a held key scrolls on smoothly, with no steps
+- In a text field these keys move the caret, and the area follows the caret
+** What is wanted is brought into sight
+- A control given the focus by Tab, out of sight, is scrolled into sight with 16 px clear of the edge, by the least that does it
+- A row chosen by the keyboard, a search hit, or a thing jumped to from the command palette is scrolled into sight the same way
+- A drag held within 24 px of an area's edge scrolls it that way, faster the nearer the edge, for drag and drop and for choosing many rows
+- The area never scrolls on its own otherwise: new content arriving does not move what is in view
+** The place is kept
+- Content that changes above what is in view, from a live reload or rows added, does not move what is in view: the first row seen stays where it was
+- A scroll area added at the end of a list it shows to the bottom, such as a log, stays at the bottom while it is there, and stays put once scrolled up
+- Each page's scroll place is kept as it is left, and is there on going back to it, and between runs
+- Resizing the window keeps the first row seen in place
+** Content scrolls under glass
+- Content scrolls on under a glass toolbar or bar, and is seen through it, as the glass layer floats over it
+- Where content meets the edge of glass, it softens and fades over 16 px, so words under it never clash with the bar's words
+- At the top, with nothing scrolled under, the edge shows no fade
+** Scrolling stays at the frame rate
+- A scroll is drawn at the screen's frame rate, 55 a second or more, with any amount of content
+- Only the rows in view, and a screen's worth either side, are built; a list of 100,000 rows scrolls as a list of 100 does
+- Scrolling never waits on loading: a row whose data is not yet there shows its place, and fills when it comes, off the UI thread
+- Images and heavy rows that come into view draw without a stutter
+** Scroll areas and the screen reader
+- Every scroll area has the role of a scroll area, and each bar it shows the role of a scroll bar with its axis and its place as a value from 0 to 1
+- A bar faded out is still there for a screen reader, so the place can be read
+- A screen reader's scroll by a page moves the area a page, and the place is said after
+- What macOS is given is read from macOS itself, with [[file:demo/cljfx/tools/ax_tree.swift][ax_tree.swift]]
+- Not read from macOS yet: what JavaFX gives macOS for a scroll area and its bars
+** Verification
+- A window check sends its scrolls, presses and keys the way a pointer and a keyboard do
+- It reads an area whose content fits: no bar, and a scroll moves nothing
+- It sets each of macOS's "Show scroll bars" choices and reads the bar: floating and 7 px with no track, or 15 px beside the content with a track
+- It scrolls and reads the bar: there at once; and 1 s on with no scroll: still there; and 1.4 s on: gone
+- It moves the pointer over the bar's edge and reads the knob: 11 px, a track under it; it reads it 2 s on: still there
+- It reads the knob's length against the room's share of the content, for a short and a very long content: in step, and never under 24 px
+- It sends a trackpad swipe with speed and reads the place as it glides and once still: moving on, then stopped further than the swipe went
+- It sends a swipe past the bottom and reads the place: past the end by no more than a third of the room; and 400 ms after the lift: at the end
+- It sends a wheel notch at the bottom: no give
+- It sends a down swipe with a little sideways drift over an area that scrolls both ways: no sideways move
+- It sends Shift and the wheel: a sideways move
+- It sends a swipe over an inner area until its end, without lifting: the outer area as before; then a new swipe: the outer area moved
+- It sends an up swipe over a wide table: the page moved, the table as before
+- It drags the knob halfway and reads the place: half the content; it drags off the window and back: no jump
+- It drags the knob, sends Escape and reads the place: where the drag began
+- It clicks the track with each of macOS's click choices, and with Option: a page, the spot clicked, and the other
+- It holds a press on the track and reads the place 500 ms on: paged on until the knob is under the pointer, no further
+- It sends Down, Page Down, Space, End and Home to a focused area and reads the place after each: a line, a page less a line, a page less a line, the bottom, the top
+- It sends Tab to a control out of sight and reads its edges: in the room, 16 px clear
+- It holds a drag 10 px from the bottom edge and reads the place over 500 ms: moving down
+- It adds rows above what is in view and reads the first row seen: the same row, at the same place
+- It leaves a page scrolled, goes elsewhere, comes back, and reads the place: as left; and again after a restart
+- It scrolls content under the glass toolbar and reads the pixels under it: content seen, fading at the glass's edge
+- With Reduce Motion on, it sends Page Down and reads the place 20 ms later: already a page on; it sends a glide into the end: no bounce
+- It reads the knob's contrast over light and dark content: 3 or more
+- It reads each scroll area's role and its bars' roles, axes and values as a screen reader asks, before and after a scroll: the new place
+- It counts frames through three swipes and three glides over a 100,000 row list: 55 a second or more
+- It counts rows built while a 100,000 row list scrolls: a screen's worth and the rows either side, never all
+** Decided
+- On 2026-11-14, by the owner:
+- Under Reduce Motion the edge still stretches under the fingers, with no bounce: chosen over a hard stop, and over the same bounce as with it off
+- The scroll place is kept between runs, not only while the app is open
+- A log stays at its newest line while it is at the bottom, and that is part of this requirement, not one of its own
+- The sizes and times stand: a 7 px bar, 11 px under the pointer, 15 px when always shown, a fade after 1 s, 40 px a wheel notch
+** Ideas
+- [[https://developer.apple.com/design/human-interface-guidelines/scroll-views][Apple's scroll views guidance]]
+- A way to jump far, such as a letter index or a date strip beside a long list, is a new requirement
+- Zoom by pinch in a scroll area is a new requirement
 * Status bar at the bottom :optional:
 * Message bar at the bottom :optional:
