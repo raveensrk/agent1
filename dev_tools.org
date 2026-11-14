@@ -398,7 +398,7 @@ Video.js v10 - open source media player framework for HTML and React.
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-*** Racket :expert:
+*** Racket :expert:avoid:
 :PROPERTIES:
 :NEEDS: [[*Lisp][Lisp]]
 :END:
