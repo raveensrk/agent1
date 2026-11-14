@@ -1,0 +1,1 @@
+Create a tarot card based off of what you know about me in the classic Rider-Waite style. Style me in a hand-drawn figure using bold but imperfect black ink linework with wobble and variation, flat colors with no shading. Layer subtle tarot visual elements around the figure. Add paper texture and print feel.
