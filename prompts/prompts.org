@@ -115,14 +115,7 @@ Based on the current session do the following,
 ** Make performance improvements to the project.
 
 * Maintenance
-** Perform maintenance for this project
-- Find dead code and remove it.
-- Try to reduce bloat in the project.
-- Perform maintenance and clean up redundancies in this project.
-- Break large code blocks into smaller, focused components to improve usability and maintainability.
-- Add helper scripts if they reduce token usage or improve task quality.
-- Suggest an idea, improvement, tweak, or optimization for this project.
-- Finally, Critic this project.
+** [[../skills/maintain/SKILL.md][Perform maintenance for this project]]
 ** Skills
 - List all installed skills in this computer for all AI Agent Harnesses.
 - List all installed skills in this computer for this current AI Agent Harness.
