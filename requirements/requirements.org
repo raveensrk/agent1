@@ -36,6 +36,14 @@ An idea that changes what the app does, shows or stores becomes an OPEN requirem
 - Chores that change no behaviour live in a notes file.
 - Every app commit names the requirement it builds: =(S-8)=.
 - A =commit-msg= hook refuses a source or test commit that names no existing id.
+** Feasibility first
+A requirement is written only after concrete evidence shows it can be built and tested in the project's languages and libraries.
+- Evidence is one of: library docs, code already in the repo, a throwaway spike that ran, a known working example.
+- =:VERIFY:= names a check the project can run today, or one its test tools can run once written.
+- An idea that cannot be built as asked goes back to the owner with alternatives and their trade-offs; the owner picks.
+- The evidence goes in the requirement as one =Evidence:= line with links.
+- The idea is checked against existing requirements for duplicates and conflicts; =:NEEDS:= names a parent if one fits.
+- The [[file:../skills/add-requirement/SKILL.md][add-requirement]] skill follows this.
 ** The owner approves a requirement before it is built
 A new or edited requirement is drafted, shown to the owner, and built only after their yes.
 - For visual work a mockup is approved with the requirement, never as part of =:VERIFY:=.
