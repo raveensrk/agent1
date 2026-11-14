@@ -1100,6 +1100,8 @@ Name: Avoid
 Text: Programming Languages to avoid:
 +
 + c++, go, c#, dart, kotlin
++
++ racket: lack of good libraries
 Pos: 509 2066
 Kind: card
 Size: 755 556

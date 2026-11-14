@@ -513,3 +513,5 @@ https://www.youtube.com/watch?v=48DqkAx86Vg
 Programming Languages to avoid:
 
 c++, go, c#, dart, kotlin
+
+racket: lack of good libraries
