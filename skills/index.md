@@ -6,6 +6,7 @@ by registering this repo with [install.py](../install.py).
 - [ask-simple](./ask-simple/SKILL.md) - Asks the user clear questions in simple language, as if they are new to the topic.
 - [determinize](./determinize/SKILL.md) - Turns a directory's agent rules into checks, guards and git hooks, then thins the instructions to decisions and routing.
 - [maintain](./maintain/SKILL.md) - Maintains a project: dead code, bloat, redundancy, large blocks and helper scripts, planned first, applied one verified step at a time.
+- [next](./next/SKILL.md) - Asks "What next?" after a task, lists up to 5 next steps best first, and does the one the user picks.
 - [port-app](./port-app/SKILL.md) - Plans a port of an app to a new language or toolkit by asking very simple questions, then writing the plan.
 - [redesign-gui](./redesign-gui/SKILL.md) - Redesigns a desktop app's GUI in four gated phases: brief, SVG mockups, contract, then build and verify.
 - [test-cua-driver-with-freeform](./test-cua-driver-with-freeform/SKILL.md) - Smoke-tests cua-driver by drawing a house on a new Freeform board and reports each capability as pass or fail.
