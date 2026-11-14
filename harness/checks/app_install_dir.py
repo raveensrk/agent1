@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # harness-check: {"id": "app_install_dir", "applies": ["*", "!**/archive/**", "!harness/checks/app_install_dir.py", "!harness/tests/**", "!**/node_modules/**", "!**/target/**", "!**/build/**", "!**/.build/**", "!**/_site/**", "!**/venv/**", "!**/zig-pkg/**", "!**/notes/**", "!**/content/**", "!**/deck/**", "!*.html", "!*.json", "!*.rec", "!*.elim", "!*.txt", "!*.lock"], "quadrant": "feedback/computational"}
-"""Apps from ~/repos install in ~/Applications/My_Apps and never touch the Dock.
+"""Apps from ~/repos install in an app group folder and never touch the Dock.
+
+Each goes in ~/Applications/My_Apps/<Category>: Journals, Tools, Media_Editor
+or Others.
 
 Felis is the one exception: ~/Applications/MosaixDesign_Apps/Felis.
 
 rules/macos.md: not ~/Applications itself, not /Applications, no pinning, no
 `killall Dock`. A line is an install when it copies, moves or assigns an app
 folder (cp, ditto, rsync, mv, copytree, an `app`/`dest` variable) and names an
-Applications folder that is not My_Apps; a lookup such as finding Chrome in
+Applications folder that is not a group folder; a lookup such as finding Chrome in
 /Applications is not an install and is not reported. Markdown is checked only
 inside fenced code, so prose that explains the rule does not trip it. A line
 containing `lint:ignore` is not reported.
@@ -33,7 +36,8 @@ INSTALL = re.compile(
     re.IGNORECASE,
 )
 FIX_DIR = ('installs a Mac app outside ~/Applications/My_Apps; install into '
-           '"$HOME/Applications/My_Apps/<Name>.app" (agent1 rules/macos.md)')
+           '"$HOME/Applications/My_Apps/<Category>/<Name>.app", Category one of '
+           'Journals, Tools, Media_Editor, Others (agent1 rules/macos.md)')
 FIX_DOCK = ("touches the Dock; drop it - apps from ~/repos are never pinned, "
             "the user pins one by hand (agent1 rules/macos.md)")
 MAX_BYTES = 1_000_000

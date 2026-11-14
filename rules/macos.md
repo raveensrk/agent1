@@ -27,8 +27,16 @@ last_reviewed: 2026-11-02
 
 ## Apps from `~/repos`
 
-Every app a project in `~/repos` builds and installs goes in
-`~/Applications/My_Apps`. Not `~/Applications` itself and not `/Applications`.
+Every app a project in `~/repos` builds and installs goes in a category
+folder under `~/Applications/My_Apps`, its installer's default, and the
+installer takes a path to install elsewhere. Not `~/Applications` itself and not `/Applications`.
+
+- `~/Applications/My_Apps/Journals`: ai journal, arcadia, diet tracker, elimination
+  tracker, Library ImGui, medicine tracker, My Journal, symptoms tracker.
+- `~/Applications/My_Apps/Tools`: bookmark2, DrGraph, find_link, sync2, task-router-2.
+- `~/Applications/My_Apps/Media_Editor`: Tatami.
+- `~/Applications/My_Apps/Others`: every other app.
+
 One exception: Felis goes in `~/Applications/MosaixDesign_Apps/Felis`.
 This covers the installer, the post-commit hook that reinstalls the app, and
 any code that launches or looks up the app by its path.

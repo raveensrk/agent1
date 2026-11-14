@@ -1,7 +1,7 @@
 * Auto-Install Git Hook
 
 *Goal:* On macOS, the GUI apps of one target repo stay current in
-=~/Applications/My_Apps= after commits and pulls. The target is the repo
+=~/Applications/My_Apps/<Category>= (rules/macos.md) after commits and pulls. The target is the repo
 I name, or the current repo (the git root of the working directory) if I
 don't name one.
 

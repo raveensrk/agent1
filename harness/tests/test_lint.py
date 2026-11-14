@@ -1309,6 +1309,10 @@ def test_app_install_dir_flags_installs_outside_my_apps_and_the_dock():
                      "```sh\nfor base in /Applications ~/Applications; do ls $base; done\n```\n",
         "ok.sh": "cp -R X.app /Applications/  # lint:ignore\n",
         "felis.sh": 'ditto X.app "$HOME/Applications/MosaixDesign_Apps/Felis/X.app"\n',
+        "groups.sh": 'ditto X.app "$HOME/Applications/My_Apps/Journals/X.app"\n'
+                     'ditto X.app "$HOME/Applications/My_Apps/Tools/X.app"\n'
+                     'ditto X.app "$HOME/Applications/My_Apps/Media_Editor/X.app"\n'
+                     'ditto X.app "$HOME/Applications/My_Apps/Others/X.app"\n',
     }
     with tempfile.TemporaryDirectory() as tmp:
         for name, files in (("bad", bad), ("good", good)):
