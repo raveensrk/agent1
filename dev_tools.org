@@ -407,6 +407,16 @@ Avoid: lack of good libraries
 :PROPERTIES:
 :NEEDS: [[*Lisp][Lisp]], [[*Emacs][Emacs]]
 :END:
+*** Tauri :gui:library:
+:PROPERTIES:
+:NEEDS: [[*Rust][Rust]]
+:END:
+Desktop apps: a Rust core with a web view window. Used by diet_tracker.
+*** Svelte :web:library:
+:PROPERTIES:
+:NEEDS: [[*TypeScript][TypeScript]]
+:END:
+Small, fast web UI components. diet_tracker's window.
 *** cljfx :gui:library:
 :PROPERTIES:
 :NEEDS: [[*Clojure][Clojure]]
