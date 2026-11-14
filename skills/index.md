@@ -3,6 +3,7 @@
 Agent skills in the [Agent Skills](https://agentskills.io) format. Install them
 by registering this repo with [install.py](../install.py).
 
+- [ask-simple](./ask-simple/SKILL.md) - Asks the user clear questions in simple language, as if they are new to the topic.
 - [determinize](./determinize/SKILL.md) - Turns a directory's agent rules into checks, guards and git hooks, then thins the instructions to decisions and routing.
 - [maintain](./maintain/SKILL.md) - Maintains a project: dead code, bloat, redundancy, large blocks and helper scripts, planned first, applied one verified step at a time.
 - [port-app](./port-app/SKILL.md) - Plans a port of an app to a new language or toolkit by asking very simple questions, then writing the plan.
