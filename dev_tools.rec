@@ -1027,6 +1027,7 @@ Fit: yes
 Name: Racket
 Tag: expert
 Tag: avoid
+Note: Avoid: lack of good libraries
 Group: Lisp Family of Languages
 Pos: 3232 1049
 Kind: rounded-rectangle

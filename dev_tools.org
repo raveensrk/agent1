@@ -402,6 +402,7 @@ Video.js v10 - open source media player framework for HTML and React.
 :PROPERTIES:
 :NEEDS: [[*Lisp][Lisp]]
 :END:
+Avoid: lack of good libraries
 *** Emacs Lisp :expert:
 :PROPERTIES:
 :NEEDS: [[*Lisp][Lisp]], [[*Emacs][Emacs]]
