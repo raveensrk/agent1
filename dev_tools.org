@@ -398,10 +398,11 @@ Video.js v10 - open source media player framework for HTML and React.
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-*** Racket :expert:
+*** Racket :expert:avoid:
 :PROPERTIES:
 :NEEDS: [[*Lisp][Lisp]]
 :END:
+Avoid: lack of good libraries
 *** Emacs Lisp :expert:
 :PROPERTIES:
 :NEEDS: [[*Lisp][Lisp]], [[*Emacs][Emacs]]
@@ -513,3 +514,5 @@ https://www.youtube.com/watch?v=48DqkAx86Vg
 Programming Languages to avoid:
 
 c++, go, c#, dart, kotlin
+
+racket: lack of good libraries

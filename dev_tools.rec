@@ -1026,6 +1026,8 @@ Fit: yes
 
 Name: Racket
 Tag: expert
+Tag: avoid
+Note: Avoid: lack of good libraries
 Group: Lisp Family of Languages
 Pos: 3232 1049
 Kind: rounded-rectangle
@@ -1100,6 +1102,8 @@ Name: Avoid
 Text: Programming Languages to avoid:
 +
 + c++, go, c#, dart, kotlin
++
++ racket: lack of good libraries
 Pos: 509 2066
 Kind: card
 Size: 755 556
