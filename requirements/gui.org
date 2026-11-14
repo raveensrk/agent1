@@ -20,6 +20,17 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Given up for it: true Liquid Glass. JavaFX cannot blur or bend what is behind a control, so glass is drawn as [[*Glass shows what is behind it][Glass shows what is behind it]] says
 - Everything the system would have given is built and checked by hand: the press, the glass, Reduce Motion, Reduce Transparency and Increase Contrast
 - To be looked at again if native window checks prove to run from one command, with no pointer taken over
+*** OPEN elimination_tracker uses Tauri, not JavaFX
+:PROPERTIES:
+:ID: elimination-tracker-tauri
+:CREATED: 2026-11-14
+:LAST_EDITED: 2026-11-14
+:VERIFY: cargo test -p elimination_tracker, and npm run check in app, run in elimination_tracker
+:END:
+- Decided by the owner on 2026-11-14: this repo is exempt from the JavaFX/cljfx line above; every other app keeps it
+- The window is Tauri 2 with TypeScript; the core and CLI are Rust, a separate program the window starts and talks to by JSON lines
+- Given up: the checks run inside the app. Window checks drive the real window code in jsdom over the real core, and a webview run is by hand with a screenshot
+- Glass, Reduce Motion, Reduce Transparency and Increase Contrast, where an app wants them, are drawn in CSS and checked by hand
 * Coding Guidelines
 - Follow KISS (Keep it simple stupid) philosophy
 - Less code better than more code
