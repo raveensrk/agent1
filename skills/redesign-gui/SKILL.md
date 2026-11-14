@@ -85,7 +85,7 @@ Interview before designing anything.
 ## Phase 2: SVG mockup review loop
 
 1. Mockups go in `docs/mockups/`, one SVG per screen or state, named like
-   `01-main-window-dark.svg`. Version them (`-v2`, `-v3`); never overwrite.
+   `01-main-window-dark.svg`. Version them (`-v2`, `-v3`); never overwrite. Mockups and mockup generators are gitignored.
 2. Start with 2 or 3 clearly different directions for the main screen. Let
    the user pick one before going into detail.
 3. Draw detailed screens in one dark and one light theme only. Add one theme
