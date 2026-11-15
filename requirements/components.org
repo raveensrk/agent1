@@ -279,6 +279,69 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** Ideas
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
+* OPEN Date pickers
+:PROPERTIES:
+:ID: date-pickers
+:CREATED: 2026-11-15
+:LAST_EDITED: 2026-11-15
+:APPROVED: 2026-11-15
+:VERIFY: clojure -M:test (demo.date-picker-test), clojure -M:check-date-picker (demo.date-picker-check), run in demo/cljfx
+:END:
+** A reference shows one way to build them
+- demo/cljfx gets date_picker.clj, the part worth copying, and date_picker_page.clj, the demo's page, styled in glass.css
+- =clojure -M:date-picker= opens it; =clojure -M:check-date-picker= runs its window checks
+- This requirement decides, not the reference
+** A date picker sets one day
+- One field that is typed into, with a month calendar under it; the value is a year, a month and a day
+- A date picker has a label that names what it sets
+- Where the date is optional the field may be empty, and then shows a hint in grey, "Fri, 20 Nov 2026"
+- No time, no time zone, no range of a start and an end, no words such as "tomorrow" or "next fri": a need for one is a new requirement
+** A date picker looks like a field
+- The field is 44 px tall, the height of a button, and 180 px wide or wider, with a calendar mark at its right end
+- The date is shown the way macOS's region shows a medium date, with the weekday: "Fri, 20 Nov 2026"
+- Over the field the pointer is a text cursor; over the calendar mark it is an arrow
+** Typing sets the date
+- Focus selects all of the field's text, so typing replaces it
+- These are all taken: "20 nov", "nov 20", "20 November 2026", "2026-11-20", and the region's short form, "20/11/2026" or "11/20/2026"; in either case
+- A day and month with no year is the next such day from today, today included
+- Return, Tab or a click elsewhere takes what is typed, and the field then shows it in full
+- What is not a date, "31 Nov" or "abc", is not guessed at: the text stays, the edge turns red, a line under it says "Not a date. Try 20 Nov or 2026-11-20", and nothing is written
+- Typing again clears the red edge and the line
+** A calendar offers days
+- The calendar opens under the field on a click in the field or on its mark, and on Down; Tab into the field does not open it
+- It shows one month: its name and year, the weekday initials, and six weeks at most; days of the months either side are dim and can be taken
+- The week starts on the day macOS's region starts it
+- It opens on the field's month with its day marked; from an empty field, on today's month with today marked
+- Today has a ring in the accent colour; the taken day is filled with it
+- ‹ and › go a month back and on; Page Up and Page Down do the same from the keyboard
+- The arrow keys move the mark a day or a week, into the next month where needed; Return takes the marked day, and a click takes the day under it
+- "Today" at its foot marks and takes today
+- Escape closes an open calendar and leaves the typed text; a second Escape puts the field back to the date it had
+- The calendar is glass, its words read at 4.5:1, it is never clipped by the window's edge, and it opens and closes with a 120 ms fade, at once under Reduce Motion
+** The date is written when it is taken
+- The date is written once, when it is taken, not at every key or mark move
+- Taking the date the field already had writes nothing; Escape writes nothing
+- One taken date is one step for Undo
+** Date picker states
+- Focused: a ring in the accent colour, on keyboard focus
+- Disabled: 45% opacity; it answers no click and no key, opens no calendar, and its tooltip says why it is off
+- Not a date: a red edge and the line under it, until the text changes or Escape puts the old date back
+** Verification
+- A unit test reads each typed form above, and "31 Nov", "abc" and an empty field, into a date or a refusal
+- A unit test reads a day and month with no year against a fixed today: the next such day
+- A window check types "20 nov" and sends Return: the field reads "Fri, 20 Nov 2026" and the date is written once
+- It types "31 Nov" and sends Return: the text still there, a red edge, the line under it, nothing written
+- It clicks the field: the calendar open on the field's month, its day marked, today ringed
+- It sends Right, Down and Return: the day eight days on is taken
+- It sends Page Down: the next month shown; it clicks a dim day: that day taken
+- It clicks "Today": today taken, the calendar closed
+- It sends Escape twice after typing: the date from before, nothing written
+- It takes a date, sends Undo: the date from before
+- It sets a Monday-first region and reads the first weekday column: Monday
+- It clicks and sends keys to a disabled date picker: no calendar, the date as before, 45% opacity
+- It reads the field's height and width, the calendar's edges at the window's bottom, and the contrast of its words: 44 px, 180 px or more, inside the window, 4.5 or more
+- It opens the calendar and reads it 40 ms later: fading in; with Reduce Motion on, 20 ms later: fully there
+Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/DatePicker.class and com/sun/javafx/scene/control/DatePickerContent.class (a month grid on java.time.LocalDate and WeekFields); requirements/demo/cljfx/src/demo/time_picker.clj already builds a typed glass field with a list under it and its window checks in test/demo/time_picker_check.clj; mockup shown and approved on 2026-11-15
 * DONE Scroll areas and scroll bars
 :PROPERTIES:
 :ID: scroll-areas
