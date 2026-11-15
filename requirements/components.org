@@ -191,16 +191,16 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check-time-picker=, run in =demo/cljfx=; =clojure -M:time-picker= opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** A time picker sets one time of day
-- One field that is typed into, with a list of times under it; the value is an hour and a minute, any minute of the day
+- One field that is typed into, with wheels under it; the value is an hour and a minute, any minute of the day
 - A time picker has a label that names what it sets
 - Where the time is optional the field may be empty, and then shows a hint in grey, "9:30 AM"
 - Where it is not, an emptied field is not taken: the line under it says "Not a time. Try 9:30 or 2130"
-- No date, no seconds, no time zone, no pair of a start and an end, no ready-made choices such as "In 1 hour", no clock face and no wheels: a need for one is a new requirement
+- No date, no seconds, no time zone, no pair of a start and an end, no ready-made choices such as "In 1 hour", and no clock face: a need for one is a new requirement
 ** A time picker looks like a field
 - The field is 44 px tall, the height of a button, and 120 px wide or wider
 - The time is shown the way macOS is set to show it: "9:30 AM", or "09:30" on a 24-hour clock
 - macOS's own 24-hour switch decides; with it unset, the region's habit does
-- On a 12-hour clock twelve o'clock is shown with its word, "12:00 PM, noon" and "12:00 AM, midnight", in the field and in the list
+- On a 12-hour clock twelve o'clock is shown with its word, "12:00 PM, noon" and "12:00 AM, midnight", in the field; on the wheels it is "12"
 - Over the field the pointer is a text cursor
 ** Typing sets the time
 - Focus selects all of the field's text, so typing replaces it
@@ -213,31 +213,33 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Minutes past 59, hours past 23, and AM or PM after an hour of the 24-hour clock, "13p", are not a time
 - What cannot be read as a time is not guessed at: the text stays, the field's edge turns red, a line under it says "Not a time. Try 9:30 or 2130", and nothing is written
 - Typing again clears the red edge and the line
-** A list offers times
-- The list opens under the field on a click in it, on typing, and on Down; Tab into the field does not open it
-- It holds the day in 15 minute steps, eight rows to be seen and the rest scrolled to
-- It opens with the field's time marked and in the middle; from an empty field, with the step after now
-- Typing narrows it: "2" leaves 2:00 PM, 2:15 PM, 2:30 PM and 2:45 PM, then the same four in the AM, with no row marked, so either half of the day is two keys away
-- Text that is a whole time is the first row, and marked: "207p" shows "2:07 PM" first, though it is on no step
-- Up and Down move the mark, Return takes the marked row, and a click takes the row under it
-- With no row marked, Down marks the first row and Up the last, and Return takes what is typed
-- Up and Down never step the time by a minute: an exact minute is typed
-- Text that offers nothing, "abc", closes the list
-- The list is as wide as the field, and never narrower than "12:00 AM, midnight" needs
-- Escape closes an open list and leaves the typed text; a second Escape puts the field back to the time it had
-- The list is glass, and its words read at 4.5:1
-- It is never clipped by the window's edge: with no room under the field it opens over it, and it stays whole, 4 px clear
-- Scrolling over the open list scrolls the list; over the field alone, the page under it scrolls and the time does not change
-- The list opens and closes with a 120 ms fade, and at once under Reduce Motion
+** Wheels set the time
+- The wheels open under the field on a click in it, on typing, and on Down; Tab into the field does not open them
+- On a 12-hour clock there are three wheels side by side: hour 1 to 12, minute 00 to 59, AM and PM; on a 24-hour clock two: hour 00 to 23, minute 00 to 59
+- A band across the middle marks the time; rows above and below curve away, shorter and fainter, as on a drum
+- Five rows are to be seen on each wheel, or all of its rows where it has fewer, as AM and PM; the words in the band read at 4.5:1
+- The hour and minute wheels go round: 59 runs on to 00, 12 to 1; AM and PM stop at their ends and spring back when pulled past
+- They open showing the field's time; from an empty field, the next whole minute after now
+- A drag turns a wheel and a fling coasts, slows and settles on a row; a scroll over a wheel turns it and it settles once the scroll stops; a click on a row brings it to the band
+- Each turn eases onto its row, in 250 ms or less once let go; under Reduce Motion it lands at once
+- A focused wheel turns one row on Up and Down; Left and Right move between wheels
+- Typing a whole time turns the wheels to it; text that is not yet a time leaves them where they are
+- Turning a wheel changes the field's text as it settles, and selects all of it, so typing still replaces it
+- The wheels are glass, as wide as their words need and never narrower than the field
+- They are never clipped by the window's edge: with no room under the field they open over it, and stay whole, 4 px clear
+- Scrolling over the field alone scrolls the page under it, and the time does not change
+- Return, Tab, Escape or a click elsewhere closes them; they open and close with a 120 ms fade, and at once under Reduce Motion
 ** The time is written when it is taken
 - The time is written once, when it is taken, not at every key
 - Taking the time the field already had writes nothing
 - Escape writes nothing
+- A time set on the wheels is taken when they close by Return, Tab or a click elsewhere; turning them writes nothing while they are open
+- Escape closes the wheels and puts the field back to the time it had
 - One taken time is one step for Undo
 - Command-Z while text is typed undoes the typing, in the field; with nothing typed it is the app's Undo
 ** Time picker states
 - Focused: a ring in the accent colour, on keyboard focus
-- Disabled: 45% opacity; it answers no click and no key, and opens no list
+- Disabled: 45% opacity; it answers no click and no key, and opens no wheels
 - A disabled time picker's tooltip says why it is off
 - Not a time: a red edge and the line under it, until the text changes or Escape puts the old time back
 ** Verification
@@ -252,33 +254,41 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It types, sends Escape twice, and reads the field: the time from before, nothing written
 - It takes the time the field already had and counts nothing written
 - It types "6p" and clicks elsewhere on the page: 6:00 PM, written
-- It clicks the field and reads the list: open, eight rows to be seen, the field's time marked and in the middle
-- It sends Tab into the field and reads the list: closed; it sends Down: open
-- It types "2" and reads the rows: 2:00 PM first, eight rows in all, none marked; it types "207p" and reads the first row: 2:07 PM, marked
-- It types "2" and sends Up: the last row is marked
-- It types "2", sends Down three times and Return and reads the time: the third row's, 2:30 PM
-- It clicks a row and reads the time, and the list: that row's, and closed
-- It puts the field at the window's bottom edge, opens the list and reads its edges: inside the window, over the field
-- It scrolls over the open list and over the field alone: the list moved, then the page moved and the time as before
+- It clicks the field and reads the wheels: open, five rows each and two on AM and PM, the field's time in the band
+- It sends Tab into the field and reads the wheels: closed; it sends Down: open
+- It sets a 24-hour clock and reads the wheels: two, hour 00 to 23
+- It sends Up on the minute wheel at 00 and reads it: 59; on the hour wheel at 1: 12
+- It drags the minute wheel two rows and lets go slowly: two minutes on, in the band and in the field, nothing written
+- It flings a wheel and reads it every frame until it rests: moving, then still, on a whole row
+- It scrolls over a wheel, stops, and reads it 300 ms later: settled on a row
+- It clicks the row under the band and reads the time: one row on
+- It pulls AM and PM past its end and reads it: back on its row
+- It types "207p" and reads the wheels: 2, 07, PM
+- It turns the wheels, sends Return and reads what is written: the wheels' time, once
+- It turns the wheels and sends Escape: the field and the time from before, nothing written
+- It puts the field at the window's bottom edge, opens the wheels and reads their edges: inside the window, over the field
+- It draws the wheels without their words and reads the contrast of the band's words: 4.5 or more
+- It opens the wheels and reads them 40 ms later: fading in; with Reduce Motion on, 20 ms later: fully there
+- It counts frames through three flings: 55 a second or more
 - It sets a 24-hour clock and reads the field: "09:30"; it types "9p" and reads "21:00"; it types "3" and reads "03:00"
-- It reads the field and the list's row at twelve: "12:00 PM, noon" and "12:00 AM, midnight"
+- It reads the field at twelve: "12:00 PM, noon" and "12:00 AM, midnight"; and the hour wheel: "12"
 - It empties an optional field and reads the hint and what is written: "9:30 AM" in grey, and no time
 - It takes a time, sends Undo and reads the field: the time from before
-- It clicks and sends keys to a disabled time picker: the time as before, no list; and reads its opacity: 45%
+- It clicks and sends keys to a disabled time picker: the time as before, no wheels; and reads its opacity: 45%
 - It reads the field's height and width, and its edge on keyboard focus: the accent colour
 - It reads the tooltip of a disabled time picker
-- It draws the list without its words and reads the contrast of the words over the middle of it: 4.5 or more
-- It opens the list and reads it 40 ms later: fading in; with Reduce Motion on, 20 ms later: fully there
-- It counts frames through three openings of the list: 55 a second or more
 ** Decided
 - On 2026-11-13, by the owner, from three choices:
 - An hour alone is asked about, not guessed: chosen over a daytime guess, 7 to 11 AM and 12 to 6 PM, and over whichever comes next on the clock, which gives a different answer at different times of day
 - One time only: a start and an end together is a new requirement
 - No quick buttons such as "Now" or "In 1 hour": they can be added later as a new requirement
-- Up and Down move through the list, and do not step the minute
+- Up and Down move through the list, and do not step the minute: undone on 2026-11-16, below
+- On 2026-11-16, by the owner, from a clock dial and iOS-style wheels tried side by side (demo.compare-page): wheels, as faster to pick; they replace the 15 minute list, and typing stays
+- Up and Down turn the focused wheel one row: an exact minute no longer has to be typed
 ** Ideas
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
+- Why wheels: [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]; tried against a dial in demo/cljfx, compare_page.clj
 * DONE Date pickers
 :PROPERTIES:
 :ID: date-pickers
