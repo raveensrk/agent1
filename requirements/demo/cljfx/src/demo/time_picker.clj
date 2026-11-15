@@ -4,28 +4,30 @@
   follow what it does, and take the code as one way to do it. Nothing here
   knows about the demo's page or its state (demo.time-picker-page).
 
-  One field that is typed into, with a list of times under it. What is typed
-  is read forgivingly, \"9a\", \"930a\", \"2130\", \"noon\", and shown in full
-  once it is taken. An hour that could be morning or afternoon is never
-  guessed at: the field asks. The list holds the day in 15 minute steps and
-  narrows as the text grows. The time is written once, when it is taken.
+  One field that is typed into, with wheels under it. What is typed is read
+  forgivingly, \"9a\", \"930a\", \"2130\", \"noon\", and shown in full once it
+  is taken. An hour that could be morning or afternoon is never guessed at:
+  the field asks. The wheels - hour, minute and AM/PM, or hour and minute on a
+  24-hour clock - turn like a drum: dragged, flung, scrolled, clicked or
+  stepped with Up and Down. The time is written once, when it is taken.
 
   What to take:
 
       time-picker-view   one time picker: its label, its tooltip and the control
       make-time-picker   the control itself, a VBox, for use without cljfx
-      parse, show, offer, error-text, list-place, offset-for
+      parse, show, error-text, wheel-specs, rows-for, wheels-time, turn,
+      tick, wheels-place
                          the reading, the wording and the rules, as plain data
       clock-24?          whether macOS shows a 24-hour clock
 
   A time is a whole number of minutes after midnight, 0 to 1439, or nil where
   the field may be empty.
 
-  The list is a child of the scene's root while it is open, so nothing the
-  field sits in can clip it: the root must be a Pane.
+  The wheels are a child of the scene's root while they are open, so nothing
+  the field sits in can clip them: the root must be a Pane.
 
-  The look is in demo/glass.css, under `.time-field`. Motion comes from
-  demo.ui: its tween and its Reduce Motion."
+  The look is in demo/glass.css, under `.time-field` and `.time-wheels`.
+  Motion comes from demo.ui: its tween and its Reduce Motion."
   (:require [cljfx.api :as fx]
             [cljfx.ext.node :as fx.ext.node]
             [cljfx.lifecycle :as lifecycle]
@@ -38,16 +40,16 @@
            [java.time.chrono IsoChronology]
            [java.time.format DateTimeFormatterBuilder FormatStyle]
            [java.util Collection Locale]
+           [javafx.animation AnimationTimer]
            [javafx.application Platform]
-           [javafx.beans.property SimpleDoubleProperty]
            [javafx.beans.value ChangeListener]
            [javafx.css PseudoClass]
            [javafx.event Event EventHandler]
+           [javafx.geometry Pos]
            [javafx.scene Node Scene]
            [javafx.scene.control Label TextField]
            [javafx.scene.input KeyCode KeyEvent MouseEvent ScrollEvent]
-           [javafx.scene.layout Pane StackPane VBox]
-           [javafx.scene.shape Rectangle]))
+           [javafx.scene.layout HBox Pane Region StackPane VBox]))
 
 ;;; Look and rules: plain data, so they are tested without a window
 
@@ -55,14 +57,7 @@
 (def field-h 44.0)
 (def min-width 120.0)
 (def field-w 160.0)
-;; The list holds the day in steps of this many minutes.
-(def step 15)
-(def row-h 32.0)
-;; How many rows are seen at once; the rest are scrolled to.
-(def rows-seen 8)
-;; The list is never narrower than this: "12:00 AM, midnight" fits.
-(def list-min-w 190.0)
-;; Between the field and its list, and between the list and the window's edge.
+;; Between the field and its wheels, and between the wheels and the window's edge.
 (def gap 4.0)
 (def edge-gap 4.0)
 (def day 1440)
@@ -126,81 +121,161 @@
     :not-a-time "Not a time. Try 9:30 or 2130"
     nil))
 
-(def steps (vec (range 0 day step)))
+;;; The wheels
 
-(defn- hour-steps [h]
-  (mapv #(+ (* 60 h) %) (range 0 60 step)))
+;; A row's height, and how many are seen on each wheel.
+(def row-h 34.0)
+(def rows-seen 5)
+(def wheels-h (* row-h rows-seen))
+(def wheel-w 64.0)
+;; Each row turns the drum this far; the radius keeps a row row-h tall at the band.
+(def step-rad (Math/toRadians 24.0))
+(def drum-r (/ row-h step-rad))
+;; How fast a turn eases onto its row: it is there in about 200 ms.
+(def snap-rate 30.0)
+;; How fast a fling slows, and how long a scroll must stop before it settles.
+(def coast-drag 2.6)
+(def quiet-s 0.08)
+
+(defn- two [n] (format "%02d" n))
+
+(defn wheel-specs
+  "The wheels for a clock: hour, minute and AM/PM, or hour and minute on a
+  24-hour clock. Hour and minute go round; AM/PM stops at its ends."
+  [h24]
+  (let [minute {:key :m :opts (mapv two (range 60)) :loop true}]
+    (if h24
+      [{:key :h :opts (mapv two (range 24)) :loop true} minute]
+      [{:key :h :opts (mapv str (cons 12 (range 1 12))) :loop true}
+       minute
+       {:key :p :opts ["AM" "PM"] :loop false}])))
+
+(defn wheels-w [specs] (* wheel-w (count specs)))
+
+(defn rows-for
+  "The row each wheel shows for a time."
+  [m h24]
+  (let [h (quot m 60) mm (rem m 60)]
+    (if h24 [h mm] [(rem h 12) mm (if (< h 12) 0 1)])))
+
+(defn row-at
+  "The row a wheel shows at the band."
+  [{:keys [opts loop]} offset]
+  (let [n (count opts) i (Math/round (double offset))]
+    (if loop (mod i n) (max 0 (min (dec n) i)))))
+
+(defn wheels-time
+  "The time the wheels show, from each wheel's offset."
+  [specs offsets h24]
+  (let [[h m p] (map row-at specs offsets)]
+    (if h24
+      (+ (* 60 h) m)
+      (+ (* 60 (+ h (if (= 1 p) 12 0))) m))))
 
 (defn after-now
-  "The step after `now`."
+  "The next whole minute: what the wheels show from an empty field."
   [now]
-  (rem (* step (inc (quot now step))) day))
+  (rem (inc now) day))
 
-(defn- index-of [coll x]
-  (first (keep-indexed (fn [i y] (when (= x y) i)) coll)))
+(defn nearest
+  "The offset nearest `offset` at which a wheel shows `row`: a wheel that goes
+  round turns the short way."
+  [{:keys [opts loop]} offset row]
+  (if loop
+    (let [n (count opts)
+          here (Math/round (double offset))
+          d (mod (- row (mod here n)) n)]
+      (double (+ here (if (> d (/ n 2)) (- d n) d))))
+    (double row)))
 
-(defn offer
-  "The list for a field: {:rows [times] :mark index-or-nil}.
+(defn wheel-at [row] {:offset (double row) :vel 0.0 :target nil :quiet 1.0 :drag nil})
 
-  Before anything is typed it is the whole day, with the field's time marked,
-  or the step after `now` from an empty field. Typed text narrows it: a whole
-  time is the first row and marked, ahead of the steps of its hour; an hour
-  with no AM or PM leaves both halves of the day, afternoon first, and marks
-  neither."
-  [{:keys [text typed value now h24]}]
-  (let [t (clean text)
-        halves (fn [h] (if (or h24 (zero? h) (> h 12)) [h] [(+ 12 (rem h 12)) (rem h 12)]))]
-    (cond
-      (not typed)
-      (let [all (if (and value (pos? (rem value step))) (vec (sort (conj steps value))) steps)]
-        {:rows all :mark (index-of all (or value (after-now now)))})
+(defn- bounded
+  "A wheel that stops at its ends, kept to its rows, with `give` past them."
+  [{:keys [opts loop]} o give]
+  (if loop o (max (- give) (min (+ (dec (count opts)) give) o))))
 
-      (= "" t) {:rows steps :mark nil}
+(defn- snap [spec o] (double (bounded spec (Math/round (double o)) 0)))
 
-      :else
-      (let [{:keys [time error hour minute]} (parse t h24)]
-        (cond
-          time {:rows (vec (distinct (cons time (hour-steps (quot time 60))))) :mark 0}
+(defn turn
+  "A wheel set to ease to `rows` rows on, as Up and Down do."
+  [spec {:keys [offset target] :as w} rows]
+  (assoc w :target (snap spec (+ (or target offset) rows)) :vel 0.0 :drag nil))
 
-          (= :am-pm error)
-          {:rows (vec (for [h (halves hour)
-                            m (if minute [(+ (* 60 h) minute)] (hour-steps h))]
-                        m))
-           :mark nil}
+(defn aim
+  "A wheel set to ease to show `row`, as typing a time does."
+  [spec w row]
+  (assoc w :target (nearest spec (:offset w) row) :vel 0.0))
 
-          :else
-          (if-let [[_ digits begun] (re-matches #"(\d{1,2})[:.](\d?)" t)]
-            ;; An hour and the start of its minutes, "2:3".
-            (let [hour (parse-long digits)]
-              {:rows (if (> hour 23)
-                       []
-                       (vec (for [h (halves hour)
-                                  m (hour-steps h)
-                                  :when (str/starts-with? (format "%02d" (rem m 60)) begun)]
-                              m)))
-               :mark nil})
-            ;; The start of a word, "no".
-            {:rows (vec (keep (fn [[word m]] (when (str/starts-with? word t) m))
-                              [["noon" 720] ["midnight" 0]]))
-             :mark nil}))))))
+(defn moving? [{:keys [offset vel target drag]}]
+  (boolean (or drag target (not (zero? vel)) (not= offset (Math/rint offset)))))
 
-(defn offset-for
-  "How far a list of `n` rows is scrolled to put row `mark` in the middle of
-  what is seen: never past either end."
-  [mark n]
-  (let [seen (min n rows-seen)]
-    (-> (- (* mark row-h) (/ (* (dec seen) row-h) 2.0))
-        (min (* (- n seen) row-h))
-        (max 0.0))))
+(defn tick
+  "One frame of a wheel after `dt` seconds; nil once at rest. With `calm`, for
+  Reduce Motion, a turn lands at once."
+  [spec {:keys [offset vel target quiet drag] :as w} dt calm]
+  (cond
+    drag nil
+    (and calm (or target (not (zero? vel)) (not= offset (snap spec offset))))
+    (assoc w :offset (or target (snap spec offset)) :target nil :vel 0.0)
+    target (let [o (+ offset (* (- 1.0 (Math/exp (- (* snap-rate dt)))) (- target offset)))]
+             (if (< (Math/abs (- target o)) 0.002)
+               (assoc w :offset target :target nil :vel 0.0)
+               (assoc w :offset o)))
+    (> (Math/abs vel) 0.6)
+    (let [o (+ offset (* vel dt))
+          b (bounded spec o 0.0)]
+      (if (not= o b)
+        (assoc w :offset b :vel 0.0 :target (snap spec b))
+        (assoc w :offset o :vel (* vel (Math/exp (- (* coast-drag dt)))))))
+    (not (zero? vel)) (assoc w :vel 0.0 :target (snap spec (+ offset (* vel 0.15))))
+    (not= offset (snap spec offset))
+    (if (< quiet quiet-s)
+      (assoc w :quiet (+ quiet dt))
+      (assoc w :target (snap spec offset)))
+    :else nil))
 
-(defn list-place
-  "Where the list goes, in the window: under the field, and over it when there
-  is no room under. It stays whole, `edge-gap` clear of the window's edges."
-  [{:keys [x top bottom]} list-w list-h scene-w scene-h]
+(defn row-under
+  "Which offset a point at height `y` on a wheel shows: the drum's curve undone."
+  [offset y]
+  (let [s (max -0.99 (min 0.99 (/ (- y (/ wheels-h 2)) drum-r)))]
+    (+ offset (/ (Math/asin s) step-rad))))
+
+(defn press [w y now]
+  (assoc w :drag {:y0 y :o0 (:offset w) :y y :t now :v 0.0} :vel 0.0 :target nil))
+
+(defn drag [spec w y now]
+  (if-let [{:keys [y0 o0 t v] :as d} (:drag w)]
+    (let [dt (max 1e-3 (- now t))
+          v' (+ (* 0.7 (/ (- (- y (:y d))) row-h dt)) (* 0.3 v))]
+      (assoc w :offset (bounded spec (- o0 (/ (- y y0) row-h)) 0.4)
+             :drag (assoc d :y y :t now :v v')))
+    w))
+
+(defn release
+  "A wheel let go: a click brings the row under it to the band, a fling
+  coasts, and a slow drag settles where it is."
+  [spec w y now]
+  (if-let [{:keys [y0 t v]} (:drag w)]
+    (let [w (assoc w :drag nil)]
+      (cond
+        (< (Math/abs (- y y0)) 4) (assoc w :target (snap spec (row-under (:offset w) y)))
+        (> (- now t) 0.08) (assoc w :target (snap spec (:offset w)))
+        :else (assoc w :vel (max -40.0 (min 40.0 v)))))
+    w))
+
+(defn scroll [spec w dy]
+  (assoc w :offset (bounded spec (- (:offset w) (/ dy row-h)) 0.3)
+         :vel 0.0 :target nil :quiet 0.0))
+
+(defn wheels-place
+  "Where the wheels go, in the window: under the field, and over it when there
+  is no room under. They stay whole, `edge-gap` clear of the window's edges."
+  [{:keys [x top bottom]} w h scene-w scene-h]
   (let [under (+ bottom gap)
-        fits (<= (+ under list-h edge-gap) scene-h)]
-    {:x (-> x (min (- scene-w edge-gap list-w)) (max edge-gap))
-     :y (if fits under (max edge-gap (- top gap list-h)))
+        fits (<= (+ under h edge-gap) scene-h)]
+    {:x (-> x (min (- scene-w edge-gap w)) (max edge-gap))
+     :y (if fits under (max edge-gap (- top gap h)))
      :over (not fits)}))
 
 (defn current-minute []
@@ -231,19 +306,49 @@
 (defn- listener ^ChangeListener [f]
   (reify ChangeListener (changed [_ _ old new] (f old new))))
 
+;;; The control
+
+(def ^PseudoClass marked (PseudoClass/getPseudoClass "marked"))
+(def ^PseudoClass invalid (PseudoClass/getPseudoClass "invalid"))
+
+(defn- handler ^EventHandler [f]
+  (reify EventHandler (handle [_ e] (f e))))
+
+(defn- listener ^ChangeListener [f]
+  (reify ChangeListener (changed [_ _ old new] (f old new))))
+
+;; Labels kept on each wheel: enough for the rows seen, and those curving away.
+(def ^:private slots 9)
+
+(defn- seconds [] (/ (System/nanoTime) 1e9))
+
+(defn- goal
+  "Where the wheels are headed: each one's target, or where it is."
+  [ws]
+  (map #(or (:target %) (:offset %)) ws))
+
 (defn make-time-picker
   "The control: a VBox with the label, the field and, when it has something
-  to say, the line under it. The list joins the scene's root while it is open. The control
-  is told what it is with `set-model!`, and it tells the app through the
-  model's `dispatch`: the `write` event, once, when a time is taken."
+  to say, the line under it. The wheels join the scene's root while they are
+  open. The control is told what it is with `set-model!`, and it tells the app
+  through the model's `dispatch`: the `write` event, once, when a time is
+  taken."
   ^VBox []
   (let [model (atom {:name "" :value nil})
         ;; True once the text has been changed by hand, until it is taken or put back.
         typed (atom false)
         quiet (atom false)
         open (atom false)
-        offered (atom {:rows [] :mark nil})
-        offset (SimpleDoubleProperty. 0.0)
+        specs (atom (wheel-specs false))
+        wheels (atom [])
+        ;; Each wheel's pane and its labels.
+        panes (atom [])
+        ;; True once a wheel has been turned by hand, until it is taken or put back.
+        touched (atom false)
+        ;; True while the wheels turn to a typed time: settling leaves the text alone.
+        by-typing (atom false)
+        ;; The time the wheels last put in the field.
+        shown (atom nil)
         field (TextField.)
         ;; The label names the field.
         label (doto (Label.)
@@ -252,18 +357,19 @@
                (.setVisible false)
                (.setManaged false)
                (-> .getStyleClass (.add "time-line")))
-        rows-box (doto (VBox.) (.setManaged false))
-        clip (Rectangle.)
-        port (doto (Pane.)
-               (.setClip clip)
-               (-> .getChildren (.add rows-box)))
+        band (doto (Region.)
+               (.setMouseTransparent true)
+               (.setPrefHeight row-h)
+               (.setMaxHeight row-h)
+               (-> .getStyleClass (.add "time-band")))
+        row-box (doto (HBox.) (.setAlignment Pos/CENTER))
         lst (doto (StackPane.)
               (.setManaged false)
               (.setOpacity 0.0)
-              (-> .getStyleClass (.add "time-list"))
-              (-> .getChildren (.add port)))
+              (-> .getStyleClass (.add "time-wheels"))
+              (-> .getChildren (.addAll ^Collection [band row-box])))
         box (VBox.)
-        seen #(min rows-seen (count (:rows @offered)))
+        h24? #(boolean (:h24 @model))
         value-text #(let [{:keys [value h24]} @model] (if value (show value h24) ""))
         set-text! (fn [s]
                     (reset! quiet true)
@@ -276,29 +382,46 @@
                (.setVisible line (boolean text))
                (.setManaged line (boolean text))
                (.pseudoClassStateChanged field invalid (boolean text)))
-        ;; The rows sit in the port, moved up by how far the list is scrolled.
-        lay! (fn []
-               (let [w (.getWidth port)]
-                 (.setWidth clip w)
-                 (.setHeight clip (.getHeight port))
-                 (.resizeRelocate rows-box 0.0 (- (.get offset)) w (* (count (:rows @offered)) row-h))))
-        scroll! (fn [to]
-                  (.set offset (-> (double to)
-                                   (min (* (- (count (:rows @offered)) (seen)) row-h))
-                                   (max 0.0))))
+        ;; Each label where its row sits on the drum: shorter and fainter away
+        ;; from the band.
+        draw! (fn []
+                (doseq [[spec w [_ labels]] (map vector @specs @wheels @panes)]
+                  (let [{:keys [opts loop]} spec
+                        n (count opts)
+                        offset (:offset w)
+                        c (Math/round (double offset))]
+                    (dotimes [j slots]
+                      (let [^Label l (nth labels j)
+                            k (+ c (- j (quot slots 2)))
+                            d (- k offset)
+                            a (* d step-rad)
+                            ;; Five rows are seen; one coming in or going out fades.
+                            edge (/ rows-seen 2.0)
+                            seen (and (< (Math/abs d) edge) (or loop (< -1 k n)))]
+                        (.setVisible l seen)
+                        (when seen
+                          (let [cos (Math/cos a)]
+                            (.setText l (nth opts (mod k n)))
+                            (.resizeRelocate l 0.0 (- (+ (/ wheels-h 2) (* drum-r (Math/sin a))) (/ row-h 2))
+                                             wheel-w row-h)
+                            (.setScaleY l cos)
+                            (.setOpacity l (* (Math/pow cos 1.6) (min 1.0 (* 2.0 (- edge (Math/abs d))))))
+                            (.pseudoClassStateChanged l marked (< (Math/abs d) 0.5)))))))))
         place! (fn []
                  (when-let [scene (.getScene field)]
                    (let [root (.getRoot scene)
                          b (.localToScene field (.getLayoutBounds field))
                          ins (.getInsets lst)
-                         w (max (.getWidth b) list-min-w)
-                         h (+ (* (seen) row-h) (.getTop ins) (.getBottom ins))
-                         {:keys [x y]} (list-place {:x (.getMinX b) :top (.getMinY b) :bottom (.getMaxY b)}
-                                                   w h (.getWidth scene) (.getHeight scene))
+                         w (max (.getWidth b) (+ (wheels-w @specs) (.getLeft ins) (.getRight ins)))
+                         h (+ wheels-h (.getTop ins) (.getBottom ins))
+                         {:keys [x y]} (wheels-place {:x (.getMinX b) :top (.getMinY b) :bottom (.getMaxY b)}
+                                                     w h (.getWidth scene) (.getHeight scene))
                          p (.sceneToLocal root (double x) (double y))]
                      (.resizeRelocate lst (.getX p) (.getY p) w h))))
         fade-ms #(if @ui/*reduce 0 ui/fade-ms)
+        timer-box (atom nil)
         leave! (fn []
+                 (some-> ^AnimationTimer @timer-box .stop)
                  (when-let [p (.getParent lst)]
                    (.remove (.getChildren ^Pane p) lst)))
         close! (fn []
@@ -307,29 +430,6 @@
                    (.setMouseTransparent lst true)
                    (ui/tween! lst ::fade {:ms (fade-ms) :on-done #(when-not @open (leave!))}
                               [[(.opacityProperty lst) 0.0]])))
-        show! (fn []
-                (when-let [scene (.getScene field)]
-                  (let [root (.getRoot scene)]
-                    (when (instance? Pane root)
-                      (let [kids (.getChildren ^Pane root)]
-                        (when-not (.contains kids lst) (.add kids lst)))
-                      (.applyCss lst)
-                      (place!)
-                      (when-not @open
-                        (reset! open true)
-                        (.setMouseTransparent lst false)
-                        (ui/tween! lst ::fade {:ms (fade-ms)} [[(.opacityProperty lst) 1.0]]))))))
-        mark! (fn [i]
-                (swap! offered assoc :mark i)
-                (let [kids (.getChildren rows-box)]
-                  (dotimes [k (count kids)]
-                    (.pseudoClassStateChanged ^Node (.get kids k) marked (= k i)))
-                  (when i
-                    (let [top (* i row-h)
-                          view (* (seen) row-h)
-                          o (.get offset)]
-                      (cond (< top o) (scroll! top)
-                            (> (+ top row-h) (+ o view)) (scroll! (- (+ top row-h) view)))))))
         ;; Written once, and only a time that changed.
         write! (fn [m]
                  (let [{:keys [dispatch write value]} @model]
@@ -340,36 +440,11 @@
         take! (fn [m]
                 (write! m)
                 (err! nil)
+                (reset! touched false)
                 (set-text! (value-text))
                 (close!)
                 (.selectAll field))
-        fill! (fn []
-                (let [{:keys [rows mark]} @offered
-                      h24 (:h24 @model)]
-                  (.setAll (.getChildren rows-box)
-                           ^Collection
-                           (vec (map-indexed
-                                  (fn [i m]
-                                    (doto (Label. (show m h24))
-                                      (.setMinHeight row-h)
-                                      (.setPrefHeight row-h)
-                                      (.setMaxWidth Double/MAX_VALUE)
-                                      (-> .getStyleClass (.add "time-row"))
-                                      (.pseudoClassStateChanged marked (= i mark))
-                                      (.setOnMouseClicked (handler (fn [_] (take! m))))))
-                                  rows)))))
-        ;; Works out the list anew, and opens it; with nothing to offer it closes.
-        refresh! (fn []
-                   (let [m @model
-                         o (offer {:text (.getText field) :typed @typed :value (:value m)
-                                   :now (or (:now m) (current-minute)) :h24 (:h24 m)})]
-                     (reset! offered o)
-                     (if (empty? (:rows o))
-                       (close!)
-                       (do (fill!)
-                           (show!)
-                           (.set offset (if (:mark o) (offset-for (:mark o) (count (:rows o))) 0.0))
-                           (lay!)))))
+        wheel-time #(wheels-time @specs (goal @wheels) (h24?))
         ;; Takes what is typed, or says why it cannot.
         commit! (fn []
                   (let [{:keys [optional h24]} @model
@@ -379,37 +454,149 @@
                       (and (:empty r) optional) (take! nil)
                       :else (do (err! (error-text (if (:empty r) {:error :not-a-time} r)))
                                 (close!)))))
+        ;; Return, Tab or a click elsewhere: what is typed, else what the wheels show.
+        accept! (fn []
+                  (cond
+                    @typed (commit!)
+                    @touched (take! (wheel-time))
+                    :else (close!)))
         restore! (fn []
                    (err! nil)
+                   (reset! touched false)
                    (set-text! (value-text))
                    (close!)
                    (.selectAll field))
+        ;; Each frame, while open: the wheels move, and once they rest on a time
+        ;; turned by hand, the field shows it, all selected.
+        frame! (fn [dt]
+                 (let [calm @ui/*reduce
+                       before @wheels
+                       after (mapv (fn [spec w] (or (tick spec w dt calm) w)) @specs before)]
+                   (when (not= before after)
+                     (reset! wheels after)
+                     (draw!))
+                   (when (and @touched (not @by-typing) (not-any? moving? after))
+                     (let [t (wheels-time @specs (map :offset after) (h24?))]
+                       (when (not= t @shown)
+                         (reset! shown t)
+                         (set-text! (show t (h24?)))
+                         (.selectAll field))))))
+        timer (let [last (atom 0)]
+                (proxy [AnimationTimer] []
+                  (start [] (reset! last 0) (proxy-super start))
+                  (handle [now]
+                    (let [dt (if (zero? @last) 0.0 (/ (- now @last) 1e9))]
+                      (reset! last now)
+                      (frame! (min dt 0.05))))))
+        _ (reset! timer-box timer)
+        focus-wheel! (fn [i]
+                       (when-let [[^Pane p] (get @panes (max 0 (min (dec (count @panes)) i)))]
+                         (.requestFocus p)))
+        index-of-pane (fn [^Node n] (first (keep-indexed (fn [i [p]] (when (identical? p n) i)) @panes)))
+        hand! (fn [i f]
+                (reset! touched true)
+                (reset! by-typing false)
+                (swap! wheels update i f))
+        on-wheel-key (fn [i ^KeyEvent e]
+                       (let [spec (nth @specs i)
+                             code (.getCode e)]
+                         (cond
+                           (= KeyCode/UP code) (hand! i #(turn spec % -1))
+                           (= KeyCode/DOWN code) (hand! i #(turn spec % 1))
+                           (= KeyCode/LEFT code) (focus-wheel! (dec i))
+                           (= KeyCode/RIGHT code) (focus-wheel! (inc i))
+                           (= KeyCode/ENTER code) (do (accept!) (.requestFocus field))
+                           (= KeyCode/TAB code) (do (accept!) (.requestFocus field))
+                           (= KeyCode/ESCAPE code) (do (restore!) (.requestFocus field)))
+                         (when (#{KeyCode/UP KeyCode/DOWN KeyCode/LEFT KeyCode/RIGHT
+                                  KeyCode/ENTER KeyCode/TAB KeyCode/ESCAPE} code)
+                           (.consume e))))
+        build! (fn []
+                 (let [id (:id @model)]
+                   (reset! panes
+                           (vec (for [[i {:keys [key]}] (map-indexed vector @specs)]
+                                  (let [labels (vec (repeatedly slots #(doto (Label.)
+                                                                         (.setManaged false)
+                                                                         (.setAlignment Pos/CENTER)
+                                                                         (-> .getStyleClass (.add "time-row")))))
+                                        p (doto (Pane.)
+                                            (.setId (str id "-wheel-" (name key)))
+                                            (.setMinSize wheel-w wheels-h)
+                                            (.setPrefSize wheel-w wheels-h)
+                                            (.setMaxSize wheel-w wheels-h)
+                                            (-> .getStyleClass (.add "time-wheel"))
+                                            (-> .getChildren (.addAll ^Collection labels)))]
+                                    (.addEventHandler p MouseEvent/MOUSE_PRESSED
+                                                      (handler (fn [^MouseEvent e]
+                                                                 (let [y (.getY e)] (hand! i #(press % y (seconds)))))))
+                                    (.addEventHandler p MouseEvent/MOUSE_DRAGGED
+                                                      (handler (fn [^MouseEvent e]
+                                                                 (let [y (.getY e) spec (nth @specs i)]
+                                                                   (hand! i #(drag spec % y (seconds)))))))
+                                    (.addEventHandler p MouseEvent/MOUSE_RELEASED
+                                                      (handler (fn [^MouseEvent e]
+                                                                 (let [y (.getY e) spec (nth @specs i)]
+                                                                   (hand! i #(release spec % y (seconds)))))))
+                                    ;; Scrolling over a wheel turns it, and nothing under it.
+                                    (.addEventHandler p ScrollEvent/SCROLL
+                                                      (handler (fn [^ScrollEvent e]
+                                                                 (.consume e)
+                                                                 (let [dy (.getDeltaY e) spec (nth @specs i)]
+                                                                   (hand! i #(scroll spec % dy))))))
+                                    (.addEventHandler p KeyEvent/KEY_PRESSED (handler #(on-wheel-key i %)))
+                                    [p labels])))))
+                 (.setAll (.getChildren row-box) ^Collection (mapv first @panes))
+                 (draw!))
+        ;; The wheels open showing the field's time; from an empty field, the
+        ;; next whole minute.
+        open! (fn []
+                (when (and (not @open) (not (.isDisabled field)))
+                  (when-let [scene (.getScene field)]
+                    (let [root (.getRoot scene)
+                          {:keys [value now]} @model
+                          h24 (h24?)
+                          start (or (when @typed (:time (parse (.getText field) h24)))
+                                    value
+                                    (after-now (or now (current-minute))))]
+                      (when (instance? Pane root)
+                        (reset! specs (wheel-specs h24))
+                        (reset! wheels (mapv wheel-at (rows-for start h24)))
+                        (reset! touched false)
+                        (reset! by-typing false)
+                        (reset! shown start)
+                        (build!)
+                        (let [kids (.getChildren ^Pane root)]
+                          (when-not (.contains kids lst) (.add kids lst)))
+                        (.applyCss lst)
+                        (place!)
+                        (reset! open true)
+                        (.setMouseTransparent lst false)
+                        (.start ^AnimationTimer timer)
+                        (ui/tween! lst ::fade {:ms (fade-ms)} [[(.opacityProperty lst) 1.0]]))))))
+        ;; A whole typed time turns the wheels to it.
+        follow-typing! (fn []
+                         (when @open
+                           (when-let [m (:time (parse (.getText field) (h24?)))]
+                             (reset! by-typing true)
+                             (reset! touched false)
+                             (reset! wheels (mapv (fn [spec w row] (aim spec w row))
+                                                  @specs @wheels (rows-for m (h24?)))))))
         on-key (fn [^KeyEvent e]
-                 (let [code (.getCode e)
-                       {:keys [rows mark]} @offered
-                       n (count rows)]
+                 (let [code (.getCode e)]
                    (cond
-                     (= KeyCode/DOWN code)
+                     (#{KeyCode/DOWN KeyCode/UP} code)
                      (do (.consume e)
-                         (if @open
-                           (mark! (if mark (min (inc mark) (dec n)) 0))
-                           (refresh!)))
-
-                     (and (= KeyCode/UP code) @open)
-                     (do (.consume e)
-                         (mark! (if mark (max 0 (dec mark)) (dec n))))
+                         (if @open (focus-wheel! 0) (open!)))
 
                      (= KeyCode/ENTER code)
-                     (cond
-                       (and @open mark) (do (.consume e) (take! (nth rows mark)))
-                       @typed (do (.consume e) (commit!))
-                       @open (do (.consume e) (close!)))
+                     (when (or @open @typed)
+                       (.consume e)
+                       (accept!))
 
                      (= KeyCode/ESCAPE code)
-                     (cond
-                       ;; The first Escape closes the list and leaves the text.
-                       @open (do (.consume e) (close!))
-                       (or @typed (:error @model)) (do (.consume e) (restore!)))
+                     (when (or @open @typed (:error @model))
+                       (.consume e)
+                       (restore!))
 
                      ;; With nothing typed, Undo is the app's, not the field's.
                      (and (= KeyCode/Z code) (.isShortcutDown e) (not @typed))
@@ -423,18 +610,19 @@
                       (or (identical? n field) (identical? n lst)) true
                       :else (recur (.getParent ^Node n)))))
         leave-field! (fn []
-                       (when @typed (commit!))
+                       (accept!)
                        (close!))
         ;; Followed on the scene, so it holds in a window that is not in front.
+        ;; The focus may move between the field and its wheels.
         on-owner (listener (fn [old new]
-                             (cond
-                               (identical? new field)
-                               (when-not (identical? old field)
-                                 (Platform/runLater #(.selectAll field)))
-                               (identical? old field) (leave-field!))))
-        ;; A click elsewhere takes what is typed, also where it moves no focus.
+                             (let [was (within? old) is (within? new)]
+                               (cond
+                                 (and (identical? new field) (not was))
+                                 (Platform/runLater #(.selectAll field))
+                                 (and was (not is)) (leave-field!)))))
+        ;; A click elsewhere takes the time, also where it moves no focus.
         on-outside (handler (fn [^MouseEvent e]
-                              (when (and (some-> (.getScene field) .getFocusOwner (identical? field))
+                              (when (and (within? (some-> (.getScene field) .getFocusOwner))
                                          (not (within? (.getTarget e))))
                                 (leave-field!))))
         on-moved (listener (fn [_ _] (when @open (place!))))
@@ -456,19 +644,12 @@
                               (when-not @quiet
                                 (reset! typed true)
                                 (when (:error @model) (err! nil))
-                                (refresh!)))))
-    (.addListener offset (listener (fn [_ _] (lay!))))
-    (.addListener (.widthProperty port) (listener (fn [_ _] (lay!))))
-    (.addListener (.heightProperty port) (listener (fn [_ _] (lay!))))
+                                (open!)
+                                (follow-typing!)))))
     (.addListener (.sceneProperty field) (listener wire!))
     (.addListener (.localToSceneTransformProperty field) on-moved)
     (.addEventFilter field KeyEvent/KEY_PRESSED (handler on-key))
-    (.addEventHandler field MouseEvent/MOUSE_PRESSED (handler (fn [_] (when-not @open (refresh!)))))
-    ;; Scrolling over the open list scrolls the list, and nothing under it.
-    (.addEventHandler lst ScrollEvent/SCROLL
-                      (handler (fn [^ScrollEvent e]
-                                 (.consume e)
-                                 (scroll! (- (.get offset) (.getDeltaY e))))))
+    (.addEventHandler field MouseEvent/MOUSE_PRESSED (handler (fn [_] (open!))))
     (doto field
       (-> .getStyleClass (.add "time-field"))
       (.setMinHeight field-h)
@@ -502,7 +683,7 @@
     (.setId field (:id m))
     (.setText label (:name m))
     (.setId line (str (:id m) "-line"))
-    (.setId lst (str (:id m) "-list"))
+    (.setId lst (str (:id m) "-wheels"))
     (.setDisable field (boolean (:disabled m)))
     (when (:disabled m) (close!))
     ;; The hint, in grey, where the field may be empty.

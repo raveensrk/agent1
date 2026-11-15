@@ -101,28 +101,56 @@
 
 (defn- text [^TextField f] (on-fx #(.getText f)))
 
-;; The list of a picker: there only while it is open or fading.
-(defn- lst ^Parent [id] (node (str id "-list")))
+;; The wheels of a picker: there only while they are open or fading.
+(defn- lst ^Parent [id] (node (str id "-wheels")))
 
 (defn- open? [id]
   (boolean (when-let [l (lst id)] (on-fx #(and (= 1.0 (.getOpacity l)) (not (.isMouseTransparent l)))))))
 
-(defn- port ^Region [id]
-  (when-let [l (lst id)] (on-fx #(first (.getChildrenUnmodifiable l)))))
+(defn- wheel ^Region [id k] (node (str id "-wheel-" (name k))))
 
-(defn- rows
-  "The list's rows, top to bottom."
+(defn- wheel-count [id]
+  (when-let [^Parent l (lst id)]
+    (on-fx #(count (.getChildrenUnmodifiable ^Parent (second (.getChildrenUnmodifiable l)))))))
+
+(defn- seen-rows
+  "A wheel's rows that are drawn."
+  [id k]
+  (on-fx #(vec (filter (fn [^Node n] (.isVisible n)) (.getChildrenUnmodifiable (wheel id k))))))
+
+(defn- band-row ^Label [id k]
+  (first (filter (fn [^Node l] (on-fx #(.contains (.getPseudoClassStates l) t/marked))) (seen-rows id k))))
+
+(defn- band
+  "What each wheel shows in the band."
   [id]
-  (when-let [^Parent pt (port id)]
-    (on-fx #(vec (.getChildrenUnmodifiable ^Parent (first (.getChildrenUnmodifiable pt)))))))
+  (let [ks (if (= 2 (wheel-count id)) [:h :m] [:h :m :p])]
+    (mapv (fn [k] (on-fx #(.getText (band-row id k)))) ks)))
 
-(defn- words [id] (mapv (fn [^Label l] (on-fx #(.getText l))) (rows id)))
+(defn- on-row?
+  "Whether a wheel rests on a whole row: the band's row centred in it."
+  [id k]
+  (let [[_ t _ b] (bounds (wheel id k))
+        [_ rt _ rb] (bounds (band-row id k))]
+    (< (Math/abs (- (/ (+ t b) 2) (/ (+ rt rb) 2))) 0.5)))
 
-(defn- marked
-  "Which row is marked, or nil."
-  [id]
-  (first (keep-indexed (fn [i ^Node l] (when (on-fx #(.contains (.getPseudoClassStates l) t/marked)) i))
-                       (rows id))))
+(defn- rows-at
+  "Where a wheel's drawn rows sit: it moves while this changes."
+  [id k]
+  (mapv (fn [^Node n] (on-fx #(.getLayoutY n))) (seen-rows id k)))
+
+(defn- drag!
+  "Presses a place, moves `dy` in `n` steps `ms` apart, holds still `hold` ms,
+  and lets go."
+  [[x y] dy n ms & {:keys [hold] :or {hold 0}}]
+  (pointer! MouseEvent/MOUSE_PRESSED [x y])
+  (doseq [i (range 1 (inc n))]
+    (Thread/sleep (long ms))
+    (pointer! MouseEvent/MOUSE_DRAGGED [x (+ y (* dy (/ i n)))]))
+  (Thread/sleep (long hold))
+  (pointer! MouseEvent/MOUSE_RELEASED [x (+ y dy)]))
+
+(defn- fling! [id k] (drag! (centre (wheel id k)) -120.0 4 10))
 
 (defn- line
   "The line under a field, or nil when it shows none."
@@ -285,14 +313,11 @@
     (let [before (writes)]
       (type! "4p")
       (wait 300)
-      (check "typing opens the list" true (open? "starts"))
+      (check "typing opens the wheels" true (open? "starts"))
       (tap! KeyCode/ESCAPE)
       (wait 300)
-      (check "Escape closes the list and leaves the typed text" [nil "4p"] [(lst "starts") (text s)])
-      (tap! KeyCode/ESCAPE)
-      (wait 200)
-      (check "a second Escape puts the field back, and writes nothing" ["8:00 AM" 480 before]
-             [(text s) (time-of :starts) (writes)]))
+      (check "Escape closes them and puts the field back, writing nothing" [nil "8:00 AM" 480 before]
+             [(lst "starts") (text s) (time-of :starts) (writes)]))
 
     (println "A click elsewhere")
     (type! "6p")
@@ -300,68 +325,94 @@
     (wait 300)
     (check "takes what is typed" ["6:00 PM" 1080 nil] [(text s) (time-of :starts) (lst "starts")])
 
-    (println "The list")
+    (println "The wheels")
     (click! (centre s))
     (wait 300)
-    (check "a click in the field opens it" true (open? "starts"))
-    (check "eight rows to be seen" (* t/rows-seen t/row-h) (on-fx #(.getHeight (port "starts"))))
-    (check "it holds the day in 15 minute steps" 96 (count (rows "starts")))
-    (let [i (marked "starts")
-          row (nth (rows "starts") i)]
-      (check "the field's time is marked" "6:00 PM" (on-fx #(.getText ^Label row)))
-      (check "and in the middle" (whole (second (centre (port "starts")))) (whole (second (centre row)))))
+    (check "a click in the field opens them" true (open? "starts"))
+    (check "three wheels, five rows each, AM and PM its two" [3 5 5 2]
+           (into [(wheel-count "starts")] (map #(count (seen-rows "starts" %)) [:h :m :p])))
+    (check "the field's time in the band" ["6" "00" "PM"] (band "starts"))
     (let [[_ _ _ field-bottom] (bounds s)
-          [_ list-top _ _] (bounds (lst "starts"))]
-      (check "it is under the field, 4 px from it" t/gap (- list-top field-bottom)))
+          [_ top _ _] (bounds (lst "starts"))]
+      (check "they are under the field, 4 px from it" t/gap (- top field-bottom)))
     (tap! KeyCode/ESCAPE)
     (wait 300)
-    (check "Escape closes it" nil (lst "starts"))
+    (check "Escape closes them" nil (lst "starts"))
     (tap! KeyCode/TAB)
     (wait 300)
-    (check "Tab goes to the next field, and opens no list" [true nil] [(identical? e (owner)) (lst "ends")])
+    (check "Tab goes to the next field, and opens no wheels" [true nil] [(identical? e (owner)) (lst "ends")])
     (tap! KeyCode/DOWN)
     (wait 300)
-    (check "Down opens it" true (open? "ends"))
-    (check "from an empty field, the step after now is marked" "10:15 AM"
-           (nth (words "ends") (marked "ends")))
+    (check "Down opens them" true (open? "ends"))
+    (check "from an empty field, the next whole minute" ["10" "01" "AM"] (band "ends"))
     (tap! KeyCode/ESCAPE)
     (wait 300)
 
-    (println "Typing narrows the list")
+    (println "Keys on the wheels")
     (focus! s)
-    (type! "2")
-    (wait 300)
-    (check "\"2\": 2:00 PM first, eight rows, none marked" ["2:00 PM" 8 nil]
-           [(first (words "starts")) (count (rows "starts")) (marked "starts")])
-    (check "both halves of the day" ["2:00 PM" "2:15 PM" "2:30 PM" "2:45 PM" "2:00 AM" "2:15 AM" "2:30 AM" "2:45 AM"]
-           (words "starts"))
-    (tap! KeyCode/UP)
-    (check "Up with no row marked marks the last" 7 (marked "starts"))
-    (back!)
-    (type! "2")
-    (wait 300)
-    (dotimes [_ 3] (tap! KeyCode/DOWN))
-    (check "Down three times marks the third row" 2 (marked "starts"))
-    (tap! KeyCode/ENTER)
-    (wait 300)
-    (check "Return takes the marked row" ["2:30 PM" 870 nil] [(text s) (time-of :starts) (lst "starts")])
-    (type! "207p")
-    (wait 300)
-    (check "\"207p\": 2:07 PM first, and marked" ["2:07 PM" 0] [(first (words "starts")) (marked "starts")])
-    (back!)
-    (type! "12")
-    (wait 300)
-    (check "twelve is shown with its word in the list"
-           ["12:00 PM, noon" "12:00 AM, midnight"] [(nth (words "starts") 0) (nth (words "starts") 4)])
-    (back!)
-
-    (println "A click takes a row")
+    (enter! "1a")
     (click! (centre s))
     (wait 300)
-    (let [row (nth (rows "starts") (inc (marked "starts")))]
-      (click! (centre row))
+    (tap! KeyCode/DOWN)
+    (wait 100)
+    (check "Down moves to the hour wheel" true (identical? (wheel "starts" :h) (owner)))
+    (tap! KeyCode/UP)
+    (tap! KeyCode/RIGHT)
+    (tap! KeyCode/UP)
+    (wait 400)
+    (check "Up at 1 is 12, and Up at 00 is 59" ["12" "59" "AM"] (band "starts"))
+    (check "the field shows it, and nothing is written" ["12:59 AM" 60] [(text s) (time-of :starts)])
+    (tap! KeyCode/ESCAPE)
+    (wait 300)
+    (check "Escape puts the old time back, and the focus in the field" ["1:00 AM" 60 true]
+           [(text s) (time-of :starts) (identical? s (owner))])
+
+    (println "Turning the wheels")
+    (click! (centre s))
+    (wait 300)
+    (let [before (writes)]
+      (drag! (centre (wheel "starts" :m)) (- (* 2 t/row-h)) 8 25 :hold 150)
+      (wait 400)
+      (check "a slow drag of two rows: two minutes on, in the band and the field, nothing written"
+             ["02" "1:02 AM" before] [(second (band "starts")) (text s) (writes)])
+      (let [[x y] (centre (wheel "starts" :m))]
+        (click! [x (+ y t/row-h)]))
+      (wait 400)
+      (check "a click on the row under the band brings it up: one row on" ["03" "1:03 AM"]
+             [(second (band "starts")) (text s)])
+      (fling! "starts" :m)
+      (let [seen (loop [seen [] n 0]
+                   (if (< n 120)
+                     (do (wait 16) (recur (conj seen (rows-at "starts" :m)) (inc n)))
+                     seen))
+            moves (count (filter true? (map not= seen (rest seen))))]
+        (check "a fling moves it over many frames, then it is still, on a whole row" [true true true]
+               [(> moves 10) (apply = (take-last 20 seen)) (on-row? "starts" :m)]))
+      (scroll! (centre (wheel "starts" :h)) -50.0)
       (wait 300)
-      (check "the row under the click" ["2:45 PM" 885 nil] [(text s) (time-of :starts) (lst "starts")]))
+      (check "a scroll turns a wheel, and 300 ms after it stops it is on a row" [true "2"]
+             [(on-row? "starts" :h) (first (band "starts"))])
+      (drag! (centre (wheel "starts" :p)) 40.0 8 25 :hold 150)
+      (wait 400)
+      (check "AM/PM pulled past its end springs back onto its row" ["AM" true]
+             [(nth (band "starts") 2) (on-row? "starts" :p)])
+      (check "nothing written while the wheels turn" before (writes))
+      (let [shown (text s) taken (:time (t/parse shown false))]
+        (tap! KeyCode/ENTER)
+        (wait 300)
+        (check "Return takes the wheels' time, written once" [shown taken (inc before) nil]
+               [(text s) (time-of :starts) (writes) (lst "starts")])))
+
+    (println "Typing turns the wheels")
+    (click! (centre s))
+    (wait 300)
+    (on-fx #(.selectAll s))
+    (type! "207p")
+    (wait 400)
+    (check "\"207p\": 2, 07, PM" ["2" "07" "PM"] (band "starts"))
+    (tap! KeyCode/ENTER)
+    (wait 300)
+    (check "Return takes it" ["2:07 PM" 847] [(text s) (time-of :starts)])
 
     (println "The window's edge, and scrolling")
     (let [[_ top _ _] (bounds s)
@@ -372,21 +423,18 @@
       (wait 300)
       (let [[l t r b] (bounds (lst "starts"))
             [_ field-top _ _] (bounds s)]
-        (check "with no room under the field, the list opens over it" true (<= b field-top))
-        (check "and stays whole, inside the window" true
+        (check "with no room under the field, the wheels open over it" true (<= b field-top))
+        (check "and stay whole, inside the window" true
                (and (>= l t/edge-gap) (>= t t/edge-gap) (<= r (on-fx #(.getWidth (scene)))) (<= b height))))
-      (let [first-row (first (rows "starts"))
-            [_ before _ _] (bounds first-row)]
-        (scroll! (centre (lst "starts")) -40.0)
-        (wait 200)
-        (check "scrolling over the open list scrolls the list" -40.0 (- (second (bounds first-row)) before))
-        (check "and not the page" 0.0 (on-fx #(.getVvalue page))))
+      (scroll! (centre (wheel "starts" :m)) -40.0)
+      (wait 200)
+      (check "scrolling over the wheels does not scroll the page" 0.0 (on-fx #(.getVvalue page)))
       (tap! KeyCode/ESCAPE)
       (wait 300)
       (scroll! (centre s) -40.0)
       (wait 200)
       (check "scrolling over the field alone scrolls the page" true (pos? (double (on-fx #(.getVvalue page)))))
-      (check "and the time does not change" ["2:45 PM" 885] [(text s) (time-of :starts)])
+      (check "and the time does not change" ["2:07 PM" 847] [(text s) (time-of :starts)])
       (on-fx #(.setVvalue page 0.0)))
 
     (println "A 24-hour clock")
@@ -397,6 +445,16 @@
     (check "\"9p\"" ["21:00" 1260] [(text s) (time-of :starts)])
     (enter! "3")
     (check "an hour alone is taken as it stands" ["03:00" 180] [(text s) (time-of :starts)])
+    (click! (centre s))
+    (wait 300)
+    (check "two wheels: hour 00 to 23, and minute" [2 "03" "00"] (into [(wheel-count "starts")] (band "starts")))
+    (on-fx #(.selectAll s))
+    (enter! "21:30")
+    (click! (centre s))
+    (wait 300)
+    (check "the hour wheel reads 21" ["21" "30"] (band "starts"))
+    (tap! KeyCode/ESCAPE)
+    (wait 300)
 
     (println "A field that may be empty")
     (fresh!)
@@ -431,7 +489,7 @@
       (click! (centre r))
       (type! "5p")
       (wait 300)
-      (check "it answers no click and no key, and opens no list" ["9:00 AM" 540 nil before]
+      (check "it answers no click and no key, and opens no wheels" ["9:00 AM" 540 nil before]
              [(text r) (time-of :reminder) (lst "reminder") (writes)]))
 
     (println "States and sizes")
@@ -451,38 +509,44 @@
     (focus! s)
     (enter! "10a")
 
-    (println "The list's words")
+    (println "Twelve")
+    (enter! "noon")
     (click! (centre s))
     (wait 300)
-    (let [i (marked "starts")]
-      (doseq [[what row] [["the marked row" (nth (rows "starts") i)]
-                          ["a plain row" (nth (rows "starts") (inc i))]]]
-        (let [ratio (contrast row)]
-          (check (str "contrast on " what ": 4.5 or more (" (format "%.1f" ratio) ")") true (>= ratio 4.5)))))
+    (check "the field says noon, the hour wheel 12" ["12:00 PM, noon" "12"] [(text s) (first (band "starts"))])
     (tap! KeyCode/ESCAPE)
     (wait 300)
+    (enter! "10a")
+
+    (println "The wheels' words")
+    (click! (centre s))
+    (wait 300)
+    (doseq [k [:h :m :p]]
+      (let [ratio (contrast (band-row "starts" k))]
+        (check (str "contrast of the band's words, " (name k) ": 4.5 or more (" (format "%.1f" ratio) ")")
+               true (>= ratio 4.5))))
 
     (println "Frames")
     (let [{:keys [fps slowest-ms]}
           (frames (fn []
                     (dotimes [_ 3]
-                      (click! (centre s))
-                      (wait 400)
-                      (tap! KeyCode/ESCAPE)
-                      (wait 400))))]
-      (check (str "55 frames a second or more through three openings of the list ("
+                      (fling! "starts" :m)
+                      (wait 1200))))]
+      (check (str "55 frames a second or more through three flings ("
                   (format "%.1f" fps) ", slowest frame " (format "%.1f" slowest-ms) " ms)")
              true (>= fps 55.0)))
+    (tap! KeyCode/ESCAPE)
+    (wait 300)
 
     (println "The fade, and Reduce Motion")
     (click! (centre s))
     (wait 40)
-    (check "40 ms on, the list is fading in" true (< 0.0 (double (on-fx #(.getOpacity (lst "starts")))) 1.0))
+    (check "40 ms on, the wheels are fading in" true (< 0.0 (double (on-fx #(.getOpacity (lst "starts")))) 1.0))
     (tap! KeyCode/ESCAPE)
     (wait 300)
     (reset! ui/*reduce true)
     (click! (centre s))
     (wait 20)
-    (check "with Reduce Motion on, 20 ms on it is fully there" 1.0 (on-fx #(.getOpacity (lst "starts")))))
+    (check "with Reduce Motion on, 20 ms on they are fully there" 1.0 (on-fx #(.getOpacity (lst "starts")))))
   (println (if (zero? @failures) "All checks passed." (str @failures " checks failed.")))
   (System/exit (if (zero? @failures) 0 1)))

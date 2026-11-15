@@ -43,8 +43,9 @@
 (def notes
   ["Type a time: 9a, 930a, 9:30 pm, 2130, noon, midnight."
    "An hour alone, as 3, is not guessed at: the field asks AM or PM."
-   "The list narrows as you type. Down and Up move its mark, Return takes it."
-   "Escape closes the list; a second Escape puts the old time back."
+   "The wheels turn to what you type. Drag, fling, scroll or click a row to turn them."
+   "Down moves to the wheels: Up and Down turn one, Left and Right pick another, Return takes it."
+   "Escape closes the wheels and puts the old time back."
    "Ends may be left empty."
    "Command-Z takes back the last change."])
 
