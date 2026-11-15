@@ -2,7 +2,7 @@
 name: trim
 metadata:
   scope: global
-description: Find features too complex for a project's goal and report each one with its size in lines of code, a simpler way to do it and the lines that would save. Use when the user says trim, reduce features, cut scope, find overbuilt or overengineered code, what is too complex for this project, or runs /trim. Reports first and removes or simplifies only the features the user picks.
+description: Find features and test cases too complex for a project's goal and report each one with its size in lines of code, a simpler way to do it and the lines that would save. Use when the user says trim, reduce features, trim tests, too many tests, cut scope, find overbuilt or overengineered code, what is too complex for this project, or runs /trim. Reports first and removes or simplifies only the features the user picks.
 argument-hint: "[path or area, e.g. src/export]"
 ---
 
@@ -47,7 +47,25 @@ Flag a feature when one of these holds, and name which:
 For each flagged feature, give a simpler way to do it and its new size as an
 estimate in lines. "Remove" is a valid simpler way.
 
-## 4. Report
+## 4. Judge the tests
+
+Judge test cases on their own, not only as part of a feature. Flag a test
+case or group when one of these holds, and name which:
+
+1. Duplicate: another test already checks the same behavior through the
+   same path.
+2. Trivial: it checks the language, a library, a getter or a constant, not
+   the project's behavior.
+3. Overbuilt: fixtures, mocks or helpers far larger than the behavior they
+   test, or many cases where one table-driven test would do.
+4. Out of scope: it tests a feature the goal does not need, or code that is
+   gone.
+
+For each, give a simpler way - remove, merge into one case, or a table - and
+its new size as an estimate in lines. Never flag the only test of a behavior
+the goal needs.
+
+## 5. Report
 
 Print one numbered table, largest saving first:
 
@@ -59,27 +77,35 @@ Below it:
 - Total lines in scope, total flagged, total that could be saved.
 - Features checked and kept, one line each, so the user sees what passed.
 
+Then a second numbered table for tests, numbered on from the first:
+
+| # | Test or group | File | Lines | Reason | Simpler way | New lines | Saved |
+
+- Total test lines in scope, total flagged, total that could be saved.
+
 Then stop and wait. The user answers with row numbers to pick, or none.
 
-## 5. Apply the picked rows
+## 6. Apply the picked rows
 
-- One feature at a time. Remove or simplify it as the report said.
+- One row at a time, feature or test. Remove or simplify it as the report said.
 - Run the tests and build related to it. Both must pass before the next one;
   a change that breaks either is reverted.
 - Remove the feature's tests, docs and config with it. Never remove a test
   only to make a step pass.
-- Commit each feature on its own, with a Conventional Commits message.
+- For a test row, the remaining tests still pass and still cover every
+  behavior the removed ones covered, unless the row said remove it.
+- Commit each row on its own, with a Conventional Commits message.
 - When what is found does not match what was picked, in count or in scope,
   ask before removing.
 
-## 6. Report back
+## 7. Report back
 
-- Per feature: what changed, lines before and after, commit.
+- Per row: what changed, lines before and after, commit.
 - Total lines removed, exact.
 
 ## Rules
 
-- Change no file before the user picks rows in step 4.
+- Change no file before the user picks rows in step 5.
 - Every size is a measured number; only "New lines" is an estimate, and it is
   marked as one.
 - Behavior outside the picked features stays the same.
