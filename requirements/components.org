@@ -54,8 +54,10 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Icon alone: a circle, with a tooltip that names it
 ** Button sizes
 - Every button on a page is one height, 44 px
+- A button's words stay on one line: they never wrap, and the button grows wide enough to hold them with its shortcut
 - A button with words is 76 px wide or wider
 - Buttons in a pair, as Cancel and Delete, are equal width: that of the wider
+- Where a row runs out of room, it scrolls or moves buttons into a menu; it never squeezes one
 ** Verification
 - A window check presses a button and reads its size: 100% at rest, 97% pressed, 97% after 1.5 s held, 100% once released
 - It holds a button with a second action for 500 ms and counts one second action and no click
@@ -68,6 +70,8 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It presses, sends Escape and lets go: 100%, and nothing fired
 - With the focus on another button it sends Return: the main button sinks and counts one click, and the focused one counts none
 - It sends Space down, Escape, and Space up to a button: 97%, then nothing fired
+- A window check reads the height of every button in each window and sheet: 44 px, all equal
+- It narrows the window to its minimum width and reads each button: one line of words, 44 px tall
 - It presses a busy button: 100%. It waits out the save: "Saved", then "Save"
 - It makes a save fail: "Retry", nothing saved; it presses Retry and the save is counted
 - It reads the tooltip of a disabled button and of one with a second action, and fires the right-click menu's item
