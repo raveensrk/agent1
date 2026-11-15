@@ -49,8 +49,8 @@ Example: task-router-2's
 [.githooks/post-commit](~/repos/task-router-2/.githooks/post-commit) and
 [.githooks/app-install](~/repos/task-router-2/.githooks/app-install).
 
-## Commit without asking, in agent1
+## Commit without asking
 
-In the agent1 repo, never ask whether to commit. When a change is done and
-its checks pass, commit it yourself, following [git.md](git.md). Pushing is
-still only on request.
+In every repo, never ask whether to commit. When a change is done, its checks
+pass and you judge it good, commit it yourself, following [git.md](git.md).
+Pushing is still only on request.
