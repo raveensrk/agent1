@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clock Dial Picker</title>
+    <style>
+      :root {
+        --bg: #f4f5f7;
+        --card: #fff;
+        --ink: #1d2330;
+        --muted: #5b6475;
+        --line: #d8dce3;
+        --accent: #3b6cf6;
+        --chip: #eef1f6;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171d;
+          --card: #1e222a;
+          --ink: #e8ebf1;
+          --muted: #9aa3b2;
+          --line: #343a46;
+          --accent: #5b86ff;
+          --chip: #2a2f39;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, Helvetica, Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        padding: 40px 16px;
+      }
+      .picker {
+        width: 100%;
+        max-width: 340px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 16px;
+      }
+      .field {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        background: var(--card);
+        border: 2px solid var(--accent);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 22px;
+        margin-bottom: 18px;
+      }
+      .field button {
+        font: inherit;
+        color: var(--muted);
+        background: none;
+        border: 0;
+        padding: 2px 6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .field button.set {
+        color: var(--ink);
+      }
+      .field button.active {
+        background: var(--chip);
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .step {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--accent);
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      svg {
+        width: 100%;
+        height: auto;
+        touch-action: none;
+        user-select: none;
+        outline: none;
+        display: block;
+      }
+      svg:focus-visible circle.face {
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+      .face {
+        fill: var(--card);
+        stroke: var(--line);
+      }
+      .num {
+        fill: var(--ink);
+        font-size: 18px;
+        text-anchor: middle;
+        dominant-baseline: central;
+        cursor: pointer;
+      }
+      .num.sel {
+        fill: #fff;
+        font-weight: 700;
+      }
+      .hit {
+        fill: transparent;
+        cursor: pointer;
+      }
+      .hand {
+        stroke: var(--accent);
+        stroke-width: 3;
+        transition: all 0.15s;
+      }
+      .knob {
+        fill: var(--accent);
+        transition: all 0.15s;
+      }
+      .half {
+        cursor: pointer;
+        stroke: var(--line);
+      }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 14px;
+      }
+      .nav button {
+        font: inherit;
+        font-size: 14px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+      .nav button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="picker">
+      <h1>Pick a time</h1>
+      <div class="field">
+        <button data-step="0" id="fH">--</button>:<button data-step="1" id="fM">
+          --</button
+        ><button data-step="2" id="fP">--</button>
+      </div>
+      <div class="step" id="label"></div>
+      <svg
+        id="dial"
+        viewBox="-130 -130 260 260"
+        tabindex="0"
+        role="listbox"
+        aria-label="Clock dial"
+      ></svg>
+      <div class="nav">
+        <button id="back">← Back</button>
+        <button id="reset">Clear</button>
+      </div>
+      <div class="hint">
+        Tap or drag the hand. Arrows turn it, Enter picks, Esc goes back.
+      </div>
+    </div>
+    <script>
+      const NS = "http://www.w3.org/2000/svg";
+      const dial = document.getElementById("dial");
+      const STEPS = [
+        {
+          label: "STEP 1 - HOUR",
+          opts: [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(String),
+        },
+        { label: "STEP 2 - MINUTE", opts: ["00", "15", "30", "45"] },
+        { label: "STEP 3 - AM / PM", opts: ["AM", "PM"] },
+      ];
+      const val = [null, null, null];
+      let step = 0,
+        cursor = 0,
+        dragging = false;
+
+      function el(tag, attrs, parent) {
+        const e = document.createElementNS(NS, tag);
+        for (const k in attrs) e.setAttribute(k, attrs[k]);
+        (parent || dial).appendChild(e);
+        return e;
+      }
+      function pos(i, n, r) {
+        const a = (i / n) * 2 * Math.PI;
+        return [r * Math.sin(a), -r * Math.cos(a)];
+      }
+
+      function render() {
+        dial.innerHTML = "";
+        const s = STEPS[step],
+          n = s.opts.length;
+        document.getElementById("label").textContent = s.label;
+        if (step === 2) {
+          s.opts.forEach((o, i) => {
+            const on = i === cursor;
+            const half = el("path", {
+              d:
+                i === 0
+                  ? "M-125 0 A125 125 0 0 1 125 0 Z"
+                  : "M-125 0 A125 125 0 0 0 125 0 Z",
+              class: "half",
+              fill: on ? "var(--accent)" : "var(--card)",
+            });
+            const t = el("text", {
+              x: 0,
+              y: i === 0 ? -55 : 55,
+              class: "num" + (on ? " sel" : ""),
+              "font-size": 26,
+            });
+            t.style.fontSize = "26px";
+            t.textContent = o;
+            [half, t].forEach((x) =>
+              x.addEventListener("click", () => pick(i)),
+            );
+          });
+          el("rect", {
+            x: -44,
+            y: -15,
+            width: 88,
+            height: 30,
+            rx: 15,
+            fill: "var(--card)",
+            stroke: "var(--line)",
+          });
+          const c = el("text", { x: 0, y: 0, class: "num" });
+          c.style.fontSize = "14px";
+          c.textContent = `${val[0]} : ${val[1]}`;
+        } else {
+          el("circle", { r: 125, class: "face" });
+          const [hx, hy] = pos(cursor, n, 95);
+          el("line", { x1: 0, y1: 0, x2: hx, y2: hy, class: "hand" });
+          el("circle", { r: 5, class: "knob" });
+          el("circle", {
+            cx: hx,
+            cy: hy,
+            r: step === 1 ? 24 : 20,
+            class: "knob",
+          });
+          s.opts.forEach((o, i) => {
+            const [x, y] = pos(i, n, 95);
+            const hit = el("circle", { cx: x, cy: y, r: 22, class: "hit" });
+            const t = el("text", {
+              x,
+              y,
+              class: "num" + (i === cursor ? " sel" : ""),
+            });
+            t.textContent = o;
+            if (step === 1) t.style.fontSize = "20px";
+          });
+          if (step === 1) {
+            const c = el("text", { x: 0, y: -30, class: "num" });
+            c.style.fill = "var(--muted)";
+            c.style.fontSize = "14px";
+            c.textContent = `${val[0]} : --`;
+          }
+        }
+        const f = ["fH", "fM", "fP"].map((id) => document.getElementById(id));
+        f.forEach((b, i) => {
+          b.textContent = val[i] ?? "--";
+          b.classList.toggle("set", val[i] != null);
+          b.classList.toggle("active", i === step);
+        });
+        document.getElementById("back").disabled = step === 0;
+      }
+
+      function go(s) {
+        step = s;
+        const v = val[step];
+        cursor =
+          v != null
+            ? STEPS[step].opts.indexOf(v)
+            : step === 0
+              ? 9
+              : step === 1
+                ? 0
+                : 0;
+        render();
+      }
+      function pick(i) {
+        val[step] = STEPS[step].opts[i];
+        if (step < 2) go(step + 1);
+        else {
+          cursor = i;
+          render();
+        }
+      }
+
+      function angleIndex(e) {
+        const r = dial.getBoundingClientRect();
+        const x = e.clientX - (r.left + r.width / 2),
+          y = e.clientY - (r.top + r.height / 2);
+        if (step === 2) return y < 0 ? 0 : 1;
+        const n = STEPS[step].opts.length;
+        let a = Math.atan2(x, -y);
+        if (a < 0) a += 2 * Math.PI;
+        return Math.round((a / (2 * Math.PI)) * n) % n;
+      }
+      dial.addEventListener("pointerdown", (e) => {
+        if (step === 2) return;
+        dragging = true;
+        dial.setPointerCapture(e.pointerId);
+        cursor = angleIndex(e);
+        render();
+      });
+      dial.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        const i = angleIndex(e);
+        if (i !== cursor) {
+          cursor = i;
+          render();
+        }
+      });
+      dial.addEventListener("pointerup", (e) => {
+        if (!dragging) return;
+        dragging = false;
+        pick(angleIndex(e));
+      });
+
+      dial.addEventListener("keydown", (e) => {
+        const n = STEPS[step].opts.length;
+        if (["ArrowRight", "ArrowDown"].includes(e.key))
+          cursor = (cursor + 1) % n;
+        else if (["ArrowLeft", "ArrowUp"].includes(e.key))
+          cursor = (cursor - 1 + n) % n;
+        else if (e.key === "Enter" || e.key === " ")
+          return (e.preventDefault(), pick(cursor));
+        else if (e.key === "Escape") return step > 0 && go(step - 1);
+        else return;
+        e.preventDefault();
+        render();
+      });
+      document.querySelectorAll(".field button").forEach((b) =>
+        b.addEventListener("click", () => {
+          go(+b.dataset.step);
+          dial.focus();
+        }),
+      );
+      document
+        .getElementById("back")
+        .addEventListener("click", () => step > 0 && go(step - 1));
+      document.getElementById("reset").addEventListener("click", () => {
+        val.fill(null);
+        go(0);
+      });
+      go(0);
+    </script>
+  </body>
+</html>

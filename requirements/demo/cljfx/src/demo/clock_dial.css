@@ -1,0 +1,35 @@
+/* The clock dial experiment (demo.clock-dial), over demo/glass.css. */
+.dial-field {
+  -fx-background-color: rgba(255, 255, 255, 0.08);
+  -fx-border-color: #0a84ff;
+  -fx-border-width: 2;
+  -fx-border-radius: 10;
+  -fx-background-radius: 10;
+  -fx-padding: 6 10;
+  -fx-pref-width: 260;
+}
+.dial-field .label { -fx-font-size: 22px; }
+.button.dial-part {
+  -fx-font-size: 22px;
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+  -fx-text-fill: rgba(255, 255, 255, 0.45);
+  -fx-padding: 2 6;
+}
+.button.dial-part.set { -fx-text-fill: white; }
+.button.dial-part.active { -fx-background-color: rgba(255, 255, 255, 0.12); -fx-text-fill: #4aa3ff; -fx-font-weight: bold; }
+.dial-step { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #4aa3ff; }
+.dial:focused .dial-face { -fx-stroke: #4aa3ff; -fx-stroke-width: 2; }
+.dial-face { -fx-fill: rgba(255, 255, 255, 0.08); -fx-stroke: rgba(255, 255, 255, 0.22); }
+.dial-hand { -fx-stroke: #0a84ff; -fx-stroke-width: 3; }
+.dial-knob { -fx-fill: #0a84ff; }
+.dial-num { -fx-font-size: 18px; -fx-text-fill: rgba(255, 255, 255, 0.86); }
+.dial-num.sel { -fx-text-fill: white; -fx-font-weight: bold; }
+.dial-num.big { -fx-font-size: 26px; }
+.dial-hint { -fx-font-size: 14px; -fx-text-fill: rgba(255, 255, 255, 0.55); }
+.dial-half { -fx-stroke: rgba(255, 255, 255, 0.22); }
+.dial-half.off { -fx-fill: rgba(255, 255, 255, 0.08); }
+.dial-half.on { -fx-fill: #0a84ff; }
+.dial-pill { -fx-fill: #26262c; -fx-stroke: rgba(255, 255, 255, 0.22); }
+.dial-pill-text { -fx-font-size: 14px; -fx-text-fill: white; }
+.dial-tick { -fx-stroke: rgba(255, 255, 255, 0.30); -fx-stroke-width: 1.5; }

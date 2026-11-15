@@ -1,0 +1,10 @@
+/* The wheel picker experiment (demo.wheel-picker), over demo/glass.css. */
+.wheels { -fx-padding: 0 12; }
+.wheel-band {
+  -fx-background-color: rgba(255, 255, 255, 0.12);
+  -fx-background-radius: 9;
+}
+.wheel-row { -fx-font-size: 22px; }
+.wheel-row.on { -fx-text-fill: white; }
+.wheel-row.off { -fx-text-fill: rgba(255, 255, 255, 0.70); }
+.compare-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white; }

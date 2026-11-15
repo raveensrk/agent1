@@ -36,6 +36,12 @@
                                :main-opts ["-m" "demo.time-picker-check"]
                                :jvm-opts ["--enable-native-access=ALL-UNNAMED"
                                           "-Dglass.taskbarApplication=false"]}
+           ;; The clock dial experiment: hour, minute, AM/PM on a round dial.
+           :clock-dial {:main-opts ["-m" "demo.clock-dial-page"]
+                        :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
+           ;; The clock dial and iOS-style wheels, side by side.
+           :compare {:main-opts ["-m" "demo.compare-page"]
+                     :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
            ;; The date picker demo: three date pickers.
            :date-picker {:main-opts ["-m" "demo.date-picker-page"]
                          :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
@@ -76,7 +82,7 @@
                   :extra-deps {io.github.cognitect-labs/test-runner
                                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
                   :main-opts ["-m" "cognitect.test-runner" "-n" "demo.button-test" "-n" "demo.window-test"
-                              "-n" "demo.slider-test" "-n" "demo.time-picker-test" "-n" "demo.date-picker-test"
+                              "-n" "demo.slider-test" "-n" "demo.time-picker-test" "-n" "demo.date-picker-test" "-n" "demo.clock-dial-test" "-n" "demo.wheel-picker-test"
                               "-n" "demo.scroll-test" "-n" "demo.version-test"]
                   :jvm-opts ["-Dcljfx.skip-javafx-initialization=true"
                              "--enable-native-access=ALL-UNNAMED"]}}}

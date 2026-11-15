@@ -1,0 +1,171 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1000 560"
+  font-family="-apple-system, Helvetica, Arial, sans-serif"
+>
+  <rect width="1000" height="560" fill="#f4f5f7" />
+  <text
+    x="40"
+    y="50"
+    font-size="24"
+    font-weight="700"
+    fill="#1d2330"
+  >Time picker - clock dial</text>
+  <text
+    x="40"
+    y="78"
+    font-size="14"
+    fill="#5b6475"
+  >Three taps on one round dial: hour, then minute, then AM/PM.</text>
+  <rect
+    x="40"
+    y="96"
+    width="220"
+    height="44"
+    rx="8"
+    fill="#fff"
+    stroke="#3b6cf6"
+    stroke-width="2"
+  />
+  <text x="58" y="125" font-size="18" fill="#1d2330">9 : 30  PM</text>
+
+  <!-- Step 1: hour dial -->
+  <g
+    transform="translate(180,330)"
+    font-size="18"
+    text-anchor="middle"
+    fill="#1d2330"
+  >
+    <text
+      y="-165"
+      font-size="13"
+      font-weight="700"
+      fill="#3b6cf6"
+    >STEP 1 - HOUR</text>
+    <circle r="125" fill="#fff" stroke="#d8dce3" />
+    <line x1="0" y1="0" x2="-95" y2="0" stroke="#3b6cf6" stroke-width="3" />
+    <circle r="5" fill="#3b6cf6" />
+    <circle cx="-95" cy="0" r="20" fill="#3b6cf6" />
+    <text x="47.5" y="-76">1</text><text x="82.3" y="-41">2</text><text
+      x="95"
+      y="6"
+    >3</text>
+    <text x="82.3" y="54">4</text><text x="47.5" y="88">5</text><text
+      x="0"
+      y="101"
+    >6</text>
+    <text x="-47.5" y="88">7</text><text x="-82.3" y="54">8</text>
+    <text x="-95" y="6" fill="#fff" font-weight="700">9</text>
+    <text x="-82.3" y="-41">10</text><text x="-47.5" y="-76">11</text><text
+      x="0"
+      y="-89"
+    >12</text>
+    <text
+      y="160"
+      font-size="13"
+      fill="#5b6475"
+    >Tap 9 → dial turns to minutes</text>
+  </g>
+
+  <path
+    d="M320 330 h30"
+    stroke="#9aa3b2"
+    stroke-width="2.5"
+    marker-end="url(#a)"
+  />
+
+  <!-- Step 2: minute dial -->
+  <g
+    transform="translate(500,330)"
+    font-size="20"
+    text-anchor="middle"
+    fill="#1d2330"
+  >
+    <text
+      y="-165"
+      font-size="13"
+      font-weight="700"
+      fill="#3b6cf6"
+    >STEP 2 - MINUTE</text>
+    <circle r="125" fill="#fff" stroke="#d8dce3" />
+    <g stroke="#e3e6ec" stroke-width="2">
+      <line x1="0" y1="-118" x2="0" y2="-110" /><line
+        x1="118"
+        y1="0"
+        x2="110"
+        y2="0"
+      />
+      <line x1="-118" y1="0" x2="-110" y2="0" />
+    </g>
+    <line x1="0" y1="0" x2="0" y2="95" stroke="#3b6cf6" stroke-width="3" />
+    <circle r="5" fill="#3b6cf6" />
+    <circle cx="0" cy="95" r="24" fill="#3b6cf6" />
+    <text x="0" y="-88">00</text><text x="95" y="7">15</text>
+    <text x="0" y="102" fill="#fff" font-weight="700">30</text><text
+      x="-95"
+      y="7"
+    >45</text>
+    <text y="-30" font-size="15" fill="#5b6475">9 : --</text>
+    <text
+      y="160"
+      font-size="13"
+      fill="#5b6475"
+    >Tap 30 → dial turns to AM/PM</text>
+  </g>
+
+  <path
+    d="M640 330 h30"
+    stroke="#9aa3b2"
+    stroke-width="2.5"
+    marker-end="url(#a)"
+  />
+
+  <!-- Step 3: AM/PM dial, two halves -->
+  <g transform="translate(820,330)" font-size="24" text-anchor="middle">
+    <text
+      y="-165"
+      font-size="13"
+      font-weight="700"
+      fill="#3b6cf6"
+    >STEP 3 - AM / PM</text>
+    <path d="M-125 0 A125 125 0 0 1 125 0 Z" fill="#fff" stroke="#d8dce3" />
+    <path d="M-125 0 A125 125 0 0 0 125 0 Z" fill="#3b6cf6" />
+    <text y="-48" fill="#1d2330">AM</text>
+    <text y="70" fill="#fff" font-weight="700">PM</text>
+    <rect
+      x="-46"
+      y="-16"
+      width="92"
+      height="32"
+      rx="16"
+      fill="#fff"
+      stroke="#d8dce3"
+    />
+    <text y="6" font-size="15" fill="#1d2330">9 : 30</text>
+    <text
+      y="160"
+      font-size="13"
+      fill="#5b6475"
+    >Tap PM → closes, field = 9:30 PM</text>
+  </g>
+
+  <defs>
+    <marker
+      id="a"
+      viewBox="0 0 10 10"
+      refX="8"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto"
+    >
+      <path d="M0 0 L10 5 L0 10 z" fill="#9aa3b2" />
+    </marker>
+  </defs>
+  <text
+    x="40"
+    y="540"
+    font-size="12"
+    fill="#8a93a3"
+  >Drag the hand or tap a number. Arrows rotate, Enter picks and advances, Esc steps back.</text>
+</svg>
