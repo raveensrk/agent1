@@ -198,6 +198,20 @@ For example:
 - Undo reverses the newest change, file writes included
 - Redo makes again what undo took back, until a new change is made
 ** Text boxes need to have full featured editor support
+*** OPEN Text boxes turn off macOS autocomplete
+:PROPERTIES:
+:ID:          text-no-autocomplete
+:CREATED:     2026-11-15
+:LAST_EDITED: 2026-11-15
+:APPROVED:    2026-11-15
+:VERIFY:      window check: every input and textarea in each window and sheet has the attributes below
+:END:
+macOS changes no text while it is typed: what is typed is what is kept.
+- No inline predictions, no autocorrect, no auto-capitals, no spelling or grammar marks, no text replacement, no browser autofill
+- In a web view (Tauri, WKWebView) every text box carries writingsuggestions="false", autocorrect="off", autocapitalize="off", spellcheck="false" and autocomplete="off"
+- In AppKit every NSTextView and NSTextField turns off automatic text completion, spelling correction, quote, dash and text replacement, and continuous spell checking
+- A search box and a code box follow the same rule; no box opts back in
+Evidence: WebKit's writingsuggestions attribute (https://webkit.org/blog/15865/webkit-features-in-safari-18-0/), spiked in Playwright WebKit (Safari 27.2) on 2026-11-15: writingSuggestions "false", spellcheck false; a textarea's spellcheck is on by default, so it is set on each box. diet_tracker's app/src/lib/TimePicker.svelte already sets autocomplete="off" and spellcheck="false".
 ** Delete asks first
 - A sheet says what will be deleted, with Delete and Cancel; Delete is red, and Return does not press it
 - Deleted files go to the Trash, not away for good
