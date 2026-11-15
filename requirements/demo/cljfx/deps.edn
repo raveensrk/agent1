@@ -36,6 +36,16 @@
                                :main-opts ["-m" "demo.time-picker-check"]
                                :jvm-opts ["--enable-native-access=ALL-UNNAMED"
                                           "-Dglass.taskbarApplication=false"]}
+           ;; The date picker demo: three date pickers.
+           :date-picker {:main-opts ["-m" "demo.date-picker-page"]
+                         :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
+           ;; The date picker's window checks: opens the real window for 40 s,
+           ;; behind whatever is in front; it takes neither the keyboard nor the
+           ;; pointer.
+           :check-date-picker {:extra-paths ["test"]
+                               :main-opts ["-m" "demo.date-picker-check"]
+                               :jvm-opts ["--enable-native-access=ALL-UNNAMED"
+                                          "-Dglass.taskbarApplication=false"]}
            ;; The scroll demo: areas inside a page that scrolls.
            :scroll {:main-opts ["-m" "demo.scroll-page"]
                     :jvm-opts ["--enable-native-access=ALL-UNNAMED"]}
@@ -66,7 +76,7 @@
                   :extra-deps {io.github.cognitect-labs/test-runner
                                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
                   :main-opts ["-m" "cognitect.test-runner" "-n" "demo.button-test" "-n" "demo.window-test"
-                              "-n" "demo.slider-test" "-n" "demo.time-picker-test"
+                              "-n" "demo.slider-test" "-n" "demo.time-picker-test" "-n" "demo.date-picker-test"
                               "-n" "demo.scroll-test" "-n" "demo.version-test"]
                   :jvm-opts ["-Dcljfx.skip-javafx-initialization=true"
                              "--enable-native-access=ALL-UNNAMED"]}}}

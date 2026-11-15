@@ -279,12 +279,13 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 ** Ideas
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
-* OPEN Date pickers
+* DONE Date pickers
 :PROPERTIES:
 :ID: date-pickers
 :CREATED: 2026-11-15
 :LAST_EDITED: 2026-11-15
 :APPROVED: 2026-11-15
+:IMPLEMENTED: 2026-11-15
 :VERIFY: clojure -M:test (demo.date-picker-test), clojure -M:check-date-picker (demo.date-picker-check), run in demo/cljfx
 :END:
 ** A reference shows one way to build them
