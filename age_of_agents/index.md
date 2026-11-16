@@ -26,14 +26,14 @@ arguments and run them inside itself.
    with the other workers. It decides on its own and goes as far as it can.
    When done it posts its status to the bulletin board.
 6. **Anti-monitor ant** starts with the workflow and watches the bulletin
-   board. For each completed task it spawns an antspector.
-7. **Antspector ant** inspects and reviews the completed task.
+   board. For each completed task it spawns an inspector.
+7. **Inspector ant** inspects and reviews the completed task.
    - No bugs: marks the task complete on the bulletin board. It then waits
      for the user's final review.
    - Bugs: posts them to the bug bounty board.
 8. **Detective ant** is spawned while the bug bounty board is non-zero. It
    debugs and fixes, keeps the bounty status updated, and hands each fix
-   back to the same antspector for re-inspection. After 3 failed tries on a
+   back to the same inspector for re-inspection. After 3 failed tries on a
    bug it escalates to the user.
 
 ## Always-on ants
@@ -48,8 +48,10 @@ arguments and run them inside itself.
 - All ants work in parallel without blocking each other.
 - Only ARTA and AARA ask the user questions, plus the detective on
   escalation. Workers never ask.
-- The bulletin board and bug bounty board are plain files in the repo that
-  every ant can read and write.
+- The boards are plain files every ant can read and write:
+  [`boards/bulletin.md`](boards/bulletin.md) and
+  [`boards/bounty.md`](boards/bounty.md).
+- At most 5 ant workers run at the same time.
 
 ## Diagram
 
@@ -71,7 +73,7 @@ bulletin: Bulletin board {shape: cylinder}
 bounty: Bug bounty board {shape: cylinder}
 
 monitor: Anti-monitor ant
-inspector: Antspector ant
+inspector: Inspector ant
 detective: Detective ant
 
 always_on: Always-on ants {
@@ -96,7 +98,7 @@ detective -> inspector: fixed, re-inspect
 detective -> bounty: update status
 detective -> user: escalate after 3 failed tries
 bulletin -> user: final review
-always_on.philosopher -> aw: critique {style.stroke-dash: 3}
+always_on.philosopher -> bulletin: critique {style.stroke-dash: 3}
 ```
 
 ![Ishikari workflow](ishikari.svg)

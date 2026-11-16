@@ -12,7 +12,7 @@ bulletin: Bulletin board {shape: cylinder}
 bounty: Bug bounty board {shape: cylinder}
 
 monitor: Anti-monitor ant
-inspector: Antspector ant
+inspector: Inspector ant
 detective: Detective ant
 
 always_on: Always-on ants {
@@ -37,4 +37,4 @@ detective -> inspector: fixed, re-inspect
 detective -> bounty: update status
 detective -> user: escalate after 3 failed tries
 bulletin -> user: final review
-always_on.philosopher -> aw: critique {style.stroke-dash: 3}
+always_on.philosopher -> bulletin: critique {style.stroke-dash: 3}
