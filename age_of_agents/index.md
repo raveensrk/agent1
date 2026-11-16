@@ -69,7 +69,7 @@ arguments and run them inside itself.
 ## Diagram
 
 Stages run top to bottom: plan, build, check, fix, finish. Each board
-sits in the stage that reads it. D2 source: [`ishikari.d2`](ishikari.d2),
+sits in the stage that first writes to it. D2 source: [`ishikari.d2`](ishikari.d2),
 rendered with the TALA layout:
 `d2 --layout=tala ishikari.d2 ishikari.svg`.
 
