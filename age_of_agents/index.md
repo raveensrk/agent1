@@ -54,7 +54,8 @@ worker ant's job: the worker runs it as its plan.
    and spawns an worker ant to build the fix. When the fix is built, it
    keeps the bounty status updated and hands the fix back to the same
    inspector for re-inspection. After 3 failed tries on a bug it escalates
-   to the user.
+   to the user. Each new round sees every earlier round's cause, fix
+   plan and outcome, so the detective never repeats an idea that failed.
 
 9. **Merger ant** runs after the user approves a task on the bulletin
    board. It merges the worker's branch into main and sets the status to
