@@ -1,93 +1,228 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merger ant merges approved tasks, then the janitor, librarian and philosopher ants run once',
+  description: 'Ishikari stage 3: merge the approved tasks in a scratch copy, update docs, move main forward, then janitor and philosopher ants',
   whenToUse: 'After the user approves tasks in their final review of ishikari-build.',
   phases: [
-    { title: 'Merge', detail: 'one merger ant merges every approved task in order' },
-    { title: 'Upkeep', detail: 'janitor, librarian and philosopher ants, in parallel' },
+    { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
+    { title: 'Upkeep', detail: 'librarian, janitor and philosopher ants, in parallel' },
+    { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
 
 // args: {
-//   repo: string,                      absolute repo path
-//   approved: [{id, branch}],          tasks the user approved, in merge order
+//   env: { repo, state, run, main, tool, testCommand? },
+//   approved: [{ id, branch, after? }],      tasks the user approved (from ishikari-build)
+//   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
+//   drop?: [{ id, branch }],                 tasks the user gave up on: removed
 // }
-// Returns { merged, bugs, cleanupPlan }.
-// bugs feed the next ishikari-build run; cleanupPlan becomes a plan for it.
+// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup }
+//      or { stage: 'error', reason }.
+// bugs go into the next ishikari-build run; cleanup goes into the next
+// ishikari-plan run as a suggested task.
+//
+// The repo's main checkout is touched once, at the end, by a fast-forward
+// that git refuses if it would overwrite anything.
 
-const MERGE = {
+const EFFORT = { merger: 'medium', librarian: 'low', janitor: 'low', philosopher: 'low', finisher: 'low' }
+
+const { env = {}, approved = [], together = null, drop = [] } = args
+const bad = []
+if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
+if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
+if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
+if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
+if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (bad.length) return { stage: 'error', reason: bad.join('; ') }
+
+const treeOf = branch => `${env.state}/worktrees/${branch.replace(/\//g, '__')}`
+const runOf = branch => String(branch).split('/')[1] || env.run
+const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
+Use absolute paths only, and run git as \`git -C <path> ...\`. Never touch any other repo.`
+const tests = env.testCommand ? `run the tests with \`${env.testCommand}\`` : 'run the repo\'s tests'
+const scratch = `ishikari/${env.run}/_finish`
+const scratchTree = treeOf(scratch)
+
+async function twice(fn) {
+  const first = await fn()
+  return first != null ? first : fn()
+}
+
+const COMBINE = {
   type: 'object',
   properties: {
+    sha: { type: 'string', description: 'final commit of the scratch branch' },
     results: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          merged: { type: 'boolean' },
-          broke: { type: 'string', description: 'what broke on main, empty if nothing' },
+          outcome: { type: 'string', enum: ['merged', 'conflict', 'tests failed', 'blocked'] },
+          detail: { type: 'string' },
         },
-        required: ['id', 'merged', 'broke'],
+        required: ['id', 'outcome', 'detail'],
       },
     },
   },
-  required: ['results'],
+  required: ['sha', 'results'],
 }
 
-const { repo, approved = [] } = args
+// ---- merge order: every task after the tasks it is built on ----
+const ids = new Set(approved.map(t => t.id))
+const order = []
+const placed = new Set()
+const place = t => {
+  if (placed.has(t.id)) return
+  placed.add(t.id)
+  ;(t.after || []).filter(d => ids.has(d)).forEach(d => place(approved.find(x => x.id === d)))
+  order.push(t)
+}
+approved.forEach(place)
 
-phase('Merge')
-const list = approved.map(t => `- ${t.id}: branch ${t.branch}`).join('\n')
-const m = await agent(
-  `You are the merger ant of the Ishikari workflow. Repo: ${repo}.
-Merge these branches into main, one at a time, in this order:
-${list}
-After each merge, run the repo's tests on main. If the merge or the tests
-fail, put main back as it was before that merge, report what broke, and go on
-to the next branch.
-If a later branch was built on top of a branch that failed (it contains that
-branch's commits), skip it too and report "blocked" as what broke.
-For each merged task: set its row in boards/bulletin.md to status "done",
-then remove its worktree (.ishikari/worktrees/<id>) and delete its branch.
-Last, commit any changes under boards/ with the message
-"chore(boards): update after ishikari run". Commit nothing else.`,
-  { label: 'merger-ant', phase: 'Merge', effort: 'low', schema: MERGE },
-)
+const results = {}
+let sha = null
+if (order.length) {
+  phase('Merge')
+  const sameSet = together && together.sha && Array.isArray(together.tasks) &&
+    together.tasks.length === order.length && order.every(t => together.tasks.includes(t.id))
+  const fast = sameSet
+    ? `Fast path: build's trial merge ${together.sha} already holds exactly these tasks
+on top of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
+succeeds, create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
+report every task as "merged", return that commit as sha, and stop. Otherwise do the
+normal steps below.\n`
+    : ''
+  const r = await twice(() => agent(
+    `You are the merger ant of the Ishikari workflow.
+${where}
+Work only in a scratch worktree: ${scratchTree} on branch ${scratch}.
+If that worktree or branch exists, remove them first
+(\`git -C ${env.repo} worktree remove --force ${scratchTree}\`, \`git -C ${env.repo} branch -D ${scratch}\`).
+${fast}Create it with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${env.main}\`.
+Merge these branches into it with \`git merge --no-edit\`, one at a time, in this order:
+${order.map(t => `- ${t.id}: ${t.branch}${(t.after || []).length ? ` (built on ${t.after.join(', ')})` : ''}`).join('\n')}
+A task built on other tasks needs them. If one of them was not merged here and is
+not already in ${env.main} (\`git -C ${env.repo} merge-base --is-ancestor <its branch> ${env.main}\`;
+its branch is named like the task's, with its own id), skip the task and report it
+as "blocked".
+If a merge conflicts, run \`git merge --abort\` and report "conflict" with the files.
+After all merges, ${tests} once inside ${scratchTree}. If they fail, find the first
+task whose merge makes them fail (rebuild from ${env.main} and test after each
+merge), report it as "tests failed", leave it and every task built on it out, and
+go on until the tests pass.
+Report every task. Never write or fix code yourself. Never touch ${env.main} or
+the repo's main checkout. Return the final commit of ${scratch} as sha.`,
+    { label: 'merger-ant', phase: 'Merge', effort: EFFORT.merger, schema: COMBINE },
+  ))
+  if (!r) return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` }
+  sha = r.sha
+  for (const x of r.results || []) results[x.id] = x
+}
 
-const results = m ? m.results : approved.map(t => ({ id: t.id, merged: false, broke: 'merger ant died' }))
-const merged = results.filter(r => r.merged && !r.broke).map(r => r.id)
-const bugs = results.filter(r => !r.merged || r.broke).map(r => {
-  const t = approved.find(a => a.id === r.id) || { branch: `ishikari/${r.id}` }
-  return { task: r.id, branch: t.branch, bug: `merge broke main: ${r.broke}` }
-})
+// Check what the merger said against what was asked: nothing goes missing.
+const merged = order.filter(t => results[t.id] && results[t.id].outcome === 'merged')
+const failed = order.filter(t => results[t.id] && ['conflict', 'tests failed'].includes(results[t.id].outcome))
+const waiting = order.filter(t => !merged.includes(t) && !failed.includes(t)).map(t => ({
+  id: t.id, branch: t.branch, after: t.after || [],
+  why: results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it',
+}))
+const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge', bug: `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
-phase('Upkeep')
-const [cleanupPlan] = merged.length ? await parallel([
-  () => agent(
-    `You are the janitor ant of the Ishikari workflow. Repo: ${repo}.
-Find dead code, bloat and mess left by the tasks just merged (${merged.join(', ')}).
-Only worker ants write code, so write a complete cleanup plan a worker ant can
-build without questions, to ${repo}/.ishikari/plans/cleanup.md. Change no other
-files. Return the plan, or "none" if nothing needs cleaning.`,
-    { label: 'janitor-ant', phase: 'Upkeep' },
-  ),
-  () => agent(
-    `You are the librarian ant of the Ishikari workflow. Repo: ${repo}.
-Update the docs for the tasks just merged (${merged.join(', ')}). Change docs
-only, and commit them.`,
-    { label: 'librarian-ant', phase: 'Upkeep', effort: 'low' },
-  ),
-  // One philosopher looks at all the merged work together, once per run.
-  () => agent(
-    `You are the philosopher ant of the Ishikari workflow. Repo: ${repo}.
-Question and critique the work just merged (${merged.join(', ')}) as a whole:
-design, scope, missing cases, how the tasks fit together. Short, concrete
-questions only. Add one row per critique to ${repo}/boards/critiques.md
-(Target | Critique | Time), and commit only that file. The librarian ant may
-commit at the same time: if git says the index is locked, wait a moment and
-retry. Never block or change anything else.`,
-    { label: 'philosopher-ant', phase: 'Upkeep' },
-  ),
-]) : ['none']
+// ---- upkeep on the merged result, before main moves ----
+let cleanup = null
+if (merged.length) {
+  phase('Upkeep')
+  const names = merged.map(t => t.id).join(', ')
+  const [, jan] = await parallel([
+    () => agent(
+      `You are the librarian ant of the Ishikari workflow.
+${where}
+Update the docs for the tasks just merged (${names}) inside ${scratchTree}, on
+branch ${scratch}. Change docs only, and commit them there. Never touch ${env.main}.`,
+      { label: 'librarian-ant', phase: 'Upkeep', effort: EFFORT.librarian },
+    ),
+    () => agent(
+      `You are the janitor ant of the Ishikari workflow.
+${where}
+Read the merged code in ${scratchTree}. Find dead code, bloat and mess left by the
+tasks just merged (${names}). Only worker ants write code, so if something needs
+cleaning, write a complete cleanup plan a worker ant can build without questions
+to ${env.state}/plans/${env.run}/cleanup.md. Change nothing else.`,
+      { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
+        schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
+    ),
+    () => agent(
+      `You are the philosopher ant of the Ishikari workflow.
+${where}
+Read the merged code in ${scratchTree} and question the work just merged
+(${names}) as a whole: design, scope, missing cases, how the tasks fit together.
+Keep only your 5 most useful critiques, as short, concrete questions. Add them
+with exactly this command, filling in the rows:
+python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROWS_END'
+[["<target file or task>", "<critique>"], ...]
+ISHIKARI_ROWS_END
+Change nothing else, and never block the work.`,
+      { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher },
+    ),
+  ])
+  if (jan && jan.needed) cleanup = { title: jan.title, file: `${env.state}/plans/${env.run}/cleanup.md` }
+}
 
-return { merged, bugs, cleanupPlan }
+// ---- move main forward, clean up, write the bulletin ----
+phase('Main')
+const key = t => `${runOf(t.branch)}/${t.id}`
+const rowsIf = moved => [
+  ...merged.map(t => [key(t), moved ? 'done' : 'waiting', 'merger ant', '-']),
+  ...failed.map(t => [key(t), 'merge failed', 'merger ant', '-']),
+  ...waiting.map(t => [key(t), 'waiting', 'merger ant', '-']),
+  ...drop.map(t => [key(t), 'dropped', 'user', '-']),
+]
+const write = rows => rows.length
+  ? `python3 ${env.tool} boards write ${env.state} bulletin <<'ISHIKARI_ROWS_END'
+${JSON.stringify(rows)}
+ISHIKARI_ROWS_END`
+  : '(nothing to write)'
+const remove = [...merged.map(t => t.branch), ...drop.map(t => t.branch), `ishikari/${env.run}/_together`, scratch]
+const FINISH = {
+  type: 'object',
+  properties: {
+    moved: { type: 'boolean', description: `true if ${env.main} now points at the new commit` },
+    reason: { type: 'string', description: 'if not moved, why' },
+  },
+  required: ['moved', 'reason'],
+}
+const fin = await twice(() => agent(
+  `You are Ishikari's finisher ant. Do these steps in order.
+${where}
+1. ${merged.length ? `Move ${env.main} forward to ${scratch}, only as a fast-forward:
+   - Find where ${env.main} is checked out: \`git -C ${env.repo} worktree list --porcelain\`.
+   - If it is checked out in some worktree, run \`git -C <that worktree> merge --ff-only ${scratch}\` there.
+   - If it is checked out nowhere, run \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${scratch}\`,
+     and only if that succeeds, \`git -C ${env.repo} branch -f ${env.main} ${scratch}\`.
+   - If git refuses (main moved on, or local edits are in the way), stop moving: set
+     moved to false and say why. Never reset, stash or discard anything.` : `Nothing was merged: leave ${env.main} alone (moved: false, reason: "nothing merged").`}
+2. Only if step 1 moved ${env.main}, or nothing was merged: remove these worktrees and
+   branches if they exist, with \`git -C ${env.repo} worktree remove --force <worktree>\`
+   and \`git -C ${env.repo} branch -D <branch>\`. Each worktree is under
+   ${env.state}/worktrees, named after its branch with "/" turned into "__".
+${remove.map(b => `   - ${b}`).join('\n')}
+3. If step 1 moved ${env.main}, or nothing was merged, run:
+${write(rowsIf(true))}
+   Otherwise run:
+${write(rowsIf(false))}`,
+  { label: 'finisher-ant', phase: 'Main', effort: EFFORT.finisher, schema: FINISH },
+))
+
+const mainMoved = Boolean(fin && fin.moved)
+if (merged.length && !mainMoved) log(`main not moved: ${fin ? fin.reason : 'the finisher ant died twice'}`)
+return {
+  stage: 'finish',
+  mainMoved,
+  reason: fin ? fin.reason : 'the finisher ant died twice',
+  sha,
+  merged: mainMoved ? merged.map(t => t.id) : [],
+  notMoved: mainMoved ? [] : merged.map(t => ({ id: t.id, branch: t.branch, after: t.after || [] })),
+  bugs,
+  waiting,
+  cleanup,
+}

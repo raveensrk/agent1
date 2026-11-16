@@ -7,125 +7,147 @@ agents ("ants") work in parallel to complete a task.
 
 Take any task from the user and finish it with many ants working in
 parallel. The user is asked only at fixed gates: task review, requirement
-approval, final review and escalation. Everything between runs on its own.
+and plan approval, final review, and escalations. Everything between runs on
+its own.
 
-Ishikari is a higher-order workflow: it can take other workflows as
-arguments and run them inside itself. A workflow given this way becomes an
-worker ant's job: the worker runs it as its plan.
+Ishikari is a higher-order workflow: a plan can name another saved workflow
+as its job. The build script runs that workflow in place of a worker ant.
 
 ## Flow
 
-1. **Task in.** The workflow receives a task. It can be anything.
+01. **Task in.** The user gives a task. It can be anything.
 
-2. **Task Review Ant** reviews and critiques the task, then asks
-   the user for feedback with the `/ask-simple` skill. It also reads the
-   critiques board: each critique that matters for this task becomes one
-   question for the user. Once the user answers, the add requirement ant
-   removes that critique from the board, so no question is asked twice.
+02. **Task Review Ant** reviews and critiques the task and finds the repo's
+    test command. It also reads the critiques board: each critique that
+    matters for this task becomes one question. The main session asks the
+    user every question with the `/ask-simple` skill. If there are none, the
+    flow goes straight on.
 
-3. **Add Requirement Ant** runs once the task is approved. It
-   writes a requirement with the `/add-requirement` skill, asks the user for
-   feedback, and commits the requirement after approval.
+03. **Add Requirement Ant** drafts a requirement with the `/add-requirement`
+    skill and writes one plan per worker ant. It shows the requirement can be
+    built from the repo's code and docs, and only writes a throwaway spike,
+    outside the repo, when that is not enough. The user approves the
+    requirement and the plans. The main session then commits the requirement
+    and removes the critiques the user answered.
 
-4. **Plan.** The add requirement ant writes a plan for each worker ant in
-   a temporary area. Workers cannot ask questions, so the plan must be
-   complete and correct. A plan that edits files another plan creates lists
-   that plan in `after`. It starts as soon as that plan is built, on top of
-   its branch, while that plan is still being inspected. If that plan finally
-   fails, the later one is marked blocked.
+04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks
+    are split so no two edit the same file, and each task has its own test
+    file. Only a task that must edit another task's file lists that task in
+    `after`: it starts as soon as that task is built, on top of its branch.
+    The plan script rejects unknown ids and loops in `after` before anything
+    is built.
 
-5. **Worker Ant** builds its plan in its own git worktree, in parallel
-   with the other workers. It decides on its own and goes as far as it can.
-   When done it posts its status to the bulletin board. A worker that gets
-   stuck posts a bug to the bug bounty board, and the detective plans the
-   rest.
+05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a
+    time. It decides on its own, goes as far as it can, and commits all its
+    work. A worker that gets stuck reports why, and that becomes a bug.
 
-6. **Anti-monitor ant** starts with the workflow and watches the bulletin
-   board. For each completed task it spawns an inspector.
+06. **Anti-monitor.** The build script itself does this job. It starts every
+    ant, so it knows the moment a worker finishes and starts that task's
+    inspector at once.
 
-7. **Inspector ant** inspects and reviews the completed task.
+07. **Inspector Ant** checks the task's own work against its plan and runs
+    the tests in the task's worktree. A task built on others is inspected
+    only after those tasks are final; if one of them changed, their final
+    version is merged in first, and if one failed, this task is blocked.
+    Real bugs go to the fix loop; style points go to the final review as
+    notes.
 
-   - No bugs: marks the task complete on the bulletin board. It then waits
-     for the user's final review.
-   - Bugs: posts them to the bug bounty board.
+08. **Detective Ant** takes the open bugs, finds the cause and writes a fix
+    plan, but never writes code. A worker ant builds the fix, and the
+    inspector re-checks each open bug by its id. Each round sees every
+    earlier round's cause, plan and outcome, so the detective never repeats a
+    failed idea. A bug still open after 3 tries escalates the task to the
+    user. An ant that crashes is retried once and never counts as a bug.
 
-8. **Detective ant** is spawned while the bug bounty board is non-zero. It
-   debugs and finds the cause, but never writes code. It writes a fix plan
-   and a worker ant builds the fix. When the worker has built it, the build
-   script sends the branch back to the same task's inspector, and the bounty
-   status is updated. After 3 failed tries on a bug it escalates to the user.
-   Each new round sees every earlier round's cause, fix plan and outcome, so
-   the detective never repeats an idea that failed.
+09. **Together test.** When every task is done, a merger ant merges all
+    passing tasks in a scratch copy and runs the tests once. A task that
+    clashes takes in the tasks it clashes with and goes back through the fix
+    loop, and the test runs once more. The user then does the final review.
 
-9. **Merger ant** runs after the user approves a task on the bulletin
-   board. It merges the worker's branch into main and sets the status to
-   `done`. If the merge breaks main, it posts a bug to the bug bounty
-   board, and the detective ant handles it like any other bug. One merger
-   ant merges every approved task in order, then removes each merged task's
-   worktree and branch.
+10. **Merger Ant** runs after the final review. It merges the approved
+    tasks in a scratch copy, in dependency order, and tests once. When the
+    approved tasks are exactly the ones tested together, it reuses that
+    result. It refuses a task whose base the user did not approve. A failed
+    merge goes back to the next build as a bug. Main moves forward only as a
+    fast-forward, which git refuses if it would overwrite local edits.
 
 ## Upkeep ants
 
-- **Janitor ant** finds mess in the codebase after each task is done. It
-  writes a cleanup plan, which goes into the next build run for a worker ant.
-- **Librarian ant** updates the docs after the merge.
-- **Philosopher ant** questions and critiques all the merged work together,
-  once per run. It only comments, in
-  [`boards/critiques.md`](boards/critiques.md), and never blocks. On the
-  next task, the task review ant turns the critiques that matter into
-  questions for the user.
+They run once per finish, on the merged result, before main moves.
+
+- **Librarian ant** updates the docs and commits them with the merge.
+- **Janitor ant** finds mess left by the merged tasks and writes a cleanup
+  plan. The next plan stage offers it to the user as a task.
+- **Philosopher ant** questions all the merged work together and keeps its
+  5 best critiques. It only comments, in the critiques board, and never
+  blocks. On the next task, the task review ant turns the ones that matter
+  into questions.
 
 ## Rules
 
-- All ants work in parallel without blocking each other.
-- Only the task review ant and the add requirement ant ask the user
-  questions, plus the detective on escalation. Workers never ask.
-- The boards are plain files every ant can read and write:
-  [`boards/bulletin.md`](boards/bulletin.md),
-  [`boards/bounty.md`](boards/bounty.md) and
-  [`boards/critiques.md`](boards/critiques.md).
-- Only worker ants write code or build. Every other ant reads, plans,
-  reviews or posts to a board.
-- At most 5 worker ants run at the same time, fix workers included.
+- Ants work in parallel wherever nothing forces an order. Fix rounds, tasks
+  in `after` and merges run in order.
+- Only the main session asks the user questions. Ants report questions and
+  escalations in their results.
+- Only worker ants write code. Every other ant reads, plans, reviews,
+  merges or posts to a board.
+- At most 5 worker ants run at the same time, fix workers included. Upkeep
+  ants and the ants of a saved workflow do not count.
 - A worker ant never resets an existing branch: a fix round reuses the
   task's worktree and branch, so earlier work is never lost.
-  Upkeep ants do not count toward this limit.
-- Only the workflow script writes the boards. It keeps their rows while a
-  stage runs and writes them once when the stage ends, so no task ever waits
-  on a board and no update is lost.
-- One workflow script, kept next to this file, starts and connects all
-  the ants.
+- Each run has its own id, and every branch is `ishikari/<run>/<task>`, so
+  a new task never builds on an old task's branch.
+- Ishikari keeps everything outside the repo, in its state folder
+  `~/.ishikari/<repo>-<hash>/`: the boards, the plans and the worktrees.
+  None of it is ever committed, and the repo's main checkout is touched
+  only by the final fast-forward.
+- Only Ishikari's board tool, [`tools/ishikari.py`](tools/ishikari.py),
+  writes the boards. The scripts keep their rows while a stage runs and
+  hand them to the tool once when the stage ends. The files in
+  [`boards/`](boards/) are the templates it starts from.
+- Each ant thinks only as hard as its job needs: low for the board clerk,
+  finisher and upkeep ants; medium for the review, workers, inspectors and
+  merger; high for the add requirement ant and the detective.
 
 ## Running Ishikari
 
 A running workflow cannot stop to ask the user, so Ishikari is three
-workflows. The user answers between them, at the same points the flow above
-asks.
+workflows. The main session answers between them, at the gates above.
 
-| Workflow                                          | Stages            | Ends with                   |
-| ------------------------------------------------- | ----------------- | --------------------------- |
-| [`ishikari-plan`](workflows/ishikari-plan.js)     | Plan              | review, requirement, plans  |
-| [`ishikari-build`](workflows/ishikari-build.js)   | Build, Check, Fix | tasks for final review      |
-| [`ishikari-finish`](workflows/ishikari-finish.js) | Finish, upkeep    | merges, new bugs, critiques |
+| Workflow          | Stages                      | Ends with            |
+| ----------------- | --------------------------- | -------------------- |
+| `ishikari-plan`   | review, plans               | plans to approve     |
+| `ishikari-build`  | build, check, fix, together | tasks to review      |
+| `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 
-1. Run `ishikari-plan` with the task. If the review has questions, ask them
-   with `/ask-simple` and run it again with the answers and that review; the
-   second run skips the review and goes straight to the plans. Then the user
-   approves the requirement and the plans, and the main session commits the
-   requirement.
-2. Run `ishikari-build` with the approved plans. The user does the final
-   review and handles any escalated tasks.
-3. Run `ishikari-finish` with the approved tasks. Bugs from a broken merge go
-   into the next `ishikari-build` run.
+The scripts: [`ishikari-plan.js`](workflows/ishikari-plan.js),
+[`ishikari-build.js`](workflows/ishikari-build.js) and
+[`ishikari-finish.js`](workflows/ishikari-finish.js).
 
-The anti-monitor ant is the build script itself: when a worker ant finishes,
-the script starts that task's inspector ant at once. The script also keeps
-the boards and the 5-worker limit.
+1. Run `python3 tools/ishikari.py setup <repo>`. It makes the state folder,
+   copies the board templates and prints the run's `env`: repo, state
+   folder, run id, main branch and tool path. Every workflow gets this
+   `env`.
+2. Run `ishikari-plan` with `env` and the task. If it returns questions, ask
+   them with `/ask-simple` and run it again with that review and one answer
+   per question; a skipped answer means "use the recommended one". Show the
+   requirement and plans for approval. Then commit the requirement and run
+   `ishikari.py boards remove <state> critiques` with the answered critique
+   ids.
+3. Run `ishikari-build` with `env` (plus the plan's `testCommand`) and the
+   approved plans. Do the final review with each task's notes, nits and fix
+   history. Escalated or rejected tasks come back in a later build as
+   `bugs`, with the user's guidance.
+4. Run `ishikari-finish` with `env`, the approved tasks, the build's
+   `together` result and any tasks to drop. Failed merges come back in the
+   next build as `bugs`; the janitor's cleanup plan goes to the next plan
+   stage.
 
 ## Diagram
 
 Stages run left to right: plan, build, check, fix, finish. Each board
-sits in the stage that first writes to it.
+sits in the stage that first writes to it; all boards live in the state
+folder, outside the repo.
 D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA
 layout by [`render.sh`](render.sh) to a light and a dark SVG.
 
@@ -182,7 +204,7 @@ plan: 1. Plan {
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta -> aara: approved {class: ok}
-  aara -> plans: commit requirement,\nwrite plans {class: flow}
+  aara -> plans: draft requirement,\nwrite plans {class: flow}
 }
 
 build: 2. Build {
@@ -191,7 +213,7 @@ build: 2. Build {
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
   aw: Worker Ants\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
   bulletin: Bulletin board {shape: cylinder; class: node; style.stroke: ${build-line}}
-  aw -> bulletin: post "built" {class: flow}
+  aw -> bulletin: built {class: flow}
 }
 
 check: 3. Check {
@@ -201,7 +223,9 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
+  together: Together test\nmerger ant, scratch copy {class: node; style.stroke: ${check-line}}
   monitor -> inspector: spawn per built\ntask or fix {class: flow}
+  inspector -> together: all tasks\nchecked {class: ok}
 }
 
 fix: 4. Fix {
@@ -218,16 +242,17 @@ finish: 5. Finish {
   left: 2700
   top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
-  merger: Merger ant\nmerges all in order,\ncleans up {class: node; style.stroke: ${finish-line}}
+  merger: Merger ant\nmerges in a scratch copy,\ntests once {class: node; style.stroke: ${finish-line}}
+  finisher: Finisher ant\nmoves main forward,\ncleans up {class: node; style.stroke: ${finish-line}}
 }
 
-always_on: Upkeep ants (after merge) {
+always_on: Upkeep ants (before main moves) {
   left: 1700
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
-  librarian: Librarian ant\nupdates docs {class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\ncritiques all merged work {class: node; style.stroke: ${always-line}}
+  librarian: Librarian ant\nupdates docs in the merge {class: node; style.stroke: ${always-line}}
+  philosopher: Philosopher ant\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
   philosopher -> critiques: critique {class: flow; style.stroke-dash: 3}
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
 }
@@ -235,19 +260,21 @@ always_on: Upkeep ants (after merge) {
 plan.arta <-> user: critique, /ask-simple {class: flow}
 plan.aara <-> user: approve requirement {class: ok}
 plan.plans -> build.aw: start in parallel {class: flow}
-check.monitor -> build.bulletin: watch, writes\nboards once per stage {class: flow; style.stroke-dash: 3}
-check.inspector -> build.bulletin: no bugs {class: ok}
+check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
+check.together -> build.bulletin: work together {class: ok}
+check.together -> fix.bounty: clash {class: bug}
 check.inspector -> fix.bounty: bugs found {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
-fix.detective -> user: escalate after 3 tries {class: bug}
+fix.detective -> user: escalate after\n3 tries on a bug {class: bug}
 build.bulletin -> user: final review {class: ok}
 build.aw -> fix.bounty: stuck {class: bug}
 user -> finish.merger: approved {class: ok}
-finish.merger -> build.bulletin: merge, set "done" {class: ok}
-finish.merger -> fix.bounty: merge broke main {class: bug}
+finish.merger -> fix.bounty: merge failed {class: bug}
 finish.merger -> always_on: then {class: flow}
-always_on.janitor -> plan.plans: cleanup plan for\nnext build {class: flow; style.stroke-dash: 3}
+always_on -> finish.finisher: then {class: flow}
+finish.finisher -> build.bulletin: main moved,\nset "done" {class: ok}
+always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
   left: 2700

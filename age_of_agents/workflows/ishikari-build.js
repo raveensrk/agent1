@@ -1,43 +1,66 @@
 export const meta = {
   name: 'ishikari-build',
-  description: 'Ishikari stage 2: worker ants build plans, inspector ants check, detective ants plan fixes',
-  whenToUse: 'After the user approves the plans from ishikari-plan. Ends with tasks awaiting the user\'s final review.',
+  description: 'Ishikari stage 2: worker ants build the plans, inspector ants check them, detective ants plan fixes, then all passing tasks are tested together',
+  whenToUse: 'After the user approves the plans from ishikari-plan. Ends with tasks for the user\'s final review.',
   phases: [
-    { title: 'Build', detail: 'worker ants, max 5 at once, one worktree each' },
-    { title: 'Check', detail: 'inspector ant per built task' },
-    { title: 'Fix', detail: 'detective ant plans, worker ant builds, up to 3 tries' },
+    { title: 'Build', detail: 'worker ants, at most 5 at once, one worktree each' },
+    { title: 'Check', detail: 'one inspector ant per built task' },
+    { title: 'Fix', detail: 'detective plans, worker builds, inspector re-checks; 3 tries per bug' },
+    { title: 'Together', detail: 'merger ant merges all passing tasks in a scratch copy and tests once' },
     { title: 'Boards', detail: 'one board write at the end' },
   ],
 }
 
 // args: {
-//   repo: string,                                   absolute repo path
-//   plans: [{id, title, file, workflow?, after?}],  from ishikari-plan;
-//                                                   after: ids it builds on
-//   bugs?: [{task, branch, bug}],                   open bounties from ishikari-finish
+//   env: { repo, state, run, main, tool, testCommand? },  from `ishikari.py setup`, plus
+//                                                          testCommand from ishikari-plan
+//   plans: [{ id, title, after?, workflow? }],             approved plans from ishikari-plan
+//   bugs?: [{ task, branch, bug, kind?, after?, guidance?, history? }]
+//          open work from earlier runs: escalations, rejected tasks, failed merges.
+//          kind 'merge' means the branch must take in the current main first.
 // }
-// Returns { tasks: [{id, branch, status, bugs, tries}] }.
-// status: 'awaiting review' or 'escalated'.
+// Returns { stage: 'build', tasks, together } or { stage: 'error', reason }.
+// Task status: 'awaiting review', 'escalated', 'blocked' or 'error'.
 //
-// Speed: tasks never wait on the boards. The script keeps board rows in
-// memory and one low-effort ant writes them all when the stage ends.
+// Nothing here touches the repo's main checkout: every ant works in a
+// worktree under the state folder, and the boards live there too.
 
 const MAX_WORKERS = 5
-const MAX_TRIES = 3
+const MAX_TRIES = 3   // tries per bug before it is escalated
+const MAX_ROUNDS = 5  // fix rounds per task, so new bugs cannot loop forever
+const EFFORT = { worker: 'medium', inspector: 'medium', detective: 'high', merger: 'medium', clerk: 'low' }
+
+const { env = {}, plans = [], bugs: bugsIn = [] } = args
+
+const bad = []
+if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
+if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
+if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
+if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id like 20261117-0120')
+if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const BUILT = {
   type: 'object',
   properties: {
-    branch: { type: 'string' },
     status: { type: 'string', enum: ['built', 'stuck'] },
-    notes: { type: 'string' },
+    notes: { type: 'string', description: 'what you did and any choice you made on your own; for stuck, what blocked you' },
   },
-  required: ['branch', 'status', 'notes'],
+  required: ['status', 'notes'],
 }
 
 const INSPECTION = {
   type: 'object',
-  properties: { bugs: { type: 'array', items: { type: 'string' } } },
+  properties: {
+    fixed: {
+      type: 'array',
+      description: 'for a re-check: one entry per open bug id you were given',
+      items: { type: 'object', properties: { id: { type: 'string' }, fixed: { type: 'boolean' } }, required: ['id', 'fixed'] },
+    },
+    bugs: { type: 'array', items: { type: 'string' }, description: 'real bugs in this task\'s own work, each with how to see it' },
+    nits: { type: 'array', items: { type: 'string' }, description: 'style points and small doubts; never fixed in the loop' },
+    baseProblems: { type: 'array', items: { type: 'string' }, description: 'problems in code that came from the branches this task is built on' },
+  },
   required: ['bugs'],
 }
 
@@ -50,161 +73,426 @@ const FIX_PLAN = {
   required: ['cause', 'plan'],
 }
 
-const { repo, plans = [], bugs = [] } = args
+const COMBINE = {
+  type: 'object',
+  properties: {
+    sha: { type: 'string', description: 'final commit of the scratch branch' },
+    results: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          outcome: { type: 'string', enum: ['merged', 'conflict', 'tests failed', 'blocked'] },
+          detail: { type: 'string' },
+          with: { type: 'array', items: { type: 'string' }, description: 'ids of the tasks it clashes with' },
+        },
+        required: ['id', 'outcome', 'detail'],
+      },
+    },
+  },
+  required: ['sha', 'results'],
+}
 
-// Board rows, keyed by their first cell. Only the script writes them.
+// ---- paths: computed here, never taken from what an ant says ----
+const branchOf = id => `ishikari/${env.run}/${id}`
+const treeOf = branch => `${env.state}/worktrees/${branch.replace(/\//g, '__')}`
+const planOf = branch => {
+  const m = branch.match(/^ishikari\/([^/]+)\/([^/]+)$/)
+  return m ? `${env.state}/plans/${m[1]}/${m[2]}.md` : '(no plan file)'
+}
+const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
+Use absolute paths only, and run git as \`git -C <path> ...\`. Never work in the
+repo's main checkout, and never touch any other repo.`
+const tests = env.testCommand ? `Run the tests with \`${env.testCommand}\`` : 'Run the repo\'s tests'
+
+// ---- board rows: kept here, written once at the end by the board tool ----
 const bulletin = {}
 const bounty = {}
-const setRow = (board, key, cells) => { board[key] = [key, ...cells] }
+const row = (board, cells) => { board[cells[0]] = cells }
 
-// Worker limit: at most MAX_WORKERS worker ants at once, fix workers included.
+// ---- worker limit: a finishing worker hands its slot straight to the next ----
 let running = 0
 const waiting = []
 async function workerSlot(fn) {
-  if (running >= MAX_WORKERS) await new Promise(r => waiting.push(r))
-  running++
+  if (running < MAX_WORKERS) running++
+  else await new Promise(r => waiting.push(r))
   try { return await fn() } finally {
-    running--
     const next = waiting.shift()
-    if (next) next()
+    if (next) next(); else running--
   }
 }
 
-function worker(id, prompt, phase, base = 'main') {
-  return workerSlot(() => agent(
-    `You are a worker ant of the Ishikari workflow. You cannot ask questions:
-decide on your own and go as far as you can.
-Repo: ${repo}. Work in your own git worktree of that repo, never in its main
-checkout. Its path is ${repo}/.ishikari/worktrees/${id} on branch ishikari/${id}.
-If the worktree exists, reuse it. Else, if the branch exists, run
-\`git -C ${repo} worktree add ${repo}/.ishikari/worktrees/${id} ishikari/${id}\`.
-Else run \`git -C ${repo} worktree add -b ishikari/${id} ${repo}/.ishikari/worktrees/${id} ${base}\`.
-Never reset or recreate an existing branch: it may hold earlier work.
-${prompt}
-Commit your work on branch ishikari/${id}. Leave the worktree in place.
-Return status "stuck" if you cannot finish, with what blocked you in notes.`,
-    { label: `worker-ant:${id}`, phase, schema: BUILT },
-  ))
+// A dead ant (null) is retried once; a second death is an error, not a bug.
+async function twice(fn) {
+  const first = await fn()
+  return first != null ? first : fn()
 }
 
-function inspect(id, branch, base = 'main') {
+function work(task, job, phase, step) {
+  const start = task.bases[0] || env.main
+  const more = task.bases.slice(1)
+  const run = () => agent(
+    `You are a worker ant of the Ishikari workflow. You cannot ask questions:
+decide on your own and go as far as you can.
+${where}
+Your worktree is ${task.tree} on branch ${task.branch}.
+If that worktree exists, use it. Else, if the branch exists, run
+\`git -C ${env.repo} worktree add ${task.tree} ${task.branch}\`. Else run
+\`git -C ${env.repo} worktree add -b ${task.branch} ${task.tree} ${start}\`${more.length ? `, then merge ${more.join(' and ')} into it` : ''}.
+Never reset, rebase or recreate an existing branch: it holds earlier work.
+The task's plan is ${task.plan}.
+${job}
+${tests} inside your worktree before you finish. Commit all your work on
+${task.branch}, even unfinished work. Return status "stuck" if you cannot
+finish, with what blocked you in notes.`,
+    { label: `worker-ant:${task.id}:${step}`, phase, effort: EFFORT.worker, schema: BUILT },
+  )
+  return workerSlot(run)
+}
+
+// A plan can name a saved workflow as its job. It runs through the runtime's
+// own workflow() hook, inside a worker slot; its own agents are not counted.
+function runChild(task) {
+  return workerSlot(async () => {
+    try {
+      const out = await workflow(task.workflow, {
+        repo: env.repo, main: env.main, worktree: task.tree, branch: task.branch,
+        base: task.bases[0] || env.main, plan: task.plan, testCommand: env.testCommand,
+      })
+      return { status: 'built', notes: `workflow ${task.workflow} returned: ${JSON.stringify(out).slice(0, 500)}` }
+    } catch (e) {
+      return { status: 'stuck', notes: `workflow ${task.workflow} failed: ${e && e.message ? e.message : e}` }
+    }
+  })
+}
+
+function inspect(task, open, step) {
+  const own = task.bases.length
+    ? `It is built on ${task.bases.join(', ')}. Code from those branches belongs to other tasks:
+list its problems in baseProblems, never in bugs. This task's own commits are
+\`git -C ${env.repo} log --no-merges ${task.branch} --not ${[env.main, ...task.bases].join(' ')}\`.`
+    : `This task's own changes are \`git -C ${env.repo} diff ${env.main}...${task.branch}\`.`
+  const ask = open
+    ? `Re-check these open bugs. For each id, say in "fixed" whether it is fixed now:
+${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}
+Then list in bugs only NEW real bugs: ones the fix caused, or that break the plan.`
+    : 'List real bugs: behaviour that breaks the plan, or a failing test.'
   return agent(
-    `You are the inspector ant of the Ishikari workflow. Repo: ${repo}.
-Review branch ${branch} against ${base} (only this task's own changes) and its
-plan ${repo}/.ishikari/plans/${id}.md.
-Run its tests. List real bugs only, each with how to see it. Change no files.`,
-    { label: `inspector-ant:${id}`, phase: 'Check', schema: INSPECTION },
+    `You are the inspector ant of the Ishikari workflow.
+${where}
+Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
+${own}
+${tests} inside that worktree. Do not copy the repo anywhere else, and do not
+edit tracked files.
+${ask}
+Put style points and small doubts in nits, not in bugs.`,
+    { label: `inspector-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.inspector, schema: INSPECTION },
   )
 }
 
-// history: earlier rounds on this task, so the detective never repeats a
-// failed idea. Each: {round, bugs, cause, plan, outcome}.
-function detective(id, branch, bugList, history) {
+function detective(task, open, history, round) {
   const past = history.map(h => `Round ${h.round}:
   bugs: ${h.bugs.join('; ')}
   cause found: ${h.cause}
   fix plan: ${h.plan}
-  outcome: ${h.outcome}`).join('\n')
+  outcome: ${h.outcome || 'unknown'}`).join('\n')
   return agent(
-    `You are the detective ant of the Ishikari workflow. Repo: ${repo}.
-Branch ${branch} has these bugs:\n- ${bugList.join('\n- ')}
-${past ? `Earlier fix rounds on this task failed:\n${past}\nDo not repeat a cause or plan that already failed. Say why it failed and try a different approach.\n` : ''}Debug and find the cause. You never write code: write a complete fix plan
-for a worker ant instead. Change no files.`,
-    { label: `detective-ant:${id}`, phase: 'Fix', schema: FIX_PLAN },
+    `You are the detective ant of the Ishikari workflow.
+${where}
+Task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
+${task.bases.length ? `It is built on ${task.bases.join(', ')}.\n` : ''}${task.notes.length ? `The worker's notes: ${task.notes.join(' / ')}\n` : ''}These bugs are open:
+${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}
+${task.guidance ? `The user's guidance: ${task.guidance}\n` : ''}${past ? `Earlier fix rounds failed:\n${past}\nDo not repeat a cause or plan that already failed. Say why it failed and try a different approach.\n` : ''}Debug and find the cause. You never write code: write a complete fix plan for
+a worker ant instead. Change no files.`,
+    { label: `detective-ant:${task.id}:fix${round}`, phase: 'Fix', effort: EFFORT.detective, schema: FIX_PLAN },
   )
 }
 
-async function fixLoop(id, branch, found, base = 'main') {
-  let open = found
-  const history = []
-  for (let tries = 1; tries <= MAX_TRIES; tries++) {
-    open.forEach(b => setRow(bounty, b, [id, 'fixing', String(tries)]))
-    const fix = await detective(id, branch, open, history)
-    if (!fix) { history.push({ round: tries, bugs: open, cause: '-', plan: '-', outcome: 'detective ant died' }); continue }
-    const round = { round: tries, bugs: open, cause: fix.cause, plan: fix.plan }
-    history.push(round)
-    const built = await worker(id, `Build this fix plan:\n${fix.plan}`, 'Fix')
-    if (!built || built.status === 'stuck') { round.outcome = `worker stuck: ${built ? built.notes : 'worker ant died'}`; continue }
-    const check = await inspect(id, branch, base)
-    if (!check) { round.outcome = 'inspector ant died'; continue }
-    round.outcome = check.bugs.length ? `still broken: ${check.bugs.join('; ')}` : 'fixed'
-    found.filter(b => !check.bugs.includes(b)).forEach(b => setRow(bounty, b, [id, 'fixed', String(tries)]))
-    open = check.bugs
-    if (!open.length) return { bugs: [], tries }
+// Fix loop with each bug tracked by id: 3 tries per bug, at most MAX_ROUNDS
+// rounds. A round = detective plans, worker builds, inspector re-checks.
+// Returns an error text if an ant died twice, else null.
+async function fixLoop(task, texts) {
+  texts.forEach(t => task.addBug(t))
+  for (let round = 1; round <= MAX_ROUNDS; round++) {
+    const open = task.bugs.filter(b => b.open)
+    if (!open.length || open.some(b => b.tries >= MAX_TRIES)) break
+    open.forEach(b => { b.tries++ })
+    log(`${task.id}: fix round ${round} for ${open.map(b => b.id).join(', ')}`)
+    const fix = await twice(() => detective(task, open, task.history, round))
+    if (!fix) return 'the detective ant died twice'
+    const entry = { round, bugs: open.map(b => `${b.id}: ${b.text}`), cause: fix.cause, plan: fix.plan }
+    task.history.push(entry)
+    const first = task.firstStep ? `${task.firstStep}\n` : ''
+    task.firstStep = ''
+    const built = await twice(() => work(task, `${first}Build this fix plan for ${open.map(b => b.id).join(', ')}:\n${fix.plan}`, 'Fix', `fix${round}`))
+    if (!built) return 'the worker ant died twice'
+    task.touched()
+    task.notes.push(built.notes)
+    if (built.status === 'stuck') { entry.outcome = `worker stuck: ${built.notes}`; continue }
+    const check = await twice(() => inspect(task, open, `recheck${round}`))
+    if (!check) return 'the inspector ant died twice'
+    const done = new Set((check.fixed || []).filter(f => f.fixed).map(f => f.id))
+    open.forEach(b => { if (done.has(b.id)) b.open = false })
+    task.nits.push(...(check.nits || []))
+    task.baseProblems.push(...(check.baseProblems || []))
+    check.bugs.forEach(t => task.addBug(t))
+    const left = task.bugs.filter(b => b.open)
+    entry.outcome = left.length ? `still open: ${left.map(b => `${b.id}: ${b.text}`).join('; ')}` : 'fixed'
   }
-  open.forEach(b => setRow(bounty, b, [id, 'escalated', String(MAX_TRIES)]))
-  return { bugs: open, tries: MAX_TRIES }
+  return null
 }
 
-function finish(id, branch, result) {
-  const status = result.bugs.length ? 'escalated' : 'awaiting review'
-  setRow(bulletin, id, [status, result.bugs.length ? 'detective ant' : 'inspector ant'])
-  return { id, branch, status, bugs: result.bugs, tries: result.tries }
+function makeTask(id, branch, extra) {
+  const task = {
+    id, branch, tree: treeOf(branch), plan: planOf(branch),
+    after: [], bases: [], workflow: null, firstStep: '', guidance: '',
+    bugs: [], nits: [], baseProblems: [], notes: [], history: [],
+    isBuilt: false, changed: false, result: null,
+    ...extra,
+  }
+  let n = 0
+  task.addBug = text => { n++; task.bugs.push({ id: `${id}#${n}`, text, tries: 0, open: true }) }
+  task.touched = () => { if (task.isBuilt) task.changed = true }
+  task.builtP = new Promise(r => { task.markBuilt = ok => { task.isBuilt = true; r(ok) } })
+  task.doneP = new Promise(r => { task.markDone = r })
+  return task
 }
 
-// A plan in another plan's "after" list starts as soon as that plan is
-// built, on top of its branch, so building and inspecting overlap. If the
-// earlier plan finally fails, the later one is marked blocked.
-const builtById = {}, doneById = {}
-async function runTask(p) {
-  const id = p.id
-  const built0 = await Promise.all((p.after || []).map(d => builtById[d] || Promise.resolve(null)))
-  const notBuilt = (p.after || []).find((d, k) => !built0[k] || !built0[k].ok)
-  if (notBuilt) {
-    p.built({ ok: false })
-    setRow(bulletin, id, ['escalated', 'build script'])
-    return { id, branch: `ishikari/${id}`, status: 'escalated', bugs: [`blocked: ${notBuilt} was not built`], tries: 0 }
+function end(task, status, why) {
+  const open = task.bugs.filter(b => b.open)
+  task.bugs.forEach(b => row(bounty, [b.id, `${env.run}/${task.id}`, b.text,
+    !b.open ? 'fixed' : status === 'escalated' ? 'escalated' : 'open', String(b.tries)]))
+  const ant = { 'awaiting review': 'inspector ant', escalated: 'detective ant', blocked: 'build script', error: 'build script' }[status]
+  row(bulletin, [`${env.run}/${task.id}`, status, ant, '-'])
+  task.result = {
+    id: task.id, branch: task.branch, worktree: task.tree, plan: task.plan, status,
+    after: task.after, bugs: [...why, ...open.map(b => `${b.id}: ${b.text}`)],
+    tries: Math.max(0, ...task.bugs.map(b => b.tries)),
+    nits: task.nits, baseProblems: task.baseProblems, notes: task.notes, history: task.history,
   }
-  const base = built0.length ? built0[built0.length - 1].branch : 'main'
-  const job = p.workflow
-    ? `Run the saved workflow "${p.workflow}" as your job, with the plan in ${p.file}.`
-    : `Build the plan in ${p.file}.`
-  const built = await worker(id, job, 'Build', base)
-  const branch = built ? built.branch : `ishikari/${id}`
-  let result
-  if (!built || built.status === 'stuck') {
-    const bug = `stuck: ${built ? built.notes : 'worker ant died'}`
-    setRow(bounty, bug, [id, 'open', '0'])
-    result = await fixLoop(id, branch, [bug], base)
-    p.built({ ok: !result.bugs.length, branch })
-  } else {
-    p.built({ ok: true, branch })
-    setRow(bulletin, id, ['inspecting', 'inspector ant'])
-    const check = await inspect(id, branch, base)
-    const found = check ? check.bugs : ['inspector ant died']
-    found.forEach(b => setRow(bounty, b, [id, 'open', '0']))
-    result = found.length ? await fixLoop(id, branch, found, base) : { bugs: [], tries: 0 }
-  }
-  // A later plan passes only if every plan it builds on passed too.
-  const deps = await Promise.all((p.after || []).map(d => doneById[d]))
-  const failedDep = deps.find(d => !d || d.status !== 'awaiting review')
-  if (failedDep && !result.bugs.length) result = { bugs: [`blocked: ${failedDep ? failedDep.id : 'a plan it builds on'} did not pass`], tries: result.tries }
-  return finish(id, branch, result)
+  if (status !== 'awaiting review') log(`${task.id}: ${status}${why.length ? ` (${why.join('; ')})` : ''}`)
+  task.markBuilt(false)  // no-op if already marked
+  task.markDone(task.result)
+  return task.result
 }
 
-plans.forEach(p => {
-  builtById[p.id] = new Promise(r => { p.built = r })
-  doneById[p.id] = new Promise(r => { p.resolve = r })
-})
-const tasks = await parallel([
-  ...plans.map(p => async () => { const r = await runTask(p); p.resolve(r); return r }),
-  // Open bounties from a broken merge re-enter the fix loop directly.
-  ...bugs.map(b => async () => finish(b.task, b.branch, await fixLoop(b.task, b.branch, [b.bug]))),
+// ---- tasks from the approved plans ----
+const byId = {}
+const tasks = []
+const problems = {}
+for (const p of plans) {
+  const id = String(p.id || '')
+  const task = makeTask(id, branchOf(id), {
+    after: Array.isArray(p.after) ? p.after.map(String) : [],
+    workflow: p.workflow || null,
+  })
+  task.bases = task.after.map(branchOf)
+  if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(id)) problems[id] = `bad plan id "${id}"`
+  else if (byId[id]) problems[id] = `two plans have the id "${id}"`
+  tasks.push(task)
+  if (!byId[id]) byId[id] = task
+}
+for (const t of tasks) {
+  const unknown = t.after.filter(d => !byId[d] || d === t.id)
+  if (unknown.length && !problems[t.id]) problems[t.id] = `after names unknown plans: ${unknown.join(', ')}`
+}
+// A loop of "after" lists would wait forever: find every task in one.
+const seen = {}
+function visit(id, path) {
+  if (seen[id] === 'done' || !byId[id]) return
+  if (seen[id] === 'open') {
+    const loop = [...path.slice(path.indexOf(id)), id]
+    loop.forEach(c => { problems[c] = problems[c] || `loop in after: ${loop.join(' -> ')}` })
+    return
+  }
+  seen[id] = 'open'
+  byId[id].after.forEach(d => visit(d, [...path, id]))
+  seen[id] = 'done'
+}
+tasks.forEach(t => visit(t.id, []))
+
+// ---- tasks from open bugs: one fix loop per branch ----
+const bugTasks = {}
+for (const b of bugsIn) {
+  const branch = String(b.branch || '')
+  if (!branch) continue
+  if (!bugTasks[branch]) {
+    const id = String(b.task || branch.split('/').pop())
+    bugTasks[branch] = makeTask(id, branch, {
+      after: Array.isArray(b.after) ? b.after.map(String) : [],
+      history: Array.isArray(b.history) ? b.history : [],
+      texts: [],
+    })
+  }
+  const t = bugTasks[branch]
+  t.texts.push(String(b.bug))
+  if (b.kind === 'merge') t.firstStep = `First merge the current ${env.main} into your branch.`
+  if (b.guidance) t.guidance = [t.guidance, b.guidance].filter(Boolean).join(' / ')
+}
+for (const t of Object.values(bugTasks)) {
+  if (tasks.some(p => p.id === t.id)) problems[t.id] = `"${t.id}" is both a new plan and an open bug`
+}
+
+// ---- one task, start to end ----
+async function runTask(task) {
+  // Start as soon as every base is built, on top of their branches.
+  const built = await Promise.all(task.after.map(d => byId[d].builtP))
+  const notBuilt = task.after.filter((d, k) => !built[k])
+  if (notBuilt.length) return end(task, 'blocked', [`waits on ${notBuilt.join(', ')}, which did not build`])
+
+  const first = await twice(() => task.workflow ? runChild(task) : work(task, 'Build the plan.', 'Build', 'build'))
+  if (!first) return end(task, 'error', ['the worker ant died twice'])
+  task.notes.push(first.notes)
+  let inspected = false
+  if (first.status === 'stuck') {
+    const err = await fixLoop(task, [`stuck: ${first.notes}`])
+    if (err) return end(task, 'error', [err])
+    if (task.bugs.some(b => b.open)) return end(task, 'escalated', [])
+    inspected = true
+  }
+  task.markBuilt(true)
+
+  // Inspect only once every base is final. A base that failed blocks this
+  // task; a base that changed after this task started is merged in first.
+  const finals = await Promise.all(task.after.map(d => byId[d].doneP))
+  const failed = task.after.filter((d, k) => finals[k].status !== 'awaiting review')
+  if (failed.length) return end(task, 'blocked', [`built on ${failed.join(', ')}, which did not pass`])
+  if (task.after.some(d => byId[d].changed)) {
+    const up = await twice(() => work(task, `Merge the latest ${task.bases.join(' and ')} into your branch, keep both sides' intent, and make the tests pass.`, 'Build', 'update'))
+    if (!up) return end(task, 'error', ['the worker ant died twice'])
+    task.touched()
+    task.notes.push(up.notes)
+    inspected = false
+    if (up.status === 'stuck') {
+      const err = await fixLoop(task, [`could not take in the latest ${task.bases.join(', ')}: ${up.notes}`])
+      if (err) return end(task, 'error', [err])
+      inspected = true
+    }
+  }
+  if (!inspected) {
+    const check = await twice(() => inspect(task, null, 'check'))
+    if (!check) return end(task, 'error', ['the inspector ant died twice'])
+    task.nits.push(...(check.nits || []))
+    task.baseProblems.push(...(check.baseProblems || []))
+    if (check.bugs.length) {
+      const err = await fixLoop(task, check.bugs)
+      if (err) return end(task, 'error', [err])
+    }
+  }
+  return end(task, task.bugs.some(b => b.open) ? 'escalated' : 'awaiting review', [])
+}
+
+async function runBugTask(task) {
+  task.markBuilt(true)
+  const err = await fixLoop(task, task.texts)
+  if (err) return end(task, 'error', [err])
+  return end(task, task.bugs.some(b => b.open) ? 'escalated' : 'awaiting review', [])
+}
+
+// Never let one task's error leave others waiting forever.
+async function safely(task, fn) {
+  if (problems[task.id]) return end(task, 'error', [problems[task.id]])
+  try { return await fn(task) } catch (e) {
+    return end(task, 'error', [`error: ${e && e.message ? e.message : e}`])
+  }
+}
+
+phase('Build')
+await parallel([
+  ...tasks.map(t => () => safely(t, runTask)),
+  ...Object.values(bugTasks).map(t => () => safely(t, runBugTask)),
 ])
+const all = [...tasks, ...Object.values(bugTasks)]
 
-// One board write for the whole stage.
-const table = rows => rows.map(r => `| ${r.join(' | ')} |`).join('\n')
-await agent(
-  `Board clerk for Ishikari. Repo: ${repo}. Update these board tables in the
-main checkout. Add or replace rows by their first cell, keep tables aligned,
-change nothing else, and do not commit.
+// ---- together: merge every passing task in a scratch copy, test once ----
+function mergeOrder(list) {
+  const ids = new Set(list.map(t => t.id))
+  const out = []
+  const added = new Set()
+  const add = t => {
+    if (added.has(t.id)) return
+    added.add(t.id)
+    t.after.filter(d => ids.has(d)).forEach(d => add(list.find(x => x.id === d)))
+    out.push(t)
+  }
+  list.forEach(add)
+  return out
+}
 
-boards/bulletin.md (Task | Status | Ant | Time; Time is "-"):
-${table(Object.values(bulletin).map(r => [...r, '-']))}
+function combine(list, round) {
+  const branch = `ishikari/${env.run}/_together`
+  const tree = treeOf(branch)
+  return agent(
+    `You are the merger ant of the Ishikari workflow, doing a trial merge.
+${where}
+Work only in a scratch worktree: ${tree} on branch ${branch}.
+Start fresh: if that worktree or branch exists, remove them
+(\`git -C ${env.repo} worktree remove --force ${tree}\`, \`git -C ${env.repo} branch -D ${branch}\`),
+then run \`git -C ${env.repo} worktree add -b ${branch} ${tree} ${env.main}\`.
+Merge these branches into it with \`git merge --no-edit\`, one at a time, in this order:
+${list.map(t => `- ${t.id}: ${t.branch}`).join('\n')}
+If a merge conflicts, run \`git merge --abort\`, report "conflict" with the files
+and the ids of the tasks it clashes with, and go on to the next one.
+After all merges, ${tests.toLowerCase()} once inside ${tree}. If they fail, find
+the first task whose merge makes them fail: rebuild the branch from ${env.main}
+and test after each merge. Report that task as "tests failed" with the failing
+tests and the tasks merged before it, leave it out, and go on until the tests pass.
+Report every task. Never write or fix code yourself, and never touch ${env.main}.
+Return the final commit of ${branch} as sha.`,
+    { label: `merger-ant:together${round}`, phase: 'Together', effort: EFFORT.merger, schema: COMBINE },
+  )
+}
 
-boards/bounty.md (Bug | Task | Status | Tries):
-${table(Object.values(bounty)) || '(no rows)'}`,
-  { label: 'board-clerk', phase: 'Boards', effort: 'low' },
-)
+let together = null
+for (let round = 1; round <= 2; round++) {
+  const passing = mergeOrder(all.filter(t => t.result && t.result.status === 'awaiting review'))
+  if (passing.length < 2) break
+  phase('Together')
+  const r = await twice(() => combine(passing, round))
+  if (!r) { log('together check skipped: the merger ant died twice'); break }
+  const outcome = Object.fromEntries((r.results || []).map(x => [x.id, x]))
+  const clashes = passing.filter(t => outcome[t.id] && ['conflict', 'tests failed'].includes(outcome[t.id].outcome))
+  if (!clashes.length) {
+    together = { branch: `ishikari/${env.run}/_together`, sha: r.sha, tasks: passing.map(t => t.id) }
+    break
+  }
+  if (round === 2) {
+    clashes.forEach(t => {
+      t.addBug(`does not work with the other tasks: ${outcome[t.id].detail}`)
+      end(t, 'escalated', [])
+    })
+    break
+  }
+  // Round 1 clash: the task takes in the tasks it clashes with, which makes
+  // them its bases, then fixes the clash in the normal fix loop.
+  await parallel(clashes.map(t => () => safely(t, async task => {
+    const before = passing.slice(0, passing.indexOf(task)).map(x => x.id)
+    const named = (outcome[task.id].with || []).filter(d => before.includes(d))
+    const need = named.length ? named : before
+    const merge = need.map(d => all.find(x => x.id === d).branch)
+    need.forEach((d, k) => {
+      if (!task.after.includes(d)) task.after.push(d)
+      if (!task.bases.includes(merge[k])) task.bases.push(merge[k])
+    })
+    task.firstStep = `First merge ${merge.join(' and ')} into your branch, because yours clashes with them.`
+    const err = await fixLoop(task, [`does not work with ${need.join(', ')}: ${outcome[task.id].detail}`])
+    if (err) return end(task, 'error', [err])
+    return end(task, task.bugs.some(b => b.open) ? 'escalated' : 'awaiting review', [])
+  })))
+}
 
-return { tasks: tasks.filter(Boolean) }
+// ---- one board write for the whole stage ----
+const writes = [['bulletin', Object.values(bulletin)], ['bounty', Object.values(bounty)]].filter(([, rows]) => rows.length)
+if (writes.length) {
+  phase('Boards')
+  await agent(
+    `You are Ishikari's board clerk. Run exactly these commands and nothing else:
+${writes.map(([board, rows]) => `python3 ${env.tool} boards write ${env.state} ${board} <<'ISHIKARI_ROWS_END'
+${JSON.stringify(rows)}
+ISHIKARI_ROWS_END`).join('\n')}`,
+    { label: 'board-clerk', phase: 'Boards', effort: EFFORT.clerk },
+  )
+}
+
+return { stage: 'build', tasks: all.map(t => t.result), together }

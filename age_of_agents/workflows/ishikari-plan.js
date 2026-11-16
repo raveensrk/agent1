@@ -3,19 +3,39 @@ export const meta = {
   description: 'Ishikari stage 1: review the task, draft a requirement, write worker plans',
   whenToUse: 'Start of an Ishikari run. The user answers the review and approves the requirement and plans before ishikari-build.',
   phases: [
-    { title: 'Review', detail: 'task review ant critiques the task' },
+    { title: 'Review', detail: 'task review ant critiques the task and turns critiques into questions' },
     { title: 'Plans', detail: 'add requirement ant drafts the requirement and writes one plan per worker ant' },
   ],
 }
 
 // args: {
-//   task: string,          the task, in the user's words
-//   repo: string,          absolute path of the repo the work happens in
-//   answers?: string,      the user's answers to an earlier review, if any
-//   review?: object,       that earlier review; with answers, skips a new review
+//   env: { repo, state, run, main, tool },  from `ishikari.py setup`
+//   task: string,                           the task, in the user's words
+//   review?: object,                        the earlier review, once the user answered it
+//   answers?: string[],                     one answer per review question, '' if skipped
 // }
-// Returns { review, requirement, plans } for the user to approve.
-// Nothing is committed here: the main session commits after the user says yes.
+// Returns one of:
+//   { stage: 'review', review }            questions for the user; run again with review + answers
+//   { stage: 'blocked', reason, review }   the task cannot be done as asked
+//   { stage: 'plans', review, requirement, plans, testCommand, answeredCritiques }
+//   { stage: 'error', reason }
+// Nothing is committed here. After the user approves, the main session commits
+// the requirement and removes answeredCritiques from the critiques board.
+
+const EFFORT = { review: 'medium', planner: 'high' }
+
+const { env = {}, task } = args
+const bad = []
+if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
+if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
+if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
+if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (!task) bad.push('task is missing')
+if (bad.length) return { stage: 'error', reason: bad.join('; ') }
+
+const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
+Use absolute paths only. Change nothing in the repo.`
+const critiques = `${env.state}/boards/critiques.md`
 
 const REVIEW = {
   type: 'object',
@@ -30,113 +50,136 @@ const REVIEW = {
         properties: {
           question: { type: 'string' },
           answers: { type: 'array', items: { type: 'string' } },
-          critique: { type: 'string', description: 'the critiques board row this question came from, copied exactly; empty if none' },
+          critique: { type: 'string', description: 'the Id of the critiques board row this question came from; empty if none' },
         },
         required: ['question', 'answers'],
       },
     },
-    ready: { type: 'boolean', description: 'true when no question blocks the requirement' },
-    answeredCritiques: {
-      type: 'array',
-      items: { type: 'string' },
-      description: 'critiques board rows the user has now answered, copied exactly',
+    blocker: { type: 'string', description: 'why the task cannot be done at all as asked; empty if it can' },
+    testCommand: { type: 'string', description: 'the one command that runs the repo\'s tests from its root' },
+  },
+  required: ['summary', 'critique', 'questions', 'blocker', 'testCommand'],
+}
+
+const PLANNED = {
+  type: 'object',
+  properties: {
+    requirement: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', description: 'requirements org file the entry belongs in' },
+        entry: { type: 'string', description: 'the requirement text, ready to paste' },
+        proof: { type: 'string', description: 'how it was shown buildable: docs, repo code or spike' },
+      },
+      required: ['file', 'entry', 'proof'],
     },
-  },
-  required: ['summary', 'critique', 'questions', 'ready'],
-}
-
-const REQUIREMENT = {
-  type: 'object',
-  properties: {
-    file: { type: 'string', description: 'requirements org file the entry belongs in' },
-    entry: { type: 'string', description: 'the requirement text, ready to paste' },
-    proof: { type: 'string', description: 'how it was shown buildable: docs, repo code or spike' },
-  },
-  required: ['file', 'entry', 'proof'],
-}
-
-const PLANS = {
-  type: 'object',
-  properties: {
     plans: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
-          id: { type: 'string', description: 'short kebab-case id, also the branch suffix' },
+          id: { type: 'string', description: 'lowercase letters, digits and dashes, at most 41 characters' },
           title: { type: 'string' },
-          file: { type: 'string', description: 'absolute path of the written plan file' },
-          workflow: { type: 'string', description: 'optional saved workflow name the worker runs as its job' },
-          after: { type: 'array', items: { type: 'string' }, description: 'ids of plans that must be built first; this plan builds on their branches' },
+          files: { type: 'array', items: { type: 'string' }, description: 'files this task creates or edits' },
+          after: { type: 'array', items: { type: 'string' }, description: 'ids of tasks that must be built first because this task edits their files' },
+          workflow: { type: 'string', description: 'optional saved workflow the worker runs as its job' },
         },
-        required: ['id', 'title', 'file'],
+        required: ['id', 'title', 'files'],
       },
     },
   },
-  required: ['plans'],
+  required: ['requirement', 'plans'],
 }
 
-const { task, repo, answers } = args
+// A dead ant (null) is retried once.
+async function twice(fn) {
+  const first = await fn()
+  return first != null ? first : fn()
+}
 
-// Second pass: the user answered the review's questions. Reuse that review
-// instead of starting the task review ant again.
-const reuse = answers && args.review
-phase('Review')
-const review = reuse ? {
-  ...args.review,
-  ready: true,
-  answeredCritiques: (args.review.questions || []).map(q => q.critique).filter(Boolean),
-} : await agent(
-  `You are the task review ant of the Ishikari workflow.
-Repo: ${repo}
+// ---- review: first pass asks, second pass reuses the answered review ----
+let review = args.review
+let answered = []
+if (!review) {
+  phase('Review')
+  review = await twice(() => agent(
+    `You are the task review ant of the Ishikari workflow.
+${where}
 Task: ${task}
-${answers ? `The user already answered earlier questions:\n${answers}\n` : ''}
 Read the repo enough to judge the task. Critique it: gaps, risks, unclear scope.
-Read ${repo}/boards/critiques.md if it exists. For each critique that matters
-for this task, ask the user one question about it and copy the critique's row
-into that question's "critique" field. Leave other critiques alone. A question
-built from a critique blocks the requirement until the user answers it; list
-critiques the user has now answered in "answeredCritiques".
-Write all questions the /ask-simple way. Ask nothing the repo answers.
-Change no files.`,
-  { label: 'task-review-ant', phase: 'Review', schema: REVIEW },
-)
-
-if (review && !reuse && review.questions.length) {
-  // Every question waits for the user, so stop here and let them answer.
-  return { stage: 'review', review }
+Read ${critiques}. For each critique that matters for this task, ask the user
+one question about it and put that row's Id in the question's "critique" field.
+Leave the other critiques alone.
+Write every question the /ask-simple way. Ask nothing the repo answers.
+If the task cannot be done at all as asked, say why in blocker.
+Find the one command that runs the repo's tests from its root.`,
+    { label: 'task-review-ant', phase: 'Review', effort: EFFORT.review, schema: REVIEW },
+  ))
+  if (!review) return { stage: 'error', reason: 'the task review ant died twice' }
+  if (review.blocker) return { stage: 'blocked', reason: review.blocker, review }
+  if (review.questions.length) return { stage: 'review', review }
+} else {
+  const answers = Array.isArray(args.answers) ? args.answers : []
+  answered = (review.questions || []).map((q, k) => ({ ...q, answer: String(answers[k] || '').trim() }))
 }
 
-if (!review || !review.ready) {
-  return { stage: 'review', review }
-}
-
+// ---- requirement and plans, in one ant ----
 phase('Plans')
-// One ant drafts the requirement and writes the plans: one start instead of two.
-const out = await agent(
+const decided = answered.length
+  ? `The user's answers:\n${answered.map(q => `- ${q.question} -> ${q.answer || '(skipped: use the recommended answer)'}`).join('\n')}\n`
+  : ''
+const planDir = `${env.state}/plans/${env.run}`
+const out = await twice(() => agent(
   `You are the add requirement ant of the Ishikari workflow.
-Repo: ${repo}
+${where}
 Task: ${task}
-Review: ${JSON.stringify(review)}
-${answers ? `User answers:\n${answers}\n` : ''}
-1. Requirement: follow the /add-requirement skill up to the draft. Prove the
-   requirement can be built in this repo, check for duplicates and conflicts.
-   Do not write the requirements file; the user approves it first.
-2. Plans: split the work into tasks worker ants build in parallel, each in its own git
-   worktree. Split by file, so no two tasks edit the same file; only when that
-   is impossible, list the earlier task's id in "after" and the later task
-   builds on its branch. Worker ants cannot ask questions, so each plan must be
-   complete: files to touch, exact behavior, tests to add, the command that
-   proves it works. Write each plan to ${repo}/.ishikari/plans/<id>.md.
-${(review.answeredCritiques || []).length ? `3. Critiques: the user answered these, so remove their rows from
-   ${repo}/boards/critiques.md and keep the table aligned:
-   - ${review.answeredCritiques.join('\n   - ')}
-` : ''}   Change no other files.`,
-  { label: 'add-requirement-ant', phase: 'Plans', schema: {
-    type: 'object',
-    properties: { requirement: REQUIREMENT, plans: PLANS.properties.plans },
-    required: ['requirement', 'plans'],
-  } },
-)
+Review: ${JSON.stringify({ summary: review.summary, critique: review.critique })}
+${decided}1. Requirement: follow the /add-requirement skill up to the draft. Show it can be
+   built with evidence from the repo's code and docs. Only if that is not enough,
+   write a throwaway spike in a temporary folder outside the repo, and delete it
+   after. Check for duplicates and conflicts. Do not write the requirements file:
+   the user approves it first.
+2. Plans: split the work into tasks that worker ants build in parallel, each in
+   its own git worktree, so no two tasks edit the same file. Give each task its
+   own test file. Merge tasks that would be too small to stand alone. Only when a
+   task must edit a file another task creates, put that task's id in its "after".
+   Worker ants cannot ask questions, so each plan must be complete: files to
+   touch, exact behaviour, tests to add, and the test command
+   \`${review.testCommand || 'the repo\'s test command'}\`.
+   Write each plan to ${planDir}/<id>.md. Change no other files.`,
+  { label: 'add-requirement-ant', phase: 'Plans', effort: EFFORT.planner, schema: PLANNED },
+))
+if (!out) return { stage: 'error', reason: 'the add requirement ant died twice' }
 
-return { stage: 'plans', review, requirement: out && out.requirement, plans: out ? out.plans : [] }
+// ---- check the plans before anyone builds them ----
+const problems = []
+const ids = new Set()
+for (const p of out.plans) {
+  if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(p.id)) problems.push(`bad id "${p.id}"`)
+  if (ids.has(p.id)) problems.push(`two plans have the id "${p.id}"`)
+  ids.add(p.id)
+}
+for (const p of out.plans) {
+  for (const d of p.after || []) if (!ids.has(d) || d === p.id) problems.push(`${p.id}: after names unknown plan "${d}"`)
+}
+const byId = Object.fromEntries(out.plans.map(p => [p.id, p]))
+const seen = {}
+const visit = (id, path) => {
+  if (seen[id] === 'done' || !byId[id]) return
+  if (seen[id] === 'open') { problems.push(`loop in after: ${[...path.slice(path.indexOf(id)), id].join(' -> ')}`); return }
+  seen[id] = 'open'
+  ;(byId[id].after || []).forEach(d => visit(d, [...path, id]))
+  seen[id] = 'done'
+}
+out.plans.forEach(p => visit(p.id, []))
+if (!out.plans.length) problems.push('the planner returned no plans')
+if (problems.length) return { stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: out.requirement, plans: out.plans }
+
+return {
+  stage: 'plans',
+  review,
+  requirement: out.requirement,
+  plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
+  testCommand: review.testCommand,
+  answeredCritiques: answered.filter(q => q.answer && q.critique).map(q => q.critique),
+}
