@@ -7,10 +7,24 @@ tables stay aligned and no row is lost.
 
   ishikari.py setup <repo>
       Make the state folder for <repo> and print the run's env as JSON:
-      {repo, state, run, main, tool, workflows}. workflows holds the
-      absolute paths of the plan, build and finish scripts. Everything Ishikari keeps (boards,
-      plans, worktrees) lives in the state folder, outside the repo, so
-      none of it is ever committed.
+      {repo, state, run, main, tool, workflows}, plus testCommand and
+      checkCommand once they are saved. workflows holds the paths of the
+      plan, build and finish scripts, copied into <repo>/.git/ishikari/,
+      inside the working directory, where the Workflow tool may load them.
+      Everything else Ishikari keeps (boards, plans, worktrees, config)
+      lives in the state folder, outside the repo, so none of it is ever
+      committed.
+
+  ishikari.py config <state> <key> <value>
+      Save testCommand or checkCommand for this repo; setup prints them
+      in env from then on. An empty value forgets the key.
+
+  ishikari.py req add <file>                    entry text on stdin
+      Append a requirement entry to an org file, after one blank line.
+
+  ishikari.py req done <file> <id>...
+      Mark the headings with these :ID:s DONE: :LAST_EDITED: and
+      :IMPLEMENTED: become today, and :APPROVED: is added if missing.
 
   ishikari.py boards write <state> <board>      rows as JSON on stdin
       Add rows, or replace the row with the same first cell. A "Time"
@@ -37,6 +51,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = os.path.join(os.path.dirname(HERE), "assets", "boards")
 BOARDS = ("bulletin", "bounty", "critiques")
+CONFIG_KEYS = ("testCommand", "checkCommand")
 
 
 def die(msg):
@@ -78,9 +93,96 @@ def setup(repo):
         "run": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         "main": main_branch(top),
         "tool": os.path.abspath(__file__),
-        "workflows": {k: os.path.join(HERE, f"ishikari-{k}.js") for k in ("plan", "build", "finish")},
+        "workflows": copy_workflows(top),
     }
+    env.update(read_config(state))
     print(json.dumps(env, indent=2))
+
+
+def copy_workflows(top):
+    """Copy the scripts under .git: inside the working directory, never committed."""
+    common = git(top, "rev-parse", "--path-format=absolute", "--git-common-dir") or die(f"no git dir in {top}")
+    dest = os.path.join(common, "ishikari", "workflows")
+    os.makedirs(dest, exist_ok=True)
+    out = {}
+    for k in ("plan", "build", "finish"):
+        name = f"ishikari-{k}.js"
+        shutil.copy(os.path.join(HERE, name), os.path.join(dest, name))
+        out[k] = os.path.join(dest, name)
+    return out
+
+
+def config_path(state):
+    return os.path.join(state, "config.json")
+
+
+def read_config(state):
+    try:
+        data = json.load(open(config_path(state)))
+    except (OSError, ValueError):
+        return {}
+    return {k: v for k, v in data.items() if k in CONFIG_KEYS and v}
+
+
+def config(state, key, value):
+    if key not in CONFIG_KEYS:
+        die(f"unknown key {key}; use one of {', '.join(CONFIG_KEYS)}")
+    if not os.path.isdir(state):
+        die(f"missing {state}; run setup first")
+    data = read_config(state)
+    if value:
+        data[key] = value
+    else:
+        data.pop(key, None)
+    tmp = config_path(state) + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, config_path(state))
+    print(json.dumps(data))
+
+
+def req_add(path):
+    entry = sys.stdin.read().strip("\n")
+    if not entry:
+        die("req add needs the entry on stdin")
+    text = open(path).read() if os.path.exists(path) else ""
+    with open(path, "w") as f:
+        f.write((text.rstrip("\n") + "\n\n" if text.strip() else "") + entry + "\n")
+    print(f"{path}: entry added")
+
+
+def req_done(path, ids):
+    lines = open(path).read().split("\n")
+    today = datetime.date.today().isoformat()
+    heads = [k for k, l in enumerate(lines) if re.match(r"^\*+ ", l)]
+    found = []
+    # Walk from the end, so editing one block never moves an earlier one.
+    for a, b in reversed(list(zip(heads, heads[1:] + [len(lines)]))):
+        block = lines[a:b]
+        m = next((re.match(r"^:ID:\s+(\S+)", l) for l in block if l.startswith(":ID:")), None)
+        if not m or m.group(1) not in ids:
+            continue
+        found.append(m.group(1))
+        block[0] = re.sub(r"^(\*+) (OPEN|TODO) ", r"\1 DONE ", block[0])
+        has_approved = any(l.startswith(":APPROVED:") for l in block)
+        has_edited = any(l.startswith(":LAST_EDITED:") for l in block)
+        stamp = [f":LAST_EDITED: {today}"] + ([] if has_approved else [f":APPROVED:    {today}"]) + [f":IMPLEMENTED: {today}"]
+        out, placed = [], False
+        for l in block:
+            if l.startswith(":IMPLEMENTED:"):
+                continue
+            if not placed and (l.startswith(":LAST_EDITED:") or (l == ":END:" and not has_edited)):
+                out += stamp if l.startswith(":LAST_EDITED:") else stamp + [l]
+                placed = True
+                continue
+            out.append(l)
+        lines[a:b] = out
+    missing = [i for i in ids if i not in found]
+    if missing:
+        die(f"no heading with :ID: {', '.join(missing)} in {path}")
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
+    print(f"{path}: done {', '.join(reversed(found))}")
 
 
 def cell(value):
@@ -161,6 +263,12 @@ def run(argv):
         return setup(argv[1])
     if len(argv) in (4, 5) and argv[0] == "boards" and argv[1] in ("write", "add", "remove"):
         return boards(argv[1], argv[2], argv[3], argv[4] if len(argv) == 5 else None)
+    if len(argv) == 4 and argv[0] == "config":
+        return config(argv[1], argv[2], argv[3])
+    if len(argv) == 3 and argv[:2] == ["req", "add"]:
+        return req_add(argv[2])
+    if len(argv) >= 4 and argv[:2] == ["req", "done"]:
+        return req_done(argv[2], argv[3:])
     die(__doc__)
 
 

@@ -61,6 +61,37 @@ def test_setup_and_boards():
         assert text.count("r/x") == 1 and "done" in text and "building" not in text
 
 
+def test_workflows_config_and_req():
+    with tempfile.TemporaryDirectory() as home:
+        repo = make_repo(home)
+        env = json.loads(run(home, "setup", repo))
+        for k in ("plan", "build", "finish"):
+            assert env["workflows"][k].startswith(os.path.join(os.path.realpath(repo), ".git", "ishikari")), k
+        assert "testCommand" not in env
+
+        state = env["state"]
+        run(home, "config", state, "testCommand", "make test")
+        env = json.loads(run(home, "setup", repo))
+        assert env["testCommand"] == "make test"
+        run(home, "config", state, "testCommand", "")
+        assert "testCommand" not in json.loads(run(home, "setup", repo))
+
+        org = os.path.join(repo, "requirements.org")
+        open(org, "w").write("#+TITLE: r\n")
+        entry = "* OPEN A\n:PROPERTIES:\n:ID:          A-1\n:LAST_EDITED: 2026-01-01\n:END:\nbody\n"
+        run(home, "req", "add", org, stdin=entry)
+        text = open(org).read()
+        assert text.startswith("#+TITLE: r\n\n* OPEN A")
+        run(home, "req", "done", org, "A-1")
+        text = open(org).read()
+        assert "* DONE A" in text and ":LAST_EDITED: 2026-01-01" not in text
+        assert ":APPROVED:" in text and ":IMPLEMENTED:" in text and text.count(":END:") == 1
+        r = subprocess.run([sys.executable, TOOL, "req", "done", org, "Z-9"], env={**os.environ, "HOME": home},
+                           capture_output=True, text=True, timeout=TIMEOUT)
+        assert r.returncode == 1 and "Z-9" in r.stderr
+
+
 if __name__ == "__main__":
     test_setup_and_boards()
+    test_workflows_config_and_req()
     print("ok")

@@ -96,11 +96,13 @@ They run once per finish, on the merged result, before main moves.
 - Each run has its own id, and every branch is `ishikari/<run>/<task>`, so a new
   task never builds on an old task's branch.
 - Ishikari keeps everything outside the repo, in its state folder
-  `~/.ishikari/<repo>-<hash>/`: the boards, the plans and the worktrees. None of
-  it is ever committed, and the repo's main checkout is touched only by the
+  `~/.ishikari/<repo>-<hash>/`: the boards, the plans, the worktrees and the
+  saved commands. The only copy inside the repo is the scripts, under `.git`.
+  None of it is ever committed, and the repo's main checkout is touched only by the
   final fast-forward.
-- Only Ishikari's board tool,
-  [`ishikari.py`](../skills/ishikari/scripts/ishikari.py), writes the boards.
+- Only Ishikari's tool,
+  [`ishikari.py`](../skills/ishikari/scripts/ishikari.py), writes the boards
+  and the requirement entries.
   The scripts keep their rows while a stage runs and hand them to the tool once
   when the stage ends. The files in
   [`assets/boards/`](../skills/ishikari/assets/boards/) are the templates it
@@ -128,20 +130,29 @@ The [`/ishikari`](../skills/ishikari/SKILL.md) command runs all four steps below
 and stops only to ask the user.
 
 1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
-   copies the board templates and prints the run's `env`: repo, state folder,
-   run id, main branch and tool path. Every workflow gets this `env`.
+   copies the board templates, copies the three scripts into
+   `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
+   prints the run's `env`: repo, state folder, run id, main branch, tool path,
+   script paths, and the repo's saved `testCommand` and `checkCommand`.
 2. Run `ishikari-plan` with `env` and the task. If it returns questions, ask
-   them with `/ask-simple` and run it again with that review and one answer per
-   question; a skipped answer means "use the recommended one". Show the
-   requirement and plans for approval. Then commit the requirement and run
-   `ishikari.py boards remove <state> critiques` with the answered critique ids.
-3. Run `ishikari-build` with `env` (plus the plan's `testCommand`) and the
-   approved plans. Do the final review with each task's notes, nits and fix
-   history. Escalated or rejected tasks come back in a later build as `bugs`,
-   with the user's guidance.
+   them with `/ask-simple` and resume the same run with one answer per
+   question; the review replays from cache, and a skipped answer means "use
+   the recommended one". Show the requirement and plans for approval. Then
+   `ishikari.py req add` writes the requirement (none for a refactor), the main
+   session commits it, and `ishikari.py boards remove` drops the answered
+   critiques. `ishikari.py config` saves the test and check commands.
+3. Run `ishikari-build` with `env` and the approved plans. Do the final review
+   with each task's notes, nits and fix history. Escalated or rejected tasks
+   come back in a later build as `bugs`, with the user's guidance. A cleanup
+   plan that builds clean skips this review: its plan approval was its gate.
 4. Run `ishikari-finish` with `env`, the approved tasks, the build's `together`
-   result and any tasks to drop. Failed merges come back in the next build as
-   `bugs`; the janitor's cleanup plan goes to the next plan stage.
+   result and any tasks to drop. One task with no `after` skips the trial
+   merge: its inspector already tested it. After main moves, the finisher runs
+   `checkCommand` to build and check the real app. Failed merges come back in
+   the next build as `bugs`; the janitor's cleanup plan, based on main, goes to
+   the next plan stage, and a cleanup run gets no janitor. The philosopher's
+   new critiques are listed in the result. Once the check passes,
+   `ishikari.py req done` marks the run's requirements DONE.
 
 ## Diagram
 

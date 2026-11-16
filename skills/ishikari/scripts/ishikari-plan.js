@@ -11,13 +11,17 @@ export const meta = {
 // args: {
 //   env: { repo, state, run, main, tool },  from `ishikari.py setup`
 //   task: string,                           the task, in the user's words
-//   review?: object,                        the earlier review, once the user answered it
 //   answers?: string[],                     one answer per review question, '' if skipped
+//   review?: object,                        the earlier review; only needed when not resuming
 // }
+// To answer questions, run again with resumeFromRunId set to the first run and
+// the same env and task plus answers: the review ant replays from cache.
 // Returns one of:
 //   { stage: 'review', review }            questions for the user; run again with review + answers
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
-//   { stage: 'plans', review, requirement, plans, testCommand, answeredCritiques }
+//   { stage: 'plans', review, requirement, plans, testCommand, checkCommand, answeredCritiques }
+// requirement.needed is false for a change with no new behaviour (a refactor):
+// then nothing is written to the requirements file.
 //   { stage: 'error', reason }
 // Nothing is committed here. After the user approves, the main session commits
 // the requirement and removes answeredCritiques from the critiques board.
@@ -57,8 +61,9 @@ const REVIEW = {
     },
     blocker: { type: 'string', description: 'why the task cannot be done at all as asked; empty if it can' },
     testCommand: { type: 'string', description: 'the one command that runs the repo\'s tests from its root' },
+    checkCommand: { type: 'string', description: 'the one command that builds and checks the real app (install, launch check), from the repo root; empty if the repo has none' },
   },
-  required: ['summary', 'critique', 'questions', 'blocker', 'testCommand'],
+  required: ['summary', 'critique', 'questions', 'blocker', 'testCommand', 'checkCommand'],
 }
 
 const PLANNED = {
@@ -67,11 +72,12 @@ const PLANNED = {
     requirement: {
       type: 'object',
       properties: {
+        needed: { type: 'boolean', description: 'false if the change adds no behaviour, so no entry is written' },
         file: { type: 'string', description: 'requirements org file the entry belongs in' },
         entry: { type: 'string', description: 'the requirement text, ready to paste' },
         proof: { type: 'string', description: 'how it was shown buildable: docs, repo code or spike' },
       },
-      required: ['file', 'entry', 'proof'],
+      required: ['needed', 'file', 'entry', 'proof'],
     },
     plans: {
       type: 'array',
@@ -98,8 +104,8 @@ async function twice(fn) {
 }
 
 // ---- review: first pass asks, second pass reuses the answered review ----
+const hasAnswers = Array.isArray(args.answers)
 let review = args.review
-let answered = []
 if (!review) {
   phase('Review')
   review = await twice(() => agent(
@@ -112,16 +118,16 @@ one question about it and put that row's Id in the question's "critique" field.
 Leave the other critiques alone.
 Write every question the /ask-simple way. Ask nothing the repo answers.
 If the task cannot be done at all as asked, say why in blocker.
-Find the one command that runs the repo's tests from its root.`,
+${env.testCommand ? `The repo's test command is \`${env.testCommand}\`: return it as testCommand.` : 'Find the one command that runs the repo\'s tests from its root.'}
+${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it as checkCommand.` : 'Find the one command that builds and checks the real app (install hook, launch check); empty if there is none.'}`,
     { label: 'task-review-ant', phase: 'Review', effort: EFFORT.review, schema: REVIEW },
   ))
   if (!review) return { stage: 'error', reason: 'the task review ant died twice' }
   if (review.blocker) return { stage: 'blocked', reason: review.blocker, review }
-  if (review.questions.length) return { stage: 'review', review }
-} else {
-  const answers = Array.isArray(args.answers) ? args.answers : []
-  answered = (review.questions || []).map((q, k) => ({ ...q, answer: String(answers[k] || '').trim() }))
+  if (review.questions.length && !hasAnswers) return { stage: 'review', review }
 }
+const answers = hasAnswers ? args.answers : []
+const answered = hasAnswers ? (review.questions || []).map((q, k) => ({ ...q, answer: String(answers[k] || '').trim() })) : []
 
 // ---- requirement and plans, in one ant ----
 phase('Plans')
@@ -181,5 +187,6 @@ return {
   requirement: out.requirement,
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: review.testCommand,
+  checkCommand: review.checkCommand || '',
   answeredCritiques: answered.filter(q => q.answer && q.critique).map(q => q.critique),
 }

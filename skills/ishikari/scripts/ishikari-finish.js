@@ -10,12 +10,14 @@ export const meta = {
 }
 
 // args: {
-//   env: { repo, state, run, main, tool, testCommand? },
+//   env: { repo, state, run, main, tool, testCommand?, checkCommand? },
 //   approved: [{ id, branch, after? }],      tasks the user approved (from ishikari-build)
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
 //   drop?: [{ id, branch }],                 tasks the user gave up on: removed
+//   cleanup?: boolean,                       this run built a cleanup plan: no janitor, so
+//                                            cleanups never chain
 // }
-// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup }
+// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, critiques, check }
 //      or { stage: 'error', reason }.
 // bugs go into the next ishikari-build run; cleanup goes into the next
 // ishikari-plan run as a suggested task.
@@ -25,7 +27,7 @@ export const meta = {
 
 const EFFORT = { merger: 'medium', janitor: 'low', philosopher: 'low', finisher: 'low' }
 
-const { env = {}, approved = [], together = null, drop = [] } = args
+const { env = {}, approved = [], together = null, drop = [], cleanup: isCleanup = false } = args
 const bad = []
 if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
 if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
@@ -85,7 +87,14 @@ if (order.length) {
   phase('Merge')
   const sameSet = together && together.sha && Array.isArray(together.tasks) &&
     together.tasks.length === order.length && order.every(t => together.tasks.includes(t.id))
-  const fast = sameSet
+  const one = !sameSet && order.length === 1 && !(order[0].after || []).length ? order[0] : null
+  const fast = one
+    ? `Fast path: one task, already tested by its inspector. If
+\`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${one.branch}\` succeeds and
+\`git -C ${env.repo} log --merges ${env.main}..${one.branch}\` prints nothing, create the worktree with
+\`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${one.branch}\`, report the task
+as "merged", return that commit as sha, and stop. Otherwise do the normal steps below.\n`
+    : sameSet
     ? `Fast path: build's trial merge ${together.sha} already holds exactly these tasks
 on top of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
 succeeds, create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
@@ -133,17 +142,20 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
 
 // ---- upkeep on the merged result, before main moves ----
 let cleanup = null
+let critiques = []
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
-  const [jan] = await parallel([
-    () => agent(
+  const [jan, phil] = await parallel([
+    () => isCleanup ? null : agent(
       `You are the janitor ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}. Find dead code, bloat and mess left by the
 tasks just merged (${names}). Only worker ants write code, so if something needs
 cleaning, write a complete cleanup plan a worker ant can build without questions
-to ${env.state}/plans/${env.run}/cleanup.md. Change nothing else.`,
+to ${env.state}/plans/${env.run}/cleanup.md. The plan starts from ${env.main} as it
+is after this run: never name a worktree or a scratch branch as its base, they are
+removed. Say it changes no behaviour. Change nothing else.`,
       { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
         schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
     ),
@@ -157,10 +169,12 @@ with exactly this command, filling in the rows:
 python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROWS_END'
 [["<target file or task>", "<critique>"], ...]
 ISHIKARI_ROWS_END
-Change nothing else, and never block the work.`,
-      { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher },
+Return the same critiques in "critiques". Change nothing else, and never block the work.`,
+      { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
+        schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
     ),
   ])
+  if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques
   if (jan && jan.needed) cleanup = { title: jan.title, file: `${env.state}/plans/${env.run}/cleanup.md` }
 }
 
@@ -184,6 +198,12 @@ const FINISH = {
   properties: {
     moved: { type: 'boolean', description: `true if ${env.main} now points at the new commit` },
     reason: { type: 'string', description: 'if not moved, why' },
+    check: {
+      type: 'object',
+      description: 'step 4 only',
+      properties: { ran: { type: 'boolean' }, ok: { type: 'boolean' }, output: { type: 'string', description: 'last 20 lines' } },
+      required: ['ran', 'ok', 'output'],
+    },
   },
   required: ['moved', 'reason'],
 }
@@ -205,7 +225,11 @@ ${remove.map(b => `   - ${b}`).join('\n')}
 3. If step 1 moved ${env.main}, or nothing was merged, run:
 ${write(rowsIf(true))}
    Otherwise run:
-${write(rowsIf(false))}`,
+${write(rowsIf(false))}
+4. ${env.checkCommand && merged.length ? `Only if step 1 moved ${env.main}: build and check the real app. Run
+   \`${env.checkCommand}\` from the checkout of ${env.main} (the worktree found in step 1,
+   else ${env.repo}), with a 600 s timeout. Report ran, ok (exit 0) and the last 20
+   lines of output in check. Never fix anything.` : 'No app check: report check as {ran: false, ok: false, output: ""}.'}`,
   { label: 'finisher-ant', phase: 'Main', effort: EFFORT.finisher, schema: FINISH },
 ))
 
@@ -221,4 +245,6 @@ return {
   bugs,
   waiting,
   cleanup,
+  critiques,
+  check: fin && fin.check ? fin.check : { ran: false, ok: false, output: '' },
 }
