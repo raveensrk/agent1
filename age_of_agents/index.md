@@ -81,7 +81,7 @@ layout by [`render.sh`](render.sh) to a light and a dark SVG.
 
 Colors: each stage has its own color. Green arrows are approvals, red
 arrows are bugs, gray arrows are normal flow. Dashed arrows only watch or
-comment.
+comment. The legend in the diagram shows the arrow colors.
 
 ```d2
 # Colors live in vars. render.sh swaps them for the dark version.
@@ -194,6 +194,42 @@ build.aw -> fix.bounty: stuck {class: bug}
 user -> finish.merger: approved {class: ok}
 finish.merger -> build.bulletin: merge, set "done" {class: ok}
 finish.merger -> fix.bounty: merge broke main {class: bug}
+
+legend: Legend {
+  left: 1000
+  top: 760
+  grid-columns: 1
+  grid-gap: 0
+  style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
+  r1: "" {
+    direction: right
+    style: {fill: transparent; stroke: transparent}
+    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${ok}; stroke: ${ok}}}
+    t: approval {shape: text; style.font-color: ${text}}
+    s -> t {class: ok}
+  }
+  r2: "" {
+    direction: right
+    style: {fill: transparent; stroke: transparent}
+    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${bug}; stroke: ${bug}}}
+    t: bug {shape: text; style.font-color: ${text}}
+    s -> t {class: bug}
+  }
+  r3: "" {
+    direction: right
+    style: {fill: transparent; stroke: transparent}
+    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${flow}; stroke: ${flow}}}
+    t: normal flow {shape: text; style.font-color: ${text}}
+    s -> t {class: flow}
+  }
+  r4: "" {
+    direction: right
+    style: {fill: transparent; stroke: transparent}
+    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${flow}; stroke: ${flow}}}
+    t: watch or comment {shape: text; style.font-color: ${text}}
+    s -> t {class: flow; style.stroke-dash: 3}
+  }
+}
 ```
 
 <picture>
