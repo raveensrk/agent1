@@ -45,15 +45,17 @@ worker ant's job: the worker runs it as its plan.
 9. **Merger ant** runs after the user approves a task on the bulletin
    board. It merges the worker's branch into main and sets the status to
    `done`. If the merge breaks main, it posts a bug to the bug bounty
-   board, and the detective ant handles it like any other bug.
+   board, and the detective ant handles it like any other bug. One merger
+   ant merges every approved task in order, then removes each merged task's
+   worktree and branch.
 
 ## Always-on ants
 
 - **Janitor ant** finds mess in the codebase after each task is done. It
-  writes a cleanup plan, and a worker ant builds it.
+  writes a cleanup plan, which goes into the next build run for a worker ant.
 - **Librarian ant** maintains the docs after each task is done.
-- **Philosopher ant** questions and critiques ongoing work at any time. It
-  only comments, in [`boards/critiques.md`](boards/critiques.md); it never
+- **Philosopher ant** questions and critiques each built task, at the same
+  time as its inspector ant. It only comments, in [`boards/critiques.md`](boards/critiques.md); it never
   pauses or blocks work. The add requirement ant reads the critiques and
   uses them when it writes the next plans.
 
@@ -70,8 +72,9 @@ worker ant's job: the worker runs it as its plan.
   reviews or posts to a board.
 - At most 5 worker ants run at the same time, fix workers included.
   Always-on ants do not count toward this limit.
-- Ants take turns writing a board: one ant holds the board's lock while it
-  writes, and others wait until it lets go. No update is lost.
+- Only the workflow script writes the boards. It keeps their rows while a
+  stage runs and writes them once when the stage ends, so no task ever waits
+  on a board and no update is lost.
 - One workflow script, kept next to this file, starts and connects all
   the ants.
 
@@ -97,8 +100,8 @@ asks.
    into the next `ishikari-build` run.
 
 The anti-monitor ant is the build script itself: when a worker ant finishes,
-the script starts that task's inspector ant at once. The script also holds
-the board lock and the 5-worker limit.
+the script starts that task's inspector ant at once. The script also keeps
+the boards and the 5-worker limit.
 
 ## Diagram
 

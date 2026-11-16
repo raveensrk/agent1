@@ -4,8 +4,7 @@ export const meta = {
   whenToUse: 'Start of an Ishikari run. The user answers the review and approves the requirement and plans before ishikari-build.',
   phases: [
     { title: 'Review', detail: 'task review ant critiques the task' },
-    { title: 'Requirement', detail: 'add requirement ant drafts a requirement' },
-    { title: 'Plans', detail: 'add requirement ant writes one plan per worker ant' },
+    { title: 'Plans', detail: 'add requirement ant drafts the requirement and writes one plan per worker ant' },
   ],
 }
 
@@ -88,32 +87,30 @@ if (!review || !review.ready) {
   return { stage: 'review', review }
 }
 
-phase('Requirement')
-const requirement = await agent(
+phase('Plans')
+// One ant drafts the requirement and writes the plans: one start instead of two.
+const out = await agent(
   `You are the add requirement ant of the Ishikari workflow.
 Repo: ${repo}
 Task: ${task}
 Review: ${JSON.stringify(review)}
 ${answers ? `User answers:\n${answers}\n` : ''}
-Follow the /add-requirement skill up to the draft: prove the requirement can be
-built in this repo, check for duplicates and conflicts, then return the draft.
-Do not write the requirements file; the user approves it first.`,
-  { label: 'add-requirement-ant', phase: 'Requirement', schema: REQUIREMENT },
+1. Requirement: follow the /add-requirement skill up to the draft. Prove the
+   requirement can be built in this repo, check for duplicates and conflicts.
+   Do not write the requirements file; the user approves it first.
+2. Plans: read ${repo}/boards/critiques.md if it exists and use the critiques.
+   Split the work into tasks worker ants build in parallel, each in its own git
+   worktree. Split by file, so no two tasks edit the same file; only when that
+   is impossible, list the earlier task's id in "after" and the later task
+   builds on its branch. Worker ants cannot ask questions, so each plan must be
+   complete: files to touch, exact behavior, tests to add, the command that
+   proves it works. Write each plan to ${repo}/.ishikari/plans/<id>.md.
+   Change no other files.`,
+  { label: 'add-requirement-ant', phase: 'Plans', schema: {
+    type: 'object',
+    properties: { requirement: REQUIREMENT, plans: PLANS.properties.plans },
+    required: ['requirement', 'plans'],
+  } },
 )
 
-phase('Plans')
-const plans = await agent(
-  `You are the add requirement ant of the Ishikari workflow, now planning.
-Repo: ${repo}
-Requirement: ${JSON.stringify(requirement)}
-Read ${repo}/boards/critiques.md if it exists and use the critiques.
-Split the work into tasks that worker ants can build in parallel, each in its
-own git worktree. When a task edits files another task creates, list that
-task's id in "after"; it then builds on top of that task's branch. Worker ants cannot ask questions, so each plan
-must be complete: files to touch, exact behavior, tests to add, the command
-that proves it works. Write each plan to ${repo}/.ishikari/plans/<id>.md.
-Change no other files.`,
-  { label: 'add-requirement-ant:plans', phase: 'Plans', schema: PLANS },
-)
-
-return { stage: 'plans', review, requirement, plans: plans ? plans.plans : [] }
+return { stage: 'plans', review, requirement: out && out.requirement, plans: out ? out.plans : [] }

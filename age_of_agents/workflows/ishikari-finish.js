@@ -1,74 +1,80 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merger ant merges approved tasks, then the always-on ants run once',
+  description: 'Ishikari stage 3: merger ant merges approved tasks, then the janitor and librarian ants run once',
   whenToUse: 'After the user approves tasks in their final review of ishikari-build.',
   phases: [
-    { title: 'Merge', detail: 'merger ant, one task at a time' },
-    { title: 'Upkeep', detail: 'janitor, librarian and philosopher ants' },
+    { title: 'Merge', detail: 'one merger ant merges every approved task in order' },
+    { title: 'Upkeep', detail: 'janitor and librarian ants, in parallel' },
   ],
 }
 
 // args: {
 //   repo: string,                      absolute repo path
-//   approved: [{id, branch}],          tasks the user approved
+//   approved: [{id, branch}],          tasks the user approved, in merge order
 // }
-// Returns { merged, bugs, cleanupPlan } — bugs feed the next ishikari-build run.
+// Returns { merged, bugs, cleanupPlan }.
+// bugs feed the next ishikari-build run; cleanupPlan becomes a plan for it.
 
 const MERGE = {
   type: 'object',
   properties: {
-    merged: { type: 'boolean' },
-    broke: { type: 'string', description: 'what broke on main after the merge, empty if nothing' },
+    results: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          merged: { type: 'boolean' },
+          broke: { type: 'string', description: 'what broke on main, empty if nothing' },
+        },
+        required: ['id', 'merged', 'broke'],
+      },
+    },
   },
-  required: ['merged', 'broke'],
+  required: ['results'],
 }
 
 const { repo, approved = [] } = args
 
 phase('Merge')
-const merged = []
-const bugs = []
-// One merge at a time: each merge must see the main the last one left.
-for (const t of approved) {
-  const r = await agent(
-    `You are the merger ant of the Ishikari workflow. Repo: ${repo}.
-Merge branch ${t.branch} into main. Run the repo's tests on main after.
-If the merge or the tests fail, leave main as it was before this merge and
-report what broke. Then set row "${t.id}" in ${repo}/boards/bulletin.md to
-status "done" if merged.`,
-    { label: `merger-ant:${t.id}`, phase: 'Merge', schema: MERGE },
-  )
-  if (r && r.merged && !r.broke) merged.push(t.id)
-  else bugs.push({ id: t.id, task: t.id, branch: t.branch, bug: `merge broke main: ${r ? r.broke : 'merger ant died'}` })
-}
+const list = approved.map(t => `- ${t.id}: branch ${t.branch}`).join('\n')
+const m = await agent(
+  `You are the merger ant of the Ishikari workflow. Repo: ${repo}.
+Merge these branches into main, one at a time, in this order:
+${list}
+After each merge, run the repo's tests on main. If the merge or the tests
+fail, put main back as it was before that merge, report what broke, and go on
+to the next branch.
+For each merged task: set its row in boards/bulletin.md to status "done",
+then remove its worktree (.ishikari/worktrees/<id>) and delete its branch.
+Last, commit any changes under boards/ with the message
+"chore(boards): update after ishikari run". Commit nothing else.`,
+  { label: 'merger-ant', phase: 'Merge', effort: 'low', schema: MERGE },
+)
+
+const results = m ? m.results : approved.map(t => ({ id: t.id, merged: false, broke: 'merger ant died' }))
+const merged = results.filter(r => r.merged && !r.broke).map(r => r.id)
+const bugs = results.filter(r => !r.merged || r.broke).map(r => {
+  const t = approved.find(a => a.id === r.id) || { branch: `ishikari/${r.id}` }
+  return { task: r.id, branch: t.branch, bug: `merge broke main: ${r.broke}` }
+})
 
 phase('Upkeep')
-const [cleanupPlan] = await parallel([
+const [cleanupPlan] = merged.length ? await parallel([
   () => agent(
     `You are the janitor ant of the Ishikari workflow. Repo: ${repo}.
 Find dead code, bloat and mess left by the tasks just merged (${merged.join(', ')}).
-Only worker ants write code, so return a complete cleanup plan for one; change no files.`,
+Only worker ants write code, so write a complete cleanup plan a worker ant can
+build without questions, to ${repo}/.ishikari/plans/cleanup.md. Change no other
+files. Return the plan, or "none" if nothing needs cleaning.`,
     { label: 'janitor-ant', phase: 'Upkeep' },
   ),
   () => agent(
     `You are the librarian ant of the Ishikari workflow. Repo: ${repo}.
-Update the docs for the tasks just merged (${merged.join(', ')}). Change docs only.`,
-    { label: 'librarian-ant', phase: 'Upkeep' },
+Update the docs for the tasks just merged (${merged.join(', ')}). Change docs
+only, and commit them.`,
+    { label: 'librarian-ant', phase: 'Upkeep', effort: 'low' },
   ),
-  () => agent(
-    `You are the philosopher ant of the Ishikari workflow. Repo: ${repo}.
-Question and critique the work just merged (${merged.join(', ')}). Add rows to
-${repo}/boards/critiques.md. Never block or change anything else.`,
-    { label: 'philosopher-ant', phase: 'Upkeep' },
-  ),
-])
-
-// Boards are written in the main checkout; save them so main stays clean.
-await agent(
-  `Board clerk for Ishikari. Repo: ${repo}. Commit only the files under boards/
-on main with the message "chore(boards): update after ishikari run". Commit
-nothing else. If boards/ has no changes, do nothing.`,
-  { label: 'board-clerk:commit', phase: 'Upkeep', effort: 'low' },
-)
+]) : ['none']
 
 return { merged, bugs, cleanupPlan }
