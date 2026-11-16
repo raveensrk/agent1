@@ -270,3 +270,7 @@ always_on.critiques -> plan.aara: read for next plans {class: flow; style.stroke
 Animated version, one stage every 6 seconds:
 [`ishikari-animated.svg`](ishikari-animated.svg), from
 [`ishikari-animated.d2`](ishikari-animated.d2).
+
+Car tour, one task driven slowly along the exact path it takes:
+[`ishikari-flow.svg`](ishikari-flow.svg), built by [`flow.py`](flow.py).
+Open it in a browser; it needs its script to run.

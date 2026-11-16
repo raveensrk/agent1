@@ -26,3 +26,5 @@ d2 --layout=tala --theme=200 "$tmp.d2" "${2:-ishikari-dark.svg}"
 rm -f "$tmp" "$tmp.d2"
 # Slow animated walk through the stages, 6 s a frame.
 [ $# -eq 0 ] && d2 --layout=tala --animate-interval=6000 ishikari-animated.d2 ishikari-animated.svg
+# Car tour along the exact path, built from ishikari.svg.
+[ $# -eq 0 ] && python3 flow.py
