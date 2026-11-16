@@ -12,6 +12,7 @@ export const meta = {
 //   task: string,          the task, in the user's words
 //   repo: string,          absolute path of the repo the work happens in
 //   answers?: string,      the user's answers to an earlier review, if any
+//   review?: object,       that earlier review; with answers, skips a new review
 // }
 // Returns { review, requirement, plans } for the user to approve.
 // Nothing is committed here: the main session commits after the user says yes.
@@ -77,8 +78,15 @@ const PLANS = {
 
 const { task, repo, answers } = args
 
+// Second pass: the user answered the review's questions. Reuse that review
+// instead of starting the task review ant again.
+const reuse = answers && args.review
 phase('Review')
-const review = await agent(
+const review = reuse ? {
+  ...args.review,
+  ready: true,
+  answeredCritiques: (args.review.questions || []).map(q => q.critique).filter(Boolean),
+} : await agent(
   `You are the task review ant of the Ishikari workflow.
 Repo: ${repo}
 Task: ${task}
@@ -93,6 +101,11 @@ Write all questions the /ask-simple way. Ask nothing the repo answers.
 Change no files.`,
   { label: 'task-review-ant', phase: 'Review', schema: REVIEW },
 )
+
+if (review && !reuse && review.questions.length) {
+  // Every question waits for the user, so stop here and let them answer.
+  return { stage: 'review', review }
+}
 
 if (!review || !review.ready) {
   return { stage: 'review', review }

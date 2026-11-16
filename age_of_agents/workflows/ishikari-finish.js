@@ -45,6 +45,8 @@ ${list}
 After each merge, run the repo's tests on main. If the merge or the tests
 fail, put main back as it was before that merge, report what broke, and go on
 to the next branch.
+If a later branch was built on top of a branch that failed (it contains that
+branch's commits), skip it too and report "blocked" as what broke.
 For each merged task: set its row in boards/bulletin.md to status "done",
 then remove its worktree (.ishikari/worktrees/<id>) and delete its branch.
 Last, commit any changes under boards/ with the message

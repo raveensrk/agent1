@@ -30,7 +30,9 @@ worker ant's job: the worker runs it as its plan.
 4. **Plan.** The add requirement ant writes a plan for each worker ant in
    a temporary area. Workers cannot ask questions, so the plan must be
    complete and correct. A plan that edits files another plan creates lists
-   that plan in `after`; it waits for it and builds on its branch.
+   that plan in `after`. It starts as soon as that plan is built, on top of
+   its branch, while that plan is still being inspected. If that plan finally
+   fails, the later one is marked blocked.
 
 5. **Worker Ant** builds its plan in its own git worktree, in parallel
    with the other workers. It decides on its own and goes as far as it can.
@@ -85,6 +87,8 @@ worker ant's job: the worker runs it as its plan.
 - Only worker ants write code or build. Every other ant reads, plans,
   reviews or posts to a board.
 - At most 5 worker ants run at the same time, fix workers included.
+- A worker ant never resets an existing branch: a fix round reuses the
+  task's worktree and branch, so earlier work is never lost.
   Upkeep ants do not count toward this limit.
 - Only the workflow script writes the boards. It keeps their rows while a
   stage runs and writes them once when the stage ends, so no task ever waits
@@ -105,7 +109,8 @@ asks.
 | [`ishikari-finish`](workflows/ishikari-finish.js) | Finish, upkeep    | merges, new bugs, critiques |
 
 1. Run `ishikari-plan` with the task. If the review has questions, ask them
-   with `/ask-simple` and run it again with the answers. Then the user
+   with `/ask-simple` and run it again with the answers and that review; the
+   second run skips the review and goes straight to the plans. Then the user
    approves the requirement and the plans, and the main session commits the
    requirement.
 2. Run `ishikari-build` with the approved plans. The user does the final

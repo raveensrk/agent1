@@ -13,7 +13,7 @@ export const meta = {
 // args: {
 //   repo: string,                                   absolute repo path
 //   plans: [{id, title, file, workflow?, after?}],  from ishikari-plan;
-//                                                   after: ids to wait for
+//                                                   after: ids it builds on
 //   bugs?: [{task, branch, bug}],                   open bounties from ishikari-finish
 // }
 // Returns { tasks: [{id, branch, status, bugs, tries}] }.
@@ -75,8 +75,11 @@ function worker(id, prompt, phase, base = 'main') {
     `You are a worker ant of the Ishikari workflow. You cannot ask questions:
 decide on your own and go as far as you can.
 Repo: ${repo}. Work in your own git worktree of that repo, never in its main
-checkout: \`git -C ${repo} worktree add ${repo}/.ishikari/worktrees/${id} -B ishikari/${id}\`
-(reuse the worktree if it exists, and start the branch from ${base} if it is new).
+checkout. Its path is ${repo}/.ishikari/worktrees/${id} on branch ishikari/${id}.
+If the worktree exists, reuse it. Else, if the branch exists, run
+\`git -C ${repo} worktree add ${repo}/.ishikari/worktrees/${id} ishikari/${id}\`.
+Else run \`git -C ${repo} worktree add -b ishikari/${id} ${repo}/.ishikari/worktrees/${id} ${base}\`.
+Never reset or recreate an existing branch: it may hold earlier work.
 ${prompt}
 Commit your work on branch ishikari/${id}. Leave the worktree in place.
 Return status "stuck" if you cannot finish, with what blocked you in notes.`,
@@ -84,10 +87,11 @@ Return status "stuck" if you cannot finish, with what blocked you in notes.`,
   ))
 }
 
-function inspect(id, branch) {
+function inspect(id, branch, base = 'main') {
   return agent(
     `You are the inspector ant of the Ishikari workflow. Repo: ${repo}.
-Review branch ${branch} against main and its plan ${repo}/.ishikari/plans/${id}.md.
+Review branch ${branch} against ${base} (only this task's own changes) and its
+plan ${repo}/.ishikari/plans/${id}.md.
 Run its tests. List real bugs only, each with how to see it. Change no files.`,
     { label: `inspector-ant:${id}`, phase: 'Check', schema: INSPECTION },
   )
@@ -110,7 +114,7 @@ for a worker ant instead. Change no files.`,
   )
 }
 
-async function fixLoop(id, branch, found) {
+async function fixLoop(id, branch, found, base = 'main') {
   let open = found
   const history = []
   for (let tries = 1; tries <= MAX_TRIES; tries++) {
@@ -121,7 +125,7 @@ async function fixLoop(id, branch, found) {
     history.push(round)
     const built = await worker(id, `Build this fix plan:\n${fix.plan}`, 'Fix')
     if (!built || built.status === 'stuck') { round.outcome = `worker stuck: ${built ? built.notes : 'worker ant died'}`; continue }
-    const check = await inspect(id, branch)
+    const check = await inspect(id, branch, base)
     if (!check) { round.outcome = 'inspector ant died'; continue }
     round.outcome = check.bugs.length ? `still broken: ${check.bugs.join('; ')}` : 'fixed'
     found.filter(b => !check.bugs.includes(b)).forEach(b => setRow(bounty, b, [id, 'fixed', String(tries)]))
@@ -138,36 +142,50 @@ function finish(id, branch, result) {
   return { id, branch, status, bugs: result.bugs, tries: result.tries }
 }
 
-// A plan waits for the plans in its "after" list and builds on their branch.
-const doneById = {}
+// A plan in another plan's "after" list starts as soon as that plan is
+// built, on top of its branch, so building and inspecting overlap. If the
+// earlier plan finally fails, the later one is marked blocked.
+const builtById = {}, doneById = {}
 async function runTask(p) {
   const id = p.id
-  const deps = await Promise.all((p.after || []).map(d => doneById[d]))
-  const blocked = deps.find(d => !d || d.status !== 'awaiting review')
-  if (deps.length && blocked) {
+  const built0 = await Promise.all((p.after || []).map(d => builtById[d] || Promise.resolve(null)))
+  const notBuilt = (p.after || []).find((d, k) => !built0[k] || !built0[k].ok)
+  if (notBuilt) {
+    p.built({ ok: false })
     setRow(bulletin, id, ['escalated', 'build script'])
-    return { id, branch: `ishikari/${id}`, status: 'escalated', bugs: [`blocked: ${blocked ? blocked.id : 'a plan it needs'} did not pass`], tries: 0 }
+    return { id, branch: `ishikari/${id}`, status: 'escalated', bugs: [`blocked: ${notBuilt} was not built`], tries: 0 }
   }
-  const base = deps.length ? deps[deps.length - 1].branch : 'main'
+  const base = built0.length ? built0[built0.length - 1].branch : 'main'
   const job = p.workflow
     ? `Run the saved workflow "${p.workflow}" as your job, with the plan in ${p.file}.`
     : `Build the plan in ${p.file}.`
   const built = await worker(id, job, 'Build', base)
   const branch = built ? built.branch : `ishikari/${id}`
+  let result
   if (!built || built.status === 'stuck') {
     const bug = `stuck: ${built ? built.notes : 'worker ant died'}`
     setRow(bounty, bug, [id, 'open', '0'])
-    return finish(id, branch, await fixLoop(id, branch, [bug]))
+    result = await fixLoop(id, branch, [bug], base)
+    p.built({ ok: !result.bugs.length, branch })
+  } else {
+    p.built({ ok: true, branch })
+    setRow(bulletin, id, ['inspecting', 'inspector ant'])
+    const check = await inspect(id, branch, base)
+    const found = check ? check.bugs : ['inspector ant died']
+    found.forEach(b => setRow(bounty, b, [id, 'open', '0']))
+    result = found.length ? await fixLoop(id, branch, found, base) : { bugs: [], tries: 0 }
   }
-  setRow(bulletin, id, ['inspecting', 'inspector ant'])
-  const check = await inspect(id, branch)
-  const found = check ? check.bugs : ['inspector ant died']
-  if (!found.length) return finish(id, branch, { bugs: [], tries: 0 })
-  found.forEach(b => setRow(bounty, b, [id, 'open', '0']))
-  return finish(id, branch, await fixLoop(id, branch, found))
+  // A later plan passes only if every plan it builds on passed too.
+  const deps = await Promise.all((p.after || []).map(d => doneById[d]))
+  const failedDep = deps.find(d => !d || d.status !== 'awaiting review')
+  if (failedDep && !result.bugs.length) result = { bugs: [`blocked: ${failedDep ? failedDep.id : 'a plan it builds on'} did not pass`], tries: result.tries }
+  return finish(id, branch, result)
 }
 
-plans.forEach(p => { doneById[p.id] = new Promise(r => { p.resolve = r }) })
+plans.forEach(p => {
+  builtById[p.id] = new Promise(r => { p.built = r })
+  doneById[p.id] = new Promise(r => { p.resolve = r })
+})
 const tasks = await parallel([
   ...plans.map(p => async () => { const r = await runTask(p); p.resolve(r); return r }),
   // Open bounties from a broken merge re-enter the fix loop directly.
