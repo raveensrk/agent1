@@ -15,7 +15,8 @@ land on line 1.
 A file that passes both is then held to Prettier's XML plugin with `--check`.
 Checks report, they never write, so the finding carries the `--write` command
 and the agent runs it. Plain `npx -p` cannot find the plugin from the package
-it adds; `npx -c` runs with both packages on the path, and works.
+it adds; `npx -c` runs with both packages on the path, and the plugin is named
+by its file path, since Prettier looks a bare name up from the cwd.
 
     svg_lint.py FILE...      (or paths on stdin)
 """
@@ -67,7 +68,10 @@ def svglint(path: str) -> list[str]:
     return out
 
 
-PRETTIER = "prettier --plugin=@prettier/plugin-xml --parser=xml"
+# Prettier 3 resolves a bare --plugin name from the cwd, not from the npx
+# package dir, so it names the plugin file next to the prettier it runs.
+PRETTIER = ('prettier --plugin="$(dirname "$(dirname "$(command -v prettier)")")'
+            '/@prettier/plugin-xml/src/plugin.js" --parser=xml')
 PRETTIER_NPX = ["npx", "-y", "-p", "prettier@3", "-p", "@prettier/plugin-xml@3", "-c"]
 
 
