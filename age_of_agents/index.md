@@ -1,57 +1,55 @@
 # Index
 
-Design documentation and design bible for Ishikari, a workflow where AI
-agents ("ants") work in parallel to complete a task.
+Design documentation and design bible for Ishikari, a workflow where AI agents
+("ants") work in parallel to complete a task.
 
 ## Goal
 
-Take any task from the user and finish it with many ants working in
-parallel. The user is asked only at fixed gates: task review, requirement
-and plan approval, final review, and escalations. Everything between runs on
-its own.
+Take any task from the user and finish it with many ants working in parallel.
+The user is asked only at fixed gates: task review, requirement and plan
+approval, final review, and escalations. Everything between runs on its own.
 
-Ishikari is a higher-order workflow: a plan can name another saved workflow
-as its job. The build script runs that workflow in place of a worker ant.
+Ishikari is a higher-order workflow: a plan can name another saved workflow as
+its job. The build script runs that workflow in place of a worker ant.
 
 ## Flow
 
 01. **Task in.** The user gives a task. It can be anything.
 
-02. **Task Review Ant** reviews and critiques the task and finds the repo's
-    test command. It also reads the critiques board: each critique that
-    matters for this task becomes one question. The main session asks the
-    user every question with the `/ask-simple` skill. If there are none, the
-    flow goes straight on.
+02. **Task Review Ant** reviews and critiques the task and finds the repo's test
+    command. It also reads the critiques board: each critique that matters for
+    this task becomes one question. The main session asks the user every
+    question with the `/ask-simple` skill. If there are none, the flow goes
+    straight on.
 
 03. **Add Requirement Ant** drafts a requirement with the `/add-requirement`
     skill and writes one plan per worker ant. It shows the requirement can be
     built from the repo's code and docs, and only writes a throwaway spike,
-    outside the repo, when that is not enough. The user approves the
-    requirement and the plans. The main session then commits the requirement
-    and removes the critiques the user answered.
+    outside the repo, when that is not enough. The user approves the requirement
+    and the plans. The main session then commits the requirement and removes the
+    critiques the user answered.
 
-04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks
-    are split so no two edit the same file, and each task has its own test
-    file. Only a task that must edit another task's file lists that task in
-    `after`: it starts as soon as that task is built, on top of its branch.
-    The plan script rejects unknown ids and loops in `after` before anything
-    is built.
+04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
+    split so no two edit the same file, and each task has its own test file.
+    Only a task that must edit another task's file lists that task in `after`:
+    it starts as soon as that task is built, on top of its branch. The plan
+    script rejects unknown ids and loops in `after` before anything is built.
 
-05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a
-    time. It decides on its own, goes as far as it can, and commits all its
-    work, including the docs its change affects, so the user reviews docs
-    with the code. A worker that gets stuck reports why, and that becomes a bug.
+05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a time.
+    It decides on its own, goes as far as it can, and commits all its work,
+    including the docs its change affects, so the user reviews docs with the
+    code. A worker that gets stuck reports why, and that becomes a bug.
 
 06. **Anti-monitor.** The build script itself does this job. It starts every
     ant, so it knows the moment a worker finishes and starts that task's
     inspector at once.
 
-07. **Inspector Ant** checks the task's own work against its plan and runs
-    the tests in the task's worktree. A task built on others is inspected
-    only after those tasks are final; if one of them changed, their final
-    version is merged in first, and if one failed, this task is blocked.
-    For real bugs it also writes the first fix plan, which saves a detective
-    in round 1. Style points go to the final review as notes.
+07. **Inspector Ant** checks the task's own work against its plan and runs the
+    tests in the task's worktree. A task built on others is inspected only after
+    those tasks are final; if one of them changed, their final version is merged
+    in first, and if one failed, this task is blocked. For real bugs it also
+    writes the first fix plan, which saves a detective in round 1. Style points
+    go to the final review as notes.
 
 08. **Detective Ant** takes the bugs still open from round 2 on, finds the cause
     and writes a fix plan, but never writes code. A worker ant builds the fix,
@@ -67,53 +65,54 @@ as its job. The build script runs that workflow in place of a worker ant.
 
 10. **Merger Ant** runs after the final review. It adds the approved tasks'
     commits in a straight line, with no merge commits, in a scratch copy, in
-    dependency order, and tests once. When the
-    approved tasks are exactly the ones tested together, it reuses that
-    result. It refuses a task whose base the user did not approve. A failed
-    merge goes back to the next build as a bug. Main moves forward only as a
-    fast-forward, which git refuses if it would overwrite local edits.
+    dependency order, and tests once. When the approved tasks are exactly the
+    ones tested together, it reuses that result. It refuses a task whose base
+    the user did not approve. A failed merge goes back to the next build as a
+    bug. Main moves forward only as a fast-forward, which git refuses if it
+    would overwrite local edits.
 
 ## Upkeep ants
 
 They run once per finish, on the merged result, before main moves.
 
-- **Janitor ant** finds mess left by the merged tasks and writes a cleanup
-  plan. The next plan stage offers it to the user as a task.
-- **Philosopher ant** questions all the merged work together and keeps its
-  5 best critiques. It only comments, in the critiques board, and never
-  blocks. On the next task, the task review ant turns the ones that matter
-  into questions.
+- **Janitor ant** finds mess left by the merged tasks and writes a cleanup plan.
+  The next plan stage offers it to the user as a task.
+- **Philosopher ant** questions all the merged work together and keeps its 5
+  best critiques. It only comments, in the critiques board, and never blocks. On
+  the next task, the task review ant turns the ones that matter into questions.
 
 ## Rules
 
-- Ants work in parallel wherever nothing forces an order. Fix rounds, tasks
-  in `after` and merges run in order.
+- Ants work in parallel wherever nothing forces an order. Fix rounds, tasks in
+  `after` and merges run in order.
 - Only the main session asks the user questions. Ants report questions and
   escalations in their results.
-- Only worker ants write code. Every other ant reads, plans, reviews,
-  merges or posts to a board.
-- At most 5 worker ants run at the same time, fix workers included. Upkeep
-  ants and the ants of a saved workflow do not count.
-- A worker ant never resets an existing branch: a fix round reuses the
-  task's worktree and branch, so earlier work is never lost.
-- Each run has its own id, and every branch is `ishikari/<run>/<task>`, so
-  a new task never builds on an old task's branch.
+- Only worker ants write code. Every other ant reads, plans, reviews, merges or
+  posts to a board.
+- At most 5 worker ants run at the same time, fix workers included. Upkeep ants
+  and the ants of a saved workflow do not count.
+- A worker ant never resets an existing branch: a fix round reuses the task's
+  worktree and branch, so earlier work is never lost.
+- Each run has its own id, and every branch is `ishikari/<run>/<task>`, so a new
+  task never builds on an old task's branch.
 - Ishikari keeps everything outside the repo, in its state folder
-  `~/.ishikari/<repo>-<hash>/`: the boards, the plans and the worktrees.
-  None of it is ever committed, and the repo's main checkout is touched
-  only by the final fast-forward.
-- Only Ishikari's board tool, [`tools/ishikari.py`](tools/ishikari.py),
-  writes the boards. The scripts keep their rows while a stage runs and
-  hand them to the tool once when the stage ends. The files in
-  [`boards/`](boards/) are the templates it starts from.
+  `~/.ishikari/<repo>-<hash>/`: the boards, the plans and the worktrees. None of
+  it is ever committed, and the repo's main checkout is touched only by the
+  final fast-forward.
+- Only Ishikari's board tool,
+  [`ishikari.py`](../skills/ishikari/scripts/ishikari.py), writes the boards.
+  The scripts keep their rows while a stage runs and hand them to the tool once
+  when the stage ends. The files in
+  [`assets/boards/`](../skills/ishikari/assets/boards/) are the templates it
+  starts from.
 - Each ant thinks only as hard as its job needs: low for the board clerk,
   finisher and upkeep ants; medium for the review, workers, inspectors and
   merger; high for the add requirement ant and the detective.
 
 ## Running Ishikari
 
-A running workflow cannot stop to ask the user, so Ishikari is three
-workflows. The main session answers between them, at the gates above.
+A running workflow cannot stop to ask the user, so Ishikari is three workflows.
+The main session answers between them, at the gates above.
 
 | Workflow          | Stages                      | Ends with            |
 | ----------------- | --------------------------- | -------------------- |
@@ -121,43 +120,39 @@ workflows. The main session answers between them, at the gates above.
 | `ishikari-build`  | build, check, fix, together | tasks to review      |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 
-The scripts: [`ishikari-plan.js`](workflows/ishikari-plan.js),
-[`ishikari-build.js`](workflows/ishikari-build.js) and
-[`ishikari-finish.js`](workflows/ishikari-finish.js).
+The scripts: [`ishikari-plan.js`](../skills/ishikari/scripts/ishikari-plan.js),
+[`ishikari-build.js`](../skills/ishikari/scripts/ishikari-build.js) and
+[`ishikari-finish.js`](../skills/ishikari/scripts/ishikari-finish.js).
 
-The [`/ishikari`](../skills/ishikari/SKILL.md) command runs all four steps
-below and stops only to ask the user.
+The [`/ishikari`](../skills/ishikari/SKILL.md) command runs all four steps below
+and stops only to ask the user.
 
-1. Run `python3 tools/ishikari.py setup <repo>`. It makes the state folder,
-   copies the board templates and prints the run's `env`: repo, state
-   folder, run id, main branch and tool path. Every workflow gets this
-   `env`.
+1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
+   copies the board templates and prints the run's `env`: repo, state folder,
+   run id, main branch and tool path. Every workflow gets this `env`.
 2. Run `ishikari-plan` with `env` and the task. If it returns questions, ask
-   them with `/ask-simple` and run it again with that review and one answer
-   per question; a skipped answer means "use the recommended one". Show the
+   them with `/ask-simple` and run it again with that review and one answer per
+   question; a skipped answer means "use the recommended one". Show the
    requirement and plans for approval. Then commit the requirement and run
-   `ishikari.py boards remove <state> critiques` with the answered critique
-   ids.
+   `ishikari.py boards remove <state> critiques` with the answered critique ids.
 3. Run `ishikari-build` with `env` (plus the plan's `testCommand`) and the
    approved plans. Do the final review with each task's notes, nits and fix
-   history. Escalated or rejected tasks come back in a later build as
-   `bugs`, with the user's guidance.
-4. Run `ishikari-finish` with `env`, the approved tasks, the build's
-   `together` result and any tasks to drop. Failed merges come back in the
-   next build as `bugs`; the janitor's cleanup plan goes to the next plan
-   stage.
+   history. Escalated or rejected tasks come back in a later build as `bugs`,
+   with the user's guidance.
+4. Run `ishikari-finish` with `env`, the approved tasks, the build's `together`
+   result and any tasks to drop. Failed merges come back in the next build as
+   `bugs`; the janitor's cleanup plan goes to the next plan stage.
 
 ## Diagram
 
-Stages run left to right: plan, build, check, fix, finish. Each board
-sits in the stage that first writes to it; all boards live in the state
-folder, outside the repo.
-D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA
-layout by [`render.sh`](render.sh) to a light and a dark SVG.
+Stages run left to right: plan, build, check, fix, finish. Each board sits in
+the stage that first writes to it; all boards live in the state folder, outside
+the repo. D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA layout
+by [`render.sh`](render.sh) to a light and a dark SVG.
 
-Colors: each stage has its own color. Green arrows are approvals, red
-arrows are bugs, gray arrows are normal flow. Dashed arrows only watch or
-comment. The legend in the diagram shows the arrow colors.
+Colors: each stage has its own color. Green arrows are approvals, red arrows are
+bugs, gray arrows are normal flow. Dashed arrows only watch or comment. The
+legend in the diagram shows the arrow colors.
 
 ```d2
 # Colors live in vars. render.sh swaps them for the dark version.
@@ -327,9 +322,9 @@ Animated version, one stage every 6 seconds:
 [`ishikari-animated.d2`](ishikari-animated.d2).
 
 Car tour, one task driven slowly along the exact path it takes:
-[`ishikari-flow.svg`](ishikari-flow.svg), built by [`flow.py`](flow.py).
-Open it in a browser; it needs its script to run. It drives two routes: a
-bug fixed on the first try, and a stuck worker escalated after 3 tries. The
-−, pause and + buttons, or the keys `+`, `-` and space, change speed live.
-Click a block to see only its arrows and the blocks they join; click it
-again, click empty space or press Esc to go back to the tour.
+[`ishikari-flow.svg`](ishikari-flow.svg), built by [`flow.py`](flow.py). Open it
+in a browser; it needs its script to run. It drives two routes: a bug fixed on
+the first try, and a stuck worker escalated after 3 tries. The −, pause and +
+buttons, or the keys `+`, `-` and space, change speed live. Click a block to see
+only its arrows and the blocks they join; click it again, click empty space or
+press Esc to go back to the tour.

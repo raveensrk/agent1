@@ -7,7 +7,8 @@ tables stay aligned and no row is lost.
 
   ishikari.py setup <repo>
       Make the state folder for <repo> and print the run's env as JSON:
-      {repo, state, run, main, tool}. Everything Ishikari keeps (boards,
+      {repo, state, run, main, tool, workflows}. workflows holds the
+      absolute paths of the plan, build and finish scripts. Everything Ishikari keeps (boards,
       plans, worktrees) lives in the state folder, outside the repo, so
       none of it is ever committed.
 
@@ -34,7 +35,7 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES = os.path.join(os.path.dirname(HERE), "boards")
+TEMPLATES = os.path.join(os.path.dirname(HERE), "assets", "boards")
 BOARDS = ("bulletin", "bounty", "critiques")
 
 
@@ -77,6 +78,7 @@ def setup(repo):
         "run": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         "main": main_branch(top),
         "tool": os.path.abspath(__file__),
+        "workflows": {k: os.path.join(HERE, f"ishikari-{k}.js") for k in ("plan", "build", "finish")},
     }
     print(json.dumps(env, indent=2))
 
