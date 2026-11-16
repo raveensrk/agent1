@@ -44,11 +44,6 @@ worker ant's job: the worker runs it as its plan.
      for the user's final review.
    - Bugs: posts them to the bug bounty board.
 
-   Beside each inspector, a **philosopher ant** questions and critiques the
-   task's own work. It only comments, in
-   [`boards/critiques.md`](boards/critiques.md), and never blocks. The add
-   requirement ant reads the critiques when it writes the next plans.
-
 8. **Detective ant** is spawned while the bug bounty board is non-zero. It
    debugs and finds the cause, but never writes code. It writes a fix plan
    and a worker ant builds the fix. When the worker has built it, the build
@@ -69,6 +64,10 @@ worker ant's job: the worker runs it as its plan.
 - **Janitor ant** finds mess in the codebase after each task is done. It
   writes a cleanup plan, which goes into the next build run for a worker ant.
 - **Librarian ant** updates the docs after the merge.
+- **Philosopher ant** questions and critiques all the merged work together,
+  once per run. It only comments, in
+  [`boards/critiques.md`](boards/critiques.md), and never blocks. The add
+  requirement ant reads the critiques when it writes the next plans.
 
 ## Rules
 
@@ -193,9 +192,7 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
-  philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${check-line}}
   monitor -> inspector: spawn per built\ntask or fix {class: flow}
-  monitor -> philosopher: spawn beside\ninspector {class: flow}
 }
 
 fix: 4. Fix {
@@ -221,6 +218,8 @@ always_on: Upkeep ants (after merge) {
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
   librarian: Librarian ant\nupdates docs {class: node; style.stroke: ${always-line}}
+  philosopher: Philosopher ant\ncritiques all merged work {class: node; style.stroke: ${always-line}}
+  philosopher -> critiques: critique {class: flow; style.stroke-dash: 3}
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
 }
 
@@ -239,7 +238,6 @@ user -> finish.merger: approved {class: ok}
 finish.merger -> build.bulletin: merge, set "done" {class: ok}
 finish.merger -> fix.bounty: merge broke main {class: bug}
 finish.merger -> always_on: then {class: flow}
-check.philosopher -> always_on.critiques: critique {class: flow; style.stroke-dash: 3}
 always_on.janitor -> plan.plans: cleanup plan for\nnext build {class: flow; style.stroke-dash: 3}
 
 legend: Legend {

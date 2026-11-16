@@ -38,9 +38,6 @@ steps: {
     check.monitor.style.opacity: 1
     check.inspector.style.opacity: 1
     check.(monitor -> inspector)[0].style.opacity: 1
-    check.philosopher.style.opacity: 1
-    check.(monitor -> philosopher)[0].style.opacity: 1
-    (check.philosopher -> always_on.critiques)[0].style.opacity: 1
     (check.monitor -> build.bulletin)[0].style.opacity: 1
     (check.inspector -> build.bulletin)[0].style.opacity: 1
   }
@@ -68,6 +65,8 @@ steps: {
     always_on.janitor.style.opacity: 1
     always_on.librarian.style.opacity: 1
     always_on.critiques.style.opacity: 1
+    always_on.philosopher.style.opacity: 1
+    always_on.(philosopher -> critiques)[0].style.opacity: 1
     (always_on.janitor -> plan.plans)[0].style.opacity: 1
     (finish.merger -> always_on)[0].style.opacity: 1
     (always_on.critiques -> plan.aara)[0].style.opacity: 1

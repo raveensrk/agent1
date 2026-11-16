@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merger ant merges approved tasks, then the janitor and librarian ants run once',
+  description: 'Ishikari stage 3: merger ant merges approved tasks, then the janitor, librarian and philosopher ants run once',
   whenToUse: 'After the user approves tasks in their final review of ishikari-build.',
   phases: [
     { title: 'Merge', detail: 'one merger ant merges every approved task in order' },
-    { title: 'Upkeep', detail: 'janitor and librarian ants, in parallel' },
+    { title: 'Upkeep', detail: 'janitor, librarian and philosopher ants, in parallel' },
   ],
 }
 
@@ -74,6 +74,17 @@ files. Return the plan, or "none" if nothing needs cleaning.`,
 Update the docs for the tasks just merged (${merged.join(', ')}). Change docs
 only, and commit them.`,
     { label: 'librarian-ant', phase: 'Upkeep', effort: 'low' },
+  ),
+  // One philosopher looks at all the merged work together, once per run.
+  () => agent(
+    `You are the philosopher ant of the Ishikari workflow. Repo: ${repo}.
+Question and critique the work just merged (${merged.join(', ')}) as a whole:
+design, scope, missing cases, how the tasks fit together. Short, concrete
+questions only. Add one row per critique to ${repo}/boards/critiques.md
+(Target | Critique | Time), and commit only that file. The librarian ant may
+commit at the same time: if git says the index is locked, wait a moment and
+retry. Never block or change anything else.`,
+    { label: 'philosopher-ant', phase: 'Upkeep' },
   ),
 ]) : ['none']
 

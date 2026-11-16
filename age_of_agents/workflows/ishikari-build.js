@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'After the user approves the plans from ishikari-plan. Ends with tasks awaiting the user\'s final review.',
   phases: [
     { title: 'Build', detail: 'worker ants, max 5 at once, one worktree each' },
-    { title: 'Check', detail: 'inspector and philosopher ants per built task' },
+    { title: 'Check', detail: 'inspector ant per built task' },
     { title: 'Fix', detail: 'detective ant plans, worker ant builds, up to 3 tries' },
     { title: 'Boards', detail: 'one board write at the end' },
   ],
@@ -50,18 +50,11 @@ const FIX_PLAN = {
   required: ['cause', 'plan'],
 }
 
-const CRITIQUES = {
-  type: 'object',
-  properties: { critiques: { type: 'array', items: { type: 'string' } } },
-  required: ['critiques'],
-}
-
 const { repo, plans = [], bugs = [] } = args
 
 // Board rows, keyed by their first cell. Only the script writes them.
 const bulletin = {}
 const bounty = {}
-const critiques = []
 const setRow = (board, key, cells) => { board[key] = [key, ...cells] }
 
 // Worker limit: at most MAX_WORKERS worker ants at once, fix workers included.
@@ -98,16 +91,6 @@ Review branch ${branch} against main and its plan ${repo}/.ishikari/plans/${id}.
 Run its tests. List real bugs only, each with how to see it. Change no files.`,
     { label: `inspector-ant:${id}`, phase: 'Check', schema: INSPECTION },
   )
-}
-
-// The philosopher critiques each built branch alongside the inspector.
-function philosopher(id, branch, base) {
-  return agent(
-    `You are the philosopher ant of the Ishikari workflow. Repo: ${repo}.
-Question and critique branch ${branch} against ${base}: design, scope,
-missing cases. Work from ${base} is not part of this task. Short, concrete questions only. Change no files.`,
-    { label: `philosopher-ant:${id}`, phase: 'Check', schema: CRITIQUES },
-  ).then(r => { if (r) r.critiques.forEach(c => critiques.push([id, c])) })
 }
 
 // history: earlier rounds on this task, so the detective never repeats a
@@ -177,7 +160,7 @@ async function runTask(p) {
     return finish(id, branch, await fixLoop(id, branch, [bug]))
   }
   setRow(bulletin, id, ['inspecting', 'inspector ant'])
-  const [check] = await Promise.all([inspect(id, branch), philosopher(id, branch, base)])
+  const check = await inspect(id, branch)
   const found = check ? check.bugs : ['inspector ant died']
   if (!found.length) return finish(id, branch, { bugs: [], tries: 0 })
   found.forEach(b => setRow(bounty, b, [id, 'open', '0']))
@@ -202,10 +185,7 @@ boards/bulletin.md (Task | Status | Ant | Time; Time is "-"):
 ${table(Object.values(bulletin).map(r => [...r, '-']))}
 
 boards/bounty.md (Bug | Task | Status | Tries):
-${table(Object.values(bounty)) || '(no rows)'}
-
-boards/critiques.md (Target | Critique | Time; Time is "-"):
-${table(critiques.map(r => [...r, '-'])) || '(no rows)'}`,
+${table(Object.values(bounty)) || '(no rows)'}`,
   { label: 'board-clerk', phase: 'Boards', effort: 'low' },
 )
 
