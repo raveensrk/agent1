@@ -37,7 +37,8 @@ arguments and run them inside itself.
    bug it escalates to the user.
 9. **Merger ant** runs after the user approves a task on the bulletin
    board. It merges the worker's branch into main and sets the status to
-   `done`.
+   `done`. If the merge breaks main, it posts a bug to the bug bounty
+   board, and the detective ant fixes it like any other bug.
 
 ## Always-on ants
 
@@ -58,7 +59,8 @@ arguments and run them inside itself.
   [`boards/bounty.md`](boards/bounty.md) and
   [`boards/critiques.md`](boards/critiques.md).
 - At most 5 ant workers run at the same time.
-- One workflow script starts and connects all the ants.
+- One workflow script, kept next to this file, starts and connects all
+  the ants.
 
 ## Diagram
 
@@ -69,22 +71,25 @@ D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA layout:
 direction: down
 
 task: Task {shape: oval}
-user: User (me) {shape: person}
+user: User (me) {shape: person; width: 80; height: 80}
 
 arta: ARTA\nAnt-Review-Task-Agent
 aara: AARA\nAnt-Add-Requirement-Agent
 plan: Worker plans\n(temporary area) {shape: page}
 aw: Ant Workers (AW)\none worktree each {style.multiple: true}
 
-bulletin: Bulletin board {shape: cylinder}
-bounty: Bug bounty board {shape: cylinder}
 
 monitor: Anti-monitor ant
 inspector: Inspector ant
 detective: Detective ant
 
 merger: Merger ant
-critiques: Critiques board {shape: cylinder}
+
+boards: Boards (files in boards/) {
+  bulletin: Bulletin board {shape: cylinder}
+  bounty: Bug bounty board {shape: cylinder}
+  critiques: Critiques board {shape: cylinder}
+}
 
 always_on: Always-on ants {
   janitor: Janitor ant\ncleans code after each task
@@ -98,19 +103,20 @@ arta -> aara: approved
 aara <-> user: approve requirement
 aara -> plan: commit requirement, write plans
 plan -> aw: start in parallel
-aw -> bulletin: post "built"
-monitor -> bulletin: watch {style.stroke-dash: 3}
+aw -> boards.bulletin: post "built"
+monitor -> boards.bulletin: watch {style.stroke-dash: 3}
 monitor -> inspector: spawn per completed task
-inspector -> bulletin: no bugs: "awaiting review"
-inspector -> bounty: bugs found
-bounty -> detective: spawn when non-zero
+inspector -> boards.bulletin: no bugs: "awaiting review"
+inspector -> boards.bounty: bugs found
+boards.bounty -> detective: spawn when non-zero
 detective -> inspector: fixed, re-inspect
-detective -> bounty: update status
+detective -> boards.bounty: update status
 detective -> user: escalate after 3 failed tries
-bulletin -> user: final review
+boards.bulletin -> user: final review
 user -> merger: approved
-merger -> bulletin: merge, set "done"
-always_on.philosopher -> critiques: critique {style.stroke-dash: 3}
+merger -> boards.bulletin: merge, set "done"
+merger -> boards.bounty: merge broke main
+always_on.philosopher -> boards.critiques: critique {style.stroke-dash: 3}
 ```
 
 ![Ishikari workflow](ishikari.svg)
