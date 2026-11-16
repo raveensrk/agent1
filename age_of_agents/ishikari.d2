@@ -63,7 +63,7 @@ check: 3. Check {
   top: 0
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
-  monitor: Anti-monitor ant {class: node; style.stroke: ${check-line}}
+  monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
   monitor -> inspector: spawn per\ncompleted task {class: flow}
 }
@@ -89,7 +89,7 @@ always_on: Always-on ants {
   left: 1300
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  janitor: Janitor ant\ncleans code after each task {class: node; style.stroke: ${always-line}}
+  janitor: Janitor ant\nplans cleanup after each task {class: node; style.stroke: ${always-line}}
   librarian: Librarian ant\nupdates docs after each task {class: node; style.stroke: ${always-line}}
   philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${always-line}}
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}

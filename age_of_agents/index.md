@@ -48,8 +48,8 @@ worker ant's job: the worker runs it as its plan.
 
 ## Always-on ants
 
-- **Janitor ant** cleans and maintains the codebase after each task is
-  done.
+- **Janitor ant** finds mess in the codebase after each task is done. It
+  writes a cleanup plan, and a worker ant builds it.
 - **Librarian ant** maintains the docs after each task is done.
 - **Philosopher ant** questions and critiques ongoing work at any time. It
   only comments, in [`boards/critiques.md`](boards/critiques.md); it never
@@ -73,6 +73,31 @@ worker ant's job: the worker runs it as its plan.
   writes, and others wait until it lets go. No update is lost.
 - One workflow script, kept next to this file, starts and connects all
   the ants.
+
+## Running Ishikari
+
+A running workflow cannot stop to ask the user, so Ishikari is three
+workflows. The user answers between them, at the same points the flow above
+asks.
+
+| Workflow                                          | Stages            | Ends with                   |
+| ------------------------------------------------- | ----------------- | --------------------------- |
+| [`ishikari-plan`](workflows/ishikari-plan.js)     | Plan              | review, requirement, plans  |
+| [`ishikari-build`](workflows/ishikari-build.js)   | Build, Check, Fix | tasks for final review      |
+| [`ishikari-finish`](workflows/ishikari-finish.js) | Finish, upkeep    | merges, new bugs, critiques |
+
+1. Run `ishikari-plan` with the task. If the review has questions, ask them
+   with `/ask-simple` and run it again with the answers. Then the user
+   approves the requirement and the plans, and the main session commits the
+   requirement.
+2. Run `ishikari-build` with the approved plans. The user does the final
+   review and handles any escalated tasks.
+3. Run `ishikari-finish` with the approved tasks. Bugs from a broken merge go
+   into the next `ishikari-build` run.
+
+The anti-monitor ant is the build script itself: when a worker ant finishes,
+the script starts that task's inspector ant at once. The script also holds
+the board lock and the 5-worker limit.
 
 ## Diagram
 
@@ -151,7 +176,7 @@ check: 3. Check {
   top: 0
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
-  monitor: Anti-monitor ant {class: node; style.stroke: ${check-line}}
+  monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
   monitor -> inspector: spawn per\ncompleted task {class: flow}
 }
@@ -177,7 +202,7 @@ always_on: Always-on ants {
   left: 1300
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  janitor: Janitor ant\ncleans code after each task {class: node; style.stroke: ${always-line}}
+  janitor: Janitor ant\nplans cleanup after each task {class: node; style.stroke: ${always-line}}
   librarian: Librarian ant\nupdates docs after each task {class: node; style.stroke: ${always-line}}
   philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${always-line}}
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
