@@ -1,71 +1,110 @@
+# Colors live in vars. render.sh swaps them for the dark version.
+vars: {
+  plan-fill: "#DBEAFE"
+  plan-line: "#2563EB"
+  build-fill: "#DCFCE7"
+  build-line: "#16A34A"
+  check-fill: "#FEF3C7"
+  check-line: "#D97706"
+  fix-fill: "#FFE4E6"
+  fix-line: "#E11D48"
+  finish-fill: "#EDE9FE"
+  finish-line: "#7C3AED"
+  always-fill: "#F1F5F9"
+  always-line: "#64748B"
+  node-fill: "#FFFFFF"
+  text: "#0F172A"
+  bug: "#DC2626"
+  ok: "#16A34A"
+  flow: "#475569"
+}
+
+classes: {
+  node: {style: {fill: ${node-fill}; font-color: ${text}; stroke-width: 2}}
+  bug: {style: {stroke: ${bug}; font-color: ${bug}; stroke-width: 2}}
+  ok: {style: {stroke: ${ok}; font-color: ${ok}; stroke-width: 2}}
+  flow: {style: {stroke: ${flow}; font-color: ${flow}}}
+}
+
 direction: down
 
-user: User (me) {shape: person; width: 80; height: 80}
+user: User (me) {
+  shape: person
+  width: 80
+  height: 80
+  style: {fill: "#FDE68A"; stroke: "#B45309"; font-color: ${text}}
+}
 
 plan: 1. Plan {
   left: 0
   top: 0
   direction: right
-  task: Task {shape: oval}
-  arta: ARTA\nAnt-Review-Task-Agent
-  aara: AARA\nAnt-Add-Requirement-Agent
-  plans: Worker plans\n(temporary area) {shape: page}
-  task -> arta: review
-  arta -> aara: approved
-  aara -> plans: commit requirement,\nwrite plans
+  style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
+  task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
+  arta: ARTA\nAnt-Review-Task-Agent {class: node; style.stroke: ${plan-line}}
+  aara: AARA\nAnt-Add-Requirement-Agent {class: node; style.stroke: ${plan-line}}
+  plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
+  task -> arta: review {class: flow}
+  arta -> aara: approved {class: ok}
+  aara -> plans: commit requirement,\nwrite plans {class: flow}
 }
 
 build: 2. Build {
   left: 0
   top: 560
-  aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true}
-  bulletin: Bulletin board {shape: cylinder}
-  aw -> bulletin: post "built"
+  style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
+  aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
+  bulletin: Bulletin board {shape: cylinder; class: node; style.stroke: ${build-line}}
+  aw -> bulletin: post "built" {class: flow}
 }
 
 check: 3. Check {
   left: 0
   top: 1060
   direction: right
-  monitor: Anti-monitor ant
-  inspector: Inspector ant
-  monitor -> inspector: spawn per\ncompleted task
+  style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
+  monitor: Anti-monitor ant {class: node; style.stroke: ${check-line}}
+  inspector: Inspector ant {class: node; style.stroke: ${check-line}}
+  monitor -> inspector: spawn per\ncompleted task {class: flow}
 }
 
 fix: 4. Fix {
   left: 0
   top: 1320
   direction: right
-  bounty: Bug bounty board {shape: cylinder}
-  detective: Detective ant\nplans fixes, writes no code
-  bounty -> detective: spawn
+  style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
+  bounty: Bug bounty board {shape: cylinder; class: node; style.stroke: ${fix-line}}
+  detective: Detective ant\nplans fixes, writes no code {class: node; style.stroke: ${fix-line}}
+  bounty -> detective: spawn {class: bug}
 }
 
 finish: 5. Finish {
   left: 0
   top: 1660
-  merger: Merger ant
+  style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
+  merger: Merger ant {class: node; style.stroke: ${finish-line}}
 }
 
 always_on: Always-on ants {
-  janitor: Janitor ant\ncleans code after each task
-  librarian: Librarian ant\nupdates docs after each task
-  philosopher: Philosopher ant\ncritiques, never blocks
-  critiques: Critiques board {shape: cylinder}
-  philosopher -> critiques: critique {style.stroke-dash: 3}
+  style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
+  janitor: Janitor ant\ncleans code after each task {class: node; style.stroke: ${always-line}}
+  librarian: Librarian ant\nupdates docs after each task {class: node; style.stroke: ${always-line}}
+  philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${always-line}}
+  critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
+  philosopher -> critiques: critique {class: flow; style.stroke-dash: 3}
 }
 
-plan.arta <-> user: critique, /ask-simple
-plan.aara <-> user: approve requirement
-plan.plans -> build.aw: start in parallel
-check.monitor -> build.bulletin: watch {style.stroke-dash: 3}
-check.inspector -> build.bulletin: no bugs
-check.inspector -> fix.bounty: bugs found
-fix.detective -> build.aw: fix plan
-fix.detective -> check.inspector: re-inspect
-fix.detective -> user: escalate after 3 tries
-build.bulletin -> user: final review
-build.aw -> fix.bounty: stuck
-user -> finish.merger: approved
-finish.merger -> build.bulletin: merge, set "done"
-finish.merger -> fix.bounty: merge broke main
+plan.arta <-> user: critique, /ask-simple {class: flow}
+plan.aara <-> user: approve requirement {class: ok}
+plan.plans -> build.aw: start in parallel {class: flow}
+check.monitor -> build.bulletin: watch {class: flow; style.stroke-dash: 3}
+check.inspector -> build.bulletin: no bugs {class: ok}
+check.inspector -> fix.bounty: bugs found {class: bug}
+fix.detective -> build.aw: fix plan {class: flow}
+fix.detective -> check.inspector: re-inspect {class: flow}
+fix.detective -> user: escalate after 3 tries {class: bug}
+build.bulletin -> user: final review {class: ok}
+build.aw -> fix.bounty: stuck {class: bug}
+user -> finish.merger: approved {class: ok}
+finish.merger -> build.bulletin: merge, set "done" {class: ok}
+finish.merger -> fix.bounty: merge broke main {class: bug}
