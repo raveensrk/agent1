@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a scratch copy, update docs, move main forward, then janitor and philosopher ants',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, move main forward, run janitor and philosopher ants',
   whenToUse: 'After the user approves tasks in their final review of ishikari-build.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'librarian, janitor and philosopher ants, in parallel' },
+    { title: 'Upkeep', detail: 'janitor and philosopher ants, in parallel' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -23,7 +23,7 @@ export const meta = {
 // The repo's main checkout is touched once, at the end, by a fast-forward
 // that git refuses if it would overwrite anything.
 
-const EFFORT = { merger: 'medium', librarian: 'low', janitor: 'low', philosopher: 'low', finisher: 'low' }
+const EFFORT = { merger: 'medium', janitor: 'low', philosopher: 'low', finisher: 'low' }
 
 const { env = {}, approved = [], together = null, drop = [] } = args
 const bad = []
@@ -99,13 +99,16 @@ Work only in a scratch worktree: ${scratchTree} on branch ${scratch}.
 If that worktree or branch exists, remove them first
 (\`git -C ${env.repo} worktree remove --force ${scratchTree}\`, \`git -C ${env.repo} branch -D ${scratch}\`).
 ${fast}Create it with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${env.main}\`.
-Merge these branches into it with \`git merge --no-edit\`, one at a time, in this order:
+Add each task's own commits on top, in a straight line with no merge commits,
+one task at a time, in this order:
 ${order.map(t => `- ${t.id}: ${t.branch}${(t.after || []).length ? ` (built on ${t.after.join(', ')})` : ''}`).join('\n')}
 A task built on other tasks needs them. If one of them was not merged here and is
 not already in ${env.main} (\`git -C ${env.repo} merge-base --is-ancestor <its branch> ${env.main}\`;
 its branch is named like the task's, with its own id), skip the task and report it
 as "blocked".
-If a merge conflicts, run \`git merge --abort\` and report "conflict" with the files.
+For each, run \`git cherry-pick --empty=drop $(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>)\`
+inside the worktree. If it conflicts, run \`git cherry-pick --abort\`, reset the
+scratch branch to where it was before this task, and report "conflict" with the files.
 After all merges, ${tests} once inside ${scratchTree}. If they fail, find the first
 task whose merge makes them fail (rebuild from ${env.main} and test after each
 merge), report it as "tests failed", leave it and every task built on it out, and
@@ -133,14 +136,7 @@ let cleanup = null
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
-  const [, jan] = await parallel([
-    () => agent(
-      `You are the librarian ant of the Ishikari workflow.
-${where}
-Update the docs for the tasks just merged (${names}) inside ${scratchTree}, on
-branch ${scratch}. Change docs only, and commit them there. Never touch ${env.main}.`,
-      { label: 'librarian-ant', phase: 'Upkeep', effort: EFFORT.librarian },
-    ),
+  const [jan] = await parallel([
     () => agent(
       `You are the janitor ant of the Ishikari workflow.
 ${where}

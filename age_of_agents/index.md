@@ -39,7 +39,8 @@ as its job. The build script runs that workflow in place of a worker ant.
 
 05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a
     time. It decides on its own, goes as far as it can, and commits all its
-    work. A worker that gets stuck reports why, and that becomes a bug.
+    work, including the docs its change affects, so the user reviews docs
+    with the code. A worker that gets stuck reports why, and that becomes a bug.
 
 06. **Anti-monitor.** The build script itself does this job. It starts every
     ant, so it knows the moment a worker finishes and starts that task's
@@ -49,23 +50,24 @@ as its job. The build script runs that workflow in place of a worker ant.
     the tests in the task's worktree. A task built on others is inspected
     only after those tasks are final; if one of them changed, their final
     version is merged in first, and if one failed, this task is blocked.
-    Real bugs go to the fix loop; style points go to the final review as
-    notes.
+    For real bugs it also writes the first fix plan, which saves a detective
+    in round 1. Style points go to the final review as notes.
 
-08. **Detective Ant** takes the open bugs, finds the cause and writes a fix
-    plan, but never writes code. A worker ant builds the fix, and the
-    inspector re-checks each open bug by its id. Each round sees every
+08. **Detective Ant** takes the bugs still open from round 2 on, finds the cause
+    and writes a fix plan, but never writes code. A worker ant builds the fix,
+    and the inspector re-checks each open bug by its id. Each round sees every
     earlier round's cause, plan and outcome, so the detective never repeats a
-    failed idea. A bug still open after 3 tries escalates the task to the
-    user. An ant that crashes is retried once and never counts as a bug.
+    failed idea. A bug still open after 3 tries escalates the task to the user.
+    An ant that crashes is retried once and never counts as a bug.
 
-09. **Together test.** When every task is done, a merger ant merges all
-    passing tasks in a scratch copy and runs the tests once. A task that
-    clashes takes in the tasks it clashes with and goes back through the fix
-    loop, and the test runs once more. The user then does the final review.
+09. **Together test.** When every task is done, a merger ant merges all passing
+    tasks in a straight line in a scratch copy and runs the tests once. A task
+    that clashes takes in the tasks it clashes with and goes back through the
+    fix loop, and the test runs once more. The user then does the final review.
 
-10. **Merger Ant** runs after the final review. It merges the approved
-    tasks in a scratch copy, in dependency order, and tests once. When the
+10. **Merger Ant** runs after the final review. It adds the approved tasks'
+    commits in a straight line, with no merge commits, in a scratch copy, in
+    dependency order, and tests once. When the
     approved tasks are exactly the ones tested together, it reuses that
     result. It refuses a task whose base the user did not approve. A failed
     merge goes back to the next build as a bug. Main moves forward only as a
@@ -75,7 +77,6 @@ as its job. The build script runs that workflow in place of a worker ant.
 
 They run once per finish, on the merged result, before main moves.
 
-- **Librarian ant** updates the docs and commits them with the merge.
 - **Janitor ant** finds mess left by the merged tasks and writes a cleanup
   plan. The next plan stage offers it to the user as a task.
 - **Philosopher ant** questions all the merged work together and keeps its
@@ -123,6 +124,9 @@ workflows. The main session answers between them, at the gates above.
 The scripts: [`ishikari-plan.js`](workflows/ishikari-plan.js),
 [`ishikari-build.js`](workflows/ishikari-build.js) and
 [`ishikari-finish.js`](workflows/ishikari-finish.js).
+
+The [`/ishikari`](../skills/ishikari/SKILL.md) command runs all four steps
+below and stops only to ask the user.
 
 1. Run `python3 tools/ishikari.py setup <repo>`. It makes the state folder,
    copies the board templates and prints the run's `env`: repo, state
@@ -211,7 +215,7 @@ build: 2. Build {
   left: 560
   top: 0
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
-  aw: Worker Ants\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
+  aw: Worker Ants\ncode, tests and docs,\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
   bulletin: Bulletin board {shape: cylinder; class: node; style.stroke: ${build-line}}
   aw -> bulletin: built {class: flow}
 }
@@ -234,7 +238,7 @@ fix: 4. Fix {
   direction: down
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
   bounty: Bug bounty board {shape: cylinder; class: node; style.stroke: ${fix-line}}
-  detective: Detective ant\nplans fixes, writes no code {class: node; style.stroke: ${fix-line}}
+  detective: Detective ant\nplans fixes from round 2,\nwrites no code {class: node; style.stroke: ${fix-line}}
   bounty -> detective: spawn {class: bug}
 }
 
@@ -242,7 +246,7 @@ finish: 5. Finish {
   left: 2700
   top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
-  merger: Merger ant\nmerges in a scratch copy,\ntests once {class: node; style.stroke: ${finish-line}}
+  merger: Merger ant\nstraight line in a\nscratch copy, tests once {class: node; style.stroke: ${finish-line}}
   finisher: Finisher ant\nmoves main forward,\ncleans up {class: node; style.stroke: ${finish-line}}
 }
 
@@ -251,7 +255,6 @@ always_on: Upkeep ants (before main moves) {
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
-  librarian: Librarian ant\nupdates docs in the merge {class: node; style.stroke: ${always-line}}
   philosopher: Philosopher ant\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
   philosopher -> critiques: critique {class: flow; style.stroke-dash: 3}
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
@@ -263,7 +266,7 @@ plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> build.bulletin: work together {class: ok}
 check.together -> fix.bounty: clash {class: bug}
-check.inspector -> fix.bounty: bugs found {class: bug}
+check.inspector -> fix.bounty: bugs found,\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
 fix.detective -> user: escalate after\n3 tries on a bug {class: bug}

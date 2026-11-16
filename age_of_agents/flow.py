@@ -48,7 +48,7 @@ ROUTES = [
             ["(check.together -> build.bulletin)[0]", False, "They work together. Ready for your review."],
             ["(build.bulletin -> user)[0]", False, "You do the final review."],
             ["(user -> finish.merger)[0]", False, "You approve. The merger ant merges in a scratch copy."],
-            ["(finish.merger -> always_on)[0]", False, "The librarian, janitor and philosopher ants run."],
+            ["(finish.merger -> always_on)[0]", False, "The janitor and philosopher ants run."],
             ["always_on.(philosopher -> critiques)[0]", False, "The philosopher keeps its 5 best critiques."],
             ["(always_on -> finish.finisher)[0]", False, "Then the finisher ant moves main forward."],
             ["(finish.finisher -> build.bulletin)[0]", False, "Main moved. Status: done."],

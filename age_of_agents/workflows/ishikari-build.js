@@ -60,6 +60,8 @@ const INSPECTION = {
     bugs: { type: 'array', items: { type: 'string' }, description: 'real bugs in this task\'s own work, each with how to see it' },
     nits: { type: 'array', items: { type: 'string' }, description: 'style points and small doubts; never fixed in the loop' },
     baseProblems: { type: 'array', items: { type: 'string' }, description: 'problems in code that came from the branches this task is built on' },
+    cause: { type: 'string', description: 'first check only, if there are bugs: their cause' },
+    plan: { type: 'string', description: 'first check only, if there are bugs: a complete fix plan a worker ant can build without questions' },
   },
   required: ['bugs'],
 }
@@ -143,6 +145,7 @@ If that worktree exists, use it. Else, if the branch exists, run
 Never reset, rebase or recreate an existing branch: it holds earlier work.
 The task's plan is ${task.plan}.
 ${job}
+Also update the docs your change affects, inside this task.
 ${tests} inside your worktree before you finish. Commit all your work on
 ${task.branch}, even unfinished work. Return status "stuck" if you cannot
 finish, with what blocked you in notes.`,
@@ -177,7 +180,9 @@ list its problems in baseProblems, never in bugs. This task's own commits are
     ? `Re-check these open bugs. For each id, say in "fixed" whether it is fixed now:
 ${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}
 Then list in bugs only NEW real bugs: ones the fix caused, or that break the plan.`
-    : 'List real bugs: behaviour that breaks the plan, or a failing test.'
+    : `List real bugs: behaviour that breaks the plan, or a failing test. If there are
+any, also find their cause and write a complete fix plan for a worker ant; you
+never write code yourself.`
   return agent(
     `You are the inspector ant of the Ishikari workflow.
 ${where}
@@ -186,7 +191,8 @@ ${own}
 ${tests} inside that worktree. Do not copy the repo anywhere else, and do not
 edit tracked files.
 ${ask}
-Put style points and small doubts in nits, not in bugs.`,
+Put style points and small doubts in nits, not in bugs. Check that the docs
+match the change.`,
     { label: `inspector-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.inspector, schema: INSPECTION },
   )
 }
@@ -212,14 +218,15 @@ a worker ant instead. Change no files.`,
 // Fix loop with each bug tracked by id: 3 tries per bug, at most MAX_ROUNDS
 // rounds. A round = detective plans, worker builds, inspector re-checks.
 // Returns an error text if an ant died twice, else null.
-async function fixLoop(task, texts) {
+// firstFix: the inspector's own fix plan for round 1, which saves a detective.
+async function fixLoop(task, texts, firstFix) {
   texts.forEach(t => task.addBug(t))
   for (let round = 1; round <= MAX_ROUNDS; round++) {
     const open = task.bugs.filter(b => b.open)
     if (!open.length || open.some(b => b.tries >= MAX_TRIES)) break
     open.forEach(b => { b.tries++ })
     log(`${task.id}: fix round ${round} for ${open.map(b => b.id).join(', ')}`)
-    const fix = await twice(() => detective(task, open, task.history, round))
+    const fix = round === 1 && firstFix && firstFix.plan ? firstFix : await twice(() => detective(task, open, task.history, round))
     if (!fix) return 'the detective ant died twice'
     const entry = { round, bugs: open.map(b => `${b.id}: ${b.text}`), cause: fix.cause, plan: fix.plan }
     task.history.push(entry)
@@ -376,7 +383,7 @@ async function runTask(task) {
     task.nits.push(...(check.nits || []))
     task.baseProblems.push(...(check.baseProblems || []))
     if (check.bugs.length) {
-      const err = await fixLoop(task, check.bugs)
+      const err = await fixLoop(task, check.bugs, check)
       if (err) return end(task, 'error', [err])
     }
   }
@@ -430,9 +437,12 @@ Work only in a scratch worktree: ${tree} on branch ${branch}.
 Start fresh: if that worktree or branch exists, remove them
 (\`git -C ${env.repo} worktree remove --force ${tree}\`, \`git -C ${env.repo} branch -D ${branch}\`),
 then run \`git -C ${env.repo} worktree add -b ${branch} ${tree} ${env.main}\`.
-Merge these branches into it with \`git merge --no-edit\`, one at a time, in this order:
+Add each task's own commits on top, in a straight line with no merge commits,
+one task at a time, in this order:
 ${list.map(t => `- ${t.id}: ${t.branch}`).join('\n')}
-If a merge conflicts, run \`git merge --abort\`, report "conflict" with the files
+For each, run \`git cherry-pick --empty=drop $(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>)\`
+inside the worktree. If it conflicts, run \`git cherry-pick --abort\`, reset the
+scratch branch to where it was before this task, report "conflict" with the files
 and the ids of the tasks it clashes with, and go on to the next one.
 After all merges, ${tests.toLowerCase()} once inside ${tree}. If they fail, find
 the first task whose merge makes them fail: rebuild the branch from ${env.main}
