@@ -80,11 +80,13 @@ function worker(id, prompt, phase) {
   return workerSlot(() => agent(
     `You are a worker ant of the Ishikari workflow. You cannot ask questions:
 decide on your own and go as far as you can.
-Repo: ${repo}. Work on branch ishikari/${id}; create it from main if missing.
+Repo: ${repo}. Work in your own git worktree of that repo, never in its main
+checkout: \`git -C ${repo} worktree add ${repo}/.ishikari/worktrees/${id} -B ishikari/${id}\`
+(reuse the worktree if it exists, and start the branch from main if it is new).
 ${prompt}
-Commit your work on that branch. Return status "stuck" if you cannot finish,
+Commit your work on branch ishikari/${id}. Leave the worktree in place. Return status "stuck" if you cannot finish,
 with what blocked you in notes.`,
-    { label: `worker-ant:${id}`, phase, isolation: 'worktree', schema: BUILT },
+    { label: `worker-ant:${id}`, phase, schema: BUILT },
   ))
 }
 
