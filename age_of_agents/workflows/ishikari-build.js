@@ -110,11 +110,18 @@ missing cases. Work from ${base} is not part of this task. Short, concrete quest
   ).then(r => { if (r) r.critiques.forEach(c => critiques.push([id, c])) })
 }
 
-function detective(id, branch, bugList) {
+// history: earlier rounds on this task, so the detective never repeats a
+// failed idea. Each: {round, bugs, cause, plan, outcome}.
+function detective(id, branch, bugList, history) {
+  const past = history.map(h => `Round ${h.round}:
+  bugs: ${h.bugs.join('; ')}
+  cause found: ${h.cause}
+  fix plan: ${h.plan}
+  outcome: ${h.outcome}`).join('\n')
   return agent(
     `You are the detective ant of the Ishikari workflow. Repo: ${repo}.
 Branch ${branch} has these bugs:\n- ${bugList.join('\n- ')}
-Debug and find the cause. You never write code: write a complete fix plan
+${past ? `Earlier fix rounds on this task failed:\n${past}\nDo not repeat a cause or plan that already failed. Say why it failed and try a different approach.\n` : ''}Debug and find the cause. You never write code: write a complete fix plan
 for a worker ant instead. Change no files.`,
     { label: `detective-ant:${id}`, phase: 'Fix', schema: FIX_PLAN },
   )
@@ -122,14 +129,18 @@ for a worker ant instead. Change no files.`,
 
 async function fixLoop(id, branch, found) {
   let open = found
+  const history = []
   for (let tries = 1; tries <= MAX_TRIES; tries++) {
     open.forEach(b => setRow(bounty, b, [id, 'fixing', String(tries)]))
-    const fix = await detective(id, branch, open)
-    if (!fix) continue
+    const fix = await detective(id, branch, open, history)
+    if (!fix) { history.push({ round: tries, bugs: open, cause: '-', plan: '-', outcome: 'detective ant died' }); continue }
+    const round = { round: tries, bugs: open, cause: fix.cause, plan: fix.plan }
+    history.push(round)
     const built = await worker(id, `Build this fix plan:\n${fix.plan}`, 'Fix')
-    if (!built || built.status === 'stuck') continue
+    if (!built || built.status === 'stuck') { round.outcome = `worker stuck: ${built ? built.notes : 'worker ant died'}`; continue }
     const check = await inspect(id, branch)
-    if (!check) continue
+    if (!check) { round.outcome = 'inspector ant died'; continue }
+    round.outcome = check.bugs.length ? `still broken: ${check.bugs.join('; ')}` : 'fixed'
     found.filter(b => !check.bugs.includes(b)).forEach(b => setRow(bounty, b, [id, 'fixed', String(tries)]))
     open = check.bugs
     if (!open.length) return { bugs: [], tries }
