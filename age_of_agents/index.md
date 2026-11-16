@@ -10,7 +10,8 @@ parallel. The user is asked only at fixed gates: task review, requirement
 approval, final review and escalation. Everything between runs on its own.
 
 Ishikari is a higher-order workflow: it can take other workflows as
-arguments and run them inside itself.
+arguments and run them inside itself. A workflow given this way becomes an
+ant worker's job: the worker runs it as its plan.
 
 ## Flow
 
@@ -24,7 +25,9 @@ arguments and run them inside itself.
    Workers cannot ask questions, so the plan must be complete and correct.
 5. **AW** (Ant Worker) builds its plan in its own git worktree, in parallel
    with the other workers. It decides on its own and goes as far as it can.
-   When done it posts its status to the bulletin board.
+   When done it posts its status to the bulletin board. A worker that gets
+   stuck posts a bug to the bug bounty board, and the detective plans the
+   rest.
 6. **Anti-monitor ant** starts with the workflow and watches the bulletin
    board. For each completed task it spawns an inspector.
 7. **Inspector ant** inspects and reviews the completed task.
@@ -63,14 +66,15 @@ arguments and run them inside itself.
 - Only ant workers write code or build. Every other ant reads, plans,
   reviews or posts to a board.
 - At most 5 ant workers run at the same time, fix workers included.
+  Always-on ants do not count toward this limit.
 - One workflow script, kept next to this file, starts and connects all
   the ants.
 
 ## Diagram
 
 Stages run top to bottom: plan, build, check, fix, finish. Each board
-sits in the stage that first writes to it. D2 source: [`ishikari.d2`](ishikari.d2),
-rendered with the TALA layout:
+sits in the stage that first writes to it.
+D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA layout:
 `d2 --layout=tala ishikari.d2 ishikari.svg`.
 
 ```d2
@@ -93,7 +97,7 @@ plan: 1. Plan {
 
 build: 2. Build {
   left: 0
-  top: 700
+  top: 560
   aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true}
   bulletin: Bulletin board {shape: cylinder}
   aw -> bulletin: post "built"
@@ -101,7 +105,7 @@ build: 2. Build {
 
 check: 3. Check {
   left: 0
-  top: 1500
+  top: 1060
   direction: right
   monitor: Anti-monitor ant
   inspector: Inspector ant
@@ -110,7 +114,7 @@ check: 3. Check {
 
 fix: 4. Fix {
   left: 0
-  top: 1900
+  top: 1320
   direction: right
   bounty: Bug bounty board {shape: cylinder}
   detective: Detective ant\nplans fixes, writes no code
@@ -119,7 +123,7 @@ fix: 4. Fix {
 
 finish: 5. Finish {
   left: 0
-  top: 2400
+  top: 1660
   merger: Merger ant
 }
 
@@ -141,6 +145,7 @@ fix.detective -> build.aw: fix plan
 fix.detective -> check.inspector: re-inspect
 fix.detective -> user: escalate after 3 tries
 build.bulletin -> user: final review
+build.aw -> fix.bounty: stuck
 user -> finish.merger: approved
 finish.merger -> build.bulletin: merge, set "done"
 finish.merger -> fix.bounty: merge broke main

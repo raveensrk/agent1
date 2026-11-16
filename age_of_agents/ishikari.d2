@@ -17,7 +17,7 @@ plan: 1. Plan {
 
 build: 2. Build {
   left: 0
-  top: 700
+  top: 560
   aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true}
   bulletin: Bulletin board {shape: cylinder}
   aw -> bulletin: post "built"
@@ -25,7 +25,7 @@ build: 2. Build {
 
 check: 3. Check {
   left: 0
-  top: 1500
+  top: 1060
   direction: right
   monitor: Anti-monitor ant
   inspector: Inspector ant
@@ -34,7 +34,7 @@ check: 3. Check {
 
 fix: 4. Fix {
   left: 0
-  top: 1900
+  top: 1320
   direction: right
   bounty: Bug bounty board {shape: cylinder}
   detective: Detective ant\nplans fixes, writes no code
@@ -43,7 +43,7 @@ fix: 4. Fix {
 
 finish: 5. Finish {
   left: 0
-  top: 2400
+  top: 1660
   merger: Merger ant
 }
 
@@ -65,6 +65,7 @@ fix.detective -> build.aw: fix plan
 fix.detective -> check.inspector: re-inspect
 fix.detective -> user: escalate after 3 tries
 build.bulletin -> user: final review
+build.aw -> fix.bounty: stuck
 user -> finish.merger: approved
 finish.merger -> build.bulletin: merge, set "done"
 finish.merger -> fix.bounty: merge broke main
