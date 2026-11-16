@@ -63,4 +63,12 @@ ${repo}/boards/critiques.md. Never block or change anything else.`,
   ),
 ])
 
+// Boards are written in the main checkout; save them so main stays clean.
+await agent(
+  `Board clerk for Ishikari. Repo: ${repo}. Commit only the files under boards/
+on main with the message "chore(boards): update after ishikari run". Commit
+nothing else. If boards/ has no changes, do nothing.`,
+  { label: 'board-clerk:commit', phase: 'Upkeep', effort: 'low' },
+)
+
 return { merged, bugs, cleanupPlan }
