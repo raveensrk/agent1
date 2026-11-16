@@ -1,51 +1,70 @@
 direction: down
 
-task: Task {shape: oval}
 user: User (me) {shape: person; width: 80; height: 80}
 
-arta: ARTA\nAnt-Review-Task-Agent
-aara: AARA\nAnt-Add-Requirement-Agent
-plan: Worker plans\n(temporary area) {shape: page}
-aw: Ant Workers (AW)\none worktree each {style.multiple: true}
+plan: 1. Plan {
+  left: 0
+  top: 0
+  direction: right
+  task: Task {shape: oval}
+  arta: ARTA\nAnt-Review-Task-Agent
+  aara: AARA\nAnt-Add-Requirement-Agent
+  plans: Worker plans\n(temporary area) {shape: page}
+  task -> arta: review
+  arta -> aara: approved
+  aara -> plans: commit requirement,\nwrite plans
+}
 
-
-monitor: Anti-monitor ant
-inspector: Inspector ant
-detective: Detective ant
-
-merger: Merger ant
-
-boards: Boards (files in boards/) {
+build: 2. Build {
+  left: 0
+  top: 700
+  aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true}
   bulletin: Bulletin board {shape: cylinder}
+  aw -> bulletin: post "built"
+}
+
+check: 3. Check {
+  left: 0
+  top: 1500
+  direction: right
+  monitor: Anti-monitor ant
+  inspector: Inspector ant
+  monitor -> inspector: spawn per\ncompleted task
+}
+
+fix: 4. Fix {
+  left: 0
+  top: 1900
+  direction: right
   bounty: Bug bounty board {shape: cylinder}
-  critiques: Critiques board {shape: cylinder}
+  detective: Detective ant\nplans fixes, writes no code
+  bounty -> detective: spawn
+}
+
+finish: 5. Finish {
+  left: 0
+  top: 2400
+  merger: Merger ant
 }
 
 always_on: Always-on ants {
   janitor: Janitor ant\ncleans code after each task
   librarian: Librarian ant\nupdates docs after each task
   philosopher: Philosopher ant\ncritiques, never blocks
+  critiques: Critiques board {shape: cylinder}
+  philosopher -> critiques: critique {style.stroke-dash: 3}
 }
 
-task -> arta: review
-arta <-> user: critique, /ask-simple
-arta -> aara: approved
-aara <-> user: approve requirement
-aara -> plan: commit requirement, write plans
-plan -> aw: start in parallel
-aw -> boards.bulletin: post "built"
-monitor -> boards.bulletin: watch {style.stroke-dash: 3}
-monitor -> inspector: spawn per completed task
-inspector -> boards.bulletin: no bugs: "awaiting review"
-inspector -> boards.bounty: bugs found
-boards.bounty -> detective: spawn when non-zero
-detective -> aw: spawn with fix plan
-aw -> detective: fix built
-detective -> inspector: re-inspect
-detective -> boards.bounty: update status
-detective -> user: escalate after 3 failed tries
-boards.bulletin -> user: final review
-user -> merger: approved
-merger -> boards.bulletin: merge, set "done"
-merger -> boards.bounty: merge broke main
-always_on.philosopher -> boards.critiques: critique {style.stroke-dash: 3}
+plan.arta <-> user: critique, /ask-simple
+plan.aara <-> user: approve requirement
+plan.plans -> build.aw: start in parallel
+check.monitor -> build.bulletin: watch {style.stroke-dash: 3}
+check.inspector -> build.bulletin: no bugs
+check.inspector -> fix.bounty: bugs found
+fix.detective -> build.aw: fix plan
+fix.detective -> check.inspector: re-inspect
+fix.detective -> user: escalate after 3 tries
+build.bulletin -> user: final review
+user -> finish.merger: approved
+finish.merger -> build.bulletin: merge, set "done"
+finish.merger -> fix.bounty: merge broke main
