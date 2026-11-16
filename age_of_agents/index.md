@@ -85,7 +85,7 @@ always_on: Always-on ants {
 task -> arta: review
 arta <-> user: critique, /ask-simple
 arta -> aara: approved
-aara <-> user: requirement, /add-requirement
+aara <-> user: approve requirement
 aara -> plan: commit requirement, write plans
 plan -> aw: start in parallel
 aw -> bulletin: post "built"
