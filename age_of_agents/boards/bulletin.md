@@ -1,10 +1,10 @@
 # Bulletin board
 
-Task status posted by worker ants and the inspector ant.
-One row per task. Update the row in place as the status changes.
+One row per task, as `<run>/<task>`. Only Ishikari's board tool writes this
+table, once at the end of each stage.
 
-Status words, in order: `built`, `inspecting`, `bugs`, `awaiting review`,
-`done`. The merger ant sets `done` after the user approves.
+Status words: `awaiting review`, `escalated`, `blocked`, `error`, `done`,
+`merge failed`, `waiting`, `dropped`.
 
 | Task | Status | Ant | Time |
 | ---- | ------ | --- | ---- |

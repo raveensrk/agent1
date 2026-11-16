@@ -1,10 +1,11 @@
 # Bug bounty board
 
-Bugs posted by the inspector ant, worked by the detective ant.
-One row per bug. Update the row in place as the status changes.
+One row per bug. Bugs are found by the inspector ant and worked by the
+detective ant, who plans the fix, and a worker ant, who builds it. Only
+Ishikari's board tool writes this table, once at the end of each stage.
 
-Status words: `open`, `fixing`, `fixed`, `escalated`.
-After 3 failed tries the detective sets `escalated` and asks the user.
+Status words: `open`, `fixed`, `escalated`. A bug still open after 3 tries
+is escalated to the user.
 
-| Bug | Task | Status | Tries |
-| --- | ---- | ------ | ----- |
+| Id | Task | Bug | Status | Tries |
+| -- | ---- | --- | ------ | ----- |
