@@ -16,23 +16,30 @@ worker ant's job: the worker runs it as its plan.
 ## Flow
 
 1. **Task in.** The workflow receives a task. It can be anything.
+
 2. **Task Review Ant** reviews and critiques the task, then asks
    the user for feedback with the `/ask-simple` skill.
+
 3. **Add Requirement Ant** runs once the task is approved. It
    writes a requirement with the `/add-requirement` skill, asks the user for
    feedback, and commits the requirement after approval.
+
 4. **Plan.** The add requirement ant writes a plan for each worker ant in
    a temporary area. Workers cannot ask questions, so the plan must be
    complete and correct. A plan that edits files another plan creates lists
    that plan in `after`; it waits for it and builds on its branch.
+
 5. **Worker Ant** builds its plan in its own git worktree, in parallel
    with the other workers. It decides on its own and goes as far as it can.
    When done it posts its status to the bulletin board. A worker that gets
    stuck posts a bug to the bug bounty board, and the detective plans the
    rest.
+
 6. **Anti-monitor ant** starts with the workflow and watches the bulletin
    board. For each completed task it spawns an inspector.
+
 7. **Inspector ant** inspects and reviews the completed task.
+
    - No bugs: marks the task complete on the bulletin board. It then waits
      for the user's final review.
    - Bugs: posts them to the bug bounty board.
@@ -41,12 +48,14 @@ worker ant's job: the worker runs it as its plan.
    task's own work. It only comments, in
    [`boards/critiques.md`](boards/critiques.md), and never blocks. The add
    requirement ant reads the critiques when it writes the next plans.
+
 8. **Detective ant** is spawned while the bug bounty board is non-zero. It
    debugs and finds the cause, but never writes code. It writes a fix plan
    and spawns an worker ant to build the fix. When the fix is built, it
    keeps the bounty status updated and hands the fix back to the same
    inspector for re-inspection. After 3 failed tries on a bug it escalates
    to the user.
+
 9. **Merger ant** runs after the user approves a task on the bulletin
    board. It merges the worker's branch into main and sets the status to
    `done`. If the merge breaks main, it posts a bug to the bug bounty
