@@ -1,0 +1,40 @@
+direction: down
+
+task: Task {shape: oval}
+user: User (me) {shape: person}
+
+arta: ARTA\nAnt-Review-Task-Agent
+aara: AARA\nAnt-Add-Requirement-Agent
+plan: Worker plans\n(temporary area) {shape: page}
+aw: Ant Workers (AW)\none worktree each {style.multiple: true}
+
+bulletin: Bulletin board {shape: cylinder}
+bounty: Bug bounty board {shape: cylinder}
+
+monitor: Anti-monitor ant
+inspector: Antspector ant
+detective: Detective ant
+
+always_on: Always-on ants {
+  janitor: Janitor ant\ncleans the codebase
+  librarian: Librarian ant\nmaintains the docs
+  philosopher: Philosopher ant\ncritiques, never blocks
+}
+
+task -> arta: review
+arta <-> user: critique, /ask-simple
+arta -> aara: approved
+aara <-> user: requirement, /add-requirement
+aara -> plan: commit requirement, write plans
+plan -> aw: start in parallel
+aw -> bulletin: post "built"
+monitor -> bulletin: watch {style.stroke-dash: 3}
+monitor -> inspector: spawn per completed task
+inspector -> bulletin: no bugs: "awaiting review"
+inspector -> bounty: bugs found
+bounty -> detective: spawn when non-zero
+detective -> inspector: fixed, re-inspect
+detective -> bounty: update status
+detective -> user: escalate after 3 failed tries
+bulletin -> user: final review
+always_on.philosopher -> aw: critique {style.stroke-dash: 3}
