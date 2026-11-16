@@ -55,7 +55,8 @@ worker ant's job: the worker runs it as its plan.
   writes a cleanup plan, which goes into the next build run for a worker ant.
 - **Librarian ant** maintains the docs after each task is done.
 - **Philosopher ant** questions and critiques each built task, at the same
-  time as its inspector ant. It only comments, in [`boards/critiques.md`](boards/critiques.md); it never
+  time as its inspector ant. It only comments, in
+  [`boards/critiques.md`](boards/critiques.md); it never
   pauses or blocks work. The add requirement ant reads the critiques and
   uses them when it writes the next plans.
 
