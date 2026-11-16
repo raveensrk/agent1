@@ -15,9 +15,12 @@ monitor: Anti-monitor ant
 inspector: Inspector ant
 detective: Detective ant
 
+merger: Merger ant
+critiques: Critiques board {shape: cylinder}
+
 always_on: Always-on ants {
-  janitor: Janitor ant\ncleans the codebase
-  librarian: Librarian ant\nmaintains the docs
+  janitor: Janitor ant\ncleans code after each task
+  librarian: Librarian ant\nupdates docs after each task
   philosopher: Philosopher ant\ncritiques, never blocks
 }
 
@@ -37,4 +40,6 @@ detective -> inspector: fixed, re-inspect
 detective -> bounty: update status
 detective -> user: escalate after 3 failed tries
 bulletin -> user: final review
-always_on.philosopher -> bulletin: critique {style.stroke-dash: 3}
+user -> merger: approved
+merger -> bulletin: merge, set "done"
+always_on.philosopher -> critiques: critique {style.stroke-dash: 3}

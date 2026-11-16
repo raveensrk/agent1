@@ -35,13 +35,18 @@ arguments and run them inside itself.
    debugs and fixes, keeps the bounty status updated, and hands each fix
    back to the same inspector for re-inspection. After 3 failed tries on a
    bug it escalates to the user.
+9. **Merger ant** runs after the user approves a task on the bulletin
+   board. It merges the worker's branch into main and sets the status to
+   `done`.
 
 ## Always-on ants
 
-- **Janitor ant** cleans and maintains the codebase.
-- **Librarian ant** maintains the docs.
+- **Janitor ant** cleans and maintains the codebase after each task is
+  done.
+- **Librarian ant** maintains the docs after each task is done.
 - **Philosopher ant** questions and critiques ongoing work at any time. It
-  only comments; it never pauses or blocks work.
+  only comments, in [`boards/critiques.md`](boards/critiques.md); it never
+  pauses or blocks work.
 
 ## Rules
 
@@ -49,9 +54,11 @@ arguments and run them inside itself.
 - Only ARTA and AARA ask the user questions, plus the detective on
   escalation. Workers never ask.
 - The boards are plain files every ant can read and write:
-  [`boards/bulletin.md`](boards/bulletin.md) and
-  [`boards/bounty.md`](boards/bounty.md).
+  [`boards/bulletin.md`](boards/bulletin.md),
+  [`boards/bounty.md`](boards/bounty.md) and
+  [`boards/critiques.md`](boards/critiques.md).
 - At most 5 ant workers run at the same time.
+- One workflow script starts and connects all the ants.
 
 ## Diagram
 
@@ -76,9 +83,12 @@ monitor: Anti-monitor ant
 inspector: Inspector ant
 detective: Detective ant
 
+merger: Merger ant
+critiques: Critiques board {shape: cylinder}
+
 always_on: Always-on ants {
-  janitor: Janitor ant\ncleans the codebase
-  librarian: Librarian ant\nmaintains the docs
+  janitor: Janitor ant\ncleans code after each task
+  librarian: Librarian ant\nupdates docs after each task
   philosopher: Philosopher ant\ncritiques, never blocks
 }
 
@@ -98,7 +108,9 @@ detective -> inspector: fixed, re-inspect
 detective -> bounty: update status
 detective -> user: escalate after 3 failed tries
 bulletin -> user: final review
-always_on.philosopher -> bulletin: critique {style.stroke-dash: 3}
+user -> merger: approved
+merger -> bulletin: merge, set "done"
+always_on.philosopher -> critiques: critique {style.stroke-dash: 3}
 ```
 
 ![Ishikari workflow](ishikari.svg)
