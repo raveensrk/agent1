@@ -101,11 +101,11 @@ Run its tests. List real bugs only, each with how to see it. Change no files.`,
 }
 
 // The philosopher critiques each built branch alongside the inspector.
-function philosopher(id, branch) {
+function philosopher(id, branch, base) {
   return agent(
     `You are the philosopher ant of the Ishikari workflow. Repo: ${repo}.
-Question and critique branch ${branch} against main: design, scope, missing
-cases. Short, concrete questions only. Change no files.`,
+Question and critique branch ${branch} against ${base}: design, scope,
+missing cases. Work from ${base} is not part of this task. Short, concrete questions only. Change no files.`,
     { label: `philosopher-ant:${id}`, phase: 'Check', schema: CRITIQUES },
   ).then(r => { if (r) r.critiques.forEach(c => critiques.push([id, c])) })
 }
@@ -166,7 +166,7 @@ async function runTask(p) {
     return finish(id, branch, await fixLoop(id, branch, [bug]))
   }
   setRow(bulletin, id, ['inspecting', 'inspector ant'])
-  const [check] = await Promise.all([inspect(id, branch), philosopher(id, branch)])
+  const [check] = await Promise.all([inspect(id, branch), philosopher(id, branch, base)])
   const found = check ? check.bugs : ['inspector ant died']
   if (!found.length) return finish(id, branch, { bugs: [], tries: 0 })
   found.forEach(b => setRow(bounty, b, [id, 'open', '0']))
