@@ -41,8 +41,8 @@ plan: 1. Plan {
   direction: right
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
-  arta: ARTA\nAnt-Review-Task-Agent {class: node; style.stroke: ${plan-line}}
-  aara: AARA\nAnt-Add-Requirement-Agent {class: node; style.stroke: ${plan-line}}
+  arta: Task Review Ant {class: node; style.stroke: ${plan-line}}
+  aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta -> aara: approved {class: ok}
@@ -53,7 +53,7 @@ build: 2. Build {
   left: 0
   top: 560
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
-  aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
+  aw: Worker Ants\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
   bulletin: Bulletin board {shape: cylinder; class: node; style.stroke: ${build-line}}
   aw -> bulletin: post "built" {class: flow}
 }

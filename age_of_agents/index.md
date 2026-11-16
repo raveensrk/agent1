@@ -11,19 +11,20 @@ approval, final review and escalation. Everything between runs on its own.
 
 Ishikari is a higher-order workflow: it can take other workflows as
 arguments and run them inside itself. A workflow given this way becomes an
-ant worker's job: the worker runs it as its plan.
+worker ant's job: the worker runs it as its plan.
 
 ## Flow
 
 1. **Task in.** The workflow receives a task. It can be anything.
-2. **ARTA** (Ant-Review-Task-Agent) reviews and critiques the task, then asks
+2. **Task Review Ant** reviews and critiques the task, then asks
    the user for feedback with the `/ask-simple` skill.
-3. **AARA** (Ant-Add-Requirement-Agent) runs once the task is approved. It
+3. **Add Requirement Ant** runs once the task is approved. It
    writes a requirement with the `/add-requirement` skill, asks the user for
    feedback, and commits the requirement after approval.
-4. **Plan.** AARA writes a plan for each ant worker in a temporary area.
-   Workers cannot ask questions, so the plan must be complete and correct.
-5. **AW** (Ant Worker) builds its plan in its own git worktree, in parallel
+4. **Plan.** The add requirement ant writes a plan for each worker ant in
+   a temporary area. Workers cannot ask questions, so the plan must be
+   complete and correct.
+5. **Worker Ant** builds its plan in its own git worktree, in parallel
    with the other workers. It decides on its own and goes as far as it can.
    When done it posts its status to the bulletin board. A worker that gets
    stuck posts a bug to the bug bounty board, and the detective plans the
@@ -36,7 +37,7 @@ ant worker's job: the worker runs it as its plan.
    - Bugs: posts them to the bug bounty board.
 8. **Detective ant** is spawned while the bug bounty board is non-zero. It
    debugs and finds the cause, but never writes code. It writes a fix plan
-   and spawns an ant worker to build the fix. When the fix is built, it
+   and spawns an worker ant to build the fix. When the fix is built, it
    keeps the bounty status updated and hands the fix back to the same
    inspector for re-inspection. After 3 failed tries on a bug it escalates
    to the user.
@@ -57,15 +58,15 @@ ant worker's job: the worker runs it as its plan.
 ## Rules
 
 - All ants work in parallel without blocking each other.
-- Only ARTA and AARA ask the user questions, plus the detective on
-  escalation. Workers never ask.
+- Only the task review ant and the add requirement ant ask the user
+  questions, plus the detective on escalation. Workers never ask.
 - The boards are plain files every ant can read and write:
   [`boards/bulletin.md`](boards/bulletin.md),
   [`boards/bounty.md`](boards/bounty.md) and
   [`boards/critiques.md`](boards/critiques.md).
-- Only ant workers write code or build. Every other ant reads, plans,
+- Only worker ants write code or build. Every other ant reads, plans,
   reviews or posts to a board.
-- At most 5 ant workers run at the same time, fix workers included.
+- At most 5 worker ants run at the same time, fix workers included.
   Always-on ants do not count toward this limit.
 - Ants take turns writing a board: one ant holds the board's lock while it
   writes, and others wait until it lets go. No update is lost.
@@ -127,8 +128,8 @@ plan: 1. Plan {
   direction: right
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
-  arta: ARTA\nAnt-Review-Task-Agent {class: node; style.stroke: ${plan-line}}
-  aara: AARA\nAnt-Add-Requirement-Agent {class: node; style.stroke: ${plan-line}}
+  arta: Task Review Ant {class: node; style.stroke: ${plan-line}}
+  aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta -> aara: approved {class: ok}
@@ -139,7 +140,7 @@ build: 2. Build {
   left: 0
   top: 560
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
-  aw: Ant Workers (AW)\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
+  aw: Worker Ants\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
   bulletin: Bulletin board {shape: cylinder; class: node; style.stroke: ${build-line}}
   aw -> bulletin: post "built" {class: flow}
 }
