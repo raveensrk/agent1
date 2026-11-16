@@ -65,7 +65,9 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
+  philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${check-line}}
   monitor -> inspector: spawn per\ncompleted task {class: flow}
+  monitor -> philosopher: spawn beside\ninspector {class: flow}
 }
 
 fix: 4. Fix {
@@ -82,24 +84,22 @@ finish: 5. Finish {
   left: 2160
   top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
-  merger: Merger ant {class: node; style.stroke: ${finish-line}}
+  merger: Merger ant\nmerges all in order,\ncleans up {class: node; style.stroke: ${finish-line}}
 }
 
-always_on: Always-on ants {
+always_on: Upkeep ants (after merge) {
   left: 1300
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  janitor: Janitor ant\nplans cleanup after each task {class: node; style.stroke: ${always-line}}
-  librarian: Librarian ant\nupdates docs after each task {class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${always-line}}
+  janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
+  librarian: Librarian ant\nupdates docs {class: node; style.stroke: ${always-line}}
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
-  philosopher -> critiques: critique {class: flow; style.stroke-dash: 3}
 }
 
 plan.arta <-> user: critique, /ask-simple {class: flow}
 plan.aara <-> user: approve requirement {class: ok}
 plan.plans -> build.aw: start in parallel {class: flow}
-check.monitor -> build.bulletin: watch {class: flow; style.stroke-dash: 3}
+check.monitor -> build.bulletin: watch, writes\nboards once per stage {class: flow; style.stroke-dash: 3}
 check.inspector -> build.bulletin: no bugs {class: ok}
 check.inspector -> fix.bounty: bugs found {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
@@ -110,6 +110,9 @@ build.aw -> fix.bounty: stuck {class: bug}
 user -> finish.merger: approved {class: ok}
 finish.merger -> build.bulletin: merge, set "done" {class: ok}
 finish.merger -> fix.bounty: merge broke main {class: bug}
+finish.merger -> always_on: then {class: flow}
+check.philosopher -> always_on.critiques: critique {class: flow; style.stroke-dash: 3}
+always_on.janitor -> plan.plans: cleanup plan for\nnext build {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
   left: 2000
