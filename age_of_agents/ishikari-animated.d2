@@ -1,0 +1,72 @@
+# Animated walk through ishikari.d2, one stage per frame.
+# Render: render.sh. Each frame lights up the next part of the flow.
+
+...@ishikari.d2
+
+**.style.opacity: 0.12
+(** -> **)[*].style.opacity: 0.12
+(** <-> **)[*].style.opacity: 0.12
+legend.style.opacity: 1
+legend.**.style.opacity: 1
+legend.**.(** -> **)[*].style.opacity: 1
+
+steps: {
+  1-review: {
+    plan.style.opacity: 1
+    plan.task.style.opacity: 1
+    plan.arta.style.opacity: 1
+    plan.(task -> arta)[0].style.opacity: 1
+    user.style.opacity: 1
+    (plan.arta <-> user)[0].style.opacity: 1
+  }
+  2-requirement: {
+    plan.aara.style.opacity: 1
+    plan.plans.style.opacity: 1
+    plan.(arta -> aara)[0].style.opacity: 1
+    plan.(aara -> plans)[0].style.opacity: 1
+    (plan.aara <-> user)[0].style.opacity: 1
+  }
+  3-build: {
+    build.style.opacity: 1
+    build.aw.style.opacity: 1
+    build.bulletin.style.opacity: 1
+    build.(aw -> bulletin)[0].style.opacity: 1
+    (plan.plans -> build.aw)[0].style.opacity: 1
+  }
+  4-check: {
+    check.style.opacity: 1
+    check.monitor.style.opacity: 1
+    check.inspector.style.opacity: 1
+    check.(monitor -> inspector)[0].style.opacity: 1
+    (check.monitor -> build.bulletin)[0].style.opacity: 1
+    (check.inspector -> build.bulletin)[0].style.opacity: 1
+  }
+  5-fix: {
+    fix.style.opacity: 1
+    fix.bounty.style.opacity: 1
+    fix.detective.style.opacity: 1
+    fix.(bounty -> detective)[0].style.opacity: 1
+    (check.inspector -> fix.bounty)[0].style.opacity: 1
+    (build.aw -> fix.bounty)[0].style.opacity: 1
+    (fix.detective -> build.aw)[0].style.opacity: 1
+    (fix.detective -> check.inspector)[0].style.opacity: 1
+    (fix.detective -> user)[0].style.opacity: 1
+  }
+  6-finish: {
+    finish.style.opacity: 1
+    finish.merger.style.opacity: 1
+    (build.bulletin -> user)[0].style.opacity: 1
+    (user -> finish.merger)[0].style.opacity: 1
+    (finish.merger -> build.bulletin)[0].style.opacity: 1
+    (finish.merger -> fix.bounty)[0].style.opacity: 1
+  }
+  7-always-on: {
+    always_on.style.opacity: 1
+    always_on.janitor.style.opacity: 1
+    always_on.librarian.style.opacity: 1
+    always_on.philosopher.style.opacity: 1
+    always_on.critiques.style.opacity: 1
+    always_on.(philosopher -> critiques)[0].style.opacity: 1
+    (always_on.critiques -> plan.aara)[0].style.opacity: 1
+  }
+}

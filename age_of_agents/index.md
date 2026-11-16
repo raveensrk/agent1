@@ -266,3 +266,7 @@ always_on.critiques -> plan.aara: read for next plans {class: flow; style.stroke
   <source media="(prefers-color-scheme: dark)" srcset="ishikari-dark.svg">
   <img alt="Ishikari workflow" src="ishikari.svg">
 </picture>
+
+Animated version, one stage every 6 seconds:
+[`ishikari-animated.svg`](ishikari-animated.svg), from
+[`ishikari-animated.d2`](ishikari-animated.d2).
