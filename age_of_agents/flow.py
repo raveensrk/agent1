@@ -50,7 +50,7 @@ ROUTES = [
             ["(finish.merger -> build.bulletin)[0]", False, "Merged into main. Status: done."],
             ["(finish.merger -> always_on)[0]", False, "Then the janitor, librarian and philosopher ants run."],
             ["always_on.(philosopher -> critiques)[0]", False, "The philosopher critiques all the merged work."],
-            ["(always_on.critiques -> plan.aara)[0]", False, "Critiques shape the next plans."],
+            ["(always_on.critiques -> plan.arta)[0]", False, "Next task: the task review ant asks you about critiques."],
             ["(always_on.janitor -> plan.plans)[0]", False, "The janitor's cleanup plan joins the next build."],
         ],
     },

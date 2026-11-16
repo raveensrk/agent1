@@ -29,11 +29,17 @@ const REVIEW = {
         properties: {
           question: { type: 'string' },
           answers: { type: 'array', items: { type: 'string' } },
+          critique: { type: 'string', description: 'the critiques board row this question came from, copied exactly; empty if none' },
         },
         required: ['question', 'answers'],
       },
     },
     ready: { type: 'boolean', description: 'true when no question blocks the requirement' },
+    answeredCritiques: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'critiques board rows the user has now answered, copied exactly',
+    },
   },
   required: ['summary', 'critique', 'questions', 'ready'],
 }
@@ -78,7 +84,12 @@ Repo: ${repo}
 Task: ${task}
 ${answers ? `The user already answered earlier questions:\n${answers}\n` : ''}
 Read the repo enough to judge the task. Critique it: gaps, risks, unclear scope.
-Write any questions for the user the /ask-simple way. Ask nothing the repo answers.
+Read ${repo}/boards/critiques.md if it exists. For each critique that matters
+for this task, ask the user one question about it and copy the critique's row
+into that question's "critique" field. Leave other critiques alone. A question
+built from a critique blocks the requirement until the user answers it; list
+critiques the user has now answered in "answeredCritiques".
+Write all questions the /ask-simple way. Ask nothing the repo answers.
 Change no files.`,
   { label: 'task-review-ant', phase: 'Review', schema: REVIEW },
 )
@@ -98,14 +109,16 @@ ${answers ? `User answers:\n${answers}\n` : ''}
 1. Requirement: follow the /add-requirement skill up to the draft. Prove the
    requirement can be built in this repo, check for duplicates and conflicts.
    Do not write the requirements file; the user approves it first.
-2. Plans: read ${repo}/boards/critiques.md if it exists and use the critiques.
-   Split the work into tasks worker ants build in parallel, each in its own git
+2. Plans: split the work into tasks worker ants build in parallel, each in its own git
    worktree. Split by file, so no two tasks edit the same file; only when that
    is impossible, list the earlier task's id in "after" and the later task
    builds on its branch. Worker ants cannot ask questions, so each plan must be
    complete: files to touch, exact behavior, tests to add, the command that
    proves it works. Write each plan to ${repo}/.ishikari/plans/<id>.md.
-   Change no other files.`,
+${(review.answeredCritiques || []).length ? `3. Critiques: the user answered these, so remove their rows from
+   ${repo}/boards/critiques.md and keep the table aligned:
+   - ${review.answeredCritiques.join('\n   - ')}
+` : ''}   Change no other files.`,
   { label: 'add-requirement-ant', phase: 'Plans', schema: {
     type: 'object',
     properties: { requirement: REQUIREMENT, plans: PLANS.properties.plans },

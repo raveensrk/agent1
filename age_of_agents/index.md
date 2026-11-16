@@ -18,7 +18,10 @@ worker ant's job: the worker runs it as its plan.
 1. **Task in.** The workflow receives a task. It can be anything.
 
 2. **Task Review Ant** reviews and critiques the task, then asks
-   the user for feedback with the `/ask-simple` skill.
+   the user for feedback with the `/ask-simple` skill. It also reads the
+   critiques board: each critique that matters for this task becomes one
+   question for the user. Once the user answers, the add requirement ant
+   removes that critique from the board, so no question is asked twice.
 
 3. **Add Requirement Ant** runs once the task is approved. It
    writes a requirement with the `/add-requirement` skill, asks the user for
@@ -66,8 +69,9 @@ worker ant's job: the worker runs it as its plan.
 - **Librarian ant** updates the docs after the merge.
 - **Philosopher ant** questions and critiques all the merged work together,
   once per run. It only comments, in
-  [`boards/critiques.md`](boards/critiques.md), and never blocks. The add
-  requirement ant reads the critiques when it writes the next plans.
+  [`boards/critiques.md`](boards/critiques.md), and never blocks. On the
+  next task, the task review ant turns the critiques that matter into
+  questions for the user.
 
 ## Rules
 
@@ -275,7 +279,7 @@ legend: Legend {
     s -> t {class: flow; style.stroke-dash: 3}
   }
 }
-always_on.critiques -> plan.aara: read for next plans {class: flow; style.stroke-dash: 3}
+always_on.critiques -> plan.arta: turned into questions\nfor the next task {class: flow; style.stroke-dash: 3}
 ```
 
 <picture>
