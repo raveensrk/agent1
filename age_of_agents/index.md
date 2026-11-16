@@ -276,3 +276,5 @@ Car tour, one task driven slowly along the exact path it takes:
 Open it in a browser; it needs its script to run. It drives two routes: a
 bug fixed on the first try, and a stuck worker escalated after 3 tries. The
 −, pause and + buttons, or the keys `+`, `-` and space, change speed live.
+Click a block to see only its arrows and the blocks they join; click it
+again, click empty space or press Esc to go back to the tour.

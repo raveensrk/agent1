@@ -3,6 +3,7 @@
 Reads the rendered ishikari.svg, tags every block and arrow with its D2 name,
 and adds a script that drives the car slowly along each arrow of each route in ROUTES. The
 buttons under the caption, or the keys + - and space, change speed live.
+Clicking a block shows only its arrows; Esc goes back to the tour.
 The car leaves a trace; blocks and arrows light up when the task reaches
 them; everything not yet reached stays dim.
 
@@ -77,8 +78,8 @@ SCRIPT = r"""
   const PAUSE = 1800;    // ms at each block, at 1x
   const RESTART = 4000;  // ms between routes, at 1x
   const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
-  let si = 3, paused = false;
-  const rate = () => paused ? 0 : SPEEDS[si];
+  let si = 3, paused = false, focused = null;
+  const rate = () => (paused || focused) ? 0 : SPEEDS[si];
 
   const edges = {}, nodes = {};
   svg.querySelectorAll('[data-edge]').forEach(g => edges[g.dataset.edge] = g);
@@ -100,7 +101,7 @@ SCRIPT = r"""
   };
 
   const layer = el('g', {}, svg);
-  const car = el('g', {}, svg);
+  const car = el('g', { class: 'car' }, svg);
   car.innerHTML = '<circle r="22" fill="#FDE68A" stroke="#B45309" stroke-width="3"/>' +
     '<text text-anchor="middle" dominant-baseline="central" font-size="26">🚗</text>';
 
@@ -181,6 +182,46 @@ SCRIPT = r"""
       await wait(RESTART);
     }
   }
+  // Click a block: show only its arrows and the blocks they join; dim the rest.
+  // Click it again, click empty space or press Esc to go back to the tour.
+  let savedCaption = '';
+  const label = id => { const t = nodes[id] && nodes[id].querySelector('text'); return t ? t.textContent : id; };
+  function focus(id) {
+    if (!focused) savedCaption = capText.textContent;
+    unfocus(false);
+    focused = id;
+    const inside = n => n === id || n.startsWith(id + '.');
+    nodes[id].classList.add('on');
+    withParents(id).forEach(n => nodes[n] && nodes[n].classList.add('on'));
+    let count = 0;
+    for (const name in edges) {
+      const [a, b] = endpoints(name);
+      if (!inside(a) && !inside(b)) continue;
+      count++;
+      edges[name].classList.add('on');
+      [a, b].forEach(n => withParents(n).forEach(x => nodes[x] && nodes[x].classList.add('on')));
+    }
+    svg.classList.add('focus');
+    capText.textContent = `${label(id)}: ${count} arrows. Click it again or press Esc to go back.`;
+  }
+  function unfocus(restore = true) {
+    if (!focused) return;
+    svg.classList.remove('focus');
+    svg.querySelectorAll('.on').forEach(g => g.classList.remove('on'));
+    focused = null;
+    if (restore) capText.textContent = savedCaption;
+  }
+  for (const id in nodes) {
+    nodes[id].style.cursor = 'pointer';
+    nodes[id].addEventListener('click', e => {
+      e.stopPropagation();
+      const deepest = e.currentTarget.dataset.node;
+      if (focused === deepest) unfocus(); else focus(deepest);
+    });
+  }
+  svg.addEventListener('click', e => { if (!ui.contains(e.target)) unfocus(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') unfocus(); });
+
   run();
 })();
 """
@@ -190,6 +231,10 @@ STYLE = """
 [data-edge].lit, [data-node].lit { opacity: 1; }
 [data-node].now > .shape { filter: drop-shadow(0 0 10px #F59E0B) drop-shadow(0 0 4px #F59E0B); }
 [data-edge].now path { stroke-width: 4 !important; }
+svg.focus [data-edge], svg.focus [data-node] { opacity: 0.08 !important; }
+svg.focus [data-edge].on, svg.focus [data-node].on { opacity: 1 !important; }
+svg.focus [data-edge].on path { stroke-width: 4 !important; }
+svg.focus .trace, svg.focus .car { opacity: 0 !important; }
 .trace { stroke: #F59E0B !important; stroke-width: 8 !important; opacity: 0.55; fill: none; }
 """
 
