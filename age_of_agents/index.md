@@ -273,4 +273,6 @@ Animated version, one stage every 6 seconds:
 
 Car tour, one task driven slowly along the exact path it takes:
 [`ishikari-flow.svg`](ishikari-flow.svg), built by [`flow.py`](flow.py).
-Open it in a browser; it needs its script to run.
+Open it in a browser; it needs its script to run. It drives two routes: a
+bug fixed on the first try, and a stuck worker escalated after 3 tries. The
+−, pause and + buttons, or the keys `+`, `-` and space, change speed live.

@@ -1,7 +1,8 @@
 """Build ishikari-flow.svg: a car carries one task along the exact path.
 
 Reads the rendered ishikari.svg, tags every block and arrow with its D2 name,
-and adds a script that drives the car slowly along each arrow in TOUR order.
+and adds a script that drives the car slowly along each arrow of each route in ROUTES. The
+buttons under the caption, or the keys + - and space, change speed live.
 The car leaves a trace; blocks and arrows light up when the task reaches
 them; everything not yet reached stays dim.
 
@@ -16,41 +17,68 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
-# One step per arrow the task travels: [arrow, reverse?, caption].
+# Routes the car drives, one after another. Each step: [arrow, reverse?, caption].
 # reverse=True drives the car from the arrow's end back to its start.
-TOUR = [
-    ["plan.(task -> arta)[0]", False, "A task arrives. The task review ant reads it."],
-    ["(plan.arta <-> user)[0]", False, "The task review ant asks you questions."],
-    ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
-    ["plan.(arta -> aara)[0]", False, "Approved. On to the add requirement ant."],
-    ["(plan.aara <-> user)[0]", False, "It drafts a requirement and asks you."],
-    ["(plan.aara <-> user)[0]", True, "You approve the requirement."],
-    ["plan.(aara -> plans)[0]", False, "It commits the requirement and writes plans."],
-    ["(plan.plans -> build.aw)[0]", False, "Worker ants start, each in its own worktree."],
-    ["build.(aw -> bulletin)[0]", False, "A worker finishes and posts \"built\"."],
-    ["(check.monitor -> build.bulletin)[0]", True, "The build script sees it at once."],
-    ["check.(monitor -> inspector)[0]", False, "It starts an inspector ant for this task."],
-    ["(check.inspector -> fix.bounty)[0]", False, "The inspector finds a bug and posts it."],
+FIX_ROUND = [
     ["fix.(bounty -> detective)[0]", False, "A detective ant takes the bug."],
     ["(fix.detective -> build.aw)[0]", False, "It writes a fix plan for a worker ant."],
     ["(fix.detective -> build.aw)[0]", True, "The worker builds the fix."],
     ["(fix.detective -> check.inspector)[0]", False, "The same inspector checks again."],
-    ["(check.inspector -> build.bulletin)[0]", False, "No bugs. The task waits for your review."],
-    ["(build.bulletin -> user)[0]", False, "You do the final review."],
-    ["(user -> finish.merger)[0]", False, "You approve. The merger ant takes it."],
-    ["(finish.merger -> build.bulletin)[0]", False, "Merged into main. Status: done."],
-    ["always_on.(philosopher -> critiques)[0]", False, "The philosopher ant writes critiques."],
-    ["(always_on.critiques -> plan.aara)[0]", False, "Critiques shape the next plans."],
+]
+
+ROUTES = [
+    {
+        "name": "Route 1 of 2: a bug, fixed on the first try",
+        "steps": [
+            ["plan.(task -> arta)[0]", False, "A task arrives. The task review ant reads it."],
+            ["(plan.arta <-> user)[0]", False, "The task review ant asks you questions."],
+            ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
+            ["plan.(arta -> aara)[0]", False, "Approved. On to the add requirement ant."],
+            ["(plan.aara <-> user)[0]", False, "It drafts a requirement and asks you."],
+            ["(plan.aara <-> user)[0]", True, "You approve the requirement."],
+            ["plan.(aara -> plans)[0]", False, "It commits the requirement and writes plans."],
+            ["(plan.plans -> build.aw)[0]", False, "Worker ants start, each in its own worktree."],
+            ["build.(aw -> bulletin)[0]", False, "A worker finishes and posts \"built\"."],
+            ["(check.monitor -> build.bulletin)[0]", True, "The build script sees it at once."],
+            ["check.(monitor -> inspector)[0]", False, "It starts an inspector ant for this task."],
+            ["(check.inspector -> fix.bounty)[0]", False, "The inspector finds a bug and posts it."],
+            *FIX_ROUND,
+            ["(check.inspector -> build.bulletin)[0]", False, "No bugs. The task waits for your review."],
+            ["(build.bulletin -> user)[0]", False, "You do the final review."],
+            ["(user -> finish.merger)[0]", False, "You approve. The merger ant takes it."],
+            ["(finish.merger -> build.bulletin)[0]", False, "Merged into main. Status: done."],
+            ["always_on.(philosopher -> critiques)[0]", False, "The philosopher ant writes critiques."],
+            ["(always_on.critiques -> plan.aara)[0]", False, "Critiques shape the next plans."],
+        ],
+    },
+    {
+        "name": "Route 2 of 2: a stuck worker, 3 failed fixes, escalated",
+        "steps": [
+            ["(plan.plans -> build.aw)[0]", False, "Approved plans go to the worker ants."],
+            ["(build.aw -> fix.bounty)[0]", False, "A worker gets stuck and posts a bug."],
+            *[[a, r, f"Try 1: {c}"] for a, r, c in FIX_ROUND],
+            ["(check.inspector -> fix.bounty)[0]", False, "Still broken. Back on the bounty board."],
+            *[[a, r, f"Try 2: {c}"] for a, r, c in FIX_ROUND],
+            ["(check.inspector -> fix.bounty)[0]", False, "Still broken. Back on the bounty board."],
+            *[[a, r, f"Try 3: {c}"] for a, r, c in FIX_ROUND],
+            ["(check.inspector -> fix.bounty)[0]", False, "Still broken after 3 tries."],
+            ["fix.(bounty -> detective)[0]", False, "The detective stops trying."],
+            ["(fix.detective -> user)[0]", False, "Escalated to you to decide."],
+        ],
+    },
 ]
 
 SCRIPT = r"""
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.querySelector('svg svg') || document.documentElement;
-  const TOUR = __TOUR__;
-  const SPEED = 70;      // px per second: slow
-  const PAUSE = 1800;    // ms at each block
-  const RESTART = 5000;  // ms before the tour starts again
+  const ROUTES = __ROUTES__;
+  const BASE = 70;       // px per second at 1x: slow
+  const PAUSE = 1800;    // ms at each block, at 1x
+  const RESTART = 4000;  // ms between routes, at 1x
+  const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+  let si = 3, paused = false;
+  const rate = () => paused ? 0 : SPEEDS[si];
 
   const edges = {}, nodes = {};
   svg.querySelectorAll('[data-edge]').forEach(g => edges[g.dataset.edge] = g);
@@ -62,56 +90,79 @@ SCRIPT = r"""
     const pre = m[1] ? m[1] + '.' : '';
     return [pre + m[2], pre + m[3]];
   };
-  const withParents = id => {
-    const out = [];
-    const parts = id.split('.');
-    for (let i = 1; i <= parts.length; i++) out.push(parts.slice(0, i).join('.'));
-    return out;
-  };
+  const withParents = id => id.split('.').map((_, i, p) => p.slice(0, i + 1).join('.'));
   const light = id => withParents(id).forEach(n => nodes[n] && nodes[n].classList.add('lit'));
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
 
-  const layer = document.createElementNS(NS, 'g');
-  svg.appendChild(layer);
-  const car = document.createElementNS(NS, 'g');
+  const layer = el('g', {}, svg);
+  const car = el('g', {}, svg);
   car.innerHTML = '<circle r="22" fill="#FDE68A" stroke="#B45309" stroke-width="3"/>' +
     '<text text-anchor="middle" dominant-baseline="central" font-size="26">🚗</text>';
-  const cap = document.createElementNS(NS, 'g');
-  cap.innerHTML = '<rect x="-80" y="1300" width="1150" height="56" rx="12" fill="#0F172A" opacity="0.9"/>' +
-    '<text x="-56" y="1336" font-size="26" fill="#F8FAFC" font-family="sans-serif"></text>';
-  svg.appendChild(cap);
-  svg.appendChild(car);
-  const capText = cap.querySelector('text');
 
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const drive = (path, rev) => new Promise(done => {
+  // Caption and live speed controls.
+  const ui = el('g', { 'font-family': 'sans-serif' }, svg);
+  el('rect', { x: -80, y: 1250, width: 1150, height: 110, rx: 12, fill: '#0F172A', opacity: 0.92 }, ui);
+  const title = el('text', { x: -56, y: 1282, 'font-size': 20, fill: '#FBBF24' }, ui);
+  const capText = el('text', { x: -56, y: 1330, 'font-size': 26, fill: '#F8FAFC' }, ui);
+  const setPause = v => { paused = v; pauseLabel.textContent = paused ? '▶' : '❚❚'; show(); };
+  const faster = () => { si = Math.min(SPEEDS.length - 1, si + 1); show(); };
+  const slower = () => { si = Math.max(0, si - 1); show(); };
+  const btn = (x, label, fn, w) => {
+    const g = el('g', { cursor: 'pointer', transform: `translate(${x},1262)` }, ui);
+    el('rect', { width: w, height: 40, rx: 8, fill: '#334155', stroke: '#94A3B8' }, g);
+    const t = el('text', { x: w / 2, y: 28, 'text-anchor': 'middle', 'font-size': 22, fill: '#F8FAFC' }, g);
+    t.textContent = label;
+    g.addEventListener('click', fn);
+    return t;
+  };
+  btn(780, '−', slower, 56);
+  const pauseLabel = btn(846, '❚❚', () => setPause(!paused), 90);
+  btn(946, '+', faster, 56);
+  const speedText = el('text', { x: 919, y: 1342, 'text-anchor': 'middle', 'font-size': 18, fill: '#CBD5E1' }, ui);
+  const show = () => speedText.textContent = paused ? 'paused   (keys: + - space)' : `speed ${SPEEDS[si]}x   (keys: + - space)`;
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=' || e.key === 'ArrowUp') faster();
+    if (e.key === '-' || e.key === 'ArrowDown') slower();
+    if (e.key === ' ') { e.preventDefault(); setPause(!paused); }
+  });
+  show();
+
+  // A clock that runs at the live rate, so speed changes act mid-arrow.
+  const frame = () => new Promise(r => requestAnimationFrame(r));
+  async function wait(ms) {
+    let left = ms, last = performance.now();
+    while (left > 0) { const now = await frame(); left -= (now - last) * rate(); last = now; }
+  }
+  async function drive(path, rev) {
     const len = path.getTotalLength();
     const trace = path.cloneNode(false);
-    trace.removeAttribute('marker-end');
-    trace.removeAttribute('marker-start');
-    trace.removeAttribute('mask');
+    ['marker-end', 'marker-start', 'mask'].forEach(a => trace.removeAttribute(a));
     trace.setAttribute('class', 'trace');
     trace.style.strokeDasharray = len + ' ' + len;
-    trace.style.strokeDashoffset = rev ? -len : len;
     layer.appendChild(trace);
-    const ms = len / SPEED * 1000;
-    const t0 = performance.now();
-    const tick = now => {
-      const k = Math.min(1, (now - t0) / ms);
-      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      const d = rev ? len * (1 - e) : len * e;
-      const p = path.getPointAtLength(d);
-      car.setAttribute('transform', `translate(${p.x},${p.y})`);
-      trace.style.strokeDashoffset = rev ? -(len - len * e) : len - len * e;
-      if (k < 1) requestAnimationFrame(tick); else done();
-    };
-    requestAnimationFrame(tick);
-  });
-
-  async function tour() {
+    let d = 0, last = performance.now();
     for (;;) {
+      const p = path.getPointAtLength(rev ? len - d : d);
+      car.setAttribute('transform', `translate(${p.x},${p.y})`);
+      trace.style.strokeDashoffset = rev ? -(len - d) : len - d;
+      if (d >= len) break;
+      const now = await frame();
+      d = Math.min(len, d + (now - last) / 1000 * BASE * rate());
+      last = now;
+    }
+  }
+
+  async function run() {
+    for (;;) for (const route of ROUTES) {
       layer.innerHTML = '';
       all.forEach(g => g.classList.remove('lit', 'now'));
-      for (const [name, rev, caption] of TOUR) {
+      title.textContent = route.name;
+      for (const [name, rev, caption] of route.steps) {
         const g = edges[name];
         if (!g) continue;
         const [from, to] = endpoints(name);
@@ -123,14 +174,14 @@ SCRIPT = r"""
         g.classList.remove('now');
         light(end);
         nodes[end] && nodes[end].classList.add('now');
-        await sleep(PAUSE);
+        await wait(PAUSE);
         nodes[end] && nodes[end].classList.remove('now');
       }
-      capText.textContent = 'Done. The tour starts again.';
-      await sleep(RESTART);
+      capText.textContent = 'Route done. Next route soon.';
+      await wait(RESTART);
     }
   }
-  tour();
+  run();
 })();
 """
 
@@ -161,7 +212,7 @@ def tag(svg: str) -> str:
 def main() -> None:
     svg = (HERE / "ishikari.svg").read_text()
     svg = tag(svg)
-    script = SCRIPT.replace("__TOUR__", json.dumps(TOUR))
+    script = SCRIPT.replace("__ROUTES__", json.dumps(ROUTES))
     extra = f"<style>{STYLE}</style><script><![CDATA[{script}]]></script>"
     i = svg.rindex("</svg>", 0, svg.rindex("</svg>"))
     svg = svg[:i] + extra + svg[i:]
