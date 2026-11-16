@@ -75,7 +75,7 @@ worker ant's job: the worker runs it as its plan.
 
 ## Diagram
 
-Stages run top to bottom: plan, build, check, fix, finish. Each board
+Stages run left to right: plan, build, check, fix, finish. Each board
 sits in the stage that first writes to it.
 D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA
 layout by [`render.sh`](render.sh) to a light and a dark SVG.
@@ -113,7 +113,7 @@ classes: {
   flow: {style: {stroke: ${flow}; font-color: ${flow}}}
 }
 
-direction: down
+direction: right
 
 user: User (me) {
   shape: person
@@ -125,7 +125,7 @@ user: User (me) {
 plan: 1. Plan {
   left: 0
   top: 0
-  direction: right
+  direction: down
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
   arta: Task Review Ant {class: node; style.stroke: ${plan-line}}
@@ -137,8 +137,8 @@ plan: 1. Plan {
 }
 
 build: 2. Build {
-  left: 0
-  top: 560
+  left: 560
+  top: 0
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
   aw: Worker Ants\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
   bulletin: Bulletin board {shape: cylinder; class: node; style.stroke: ${build-line}}
@@ -146,9 +146,9 @@ build: 2. Build {
 }
 
 check: 3. Check {
-  left: 0
-  top: 1060
-  direction: right
+  left: 1060
+  top: 0
+  direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
@@ -156,9 +156,9 @@ check: 3. Check {
 }
 
 fix: 4. Fix {
-  left: 0
-  top: 1320
-  direction: right
+  left: 1560
+  top: 0
+  direction: down
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
   bounty: Bug bounty board {shape: cylinder; class: node; style.stroke: ${fix-line}}
   detective: Detective ant\nplans fixes, writes no code {class: node; style.stroke: ${fix-line}}
@@ -166,8 +166,8 @@ fix: 4. Fix {
 }
 
 finish: 5. Finish {
-  left: 0
-  top: 1660
+  left: 2160
+  top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
   merger: Merger ant {class: node; style.stroke: ${finish-line}}
 }
@@ -197,8 +197,8 @@ finish.merger -> build.bulletin: merge, set "done" {class: ok}
 finish.merger -> fix.bounty: merge broke main {class: bug}
 
 legend: Legend {
-  left: 1000
-  top: 760
+  left: 0
+  top: 900
   grid-columns: 1
   grid-gap: 0
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
