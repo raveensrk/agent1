@@ -39,7 +39,9 @@ monitor -> inspector: spawn per completed task
 inspector -> boards.bulletin: no bugs: "awaiting review"
 inspector -> boards.bounty: bugs found
 boards.bounty -> detective: spawn when non-zero
-detective -> inspector: fixed, re-inspect
+detective -> aw: spawn with fix plan
+aw -> detective: fix built
+detective -> inspector: re-inspect
 detective -> boards.bounty: update status
 detective -> user: escalate after 3 failed tries
 boards.bulletin -> user: final review

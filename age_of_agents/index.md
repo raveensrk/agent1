@@ -32,13 +32,15 @@ arguments and run them inside itself.
      for the user's final review.
    - Bugs: posts them to the bug bounty board.
 8. **Detective ant** is spawned while the bug bounty board is non-zero. It
-   debugs and fixes, keeps the bounty status updated, and hands each fix
-   back to the same inspector for re-inspection. After 3 failed tries on a
-   bug it escalates to the user.
+   debugs and finds the cause, but never writes code. It writes a fix plan
+   and spawns an ant worker to build the fix. When the fix is built, it
+   keeps the bounty status updated and hands the fix back to the same
+   inspector for re-inspection. After 3 failed tries on a bug it escalates
+   to the user.
 9. **Merger ant** runs after the user approves a task on the bulletin
    board. It merges the worker's branch into main and sets the status to
    `done`. If the merge breaks main, it posts a bug to the bug bounty
-   board, and the detective ant fixes it like any other bug.
+   board, and the detective ant handles it like any other bug.
 
 ## Always-on ants
 
@@ -58,7 +60,9 @@ arguments and run them inside itself.
   [`boards/bulletin.md`](boards/bulletin.md),
   [`boards/bounty.md`](boards/bounty.md) and
   [`boards/critiques.md`](boards/critiques.md).
-- At most 5 ant workers run at the same time.
+- Only ant workers write code or build. Every other ant reads, plans,
+  reviews or posts to a board.
+- At most 5 ant workers run at the same time, fix workers included.
 - One workflow script, kept next to this file, starts and connects all
   the ants.
 
@@ -109,7 +113,9 @@ monitor -> inspector: spawn per completed task
 inspector -> boards.bulletin: no bugs: "awaiting review"
 inspector -> boards.bounty: bugs found
 boards.bounty -> detective: spawn when non-zero
-detective -> inspector: fixed, re-inspect
+detective -> aw: spawn with fix plan
+aw -> detective: fix built
+detective -> inspector: re-inspect
 detective -> boards.bounty: update status
 detective -> user: escalate after 3 failed tries
 boards.bulletin -> user: final review
