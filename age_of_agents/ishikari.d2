@@ -59,19 +59,19 @@ build: 2. Build {
 }
 
 check: 3. Check {
-  left: 1060
+  left: 1440
   top: 0
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector ant {class: node; style.stroke: ${check-line}}
   philosopher: Philosopher ant\ncritiques, never blocks {class: node; style.stroke: ${check-line}}
-  monitor -> inspector: spawn per\ncompleted task {class: flow}
+  monitor -> inspector: spawn per built\ntask or fix {class: flow}
   monitor -> philosopher: spawn beside\ninspector {class: flow}
 }
 
 fix: 4. Fix {
-  left: 1560
+  left: 2100
   top: 0
   direction: down
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
@@ -81,14 +81,14 @@ fix: 4. Fix {
 }
 
 finish: 5. Finish {
-  left: 2160
+  left: 2700
   top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
   merger: Merger ant\nmerges all in order,\ncleans up {class: node; style.stroke: ${finish-line}}
 }
 
 always_on: Upkeep ants (after merge) {
-  left: 1300
+  left: 1700
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
@@ -103,7 +103,7 @@ check.monitor -> build.bulletin: watch, writes\nboards once per stage {class: fl
 check.inspector -> build.bulletin: no bugs {class: ok}
 check.inspector -> fix.bounty: bugs found {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
-fix.detective -> check.inspector: re-inspect {class: flow}
+build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
 fix.detective -> user: escalate after 3 tries {class: bug}
 build.bulletin -> user: final review {class: ok}
 build.aw -> fix.bounty: stuck {class: bug}
@@ -115,7 +115,7 @@ check.philosopher -> always_on.critiques: critique {class: flow; style.stroke-da
 always_on.janitor -> plan.plans: cleanup plan for\nnext build {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
-  left: 2000
+  left: 2700
   top: 700
   grid-columns: 1
   grid-gap: 0

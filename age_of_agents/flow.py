@@ -23,8 +23,8 @@ HERE = Path(__file__).parent
 FIX_ROUND = [
     ["fix.(bounty -> detective)[0]", False, "A detective ant takes the bug."],
     ["(fix.detective -> build.aw)[0]", False, "It writes a fix plan for a worker ant."],
-    ["(fix.detective -> build.aw)[0]", True, "The worker builds the fix."],
-    ["(fix.detective -> check.inspector)[0]", False, "The same inspector checks again."],
+    ["(build.aw -> check.monitor)[0]", False, "The worker builds the fix; the build script sees it."],
+    ["check.(monitor -> inspector)[0]", False, "It sends the fix to the same inspector."],
 ]
 
 ROUTES = [

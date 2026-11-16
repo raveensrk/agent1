@@ -52,7 +52,7 @@ steps: {
     (check.inspector -> fix.bounty)[0].style.opacity: 1
     (build.aw -> fix.bounty)[0].style.opacity: 1
     (fix.detective -> build.aw)[0].style.opacity: 1
-    (fix.detective -> check.inspector)[0].style.opacity: 1
+    (build.aw -> check.monitor)[0].style.opacity: 1
     (fix.detective -> user)[0].style.opacity: 1
   }
   6-finish: {
