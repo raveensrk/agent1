@@ -23,7 +23,8 @@ worker ant's job: the worker runs it as its plan.
    feedback, and commits the requirement after approval.
 4. **Plan.** The add requirement ant writes a plan for each worker ant in
    a temporary area. Workers cannot ask questions, so the plan must be
-   complete and correct.
+   complete and correct. A plan that edits files another plan creates lists
+   that plan in `after`; it waits for it and builds on its branch.
 5. **Worker Ant** builds its plan in its own git worktree, in parallel
    with the other workers. It decides on its own and goes as far as it can.
    When done it posts its status to the bulletin board. A worker that gets
