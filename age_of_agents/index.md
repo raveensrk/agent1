@@ -53,7 +53,8 @@ worker ant's job: the worker runs it as its plan.
 - **Librarian ant** maintains the docs after each task is done.
 - **Philosopher ant** questions and critiques ongoing work at any time. It
   only comments, in [`boards/critiques.md`](boards/critiques.md); it never
-  pauses or blocks work.
+  pauses or blocks work. The add requirement ant reads the critiques and
+  uses them when it writes the next plans.
 
 ## Rules
 
@@ -173,6 +174,8 @@ finish: 5. Finish {
 }
 
 always_on: Always-on ants {
+  left: 1300
+  top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\ncleans code after each task {class: node; style.stroke: ${always-line}}
   librarian: Librarian ant\nupdates docs after each task {class: node; style.stroke: ${always-line}}
@@ -197,8 +200,8 @@ finish.merger -> build.bulletin: merge, set "done" {class: ok}
 finish.merger -> fix.bounty: merge broke main {class: bug}
 
 legend: Legend {
-  left: 0
-  top: 900
+  left: 2000
+  top: 700
   grid-columns: 1
   grid-gap: 0
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
@@ -231,6 +234,7 @@ legend: Legend {
     s -> t {class: flow; style.stroke-dash: 3}
   }
 }
+always_on.critiques -> plan.aara: read for next plans {class: flow; style.stroke-dash: 3}
 ```
 
 <picture>
