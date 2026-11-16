@@ -61,6 +61,7 @@ const PLANS = {
           title: { type: 'string' },
           file: { type: 'string', description: 'absolute path of the written plan file' },
           workflow: { type: 'string', description: 'optional saved workflow name the worker runs as its job' },
+          after: { type: 'array', items: { type: 'string' }, description: 'ids of plans that must be built first; this plan builds on their branches' },
         },
         required: ['id', 'title', 'file'],
       },
@@ -106,8 +107,9 @@ const plans = await agent(
 Repo: ${repo}
 Requirement: ${JSON.stringify(requirement)}
 Read ${repo}/boards/critiques.md if it exists and use the critiques.
-Split the work into independent tasks that worker ants can build in parallel,
-each in its own git worktree. Worker ants cannot ask questions, so each plan
+Split the work into tasks that worker ants can build in parallel, each in its
+own git worktree. When a task edits files another task creates, list that
+task's id in "after"; it then builds on top of that task's branch. Worker ants cannot ask questions, so each plan
 must be complete: files to touch, exact behavior, tests to add, the command
 that proves it works. Write each plan to ${repo}/.ishikari/plans/<id>.md.
 Change no other files.`,
