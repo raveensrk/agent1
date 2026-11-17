@@ -113,7 +113,6 @@ finish.merger -> fix.bounty: merge failed {class: bug}
 finish.merger -> always_on: then {class: flow}
 always_on -> finish.finisher: then {class: flow}
 finish.finisher -> build.bulletin: main moved,\nset "done" {class: ok}
-finish.finisher -> user: final report {class: ok}
 always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {

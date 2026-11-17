@@ -49,7 +49,6 @@ ROUTES = [
             ["always_on.(philosopher -> critiques)[0]", False, "The philosopher keeps its 5 best critiques."],
             ["(always_on -> finish.finisher)[0]", False, "Then the finisher ant moves main forward."],
             ["(finish.finisher -> build.bulletin)[0]", False, "Main moved. Status: done."],
-            ["(finish.finisher -> user)[0]", False, "You get the final report."],
             ["(always_on.critiques -> plan.arta)[0]", False, "Next task: the investigator ant asks you about critiques."],
             ["(always_on.janitor -> plan.plans)[0]", False, "The janitor's cleanup plan is offered next time."],
         ],
