@@ -411,7 +411,7 @@ Rust and its tooling: rustup, cargo, clippy, rustfmt
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-***** pytest :core:
+***** pytest
 :PROPERTIES:
 :NEEDS: [[*Python][Python]]
 :END:
