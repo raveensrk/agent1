@@ -32,3 +32,5 @@ rm -f "$tmp" "$tmp.d2"
 [ $# -eq 0 ] && python3 journey.py
 # Subway map view.
 [ $# -eq 0 ] && python3 metro.py
+# Readable subway map view.
+[ $# -eq 0 ] && python3 metro-clean.py
