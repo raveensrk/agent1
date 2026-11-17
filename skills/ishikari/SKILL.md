@@ -26,6 +26,7 @@ Design, rules and diagram:
 | `scripts/ishikari-build.js`  | build, check, fix, combined test             |
 | `scripts/ishikari-finish.js` | merge, upkeep, move main                     |
 | `assets/boards/*.md`         | board templates: bulletin, bounty, critiques |
+| `assets/prompts/investigator.md` | the live investigator ant's brief      |
 | `tests/test_ishikari.py`    | the tool: setup, boards, requirements, guards |
 | `tests/test_workflows.mjs`   | the scripts' own logic, with stand-in ants   |
 
@@ -40,7 +41,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 ## Rules
 
 - Ask every question with the `/ask-simple` skill, and only in step 2. Never
-  answer for the user.
+  answer for the user. Never edit the investigation report yourself.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
 - Never edit code, boards, requirements or branches yourself. Ants and
@@ -58,15 +59,26 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## 2. Plan
 
-- Run `env.workflows.plan` with `{env, task}`. If the last finish left a cleanup
-  plan, add one line to the task: `Also consider the cleanup plan at <file>.`
-  The investigator ant decides whether to ask about it; never ask yourself.
-- `question`: ask that one question with `/ask-simple`, never batched. Head it
-  `Question <n> of about <n + remaining>`, where n counts from 1. Add its `why`
-  line when set. Append `{question, answer, critique}` to `answered` (`''` if
-  skipped) and run plan again with `{env, task, answered, findings}`, `findings`
-  from the last result. Repeat until the result is not `question`.
-- `blocked`: show the reason and stop.
+- Start ONE investigator with the Agent tool (general-purpose). Its prompt is
+  [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
+  inputs: `env.repo`, `env.main`, `env.state`, the task, the critiques board
+  `<env.state>/boards/critiques.md`, the report path
+  `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`
+  and `env.checkCommand` when saved. If the last finish left a cleanup plan,
+  add one line to the task: `Also consider the cleanup plan at <file>.` The
+  investigator decides whether to ask about it; never ask yourself.
+- It replies with JSON. While `questions` is not empty, ask them all in one
+  `/ask-simple` call (up to 4), headed `Questions <n>-<m> of about <m +
+  remaining>`, `why` lines added when set. Send the answers back to the SAME
+  agent with SendMessage (`''` if skipped). Never start a new investigator
+  for an answer.
+- `blocker` set: show the reason and stop.
+- `reportWritten`: run `env.workflows.plan` with `{env, task, investigated:
+  {testCommand, checkCommand, answeredCritiques}}` from its last reply. It
+  skips Review and runs the requirement and design ants.
+- Without the Agent tool, fall back to the workflow loop: run plan with
+  `{env, task}`; on `question`, ask it and run again with `answered` (append
+  `{question, answer, critique}`) and `findings` from the last result.
 - `plans`: do not ask. Show the `report` path (`investigation_report.md`), the
   `design` path (`architecture.md`), the requirement and each plan's title,
   files and `after` as a note, then:

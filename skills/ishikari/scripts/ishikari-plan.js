@@ -15,6 +15,11 @@ export const meta = {
 //   answered?: [{ question, answer, critique? }],  every question asked so far, in order;
 //                                           answer '' if skipped
 //   findings?: string[],                    research notes from earlier runs
+//   investigated?: { testCommand, checkCommand, answeredCritiques },
+//                                           set when a live investigator agent,
+//                                           run by the skill, already asked the
+//                                           user and wrote the investigation
+//                                           report: Review is skipped
 // }
 // The investigator ant asks one question per run, chosen after every earlier
 // answer. To answer, run again with the same env and task, answered with the new
@@ -153,8 +158,12 @@ files, browser profiles. Return short facts with their paths and URLs.`,
   )
 }
 
-phase('Review')
 let review = null
+const inv = args.investigated && typeof args.investigated === 'object' ? args.investigated : null
+if (inv) {
+  review = { summary: 'investigated by the live investigator', testCommand: String(inv.testCommand || env.testCommand || ''), checkCommand: String(inv.checkCommand || env.checkCommand || '') }
+} else {
+phase('Review')
 for (let round = 0; round <= MAX_RESEARCH; round++) {
   const known = findings.length ? `Research so far:\n${findings.map(f => `- ${f}`).join('\n')}\n` : ''
   review = await twice(() => agent(
@@ -202,6 +211,7 @@ if (review.next && review.next.question) {
   return { stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review }
 }
 if (!review.reportWritten) return { stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings }
+}
 
 // ---- requirement: the add requirement ant only adds ----
 phase('Requirement')
@@ -316,5 +326,5 @@ return {
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: review.testCommand,
   checkCommand: review.checkCommand || '',
-  answeredCritiques: answered.filter(q => q.answer && q.critique).map(q => q.critique),
+  answeredCritiques: inv ? list(inv.answeredCritiques).map(String) : answered.filter(q => q.answer && q.critique).map(q => q.critique),
 }

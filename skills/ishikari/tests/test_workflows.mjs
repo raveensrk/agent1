@@ -175,3 +175,12 @@ test('stress: finish never claims main moved when nothing merged', async () => {
   assert.equal(out.mainMoved, false)
   assert.equal(out.waiting.length, 1)
 })
+
+test('plan: a live investigation skips Review', async () => {
+  const { out, calls } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '', answeredCritiques: ['c1'] } }, (p, o) =>
+    o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
+  assert.equal(out.stage, 'plans')
+  assert.equal(out.testCommand, 'npm test')
+  assert.deepEqual(out.answeredCritiques, ['c1'])
+  assert.ok(!calls.some(c => c.startsWith('investigator')))
+})

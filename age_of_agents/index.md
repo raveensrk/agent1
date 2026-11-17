@@ -23,9 +23,11 @@ its job. The build script runs that workflow in place of a worker ant.
     repo's test command and reads the critiques board: each critique that
     matters becomes a question. When it lacks facts it sends up to 5
     **Researcher Ants** in parallel; they search the web and the whole computer,
-    read only, never secrets, and report back. It asks one question at a time,
-    with `/ask-simple`, never a batch, and picks each question after the last
-    answer. Each question shows a best-guess count: "Question 2 of about 5". It
+    read only, never secrets, and report back. It is one live agent for the
+    whole talk, run by the skill, not a workflow: it reads the repo once and
+    gets each answer as a message. It asks up to 4 independent questions at
+    a time with `/ask-simple`, at most 8 in all, with a best-guess count:
+    "Questions 1-3 of about 5". It
     stops once nothing important is unclear, then writes
     `investigation_report.md` in the run's plans folder: goal, scope, every
     decision, facts with sources, constraints, risks, assumptions, acceptance
@@ -329,7 +331,7 @@ always_on: Upkeep ants (before main moves) {
 build.aw -> boards.bulletin: built {class: flow}
 boards.bounty -> fix.detective: bug still open\nafter round 1 {class: bug}
 always_on.philosopher -> boards.critiques: critique {class: flow; style.stroke-dash: 3}
-plan.arta <-> user: one question\nat a time, /ask-simple {class: flow}
+plan.arta <-> user: up to 4 questions\na round, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> boards.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> boards.bulletin: pass: they\nwork combined {class: ok}
