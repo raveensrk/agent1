@@ -102,13 +102,23 @@ for x, y, nm, sub, kind, side, c in stations:
                   "sw": (x - 20, y + 30, "end"), "se": (x + 20, y + 36, "start"), "s2": (x + 10, y + 40, "start")}[side]
     o.append(txt(ax, ay, nm, TXT, 14, an, "700"))
     o.append(txt(ax, ay + 17, sub, SUB, 11, an))
-# trains
-for name, c, pts, w, dash, n, sec in lines:
-    for i in range(n):
-        o.append(f'<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="{c}" stroke-width="2"><animateMotion dur="{sec}s" begin="{-i*sec/max(n,1):.2f}s" repeatCount="indefinite" rotate="auto"><mpath href="#L-{name}"/></animateMotion></rect></g>')
-# ask: gold shuttle both ways
-o.append(f'<circle r="6" fill="#FDE047" filter="url(#g)"><animateMotion dur="3s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></circle>')
-o.append(f'<circle r="6" fill="#93C5FD" filter="url(#g)"><animateMotion dur="2.4s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-res"/></animateMotion></circle>')
+# trains: numbered, upright, slow enough to follow
+def train(num, c, path, sec, begin="0", pingpong=False):
+    kp = ' keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"' if pingpong else ''
+    return (f'<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="{c}" stroke-width="3"/>'
+            f'<text y="5" font-size="13" font-weight="800" fill="{BG}" text-anchor="middle">{num}</text>'
+            f'<animateMotion dur="{sec}s" begin="{begin}s" repeatCount="indefinite"{kp}><mpath href="#L-{path}"/></animateMotion></g>')
+trains = []
+n = 1
+for name, c, pts, w, dash, k, sec in lines:
+    for i in range(k):
+        trains.append((n, name, c))
+        o.append(train(n, c, name, sec * 2, f"{-i*sec*2/k:.2f}"))
+        n += 1
+for name, c, sec in [("ask", GOLD, 6), ("res", BLUE, 5)]:
+    trains.append((n, name, c))
+    o.append(train(n, c, name, sec, pingpong=True))
+    n += 1
 # MAIN pulse
 o.append(f'<circle class="pulse" cx="560" cy="780" r="22" fill="none" stroke="{GREEN}" stroke-width="2" opacity="0.6"/>')
 # key
@@ -123,5 +133,21 @@ for i, (c, dash, t) in enumerate([(BLUE, "", "Plan line - Ask + Plan workflow"),
     o.append(txt(kx + 70, y + 4, [t], TXT, 11))
 o.append(txt(kx + 290, ky + 48, ["o  interchange", "■  terminus", "▬  dead end"], SUB, 11))
 o.append(txt(kx + 290, ky + 100, ["PURPLE: after main moves"], PURP, 11))
+what = {"plan": "task riding the plan line", "build": "a worker's task: build to MAIN", "ring": "a bug going round the bug loop",
+        "clash": "combined test failed: tasks clash", "stuck": "a worker got stuck", "mfail": "merge failed",
+        "check": "checkCommand, then req done", "crit": "critique back to the Investigator", "clean": "cleanup plan back to Task",
+        "ask": "questions to you and answers back", "res": "researcher fetching facts"}
+tx, ty = 740, 60
+o.insert(len(o), f'<rect x="{tx-480}" y="{ty+300}" width="470" height="{len(what)*15+34}" rx="12" fill="#0F172A" stroke="#334155"/>')
+o.append(txt(tx - 464, ty + 322, ["TRAINS"], SUB, 12, weight="800"))
+row = 0
+for name in what:
+    nums = [str(k) for k, nm, c in trains if nm == name]
+    col = next(c for k, nm, c in trains if nm == name)
+    label = nums[0] if len(nums) == 1 else f"{nums[0]}-{nums[-1]}"
+    o.append(f'<rect x="{tx-464}" y="{ty+332+row*15}" width="34" height="13" rx="4" fill="#FDE047" stroke="{col}" stroke-width="2"/>')
+    o.append(f'<text x="{tx-447}" y="{ty+342+row*15}" font-size="10" font-weight="800" fill="{BG}" text-anchor="middle">{label}</text>')
+    o.append(txt(tx - 422, ty + 342 + row * 15, [what[name]], TXT, 11))
+    row += 1
 o.append('</svg>')
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro.svg"), "w").write("\n".join(o))
