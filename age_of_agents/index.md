@@ -112,9 +112,17 @@ its job. The build script runs that workflow in place of a worker ant.
 
 They run once per finish, on the merged result, before main moves.
 
-- **Janitor ant** finds mess left by the merged tasks and writes a cleanup plan.
-  The next plan stage hands it to the investigator ant, which may ask about it.
-- **Philosopher ant** questions all the merged work together and keeps its 5
+- **Janitor ant** finds mess left by the merged tasks, and only that, and writes
+  a cleanup plan. A worker ant builds it at once on top of the merged scratch
+  copy, and an inspector ant checks it and runs the tests: the combined test.
+  A failed check gets one fix round (detective, worker, inspector). Passed: the
+  cleanup lands as its own commits after the tasks, in the same main move.
+  Still failing: it is dropped, main moves with the tasks alone, the cleanup
+  branch is kept and the next plan stage hands its plan to the investigator ant,
+  which may ask about it. One cleanup per run: a dropped cleanup's own run gets
+  no janitor, so cleanups never chain.
+- **Philosopher ant** runs after the cleanup, on the code that will land, and
+  questions all the merged work together and keeps its 5
   best critiques. It only comments, in the critiques board, and never blocks. On
   the next task, the investigator ant turns the ones that matter into questions.
 
@@ -201,8 +209,10 @@ and stops to ask the user only in step 2.
    skips the trial merge: its inspector already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
-   waiting tasks come back in the next build as `bugs`, at most 2 rounds; the janitor's cleanup plan, based on main, goes to
-   the next plan stage, and a cleanup run gets no janitor. The philosopher's
+   waiting tasks come back in the next build as `bugs`, at most 2 rounds. The
+   janitor's cleanup is built and checked inside finish, with its own one fix
+   round, and lands with the tasks; only a dropped cleanup's plan goes to the
+   next plan stage, and that cleanup run gets no janitor. The philosopher's
    new critiques are listed in the result. Once the check passes,
    `ishikari.py req done` marks the run's requirements DONE.
 
@@ -332,8 +342,8 @@ always_on: Upkeep ants (before main moves) {
   top: 820
   label.near: outside-bottom-center
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
+  janitor: Janitor ant\ncleanup plan for this\nrun's mess, built now {class: node; style.stroke: ${always-line}}
+  philosopher: Philosopher ant\nafter the cleanup,\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
 }
 
 build.aw -> boards.bulletin: built {class: flow}
@@ -355,7 +365,8 @@ finish.merger -> boards.bounty: merge failed {class: bug}
 finish.merger -> always_on: then {class: flow}
 always_on -> finish.finisher: then {class: flow}
 finish.finisher -> boards.bulletin: main moved,\nset "done" {class: ok}
-always_on.janitor -> ask.task: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
+always_on.janitor -> build.aw: cleanup plan,\nbuilt and checked\nbefore main moves {class: flow}
+always_on.janitor -> ask.task: dropped cleanup,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
   left: 3350

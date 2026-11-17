@@ -2,7 +2,7 @@
 import os
 W, H = 1820, 1010
 BG = "#0B1120"; TXT = "#E2E8F0"; SUB = "#94A3B8"
-BLUE = "#60A5FA"; GREEN = "#4ADE80"; RED = "#F87171"; GREY = "#94A3B8"; GOLD = "#FBBF24"; PURP = "#A78BFA"
+BLUE = "#60A5FA"; GREEN = "#4ADE80"; RED = "#F87171"; GREY = "#94A3B8"; GOLD = "#FBBF24"; TEAL = "#2DD4BF"; PURP = "#A78BFA"
 o = []
 def esc(s): return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 def txt(x, y, lines, fill=TXT, size=13, anchor="start", weight="400"):
@@ -23,6 +23,7 @@ lines = [
  ("drop",  RED,   [(1300,200),(1300,100)], 5, "", 0, 0),
  ("check", PURP,  [(560,780),(240,780)], 7, "", 1, 4),
  ("crit",  GREY,  [(960,780),(960,900),(200,900),(200,140),(250,140),(292,192)], 4, "3 6", 1, 10),
+ ("tidy",  TEAL,  [(1160,780),(1160,560),(1080,480),(1060,420)], 6, "", 1, 6),
  ("clean", GREY,  [(1160,780),(1160,960),(60,960),(60,200),(120,200)], 4, "3 6", 1, 12),
  ("board", GREY,  [(1220,420),(1300,560),(1540,620)], 3, "3 6", 0, 0),
  ("board2",GREY,  [(1060,420),(1060,620),(1540,620)], 3, "3 6", 0, 0),
@@ -30,7 +31,7 @@ lines = [
 ]
 # (x, y, name lines, sub lines, kind, label side, colour)
 stations = [
- (120,200,["Task"],["you give it, or the","last cleanup plan"],"term","n",BLUE),
+ (120,200,["Task"],["you give it, or a","dropped cleanup plan"],"term","n",BLUE),
  (300,200,["Investigator Ant"],["stays alive, reads repo once,","gets each answer as a message"],"x","s2",BLUE),
  (300,90,["You"],["answering approves the whole run"],"term","e",GOLD),
  (300,320,["Researcher Ants"],["up to 5, web + computer","facts, it waits"],"end","e",BLUE),
@@ -47,14 +48,14 @@ stations = [
  (1300,200,["Detective Ant"],["why is the bug still open?","writes next fix plan, never code"],"x","s",RED),
  (1300,100,["Dropped"],["after 3 tries on a bug","branch kept, not deleted"],"term","e",RED),
  (1360,780,["Merger ant"],["straight line in a scratch copy,","tests once, no review"],"x","s",GREEN),
- (1160,780,["Janitor ant"],["writes a cleanup plan"],"x","n",GREEN),
- (960,780,["Philosopher ant"],["5 best critiques of the merge"],"x","n",GREEN),
+ (1160,780,["Janitor ant"],["cleanup plan for this run's mess,","built + checked before main moves"],"x","n",GREEN),
+ (960,780,["Philosopher ant"],["after the cleanup,","5 best critiques"],"x","n",GREEN),
  (760,780,["Finisher ant"],["moves main, cleans up,","sets rows done"],"st","s",GREEN),
  (560,780,["MAIN"],["fast-forward only, never pushed"],"term","n",GREEN),
  (400,780,["checkCommand"],["fails: one check-fix round","from the moved main"],"st","s",PURP),
  (240,780,["req done"],["marks the kept :ID:s"],"term","n",PURP),
  (960,900,["Critiques board"],["turned into questions","for the next task"],"x","s",GREY),
- (1160,960,["Cleanup plan"],["offered next time"],"st","n",GREY),
+ (1160,960,["Dropped cleanup"],["plan offered next time,","branch kept"],"st","n",GREY),
 ]
 o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">')
 o.append('<title>Ishikari metro map</title>')
@@ -87,7 +88,8 @@ o.append(txt(1000, 694, ["main moved, set \"done\""], GREY, 11))
 o.append(txt(976, 200 + 160, ["start in parallel"], BLUE, 11))
 o.append(txt(308, 140, ["up to 4 questions a round", "/ask-simple"], GOLD, 11))
 o.append(txt(212, 600, ["critiques"], GREY, 11))
-o.append(txt(72, 600, ["cleanup"], GREY, 11))
+o.append(txt(72, 600, ["dropped cleanup"], GREY, 11))
+o.append(txt(1168, 640, ["cleanup plan", "built now"], TEAL, 11))
 # stations
 for x, y, nm, sub, kind, side, c in stations:
     if kind == "x":
@@ -122,12 +124,12 @@ for name, c, sec in [("ask", GOLD, 6), ("res", BLUE, 5)]:
 # MAIN pulse
 o.append(f'<circle class="pulse" cx="560" cy="780" r="22" fill="none" stroke="{GREEN}" stroke-width="2" opacity="0.6"/>')
 # key
-kx, ky = 1380, 870
-o.append(f'<rect x="{kx}" y="{ky}" width="420" height="125" rx="12" fill="#0F172A" stroke="#334155"/>')
+kx, ky = 1380, 862
+o.append(f'<rect x="{kx}" y="{ky-16}" width="420" height="141" rx="12" fill="#0F172A" stroke="#334155"/>')
 o.append(txt(kx + 16, ky + 24, ["LINES"], SUB, 12, weight="800"))
 for i, (c, dash, t) in enumerate([(BLUE, "", "Plan line - Ask + Plan workflow"), (GREEN, "", "Build line - build, check, merge, upkeep"),
                                   (RED, "", "Bug loop - bounty, Detective, fix"), (RED, "8 5", "Bug branch - clash, stuck, merge failed"),
-                                  (GREY, "3 6", "Feedback - board writes, critiques, cleanup")]):
+                                  (TEAL, "", "Cleanup line - janitor plan to worker ants"), (GREY, "3 6", "Feedback - board writes, critiques, dropped cleanup")]):
     y = ky + 44 + i * 16
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="5"' + (f' stroke-dasharray="{dash}"' if dash else '') + '/>')
     o.append(txt(kx + 70, y + 4, [t], TXT, 11))
@@ -135,7 +137,7 @@ o.append(txt(kx + 290, ky + 48, ["o  interchange", "■  terminus", "▬  dead e
 o.append(txt(kx + 290, ky + 100, ["PURPLE: after main moves"], PURP, 11))
 what = {"plan": "task riding the plan line", "build": "a worker's task: build to MAIN", "ring": "a bug going round the bug loop",
         "clash": "combined test failed: tasks clash", "stuck": "a worker got stuck", "mfail": "merge failed",
-        "check": "checkCommand, then req done", "crit": "critique back to the Investigator", "clean": "cleanup plan back to Task",
+        "check": "checkCommand, then req done", "crit": "critique back to the Investigator", "tidy": "cleanup built by a worker, 1 fix round", "clean": "dropped cleanup plan back to Task",
         "ask": "questions to you and answers back", "res": "researcher fetching facts"}
 tx, ty = 740, 60
 o.insert(len(o), f'<rect x="{tx-480}" y="{ty+300}" width="470" height="{len(what)*15+34}" rx="12" fill="#0F172A" stroke="#334155"/>')

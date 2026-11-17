@@ -80,8 +80,8 @@ note(1660,560,["Bugs or waiting: new build round,","then finish again; max 2 rou
 node("bulletin",630,800,240,110,["Bulletin board","one row per task"],"build","cyl")
 node("bounty",930,800,240,110,["Bug bounty board","one row per bug"],"fix","cyl")
 node("critiques",1230,800,240,110,["Critiques board"],"always","cyl")
-node("janitor",1580,800,140,110,["Janitor ant","writes a","cleanup plan"],"always")
-node("philo",1740,800,140,110,["Philosopher ant","5 best critiques","of the merge"],"always")
+node("janitor",1580,800,140,110,["Janitor ant","cleanup plan,","built now"],"always")
+node("philo",1740,800,140,110,["Philosopher ant","after cleanup,","5 best critiques"],"always")
 
 # legend
 o.append(f'<rect x="220" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="{SUB}" stroke-width="2"/>')
@@ -117,8 +117,9 @@ edges=[ # id, d, kind, dashed, both, label, lx, ly
 ("e22","M1880,205 H1910 V758","f",0,0,"then",1910,560),
 ("e23","M1620,758 V465 H1658","f",0,0,"then",1620,600),
 ("e24","M1760,510 V700 H740 V798","o",0,0,"main moved,|set \"done\"",1760,620),
-("e25","M1650,912 V975 H20 V165 H178","f",1,0,"cleanup plan, offered next time",900,975),
+("e25","M1650,912 V975 H20 V165 H178","f",1,0,"dropped cleanup, offered next time",900,975),
 ("e26","M1300,912 V960 H140 V300 H178","f",1,0,"turned into questions for the next task",500,960),
+("e29","M1600,798 V752 H990 V372","f",0,0,"cleanup plan: built,|checked, 1 fix round",1250,745),
 ("e27","M1190,210 V266","f",0,0,"start one as soon as|a task or fix is built",1190,238),
 ("e28","M1190,370 V418","o",0,0,"pass, once every|task is checked",1190,395),
 ]
@@ -133,7 +134,7 @@ for lx,ly,lab,c in labels:
     o.append(f'<g class="lb">{text(lx,ly,lab.split("|"),c,11)}</g>')
 
 # ant path through the run
-seq=["e1","e4","e3","e5","e6","e7","e8","e17","e27","e15","e10","e16","e17","e27","e28","e13","e20","e22","e23","e24"]
+seq=["e1","e4","e3","e5","e6","e7","e8","e17","e27","e15","e10","e16","e17","e27","e28","e13","e20","e22","e29","e17","e27","e23","e24"]
 def pts(d):
     t=re.findall(r'[MHVL]|-?\d+',d);p=[];x=y=0;i=0
     while i<len(t):
@@ -157,8 +158,8 @@ path="M"+" L".join(f"{x},{y}" for x,y in P)
 # stage windows (seconds) from segment end times
 seg_t=[];prev=0
 for s,n in marks:seg_t.append((s,prev,t_at(n)));prev=t_at(n)
-stage_of={"e1":"ask","e4":"ask","e3":"ask","e5":"plan","e6":"plan","e7":"plan","e8":"build","e17":"check","e27":"check","e15":"boards","e10":"fix","e16":"build","e28":"check","e13":"boards","e20":"finish","e22":"upkeep","e23":"finish","e24":"boards"}
-cap={"e1":"The task reaches the live Investigator Ant.","e4":"It asks the user up to 4 questions a round; answers come back as messages.","e3":"Nothing unclear: it writes investigation_report.md, then stops.","e5":"Plan workflow: the Add Requirement Ant reads the report.","e6":"Architect Ant writes architecture.md.","e7":"One plan per worker ant.","e8":"Worker Ants start in parallel, one worktree each, max 5.","e17":"Built: the anti-monitor ant sees it.","e27":"An Inspector Ant starts at once for that task.","e15":"Fail: bugs and a first fix plan go on the bug bounty board.","e10":"Bug still open after round 1: the Detective Ant digs in.","e16":"Detective's fix plan goes back to a Worker Ant.","e28":"Fix re-inspected: pass, once every task is checked.","e13":"Combined test passes: the bulletin board records it.","e20":"Passing tasks go to the Merger, no review.","e22":"Merged in a straight line: Janitor and Philosopher run.","e23":"Then the Finisher.","e24":"Main fast-forwards; bulletin rows set to \"done\"."}
+stage_of={"e1":"ask","e4":"ask","e3":"ask","e5":"plan","e6":"plan","e7":"plan","e8":"build","e17":"check","e27":"check","e15":"boards","e10":"fix","e16":"build","e28":"check","e13":"boards","e20":"finish","e22":"upkeep","e29":"build","e23":"finish","e24":"boards"}
+cap={"e1":"The task reaches the live Investigator Ant.","e4":"It asks the user up to 4 questions a round; answers come back as messages.","e3":"Nothing unclear: it writes investigation_report.md, then stops.","e5":"Plan workflow: the Add Requirement Ant reads the report.","e6":"Architect Ant writes architecture.md.","e7":"One plan per worker ant.","e8":"Worker Ants start in parallel, one worktree each, max 5.","e17":"Built: the anti-monitor ant sees it.","e27":"An Inspector Ant starts at once for that task.","e15":"Fail: bugs and a first fix plan go on the bug bounty board.","e10":"Bug still open after round 1: the Detective Ant digs in.","e16":"Detective's fix plan goes back to a Worker Ant.","e28":"Fix re-inspected: pass, once every task is checked.","e13":"Combined test passes: the bulletin board records it.","e20":"Passing tasks go to the Merger, no review.","e22":"Merged in a straight line: the Janitor plans a cleanup of this run's mess.","e29":"A Worker Ant builds the cleanup now, on top of the merge.","e23":"Cleanup checked and landed; Philosopher critiques; then the Finisher.","e24":"Main fast-forwards; bulletin rows set to \"done\"."}
 def win(spans):
     kt=[0];v=[0]
     for a,b in spans:kt+=[a/D,min(b,D-0.01)/D];v+=[1,0]

@@ -124,6 +124,41 @@ test('finish: dropped branches are kept, merged ones removed', async () => {
   assert.ok(!fin.includes('   - ishikari/r1/b'))
 })
 
+function finishWith(answer) {
+  const prompts = []
+  return run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }] }, (p, o) => {
+    prompts.push(p)
+    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    if (o.label === 'janitor-ant') return { needed: true, title: 'tidy' }
+    if (o.label === 'philosopher-ant') return { critiques: [] }
+    return answer(o) || { moved: true, reason: '' }
+  }).then(r => ({ ...r, fin: prompts.find(p => p.includes('finisher ant')) }))
+}
+
+test('finish: a checked cleanup lands before main moves, philosopher after it', async () => {
+  const { out, calls, fin } = await finishWith(o =>
+    o.label.startsWith('worker') ? { status: 'built', notes: '' }
+      : o.label.startsWith('inspector') ? { bugs: [] }
+      : o.label === 'merger-ant:cleanup' ? { ok: true, sha: 'def' } : null)
+  assert.deepEqual(out.cleanup, { title: 'tidy', landed: true })
+  assert.equal(out.sha, 'def')
+  assert.deepEqual(calls.slice(1, 6), ['janitor-ant', 'worker-ant:cleanup', 'inspector-ant:cleanup:1', 'merger-ant:cleanup', 'philosopher-ant'])
+  assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
+})
+
+test('finish: a cleanup still failing after one fix round is dropped, branch kept, main still moves', async () => {
+  const { out, calls, fin } = await finishWith(o =>
+    o.label.startsWith('worker') ? { status: 'built', notes: '' }
+      : o.label.startsWith('inspector') ? { bugs: ['broke x'] }
+      : o.label.startsWith('detective') ? { cause: 'c', plan: 'p' } : null)
+  assert.equal(out.mainMoved, true)
+  assert.equal(out.cleanup.landed, false)
+  assert.equal(out.cleanup.branch, 'ishikari/r1/_cleanup')
+  assert.equal(calls.filter(c => c.startsWith('detective')).length, 1)
+  assert.ok(!calls.includes('merger-ant:cleanup'))
+  assert.ok(!fin.includes('   - ishikari/r1/_cleanup'))
+})
+
 // ---- stress: malformed input and half answers never crash or pass silently ----
 
 test('stress: plan survives broken ant replies', async () => {

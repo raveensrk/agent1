@@ -88,6 +88,7 @@
 <path id="L-drop" d="M1300,200 L1300,100" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
 <path id="L-check" d="M560,780 L240,780" fill="none" stroke="#A78BFA" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
 <path id="L-crit" d="M960,780 L960,900 L200,900 L200,140 L250,140 L292,192" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-tidy" d="M1160,780 L1160,560 L1080,480 L1060,420" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
 <path id="L-clean" d="M1160,780 L1160,960 L60,960 L60,200 L120,200" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
 <path id="L-board" d="M1220,420 L1300,560 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
 <path id="L-board2" d="M1060,420 L1060,620 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
@@ -108,10 +109,11 @@
 <text class="h" x="976" y="360" fill="#60A5FA" font-size="11" text-anchor="start" font-weight="400">start in parallel</text>
 <text class="h" x="308" y="140" fill="#FBBF24" font-size="11" text-anchor="start" font-weight="400">up to 4 questions a round</text><text class="h" x="308" y="154" fill="#FBBF24" font-size="11" text-anchor="start" font-weight="400">/ask-simple</text>
 <text class="h" x="212" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">critiques</text>
-<text class="h" x="72" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">cleanup</text>
+<text class="h" x="72" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">dropped cleanup</text>
+<text class="h" x="1168" y="640" fill="#2DD4BF" font-size="11" text-anchor="start" font-weight="400">cleanup plan</text><text class="h" x="1168" y="654" fill="#2DD4BF" font-size="11" text-anchor="start" font-weight="400">built now</text>
 <rect x="106" y="186" width="28" height="28" rx="6" fill="#60A5FA" stroke="#E2E8F0" stroke-width="3"/>
 <text class="h" x="120" y="150" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Task</text>
-<text class="h" x="120" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">you give it, or the</text><text class="h" x="120" y="181" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">last cleanup plan</text>
+<text class="h" x="120" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">you give it, or a</text><text class="h" x="120" y="181" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">dropped cleanup plan</text>
 <circle cx="300" cy="200" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="300" cy="200" r="4" fill="#60A5FA"/>
 <text class="h" x="310" y="240" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Investigator Ant</text>
 <text class="h" x="310" y="257" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">stays alive, reads repo once,</text><text class="h" x="310" y="271" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">gets each answer as a message</text>
@@ -162,10 +164,10 @@
 <text class="h" x="1360" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">straight line in a scratch copy,</text><text class="h" x="1360" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">tests once, no review</text>
 <circle cx="1160" cy="780" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1160" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="1160" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Janitor ant</text>
-<text class="h" x="1160" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">writes a cleanup plan</text>
+<text class="h" x="1160" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="1160" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">built + checked before main moves</text>
 <circle cx="960" cy="780" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="960" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Philosopher ant</text>
-<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">5 best critiques of the merge</text>
+<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">after the cleanup,</text><text class="h" x="960" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">5 best critiques</text>
 <circle cx="760" cy="780" r="8" fill="#E2E8F0" stroke="#4ADE80" stroke-width="3"/>
 <text class="h" x="760" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="760" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">moves main, cleans up,</text><text class="h" x="760" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">sets rows done</text>
@@ -182,8 +184,8 @@
 <text class="h" x="960" y="932" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Critiques board</text>
 <text class="h" x="960" y="949" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">turned into questions</text><text class="h" x="960" y="963" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">for the next task</text>
 <circle cx="1160" cy="960" r="8" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3"/>
-<text class="h" x="1160" y="910" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Cleanup plan</text>
-<text class="h" x="1160" y="927" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">offered next time</text>
+<text class="h" x="1160" y="910" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Dropped cleanup</text>
+<text class="h" x="1160" y="927" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">plan offered next time,</text><text class="h" x="1160" y="941" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">branch kept</text>
 <g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#60A5FA" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">1</text><animateMotion dur="18s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-plan"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#4ADE80" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">2</text><animateMotion dur="28s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-build"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#4ADE80" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">3</text><animateMotion dur="28s" begin="-5.60s" repeatCount="indefinite"><mpath href="#L-build"/></animateMotion></g>
@@ -197,25 +199,28 @@
 <g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">11</text><animateMotion dur="14s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-mfail"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#A78BFA" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">12</text><animateMotion dur="8s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-check"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#94A3B8" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">13</text><animateMotion dur="20s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-crit"/></animateMotion></g>
-<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#94A3B8" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">14</text><animateMotion dur="24s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-clean"/></animateMotion></g>
-<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#FBBF24" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">15</text><animateMotion dur="6s" begin="0s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></g>
-<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#60A5FA" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">16</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-res"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#2DD4BF" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">14</text><animateMotion dur="12s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-tidy"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#94A3B8" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">15</text><animateMotion dur="24s" begin="0.00s" repeatCount="indefinite"><mpath href="#L-clean"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#FBBF24" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">16</text><animateMotion dur="6s" begin="0s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-12" y="-10" width="24" height="20" rx="6" fill="#FDE047" stroke="#60A5FA" stroke-width="3"/><text y="5" font-size="13" font-weight="800" fill="#0B1120" text-anchor="middle">17</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-res"/></animateMotion></g>
 <circle class="pulse" cx="560" cy="780" r="22" fill="none" stroke="#4ADE80" stroke-width="2" opacity="0.6"/>
-<rect x="1380" y="870" width="420" height="125" rx="12" fill="#0F172A" stroke="#334155"/>
-<text class="h" x="1396" y="894" fill="#94A3B8" font-size="12" text-anchor="start" font-weight="800">LINES</text>
-<line x1="1396" y1="914" x2="1440" y2="914" stroke="#60A5FA" stroke-width="5"/>
-<text class="h" x="1450" y="918" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Plan line - Ask + Plan workflow</text>
-<line x1="1396" y1="930" x2="1440" y2="930" stroke="#4ADE80" stroke-width="5"/>
-<text class="h" x="1450" y="934" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Build line - build, check, merge, upkeep</text>
-<line x1="1396" y1="946" x2="1440" y2="946" stroke="#F87171" stroke-width="5"/>
-<text class="h" x="1450" y="950" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Bug loop - bounty, Detective, fix</text>
-<line x1="1396" y1="962" x2="1440" y2="962" stroke="#F87171" stroke-width="5" stroke-dasharray="8 5"/>
-<text class="h" x="1450" y="966" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Bug branch - clash, stuck, merge failed</text>
-<line x1="1396" y1="978" x2="1440" y2="978" stroke="#94A3B8" stroke-width="5" stroke-dasharray="3 6"/>
-<text class="h" x="1450" y="982" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Feedback - board writes, critiques, cleanup</text>
-<text class="h" x="1670" y="918" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">o  interchange</text><text class="h" x="1670" y="932" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">■  terminus</text><text class="h" x="1670" y="946" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">▬  dead end</text>
-<text class="h" x="1670" y="970" fill="#A78BFA" font-size="11" text-anchor="start" font-weight="400">PURPLE: after main moves</text>
-<rect x="260" y="360" width="470" height="199" rx="12" fill="#0F172A" stroke="#334155"/>
+<rect x="1380" y="846" width="420" height="141" rx="12" fill="#0F172A" stroke="#334155"/>
+<text class="h" x="1396" y="886" fill="#94A3B8" font-size="12" text-anchor="start" font-weight="800">LINES</text>
+<line x1="1396" y1="906" x2="1440" y2="906" stroke="#60A5FA" stroke-width="5"/>
+<text class="h" x="1450" y="910" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Plan line - Ask + Plan workflow</text>
+<line x1="1396" y1="922" x2="1440" y2="922" stroke="#4ADE80" stroke-width="5"/>
+<text class="h" x="1450" y="926" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Build line - build, check, merge, upkeep</text>
+<line x1="1396" y1="938" x2="1440" y2="938" stroke="#F87171" stroke-width="5"/>
+<text class="h" x="1450" y="942" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Bug loop - bounty, Detective, fix</text>
+<line x1="1396" y1="954" x2="1440" y2="954" stroke="#F87171" stroke-width="5" stroke-dasharray="8 5"/>
+<text class="h" x="1450" y="958" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Bug branch - clash, stuck, merge failed</text>
+<line x1="1396" y1="970" x2="1440" y2="970" stroke="#2DD4BF" stroke-width="5"/>
+<text class="h" x="1450" y="974" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Cleanup line - janitor plan to worker ants</text>
+<line x1="1396" y1="986" x2="1440" y2="986" stroke="#94A3B8" stroke-width="5" stroke-dasharray="3 6"/>
+<text class="h" x="1450" y="990" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Feedback - board writes, critiques, dropped cleanup</text>
+<text class="h" x="1670" y="910" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">o  interchange</text><text class="h" x="1670" y="924" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">■  terminus</text><text class="h" x="1670" y="938" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">▬  dead end</text>
+<text class="h" x="1670" y="962" fill="#A78BFA" font-size="11" text-anchor="start" font-weight="400">PURPLE: after main moves</text>
+<rect x="260" y="360" width="470" height="214" rx="12" fill="#0F172A" stroke="#334155"/>
 <text class="h" x="276" y="382" fill="#94A3B8" font-size="12" text-anchor="start" font-weight="800">TRAINS</text>
 <rect x="276" y="392" width="34" height="13" rx="4" fill="#FDE047" stroke="#60A5FA" stroke-width="2"/>
 <text x="293" y="402" font-size="10" font-weight="800" fill="#0B1120" text-anchor="middle">1</text>
@@ -241,13 +246,16 @@
 <rect x="276" y="497" width="34" height="13" rx="4" fill="#FDE047" stroke="#94A3B8" stroke-width="2"/>
 <text x="293" y="507" font-size="10" font-weight="800" fill="#0B1120" text-anchor="middle">13</text>
 <text class="h" x="318" y="507" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">critique back to the Investigator</text>
-<rect x="276" y="512" width="34" height="13" rx="4" fill="#FDE047" stroke="#94A3B8" stroke-width="2"/>
+<rect x="276" y="512" width="34" height="13" rx="4" fill="#FDE047" stroke="#2DD4BF" stroke-width="2"/>
 <text x="293" y="522" font-size="10" font-weight="800" fill="#0B1120" text-anchor="middle">14</text>
-<text class="h" x="318" y="522" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">cleanup plan back to Task</text>
-<rect x="276" y="527" width="34" height="13" rx="4" fill="#FDE047" stroke="#FBBF24" stroke-width="2"/>
+<text class="h" x="318" y="522" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">cleanup built by a worker, 1 fix round</text>
+<rect x="276" y="527" width="34" height="13" rx="4" fill="#FDE047" stroke="#94A3B8" stroke-width="2"/>
 <text x="293" y="537" font-size="10" font-weight="800" fill="#0B1120" text-anchor="middle">15</text>
-<text class="h" x="318" y="537" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">questions to you and answers back</text>
-<rect x="276" y="542" width="34" height="13" rx="4" fill="#FDE047" stroke="#60A5FA" stroke-width="2"/>
+<text class="h" x="318" y="537" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">dropped cleanup plan back to Task</text>
+<rect x="276" y="542" width="34" height="13" rx="4" fill="#FDE047" stroke="#FBBF24" stroke-width="2"/>
 <text x="293" y="552" font-size="10" font-weight="800" fill="#0B1120" text-anchor="middle">16</text>
-<text class="h" x="318" y="552" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">researcher fetching facts</text>
+<text class="h" x="318" y="552" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">questions to you and answers back</text>
+<rect x="276" y="557" width="34" height="13" rx="4" fill="#FDE047" stroke="#60A5FA" stroke-width="2"/>
+<text x="293" y="567" font-size="10" font-weight="800" fill="#0B1120" text-anchor="middle">17</text>
+<text class="h" x="318" y="567" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">researcher fetching facts</text>
 </svg>

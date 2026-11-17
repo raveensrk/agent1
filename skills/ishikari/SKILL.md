@@ -67,7 +67,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   inputs: `env.repo`, `env.main`, `env.state`, the task, the critiques board
   `<env.state>/boards/critiques.md`, the report path
   `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`
-  and `env.checkCommand` when saved. If the last finish left a cleanup plan,
+  and `env.checkCommand` when saved. If the last finish dropped a cleanup,
   add one line to the task: `Also consider the cleanup plan at <file>.` The
   investigator decides whether to ask about it; never ask yourself.
 - It replies with JSON. While `questions` is not empty, ask them all in one
@@ -93,8 +93,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
     `python3 <env.tool> boards remove <env.state> critiques`;
   - save `testCommand` and `checkCommand` with
     `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
-- A run whose task is the cleanup plan passes `cleanup: true` to finish, so
-  cleanups never chain.
+- A run whose task is a dropped cleanup plan passes `cleanup: true` to finish,
+  so cleanups never chain.
 
 ## 3. Build
 
@@ -126,4 +126,5 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   values kept in step 2, and commit only that file.
 - Report once, at the end: what landed on main, each task's notes and nits,
   each dropped task with why and its bugs, the check, each new critique (one
-  line each from `critiques`) and any cleanup plan, offered as the next task.
+  line each from `critiques`) and the cleanup: `landed`, or dropped with its
+  `reason` and `branch`, its plan offered as the next task.

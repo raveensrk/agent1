@@ -78,6 +78,9 @@ steps: {
     always_on.philosopher.style.opacity: 1
     (always_on.philosopher -> boards.critiques)[0].style.opacity: 1
     (always_on.janitor -> ask.task)[0].style.opacity: 1
+    (always_on.janitor -> build.aw)[0].style.opacity: 1
+    build.style.opacity: 1
+    build.aw.style.opacity: 1
     (finish.merger -> always_on)[0].style.opacity: 1
     (boards.critiques -> ask.arta)[0].style.opacity: 1
   }

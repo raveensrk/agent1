@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, move main forward, run janitor and philosopher ants',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, build and check the janitor cleanup on top, run the philosopher, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'janitor and philosopher ants, in parallel' },
+    { title: 'Upkeep', detail: 'janitor plans a cleanup, a worker builds it, an inspector checks it; then the philosopher' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -15,18 +15,20 @@ export const meta = {
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
 //   drop?: [{ id, branch }],                 tasks dropped by the rules: marked dropped;
 //                                            their branches are kept for a later look
-//   cleanup?: boolean,                       this run built a cleanup plan: no janitor, so
-//                                            cleanups never chain
+//   cleanup?: boolean,                       this run built a dropped cleanup plan: no janitor,
+//                                            so cleanups never chain
 // }
 // Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, critiques, check }
 //      or { stage: 'error', reason }.
-// bugs go into the next ishikari-build run; cleanup goes into the next
+// bugs go into the next ishikari-build run. cleanup: {title, landed: true} when the
+// janitor's cleanup was built, checked and landed with the tasks; {title, file,
+// branch, landed: false, reason} when it was dropped, offered to the next
 // ishikari-plan run as a suggested task.
 //
 // The repo's main checkout is touched once, at the end, by a fast-forward
 // that git refuses if it would overwrite anything.
 
-const EFFORT = { merger: 'medium', janitor: 'low', philosopher: 'low', finisher: 'low' }
+const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', philosopher: 'low', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
@@ -154,41 +156,104 @@ const waiting = order.filter(t => !merged.includes(t) && !failed.includes(t)).ma
 const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge', bug: `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
 // ---- upkeep on the merged result, before main moves ----
+// The janitor plans a cleanup of this run's mess; a worker ant builds it on top
+// of the scratch branch, an inspector checks it, with one fix round (detective,
+// worker, inspector). Passed: the scratch branch fast-forwards to it, so the
+// cleanup lands as its own commits after the tasks. Failed: it is dropped, its
+// branch kept, its plan offered next time. Then the philosopher reads the result.
 let cleanup = null
 let critiques = []
+const cleanBranch = `ishikari/${env.run}/_cleanup`
+const cleanTree = treeOf(cleanBranch)
+const cleanPlan = `${env.state}/plans/${env.run}/cleanup.md`
+let cleanKept = false
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
-  const [jan, phil] = await parallel([
-    () => isCleanup ? null : agent(
-      `You are the janitor ant of the Ishikari workflow.
+  const jan = isCleanup ? null : await agent(
+    `You are the janitor ant of the Ishikari workflow.
 ${where}
-Read the merged code in ${scratchTree}. Find dead code, bloat and mess left by the
-tasks just merged (${names}). Only worker ants write code, so if something needs
-cleaning, write a complete cleanup plan a worker ant can build without questions
-to ${env.state}/plans/${env.run}/cleanup.md. The plan starts from ${env.main} as it
-is after this run: never name a worktree or a scratch branch as its base, they are
-removed. Say it changes no behaviour. Change nothing else.`,
-      { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
-        schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
-    ),
-    () => agent(
-      `You are the philosopher ant of the Ishikari workflow.
+Read the merged code in ${scratchTree}. Find dead code, bloat, duplication and mess
+left by the tasks just merged (${names}), and only that: leave the rest of the repo
+alone. Only worker ants write code, so if something needs cleaning, write a
+complete cleanup plan a worker ant can build without questions to ${cleanPlan}.
+A worker builds it now, on top of ${scratch}. Say it changes no behaviour, and
+name the files it touches. Change nothing else.`,
+    { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
+      schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
+  )
+  if (jan && jan.needed) {
+    const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
+    const CHECKED = { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] }
+    const build = (extra) => agent(
+      `You are a worker ant of the Ishikari workflow, building the janitor's cleanup.
 ${where}
-Read the merged code in ${scratchTree} and question the work just merged
-(${names}) as a whole: design, scope, missing cases, how the tasks fit together.
+Plan: ${cleanPlan}.${extra}
+Work only in the worktree ${cleanTree} on branch ${cleanBranch}. If it does not exist,
+create it with \`git -C ${env.repo} worktree add -b ${cleanBranch} ${cleanTree} ${scratch}\`.
+Change no behaviour. Keep the tests passing (${tests} inside ${cleanTree}).
+Commit your work on ${cleanBranch} in small commits, no merge commits. Never touch
+${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
+      { label: extra ? 'worker-ant:cleanup:fix' : 'worker-ant:cleanup', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
+    )
+    const inspect = (round) => agent(
+      `You are an inspector ant of the Ishikari workflow, checking the janitor's cleanup.
+${where}
+Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}, built on ${scratch}
+(every task of this run, merged). Check that it follows the plan, changes no
+behaviour and touches only this run's mess, then ${tests} inside ${cleanTree}:
+these tests are the combined test. Return each problem in "bugs", or an empty
+list. Never fix anything.`,
+      { label: `inspector-ant:cleanup:${round}`, phase: 'Upkeep', effort: EFFORT.inspector, schema: CHECKED },
+    )
+    const drop = reason => ({ title: jan.title, file: cleanPlan, branch: cleanBranch, landed: false, reason })
+    let b = await build('')
+    let bugs = b && b.status === 'built' ? (await inspect(1) || { bugs: ['the inspector ant died'] }).bugs : [b ? 'worker stuck: ' + b.notes : 'the worker ant died']
+    if (bugs.length) {
+      const det = await agent(
+        `You are the detective ant of the Ishikari workflow. The janitor's cleanup failed its check.
+${where}
+Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}. Bugs:
+${bugs.map(x => `- ${x}`).join('\n')}
+Find why, and write the fix plan in "plan" for a worker ant. Never write code.`,
+        { label: 'detective-ant:cleanup', phase: 'Upkeep', effort: EFFORT.detective,
+          schema: { type: 'object', properties: { cause: { type: 'string' }, plan: { type: 'string' } }, required: ['cause', 'plan'] } },
+      )
+      b = det ? await build(`\nIt failed its check. Fix plan from the detective ant:\n${det.plan}`) : null
+      bugs = b && b.status === 'built' ? (await inspect(2) || { bugs: ['the inspector ant died'] }).bugs : ['fix not built']
+    }
+    if (bugs.length) {
+      cleanup = drop(bugs.join('; '))
+      cleanKept = true
+    } else {
+      const ff = await agent(
+        `Fast-forward the Ishikari scratch branch to the checked cleanup.
+${where}
+Run \`git -C ${scratchTree} merge --ff-only ${cleanBranch}\`. If git refuses, change
+nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
+        { label: 'merger-ant:cleanup', phase: 'Upkeep', effort: 'low',
+          schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
+      )
+      if (ff && ff.ok) { cleanup = { title: jan.title, landed: true }; sha = ff.sha || sha }
+      else { cleanup = drop('could not fast-forward the scratch branch'); cleanKept = true }
+    }
+  }
+  const phil = await agent(
+    `You are the philosopher ant of the Ishikari workflow.
+${where}
+Read the merged code in ${scratchTree}, the code that will land on ${env.main}, and
+question the work just merged (${names}) as a whole: design, scope, missing cases,
+how the tasks fit together.
 Keep only your 5 most useful critiques, as short, concrete questions. Add them
 with exactly this command, filling in the rows:
 python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROWS_END'
 [["<target file or task>", "<critique>"], ...]
 ISHIKARI_ROWS_END
 Return the same critiques in "critiques". Change nothing else, and never block the work.`,
-      { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
-        schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
-    ),
-  ])
+    { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
+      schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
+  )
   if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques
-  if (jan && jan.needed) cleanup = { title: jan.title, file: `${env.state}/plans/${env.run}/cleanup.md` }
 }
 
 // ---- move main forward, clean up, write the bulletin ----
@@ -205,7 +270,7 @@ const write = rows => rows.length
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'
-const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch]
+const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(cleanKept ? [] : [cleanBranch])]
 const FINISH = {
   type: 'object',
   properties: {
