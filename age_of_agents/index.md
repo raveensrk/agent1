@@ -333,7 +333,7 @@ finish: 6. Finish {
   finisher: Finisher ant\nmoves main forward,\ncleans up {class: node; style.stroke: ${finish-line}}
 }
 
-logbook: Logbook - for you to read after a run, no ant reads it {
+logbook: Logbook - for you to read after a run, no ant reads it - in ~/.ishikari/<repo>-<hash>/boards/, outside the repo {
   left: 1000
   top: 820
   direction: right
@@ -342,7 +342,7 @@ logbook: Logbook - for you to read after a run, no ant reads it {
   bounty: Bug bounty board\none row per bug {shape: cylinder; class: node; style.stroke: ${fix-line}}
 }
 
-critiques: Critiques board\nthe bridge to the next run {
+critiques: Critiques board\nthe bridge to the next run\n~/.ishikari/<repo>-<hash>/boards/critiques.md {
   left: 1600
   top: 820
   shape: cylinder

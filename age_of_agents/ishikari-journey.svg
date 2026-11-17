@@ -35,11 +35,12 @@
 </g>
 <g id="f-boards"><rect x="600" y="760" width="600" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
 <text x="614" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Logbook</text>
-<text x="1186" y="783.9" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">for you to read after a run, no ant reads it</text>
+<text x="1186" y="783.9" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/ - for you, no ant reads it</text>
 </g>
 <g id="f-bridge"><rect x="1215" y="760" width="270" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
 <text x="1229" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Bridge to next run</text>
 </g>
+<g class="lb"><text x="1230" y="928.9" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/critiques.md</text></g>
 <g id="f-upkeep"><rect x="1560" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
 <text x="1574" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Upkeep ants</text>
 </g>

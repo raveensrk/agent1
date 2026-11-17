@@ -43,7 +43,7 @@ stations = [
  (1220,420,["Anti-monitor"],["the build script"],"x","s",GREEN),
  (1380,420,["Inspector Ants"],["one per built task,","checks plan + design, runs tests"],"x","s",GREEN),
  (1540,420,["Combined test"],["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x","e",GREEN),
- (1300,640,["Logbook"],["bulletin + bug bounty boards:","for you to read, no ant reads it"],"term","e",GREY),
+ (1300,640,["Logbook"],["bulletin + bug bounty boards:","for you to read, no ant reads it","~/.ishikari/<repo>-<hash>/boards/"],"term","e",GREY),
  (1300,200,["Detective Ant"],["why is the bug still open?","writes next fix plan, never code"],"x","w2",RED),
  (1300,100,["Dropped"],["after 3 tries on a bug","branch kept, not deleted"],"term","e",RED),
  (1360,780,["Merger ant"],["straight line in a scratch copy,","tests once, no review"],"x","s",GREEN),
@@ -53,7 +53,7 @@ stations = [
  (560,780,["MAIN"],["fast-forward only, never pushed"],"term","n",GREEN),
  (400,780,["checkCommand"],["fails: one check-fix round","from the moved main"],"st","s",PURP),
  (240,780,["req done"],["marks the kept :ID:s"],"term","n",PURP),
- (960,900,["Critiques board"],["bridge to the next run: its","investigator turns them into questions"],"x","s",GREY),
+ (960,900,["Critiques board"],["bridge to the next run: its","investigator turns them into questions","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"x","s",GREY),
  (1160,960,["Dropped cleanup"],["plan offered next time,","branch kept"],"st","n",GREY),
 ]
 o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">')
