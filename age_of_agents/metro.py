@@ -34,17 +34,16 @@ stations = [
  (120,200,["Task"],["you give it, or a","dropped cleanup plan"],"term","n",BLUE),
  (300,200,["Investigator Ant"],["stays alive, reads repo once,","gets each answer as a message"],"x","s2",BLUE),
  (300,90,["You"],["answering approves the whole run"],"term","e",GOLD),
- (300,320,["Researcher Ants"],["up to 5, web + computer","facts, it waits"],"end","e",BLUE),
+ (300,320,["Researcher Ants  ∥"],["up to 5, web + computer","facts, it waits"],"end","e",BLUE),
  (480,200,["investigation_report.md"],["nothing unclear: write it,","investigator stopped"],"st","n",BLUE),
  (640,200,["Add Requirement Ant"],["req add, keeps :ID:s"],"st","s",BLUE),
  (800,200,["Architect Ant"],["architecture.md"],"st","n",BLUE),
  (960,200,["Worker plans"],["one per worker ant:","title, files, after"],"x","n",BLUE),
- (1060,420,["Worker Ants"],["code, tests, docs","one worktree each, max 5"],"x","sw",GREEN),
- (1220,420,["Anti-monitor"],["the build script"],"x","s",GREEN),
- (1380,420,["Inspector Ants"],["one per built task,","checks plan + design, runs tests"],"x","s",GREEN),
+ (1060,420,["Worker Ants  ∥"],["code, tests, docs","one worktree each, max 5"],"x","sw",GREEN),
+ (1380,420,["Inspector Ants  ∥"],["one per built task,","checks plan + design, runs tests"],"x","s",GREEN),
  (1540,420,["Combined test"],["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x","e",GREEN),
  (1300,640,["Logbook"],["bulletin + bug bounty boards:","for you to read, no ant reads it","~/.ishikari/<repo>-<hash>/boards/"],"term","e",GREY),
- (1300,200,["Detective Ant"],["why is the bug still open?","writes next fix plan, never code"],"x","w2",RED),
+ (1300,200,["Detective Ants  ∥"],["why is the bug still open?","writes next fix plan, never code"],"x","w2",RED),
  (1300,100,["Dropped"],["after 3 tries on a bug","branch kept, not deleted"],"term","e",RED),
  (1360,780,["Merger ant"],["straight line in a scratch copy,","tests once, no review"],"x","s",GREEN),
  (1160,780,["Janitor ant"],["cleanup plan for this run's mess,","built + checked before main moves"],"x","n",GREEN),
@@ -80,6 +79,7 @@ o.append(txt(1220, 400, ["round 1 (lowest red track): the inspector's own fix pl
 o.append(txt(1550, 300, ["fail: tasks clash,", "merge, fix loop"], RED, 11))
 o.append(txt(1392, 300, ["still open after", "round 1: the script", "hands it over"], RED, 11))
 o.append(txt(1708, 700, ["merge failed:", "next build round"], RED, 11))
+o.append(txt(1220, 380, ["built: script starts its inspector"], GREEN, 11, "middle"))
 o.append(txt(1550, 560, ["pass: they work combined"], GREEN, 11))
 o.append(txt(1388, 560, ["end of build"], GREY, 11))
 o.append(txt(1000, 694, ["end of finish"], GREY, 11))
@@ -89,9 +89,17 @@ o.append(txt(308, 140, ["up to 4 questions a round", "/ask-simple"], GOLD, 11))
 o.append(txt(212, 600, ["critiques"], GREY, 11))
 o.append(txt(72, 600, ["dropped cleanup"], GREY, 11))
 o.append(txt(1168, 640, ["cleanup plan", "built now"], TEAL, 11))
+def is_ant(nm):
+    n = nm.lower()
+    return " ant" in n or n in ("combined test", "cleanup worker", "cleanup inspector")
+def hexm(x, y, r, fill, stroke, sw):
+    pts = " ".join(f"{x + r * dx:.1f},{y + r * dy:.1f}" for dx, dy in [(-1,0),(-0.5,-0.87),(0.5,-0.87),(1,0),(0.5,0.87),(-0.5,0.87)])
+    return f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
 # stations
 for x, y, nm, sub, kind, side, c in stations:
-    if kind == "x":
+    if is_ant(nm[0]):
+        o.append(hexm(x, y, 15, BG, TXT, 4) + f'<circle cx="{x}" cy="{y}" r="4" fill="{c}"/>')
+    elif kind == "x":
         o.append(f'<circle cx="{x}" cy="{y}" r="12" fill="{BG}" stroke="{TXT}" stroke-width="4"/><circle cx="{x}" cy="{y}" r="4" fill="{c}"/>')
     elif kind == "term":
         o.append(f'<rect x="{x-14}" y="{y-14}" width="28" height="28" rx="6" fill="{c}" stroke="{TXT}" stroke-width="3"/>')
@@ -132,8 +140,9 @@ for i, (c, dash, t) in enumerate([(BLUE, "", "Plan line - Ask + Plan workflow"),
     y = ky + 44 + i * 16
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="5"' + (f' stroke-dasharray="{dash}"' if dash else '') + '/>')
     o.append(txt(kx + 70, y + 4, [t], TXT, 11))
-o.append(txt(kx + 290, ky + 48, ["o  interchange", "■  terminus", "▬  dead end"], SUB, 11))
-o.append(txt(kx + 290, ky + 100, ["PURPLE: after main moves"], PURP, 11))
+o.append(txt(kx + 290, ky + 48, ["⬡  an ant (AI agent)", "o  interchange", "■  terminus", "▬  dead end"], SUB, 11))
+o.append(txt(kx + 290, ky + 118, ["PURPLE: after main moves"], PURP, 11))
+o.append(txt(kx + 290, ky + 104, ["∥  many run in parallel"], SUB, 11))
 what = {"plan": "task riding the plan line", "build": "a worker's task: build to MAIN", "ring": "a bug going round the bug loop", "r1": "round 1: inspector's fix plan to a worker",
         "clash": "tasks clash: into the fix loop", "stuck": "a worker got stuck: to the Detective", "mfail": "merge failed: next build round",
         "check": "checkCommand, then req done", "crit": "critique back to the Investigator", "tidy": "cleanup built by a worker, 1 fix round", "clean": "dropped cleanup plan back to Task",

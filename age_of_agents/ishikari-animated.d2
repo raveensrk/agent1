@@ -43,9 +43,7 @@ steps: {
   }
   4-check: {
     check.style.opacity: 1
-    check.monitor.style.opacity: 1
     check.inspector.style.opacity: 1
-    check.(monitor -> inspector)[0].style.opacity: 1
     check.together.style.opacity: 1
     check.(inspector -> together)[0].style.opacity: 1
   }
@@ -57,7 +55,7 @@ steps: {
     (build.aw -> fix.detective)[0].style.opacity: 1
     (check.together -> build.aw)[0].style.opacity: 1
     (fix.detective -> build.aw)[0].style.opacity: 1
-    (build.aw -> check.monitor)[0].style.opacity: 1
+    (build.aw -> check.inspector)[0].style.opacity: 1
   }
   6-finish: {
     finish.style.opacity: 1

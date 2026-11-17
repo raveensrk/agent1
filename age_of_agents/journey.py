@@ -19,13 +19,20 @@ def frame(k,x,y,w,h,title,sub,col,dash=False):
     if sub:o.append(text(x+w-14,y+20,[sub],SUB,11,"end"))
     o.append('</g>')
 nodes={}
+ANTS={"inv","res","addreq","arch","workers","inspector","together","detective","merger","finisher","janitor","philo"}
+def hexp(x,y,w,h):
+    i=min(16,h/3)
+    return f"M{x+i},{y} H{x+w-i} L{x+w},{y+h/2} L{x+w-i},{y+h} H{x+i} L{x},{y+h/2} Z"
 def node(k,x,y,w,h,lines,col,shape="rect",multi=False):
     nodes[k]=(x,y,w,h)
     s=C[col]
+    if k in ANTS:shape="hex"
     if multi:
-        o.append(f'<rect x="{x+8}" y="{y-8}" width="{w}" height="{h}" rx="8" fill="#0F172A" stroke="{s}" stroke-width="1.5" opacity="0.6"/>')
-        o.append(f'<rect x="{x+4}" y="{y-4}" width="{w}" height="{h}" rx="8" fill="#0F172A" stroke="{s}" stroke-width="1.5" opacity="0.8"/>')
-    if shape=="oval":o.append(f'<ellipse cx="{x+w/2}" cy="{y+h/2}" rx="{w/2}" ry="{h/2}" fill="#0F172A" stroke="{s}" stroke-width="2"/>')
+        for dx,op in [(8,0.6),(4,0.8)]:
+            if shape=="hex":o.append(f'<path d="{hexp(x+dx,y-dx,w,h)}" fill="#0F172A" stroke="{s}" stroke-width="1.5" opacity="{op}"/>')
+            else:o.append(f'<rect x="{x+dx}" y="{y-dx}" width="{w}" height="{h}" rx="8" fill="#0F172A" stroke="{s}" stroke-width="1.5" opacity="{op}"/>')
+    if shape=="hex":o.append(f'<path d="{hexp(x,y,w,h)}" fill="#0F172A" stroke="{s}" stroke-width="2"/>')
+    elif shape=="oval":o.append(f'<ellipse cx="{x+w/2}" cy="{y+h/2}" rx="{w/2}" ry="{h/2}" fill="#0F172A" stroke="{s}" stroke-width="2"/>')
     elif shape=="page":o.append(f'<path d="M{x},{y} H{x+w-16} L{x+w},{y+16} V{y+h} H{x} Z" fill="#0F172A" stroke="{s}" stroke-width="2"/><path d="M{x+w-16},{y} V{y+16} H{x+w}" fill="none" stroke="{s}" stroke-width="1.5"/>')
     elif shape=="cyl":o.append(f'<path d="M{x},{y+10} V{y+h-10} A{w/2},10 0 0 0 {x+w},{y+h-10} V{y+10}" fill="#0F172A" stroke="{s}" stroke-width="2"/><ellipse cx="{x+w/2}" cy="{y+10}" rx="{w/2}" ry="10" fill="#1E293B" stroke="{s}" stroke-width="2"/>')
     else:o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="#0F172A" stroke="{s}" stroke-width="2"/>')
@@ -71,10 +78,9 @@ node("plans",504,428,212,72,["Worker plans","one per worker ant","title, files, 
 note(500,592,["Saves testCommand and checkCommand.","Answered critiques removed","from the critiques board.","Never asks to approve plans."])
 node("workers",804,268,196,102,["Worker Ants","code, tests and docs,","one worktree each, max 5"],"build",multi=True)
 note(800,560,["Approve every awaiting review.","Drop escalated, blocked, error","and every task after a dropped one.","A dropped task's branch is kept."])
-node("monitor",1080,140,220,70,["Anti-monitor ant","(the build script)"],"check")
 node("inspector",1084,268,212,102,["Inspector Ants","one per built task,","checks plan + design,","runs its tests"],"check",multi=True)
 node("together",1080,420,220,120,["Combined test","Integrator Ant","merges passing tasks","in a scratch copy, tests once"],"check")
-node("detective",1380,260,200,120,["Detective Ant","finds why a bug is still open","after a failed fix, writes the","next fix plan, never code"],"fix")
+node("detective",1384,268,196,112,["Detective Ants","one per task, in parallel:","finds why a bug is still open","after a failed fix, writes the","next fix plan, never code"],"fix",multi=True)
 note(1380,600,["Max 3 tries on a bug,","then the task is dropped."])
 node("merger",1660,140,220,90,["Merger ant","straight line in a","scratch copy, tests once"],"finish")
 node("finisher",1660,420,220,90,["Finisher ant","moves main forward,","cleans up"],"finish")
@@ -86,11 +92,13 @@ node("janitor",1580,800,140,110,["Janitor ant","cleanup plan,","built now"],"alw
 node("philo",1740,800,140,110,["Philosopher ant","after cleanup,","1 critique (--critiques N)"],"always")
 
 # legend
-o.append(f'<rect x="220" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="{SUB}" stroke-width="2"/>')
+o.append(f'<rect x="220" y="760" width="340" height="200" rx="14" fill="#1E293B" stroke="{SUB}" stroke-width="2"/>')
 o.append(text(236,782,["Legend"],SUB,15,"start","700"))
-for i,(c,cls,t) in enumerate([(OK,"flowing","approval"),(BUG,"flowing","bug"),(FLOW,"flowing","normal flow"),(FLOW,"dot","log, watch or comment"),("#FDE047","","glowing dot: one task's trip")]):
-    y=812+i*24
-    if cls:o.append(f'<path class="e {cls}" d="M240,{y} H310" stroke="{c}"/>')
+for i,(c,cls,t) in enumerate([(OK,"flowing","approval"),(BUG,"flowing","bug"),(FLOW,"flowing","normal flow"),(FLOW,"dot","log, watch or comment"),("#FDE047","","glowing dot: one task's trip"),("HEX","","hexagon: an ant (an AI agent)"),("STACK","","stacked: many run in parallel")]):
+    y=804+i*20
+    if c=="HEX":o.append(f'<path d="{hexp(258,y-7,34,14)}" fill="#0F172A" stroke="{TXT}" stroke-width="1.5"/>')
+    elif c=="STACK":o.append(f'<path d="{hexp(264,y-11,34,14)}" fill="none" stroke="{TXT}" stroke-width="1.5" opacity="0.6"/><path d="{hexp(258,y-7,34,14)}" fill="#0F172A" stroke="{TXT}" stroke-width="1.5"/>')
+    elif cls:o.append(f'<path class="e {cls}" d="M240,{y} H310" stroke="{c}"/>')
     else:o.append(f'<circle cx="275" cy="{y}" r="7" fill="{c}" filter="url(#antglow)"/>')
     o.append(text(325,y,[t],TXT,12,"start"))
 
@@ -106,7 +114,7 @@ edges=[ # id, d, kind, dashed, both, label, lx, ly
 ("e10","M1306,335 H1378","b",0,0,"still open after|round 1: script|hands it over",1340,410),
 ("e11","M1810,910 V950 H1350 V912","f",1,0,"critique",1580,950),
 ("e16","M1480,258 V96 H900 V266","f",0,0,"fix plan",1190,96),
-("e17","M1000,290 H1030 V160 H1078","f",0,0,"fix built,|re-inspect",960,215),
+("e17","M1002,285 H1082","f",0,0,"built: script starts|its inspector at once",1041,250),
 ("e22","M1880,205 H1910 V758","f",0,0,"then",1910,560),
 ("e23","M1620,758 V465 H1658","f",0,0,"then",1620,600),
 ("e25","M1650,912 V975 H20 V165 H178","f",1,0,"dropped cleanup, offered next time",900,975),
@@ -119,7 +127,6 @@ edges=[ # id, d, kind, dashed, both, label, lx, ly
 ("e34","M1720,138 V84 H850 V266","b",0,0,"merge failed: next build round",1300,84),
 ("e40","M1190,670 V720 H750 V798","f",1,0,"end of build: every task and bug, once",960,720),
 ("e41","M1770,670 V706 H1060 V798","f",1,0,"end of finish: merged tasks \"done\"",1480,706),
-("e27","M1190,210 V266","f",0,0,"start one as soon as|a task or fix is built",1190,238),
 ("e28","M1190,370 V418","o",0,0,"pass, once every|task is checked",1190,395),
 ]
 col={"f":FLOW,"b":BUG,"o":OK}
@@ -133,7 +140,7 @@ for lx,ly,lab,c in labels:
     o.append(f'<g class="lb">{text(lx,ly,lab.split("|"),c,11)}</g>')
 
 # ant path through the run
-seq=["e1","e4","e3","e5","e6","e7","e8","e17","e27","e30","e17","e27","e10","e16","e17","e27","e28","e33","e22","e29","e17","e27","e23"]
+seq=["e1","e4","e3","e5","e6","e7","e8","e17","e30","e17","e10","e16","e17","e28","e33","e22","e29","e17","e23"]
 def pts(d):
     t=re.findall(r'[MHVL]|-?\d+',d);p=[];x=y=0;i=0
     while i<len(t):
@@ -158,7 +165,7 @@ path="M"+" L".join(f"{x},{y}" for x,y in P)
 seg_t=[];prev=0
 for s,n in marks:seg_t.append((s,prev,t_at(n)));prev=t_at(n)
 stage_of={"e1":"ask","e4":"ask","e3":"ask","e5":"plan","e6":"plan","e7":"plan","e8":"build","e17":"check","e27":"check","e15":"boards","e10":"fix","e16":"build","e28":"check","e13":"boards","e20":"finish","e22":"upkeep","e30":"build","e10":"fix","e33":"finish","e29":"build","e23":"finish","e24":"boards"}
-cap={"e1":"The task reaches the live Investigator Ant.","e4":"It asks the user up to 4 questions a round; answers come back as messages.","e3":"Nothing unclear: it writes investigation_report.md, then stops.","e5":"Plan workflow: the Add Requirement Ant reads the report.","e6":"Architect Ant writes architecture.md.","e7":"One plan per worker ant.","e8":"Worker Ants start in parallel, one worktree each, max 5.","e17":"Built: the anti-monitor ant sees it.","e27":"An Inspector Ant starts at once for that task.","e30":"Fail, round 1: a worker builds the inspector's own fix plan.","e33":"They work combined: the main session approves them for the Merger, no review.","e10":"Still open after round 1: the script hands the bug to the Detective Ant.","e16":"Detective's fix plan goes back to a Worker Ant.","e28":"Fix re-inspected: pass, once every task is checked.","e13":"Combined test passes: the bulletin board records it.","e20":"Passing tasks go to the Merger, no review.","e22":"Merged in a straight line: the Janitor plans a cleanup of this run's mess.","e29":"A Worker Ant builds the cleanup now, on top of the merge.","e23":"Cleanup landed; Philosopher critiques; the Finisher moves main. Boards log it all.","e24":"Main fast-forwards; bulletin rows set to \"done\"."}
+cap={"e1":"The task reaches the live Investigator Ant.","e4":"It asks the user up to 4 questions a round; answers come back as messages.","e3":"Nothing unclear: it writes investigation_report.md, then stops.","e5":"Plan workflow: the Add Requirement Ant reads the report.","e6":"Architect Ant writes architecture.md.","e7":"One plan per worker ant.","e8":"Worker Ants start in parallel, one worktree each, max 5.","e17":"Built: the build script starts this task's inspector at once.","e27":"An Inspector Ant starts at once for that task.","e30":"Fail, round 1: a worker builds the inspector's own fix plan.","e33":"They work combined: the main session approves them for the Merger, no review.","e10":"Still open after round 1: the script hands the bug to the Detective Ant.","e16":"Detective's fix plan goes back to a Worker Ant.","e28":"Fix re-inspected: pass, once every task is checked.","e13":"Combined test passes: the bulletin board records it.","e20":"Passing tasks go to the Merger, no review.","e22":"Merged in a straight line: the Janitor plans a cleanup of this run's mess.","e29":"A Worker Ant builds the cleanup now, on top of the merge.","e23":"Cleanup landed; Philosopher critiques; the Finisher moves main. Boards log it all.","e24":"Main fast-forwards; bulletin rows set to \"done\"."}
 def win(spans):
     kt=[0];v=[0]
     for a,b in spans:kt+=[a/D,min(b,D-0.01)/D];v+=[1,0]

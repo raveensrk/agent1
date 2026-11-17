@@ -61,12 +61,9 @@ its job. The build script runs that workflow in place of a worker ant.
     including the docs its change affects, so docs land with the code. A worker
     that gets stuck reports why, and that becomes a bug.
 
-06. **Anti-monitor.** The build script itself does this job. It starts every
-    ant, so it knows the moment a worker finishes and starts that task's
-    inspector at once.
-
-07. **Inspector Ant**: one per built task, started the moment the task or a
-    fix for it is built. It reads only; it never changes code.
+06. **Inspector Ant**: one per built task, started the moment the task or a
+    fix for it is built. No ant watches for that: the build script starts every
+    ant, so it starts the inspector as soon as the worker returns. It reads only; it never changes code.
     - **Checks:** the task's own work against its plan, and against
       `architecture.md`: a name or interface that differs from the design is a
       bug. It runs the tests in the task's worktree.
@@ -79,7 +76,7 @@ its job. The build script runs that workflow in place of a worker ant.
       changed base is merged in first; a failed base blocks the task.
     - **Re-check:** after each fix it checks every open bug again, by its id.
 
-08. **Detective Ant**: finds why a bug is still open after a failed fix. It
+07. **Detective Ant**: finds why a bug is still open after a failed fix. It
     reads only; it never writes code.
     - **Round 1** needs no detective: the worker builds the inspector's first
       fix plan.
@@ -92,7 +89,7 @@ its job. The build script runs that workflow in place of a worker ant.
       built on it drop too; the final report lists them.
     - An ant that crashes is retried once and never counts as a bug.
 
-09. **Combined test, by the Integrator Ant.** Tasks are built and inspected
+08. **Combined test, by the Integrator Ant.** Tasks are built and inspected
     alone, so two can pass alone and still break when combined. When every
     task is done, the integrator ant merges all passing tasks in a straight
     line in a scratch copy, a throwaway copy that never touches main, and runs
@@ -100,7 +97,7 @@ its job. The build script runs that workflow in place of a worker ant.
     that clashes takes in the tasks it clashes with and goes back through the
     fix loop, and the test runs once more. No one reviews by hand.
 
-10. **Merger Ant** runs straight after. It adds every passing task's
+09. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
     dependency order, and tests once. When the approved tasks are exactly the
     ones in the combined test, it reuses that result. It refuses a task whose base
@@ -276,8 +273,8 @@ ask: 1. Ask - one live agent, run by the skill {
   direction: down
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2; stroke-dash: 4}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
-  arta: Investigator Ant\nstays alive, reads repo once,\ngets each answer as a message {class: node; style.stroke: ${plan-line}}
-  research: Researcher Ants\nup to 5, web + computer {style.multiple: true; class: node; style.stroke: ${plan-line}}
+  arta: Investigator Ant\nstays alive, reads repo once,\ngets each answer as a message {shape: hexagon; class: node; style.stroke: ${plan-line}}
+  research: Researcher Ants\nup to 5, web + computer {shape: hexagon; style.multiple: true; class: node; style.stroke: ${plan-line}}
   report: investigation_report.md {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta <-> research: facts, it waits {class: flow; style.stroke-dash: 3}
@@ -285,12 +282,12 @@ ask: 1. Ask - one live agent, run by the skill {
 }
 
 plan: 2. Plan workflow {
-  left: 620
+  left: 760
   top: 0
   direction: down
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
-  aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
-  arch: Architect Ant\narchitecture.md {class: node; style.stroke: ${plan-line}}
+  aara: Add Requirement Ant {shape: hexagon; class: node; style.stroke: ${plan-line}}
+  arch: Architect Ant\narchitecture.md {shape: hexagon; class: node; style.stroke: ${plan-line}}
   plans: Worker plans\none per worker ant {shape: page; class: node; style.stroke: ${plan-line}; style.multiple: true}
   aara -> arch: requirement {class: flow}
   arch -> plans: design,\nwrite plans {class: flow}
@@ -300,7 +297,7 @@ build: 3. Build {
   left: 1180
   top: 0
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
-  aw: Worker Ants\ncode, tests and docs,\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
+  aw: Worker Ants\ncode, tests and docs,\none worktree each, max 5 {shape: hexagon; style.multiple: true; class: node; style.stroke: ${build-line}}
 }
 
 check: 4. Check {
@@ -308,10 +305,8 @@ check: 4. Check {
   top: 0
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
-  monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
-  inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
-  together: Combined test\nIntegrator Ant\nmerges passing tasks\nin a scratch copy,\ntests once {class: node; style.stroke: ${check-line}}
-  monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
+  inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {shape: hexagon; style.multiple: true; class: node; style.stroke: ${check-line}}
+  together: Combined test\nIntegrator Ant\nmerges passing tasks\nin a scratch copy,\ntests once {shape: hexagon; class: node; style.stroke: ${check-line}}
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
@@ -320,7 +315,7 @@ fix: 5. Fix {
   top: 0
   direction: up
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
-  detective: Detective Ant\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {class: node; style.stroke: ${fix-line}}
+  detective: Detective Ant\none per task with a bug, in parallel:\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {shape: hexagon; style.multiple: true; class: node; style.stroke: ${fix-line}}
 }
 
 finish: 6. Finish {
@@ -329,11 +324,11 @@ finish: 6. Finish {
   direction: right
   grid-columns: 2
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
-  merger: Merger ant\nstraight line in a\nscratch copy, tests once {class: node; style.stroke: ${finish-line}}
-  finisher: Finisher ant\nmoves main forward,\ncleans up {class: node; style.stroke: ${finish-line}}
+  merger: Merger ant\nstraight line in a\nscratch copy, tests once {shape: hexagon; class: node; style.stroke: ${finish-line}}
+  finisher: Finisher ant\nmoves main forward,\ncleans up {shape: hexagon; class: node; style.stroke: ${finish-line}}
 }
 
-logbook: Logbook - for you to read after a run, no ant reads it - in ~/.ishikari/<repo>-<hash>/boards/, outside the repo {
+logbook: Logbook - for you, no ant reads it\n~/.ishikari/<repo>-<hash>/boards/ {
   left: 1000
   top: 820
   direction: right
@@ -343,8 +338,8 @@ logbook: Logbook - for you to read after a run, no ant reads it - in ~/.ishikari
 }
 
 critiques: Critiques board\nthe bridge to the next run\n~/.ishikari/<repo>-<hash>/boards/critiques.md {
-  left: 1600
-  top: 820
+  left: 1650
+  top: 1150
   shape: cylinder
   class: node
   style.stroke: ${always-line}
@@ -355,8 +350,8 @@ always_on: Upkeep ants (before main moves) {
   top: 820
   label.near: outside-bottom-center
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  janitor: Janitor ant\ncleanup plan for this\nrun's mess, built now {class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\nafter the cleanup,\nbest critiques (1 by default,\n--critiques N) {class: node; style.stroke: ${always-line}}
+  janitor: Janitor ant\ncleanup plan for this\nrun's mess, built now {shape: hexagon; class: node; style.stroke: ${always-line}}
+  philosopher: Philosopher ant\nafter the cleanup,\nbest critiques (1 by default,\n--critiques N) {shape: hexagon; class: node; style.stroke: ${always-line}}
 }
 
 check.inspector -> fix.detective: bug still open after round 1:\nthe script hands it over {class: bug}
@@ -370,7 +365,7 @@ check.together -> finish.merger: pass: they work combined,\nmain session approve
 check.together -> build.aw: fail: tasks clash,\nmerge them, then fix loop {class: bug}
 check.inspector -> build.aw: fail: round 1 uses\nthe inspector's fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
-build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
+build.aw -> check.inspector: built: the build script starts\nits inspector at once (task or fix) {class: flow}
 build.aw -> fix.detective: stuck: next fix round {class: bug}
 finish.merger -> build.aw: merge failed:\nnext build round {class: bug}
 finish.merger -> always_on: then {class: flow}
@@ -411,6 +406,18 @@ legend: Legend {
     s: "" {shape: circle; width: 12; height: 12; style: {fill: ${flow}; stroke: ${flow}}}
     t: log, watch or comment {shape: text; style.font-color: ${text}}
     s -> t {class: flow; style.stroke-dash: 3}
+  }
+  r5: "" {
+    direction: right
+    style: {fill: transparent; stroke: transparent}
+    s: "" {shape: hexagon; width: 30; height: 18; style: {fill: ${node-fill}; stroke: ${text}}}
+    t: hexagon: an ant (an AI agent) {shape: text; style.font-color: ${text}}
+  }
+  r6: "" {
+    direction: right
+    style: {fill: transparent; stroke: transparent}
+    s: "" {shape: hexagon; width: 30; height: 18; style: {multiple: true; fill: ${node-fill}; stroke: ${text}}}
+    t: stacked: many run in parallel\nsingle: one at a time {shape: text; style.font-color: ${text}}
   }
 }
 critiques -> ask.arta: turned into questions\nfor the next task {class: flow; style.stroke-dash: 3}

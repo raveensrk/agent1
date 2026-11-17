@@ -37,17 +37,16 @@ stations = [
  (120,R1,"Task",["you give it, or a","dropped cleanup plan"],"term",L_DN),
  (440,R1,"Investigator Ant",["stays alive, reads the repo once,","gets each answer as a message"],"x",(-22,-60,"end")),
  (440,90,"You",["up to 4 questions a round (/ask-simple);","answering approves the whole run"],"term",(26,-6,"start")),
- (440,290,"Researcher Ants",["up to 5, web + computer;","the investigator waits for facts"],"end",(24,-4,"start")),
+ (440,290,"Researcher Ants  ∥",["up to 5, web + computer;","the investigator waits for facts"],"end",(24,-4,"start")),
  (700,R1,"investigation_report.md",["written when nothing is unclear;","investigator stopped"],"st",L_DN),
  (960,R1,"Add Requirement Ant",["req add, keeps the :ID:s"],"st",L_DN),
  (1200,R1,"Architect Ant",["writes architecture.md"],"st",L_UP),
  (1440,R1,"Worker plans",["one per worker ant:","title, files, after"],"st",L_DN),
- (200,R2,"Worker Ants",["max 5, one worktree each,","code + tests + docs","stuck: next fix round"],"x",(0,-74,"middle")),
- (480,R2,"Anti-monitor",["the build script: starts an","inspector as soon as a task is built"],"st",L_UP),
- (760,R2,"Inspector Ants",["one per built task: checks","plan + design, runs its tests"],"x",(0,-60,"middle")),
+ (200,R2,"Worker Ants  ∥",["max 5, one worktree each,","code + tests + docs","stuck: next fix round"],"x",(0,-74,"middle")),
+ (760,R2,"Inspector Ants  ∥",["one per built task: checks","plan + design, runs its tests"],"x",(0,-60,"middle")),
  (1040,R2,"Combined test",["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x",(0,-60,"middle")),
  (1320,660,"Logbook",["bulletin + bug bounty boards,","written at the end of build and","of finish. For you; no ant reads it.","~/.ishikari/<repo>-<hash>/boards/"],"log",(26,-4,"start")),
- (620,700,"Detective Ant",["finds why, writes the next","fix plan, never code"],"x",(-26,34,"end")),
+ (620,700,"Detective Ants  ∥",["finds why, writes the next","fix plan, never code"],"x",(-26,34,"end")),
  (620,770,"Dropped",["after 3 tries on a bug,","branch kept"],"term",(26,-4,"start")),
  (200,R3,"Merger ant",["straight line in a scratch","copy, tests once, no review"],"x",(0,-58,"middle")),
  (200,1070,"merge failed",["next build round,","back to the Worker Ants"],"term",(26,-4,"start")),
@@ -76,14 +75,23 @@ for y, label, c in [(R1, "1 ASK  ·  2 PLAN", BLUE), (R2, "3 BUILD  ·  4 CHECK 
 for name, c, pts, w, dash in lines:
     o.append(f'<path id="L-{name}" d="{d(pts)}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linejoin="round" stroke-linecap="round"' + (f' stroke-dasharray="{dash}" class="flow"' if dash else '') + '/>')
 o.append(txt(1612, 290, ["to row 2"], BLUE, 13, weight="700"))
+o.append(txt(480, 474, ["built: the script starts", "its inspector at once"], GREEN, 13, "middle"))
 o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
 o.append(txt(1330, 590, ["end of build: written once"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
 o.append(txt(480, 604, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
 o.append(txt(1052, 640, ["fail: tasks clash,", "merge, then fix loop"], RED, 13))
 o.append(txt(250, 684, ["fix plan back to a worker  ·  max 2 extra build rounds"], RED, 13))
+def is_ant(nm):
+    n = nm.lower()
+    return " ant" in n or n in ("combined test", "cleanup worker", "cleanup inspector")
+def hexm(x, y, r, fill, stroke, sw):
+    pts = " ".join(f"{x + r * dx:.1f},{y + r * dy:.1f}" for dx, dy in [(-1,0),(-0.5,-0.87),(0.5,-0.87),(1,0),(0.5,0.87),(-0.5,0.87)])
+    return f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
 for x, y, nm, sub, kind, (dx, dy, an) in stations:
-    if kind == "x":
+    if is_ant(nm.replace("  ∥", "")):
+        o.append(hexm(x, y, 16, BG, TXT, 5))
+    elif kind == "x":
         o.append(f'<circle cx="{x}" cy="{y}" r="14" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
     elif kind == "term":
         o.append(f'<rect x="{x-14}" y="{y-14}" width="28" height="28" rx="7" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
@@ -106,8 +114,8 @@ for n, path, c, sec, beg in trains:
 for path, sec in [("ask", 6), ("res", 5)]:
     o.append(f'<circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="{sec}s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-{path}"/></animateMotion></circle>')
 # key
-kx, ky = 1000, 1060
-o.append(f'<rect x="{kx}" y="{ky}" width="420" height="124" rx="12" fill="#0F172A" stroke="#334155"/>')
+kx, ky = 1000, 1066
+o.append(f'<rect x="{kx}" y="{ky}" width="420" height="150" rx="12" fill="#0F172A" stroke="#334155"/>')
 rows = [(BLUE, "1", "task on the plan line"), (GREEN, "2-6", "five worker tasks to MAIN"), (RED, "7-8", "a bug through the fix loop"),
         (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves")]
 for i, (c, n, t) in enumerate(rows):
@@ -115,6 +123,6 @@ for i, (c, n, t) in enumerate(rows):
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')
     o.append(f'<rect x="{kx+70}" y="{y-9}" width="34" height="18" rx="5" fill="#FDE047" stroke="{c}" stroke-width="2"/><text x="{kx+87}" y="{y+4}" font-size="11" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>')
     o.append(txt(kx + 114, y + 5, [t], TXT, 13))
-o.append(txt(kx + 320, ky + 30, ["dashed:", "a branch or", "a log", "■ terminus", "○ interchange"], SUB, 12))
+o.append(txt(kx + 320, ky + 30, ["dashed:", "a branch or", "a log", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "∥ parallel"], SUB, 12))
 o.append('</svg>')
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro-clean.svg"), "w").write("\n".join(o))

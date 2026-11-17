@@ -25,6 +25,7 @@
 <path id="L-after" d="M1290,980 L1630,980" fill="none" stroke="#C4B5FD" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-cfix" d="M1450,980 L1450,1070" fill="none" stroke="#C4B5FD" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <text class="h" x="1612" y="290" fill="#60A5FA" font-size="13" text-anchor="start" font-weight="700">to row 2</text>
+<text class="h" x="480" y="474" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">built: the script starts</text><text class="h" x="480" y="491" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">its inspector at once</text>
 <text class="h" x="1612" y="680" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 3</text>
 <text class="h" x="1330" y="590" fill="#94A3B8" font-size="13" text-anchor="start" font-weight="400">end of build: written once</text>
 <text class="h" x="772" y="640" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">still open after round 1:</text><text class="h" x="772" y="657" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">the script hands it over</text>
@@ -34,73 +35,70 @@
 <rect x="106" y="186" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="120" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Task</text>
 <text class="h" x="120" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">you give it, or a</text><text class="h" x="120" y="269" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">dropped cleanup plan</text>
-<circle cx="440" cy="200" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<polygon points="424.0,200.0 432.0,186.1 448.0,186.1 456.0,200.0 448.0,213.9 432.0,213.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="418" y="140" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Investigator Ant</text>
 <text class="h" x="418" y="159" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">stays alive, reads the repo once,</text><text class="h" x="418" y="175" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">gets each answer as a message</text>
 <rect x="426" y="76" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="466" y="84" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">You</text>
 <text class="h" x="466" y="103" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">up to 4 questions a round (/ask-simple);</text><text class="h" x="466" y="119" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">answering approves the whole run</text>
-<line x1="424" y1="290" x2="456" y2="290" stroke="#F1F5F9" stroke-width="7" stroke-linecap="round"/>
-<text class="h" x="464" y="286" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Researcher Ants</text>
+<polygon points="424.0,290.0 432.0,276.1 448.0,276.1 456.0,290.0 448.0,303.9 432.0,303.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="464" y="286" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Researcher Ants  ∥</text>
 <text class="h" x="464" y="305" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">up to 5, web + computer;</text><text class="h" x="464" y="321" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the investigator waits for facts</text>
 <circle cx="700" cy="200" r="9" fill="#F1F5F9"/>
 <text class="h" x="700" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">investigation_report.md</text>
 <text class="h" x="700" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">written when nothing is unclear;</text><text class="h" x="700" y="269" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">investigator stopped</text>
-<circle cx="960" cy="200" r="9" fill="#F1F5F9"/>
+<polygon points="944.0,200.0 952.0,186.1 968.0,186.1 976.0,200.0 968.0,213.9 952.0,213.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="960" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Add Requirement Ant</text>
 <text class="h" x="960" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">req add, keeps the :ID:s</text>
-<circle cx="1200" cy="200" r="9" fill="#F1F5F9"/>
+<polygon points="1184.0,200.0 1192.0,186.1 1208.0,186.1 1216.0,200.0 1208.0,213.9 1192.0,213.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1200" y="148" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Architect Ant</text>
 <text class="h" x="1200" y="167" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">writes architecture.md</text>
 <circle cx="1440" cy="200" r="9" fill="#F1F5F9"/>
 <text class="h" x="1440" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker plans</text>
 <text class="h" x="1440" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per worker ant:</text><text class="h" x="1440" y="269" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">title, files, after</text>
-<circle cx="200" cy="520" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="200" y="446" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker Ants</text>
+<polygon points="184.0,520.0 192.0,506.1 208.0,506.1 216.0,520.0 208.0,533.9 192.0,533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="200" y="446" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker Ants  ∥</text>
 <text class="h" x="200" y="465" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">max 5, one worktree each,</text><text class="h" x="200" y="481" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">code + tests + docs</text><text class="h" x="200" y="497" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">stuck: next fix round</text>
-<circle cx="480" cy="520" r="9" fill="#F1F5F9"/>
-<text class="h" x="480" y="468" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Anti-monitor</text>
-<text class="h" x="480" y="487" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">the build script: starts an</text><text class="h" x="480" y="503" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">inspector as soon as a task is built</text>
-<circle cx="760" cy="520" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="760" y="460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector Ants</text>
+<polygon points="744.0,520.0 752.0,506.1 768.0,506.1 776.0,520.0 768.0,533.9 752.0,533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="760" y="460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector Ants  ∥</text>
 <text class="h" x="760" y="479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per built task: checks</text><text class="h" x="760" y="495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">plan + design, runs its tests</text>
-<circle cx="1040" cy="520" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<polygon points="1024.0,520.0 1032.0,506.1 1048.0,506.1 1056.0,520.0 1048.0,533.9 1032.0,533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1040" y="460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Combined test</text>
 <text class="h" x="1040" y="479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">Integrator Ant merges passing</text><text class="h" x="1040" y="495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">tasks in a scratch copy, tests once</text>
 <rect x="1306" y="646" width="28" height="28" rx="4" fill="#0B1120" stroke="#94A3B8" stroke-width="3" stroke-dasharray="4 3"/>
 <text class="h" x="1346" y="656" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Logbook</text>
 <text class="h" x="1346" y="675" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">bulletin + bug bounty boards,</text><text class="h" x="1346" y="691" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">written at the end of build and</text><text class="h" x="1346" y="707" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">of finish. For you; no ant reads it.</text><text class="h" x="1346" y="723" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/</text>
-<circle cx="620" cy="700" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="594" y="734" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Detective Ant</text>
+<polygon points="604.0,700.0 612.0,686.1 628.0,686.1 636.0,700.0 628.0,713.9 612.0,713.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="594" y="734" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Detective Ants  ∥</text>
 <text class="h" x="594" y="753" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">finds why, writes the next</text><text class="h" x="594" y="769" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">fix plan, never code</text>
 <rect x="606" y="756" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="646" y="766" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped</text>
 <text class="h" x="646" y="785" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after 3 tries on a bug,</text><text class="h" x="646" y="801" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept</text>
-<circle cx="200" cy="980" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<polygon points="184.0,980.0 192.0,966.1 208.0,966.1 216.0,980.0 208.0,993.9 192.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="200" y="922" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Merger ant</text>
 <text class="h" x="200" y="941" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">straight line in a scratch</text><text class="h" x="200" y="957" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">copy, tests once, no review</text>
 <rect x="186" y="1056" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="226" y="1066" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">merge failed</text>
 <text class="h" x="226" y="1085" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">next build round,</text><text class="h" x="226" y="1101" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">back to the Worker Ants</text>
-<circle cx="440" cy="980" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<polygon points="424.0,980.0 432.0,966.1 448.0,966.1 456.0,980.0 448.0,993.9 432.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="440" y="928" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Janitor ant</text>
 <text class="h" x="440" y="947" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="440" y="963" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">built + checked before main moves</text>
-<circle cx="560" cy="1050" r="9" fill="#F1F5F9"/>
+<polygon points="544.0,1050.0 552.0,1036.1 568.0,1036.1 576.0,1050.0 568.0,1063.9 552.0,1063.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="560" y="1084" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Cleanup worker</text>
 <text class="h" x="560" y="1103" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">builds it on top of the merge</text>
-<circle cx="760" cy="1050" r="9" fill="#F1F5F9"/>
+<polygon points="744.0,1050.0 752.0,1036.1 768.0,1036.1 776.0,1050.0 768.0,1063.9 752.0,1063.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="760" y="1084" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Cleanup inspector</text>
 <text class="h" x="760" y="1103" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">plan + tests = combined test;</text><text class="h" x="760" y="1119" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fail: one fix round</text>
 <rect x="746" y="1146" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="786" y="1156" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped cleanup</text>
 <text class="h" x="786" y="1175" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept, plan offered as</text><text class="h" x="786" y="1191" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the next run's Task</text>
-<circle cx="1000" cy="980" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<polygon points="984.0,980.0 992.0,966.1 1008.0,966.1 1016.0,980.0 1008.0,993.9 992.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1026" y="1020" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Philosopher ant</text>
 <text class="h" x="1026" y="1039" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after the cleanup:</text><text class="h" x="1026" y="1055" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">1 best critique (--critiques N)</text>
 <rect x="986" y="866" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="974" y="876" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Critiques board</text>
 <text class="h" x="974" y="895" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">bridge to the next run:</text><text class="h" x="974" y="911" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">its Investigator reads it</text><text class="h" x="974" y="927" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/critiques.md</text>
-<circle cx="1150" cy="980" r="9" fill="#F1F5F9"/>
+<polygon points="1134.0,980.0 1142.0,966.1 1158.0,966.1 1166.0,980.0 1158.0,993.9 1142.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1150" y="928" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="1150" y="947" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forwards main, cleans</text><text class="h" x="1150" y="963" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">up, sets bulletin rows done</text>
 <rect x="1276" y="966" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
@@ -127,21 +125,21 @@
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#C4B5FD" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">10</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-after"/></animateMotion></g>
 <circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></circle>
 <circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="5s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-res"/></animateMotion></circle>
-<rect x="1000" y="1060" width="420" height="124" rx="12" fill="#0F172A" stroke="#334155"/>
-<line x1="1016" y1="1084" x2="1060" y2="1084" stroke="#60A5FA" stroke-width="7" stroke-linecap="round"/>
-<rect x="1070" y="1075" width="34" height="18" rx="5" fill="#FDE047" stroke="#60A5FA" stroke-width="2"/><text x="1087" y="1088" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">1</text>
-<text class="h" x="1114" y="1089" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">task on the plan line</text>
-<line x1="1016" y1="1104" x2="1060" y2="1104" stroke="#4ADE80" stroke-width="7" stroke-linecap="round"/>
-<rect x="1070" y="1095" width="34" height="18" rx="5" fill="#FDE047" stroke="#4ADE80" stroke-width="2"/><text x="1087" y="1108" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">2-6</text>
-<text class="h" x="1114" y="1109" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">five worker tasks to MAIN</text>
-<line x1="1016" y1="1124" x2="1060" y2="1124" stroke="#F87171" stroke-width="7" stroke-linecap="round"/>
-<rect x="1070" y="1115" width="34" height="18" rx="5" fill="#FDE047" stroke="#F87171" stroke-width="2"/><text x="1087" y="1128" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">7-8</text>
-<text class="h" x="1114" y="1129" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">a bug through the fix loop</text>
-<line x1="1016" y1="1144" x2="1060" y2="1144" stroke="#2DD4BF" stroke-width="7" stroke-linecap="round"/>
-<rect x="1070" y="1135" width="34" height="18" rx="5" fill="#FDE047" stroke="#2DD4BF" stroke-width="2"/><text x="1087" y="1148" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">9</text>
-<text class="h" x="1114" y="1149" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">the janitor's cleanup</text>
-<line x1="1016" y1="1164" x2="1060" y2="1164" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round"/>
-<rect x="1070" y="1155" width="34" height="18" rx="5" fill="#FDE047" stroke="#C4B5FD" stroke-width="2"/><text x="1087" y="1168" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">10</text>
-<text class="h" x="1114" y="1169" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">after main moves</text>
-<text class="h" x="1320" y="1090" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">dashed:</text><text class="h" x="1320" y="1106" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a branch or</text><text class="h" x="1320" y="1122" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a log</text><text class="h" x="1320" y="1138" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">■ terminus</text><text class="h" x="1320" y="1154" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">○ interchange</text>
+<rect x="1000" y="1066" width="420" height="150" rx="12" fill="#0F172A" stroke="#334155"/>
+<line x1="1016" y1="1090" x2="1060" y2="1090" stroke="#60A5FA" stroke-width="7" stroke-linecap="round"/>
+<rect x="1070" y="1081" width="34" height="18" rx="5" fill="#FDE047" stroke="#60A5FA" stroke-width="2"/><text x="1087" y="1094" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">1</text>
+<text class="h" x="1114" y="1095" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">task on the plan line</text>
+<line x1="1016" y1="1110" x2="1060" y2="1110" stroke="#4ADE80" stroke-width="7" stroke-linecap="round"/>
+<rect x="1070" y="1101" width="34" height="18" rx="5" fill="#FDE047" stroke="#4ADE80" stroke-width="2"/><text x="1087" y="1114" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">2-6</text>
+<text class="h" x="1114" y="1115" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">five worker tasks to MAIN</text>
+<line x1="1016" y1="1130" x2="1060" y2="1130" stroke="#F87171" stroke-width="7" stroke-linecap="round"/>
+<rect x="1070" y="1121" width="34" height="18" rx="5" fill="#FDE047" stroke="#F87171" stroke-width="2"/><text x="1087" y="1134" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">7-8</text>
+<text class="h" x="1114" y="1135" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">a bug through the fix loop</text>
+<line x1="1016" y1="1150" x2="1060" y2="1150" stroke="#2DD4BF" stroke-width="7" stroke-linecap="round"/>
+<rect x="1070" y="1141" width="34" height="18" rx="5" fill="#FDE047" stroke="#2DD4BF" stroke-width="2"/><text x="1087" y="1154" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">9</text>
+<text class="h" x="1114" y="1155" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">the janitor's cleanup</text>
+<line x1="1016" y1="1170" x2="1060" y2="1170" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round"/>
+<rect x="1070" y="1161" width="34" height="18" rx="5" fill="#FDE047" stroke="#C4B5FD" stroke-width="2"/><text x="1087" y="1174" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">10</text>
+<text class="h" x="1114" y="1175" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">after main moves</text>
+<text class="h" x="1320" y="1096" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">dashed:</text><text class="h" x="1320" y="1112" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a branch or</text><text class="h" x="1320" y="1128" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a log</text><text class="h" x="1320" y="1144" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">⬡ an ant (AI agent)</text><text class="h" x="1320" y="1160" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">■ terminus</text><text class="h" x="1320" y="1176" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">○ interchange</text><text class="h" x="1320" y="1192" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">∥ parallel</text>
 </svg>

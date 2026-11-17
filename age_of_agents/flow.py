@@ -23,8 +23,7 @@ HERE = Path(__file__).parent
 FIX_ROUND = [
     ["(check.inspector -> fix.detective)[0]", False, "Still open after round 1: the script hands the bug to a detective ant."],
     ["(fix.detective -> build.aw)[0]", False, "It writes a fix plan for a worker ant."],
-    ["(build.aw -> check.monitor)[0]", False, "The worker builds the fix; the build script sees it."],
-    ["check.(monitor -> inspector)[0]", False, "It sends the fix to the same inspector."],
+    ["(build.aw -> check.inspector)[0]", False, "The worker builds the fix; the script sends it to the same inspector."],
 ]
 
 ROUTES = [
@@ -41,8 +40,7 @@ ROUTES = [
             ["plan.(aara -> arch)[0]", False, "It drafts the requirement for the architect ant."],
             ["plan.(arch -> plans)[0]", False, "The architect writes architecture.md and the plans."],
             ["(plan.plans -> build.aw)[0]", False, "Worker ants start, each in its own worktree."],
-            ["(build.aw -> check.monitor)[0]", False, "The build script sees it at once."],
-            ["check.(monitor -> inspector)[0]", False, "It starts an inspector ant for this task."],
+            ["(build.aw -> check.inspector)[0]", False, "Built: the build script starts this task's inspector at once."],
             ["(check.inspector -> build.aw)[0]", False, "Round 1: a worker builds the inspector's own fix plan."],
             *FIX_ROUND,
             ["check.(inspector -> together)[0]", False, "All tasks checked: the integrator ant tests them combined."],
