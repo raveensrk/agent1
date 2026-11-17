@@ -32,7 +32,9 @@ ROUTES = [
         "name": "Route 1 of 2: a bug, fixed on the first try",
         "steps": [
             ["plan.(task -> arta)[0]", False, "A task arrives. The investigator ant reads it."],
-            ["(plan.arta <-> user)[0]", False, "The investigator ant asks you questions."],
+            ["plan.(arta <-> research)[0]", False, "It sends researcher ants for missing facts."],
+            ["plan.(arta <-> research)[0]", True, "They report back."],
+            ["(plan.arta <-> user)[0]", False, "It asks you one question at a time."],
             ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
             ["plan.(arta -> aara)[0]", False, "Your answers go to the add requirement ant."],
             ["plan.(aara -> plans)[0]", False, "It drafts the requirement and writes the plans."],

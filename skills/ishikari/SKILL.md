@@ -55,10 +55,11 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 - Run `env.workflows.plan` with `{env, task}`. If the last finish left a cleanup
   plan, offer it as an extra task.
-- `review`: ask its questions, then run again with the same `scriptPath`,
-  `resumeFromRunId` set to the first run's id, and `{env, task, answers}`: one
-  answer per question, in order, `''` if skipped. The review replays from
-  cache; never retype it.
+- `question`: ask that one question with `/ask-simple`, never batched. Head it
+  `Question <n> of about <n + remaining>`, where n counts from 1. Add its `why`
+  line when set. Append `{question, answer, critique}` to `answered` (`''` if
+  skipped) and run plan again with `{env, task, answered, findings}`, `findings`
+  from the last result. Repeat until the result is not `question`.
 - `blocked`: show the reason and stop.
 - `plans`: do not ask. Show the requirement and each plan's title, files and
   `after` as a note, then:

@@ -1,9 +1,9 @@
 export const meta = {
   name: 'ishikari-plan',
   description: 'Ishikari stage 1: review the task, draft a requirement, write worker plans',
-  whenToUse: 'Start of an Ishikari run. The user answers the investigator ant's questions; the plans then go straight to ishikari-build.',
+  whenToUse: 'Start of an Ishikari run, then once per answer: the investigator ant asks one question per run. When it has no more, the plans go straight to ishikari-build.',
   phases: [
-    { title: 'Review', detail: 'investigator ant critiques the task and turns critiques into questions' },
+    { title: 'Review', detail: 'investigator ant, helped by up to 5 researcher ants, asks the next question' },
     { title: 'Plans', detail: 'add requirement ant drafts the requirement and writes one plan per worker ant' },
   ],
 }
@@ -11,13 +11,17 @@ export const meta = {
 // args: {
 //   env: { repo, state, run, main, tool },  from `ishikari.py setup`
 //   task: string,                           the task, in the user's words
-//   answers?: string[],                     one answer per review question, '' if skipped
-//   review?: object,                        the earlier review; only needed when not resuming
+//   answered?: [{ question, answer, critique? }],  every question asked so far, in order;
+//                                           answer '' if skipped
+//   findings?: string[],                    research notes from earlier runs
 // }
-// To answer questions, run again with resumeFromRunId set to the first run and
-// the same env and task plus answers: the investigator ant replays from cache.
+// The investigator ant asks one question per run, chosen after every earlier
+// answer. To answer, run again with the same env and task, answered with the new
+// answer appended, and findings from the last result.
 // Returns one of:
-//   { stage: 'review', review }            questions for the user; run again with review + answers
+//   { stage: 'question', question, remaining, findings, review }
+//                                           ask question; remaining is the best
+//                                           guess of questions left after it
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
 //   { stage: 'plans', review, requirement, plans, testCommand, checkCommand, answeredCritiques }
 // requirement.needed is false for a change with no new behaviour (a refactor):
@@ -26,7 +30,9 @@ export const meta = {
 // Nothing is committed here. Without asking, the main session then commits
 // the requirement and removes answeredCritiques from the critiques board.
 
-const EFFORT = { review: 'medium', planner: 'high' }
+const EFFORT = { review: 'medium', researcher: 'medium', planner: 'high' }
+const MAX_RESEARCHERS = 5  // researcher ants at once
+const MAX_RESEARCH = 2     // research bursts per question
 
 const { env = {}, task } = args
 const bad = []
@@ -46,24 +52,33 @@ const REVIEW = {
   properties: {
     summary: { type: 'string' },
     critique: { type: 'array', items: { type: 'string' } },
-    questions: {
-      type: 'array',
-      description: 'Questions for the user, in /ask-simple style: one thing each, plain words, 2-4 answers, recommended first',
-      items: {
-        type: 'object',
-        properties: {
-          question: { type: 'string' },
-          answers: { type: 'array', items: { type: 'string' } },
-          critique: { type: 'string', description: 'the Id of the critiques board row this question came from; empty if none' },
-        },
-        required: ['question', 'answers'],
-      },
+    research: {
+      type: 'array', items: { type: 'string' },
+      description: `facts to look up before the next question, one per researcher ant, at most ${MAX_RESEARCHERS}; empty if none are needed`,
     },
+    next: {
+      type: 'object',
+      description: 'the one next question for the user, in /ask-simple style; question empty when the goal is clear',
+      properties: {
+        question: { type: 'string' },
+        why: { type: 'string', description: 'one plain line on why it matters; empty if obvious' },
+        answers: { type: 'array', items: { type: 'string' }, description: '2-4 short answers, recommended first and marked (Recommended)' },
+        critique: { type: 'string', description: 'the Id of the critiques board row this question came from; empty if none' },
+      },
+      required: ['question', 'answers'],
+    },
+    remaining: { type: 'integer', description: 'best guess of questions still to ask after next; 0 if none' },
     blocker: { type: 'string', description: 'why the task cannot be done at all as asked; empty if it can' },
     testCommand: { type: 'string', description: 'the one command that runs the repo\'s tests from its root' },
     checkCommand: { type: 'string', description: 'the one command that builds and checks the real app (install, launch check), from the repo root; empty if the repo has none' },
   },
-  required: ['summary', 'critique', 'questions', 'blocker', 'testCommand', 'checkCommand'],
+  required: ['summary', 'critique', 'research', 'next', 'remaining', 'blocker', 'testCommand', 'checkCommand'],
+}
+
+const FOUND = {
+  type: 'object',
+  properties: { findings: { type: 'string', description: 'what you found, with paths and URLs; "nothing found" if so' } },
+  required: ['findings'],
 }
 
 const PLANNED = {
@@ -103,31 +118,61 @@ async function twice(fn) {
   return first != null ? first : fn()
 }
 
-// ---- review: first pass asks, second pass reuses the answered review ----
-const hasAnswers = Array.isArray(args.answers)
-let review = args.review
-if (!review) {
-  phase('Review')
+// ---- review: one question per run, research when facts are missing ----
+const answered = (args.answered || []).map(q => ({ ...q, answer: String(q.answer || '').trim() }))
+const findings = [...(args.findings || [])]
+const asked = answered.length
+  ? `Questions asked so far, with the user's answers:\n${answered.map(q => `- ${q.question} -> ${q.answer || '(skipped: use the recommended answer)'}`).join('\n')}\n`
+  : ''
+
+function researcher(topic, k, round) {
+  return agent(
+    `You are a researcher ant of the Ishikari workflow. Find facts for the
+investigator ant, so it can ask the user better questions about this task:
+${task}
+Look up: ${topic}
+Search the web and anywhere on this computer: ${env.repo}, other repos, notes,
+docs and config. Read only; change nothing. Never open or quote secrets:
+passwords, keys, tokens, ~/.ssh, keychains, .env files, credential and login
+files, browser profiles. Return short facts with their paths and URLs.`,
+    { label: `researcher-ant:${answered.length}:${round}:${k}`, phase: 'Review', effort: EFFORT.researcher, schema: FOUND },
+  )
+}
+
+phase('Review')
+let review = null
+for (let round = 0; round <= MAX_RESEARCH; round++) {
+  const known = findings.length ? `Research so far:\n${findings.map(f => `- ${f}`).join('\n')}\n` : ''
   review = await twice(() => agent(
     `You are the investigator ant of the Ishikari workflow.
 ${where}
 Task: ${task}
-Read the repo enough to judge the task. Critique it: gaps, risks, unclear scope.
-Read ${critiques}. For each critique that matters for this task, ask the user
-one question about it and put that row's Id in the question's "critique" field.
-Leave the other critiques alone.
-Write every question the /ask-simple way. Ask nothing the repo answers.
+Your goal: understand what the user wants, well enough that every later ant
+can finish the task with no more questions. Read the repo enough to judge it.
+Critique it: gaps, risks, unclear scope.
+${asked}${known}Read ${critiques}. A critique that matters for this task becomes a question;
+put that row's Id in the question's "critique" field. Leave the rest alone.
+Ask nothing the repo, the research or an earlier answer already settles.
+${round < MAX_RESEARCH ? `If facts you need are missing, list them in research, at most ${MAX_RESEARCHERS}, and leave next empty: researcher ants look them up and you run again.` : 'Research is done for this question: leave research empty.'}
+Otherwise give the single most important next question in next, the
+/ask-simple way, and guess how many remain after it. Leave next.question
+empty once nothing important is unclear.
 If the task cannot be done at all as asked, say why in blocker.
 ${env.testCommand ? `The repo's test command is \`${env.testCommand}\`: return it as testCommand.` : 'Find the one command that runs the repo\'s tests from its root.'}
 ${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it as checkCommand.` : 'Find the one command that builds and checks the real app (install hook, launch check); empty if there is none.'}`,
-    { label: 'investigator-ant', phase: 'Review', effort: EFFORT.review, schema: REVIEW },
+    { label: `investigator-ant:${answered.length}:${round}`, phase: 'Review', effort: EFFORT.review, schema: REVIEW },
   ))
   if (!review) return { stage: 'error', reason: 'the investigator ant died twice' }
-  if (review.blocker) return { stage: 'blocked', reason: review.blocker, review }
-  if (review.questions.length && !hasAnswers) return { stage: 'review', review }
+  const topics = round < MAX_RESEARCH ? (review.research || []).slice(0, MAX_RESEARCHERS) : []
+  if (!topics.length) break
+  log(`research round ${round + 1}: ${topics.length} researcher ants`)
+  const found = await parallel(topics.map((t, k) => () => twice(() => researcher(t, k, round))))
+  topics.forEach((t, k) => findings.push(`${t}: ${found[k] ? found[k].findings : 'the researcher ant died twice'}`))
 }
-const answers = hasAnswers ? args.answers : []
-const answered = hasAnswers ? (review.questions || []).map((q, k) => ({ ...q, answer: String(answers[k] || '').trim() })) : []
+if (review.blocker) return { stage: 'blocked', reason: review.blocker, review, findings }
+if (review.next && review.next.question) {
+  return { stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review }
+}
 
 // ---- requirement and plans, in one ant ----
 phase('Plans')
@@ -140,7 +185,7 @@ const out = await twice(() => agent(
 ${where}
 Task: ${task}
 Review: ${JSON.stringify({ summary: review.summary, critique: review.critique })}
-${decided}1. Requirement: follow the /add-requirement skill up to the draft. Show it can be
+${findings.length ? `Research:\n${findings.map(f => `- ${f}`).join('\n')}\n` : ''}${decided}1. Requirement: follow the /add-requirement skill up to the draft. Show it can be
    built with evidence from the repo's code and docs. Only if that is not enough,
    write a throwaway spike in a temporary folder outside the repo, and delete it
    after. Check for duplicates and conflicts. Do not write the requirements file:

@@ -18,10 +18,15 @@ its job. The build script runs that workflow in place of a worker ant.
 
 01. **Task in.** The user gives a task. It can be anything.
 
-02. **Investigator Ant** reviews and critiques the task and finds the repo's test
-    command. It also reads the critiques board: each critique that matters for
-    this task becomes one question. The main session asks the user every
-    question with the `/ask-simple` skill. If there are none, the flow goes
+02. **Investigator Ant** has one goal: understand what the user wants, well
+    enough that no later ant needs to ask. It critiques the task, finds the
+    repo's test command and reads the critiques board: each critique that
+    matters becomes a question. When it lacks facts it sends up to 5
+    **Researcher Ants** in parallel; they search the web and the whole computer,
+    read only, never secrets, and report back. It asks one question at a time,
+    with `/ask-simple`, never a batch, and picks each question after the last
+    answer. Each question shows a best-guess count: "Question 2 of about 5". It
+    stops once nothing important is unclear; with no questions the flow goes
     straight on.
 
 03. **Add Requirement Ant** drafts a requirement with the `/add-requirement`
@@ -139,10 +144,10 @@ and stops to ask the user only in step 2.
    `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
    script paths, and the repo's saved `testCommand` and `checkCommand`.
-2. Run `ishikari-plan` with `env` and the task. If it returns questions, ask
-   them with `/ask-simple` and resume the same run with one answer per
-   question; the review replays from cache, and a skipped answer means "use
-   the recommended one". The plans go straight to build. First
+2. Run `ishikari-plan` with `env` and the task. While it returns a question,
+   ask it alone with `/ask-simple`, then run again with every answer so far
+   and the research findings; a skipped answer means "use the recommended
+   one". The plans go straight to build. First
    `ishikari.py req add` writes the requirement (none for a refactor), the main
    session commits it, and `ishikari.py boards remove` drops the answered
    critiques. `ishikari.py config` saves the test and check commands.
@@ -214,9 +219,11 @@ plan: 1. Plan {
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
   arta: Investigator Ant {class: node; style.stroke: ${plan-line}}
+  research: Researcher ants\nup to 5, web + computer {class: node; style.stroke: ${plan-line}}
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
+  arta <-> research: facts {class: flow; style.stroke-dash: 3}
   arta -> aara: your answers {class: ok}
   aara -> plans: draft requirement,\nwrite plans {class: flow}
 }
@@ -270,7 +277,7 @@ always_on: Upkeep ants (before main moves) {
   critiques: Critiques board {shape: cylinder; class: node; style.stroke: ${always-line}}
 }
 
-plan.arta <-> user: critique, /ask-simple {class: flow}
+plan.arta <-> user: one question\nat a time, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> build.bulletin: work together {class: ok}

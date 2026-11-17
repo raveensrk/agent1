@@ -18,6 +18,8 @@ steps: {
     plan.(task -> arta)[0].style.opacity: 1
     user.style.opacity: 1
     (plan.arta <-> user)[0].style.opacity: 1
+    plan.research.style.opacity: 1
+    plan.(arta <-> research)[0].style.opacity: 1
   }
   2-requirement: {
     plan.aara.style.opacity: 1
