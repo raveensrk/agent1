@@ -288,6 +288,8 @@ fix: 4. Fix {
 finish: 5. Finish {
   left: 3000
   top: 0
+  direction: right
+  grid-columns: 2
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
   merger: Merger ant\nstraight line in a\nscratch copy, tests once {class: node; style.stroke: ${finish-line}}
   finisher: Finisher ant\nmoves main forward,\ncleans up {class: node; style.stroke: ${finish-line}}
