@@ -112,7 +112,7 @@ always_on: Upkeep ants (before main moves) {
 build.aw -> boards.bulletin: built {class: flow}
 boards.bounty -> fix.detective: bug still open\nafter round 1 {class: bug}
 always_on.philosopher -> boards.critiques: critique {class: flow; style.stroke-dash: 3}
-plan.arta <-> user: one question\nat a time, /ask-simple {class: flow}
+plan.arta <-> user: up to 4 questions\na round, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> boards.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> boards.bulletin: pass: they\nwork combined {class: ok}

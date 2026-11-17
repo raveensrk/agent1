@@ -34,7 +34,7 @@ ROUTES = [
             ["plan.(task -> arta)[0]", False, "A task arrives. The investigator ant reads it."],
             ["plan.(arta <-> research)[0]", False, "It sends researcher ants for missing facts."],
             ["plan.(arta <-> research)[0]", True, "They report back."],
-            ["(plan.arta <-> user)[0]", False, "It asks you one question at a time."],
+            ["(plan.arta <-> user)[0]", False, "One live investigator asks you up to 4 questions a round."],
             ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
             ["plan.(arta -> aara)[0]", False, "It writes the investigation report for the add requirement ant."],
             ["plan.(aara -> arch)[0]", False, "It drafts the requirement for the architect ant."],
