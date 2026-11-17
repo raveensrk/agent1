@@ -31,8 +31,8 @@ ROUTES = [
     {
         "name": "Route 1 of 2: a bug, fixed on the first try",
         "steps": [
-            ["plan.(task -> arta)[0]", False, "A task arrives. The task review ant reads it."],
-            ["(plan.arta <-> user)[0]", False, "The task review ant asks you questions."],
+            ["plan.(task -> arta)[0]", False, "A task arrives. The investigator ant reads it."],
+            ["(plan.arta <-> user)[0]", False, "The investigator ant asks you questions."],
             ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
             ["plan.(arta -> aara)[0]", False, "Approved. On to the add requirement ant."],
             ["(plan.aara <-> user)[0]", False, "It drafts a requirement and asks you."],
@@ -52,7 +52,7 @@ ROUTES = [
             ["always_on.(philosopher -> critiques)[0]", False, "The philosopher keeps its 5 best critiques."],
             ["(always_on -> finish.finisher)[0]", False, "Then the finisher ant moves main forward."],
             ["(finish.finisher -> build.bulletin)[0]", False, "Main moved. Status: done."],
-            ["(always_on.critiques -> plan.arta)[0]", False, "Next task: the task review ant asks you about critiques."],
+            ["(always_on.critiques -> plan.arta)[0]", False, "Next task: the investigator ant asks you about critiques."],
             ["(always_on.janitor -> plan.plans)[0]", False, "The janitor's cleanup plan is offered next time."],
         ],
     },

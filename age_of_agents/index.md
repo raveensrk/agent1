@@ -16,7 +16,7 @@ its job. The build script runs that workflow in place of a worker ant.
 
 01. **Task in.** The user gives a task. It can be anything.
 
-02. **Task Review Ant** reviews and critiques the task and finds the repo's test
+02. **Investigator Ant** reviews and critiques the task and finds the repo's test
     command. It also reads the critiques board: each critique that matters for
     this task becomes one question. The main session asks the user every
     question with the `/ask-simple` skill. If there are none, the flow goes
@@ -79,7 +79,7 @@ They run once per finish, on the merged result, before main moves.
   The next plan stage offers it to the user as a task.
 - **Philosopher ant** questions all the merged work together and keeps its 5
   best critiques. It only comments, in the critiques board, and never blocks. On
-  the next task, the task review ant turns the ones that matter into questions.
+  the next task, the investigator ant turns the ones that matter into questions.
 
 ## Rules
 
@@ -209,7 +209,7 @@ plan: 1. Plan {
   direction: down
   style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
-  arta: Task Review Ant {class: node; style.stroke: ${plan-line}}
+  arta: Investigator Ant {class: node; style.stroke: ${plan-line}}
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}

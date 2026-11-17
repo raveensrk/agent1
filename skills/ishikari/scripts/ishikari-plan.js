@@ -3,7 +3,7 @@ export const meta = {
   description: 'Ishikari stage 1: review the task, draft a requirement, write worker plans',
   whenToUse: 'Start of an Ishikari run. The user answers the review and approves the requirement and plans before ishikari-build.',
   phases: [
-    { title: 'Review', detail: 'task review ant critiques the task and turns critiques into questions' },
+    { title: 'Review', detail: 'investigator ant critiques the task and turns critiques into questions' },
     { title: 'Plans', detail: 'add requirement ant drafts the requirement and writes one plan per worker ant' },
   ],
 }
@@ -15,7 +15,7 @@ export const meta = {
 //   review?: object,                        the earlier review; only needed when not resuming
 // }
 // To answer questions, run again with resumeFromRunId set to the first run and
-// the same env and task plus answers: the review ant replays from cache.
+// the same env and task plus answers: the investigator ant replays from cache.
 // Returns one of:
 //   { stage: 'review', review }            questions for the user; run again with review + answers
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
@@ -109,7 +109,7 @@ let review = args.review
 if (!review) {
   phase('Review')
   review = await twice(() => agent(
-    `You are the task review ant of the Ishikari workflow.
+    `You are the investigator ant of the Ishikari workflow.
 ${where}
 Task: ${task}
 Read the repo enough to judge the task. Critique it: gaps, risks, unclear scope.
@@ -120,9 +120,9 @@ Write every question the /ask-simple way. Ask nothing the repo answers.
 If the task cannot be done at all as asked, say why in blocker.
 ${env.testCommand ? `The repo's test command is \`${env.testCommand}\`: return it as testCommand.` : 'Find the one command that runs the repo\'s tests from its root.'}
 ${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it as checkCommand.` : 'Find the one command that builds and checks the real app (install hook, launch check); empty if there is none.'}`,
-    { label: 'task-review-ant', phase: 'Review', effort: EFFORT.review, schema: REVIEW },
+    { label: 'investigator-ant', phase: 'Review', effort: EFFORT.review, schema: REVIEW },
   ))
-  if (!review) return { stage: 'error', reason: 'the task review ant died twice' }
+  if (!review) return { stage: 'error', reason: 'the investigator ant died twice' }
   if (review.blocker) return { stage: 'blocked', reason: review.blocker, review }
   if (review.questions.length && !hasAnswers) return { stage: 'review', review }
 }
