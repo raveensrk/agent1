@@ -35,12 +35,6 @@ TUI and CLI for browsing AI models and comparing benchmarks
 :NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for finding LLMs that fit local hardware
-*** ollama :AI:core:
-:PROPERTIES:
-:URL: https://github.com/ollama/ollama
-:NEEDS: [[*AI][AI]]
-:END:
-Run LLMs locally
 ** Browser
 *** Firefox :Web_Browser:core:
 :PROPERTIES:
@@ -289,6 +283,12 @@ Requirements management; doorstop-gui for the GUI
 :URL: https://github.com/sst/opencode
 :NEEDS: [[*AI][AI]]
 :END:
+*** ollama :AI:core:
+:PROPERTIES:
+:URL: https://github.com/ollama/ollama
+:NEEDS: [[*AI][AI]]
+:END:
+Run LLMs locally
 ** System Admin
 *** rsync :core:
 :PROPERTIES:
