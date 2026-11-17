@@ -233,7 +233,7 @@ plan: 1. Plan {
   research: Researcher ants\nup to 5, web + computer {class: node; style.stroke: ${plan-line}}
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   arch: Architect Ant\narchitecture.md {class: node; style.stroke: ${plan-line}}
-  plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
+  plans: Worker plans\none per worker ant {shape: page; class: node; style.stroke: ${plan-line}; style.multiple: true}
   task -> arta: review {class: flow}
   arta <-> research: facts {class: flow; style.stroke-dash: 3}
   arta -> aara: investigation_report.md {class: ok}
