@@ -1,7 +1,7 @@
 export const meta = {
   name: 'ishikari-build',
   description: 'Ishikari stage 2: worker ants build the plans, inspector ants check them, detective ants plan fixes, then all passing tasks are tested together',
-  whenToUse: 'After the user approves the plans from ishikari-plan. Ends with tasks for the user\'s final review.',
+  whenToUse: 'After ishikari-plan returns plans. Ends with task results; the main session approves passing tasks without asking.',
   phases: [
     { title: 'Build', detail: 'worker ants, at most 5 at once, one worktree each' },
     { title: 'Check', detail: 'one inspector ant per built task' },

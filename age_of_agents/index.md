@@ -6,9 +6,9 @@ Design documentation and design bible for Ishikari, a workflow where AI agents
 ## Goal
 
 Take any task from the user and finish it with many ants working in parallel.
-The user is asked only while planning: task review questions, then requirement
-and plan approval. Approving the plans also approves merging the result to
-main. Build, check, fix, merge and upkeep run on their own, and the run ends
+The user is asked only once: the investigator ant's questions. Answering
+them approves the whole run, merge to main included. The add requirement ant
+only adds: it never asks. Build, check, fix, merge and upkeep run on their own, and the run ends
 with one report.
 
 Ishikari is a higher-order workflow: a plan can name another saved workflow as
@@ -27,9 +27,9 @@ its job. The build script runs that workflow in place of a worker ant.
 03. **Add Requirement Ant** drafts a requirement with the `/add-requirement`
     skill and writes one plan per worker ant. It shows the requirement can be
     built from the repo's code and docs, and only writes a throwaway spike,
-    outside the repo, when that is not enough. The user approves the requirement
-    and the plans. The main session then commits the requirement and removes the
-    critiques the user answered.
+    outside the repo, when that is not enough. It never asks the user: it builds on
+    the investigator ant's answers. The main session then commits the
+    requirement and removes the critiques the user answered.
 
 04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
     split so no two edit the same file, and each task has its own test file.
@@ -118,12 +118,12 @@ They run once per finish, on the merged result, before main moves.
 ## Running Ishikari
 
 A running workflow cannot stop to ask the user, so Ishikari is three workflows.
-The main session asks the user only between plan runs; after plan approval it
-drives build and finish on its own.
+The main session asks the user only between the two plan runs, for the
+investigator ant's questions; after that it drives everything on its own.
 
 | Workflow          | Stages                      | Ends with            |
 | ----------------- | --------------------------- | -------------------- |
-| `ishikari-plan`   | review, plans               | plans to approve     |
+| `ishikari-plan`   | review, plans               | plans to build       |
 | `ishikari-build`  | build, check, fix, together | tasks to review      |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 
@@ -142,11 +142,11 @@ and stops to ask the user only in step 2.
 2. Run `ishikari-plan` with `env` and the task. If it returns questions, ask
    them with `/ask-simple` and resume the same run with one answer per
    question; the review replays from cache, and a skipped answer means "use
-   the recommended one". Show the requirement and plans for approval. Then
+   the recommended one". The plans go straight to build. First
    `ishikari.py req add` writes the requirement (none for a refactor), the main
    session commits it, and `ishikari.py boards remove` drops the answered
    critiques. `ishikari.py config` saves the test and check commands.
-3. Run `ishikari-build` with `env` and the approved plans. Every task
+3. Run `ishikari-build` with `env` and the plans. Every task
    `awaiting review` is approved without asking. Escalated, blocked and error
    tasks, and tasks built on them, are dropped and listed in the report.
 4. Run `ishikari-finish` with `env`, the approved tasks, the build's `together`
@@ -217,7 +217,7 @@ plan: 1. Plan {
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
-  arta -> aara: approved {class: ok}
+  arta -> aara: your answers {class: ok}
   aara -> plans: draft requirement,\nwrite plans {class: flow}
 }
 
@@ -271,7 +271,6 @@ always_on: Upkeep ants (before main moves) {
 }
 
 plan.arta <-> user: critique, /ask-simple {class: flow}
-plan.aara <-> user: approve requirement {class: ok}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> build.bulletin: work together {class: ok}

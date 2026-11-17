@@ -45,7 +45,7 @@ plan: 1. Plan {
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
-  arta -> aara: approved {class: ok}
+  arta -> aara: your answers {class: ok}
   aara -> plans: draft requirement,\nwrite plans {class: flow}
 }
 
@@ -99,7 +99,6 @@ always_on: Upkeep ants (before main moves) {
 }
 
 plan.arta <-> user: critique, /ask-simple {class: flow}
-plan.aara <-> user: approve requirement {class: ok}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> build.bulletin: work together {class: ok}

@@ -9,8 +9,9 @@ argument-hint: "<task> [repo path]"
 # Ishikari
 
 Drive three workflows for one task. A running workflow cannot ask the user, so
-this skill runs them in turn. It asks the user only in step 2, Plan. Approving
-the plans approves the whole run, merge to main included. After that, never
+this skill runs them in turn. It asks the user only the investigator ant's
+questions in step 2. Answering them approves the whole run, merge to main
+included. Never ask for approval of the requirement or the plans. After that, never
 ask: decide by the rules in steps 3 and 4 and report at the end.
 
 Design, rules and diagram:
@@ -59,8 +60,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   answer per question, in order, `''` if skipped. The review replays from
   cache; never retype it.
 - `blocked`: show the reason and stop.
-- `plans`: show the requirement and each plan's title, files and `after`. Ask
-  for approval. On yes:
+- `plans`: do not ask. Show the requirement and each plan's title, files and
+  `after` as a note, then:
   - if `requirement.needed`, pipe `requirement.entry` into
     `python3 <env.tool> req add <requirement.file>` and commit only that file;
   - pipe the `answeredCritiques` JSON into

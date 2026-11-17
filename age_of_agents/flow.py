@@ -34,9 +34,7 @@ ROUTES = [
             ["plan.(task -> arta)[0]", False, "A task arrives. The investigator ant reads it."],
             ["(plan.arta <-> user)[0]", False, "The investigator ant asks you questions."],
             ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
-            ["plan.(arta -> aara)[0]", False, "Approved. On to the add requirement ant."],
-            ["(plan.aara <-> user)[0]", False, "It drafts a requirement and asks you."],
-            ["(plan.aara <-> user)[0]", True, "You approve the requirement."],
+            ["plan.(arta -> aara)[0]", False, "Your answers go to the add requirement ant."],
             ["plan.(aara -> plans)[0]", False, "It drafts the requirement and writes the plans."],
             ["(plan.plans -> build.aw)[0]", False, "Worker ants start, each in its own worktree."],
             ["build.(aw -> bulletin)[0]", False, "A worker finishes its build."],
@@ -59,7 +57,7 @@ ROUTES = [
     {
         "name": "Route 2 of 2: a stuck worker, 3 failed fixes, dropped",
         "steps": [
-            ["(plan.plans -> build.aw)[0]", False, "Approved plans go to the worker ants."],
+            ["(plan.plans -> build.aw)[0]", False, "The plans go to the worker ants."],
             ["(build.aw -> fix.bounty)[0]", False, "A worker gets stuck and posts a bug."],
             *[[a, r, f"Try 1: {c}"] for a, r, c in FIX_ROUND],
             ["(check.inspector -> fix.bounty)[0]", False, "Still broken. Back on the bounty board."],

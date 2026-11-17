@@ -1,7 +1,7 @@
 export const meta = {
   name: 'ishikari-finish',
   description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, move main forward, run janitor and philosopher ants',
-  whenToUse: 'After the user approves tasks in their final review of ishikari-build.',
+  whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
     { title: 'Upkeep', detail: 'janitor and philosopher ants, in parallel' },
@@ -11,7 +11,7 @@ export const meta = {
 
 // args: {
 //   env: { repo, state, run, main, tool, testCommand?, checkCommand? },
-//   approved: [{ id, branch, after? }],      tasks the user approved (from ishikari-build)
+//   approved: [{ id, branch, after? }],      passing tasks (from ishikari-build)
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
 //   drop?: [{ id, branch }],                 tasks the user gave up on: removed
 //   cleanup?: boolean,                       this run built a cleanup plan: no janitor, so

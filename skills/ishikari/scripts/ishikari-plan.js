@@ -1,7 +1,7 @@
 export const meta = {
   name: 'ishikari-plan',
   description: 'Ishikari stage 1: review the task, draft a requirement, write worker plans',
-  whenToUse: 'Start of an Ishikari run. The user answers the review and approves the requirement and plans before ishikari-build.',
+  whenToUse: 'Start of an Ishikari run. The user answers the investigator ant's questions; the plans then go straight to ishikari-build.',
   phases: [
     { title: 'Review', detail: 'investigator ant critiques the task and turns critiques into questions' },
     { title: 'Plans', detail: 'add requirement ant drafts the requirement and writes one plan per worker ant' },
@@ -23,7 +23,7 @@ export const meta = {
 // requirement.needed is false for a change with no new behaviour (a refactor):
 // then nothing is written to the requirements file.
 //   { stage: 'error', reason }
-// Nothing is committed here. After the user approves, the main session commits
+// Nothing is committed here. Without asking, the main session then commits
 // the requirement and removes answeredCritiques from the critiques board.
 
 const EFFORT = { review: 'medium', planner: 'high' }
@@ -144,7 +144,7 @@ ${decided}1. Requirement: follow the /add-requirement skill up to the draft. Sho
    built with evidence from the repo's code and docs. Only if that is not enough,
    write a throwaway spike in a temporary folder outside the repo, and delete it
    after. Check for duplicates and conflicts. Do not write the requirements file:
-   the user approves it first.
+   the main session writes it from your entry.
 2. Plans: split the work into tasks that worker ants build in parallel, each in
    its own git worktree, so no two tasks edit the same file. Give each task its
    own test file. Merge tasks that would be too small to stand alone. Only when a
