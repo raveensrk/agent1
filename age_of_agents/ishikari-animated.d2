@@ -25,7 +25,9 @@ steps: {
     plan.aara.style.opacity: 1
     plan.plans.style.opacity: 1
     plan.(arta -> aara)[0].style.opacity: 1
-    plan.(aara -> plans)[0].style.opacity: 1
+    plan.arch.style.opacity: 1
+    plan.(aara -> arch)[0].style.opacity: 1
+    plan.(arch -> plans)[0].style.opacity: 1
   }
   3-build: {
     build.style.opacity: 1

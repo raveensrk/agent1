@@ -31,14 +31,19 @@ its job. The build script runs that workflow in place of a worker ant.
     decision, facts with sources, constraints, risks, assumptions, acceptance
     checks and commands. Every claim cites an answer, a fact or the repo.
 
-03. **Add Requirement Ant** reads only the investigation report and the repo.
-    Where the report and its own idea differ, the report wins. It drafts a
-    requirement with the `/add-requirement`
-    skill and writes one plan per worker ant. It shows the requirement can be
-    built from the repo's code and docs, and only writes a throwaway spike,
-    outside the repo, when that is not enough. It never asks the user: it builds on
-    the investigator ant's answers. The main session then commits the
-    requirement and removes the critiques the user answered.
+03. **Add Requirement Ant** only adds the requirement. It reads only the
+    investigation report and the repo; where the report and its own idea
+    differ, the report wins. It drafts the requirement with the
+    `/add-requirement` skill and shows it can be built from the repo's code and
+    docs, writing a throwaway spike outside the repo only when that is not
+    enough. It never asks the user, and never designs or plans. The main session
+    then commits the requirement and removes the critiques the user answered.
+
+03b. **Architect Ant** reads the report and the requirement and writes
+    `architecture.md` beside the report: the parts of the change, the files each
+    part owns, and every name, interface and data shape that crosses between
+    parts, so parallel workers fit together. It maps each acceptance check to
+    the part that proves it, then writes one plan per worker ant.
 
 04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
     split so no two edit the same file, and each task has its own test file.
@@ -54,7 +59,8 @@ its job. The build script runs that workflow in place of a worker ant.
     ant, so it knows the moment a worker finishes and starts that task's
     inspector at once.
 
-07. **Inspector Ant** checks the task's own work against its plan and runs the
+07. **Inspector Ant** checks the task's own work against its plan and the
+    design, where a name or interface that differs is a bug, and runs the
     tests in the task's worktree. A task built on others is inspected only after
     those tasks are final; if one of them changed, their final version is merged
     in first, and if one failed, this task is blocked. For real bugs it also
@@ -121,8 +127,9 @@ They run once per finish, on the merged result, before main moves.
   [`assets/boards/`](../skills/ishikari/assets/boards/) are the templates it
   starts from.
 - Each ant thinks only as hard as its job needs: low for the board clerk,
-  finisher and upkeep ants; medium for the review, workers, inspectors and
-  merger; high for the add requirement ant and the detective.
+  finisher and upkeep ants; medium for the investigator, researchers, add
+  requirement ant, workers, inspectors and merger; high for the architect and
+  the detective.
 
 ## Running Ishikari
 
@@ -225,11 +232,13 @@ plan: 1. Plan {
   arta: Investigator Ant {class: node; style.stroke: ${plan-line}}
   research: Researcher ants\nup to 5, web + computer {class: node; style.stroke: ${plan-line}}
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
+  arch: Architect Ant\narchitecture.md {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta <-> research: facts {class: flow; style.stroke-dash: 3}
   arta -> aara: investigation_report.md {class: ok}
-  aara -> plans: draft requirement,\nwrite plans {class: flow}
+  aara -> arch: requirement {class: flow}
+  arch -> plans: design,\nwrite plans {class: flow}
 }
 
 build: 2. Build {

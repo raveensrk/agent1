@@ -22,7 +22,7 @@ Design, rules and diagram:
 | File                         | Job                                          |
 | ---------------------------- | -------------------------------------------- |
 | `scripts/ishikari.py`        | setup, config; only writer of boards, reqs   |
-| `scripts/ishikari-plan.js`   | review the task, write the plans             |
+| `scripts/ishikari-plan.js`   | investigate, requirement, design, plans      |
 | `scripts/ishikari-build.js`  | build, check, fix, test together             |
 | `scripts/ishikari-finish.js` | merge, upkeep, move main                     |
 | `assets/boards/*.md`         | board templates: bulletin, bounty, critiques |
@@ -62,7 +62,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   from the last result. Repeat until the result is not `question`.
 - `blocked`: show the reason and stop.
 - `plans`: do not ask. Show the `report` path (`investigation_report.md`), the
-  requirement and each plan's title, files and `after` as a note, then:
+  `design` path (`architecture.md`), the requirement and each plan's title,
+  files and `after` as a note, then:
   - if `requirement.needed`, pipe `requirement.entry` into
     `python3 <env.tool> req add <requirement.file>` and commit only that file;
   - pipe the `answeredCritiques` JSON into

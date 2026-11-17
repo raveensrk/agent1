@@ -44,11 +44,13 @@ plan: 1. Plan {
   arta: Investigator Ant {class: node; style.stroke: ${plan-line}}
   research: Researcher ants\nup to 5, web + computer {class: node; style.stroke: ${plan-line}}
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
+  arch: Architect Ant\narchitecture.md {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta <-> research: facts {class: flow; style.stroke-dash: 3}
   arta -> aara: investigation_report.md {class: ok}
-  aara -> plans: draft requirement,\nwrite plans {class: flow}
+  aara -> arch: requirement {class: flow}
+  arch -> plans: design,\nwrite plans {class: flow}
 }
 
 build: 2. Build {

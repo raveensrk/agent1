@@ -103,6 +103,8 @@ const planOf = branch => {
   const m = branch.match(/^ishikari\/([^/]+)\/([^/]+)$/)
   return m ? `${env.state}/plans/${m[1]}/${m[2]}.md` : '(no plan file)'
 }
+// The design sits beside the plan, in that run's plans folder.
+const designOf = task => task.plan.startsWith('/') ? task.plan.replace(/[^/]*$/, 'architecture.md') : '(no design file)'
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
 Use absolute paths only, and run git as \`git -C <path> ...\`. Never work in the
 repo's main checkout, and never touch any other repo.`
@@ -143,7 +145,8 @@ If that worktree exists, use it. Else, if the branch exists, run
 \`git -C ${env.repo} worktree add ${task.tree} ${task.branch}\`. Else run
 \`git -C ${env.repo} worktree add -b ${task.branch} ${task.tree} ${start}\`${more.length ? `, then merge ${more.join(' and ')} into it` : ''}.
 Never reset, rebase or recreate an existing branch: it holds earlier work.
-The task's plan is ${task.plan}.
+The task's plan is ${task.plan}. The run's design is ${designOf(task)}: use its
+names and interfaces exactly.
 ${job}
 Also update the docs your change affects, inside this task.
 ${tests} inside your worktree before you finish. Commit all your work on
@@ -187,6 +190,8 @@ never write code yourself.`
     `You are the inspector ant of the Ishikari workflow.
 ${where}
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
+Check it against its plan and the run's design ${designOf(task)}: a name or interface
+that differs from the design is a bug.
 ${own}
 ${tests} inside that worktree. Do not copy the repo anywhere else, and do not
 edit tracked files.

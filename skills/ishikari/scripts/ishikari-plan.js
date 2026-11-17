@@ -1,10 +1,11 @@
 export const meta = {
   name: 'ishikari-plan',
-  description: 'Ishikari stage 1: review the task, draft a requirement, write worker plans',
+  description: 'Ishikari stage 1: investigate the task, draft a requirement, design it and write worker plans',
   whenToUse: 'Start of an Ishikari run, then once per answer: the investigator ant asks one question per run. When it has no more, the plans go straight to ishikari-build.',
   phases: [
     { title: 'Review', detail: 'investigator ant, helped by up to 5 researcher ants, asks the next question' },
-    { title: 'Plans', detail: 'add requirement ant drafts the requirement and writes one plan per worker ant' },
+    { title: 'Requirement', detail: 'add requirement ant drafts the requirement from the investigation report' },
+    { title: 'Design', detail: 'architect ant writes architecture.md and one plan per worker ant' },
   ],
 }
 
@@ -23,14 +24,14 @@ export const meta = {
 //                                           ask question; remaining is the best
 //                                           guess of questions left after it
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
-//   { stage: 'plans', report, review, requirement, plans, testCommand, checkCommand, answeredCritiques }
+//   { stage: 'plans', report, design, review, requirement, plans, testCommand, checkCommand, answeredCritiques }
 // requirement.needed is false for a change with no new behaviour (a refactor):
 // then nothing is written to the requirements file.
 //   { stage: 'error', reason }
 // Nothing is committed here. Without asking, the main session then commits
 // the requirement and removes answeredCritiques from the critiques board.
 
-const EFFORT = { review: 'medium', researcher: 'medium', planner: 'high' }
+const EFFORT = { review: 'medium', researcher: 'medium', requirement: 'medium', architect: 'high' }
 const MAX_RESEARCHERS = 5  // researcher ants at once
 const MAX_RESEARCH = 2     // research bursts per question
 
@@ -48,6 +49,7 @@ Use absolute paths only. Change nothing in the repo.`
 const critiques = `${env.state}/boards/critiques.md`
 const planDir = `${env.state}/plans/${env.run}`
 const reportFile = `${planDir}/investigation_report.md`
+const designFile = `${planDir}/architecture.md`
 
 const REVIEW = {
   type: 'object',
@@ -84,7 +86,7 @@ const FOUND = {
   required: ['findings'],
 }
 
-const PLANNED = {
+const REQUIRED = {
   type: 'object',
   properties: {
     requirement: {
@@ -97,6 +99,14 @@ const PLANNED = {
       },
       required: ['needed', 'file', 'entry', 'proof'],
     },
+  },
+  required: ['requirement'],
+}
+
+const PLANNED = {
+  type: 'object',
+  properties: {
+    designWritten: { type: 'boolean', description: 'true once architecture.md is written' },
     plans: {
       type: 'array',
       items: {
@@ -112,7 +122,7 @@ const PLANNED = {
       },
     },
   },
-  required: ['requirement', 'plans'],
+  required: ['designWritten', 'plans'],
 }
 
 // A dead ant (null) is retried once.
@@ -187,31 +197,49 @@ if (review.next && review.next.question) {
 }
 if (!review.reportWritten) return { stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings }
 
-// ---- requirement and plans, in one ant ----
-phase('Plans')
-const out = await twice(() => agent(
-  `You are the add requirement ant of the Ishikari workflow.
+// ---- requirement: the add requirement ant only adds ----
+phase('Requirement')
+const req = await twice(() => agent(
+  `You are the add requirement ant of the Ishikari workflow. Your one job: the
+requirement. Do not design or plan the work.
 ${where}
 Task: ${task}
-Read the investigation report ${reportFile} first. It holds the goal, scope,
-the user's decisions, facts, risks and acceptance checks: build only on it and
-the repo. Where the report and your own idea differ, the report wins.
-1. Requirement: follow the /add-requirement skill up to the draft. Show it can be
-   built with evidence from the repo's code and docs. Only if that is not enough,
-   write a throwaway spike in a temporary folder outside the repo, and delete it
-   after. Check for duplicates and conflicts. Do not write the requirements file:
-   the main session writes it from your entry.
+Read the investigation report ${reportFile} first. Build only on it and the
+repo. Where the report and your own idea differ, the report wins.
+Follow the /add-requirement skill up to the draft. Show it can be built with
+evidence from the repo's code and docs. Only if that is not enough, write a
+throwaway spike in a temporary folder outside the repo, and delete it after.
+Check for duplicates and conflicts. Write no files: the main session writes the
+requirements file from your entry.`,
+  { label: 'add-requirement-ant', phase: 'Requirement', effort: EFFORT.requirement, schema: REQUIRED },
+))
+if (!req) return { stage: 'error', reason: 'the add requirement ant died twice' }
+
+// ---- design and plans: the architect ant ----
+phase('Design')
+const out = await twice(() => agent(
+  `You are the architect ant of the Ishikari workflow.
+${where}
+Task: ${task}
+Read the investigation report ${reportFile} first. Where the report and your
+own idea differ, the report wins.
+${req.requirement.needed ? `The requirement, from the add requirement ant (${req.requirement.file}):\n${req.requirement.entry}\n` : 'This change adds no behaviour, so it has no requirement.\n'}1. Design: write ${designFile}: the parts of the change, the files each part
+   owns, and every name, interface and data shape that crosses between parts,
+   exact, so worker ants building in parallel fit together. Map each of the
+   report's acceptance checks to the part that proves it.
 2. Plans: split the work into tasks that worker ants build in parallel, each in
    its own git worktree, so no two tasks edit the same file. Give each task its
    own test file. Merge tasks that would be too small to stand alone. Only when a
    task must edit a file another task creates, put that task's id in its "after".
    Worker ants cannot ask questions, so each plan must be complete: files to
-   touch, exact behaviour, tests to add, and the test command
+   touch, exact behaviour, the interfaces from the design it uses or provides,
+   the acceptance checks it covers, tests to add, and the test command
    \`${review.testCommand || 'the repo\'s test command'}\`.
    Write each plan to ${planDir}/<id>.md. Change no other files.`,
-  { label: 'add-requirement-ant', phase: 'Plans', effort: EFFORT.planner, schema: PLANNED },
+  { label: 'architect-ant', phase: 'Design', effort: EFFORT.architect, schema: PLANNED },
 ))
-if (!out) return { stage: 'error', reason: 'the add requirement ant died twice' }
+if (!out) return { stage: 'error', reason: 'the architect ant died twice' }
+if (!out.designWritten) return { stage: 'error', reason: `the architect ant did not write ${designFile}` }
 
 // ---- check the plans before anyone builds them ----
 const problems = []
@@ -235,13 +263,14 @@ const visit = (id, path) => {
 }
 out.plans.forEach(p => visit(p.id, []))
 if (!out.plans.length) problems.push('the planner returned no plans')
-if (problems.length) return { stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: out.requirement, plans: out.plans }
+if (problems.length) return { stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: req.requirement, plans: out.plans }
 
 return {
   stage: 'plans',
   report: reportFile,
+  design: designFile,
   review,
-  requirement: out.requirement,
+  requirement: req.requirement,
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: review.testCommand,
   checkCommand: review.checkCommand || '',
