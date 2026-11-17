@@ -164,7 +164,7 @@
 <text class="h" x="1160" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="1160" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">built + checked before main moves</text>
 <circle cx="960" cy="780" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="960" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Philosopher ant</text>
-<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">after the cleanup,</text><text class="h" x="960" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">5 best critiques</text>
+<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">after the cleanup,</text><text class="h" x="960" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">1 best critique (--critiques N)</text>
 <circle cx="760" cy="780" r="8" fill="#E2E8F0" stroke="#4ADE80" stroke-width="3"/>
 <text class="h" x="760" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="760" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">moves main, cleans up,</text><text class="h" x="760" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">sets rows done</text>

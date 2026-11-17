@@ -96,7 +96,7 @@
 <text class="h" x="786" y="1175" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept, plan offered as</text><text class="h" x="786" y="1191" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the next run's Task</text>
 <circle cx="1000" cy="980" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1026" y="1020" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Philosopher ant</text>
-<text class="h" x="1026" y="1039" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after the cleanup:</text><text class="h" x="1026" y="1055" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">5 best critiques</text>
+<text class="h" x="1026" y="1039" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after the cleanup:</text><text class="h" x="1026" y="1055" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">1 best critique (--critiques N)</text>
 <rect x="986" y="866" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="974" y="876" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Critiques board</text>
 <text class="h" x="974" y="895" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">bridge to the next run:</text><text class="h" x="974" y="911" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">its Investigator reads it</text><text class="h" x="974" y="927" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/critiques.md</text>

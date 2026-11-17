@@ -49,7 +49,7 @@ ROUTES = [
             ["(check.together -> finish.merger)[0]", False, "They work combined. The main session approves them, no review."],
             ["(finish.merger -> always_on)[0]", False, "The janitor ant plans a cleanup of this run's mess."],
             ["(always_on.janitor -> build.aw)[0]", False, "A worker builds it now; an inspector checks it, one fix round."],
-            ["(always_on.philosopher -> critiques)[0]", False, "Cleanup landed: the philosopher keeps its 5 best critiques."],
+            ["(always_on.philosopher -> critiques)[0]", False, "Cleanup landed: the philosopher keeps its best critique (--critiques N, default 1)."],
             ["(always_on -> finish.finisher)[0]", False, "Then the finisher ant moves main forward."],
             ["(critiques -> ask.arta)[0]", False, "Next task: the investigator ant asks you about critiques."],
             ["(always_on.janitor -> ask.task)[0]", False, "Only a dropped cleanup's plan is offered next time."],

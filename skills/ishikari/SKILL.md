@@ -3,7 +3,7 @@ name: ishikari
 metadata:
   scope: global
 description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it combined, and merge it in a straight line - asking the user only while planning, then running on its own. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
-argument-hint: "<task> [repo path]"
+argument-hint: "<task> [repo path] [--critiques N]"
 ---
 
 # Ishikari
@@ -54,8 +54,9 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## 1. Setup
 
-- Repo: the path in the arguments, else the current repo. Task: the rest of the
-  arguments; if there is none, ask for it.
+- Repo: the path in the arguments, else the current repo. `--critiques N`: the
+  most critiques the philosopher keeps per run, 0-20, default 1; 0 skips it.
+  Task: the rest of the arguments; if there is none, ask for it.
 - Run `python3 <skill>/scripts/ishikari.py setup <repo>`. Keep its JSON as `env`
   for every step. Its `workflows` field holds the three script paths. It also
   holds `testCommand` and `checkCommand` once saved for this repo.
@@ -108,7 +109,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## 4. Finish
 
-- Run `env.workflows.finish` with `{env, approved, together, drop}`, plus
+- Run `env.workflows.finish` with `{env, approved, together, drop, critiques}`
+  (`critiques` is N from step 1), plus
   `cleanup: true` for a cleanup run. `approved` items are `{id, branch, after}`
   from the build result.
 - `bugs` and `waiting`: run a new build round with both lists as `bugs`; each

@@ -159,6 +159,29 @@ test('finish: a cleanup still failing after one fix round is dropped, branch kep
   assert.ok(!fin.includes('   - ishikari/r1/_cleanup'))
 })
 
+test('finish: the philosopher keeps 1 critique by default, N when asked, none at 0', async () => {
+  const many = [1, 2, 3].map(i => ({ target: 't', critique: `c${i}` }))
+  const go = critiques => {
+    const prompts = []
+    return run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }], cleanup: true, ...(critiques == null ? {} : { critiques }) }, (p, o) => {
+      prompts.push(p)
+      if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+      if (o.label === 'philosopher-ant') return { critiques: many }
+      return { moved: true, reason: '' }
+    }).then(r => ({ ...r, phil: prompts.find(p => p.includes('philosopher ant')) }))
+  }
+  const one = await go()
+  assert.equal(one.out.critiques.length, 1)
+  assert.ok(one.phil.includes('single most useful critique'))
+  const two = await go(2)
+  assert.equal(two.out.critiques.length, 2)
+  assert.ok(two.phil.includes('2 most useful critiques'))
+  const none = await go(0)
+  assert.ok(!none.calls.includes('philosopher-ant'))
+  assert.deepEqual(none.out.critiques, [])
+  for (const bad of [-1, 21, 1.5, '3']) assert.equal((await go(bad)).out.stage, 'error')
+})
+
 // ---- stress: malformed input and half answers never crash or pass silently ----
 
 test('stress: plan survives broken ant replies', async () => {

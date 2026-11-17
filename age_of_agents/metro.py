@@ -48,7 +48,7 @@ stations = [
  (1300,100,["Dropped"],["after 3 tries on a bug","branch kept, not deleted"],"term","e",RED),
  (1360,780,["Merger ant"],["straight line in a scratch copy,","tests once, no review"],"x","s",GREEN),
  (1160,780,["Janitor ant"],["cleanup plan for this run's mess,","built + checked before main moves"],"x","n",GREEN),
- (960,780,["Philosopher ant"],["after the cleanup,","5 best critiques"],"x","n",GREEN),
+ (960,780,["Philosopher ant"],["after the cleanup,","1 best critique (--critiques N)"],"x","n",GREEN),
  (760,780,["Finisher ant"],["moves main, cleans up,","sets rows done"],"st","s",GREEN),
  (560,780,["MAIN"],["fast-forward only, never pushed"],"term","n",GREEN),
  (400,780,["checkCommand"],["fails: one check-fix round","from the moved main"],"st","s",PURP),

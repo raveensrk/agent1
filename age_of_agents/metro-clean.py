@@ -55,7 +55,7 @@ stations = [
  (560,1050,"Cleanup worker",["builds it on top of the merge"],"st",(0,34,"middle")),
  (760,1050,"Cleanup inspector",["plan + tests = combined test;","fail: one fix round"],"st",(0,34,"middle")),
  (760,1160,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
- (1000,R3,"Philosopher ant",["after the cleanup:","5 best critiques"],"x",(26,40,"start")),
+ (1000,R3,"Philosopher ant",["after the cleanup:","1 best critique (--critiques N)"],"x",(26,40,"start")),
  (1000,880,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"term",(-26,-4,"end")),
  (1150,R3,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
  (1290,R3,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),

@@ -83,7 +83,7 @@ node("bulletin",630,800,240,110,["Bulletin board","one row per task"],"build","c
 node("bounty",930,800,240,110,["Bug bounty board","one row per bug"],"fix","cyl")
 node("critiques",1230,800,240,110,["Critiques board"],"always","cyl")
 node("janitor",1580,800,140,110,["Janitor ant","cleanup plan,","built now"],"always")
-node("philo",1740,800,140,110,["Philosopher ant","after cleanup,","5 best critiques"],"always")
+node("philo",1740,800,140,110,["Philosopher ant","after cleanup,","1 critique (--critiques N)"],"always")
 
 # legend
 o.append(f'<rect x="220" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="{SUB}" stroke-width="2"/>')

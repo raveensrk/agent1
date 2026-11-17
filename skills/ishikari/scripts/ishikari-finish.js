@@ -15,6 +15,8 @@ export const meta = {
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
 //   drop?: [{ id, branch }],                 tasks dropped by the rules: marked dropped;
 //                                            their branches are kept for a later look
+//   critiques?: number,                      most critiques the philosopher keeps, 0-20;
+//                                            default 1, 0 skips the philosopher
 //   cleanup?: boolean,                       this run built a dropped cleanup plan: no janitor,
 //                                            so cleanups never chain
 // }
@@ -31,6 +33,7 @@ export const meta = {
 const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', philosopher: 'low', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
+const maxCritiques = args.critiques == null ? 1 : args.critiques
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
 const approved = items(args.approved)
 const drop = items(args.drop)
@@ -44,6 +47,7 @@ for (const t of [...approved, ...drop]) {
   if (idsSeen.has(t.id)) bad.push(`task "${t.id}" is listed twice`)
   idsSeen.add(t.id)
 }
+if (!Number.isInteger(maxCritiques) || maxCritiques < 0 || maxCritiques > 20) bad.push('critiques must be a whole number from 0 to 20')
 if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
 if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
 if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
@@ -238,13 +242,13 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
       else { cleanup = drop('could not fast-forward the scratch branch'); cleanKept = true }
     }
   }
-  const phil = await agent(
+  const phil = maxCritiques === 0 ? null : await agent(
     `You are the philosopher ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}, the code that will land on ${env.main}, and
 question the work just merged (${names}) as a whole: design, scope, missing cases,
 how the tasks fit together.
-Keep only your 5 most useful critiques, as short, concrete questions. Add them
+Keep only your ${maxCritiques === 1 ? 'single most useful critique' : `${maxCritiques} most useful critiques`}, as short, concrete questions. Add them
 with exactly this command, filling in the rows:
 python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROWS_END'
 [["<target file or task>", "<critique>"], ...]
@@ -253,7 +257,7 @@ Return the same critiques in "critiques". Change nothing else, and never block t
     { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
       schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
   )
-  if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques
+  if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques.slice(0, maxCritiques)
 }
 
 // ---- move main forward, clean up, write the bulletin ----

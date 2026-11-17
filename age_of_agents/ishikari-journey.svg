@@ -123,7 +123,7 @@
 <rect x="1580" y="800" width="140" height="110" rx="8" fill="#0F172A" stroke="#94A3B8" stroke-width="2"/>
 <text x="1650.0" y="843.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">Janitor ant</text><text x="1650.0" y="859.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">cleanup plan,</text><text x="1650.0" y="875.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">built now</text>
 <rect x="1740" y="800" width="140" height="110" rx="8" fill="#0F172A" stroke="#94A3B8" stroke-width="2"/>
-<text x="1810.0" y="843.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">Philosopher ant</text><text x="1810.0" y="859.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">after cleanup,</text><text x="1810.0" y="875.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">5 best critiques</text>
+<text x="1810.0" y="843.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">Philosopher ant</text><text x="1810.0" y="859.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">after cleanup,</text><text x="1810.0" y="875.2" fill="#E2E8F0" font-size="12" text-anchor="middle" font-weight="400">1 critique (--critiques N)</text>
 <rect x="220" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
 <text x="236" y="787.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Legend</text>
 <path class="e flowing" d="M240,812 H310" stroke="#4ADE80"/>

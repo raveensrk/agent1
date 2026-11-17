@@ -123,8 +123,8 @@ They run once per finish, on the merged result, before main moves.
   which may ask about it. One cleanup per run: a dropped cleanup's own run gets
   no janitor, so cleanups never chain.
 - **Philosopher ant** runs after the cleanup, on the code that will land, and
-  questions all the merged work together and keeps its 5
-  best critiques. It only comments, in the critiques board, and never blocks. On
+  questions all the merged work together and keeps its best critiques: 1 by
+  default, set with `--critiques N` (0 skips it). It only comments, in the critiques board, and never blocks. On
   the next task, the investigator ant turns the ones that matter into questions.
 
 ## Rules
@@ -356,7 +356,7 @@ always_on: Upkeep ants (before main moves) {
   label.near: outside-bottom-center
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\ncleanup plan for this\nrun's mess, built now {class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\nafter the cleanup,\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
+  philosopher: Philosopher ant\nafter the cleanup,\nbest critiques (1 by default,\n--critiques N) {class: node; style.stroke: ${always-line}}
 }
 
 check.inspector -> fix.detective: bug still open after round 1:\nthe script hands it over {class: bug}
