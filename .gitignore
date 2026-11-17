@@ -8,3 +8,5 @@ __pycache__/
 # Emacs auto-save and lock files
 \#*#
 .#*
+/dev_tools.md
+/dev_tools.txt
