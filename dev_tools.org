@@ -248,6 +248,12 @@ GitHub CLI
 :NEEDS: [[*SystemVerilog][SystemVerilog]]
 :END:
 SystemRDL register generator
+*** gtkwave :core:
+:PROPERTIES:
+:URL: https://gtkwave.github.io/gtkwave/
+:NEEDS: [[*SystemVerilog][SystemVerilog]]
+:END:
+Waveform viewer
 ** Requirements
 *** doorstop :core:
 :PROPERTIES:
@@ -293,6 +299,10 @@ Requirements management; doorstop-gui for the GUI
 :NEEDS: [[*Sys Admin][Sys Admin]]
 :END:
 *** GNU Stow :core:
+:PROPERTIES:
+:NEEDS: [[*Sys Admin][Sys Admin]]
+:END:
+*** ssh :core:
 :PROPERTIES:
 :NEEDS: [[*Sys Admin][Sys Admin]]
 :END:
@@ -387,6 +397,11 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
+***** cargo :core:
+:PROPERTIES:
+:NEEDS: [[*Rust][Rust]]
+:END:
+Rust build tool and package manager
 **** Go :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
@@ -412,6 +427,17 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :PROPERTIES:
 :NEEDS: [[*Python][Python]]
 :END:
+***** pylint :core:
+:PROPERTIES:
+:NEEDS: [[*Python][Python]]
+:END:
+Linter: reports bugs and style problems
+***** black :core:
+:PROPERTIES:
+:URL: https://github.com/psf/black
+:NEEDS: [[*Python][Python]]
+:END:
+Formatter: rewrites code into one style
 *** Scripting Languages
 **** Lua :Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
