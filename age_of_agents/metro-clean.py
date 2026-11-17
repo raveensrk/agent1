@@ -90,6 +90,8 @@ def hexm(x, y, r, fill, stroke, sw):
     return f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
 for x, y, nm, sub, kind, (dx, dy, an) in stations:
     if is_ant(nm.replace("  ∥", "")):
+        if "∥" in nm:
+            o.append(hexm(x + 10, y - 10, 16, BG, TXT, 3) + hexm(x + 5, y - 5, 16, BG, TXT, 3))
         o.append(hexm(x, y, 16, BG, TXT, 5))
     elif kind == "x":
         o.append(f'<circle cx="{x}" cy="{y}" r="14" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
@@ -123,6 +125,6 @@ for i, (c, n, t) in enumerate(rows):
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')
     o.append(f'<rect x="{kx+70}" y="{y-9}" width="34" height="18" rx="5" fill="#FDE047" stroke="{c}" stroke-width="2"/><text x="{kx+87}" y="{y+4}" font-size="11" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>')
     o.append(txt(kx + 114, y + 5, [t], TXT, 13))
-o.append(txt(kx + 320, ky + 30, ["dashed:", "a branch or", "a log", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "∥ parallel"], SUB, 12))
+o.append(txt(kx + 320, ky + 30, ["dashed:", "a branch or", "a log", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "stacked ∥: parallel"], SUB, 12))
 o.append('</svg>')
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro-clean.svg"), "w").write("\n".join(o))

@@ -98,6 +98,8 @@ def hexm(x, y, r, fill, stroke, sw):
 # stations
 for x, y, nm, sub, kind, side, c in stations:
     if is_ant(nm[0]):
+        if "∥" in nm[0]:
+            o.append(hexm(x + 9, y - 9, 15, BG, TXT, 3) + hexm(x + 4.5, y - 4.5, 15, BG, TXT, 3))
         o.append(hexm(x, y, 15, BG, TXT, 4) + f'<circle cx="{x}" cy="{y}" r="4" fill="{c}"/>')
     elif kind == "x":
         o.append(f'<circle cx="{x}" cy="{y}" r="12" fill="{BG}" stroke="{TXT}" stroke-width="4"/><circle cx="{x}" cy="{y}" r="4" fill="{c}"/>')
@@ -142,7 +144,7 @@ for i, (c, dash, t) in enumerate([(BLUE, "", "Plan line - Ask + Plan workflow"),
     o.append(txt(kx + 70, y + 4, [t], TXT, 11))
 o.append(txt(kx + 290, ky + 48, ["⬡  an ant (AI agent)", "o  interchange", "■  terminus", "▬  dead end"], SUB, 11))
 o.append(txt(kx + 290, ky + 118, ["PURPLE: after main moves"], PURP, 11))
-o.append(txt(kx + 290, ky + 104, ["∥  many run in parallel"], SUB, 11))
+o.append(txt(kx + 290, ky + 104, ["stacked ∥  many in parallel"], SUB, 11))
 what = {"plan": "task riding the plan line", "build": "a worker's task: build to MAIN", "ring": "a bug going round the bug loop", "r1": "round 1: inspector's fix plan to a worker",
         "clash": "tasks clash: into the fix loop", "stuck": "a worker got stuck: to the Detective", "mfail": "merge failed: next build round",
         "check": "checkCommand, then req done", "crit": "critique back to the Investigator", "tidy": "cleanup built by a worker, 1 fix round", "clean": "dropped cleanup plan back to Task",

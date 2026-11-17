@@ -121,6 +121,7 @@
 <rect x="286" y="76" width="28" height="28" rx="6" fill="#FBBF24" stroke="#E2E8F0" stroke-width="3"/>
 <text class="h" x="322" y="86" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">You</text>
 <text class="h" x="322" y="103" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">answering approves the whole run</text>
+<polygon points="294.0,311.0 301.5,297.9 316.5,297.9 324.0,311.0 316.5,324.1 301.5,324.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/><polygon points="289.5,315.5 297.0,302.4 312.0,302.4 319.5,315.5 312.0,328.6 297.0,328.6" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/>
 <polygon points="285.0,320.0 292.5,306.9 307.5,306.9 315.0,320.0 307.5,333.1 292.5,333.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="300" cy="320" r="4" fill="#60A5FA"/>
 <text class="h" x="322" y="316" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Researcher Ants  ∥</text>
 <text class="h" x="322" y="333" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">up to 5, web + computer</text><text class="h" x="322" y="347" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">facts, it waits</text>
@@ -136,9 +137,11 @@
 <circle cx="960" cy="200" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="200" r="4" fill="#60A5FA"/>
 <text class="h" x="960" y="150" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Worker plans</text>
 <text class="h" x="960" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">one per worker ant:</text><text class="h" x="960" y="181" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">title, files, after</text>
+<polygon points="1054.0,411.0 1061.5,397.9 1076.5,397.9 1084.0,411.0 1076.5,424.1 1061.5,424.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/><polygon points="1049.5,415.5 1057.0,402.4 1072.0,402.4 1079.5,415.5 1072.0,428.6 1057.0,428.6" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/>
 <polygon points="1045.0,420.0 1052.5,406.9 1067.5,406.9 1075.0,420.0 1067.5,433.1 1052.5,433.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1060" cy="420" r="4" fill="#4ADE80"/>
 <text class="h" x="1040" y="450" fill="#E2E8F0" font-size="14" text-anchor="end" font-weight="700">Worker Ants  ∥</text>
 <text class="h" x="1040" y="467" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">code, tests, docs</text><text class="h" x="1040" y="481" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">one worktree each, max 5</text>
+<polygon points="1374.0,411.0 1381.5,397.9 1396.5,397.9 1404.0,411.0 1396.5,424.1 1381.5,424.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/><polygon points="1369.5,415.5 1377.0,402.4 1392.0,402.4 1399.5,415.5 1392.0,428.6 1377.0,428.6" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/>
 <polygon points="1365.0,420.0 1372.5,406.9 1387.5,406.9 1395.0,420.0 1387.5,433.1 1372.5,433.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1380" cy="420" r="4" fill="#4ADE80"/>
 <text class="h" x="1380" y="452" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Inspector Ants  ∥</text>
 <text class="h" x="1380" y="469" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">one per built task,</text><text class="h" x="1380" y="483" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">checks plan + design, runs tests</text>
@@ -148,6 +151,7 @@
 <rect x="1286" y="626" width="28" height="28" rx="6" fill="#94A3B8" stroke="#E2E8F0" stroke-width="3"/>
 <text class="h" x="1322" y="636" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Logbook</text>
 <text class="h" x="1322" y="653" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">bulletin + bug bounty boards:</text><text class="h" x="1322" y="667" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">for you to read, no ant reads it</text><text class="h" x="1322" y="681" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/</text>
+<polygon points="1294.0,191.0 1301.5,177.9 1316.5,177.9 1324.0,191.0 1316.5,204.1 1301.5,204.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/><polygon points="1289.5,195.5 1297.0,182.4 1312.0,182.4 1319.5,195.5 1312.0,208.6 1297.0,208.6" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/>
 <polygon points="1285.0,200.0 1292.5,186.9 1307.5,186.9 1315.0,200.0 1307.5,213.1 1292.5,213.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1300" cy="200" r="4" fill="#F87171"/>
 <text class="h" x="1276" y="234" fill="#E2E8F0" font-size="14" text-anchor="end" font-weight="700">Detective Ants  ∥</text>
 <text class="h" x="1276" y="251" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">why is the bug still open?</text><text class="h" x="1276" y="265" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">writes next fix plan, never code</text>
@@ -216,7 +220,7 @@
 <text class="h" x="1450" y="990" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Logs and feedback - boards, critiques, cleanup</text>
 <text class="h" x="1670" y="910" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">⬡  an ant (AI agent)</text><text class="h" x="1670" y="924" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">o  interchange</text><text class="h" x="1670" y="938" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">■  terminus</text><text class="h" x="1670" y="952" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">▬  dead end</text>
 <text class="h" x="1670" y="980" fill="#A78BFA" font-size="11" text-anchor="start" font-weight="400">PURPLE: after main moves</text>
-<text class="h" x="1670" y="966" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">∥  many run in parallel</text>
+<text class="h" x="1670" y="966" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">stacked ∥  many in parallel</text>
 <rect x="260" y="360" width="470" height="229" rx="12" fill="#0F172A" stroke="#334155"/>
 <text class="h" x="276" y="382" fill="#94A3B8" font-size="12" text-anchor="start" font-weight="800">TRAINS</text>
 <rect x="276" y="392" width="34" height="13" rx="4" fill="#FDE047" stroke="#60A5FA" stroke-width="2"/>
