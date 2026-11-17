@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1820 1010" width="1820" height="1010" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">
+<title>Ishikari metro map</title>
+<defs><filter id="g" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<style>.h{paint-order:stroke;stroke:#0B1120;stroke-width:4px;stroke-linejoin:round}.flow{animation:f 1s linear infinite}@keyframes f{to{stroke-dashoffset:-18}}.pulse{animation:p 2s ease-in-out infinite}@keyframes p{50%{r:13px}}</style>
+<rect width="1820" height="1010" fill="#0B1120"/>
+<line x1="0" y1="0" x2="0" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="40" y1="0" x2="40" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="80" y1="0" x2="80" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="120" y1="0" x2="120" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="160" y1="0" x2="160" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="200" y1="0" x2="200" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="280" y1="0" x2="280" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="320" y1="0" x2="320" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="360" y1="0" x2="360" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="400" y1="0" x2="400" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="440" y1="0" x2="440" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="520" y1="0" x2="520" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="560" y1="0" x2="560" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="600" y1="0" x2="600" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="640" y1="0" x2="640" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="680" y1="0" x2="680" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="720" y1="0" x2="720" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="760" y1="0" x2="760" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="800" y1="0" x2="800" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="840" y1="0" x2="840" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="880" y1="0" x2="880" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="920" y1="0" x2="920" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="960" y1="0" x2="960" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1000" y1="0" x2="1000" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1040" y1="0" x2="1040" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1080" y1="0" x2="1080" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1120" y1="0" x2="1120" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1160" y1="0" x2="1160" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1200" y1="0" x2="1200" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1240" y1="0" x2="1240" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1280" y1="0" x2="1280" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1320" y1="0" x2="1320" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1360" y1="0" x2="1360" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1400" y1="0" x2="1400" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1440" y1="0" x2="1440" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1480" y1="0" x2="1480" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1520" y1="0" x2="1520" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1560" y1="0" x2="1560" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1600" y1="0" x2="1600" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1640" y1="0" x2="1640" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1680" y1="0" x2="1680" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1720" y1="0" x2="1720" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1760" y1="0" x2="1760" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="1800" y1="0" x2="1800" y2="1010" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="0" x2="1820" y2="0" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="40" x2="1820" y2="40" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="80" x2="1820" y2="80" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="120" x2="1820" y2="120" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="160" x2="1820" y2="160" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="200" x2="1820" y2="200" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="240" x2="1820" y2="240" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="280" x2="1820" y2="280" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="320" x2="1820" y2="320" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="360" x2="1820" y2="360" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="400" x2="1820" y2="400" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="440" x2="1820" y2="440" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="480" x2="1820" y2="480" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="520" x2="1820" y2="520" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="560" x2="1820" y2="560" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="600" x2="1820" y2="600" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="640" x2="1820" y2="640" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="680" x2="1820" y2="680" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="720" x2="1820" y2="720" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="760" x2="1820" y2="760" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="800" x2="1820" y2="800" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="840" x2="1820" y2="840" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="880" x2="1820" y2="880" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="920" x2="1820" y2="920" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="960" x2="1820" y2="960" stroke="#111A2E" stroke-width="1"/>
+<line x1="0" y1="1000" x2="1820" y2="1000" stroke="#111A2E" stroke-width="1"/>
+<text class="h" x="40" y="44" fill="#E2E8F0" font-size="26" text-anchor="start" font-weight="800">ISHIKARI METRO</text>
+<text class="h" x="40" y="66" fill="#94A3B8" font-size="13" text-anchor="start" font-weight="400">One task rides from Task to MAIN. Questions only at the first stop; after that it runs on its own.</text>
+<path id="L-plan" d="M120,200 L960,200 L960,340 L1040,420 L1060,420" fill="none" stroke="#60A5FA" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-ask" d="M300,90 L300,200" fill="none" stroke="#FBBF24" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-res" d="M300,200 L300,320" fill="none" stroke="#60A5FA" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-build" d="M1060,420 L1540,420 L1540,700 L1460,780 L560,780" fill="none" stroke="#4ADE80" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-ring" d="M1060,420 L1074,434 L1366,434 L1380,420 L1380,330 L1450,260 L1640,260 L1580,200 L1100,200 L1060,240 L1060,420" fill="none" stroke="#F87171" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-clash" d="M1540,420 L1640,320 L1640,260" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 5" class="flow" opacity="0.95"/>
+<path id="L-stuck" d="M1060,420 L1120,500 L1760,500 L1760,300 L1700,260 L1640,260" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 5" class="flow" opacity="0.95"/>
+<path id="L-mfail" d="M1360,780 L1700,780 L1700,560 L1700,320 L1640,260" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 5" class="flow" opacity="0.95"/>
+<path id="L-drop" d="M1300,200 L1300,100" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-check" d="M560,780 L240,780" fill="none" stroke="#A78BFA" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+<path id="L-crit" d="M960,780 L960,900 L200,900 L200,140 L250,140 L292,192" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-clean" d="M1160,780 L1160,960 L60,960 L60,200 L120,200" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-board" d="M1220,420 L1300,560 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-board2" d="M1060,420 L1060,620 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-board3" d="M760,780 L760,700 L1400,700 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path d="M300,96 V194" stroke="#0B1120" stroke-width="2"/>
+<path d="M1200,140 H1820" stroke="none"/>
+<text class="h" x="1100" y="300" fill="#F87171" font-size="12" text-anchor="start" font-weight="800">BUG LOOP</text>
+<text class="h" x="1100" y="316" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">max 2 extra build rounds</text>
+<text class="h" x="1124" y="494" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">stuck</text>
+<text class="h" x="1600" y="360" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">fail: tasks clash</text>
+<text class="h" x="1408" y="324" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">fail: bugs +</text><text class="h" x="1408" y="338" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">first fix plan</text>
+<text class="h" x="1708" y="700" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">merge failed</text>
+<text class="h" x="1550" y="560" fill="#4ADE80" font-size="11" text-anchor="start" font-weight="400">pass: they work combined</text>
+<text class="h" x="1068" y="236" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">fix plan</text>
+<text class="h" x="1320" y="556" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">board tool writes once per stage</text>
+<text class="h" x="1066" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">built</text>
+<text class="h" x="1000" y="694" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">main moved, set "done"</text>
+<text class="h" x="976" y="360" fill="#60A5FA" font-size="11" text-anchor="start" font-weight="400">start in parallel</text>
+<text class="h" x="308" y="140" fill="#FBBF24" font-size="11" text-anchor="start" font-weight="400">up to 4 questions a round</text><text class="h" x="308" y="154" fill="#FBBF24" font-size="11" text-anchor="start" font-weight="400">/ask-simple</text>
+<text class="h" x="212" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">critiques</text>
+<text class="h" x="72" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">cleanup</text>
+<rect x="106" y="186" width="28" height="28" rx="6" fill="#60A5FA" stroke="#E2E8F0" stroke-width="3"/>
+<text class="h" x="120" y="150" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Task</text>
+<text class="h" x="120" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">you give it, or the</text><text class="h" x="120" y="181" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">last cleanup plan</text>
+<circle cx="300" cy="200" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="300" cy="200" r="4" fill="#60A5FA"/>
+<text class="h" x="310" y="240" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Investigator Ant</text>
+<text class="h" x="310" y="257" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">stays alive, reads repo once,</text><text class="h" x="310" y="271" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">gets each answer as a message</text>
+<rect x="286" y="76" width="28" height="28" rx="6" fill="#FBBF24" stroke="#E2E8F0" stroke-width="3"/>
+<text class="h" x="322" y="86" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">You</text>
+<text class="h" x="322" y="103" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">answering approves the whole run</text>
+<line x1="286" y1="320" x2="314" y2="320" stroke="#60A5FA" stroke-width="6" stroke-linecap="round"/>
+<text class="h" x="322" y="316" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Researcher Ants</text>
+<text class="h" x="322" y="333" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">up to 5, web + computer</text><text class="h" x="322" y="347" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">facts, it waits</text>
+<circle cx="480" cy="200" r="8" fill="#E2E8F0" stroke="#60A5FA" stroke-width="3"/>
+<text class="h" x="480" y="150" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">investigation_report.md</text>
+<text class="h" x="480" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">nothing unclear: write it,</text><text class="h" x="480" y="181" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">investigator stopped</text>
+<circle cx="640" cy="200" r="8" fill="#E2E8F0" stroke="#60A5FA" stroke-width="3"/>
+<text class="h" x="640" y="232" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Add Requirement Ant</text>
+<text class="h" x="640" y="249" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">req add, keeps :ID:s</text>
+<circle cx="800" cy="200" r="8" fill="#E2E8F0" stroke="#60A5FA" stroke-width="3"/>
+<text class="h" x="800" y="150" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Architect Ant</text>
+<text class="h" x="800" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">architecture.md</text>
+<circle cx="960" cy="200" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="200" r="4" fill="#60A5FA"/>
+<text class="h" x="960" y="150" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Worker plans</text>
+<text class="h" x="960" y="167" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">one per worker ant:</text><text class="h" x="960" y="181" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">title, files, after</text>
+<circle cx="1060" cy="420" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1060" cy="420" r="4" fill="#4ADE80"/>
+<text class="h" x="1040" y="450" fill="#E2E8F0" font-size="14" text-anchor="end" font-weight="700">Worker Ants</text>
+<text class="h" x="1040" y="467" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">code, tests, docs</text><text class="h" x="1040" y="481" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">one worktree each, max 5</text>
+<circle cx="1220" cy="420" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1220" cy="420" r="4" fill="#4ADE80"/>
+<text class="h" x="1220" y="452" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Anti-monitor</text>
+<text class="h" x="1220" y="469" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">the build script</text>
+<circle cx="1380" cy="420" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1380" cy="420" r="4" fill="#4ADE80"/>
+<text class="h" x="1380" y="452" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Inspector Ants</text>
+<text class="h" x="1380" y="469" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">one per built task,</text><text class="h" x="1380" y="483" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">checks plan + design, runs tests</text>
+<circle cx="1540" cy="420" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1540" cy="420" r="4" fill="#4ADE80"/>
+<text class="h" x="1562" y="416" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Combined test</text>
+<text class="h" x="1562" y="433" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">Integrator Ant merges passing</text><text class="h" x="1562" y="447" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">tasks in a scratch copy, tests once</text>
+<circle cx="1540" cy="620" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1540" cy="620" r="4" fill="#4ADE80"/>
+<text class="h" x="1562" y="616" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Bulletin board</text>
+<text class="h" x="1562" y="633" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">one row per task</text>
+<circle cx="1640" cy="260" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1640" cy="260" r="4" fill="#F87171"/>
+<text class="h" x="1660" y="296" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Bug bounty board</text>
+<text class="h" x="1660" y="313" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">one row per bug</text>
+<circle cx="1300" cy="200" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1300" cy="200" r="4" fill="#F87171"/>
+<text class="h" x="1300" y="232" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Detective Ant</text>
+<text class="h" x="1300" y="249" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">why is the bug still open?</text><text class="h" x="1300" y="263" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">writes next fix plan, never code</text>
+<rect x="1286" y="86" width="28" height="28" rx="6" fill="#F87171" stroke="#E2E8F0" stroke-width="3"/>
+<text class="h" x="1322" y="96" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Dropped</text>
+<text class="h" x="1322" y="113" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">after 3 tries on a bug</text><text class="h" x="1322" y="127" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">branch kept, not deleted</text>
+<circle cx="1360" cy="780" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1360" cy="780" r="4" fill="#4ADE80"/>
+<text class="h" x="1360" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Merger ant</text>
+<text class="h" x="1360" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">straight line in a scratch copy,</text><text class="h" x="1360" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">tests once, no review</text>
+<circle cx="1160" cy="780" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1160" cy="780" r="4" fill="#4ADE80"/>
+<text class="h" x="1160" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Janitor ant</text>
+<text class="h" x="1160" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">writes a cleanup plan</text>
+<circle cx="960" cy="780" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="780" r="4" fill="#4ADE80"/>
+<text class="h" x="960" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Philosopher ant</text>
+<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">5 best critiques of the merge</text>
+<circle cx="760" cy="780" r="8" fill="#E2E8F0" stroke="#4ADE80" stroke-width="3"/>
+<text class="h" x="760" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Finisher ant</text>
+<text class="h" x="760" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">moves main, cleans up,</text><text class="h" x="760" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">sets rows done</text>
+<rect x="546" y="766" width="28" height="28" rx="6" fill="#4ADE80" stroke="#E2E8F0" stroke-width="3"/>
+<text class="h" x="560" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">MAIN</text>
+<text class="h" x="560" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">fast-forward only, never pushed</text>
+<circle cx="400" cy="780" r="8" fill="#E2E8F0" stroke="#A78BFA" stroke-width="3"/>
+<text class="h" x="400" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">checkCommand</text>
+<text class="h" x="400" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">fails: one check-fix round</text><text class="h" x="400" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">from the moved main</text>
+<rect x="226" y="766" width="28" height="28" rx="6" fill="#A78BFA" stroke="#E2E8F0" stroke-width="3"/>
+<text class="h" x="240" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">req done</text>
+<text class="h" x="240" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">marks the kept :ID:s</text>
+<circle cx="960" cy="900" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="900" r="4" fill="#94A3B8"/>
+<text class="h" x="960" y="932" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Critiques board</text>
+<text class="h" x="960" y="949" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">turned into questions</text><text class="h" x="960" y="963" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">for the next task</text>
+<circle cx="1160" cy="960" r="8" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3"/>
+<text class="h" x="1160" y="910" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Cleanup plan</text>
+<text class="h" x="1160" y="927" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">offered next time</text>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#60A5FA" stroke-width="2"><animateMotion dur="9s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-plan"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#4ADE80" stroke-width="2"><animateMotion dur="14s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-build"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#4ADE80" stroke-width="2"><animateMotion dur="14s" begin="-2.80s" repeatCount="indefinite" rotate="auto"><mpath href="#L-build"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#4ADE80" stroke-width="2"><animateMotion dur="14s" begin="-5.60s" repeatCount="indefinite" rotate="auto"><mpath href="#L-build"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#4ADE80" stroke-width="2"><animateMotion dur="14s" begin="-8.40s" repeatCount="indefinite" rotate="auto"><mpath href="#L-build"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#4ADE80" stroke-width="2"><animateMotion dur="14s" begin="-11.20s" repeatCount="indefinite" rotate="auto"><mpath href="#L-build"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#F87171" stroke-width="2"><animateMotion dur="12s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-ring"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#F87171" stroke-width="2"><animateMotion dur="12s" begin="-6.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-ring"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#F87171" stroke-width="2"><animateMotion dur="4s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-clash"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#F87171" stroke-width="2"><animateMotion dur="8s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-stuck"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#F87171" stroke-width="2"><animateMotion dur="7s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-mfail"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#A78BFA" stroke-width="2"><animateMotion dur="4s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-check"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#94A3B8" stroke-width="2"><animateMotion dur="10s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-crit"/></animateMotion></rect></g>
+<g filter="url(#g)"><rect x="-9" y="-5" width="18" height="10" rx="4" fill="#FDE047" stroke="#94A3B8" stroke-width="2"><animateMotion dur="12s" begin="0.00s" repeatCount="indefinite" rotate="auto"><mpath href="#L-clean"/></animateMotion></rect></g>
+<circle r="6" fill="#FDE047" filter="url(#g)"><animateMotion dur="3s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></circle>
+<circle r="6" fill="#93C5FD" filter="url(#g)"><animateMotion dur="2.4s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-res"/></animateMotion></circle>
+<circle class="pulse" cx="560" cy="780" r="22" fill="none" stroke="#4ADE80" stroke-width="2" opacity="0.6"/>
+<rect x="1380" y="870" width="420" height="125" rx="12" fill="#0F172A" stroke="#334155"/>
+<text class="h" x="1396" y="894" fill="#94A3B8" font-size="12" text-anchor="start" font-weight="800">LINES</text>
+<line x1="1396" y1="914" x2="1440" y2="914" stroke="#60A5FA" stroke-width="5"/>
+<text class="h" x="1450" y="918" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Plan line - Ask + Plan workflow</text>
+<line x1="1396" y1="930" x2="1440" y2="930" stroke="#4ADE80" stroke-width="5"/>
+<text class="h" x="1450" y="934" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Build line - build, check, merge, upkeep</text>
+<line x1="1396" y1="946" x2="1440" y2="946" stroke="#F87171" stroke-width="5"/>
+<text class="h" x="1450" y="950" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Bug loop - bounty, Detective, fix</text>
+<line x1="1396" y1="962" x2="1440" y2="962" stroke="#F87171" stroke-width="5" stroke-dasharray="8 5"/>
+<text class="h" x="1450" y="966" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Bug branch - clash, stuck, merge failed</text>
+<line x1="1396" y1="978" x2="1440" y2="978" stroke="#94A3B8" stroke-width="5" stroke-dasharray="3 6"/>
+<text class="h" x="1450" y="982" fill="#E2E8F0" font-size="11" text-anchor="start" font-weight="400">Feedback - board writes, critiques, cleanup</text>
+<text class="h" x="1670" y="918" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">o  interchange</text><text class="h" x="1670" y="932" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">■  terminus</text><text class="h" x="1670" y="946" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">▬  dead end</text>
+<text class="h" x="1670" y="970" fill="#A78BFA" font-size="11" text-anchor="start" font-weight="400">PURPLE: after main moves</text>
+</svg>

@@ -30,3 +30,5 @@ rm -f "$tmp" "$tmp.d2"
 [ $# -eq 0 ] && python3 flow.py
 # Full dark animated diagram, hand laid out.
 [ $# -eq 0 ] && python3 journey.py
+# Subway map view.
+[ $# -eq 0 ] && python3 metro.py
