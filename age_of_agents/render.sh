@@ -24,6 +24,9 @@ sed -e 's/plan-fill: "#DBEAFE"/plan-fill: "#172554"/' \
     ishikari.d2 > "$tmp.d2"
 d2 --layout=tala --theme=200 "$tmp.d2" "${2:-ishikari-dark.svg}"
 rm -f "$tmp" "$tmp.d2"
+# Step-by-step flowchart. Dagre lays out a top-down flowchart cleanly.
+d2 --layout=dagre ishikari-flowchart.d2 ishikari-flowchart.svg
+d2 --layout=dagre --theme=200 ishikari-flowchart.d2 ishikari-flowchart-dark.svg
 # Slow animated walk through the stages, 6 s a frame.
 [ $# -eq 0 ] && d2 --layout=tala --animate-interval=6000 ishikari-animated.d2 ishikari-animated.svg
 # Car tour along the exact path, built from ishikari.svg.

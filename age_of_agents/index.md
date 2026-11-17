@@ -187,7 +187,22 @@ and stops to ask the user only in step 2.
    new critiques are listed in the result. Once the check passes,
    `ishikari.py req done` marks the run's requirements DONE.
 
+## Flowchart
+
+Start here. One task, top to bottom: each diamond is a yes or no decision, and
+the only box that waits for you is the bold one, the investigator's question.
+Everything after it runs on its own. D2 source:
+[`ishikari-flowchart.d2`](ishikari-flowchart.d2), rendered with the dagre
+layout by [`render.sh`](render.sh).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="ishikari-flowchart-dark.svg">
+  <img alt="Ishikari flowchart" src="ishikari-flowchart.svg">
+</picture>
+
 ## Diagram
+
+The detailed map: every ant, every board and every hand-off, by stage.
 
 Stages run left to right: plan, build, check, fix, finish. Each board sits in
 the stage that first writes to it; all boards live in the state folder, outside
