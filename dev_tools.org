@@ -526,6 +526,11 @@ Bash linter
 :NEEDS: [[*Bash][Bash]]
 :END:
 Bash formatter
+** zsh :Environment:core:
+:PROPERTIES:
+:NEEDS: [[*Ghostty][Ghostty]]
+:END:
+Default shell on macOS
 ** Computer :ROOT:GUI:
 ** Build systems
 :PROPERTIES:
