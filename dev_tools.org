@@ -15,6 +15,33 @@ is preferred. The NEEDS property lists the prerequisites: all of the
 comma-separated items are needed; "a or b" needs only one of them.
 
 * Tools by group
+** Basics
+*** Computer :ROOT:GUI:
+*** Touch Typing :Skills:
+:PROPERTIES:
+:NEEDS: [[*Computer][Computer]] (Hello)
+:END:
+** Shell
+*** Bash :Environment:core:
+:PROPERTIES:
+:NEEDS: [[*Ghostty][Ghostty]]
+:END:
+also stands for shell scripting; prefer Bash over POSIX sh
+**** shellcheck :core:
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
+Bash linter
+**** shfmt :core:
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
+Bash formatter
+*** zsh :Environment:core:
+:PROPERTIES:
+:NEEDS: [[*Ghostty][Ghostty]]
+:END:
+Default shell on macOS
 ** Terminal
 *** Ghostty :Terminal:core:
 :PROPERTIES:
@@ -49,6 +76,9 @@ TUI and CLI for finding LLMs that fit local hardware
 :NEEDS: [[*Computer][Computer]]
 :END:
 ** VPN
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** WireGuard :intermediate:Network:
 :PROPERTIES:
 :NEEDS: [[*VPN][VPN]]
@@ -80,6 +110,9 @@ TUI and CLI for finding LLMs that fit local hardware
 :NEEDS: [[*Text Editor][Text Editor]]
 :END:
 ** Productivity
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** fzf :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
@@ -252,6 +285,9 @@ Waveform viewer
 :END:
 Requirements management; doorstop-gui for the GUI
 ** Finance
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** hledger :intermediate:Finance:
 :PROPERTIES:
 :NEEDS: [[*Ledger CLI][Ledger CLI]]
@@ -380,6 +416,9 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :NEEDS:    [[*SVG][SVG]]
 :END:
 ** Programming Languages
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** Systems Programming Languages
 **** Zig :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
@@ -395,6 +434,10 @@ Rust and its tooling: rustup, cargo, clippy, rustfmt
 :NEEDS: [[*Software][Software]]
 :END:
 **** C :Programming_Languages:Systems_and_Native:
+:PROPERTIES:
+:NEEDS: [[*Software][Software]]
+:END:
+**** C++ :avoid:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
@@ -423,6 +466,9 @@ Python and its tooling: pytest, pylint, black
 :NEEDS: [[*Software][Software]]
 :END:
 *** Web
+:PROPERTIES:
+:NEEDS: [[*Programming Languages][Programming Languages]]
+:END:
 **** JavaScript :intermediate:Programming_Languages:Web:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
@@ -492,49 +538,21 @@ Small, fast web UI components. diet_tracker's window.
 :NEEDS: [[*Clojure][Clojure]]
 :END:
 Clojure Dialect with c++ interop
-* Ungrouped
-** Touch Typing :Skills:
+** Fonts
 :PROPERTIES:
-:NEEDS: [[*Computer][Computer]] (Hello)
+:NEEDS: [[*GUI][GUI]]
 :END:
-** Bash :Environment:core:
+*** Freetype
 :PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
+:URL: https://freetype.org/index.html
+:NEEDS: [[*Fonts][Fonts]]
 :END:
-also stands for shell scripting; prefer Bash over POSIX sh
-*** shellcheck :core:
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-Bash linter
-*** shfmt :core:
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-Bash formatter
-** zsh :Environment:core:
-:PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
-:END:
-Default shell on macOS
-** Computer :ROOT:GUI:
+* Categories
 ** Build systems
 :PROPERTIES:
 :NEEDS: [[*Bash][Bash]]
 :END:
-** VPN
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Productivity
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
 ** Package Managers
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Programming Languages
 :PROPERTIES:
 :NEEDS: [[*Bash][Bash]]
 :END:
@@ -547,10 +565,6 @@ Default shell on macOS
 :NEEDS: [[*Ghostty][Ghostty]]
 :END:
 ** Version Control
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Finance
 :PROPERTIES:
 :NEEDS: [[*Bash][Bash]]
 :END:
@@ -569,23 +583,6 @@ Default shell on macOS
 ** Software
 :PROPERTIES:
 :NEEDS: [[*Programming Languages][Programming Languages]]
-:END:
-** Web
-:PROPERTIES:
-:NEEDS: [[*Programming Languages][Programming Languages]]
-:END:
-** C++
-:PROPERTIES:
-:NEEDS: [[*Software][Software]]
-:END:
-** Fonts
-:PROPERTIES:
-:NEEDS: [[*GUI][GUI]]
-:END:
-** Freetype
-:PROPERTIES:
-:URL: https://freetype.org/index.html
-:NEEDS: [[*Fonts][Fonts]]
 :END:
 * Notes
 ** Note 1
