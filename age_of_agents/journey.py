@@ -50,7 +50,7 @@ frame("build",780,110,240,560,"3. Build","ishikari-build.js","build")
 frame("check",1060,110,260,560,"4. Check","ishikari-build.js","check")
 frame("fix",1360,110,240,560,"5. Fix","ishikari-build.js","fix")
 frame("finish",1640,110,260,560,"6. Finish","ishikari-finish.js","finish")
-frame("boards",600,760,900,180,"Boards","only the board tool (ishikari.py) writes them","always")
+frame("boards",600,760,900,180,"Boards","logs only: the board tool writes them, no ant takes work from them","always")
 frame("upkeep",1560,760,340,180,"Upkeep ants","","always")
 note(1730,780,["before main moves"])
 
@@ -86,7 +86,7 @@ node("philo",1740,800,140,110,["Philosopher ant","after cleanup,","5 best critiq
 # legend
 o.append(f'<rect x="220" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="{SUB}" stroke-width="2"/>')
 o.append(text(236,782,["Legend"],SUB,15,"start","700"))
-for i,(c,cls,t) in enumerate([(OK,"flowing","approval"),(BUG,"flowing","bug"),(FLOW,"flowing","normal flow"),(FLOW,"dot","watch or comment"),("#FDE047","","glowing dot: one task's trip")]):
+for i,(c,cls,t) in enumerate([(OK,"flowing","approval"),(BUG,"flowing","bug"),(FLOW,"flowing","normal flow"),(FLOW,"dot","log, watch or comment"),("#FDE047","","glowing dot: one task's trip")]):
     y=812+i*24
     if cls:o.append(f'<path class="e {cls}" d="M240,{y} H310" stroke="{c}"/>')
     else:o.append(f'<circle cx="275" cy="{y}" r="7" fill="{c}" filter="url(#antglow)"/>')
@@ -101,25 +101,29 @@ edges=[ # id, d, kind, dashed, both, label, lx, ly
 ("e6","M610,220 V278","f",0,0,"requirement",650,250),
 ("e7","M610,350 V420","f",0,0,"design,|write plans",655,385),
 ("e8","M720,460 H760 V320 H798","o",0,0,"start in|parallel",760,500),
-("e9","M830,370 V798","f",0,0,"built",815,470),
-("e10","M1172,880 H1210 V750 H1340 V340 H1378","b",0,0,"bug still open|after round 1",1340,560),
+("e9","M830,370 V798","f",1,0,"logged:|built",815,470),
+("e10","M1306,335 H1378","b",0,0,"still open after|round 1: script|hands it over",1340,410),
 ("e11","M1810,910 V950 H1350 V912","f",1,0,"critique",1580,950),
-("e12","M1080,175 H1040 V780 H780 V798","f",1,0,"board tool writes|once per stage",1040,640),
-("e13","M1120,540 V720 H860 V798","o",0,0,"pass: they|work combined",1120,600),
-("e14","M1160,540 V798","b",0,0,"fail: tasks|clash",1200,610),
-("e15","M1080,350 H1052 V760 H1000 V798","b",0,0,"fail: bugs +|first fix plan",990,420),
+("e12","M1080,175 H1040 V780 H780 V798","f",1,0,"logged: board tool|writes once per stage",1040,640),
+("e13","M1120,540 V720 H860 V798","o",1,0,"logged:|pass",1120,600),
+("e14","M1160,540 V798","b",1,0,"logged:|clash",1200,610),
+("e15","M1080,350 H1052 V760 H1000 V798","b",1,0,"logged:|bugs",990,420),
 ("e16","M1480,258 V96 H900 V266","f",0,0,"fix plan",1190,96),
 ("e17","M1000,290 H1030 V160 H1078","f",0,0,"fix built,|re-inspect",960,215),
-("e18","M1500,380 V740 H700 V798","b",0,0,"dropped after|3 tries on a bug",1500,470),
-("e19","M960,370 V798","b",0,0,"stuck",930,620),
-("e20","M650,912 V990 H1930 V185 H1882","o",0,0,"passing tasks, no review",1300,990),
-("e21","M1680,230 V720 H1100 V798","b",0,0,"merge failed",1680,330),
+("e18","M1500,380 V740 H700 V798","b",1,0,"logged: dropped|after 3 tries on a bug",1500,470),
+("e19","M960,370 V798","b",1,0,"logged:|stuck",930,620),
+("e21","M1680,230 V720 H1100 V798","b",1,0,"logged:|merge failed",1680,330),
 ("e22","M1880,205 H1910 V758","f",0,0,"then",1910,560),
 ("e23","M1620,758 V465 H1658","f",0,0,"then",1620,600),
-("e24","M1760,510 V700 H740 V798","o",0,0,"main moved,|set \"done\"",1760,620),
+("e24","M1760,510 V700 H740 V798","o",1,0,"logged: main|moved, \"done\"",1760,620),
 ("e25","M1650,912 V975 H20 V165 H178","f",1,0,"dropped cleanup, offered next time",900,975),
 ("e26","M1300,912 V960 H140 V300 H178","f",1,0,"turned into questions for the next task",500,960),
 ("e29","M1600,798 V752 H990 V372","f",0,0,"cleanup plan: built,|checked, 1 fix round",1250,745),
+("e30","M1082,322 H1002","b",0,0,"fail, round 1:|inspector's|fix plan",1041,345),
+("e31","M1080,480 H1030 V352 H1002","b",0,0,"fail: clash,|merge, fix loop",1030,505),
+("e32","M960,266 V104 H1520 V258","b",0,0,"stuck: next fix round",1330,104),
+("e33","M1260,540 V690 H1630 V185 H1658","o",0,0,"pass: main session|approves, no review",1630,300),
+("e34","M1720,138 V84 H850 V266","b",0,0,"merge failed: next build round",1300,84),
 ("e27","M1190,210 V266","f",0,0,"start one as soon as|a task or fix is built",1190,238),
 ("e28","M1190,370 V418","o",0,0,"pass, once every|task is checked",1190,395),
 ]
@@ -134,7 +138,7 @@ for lx,ly,lab,c in labels:
     o.append(f'<g class="lb">{text(lx,ly,lab.split("|"),c,11)}</g>')
 
 # ant path through the run
-seq=["e1","e4","e3","e5","e6","e7","e8","e17","e27","e15","e10","e16","e17","e27","e28","e13","e20","e22","e29","e17","e27","e23","e24"]
+seq=["e1","e4","e3","e5","e6","e7","e8","e17","e27","e30","e17","e27","e10","e16","e17","e27","e28","e33","e22","e29","e17","e27","e23"]
 def pts(d):
     t=re.findall(r'[MHVL]|-?\d+',d);p=[];x=y=0;i=0
     while i<len(t):
@@ -158,8 +162,8 @@ path="M"+" L".join(f"{x},{y}" for x,y in P)
 # stage windows (seconds) from segment end times
 seg_t=[];prev=0
 for s,n in marks:seg_t.append((s,prev,t_at(n)));prev=t_at(n)
-stage_of={"e1":"ask","e4":"ask","e3":"ask","e5":"plan","e6":"plan","e7":"plan","e8":"build","e17":"check","e27":"check","e15":"boards","e10":"fix","e16":"build","e28":"check","e13":"boards","e20":"finish","e22":"upkeep","e29":"build","e23":"finish","e24":"boards"}
-cap={"e1":"The task reaches the live Investigator Ant.","e4":"It asks the user up to 4 questions a round; answers come back as messages.","e3":"Nothing unclear: it writes investigation_report.md, then stops.","e5":"Plan workflow: the Add Requirement Ant reads the report.","e6":"Architect Ant writes architecture.md.","e7":"One plan per worker ant.","e8":"Worker Ants start in parallel, one worktree each, max 5.","e17":"Built: the anti-monitor ant sees it.","e27":"An Inspector Ant starts at once for that task.","e15":"Fail: bugs and a first fix plan go on the bug bounty board.","e10":"Bug still open after round 1: the Detective Ant digs in.","e16":"Detective's fix plan goes back to a Worker Ant.","e28":"Fix re-inspected: pass, once every task is checked.","e13":"Combined test passes: the bulletin board records it.","e20":"Passing tasks go to the Merger, no review.","e22":"Merged in a straight line: the Janitor plans a cleanup of this run's mess.","e29":"A Worker Ant builds the cleanup now, on top of the merge.","e23":"Cleanup checked and landed; Philosopher critiques; then the Finisher.","e24":"Main fast-forwards; bulletin rows set to \"done\"."}
+stage_of={"e1":"ask","e4":"ask","e3":"ask","e5":"plan","e6":"plan","e7":"plan","e8":"build","e17":"check","e27":"check","e15":"boards","e10":"fix","e16":"build","e28":"check","e13":"boards","e20":"finish","e22":"upkeep","e30":"build","e10":"fix","e33":"finish","e29":"build","e23":"finish","e24":"boards"}
+cap={"e1":"The task reaches the live Investigator Ant.","e4":"It asks the user up to 4 questions a round; answers come back as messages.","e3":"Nothing unclear: it writes investigation_report.md, then stops.","e5":"Plan workflow: the Add Requirement Ant reads the report.","e6":"Architect Ant writes architecture.md.","e7":"One plan per worker ant.","e8":"Worker Ants start in parallel, one worktree each, max 5.","e17":"Built: the anti-monitor ant sees it.","e27":"An Inspector Ant starts at once for that task.","e30":"Fail, round 1: a worker builds the inspector's own fix plan.","e33":"They work combined: the main session approves them for the Merger, no review.","e10":"Still open after round 1: the script hands the bug to the Detective Ant.","e16":"Detective's fix plan goes back to a Worker Ant.","e28":"Fix re-inspected: pass, once every task is checked.","e13":"Combined test passes: the bulletin board records it.","e20":"Passing tasks go to the Merger, no review.","e22":"Merged in a straight line: the Janitor plans a cleanup of this run's mess.","e29":"A Worker Ant builds the cleanup now, on top of the merge.","e23":"Cleanup landed; Philosopher critiques; the Finisher moves main. Boards log it all.","e24":"Main fast-forwards; bulletin rows set to \"done\"."}
 def win(spans):
     kt=[0];v=[0]
     for a,b in spans:kt+=[a/D,min(b,D-0.01)/D];v+=[1,0]

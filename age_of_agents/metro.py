@@ -16,10 +16,14 @@ lines = [
  ("ask",   GOLD,  [(300,90),(300,200)], 6, "", 0, 0),
  ("res",   BLUE,  [(300,200),(300,320)], 6, "", 0, 0),
  ("build", GREEN, [(1060,420),(1540,420),(1540,700),(1460,780),(560,780)], 10, "", 5, 14),
- ("ring",  RED,   [(1060,420),(1074,434),(1366,434),(1380,420),(1380,330),(1450,260),(1640,260),(1580,200),(1100,200),(1060,240),(1060,420)], 7, "", 2, 12),
- ("clash", RED,   [(1540,420),(1640,320),(1640,260)], 5, "8 5", 1, 4),
- ("stuck", RED,   [(1060,420),(1120,500),(1760,500),(1760,300),(1700,260),(1640,260)], 5, "8 5", 1, 8),
- ("mfail", RED,   [(1360,780),(1700,780),(1700,560),(1700,320),(1640,260)], 5, "8 5", 1, 7),
+ ("ring",  RED,   [(1060,420),(1074,434),(1366,434),(1380,420),(1380,280),(1300,200),(1100,200),(1060,240),(1060,420)], 7, "", 2, 12),
+ ("r1",    RED,   [(1380,420),(1366,450),(1074,450),(1060,420)], 4, "", 1, 5),
+ ("clash", RED,   [(1540,420),(1540,280),(1460,200),(1300,200)], 5, "8 5", 1, 5),
+ ("stuck", RED,   [(1060,420),(1024,384),(1024,186),(1300,186)], 5, "8 5", 1, 5),
+ ("mfail", RED,   [(1360,780),(1700,780),(1700,140),(1010,140),(1010,370),(1060,420)], 5, "8 5", 1, 9),
+ ("logb1", GREY,  [(1380,450),(1380,560),(1300,660)], 3, "3 6", 0, 0),
+ ("logb2", GREY,  [(1540,470),(1300,660)], 3, "3 6", 0, 0),
+ ("logb3", GREY,  [(1360,780),(1300,720),(1300,660)], 3, "3 6", 0, 0),
  ("drop",  RED,   [(1300,200),(1300,100)], 5, "", 0, 0),
  ("check", PURP,  [(560,780),(240,780)], 7, "", 1, 4),
  ("crit",  GREY,  [(960,780),(960,900),(200,900),(200,140),(250,140),(292,192)], 4, "3 6", 1, 10),
@@ -43,9 +47,9 @@ stations = [
  (1220,420,["Anti-monitor"],["the build script"],"x","s",GREEN),
  (1380,420,["Inspector Ants"],["one per built task,","checks plan + design, runs tests"],"x","s",GREEN),
  (1540,420,["Combined test"],["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x","e",GREEN),
- (1540,620,["Bulletin board"],["one row per task"],"x","e",GREEN),
- (1640,260,["Bug bounty board"],["one row per bug"],"x","se",RED),
- (1300,200,["Detective Ant"],["why is the bug still open?","writes next fix plan, never code"],"x","s",RED),
+ (1540,620,["Bulletin board"],["log: one row per task"],"x","e",GREY),
+ (1300,660,["Bug bounty board"],["log: one row per bug,","no ant reads it"],"x","e",GREY),
+ (1300,200,["Detective Ant"],["why is the bug still open?","writes next fix plan, never code"],"x","w2",RED),
  (1300,100,["Dropped"],["after 3 tries on a bug","branch kept, not deleted"],"term","e",RED),
  (1360,780,["Merger ant"],["straight line in a scratch copy,","tests once, no review"],"x","s",GREEN),
  (1160,780,["Janitor ant"],["cleanup plan for this run's mess,","built + checked before main moves"],"x","n",GREEN),
@@ -76,13 +80,14 @@ o.append(f'<path d="M300,96 V194" stroke="{BG}" stroke-width="2"/>')
 o.append(f'<path d="M1200,140 H1820" stroke="none"/>')
 o.append(txt(1100, 300, ["BUG LOOP"], RED, 12, weight="800"))
 o.append(txt(1100, 316, ["max 2 extra build rounds"], RED, 11))
-o.append(txt(1124, 494, ["stuck"], RED, 11))
-o.append(txt(1600, 360, ["fail: tasks clash"], RED, 11))
-o.append(txt(1408, 324, ["fail: bugs +", "first fix plan"], RED, 11))
-o.append(txt(1708, 700, ["merge failed"], RED, 11))
+o.append(txt(1030, 176, ["stuck: next fix round"], RED, 11))
+o.append(txt(1220, 400, ["round 1 (lowest red track): the inspector's own fix plan"], RED, 11, "middle"))
+o.append(txt(1550, 300, ["fail: tasks clash,", "merge, fix loop"], RED, 11))
+o.append(txt(1392, 300, ["still open after", "round 1: the script", "hands it over"], RED, 11))
+o.append(txt(1708, 700, ["merge failed:", "next build round"], RED, 11))
 o.append(txt(1550, 560, ["pass: they work combined"], GREEN, 11))
-o.append(txt(1068, 236, ["fix plan"], RED, 11))
-o.append(txt(1320, 556, ["board tool writes once per stage"], GREY, 11))
+o.append(txt(1066, 330, ["fix plan"], RED, 11))
+o.append(txt(1320, 540, ["logged by the board tool, once per stage"], GREY, 11))
 o.append(txt(1066, 600, ["built"], GREY, 11))
 o.append(txt(1000, 694, ["main moved, set \"done\""], GREY, 11))
 o.append(txt(976, 200 + 160, ["start in parallel"], BLUE, 11))
@@ -101,7 +106,7 @@ for x, y, nm, sub, kind, side, c in stations:
     else:
         o.append(f'<circle cx="{x}" cy="{y}" r="8" fill="{TXT}" stroke="{c}" stroke-width="3"/>')
     ax, ay, an = {"n": (x, y - 50, "middle"), "s": (x, y + 32, "middle"), "e": (x + 22, y - 4, "start"),
-                  "sw": (x - 20, y + 30, "end"), "se": (x + 20, y + 36, "start"), "s2": (x + 10, y + 40, "start")}[side]
+                  "sw": (x - 20, y + 30, "end"), "se": (x + 20, y + 36, "start"), "s2": (x + 10, y + 40, "start"), "w2": (x - 24, y + 34, "end")}[side]
     o.append(txt(ax, ay, nm, TXT, 14, an, "700"))
     o.append(txt(ax, ay + 17, sub, SUB, 11, an))
 # trains: numbered, upright, slow enough to follow
@@ -128,15 +133,15 @@ kx, ky = 1380, 862
 o.append(f'<rect x="{kx}" y="{ky-16}" width="420" height="141" rx="12" fill="#0F172A" stroke="#334155"/>')
 o.append(txt(kx + 16, ky + 24, ["LINES"], SUB, 12, weight="800"))
 for i, (c, dash, t) in enumerate([(BLUE, "", "Plan line - Ask + Plan workflow"), (GREEN, "", "Build line - build, check, merge, upkeep"),
-                                  (RED, "", "Bug loop - bounty, Detective, fix"), (RED, "8 5", "Bug branch - clash, stuck, merge failed"),
-                                  (TEAL, "", "Cleanup line - janitor plan to worker ants"), (GREY, "3 6", "Feedback - board writes, critiques, dropped cleanup")]):
+                                  (RED, "", "Bug loop - inspector, Detective, worker"), (RED, "8 5", "Bug branch - clash, stuck, merge failed"),
+                                  (TEAL, "", "Cleanup line - janitor plan to worker ants"), (GREY, "3 6", "Logs and feedback - boards, critiques, cleanup")]):
     y = ky + 44 + i * 16
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="5"' + (f' stroke-dasharray="{dash}"' if dash else '') + '/>')
     o.append(txt(kx + 70, y + 4, [t], TXT, 11))
 o.append(txt(kx + 290, ky + 48, ["o  interchange", "■  terminus", "▬  dead end"], SUB, 11))
 o.append(txt(kx + 290, ky + 100, ["PURPLE: after main moves"], PURP, 11))
-what = {"plan": "task riding the plan line", "build": "a worker's task: build to MAIN", "ring": "a bug going round the bug loop",
-        "clash": "combined test failed: tasks clash", "stuck": "a worker got stuck", "mfail": "merge failed",
+what = {"plan": "task riding the plan line", "build": "a worker's task: build to MAIN", "ring": "a bug going round the bug loop", "r1": "round 1: inspector's fix plan to a worker",
+        "clash": "tasks clash: into the fix loop", "stuck": "a worker got stuck: to the Detective", "mfail": "merge failed: next build round",
         "check": "checkCommand, then req done", "crit": "critique back to the Investigator", "tidy": "cleanup built by a worker, 1 fix round", "clean": "dropped cleanup plan back to Task",
         "ask": "questions to you and answers back", "res": "researcher fetching facts"}
 tx, ty = 740, 60

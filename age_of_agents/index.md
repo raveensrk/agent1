@@ -72,8 +72,9 @@ its job. The build script runs that workflow in place of a worker ant.
       bug. It runs the tests in the task's worktree.
     - **Pass:** no bugs. The task waits for the combined test. Style points go
       to the final report as notes.
-    - **Fail:** each bug goes to the bug bounty board, with how to see it. It
-      also writes the first fix plan, so round 1 needs no detective.
+    - **Fail:** it returns each bug, with how to see it, and the first fix
+      plan, so round 1 needs no detective. The build script keeps the bugs and
+      hands them to the next ant; the bug bounty board only logs them.
     - **Tasks built on others** are checked only once those are final. A
       changed base is merged in first; a failed base blocks the task.
     - **Re-check:** after each fix it checks every open bug again, by its id.
@@ -219,11 +220,14 @@ and stops to ask the user only in step 2.
 ## Diagram
 
 Stages run left to right: plan, build, check, fix, finish. The three boards sit
-together in the Boards strip; they live in the state folder, outside the repo. D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA layout
+together in the Boards strip; they live in the state folder, outside the repo.
+They are logs: the scripts hand work from ant to ant directly, and the board
+tool writes the boards once per stage. Only the critiques board is read back,
+by the next run's investigator. D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA layout
 by [`render.sh`](render.sh) to a light and a dark SVG.
 
 Colors: each stage has its own color. Green arrows are approvals, red arrows are
-bugs, gray arrows are normal flow. Dashed arrows only watch or comment. The
+bugs, gray arrows are normal flow. Dashed arrows only log, watch or comment. The
 legend in the diagram shows the arrow colors.
 
 ```d2
@@ -327,7 +331,7 @@ finish: 6. Finish {
   finisher: Finisher ant\nmoves main forward,\ncleans up {class: node; style.stroke: ${finish-line}}
 }
 
-boards: Boards (only the board tool writes them) {
+boards: Boards - logs only, written by the board tool, no ant takes work from them {
   left: 1000
   top: 820
   direction: right
@@ -346,25 +350,29 @@ always_on: Upkeep ants (before main moves) {
   philosopher: Philosopher ant\nafter the cleanup,\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
 }
 
-build.aw -> boards.bulletin: built {class: flow}
-boards.bounty -> fix.detective: bug still open\nafter round 1 {class: bug}
+build.aw -> boards.bulletin: logged: built {class: flow; style.stroke-dash: 3}
+check.inspector -> fix.detective: bug still open after round 1:\nthe script hands it over {class: bug}
 always_on.philosopher -> boards.critiques: critique {class: flow; style.stroke-dash: 3}
 ask.report -> plan.aara: report {class: ok}
 ask.arta <-> user: up to 4 questions\na round, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
-check.monitor -> boards.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
-check.together -> boards.bulletin: pass: they\nwork combined {class: ok}
-check.together -> boards.bounty: fail: tasks\nclash {class: bug}
-check.inspector -> boards.bounty: fail: bugs +\nfirst fix plan {class: bug}
+check.monitor -> boards.bulletin: logged: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
+check.together -> boards.bulletin: logged: pass {class: ok; style.stroke-dash: 3}
+check.together -> finish.merger: pass: they work combined,\nmain session approves them {class: ok}
+check.together -> boards.bounty: logged: clash {class: bug; style.stroke-dash: 3}
+check.together -> build.aw: fail: tasks clash,\nmerge them, then fix loop {class: bug}
+check.inspector -> boards.bounty: logged: bugs {class: bug; style.stroke-dash: 3}
+check.inspector -> build.aw: fail: round 1 uses\nthe inspector's fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
-fix.detective -> boards.bulletin: dropped after\n3 tries on a bug {class: bug}
-build.aw -> boards.bounty: stuck {class: bug}
-boards.bulletin -> finish.merger: passing tasks,\nno review {class: ok}
-finish.merger -> boards.bounty: merge failed {class: bug}
+fix.detective -> boards.bulletin: logged: dropped after\n3 tries on a bug {class: bug; style.stroke-dash: 3}
+build.aw -> boards.bounty: logged: stuck {class: bug; style.stroke-dash: 3}
+build.aw -> fix.detective: stuck: next fix round {class: bug}
+finish.merger -> boards.bounty: logged: merge failed {class: bug; style.stroke-dash: 3}
+finish.merger -> build.aw: merge failed:\nnext build round {class: bug}
 finish.merger -> always_on: then {class: flow}
 always_on -> finish.finisher: then {class: flow}
-finish.finisher -> boards.bulletin: main moved,\nset "done" {class: ok}
+finish.finisher -> boards.bulletin: logged: main moved,\nset "done" {class: ok; style.stroke-dash: 3}
 always_on.janitor -> build.aw: cleanup plan,\nbuilt and checked\nbefore main moves {class: flow}
 always_on.janitor -> ask.task: dropped cleanup,\noffered next time {class: flow; style.stroke-dash: 3}
 
@@ -399,7 +407,7 @@ legend: Legend {
     direction: right
     style: {fill: transparent; stroke: transparent}
     s: "" {shape: circle; width: 12; height: 12; style: {fill: ${flow}; stroke: ${flow}}}
-    t: watch or comment {shape: text; style.font-color: ${text}}
+    t: log, watch or comment {shape: text; style.font-color: ${text}}
     s -> t {class: flow; style.stroke-dash: 3}
   }
 }

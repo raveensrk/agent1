@@ -54,7 +54,10 @@ steps: {
     fix.style.opacity: 1
     boards.bounty.style.opacity: 1
     fix.detective.style.opacity: 1
-    (boards.bounty -> fix.detective)[0].style.opacity: 1
+    (check.inspector -> fix.detective)[0].style.opacity: 1
+    (check.inspector -> build.aw)[0].style.opacity: 1
+    (build.aw -> fix.detective)[0].style.opacity: 1
+    (check.together -> build.aw)[0].style.opacity: 1
     (check.inspector -> boards.bounty)[0].style.opacity: 1
     (build.aw -> boards.bounty)[0].style.opacity: 1
     (check.together -> boards.bounty)[0].style.opacity: 1
@@ -65,7 +68,8 @@ steps: {
   6-finish: {
     finish.style.opacity: 1
     finish.merger.style.opacity: 1
-    (boards.bulletin -> finish.merger)[0].style.opacity: 1
+    (check.together -> finish.merger)[0].style.opacity: 1
+    (finish.merger -> build.aw)[0].style.opacity: 1
     finish.finisher.style.opacity: 1
     (finish.finisher -> boards.bulletin)[0].style.opacity: 1
     (always_on -> finish.finisher)[0].style.opacity: 1
