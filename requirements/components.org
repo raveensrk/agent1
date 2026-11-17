@@ -5,6 +5,11 @@ The things a window is made of.
 Part of the [[file:gui.org][GUI requirements]], which say what holds for all of it: the toolkit, the look, motion and performance.
 
 * Things I can act on look different from things I cannot
+:PROPERTIES:
+:ID: actable-look
+:CREATED: 2026-11-18
+:LAST_EDITED: 2026-11-18
+:END:
 - Anything clickable or actable looks it: a button, a link, a control
 - Nothing that cannot be acted on looks clickable
 - A clickable button looks like a button
