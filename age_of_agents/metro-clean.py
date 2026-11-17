@@ -22,6 +22,7 @@ lines = [  # name, colour, points, width, dash
  ("clash", RED,   [(1040,R2),(1040,700),(620,700)], 6, "10 6"),
  ("bugout",RED,   [(620,700),(240,700),(200,660),(200,R2)], 8, ""),
  ("r1",    RED,   [(760,R2),(730,580),(230,580),(200,R2)], 5, ""),
+ ("logA",  GREY,  [(1320,R2),(1320,646)], 4, "4 6"),
  ("drop",  RED,   [(620,700),(620,770)], 6, ""),
  ("mfail", RED,   [(200,R3),(200,1070)], 6, "10 6"),
  ("tidy",  TEAL,  [(440,R3),(500,1050),(560,1050),(760,1050),(940,1050),(1000,R3)], 9, ""),
@@ -45,8 +46,7 @@ stations = [
  (480,R2,"Anti-monitor",["the build script: starts an","inspector as soon as a task is built"],"st",L_UP),
  (760,R2,"Inspector Ants",["one per built task: checks","plan + design, runs its tests"],"x",(0,-60,"middle")),
  (1040,R2,"Combined test",["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x",(0,-60,"middle")),
- (1320,R2,"Bulletin board",["log: one row per task;","pass: they work combined"],"x",L_UP),
- (1320,660,"Bug bounty board",["log: one row per bug, written","by the board tool. No ant","takes work from it."],"log",(26,-4,"start")),
+ (1320,660,"Logbook",["bulletin + bug bounty boards,","written at the end of build and","of finish. For you; no ant reads it."],"log",(26,-4,"start")),
  (620,700,"Detective Ant",["finds why, writes the next","fix plan, never code"],"x",(-26,34,"end")),
  (620,770,"Dropped",["after 3 tries on a bug,","branch kept"],"term",(26,-4,"start")),
  (200,R3,"Merger ant",["straight line in a scratch","copy, tests once, no review"],"x",(0,-58,"middle")),
@@ -56,7 +56,7 @@ stations = [
  (760,1050,"Cleanup inspector",["plan + tests = combined test;","fail: one fix round"],"st",(0,34,"middle")),
  (760,1160,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
  (1000,R3,"Philosopher ant",["after the cleanup:","5 best critiques"],"x",(26,40,"start")),
- (1000,880,"Critiques board",["questions for the next","run's Investigator"],"term",(-26,-4,"end")),
+ (1000,880,"Critiques board",["bridge to the next run:","its Investigator reads it"],"term",(-26,-4,"end")),
  (1150,R3,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
  (1290,R3,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
  (1450,R3,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
@@ -77,6 +77,7 @@ for name, c, pts, w, dash in lines:
     o.append(f'<path id="L-{name}" d="{d(pts)}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linejoin="round" stroke-linecap="round"' + (f' stroke-dasharray="{dash}" class="flow"' if dash else '') + '/>')
 o.append(txt(1612, 290, ["to row 2"], BLUE, 13, weight="700"))
 o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
+o.append(txt(1330, 590, ["end of build: written once"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
 o.append(txt(480, 604, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
 o.append(txt(1052, 640, ["fail: tasks clash,", "merge, then fix loop"], RED, 13))

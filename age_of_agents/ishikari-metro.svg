@@ -86,17 +86,13 @@
 <path id="L-clash" d="M1540,420 L1540,280 L1460,200 L1300,200" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 5" class="flow" opacity="0.95"/>
 <path id="L-stuck" d="M1060,420 L1024,384 L1024,186 L1300,186" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 5" class="flow" opacity="0.95"/>
 <path id="L-mfail" d="M1360,780 L1700,780 L1700,140 L1010,140 L1010,370 L1060,420" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="8 5" class="flow" opacity="0.95"/>
-<path id="L-logb1" d="M1380,450 L1380,560 L1300,660" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
-<path id="L-logb2" d="M1540,470 L1300,660" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
-<path id="L-logb3" d="M1360,780 L1300,720 L1300,660" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-logA" d="M1380,450 L1380,560 L1300,640" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
+<path id="L-logB" d="M760,780 L760,700 L1220,700 L1300,640" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
 <path id="L-drop" d="M1300,200 L1300,100" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
 <path id="L-check" d="M560,780 L240,780" fill="none" stroke="#A78BFA" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
 <path id="L-crit" d="M960,780 L960,900 L200,900 L200,140 L250,140 L292,192" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
 <path id="L-tidy" d="M1160,780 L1160,560 L1080,480 L1060,420" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
 <path id="L-clean" d="M1160,780 L1160,960 L60,960 L60,200 L120,200" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
-<path id="L-board" d="M1220,420 L1300,560 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
-<path id="L-board2" d="M1060,420 L1060,620 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
-<path id="L-board3" d="M760,780 L760,700 L1400,700 L1540,620" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 6" class="flow" opacity="0.95"/>
 <path d="M300,96 V194" stroke="#0B1120" stroke-width="2"/>
 <path d="M1200,140 H1820" stroke="none"/>
 <text class="h" x="1100" y="300" fill="#F87171" font-size="12" text-anchor="start" font-weight="800">BUG LOOP</text>
@@ -107,10 +103,9 @@
 <text class="h" x="1392" y="300" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">still open after</text><text class="h" x="1392" y="314" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">round 1: the script</text><text class="h" x="1392" y="328" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">hands it over</text>
 <text class="h" x="1708" y="700" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">merge failed:</text><text class="h" x="1708" y="714" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">next build round</text>
 <text class="h" x="1550" y="560" fill="#4ADE80" font-size="11" text-anchor="start" font-weight="400">pass: they work combined</text>
+<text class="h" x="1388" y="560" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">end of build</text>
+<text class="h" x="1000" y="694" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">end of finish</text>
 <text class="h" x="1066" y="330" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">fix plan</text>
-<text class="h" x="1320" y="540" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">logged by the board tool, once per stage</text>
-<text class="h" x="1066" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">built</text>
-<text class="h" x="1000" y="694" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">main moved, set "done"</text>
 <text class="h" x="976" y="360" fill="#60A5FA" font-size="11" text-anchor="start" font-weight="400">start in parallel</text>
 <text class="h" x="308" y="140" fill="#FBBF24" font-size="11" text-anchor="start" font-weight="400">up to 4 questions a round</text><text class="h" x="308" y="154" fill="#FBBF24" font-size="11" text-anchor="start" font-weight="400">/ask-simple</text>
 <text class="h" x="212" y="600" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">critiques</text>
@@ -152,12 +147,9 @@
 <circle cx="1540" cy="420" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1540" cy="420" r="4" fill="#4ADE80"/>
 <text class="h" x="1562" y="416" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Combined test</text>
 <text class="h" x="1562" y="433" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">Integrator Ant merges passing</text><text class="h" x="1562" y="447" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">tasks in a scratch copy, tests once</text>
-<circle cx="1540" cy="620" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1540" cy="620" r="4" fill="#94A3B8"/>
-<text class="h" x="1562" y="616" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Bulletin board</text>
-<text class="h" x="1562" y="633" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">log: one row per task</text>
-<circle cx="1300" cy="660" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1300" cy="660" r="4" fill="#94A3B8"/>
-<text class="h" x="1322" y="656" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Bug bounty board</text>
-<text class="h" x="1322" y="673" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">log: one row per bug,</text><text class="h" x="1322" y="687" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">no ant reads it</text>
+<rect x="1286" y="626" width="28" height="28" rx="6" fill="#94A3B8" stroke="#E2E8F0" stroke-width="3"/>
+<text class="h" x="1322" y="636" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Logbook</text>
+<text class="h" x="1322" y="653" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">bulletin + bug bounty boards:</text><text class="h" x="1322" y="667" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">for you to read, no ant reads it</text>
 <circle cx="1300" cy="200" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1300" cy="200" r="4" fill="#F87171"/>
 <text class="h" x="1276" y="234" fill="#E2E8F0" font-size="14" text-anchor="end" font-weight="700">Detective Ant</text>
 <text class="h" x="1276" y="251" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">why is the bug still open?</text><text class="h" x="1276" y="265" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">writes next fix plan, never code</text>
@@ -187,7 +179,7 @@
 <text class="h" x="240" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">marks the kept :ID:s</text>
 <circle cx="960" cy="900" r="12" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="900" r="4" fill="#94A3B8"/>
 <text class="h" x="960" y="932" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Critiques board</text>
-<text class="h" x="960" y="949" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">turned into questions</text><text class="h" x="960" y="963" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">for the next task</text>
+<text class="h" x="960" y="949" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">bridge to the next run: its</text><text class="h" x="960" y="963" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">investigator turns them into questions</text>
 <circle cx="1160" cy="960" r="8" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3"/>
 <text class="h" x="1160" y="910" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Dropped cleanup</text>
 <text class="h" x="1160" y="927" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">plan offered next time,</text><text class="h" x="1160" y="941" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">branch kept</text>

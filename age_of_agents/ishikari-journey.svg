@@ -33,9 +33,12 @@
 <text x="1654" y="135.2" fill="#A78BFA" font-size="15" text-anchor="start" font-weight="700">6. Finish</text>
 <text x="1886" y="133.8" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">ishikari-finish.js</text>
 </g>
-<g id="f-boards"><rect x="600" y="760" width="900" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
-<text x="614" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Boards</text>
-<text x="1486" y="783.9" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">logs only: the board tool writes them, no ant takes work from them</text>
+<g id="f-boards"><rect x="600" y="760" width="600" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
+<text x="614" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Logbook</text>
+<text x="1186" y="783.9" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">for you to read after a run, no ant reads it</text>
+</g>
+<g id="f-bridge"><rect x="1215" y="760" width="270" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
+<text x="1229" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Bridge to next run</text>
 </g>
 <g id="f-upkeep"><rect x="1560" y="760" width="340" height="180" rx="14" fill="#1E293B" stroke="#94A3B8" stroke-width="2"/>
 <text x="1574" y="785.2" fill="#94A3B8" font-size="15" text-anchor="start" font-weight="700">Upkeep ants</text>
@@ -43,6 +46,8 @@
 <g class="lb"><text x="1730" y="783.9" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">before main moves</text></g>
 <path id="e28" class="e flowing" d="M1190,370 V418" stroke="#4ADE80" marker-end="url(#mo)"/>
 <path id="e27" class="e flowing" d="M1190,210 V266" stroke="#CBD5E1" marker-end="url(#mf)"/>
+<path id="e41" class="e dot" d="M1770,670 V706 H1060 V798" stroke="#CBD5E1" marker-end="url(#mf)"/>
+<path id="e40" class="e dot" d="M1190,670 V720 H750 V798" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e34" class="e flowing" d="M1720,138 V84 H850 V266" stroke="#F87171" marker-end="url(#mb)"/>
 <path id="e33" class="e flowing" d="M1260,540 V690 H1630 V185 H1658" stroke="#4ADE80" marker-end="url(#mo)"/>
 <path id="e32" class="e flowing" d="M960,266 V104 H1520 V258" stroke="#F87171" marker-end="url(#mb)"/>
@@ -51,21 +56,12 @@
 <path id="e29" class="e flowing" d="M1600,798 V752 H990 V372" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e26" class="e dot" d="M1300,912 V960 H140 V300 H178" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e25" class="e dot" d="M1650,912 V975 H20 V165 H178" stroke="#CBD5E1" marker-end="url(#mf)"/>
-<path id="e24" class="e dot" d="M1760,510 V700 H740 V798" stroke="#4ADE80" marker-end="url(#mo)"/>
 <path id="e23" class="e flowing" d="M1620,758 V465 H1658" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e22" class="e flowing" d="M1880,205 H1910 V758" stroke="#CBD5E1" marker-end="url(#mf)"/>
-<path id="e21" class="e dot" d="M1680,230 V720 H1100 V798" stroke="#F87171" marker-end="url(#mb)"/>
-<path id="e19" class="e dot" d="M960,370 V798" stroke="#F87171" marker-end="url(#mb)"/>
-<path id="e18" class="e dot" d="M1500,380 V740 H700 V798" stroke="#F87171" marker-end="url(#mb)"/>
 <path id="e17" class="e flowing" d="M1000,290 H1030 V160 H1078" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e16" class="e flowing" d="M1480,258 V96 H900 V266" stroke="#CBD5E1" marker-end="url(#mf)"/>
-<path id="e15" class="e dot" d="M1080,350 H1052 V760 H1000 V798" stroke="#F87171" marker-end="url(#mb)"/>
-<path id="e14" class="e dot" d="M1160,540 V798" stroke="#F87171" marker-end="url(#mb)"/>
-<path id="e13" class="e dot" d="M1120,540 V720 H860 V798" stroke="#4ADE80" marker-end="url(#mo)"/>
-<path id="e12" class="e dot" d="M1080,175 H1040 V780 H780 V798" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e11" class="e dot" d="M1810,910 V950 H1350 V912" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e10" class="e flowing" d="M1306,335 H1378" stroke="#F87171" marker-end="url(#mb)"/>
-<path id="e9" class="e dot" d="M830,370 V798" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e8" class="e flowing" d="M720,460 H760 V320 H798" stroke="#4ADE80" marker-end="url(#mo)"/>
 <path id="e7" class="e flowing" d="M610,350 V420" stroke="#CBD5E1" marker-end="url(#mf)"/>
 <path id="e6" class="e flowing" d="M610,220 V278" stroke="#CBD5E1" marker-end="url(#mf)"/>
@@ -147,21 +143,12 @@
 <g class="lb"><text x="650" y="253.8" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">requirement</text></g>
 <g class="lb"><text x="655" y="381.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">design,</text><text x="655" y="396.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">write plans</text></g>
 <g class="lb"><text x="760" y="496.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">start in</text><text x="760" y="511.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">parallel</text></g>
-<g class="lb"><text x="815" y="466.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">logged:</text><text x="815" y="481.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">built</text></g>
 <g class="lb"><text x="1340" y="398.9" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">still open after</text><text x="1340" y="413.9" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">round 1: script</text><text x="1340" y="428.9" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">hands it over</text></g>
 <g class="lb"><text x="1580" y="953.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">critique</text></g>
-<g class="lb"><text x="1040" y="636.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">logged: board tool</text><text x="1040" y="651.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">writes once per stage</text></g>
-<g class="lb"><text x="1120" y="596.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">logged:</text><text x="1120" y="611.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">pass</text></g>
-<g class="lb"><text x="1200" y="606.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">logged:</text><text x="1200" y="621.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">clash</text></g>
-<g class="lb"><text x="990" y="416.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">logged:</text><text x="990" y="431.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">bugs</text></g>
 <g class="lb"><text x="1190" y="99.8" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">fix plan</text></g>
 <g class="lb"><text x="960" y="211.3" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">fix built,</text><text x="960" y="226.3" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">re-inspect</text></g>
-<g class="lb"><text x="1500" y="466.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">logged: dropped</text><text x="1500" y="481.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">after 3 tries on a bug</text></g>
-<g class="lb"><text x="930" y="616.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">logged:</text><text x="930" y="631.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">stuck</text></g>
-<g class="lb"><text x="1680" y="326.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">logged:</text><text x="1680" y="341.4" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">merge failed</text></g>
 <g class="lb"><text x="1910" y="563.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">then</text></g>
 <g class="lb"><text x="1620" y="603.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">then</text></g>
-<g class="lb"><text x="1760" y="616.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">logged: main</text><text x="1760" y="631.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">moved, "done"</text></g>
 <g class="lb"><text x="900" y="978.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">dropped cleanup, offered next time</text></g>
 <g class="lb"><text x="500" y="963.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">turned into questions for the next task</text></g>
 <g class="lb"><text x="1250" y="741.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">cleanup plan: built,</text><text x="1250" y="756.4" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">checked, 1 fix round</text></g>
@@ -170,6 +157,8 @@
 <g class="lb"><text x="1330" y="107.8" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">stuck: next fix round</text></g>
 <g class="lb"><text x="1630" y="296.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">pass: main session</text><text x="1630" y="311.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">approves, no review</text></g>
 <g class="lb"><text x="1300" y="87.8" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">merge failed: next build round</text></g>
+<g class="lb"><text x="960" y="723.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">end of build: every task and bug, once</text></g>
+<g class="lb"><text x="1480" y="709.9" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">end of finish: merged tasks "done"</text></g>
 <g class="lb"><text x="1190" y="234.3" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">start one as soon as</text><text x="1190" y="249.3" fill="#CBD5E1" font-size="11" text-anchor="middle" font-weight="400">a task or fix is built</text></g>
 <g class="lb"><text x="1190" y="391.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">pass, once every</text><text x="1190" y="406.4" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">task is checked</text></g>
 <rect x="156" y="106" width="288" height="568" rx="17" fill="none" stroke="#60A5FA" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0000;0.0035;0.0035;0.0336;0.0336;0.0887" values="0;1;0;1;0;1;0"/></rect>
@@ -178,7 +167,8 @@
 <rect x="1056" y="106" width="268" height="568" rx="17" fill="none" stroke="#FBBF24" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.1913;0.2293;0.2293;0.2458;0.2644;0.2865;0.2865;0.3030;0.4180;0.4467;0.4467;0.4631;0.4631;0.4771;0.7859;0.8127;0.8127;0.8292" values="0;1;0;1;0;1;0;1;0;1;0;1;0;1;0;1;0;1;0"/></rect>
 <rect x="1356" y="106" width="248" height="568" rx="17" fill="none" stroke="#FB7185" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.3030;0.3221" values="0;1;0"/></rect>
 <rect x="1636" y="106" width="268" height="568" rx="17" fill="none" stroke="#A78BFA" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.4771;0.5872;0.8292;0.9200;0.9200;0.9998" values="0;1;0;1;0;1;0"/></rect>
-<rect x="596" y="756" width="908" height="188" rx="17" fill="none" stroke="#94A3B8" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000" values="0"/></rect>
+<rect x="596" y="756" width="608" height="188" rx="17" fill="none" stroke="#94A3B8" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000" values="0"/></rect>
+<rect x="1211" y="756" width="278" height="188" rx="17" fill="none" stroke="#94A3B8" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000" values="0"/></rect>
 <rect x="1556" y="756" width="348" height="188" rx="17" fill="none" stroke="#94A3B8" stroke-width="5" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.5872;0.6616" values="0;1;0"/></rect>
 <path d="M300,190 V228" fill="none" stroke="#FDE047" stroke-width="5" stroke-linecap="round" opacity="0" filter="url(#antglow)"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0000;0.0035" values="0;1;0"/></path>
 <path d="M178,275 H112" fill="none" stroke="#FDE047" stroke-width="5" stroke-linecap="round" opacity="0" filter="url(#antglow)"><animate attributeName="opacity" dur="48.0s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0035;0.0336" values="0;1;0"/></path>

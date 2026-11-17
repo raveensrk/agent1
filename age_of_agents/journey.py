@@ -50,7 +50,8 @@ frame("build",780,110,240,560,"3. Build","ishikari-build.js","build")
 frame("check",1060,110,260,560,"4. Check","ishikari-build.js","check")
 frame("fix",1360,110,240,560,"5. Fix","ishikari-build.js","fix")
 frame("finish",1640,110,260,560,"6. Finish","ishikari-finish.js","finish")
-frame("boards",600,760,900,180,"Boards","logs only: the board tool writes them, no ant takes work from them","always")
+frame("boards",600,760,600,180,"Logbook","for you to read after a run, no ant reads it","always")
+frame("bridge",1215,760,270,180,"Bridge to next run","","always")
 frame("upkeep",1560,760,340,180,"Upkeep ants","","always")
 note(1730,780,["before main moves"])
 
@@ -101,21 +102,12 @@ edges=[ # id, d, kind, dashed, both, label, lx, ly
 ("e6","M610,220 V278","f",0,0,"requirement",650,250),
 ("e7","M610,350 V420","f",0,0,"design,|write plans",655,385),
 ("e8","M720,460 H760 V320 H798","o",0,0,"start in|parallel",760,500),
-("e9","M830,370 V798","f",1,0,"logged:|built",815,470),
 ("e10","M1306,335 H1378","b",0,0,"still open after|round 1: script|hands it over",1340,410),
 ("e11","M1810,910 V950 H1350 V912","f",1,0,"critique",1580,950),
-("e12","M1080,175 H1040 V780 H780 V798","f",1,0,"logged: board tool|writes once per stage",1040,640),
-("e13","M1120,540 V720 H860 V798","o",1,0,"logged:|pass",1120,600),
-("e14","M1160,540 V798","b",1,0,"logged:|clash",1200,610),
-("e15","M1080,350 H1052 V760 H1000 V798","b",1,0,"logged:|bugs",990,420),
 ("e16","M1480,258 V96 H900 V266","f",0,0,"fix plan",1190,96),
 ("e17","M1000,290 H1030 V160 H1078","f",0,0,"fix built,|re-inspect",960,215),
-("e18","M1500,380 V740 H700 V798","b",1,0,"logged: dropped|after 3 tries on a bug",1500,470),
-("e19","M960,370 V798","b",1,0,"logged:|stuck",930,620),
-("e21","M1680,230 V720 H1100 V798","b",1,0,"logged:|merge failed",1680,330),
 ("e22","M1880,205 H1910 V758","f",0,0,"then",1910,560),
 ("e23","M1620,758 V465 H1658","f",0,0,"then",1620,600),
-("e24","M1760,510 V700 H740 V798","o",1,0,"logged: main|moved, \"done\"",1760,620),
 ("e25","M1650,912 V975 H20 V165 H178","f",1,0,"dropped cleanup, offered next time",900,975),
 ("e26","M1300,912 V960 H140 V300 H178","f",1,0,"turned into questions for the next task",500,960),
 ("e29","M1600,798 V752 H990 V372","f",0,0,"cleanup plan: built,|checked, 1 fix round",1250,745),
@@ -124,6 +116,8 @@ edges=[ # id, d, kind, dashed, both, label, lx, ly
 ("e32","M960,266 V104 H1520 V258","b",0,0,"stuck: next fix round",1330,104),
 ("e33","M1260,540 V690 H1630 V185 H1658","o",0,0,"pass: main session|approves, no review",1630,300),
 ("e34","M1720,138 V84 H850 V266","b",0,0,"merge failed: next build round",1300,84),
+("e40","M1190,670 V720 H750 V798","f",1,0,"end of build: every task and bug, once",960,720),
+("e41","M1770,670 V706 H1060 V798","f",1,0,"end of finish: merged tasks \"done\"",1480,706),
 ("e27","M1190,210 V266","f",0,0,"start one as soon as|a task or fix is built",1190,238),
 ("e28","M1190,370 V418","o",0,0,"pass, once every|task is checked",1190,395),
 ]

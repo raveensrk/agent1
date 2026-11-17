@@ -35,9 +35,10 @@ steps: {
   3-build: {
     build.style.opacity: 1
     build.aw.style.opacity: 1
-    boards.style.opacity: 1
-    boards.bulletin.style.opacity: 1
-    (build.aw -> boards.bulletin)[0].style.opacity: 1
+    logbook.style.opacity: 1
+    logbook.bulletin.style.opacity: 1
+    logbook.bounty.style.opacity: 1
+    (check -> logbook)[0].style.opacity: 1
     (plan.plans -> build.aw)[0].style.opacity: 1
   }
   4-check: {
@@ -45,25 +46,18 @@ steps: {
     check.monitor.style.opacity: 1
     check.inspector.style.opacity: 1
     check.(monitor -> inspector)[0].style.opacity: 1
-    (check.monitor -> boards.bulletin)[0].style.opacity: 1
     check.together.style.opacity: 1
     check.(inspector -> together)[0].style.opacity: 1
-    (check.together -> boards.bulletin)[0].style.opacity: 1
   }
   5-fix: {
     fix.style.opacity: 1
-    boards.bounty.style.opacity: 1
     fix.detective.style.opacity: 1
     (check.inspector -> fix.detective)[0].style.opacity: 1
     (check.inspector -> build.aw)[0].style.opacity: 1
     (build.aw -> fix.detective)[0].style.opacity: 1
     (check.together -> build.aw)[0].style.opacity: 1
-    (check.inspector -> boards.bounty)[0].style.opacity: 1
-    (build.aw -> boards.bounty)[0].style.opacity: 1
-    (check.together -> boards.bounty)[0].style.opacity: 1
     (fix.detective -> build.aw)[0].style.opacity: 1
     (build.aw -> check.monitor)[0].style.opacity: 1
-    (fix.detective -> boards.bulletin)[0].style.opacity: 1
   }
   6-finish: {
     finish.style.opacity: 1
@@ -71,21 +65,21 @@ steps: {
     (check.together -> finish.merger)[0].style.opacity: 1
     (finish.merger -> build.aw)[0].style.opacity: 1
     finish.finisher.style.opacity: 1
-    (finish.finisher -> boards.bulletin)[0].style.opacity: 1
     (always_on -> finish.finisher)[0].style.opacity: 1
-    (finish.merger -> boards.bounty)[0].style.opacity: 1
+    logbook.style.opacity: 1
+    (finish -> logbook)[0].style.opacity: 1
   }
   7-always-on: {
     always_on.style.opacity: 1
     always_on.janitor.style.opacity: 1
-    boards.critiques.style.opacity: 1
+    critiques.style.opacity: 1
     always_on.philosopher.style.opacity: 1
-    (always_on.philosopher -> boards.critiques)[0].style.opacity: 1
+    (always_on.philosopher -> critiques)[0].style.opacity: 1
     (always_on.janitor -> ask.task)[0].style.opacity: 1
     (always_on.janitor -> build.aw)[0].style.opacity: 1
     build.style.opacity: 1
     build.aw.style.opacity: 1
     (finish.merger -> always_on)[0].style.opacity: 1
-    (boards.critiques -> ask.arta)[0].style.opacity: 1
+    (critiques -> ask.arta)[0].style.opacity: 1
   }
 }

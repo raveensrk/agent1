@@ -21,17 +21,13 @@ lines = [
  ("clash", RED,   [(1540,420),(1540,280),(1460,200),(1300,200)], 5, "8 5", 1, 5),
  ("stuck", RED,   [(1060,420),(1024,384),(1024,186),(1300,186)], 5, "8 5", 1, 5),
  ("mfail", RED,   [(1360,780),(1700,780),(1700,140),(1010,140),(1010,370),(1060,420)], 5, "8 5", 1, 9),
- ("logb1", GREY,  [(1380,450),(1380,560),(1300,660)], 3, "3 6", 0, 0),
- ("logb2", GREY,  [(1540,470),(1300,660)], 3, "3 6", 0, 0),
- ("logb3", GREY,  [(1360,780),(1300,720),(1300,660)], 3, "3 6", 0, 0),
+ ("logA",  GREY,  [(1380,450),(1380,560),(1300,640)], 3, "3 6", 0, 0),
+ ("logB",  GREY,  [(760,780),(760,700),(1220,700),(1300,640)], 3, "3 6", 0, 0),
  ("drop",  RED,   [(1300,200),(1300,100)], 5, "", 0, 0),
  ("check", PURP,  [(560,780),(240,780)], 7, "", 1, 4),
  ("crit",  GREY,  [(960,780),(960,900),(200,900),(200,140),(250,140),(292,192)], 4, "3 6", 1, 10),
  ("tidy",  TEAL,  [(1160,780),(1160,560),(1080,480),(1060,420)], 6, "", 1, 6),
  ("clean", GREY,  [(1160,780),(1160,960),(60,960),(60,200),(120,200)], 4, "3 6", 1, 12),
- ("board", GREY,  [(1220,420),(1300,560),(1540,620)], 3, "3 6", 0, 0),
- ("board2",GREY,  [(1060,420),(1060,620),(1540,620)], 3, "3 6", 0, 0),
- ("board3",GREY,  [(760,780),(760,700),(1400,700),(1540,620)], 3, "3 6", 0, 0),
 ]
 # (x, y, name lines, sub lines, kind, label side, colour)
 stations = [
@@ -47,8 +43,7 @@ stations = [
  (1220,420,["Anti-monitor"],["the build script"],"x","s",GREEN),
  (1380,420,["Inspector Ants"],["one per built task,","checks plan + design, runs tests"],"x","s",GREEN),
  (1540,420,["Combined test"],["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x","e",GREEN),
- (1540,620,["Bulletin board"],["log: one row per task"],"x","e",GREY),
- (1300,660,["Bug bounty board"],["log: one row per bug,","no ant reads it"],"x","e",GREY),
+ (1300,640,["Logbook"],["bulletin + bug bounty boards:","for you to read, no ant reads it"],"term","e",GREY),
  (1300,200,["Detective Ant"],["why is the bug still open?","writes next fix plan, never code"],"x","w2",RED),
  (1300,100,["Dropped"],["after 3 tries on a bug","branch kept, not deleted"],"term","e",RED),
  (1360,780,["Merger ant"],["straight line in a scratch copy,","tests once, no review"],"x","s",GREEN),
@@ -58,7 +53,7 @@ stations = [
  (560,780,["MAIN"],["fast-forward only, never pushed"],"term","n",GREEN),
  (400,780,["checkCommand"],["fails: one check-fix round","from the moved main"],"st","s",PURP),
  (240,780,["req done"],["marks the kept :ID:s"],"term","n",PURP),
- (960,900,["Critiques board"],["turned into questions","for the next task"],"x","s",GREY),
+ (960,900,["Critiques board"],["bridge to the next run: its","investigator turns them into questions"],"x","s",GREY),
  (1160,960,["Dropped cleanup"],["plan offered next time,","branch kept"],"st","n",GREY),
 ]
 o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">')
@@ -86,10 +81,9 @@ o.append(txt(1550, 300, ["fail: tasks clash,", "merge, fix loop"], RED, 11))
 o.append(txt(1392, 300, ["still open after", "round 1: the script", "hands it over"], RED, 11))
 o.append(txt(1708, 700, ["merge failed:", "next build round"], RED, 11))
 o.append(txt(1550, 560, ["pass: they work combined"], GREEN, 11))
+o.append(txt(1388, 560, ["end of build"], GREY, 11))
+o.append(txt(1000, 694, ["end of finish"], GREY, 11))
 o.append(txt(1066, 330, ["fix plan"], RED, 11))
-o.append(txt(1320, 540, ["logged by the board tool, once per stage"], GREY, 11))
-o.append(txt(1066, 600, ["built"], GREY, 11))
-o.append(txt(1000, 694, ["main moved, set \"done\""], GREY, 11))
 o.append(txt(976, 200 + 160, ["start in parallel"], BLUE, 11))
 o.append(txt(308, 140, ["up to 4 questions a round", "/ask-simple"], GOLD, 11))
 o.append(txt(212, 600, ["critiques"], GREY, 11))

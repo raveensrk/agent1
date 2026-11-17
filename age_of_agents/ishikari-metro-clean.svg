@@ -16,6 +16,7 @@
 <path id="L-clash" d="M1040,520 L1040,700 L620,700" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-bugout" d="M620,700 L240,700 L200,660 L200,520" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-r1" d="M760,520 L730,580 L230,580 L200,520" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<path id="L-logA" d="M1320,520 L1320,646" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 6" class="flow"/>
 <path id="L-drop" d="M620,700 L620,770" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-mfail" d="M200,980 L200,1070" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-tidy" d="M440,980 L500,1050 L560,1050 L760,1050 L940,1050 L1000,980" fill="none" stroke="#2DD4BF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
@@ -25,6 +26,7 @@
 <path id="L-cfix" d="M1450,980 L1450,1070" fill="none" stroke="#C4B5FD" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <text class="h" x="1612" y="290" fill="#60A5FA" font-size="13" text-anchor="start" font-weight="700">to row 2</text>
 <text class="h" x="1612" y="680" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 3</text>
+<text class="h" x="1330" y="590" fill="#94A3B8" font-size="13" text-anchor="start" font-weight="400">end of build: written once</text>
 <text class="h" x="772" y="640" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">still open after round 1:</text><text class="h" x="772" y="657" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">the script hands it over</text>
 <text class="h" x="480" y="604" fill="#F87171" font-size="13" text-anchor="middle" font-weight="400">round 1: the inspector's own fix plan</text>
 <text class="h" x="1052" y="640" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">fail: tasks clash,</text><text class="h" x="1052" y="657" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">merge, then fix loop</text>
@@ -65,12 +67,9 @@
 <circle cx="1040" cy="520" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1040" y="460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Combined test</text>
 <text class="h" x="1040" y="479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">Integrator Ant merges passing</text><text class="h" x="1040" y="495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">tasks in a scratch copy, tests once</text>
-<circle cx="1320" cy="520" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1320" y="468" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Bulletin board</text>
-<text class="h" x="1320" y="487" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">log: one row per task;</text><text class="h" x="1320" y="503" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">pass: they work combined</text>
 <rect x="1306" y="646" width="28" height="28" rx="4" fill="#0B1120" stroke="#94A3B8" stroke-width="3" stroke-dasharray="4 3"/>
-<text class="h" x="1346" y="656" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Bug bounty board</text>
-<text class="h" x="1346" y="675" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">log: one row per bug, written</text><text class="h" x="1346" y="691" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">by the board tool. No ant</text><text class="h" x="1346" y="707" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">takes work from it.</text>
+<text class="h" x="1346" y="656" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Logbook</text>
+<text class="h" x="1346" y="675" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">bulletin + bug bounty boards,</text><text class="h" x="1346" y="691" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">written at the end of build and</text><text class="h" x="1346" y="707" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">of finish. For you; no ant reads it.</text>
 <circle cx="620" cy="700" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="594" y="734" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Detective Ant</text>
 <text class="h" x="594" y="753" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">finds why, writes the next</text><text class="h" x="594" y="769" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">fix plan, never code</text>
@@ -100,7 +99,7 @@
 <text class="h" x="1026" y="1039" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after the cleanup:</text><text class="h" x="1026" y="1055" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">5 best critiques</text>
 <rect x="986" y="866" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="974" y="876" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Critiques board</text>
-<text class="h" x="974" y="895" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">questions for the next</text><text class="h" x="974" y="911" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">run's Investigator</text>
+<text class="h" x="974" y="895" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">bridge to the next run:</text><text class="h" x="974" y="911" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">its Investigator reads it</text>
 <circle cx="1150" cy="980" r="9" fill="#F1F5F9"/>
 <text class="h" x="1150" y="928" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="1150" y="947" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forwards main, cleans</text><text class="h" x="1150" y="963" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">up, sets bulletin rows done</text>
