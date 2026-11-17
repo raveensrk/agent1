@@ -132,8 +132,9 @@ async function twice(fn) {
 }
 
 // ---- review: one question per run, research when facts are missing ----
-const answered = (args.answered || []).map(q => ({ ...q, answer: String(q.answer || '').trim() }))
-const findings = [...(args.findings || [])]
+const list = v => Array.isArray(v) ? v : []
+const answered = list(args.answered).filter(q => q && typeof q === 'object').map(q => ({ ...q, answer: String(q.answer || '').trim() }))
+const findings = list(args.findings).map(String)
 const asked = answered.length
   ? `Questions asked so far, with the user's answers:\n${answered.map(q => `- ${q.question} -> ${q.answer || '(skipped: use the recommended answer)'}`).join('\n')}\n`
   : ''
@@ -193,6 +194,11 @@ ${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it
 }
 if (review.blocker) return { stage: 'blocked', reason: review.blocker, review, findings }
 if (review.next && review.next.question) {
+  // The same question twice means the investigator is going round in circles.
+  const same = q => String(q).trim().toLowerCase()
+  if (answered.some(q => same(q.question) === same(review.next.question))) {
+    return { stage: 'error', reason: `the investigator ant asked the same question again: ${review.next.question}`, review, findings }
+  }
   return { stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review }
 }
 if (!review.reportWritten) return { stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings }
@@ -214,7 +220,7 @@ file inside ${env.repo}, and give the entry an :ID: property. Write no files:
 the main session writes the requirements file from your entry.`,
   { label: 'add-requirement-ant', phase: 'Requirement', effort: EFFORT.requirement, schema: REQUIRED },
 ))
-if (!req) return { stage: 'error', reason: 'the add requirement ant died twice' }
+if (!req || !req.requirement || typeof req.requirement !== 'object') return { stage: 'error', reason: 'the add requirement ant died twice or returned no requirement' }
 // The main session appends the entry to this file and commits it: it must be
 // an org file inside this repo, and the entry must carry an :ID: for req done.
 if (req.requirement.needed) {
@@ -249,7 +255,14 @@ ${req.requirement.needed ? `The requirement, from the add requirement ant (${req
    Write each plan to ${planDir}/<id>.md. Change no other files.`,
   { label: 'architect-ant', phase: 'Design', effort: EFFORT.architect, schema: PLANNED },
 ))
-if (!out) return { stage: 'error', reason: 'the architect ant died twice' }
+if (!out || !Array.isArray(out.plans)) return { stage: 'error', reason: 'the architect ant died twice or returned no plan list' }
+// Normalise what the ant gave, so the checks below never trip on its shape:
+// files become clean repo-relative paths, so "./a.py" and "a.py" are one file.
+const norm = f => String(f).replace(/^\.\/+/, '').replace(/\/\.\//g, '/').replace(/\/+/g, '/').replace(/\/$/, '')
+out.plans = out.plans.filter(p => p && typeof p === 'object').map(p => ({
+  ...p, id: String(p.id || ''), title: String(p.title || ''),
+  files: [...new Set(list(p.files).map(norm))], after: list(p.after).map(String),
+}))
 if (!out.designWritten) return { stage: 'error', reason: `the architect ant did not write ${designFile}` }
 
 // ---- check the plans before anyone builds them ----
@@ -257,36 +270,37 @@ const problems = []
 const ids = new Set()
 for (const p of out.plans) {
   if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(p.id)) problems.push(`bad id "${p.id}"`)
+  if (!p.files.length) problems.push(`${p.id}: lists no files`)
   if (ids.has(p.id)) problems.push(`two plans have the id "${p.id}"`)
   ids.add(p.id)
 }
 for (const p of out.plans) {
-  for (const d of p.after || []) if (!ids.has(d) || d === p.id) problems.push(`${p.id}: after names unknown plan "${d}"`)
+  for (const d of p.after) if (!ids.has(d) || d === p.id) problems.push(`${p.id}: after names unknown plan "${d}"`)
 }
-const byId = Object.fromEntries(out.plans.map(p => [p.id, p]))
-const seen = {}
+const byId = new Map(out.plans.map(p => [p.id, p]))
+const seen = new Map()
 const visit = (id, path) => {
-  if (seen[id] === 'done' || !byId[id]) return
-  if (seen[id] === 'open') { problems.push(`loop in after: ${[...path.slice(path.indexOf(id)), id].join(' -> ')}`); return }
-  seen[id] = 'open'
-  ;(byId[id].after || []).forEach(d => visit(d, [...path, id]))
-  seen[id] = 'done'
+  if (seen.get(id) === 'done' || !byId.has(id)) return
+  if (seen.get(id) === 'open') { problems.push(`loop in after: ${[...path.slice(path.indexOf(id)), id].join(' -> ')}`); return }
+  seen.set(id, 'open')
+  byId.get(id).after.forEach(d => visit(d, [...path, id]))
+  seen.set(id, 'done')
 }
 out.plans.forEach(p => visit(p.id, []))
 // Two tasks that edit the same file must run in order, one after the other;
 // in parallel, their merge would conflict.
 const before = id => {
   const acc = new Set()
-  const walk = x => (byId[x] && byId[x].after || []).forEach(d => { if (!acc.has(d)) { acc.add(d); walk(d) } })
+  const walk = x => (byId.has(x) ? byId.get(x).after : []).forEach(d => { if (!acc.has(d)) { acc.add(d); walk(d) } })
   walk(id)
   return acc
 }
 if (!problems.length) {
-  const owner = {}
-  for (const p of out.plans) for (const f of p.files || []) (owner[f] = owner[f] || []).push(p.id)
-  for (const [f, list] of Object.entries(owner)) {
-    for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
-      if (!before(list[a]).has(list[b]) && !before(list[b]).has(list[a])) problems.push(`${list[a]} and ${list[b]} both edit ${f} but neither is after the other`)
+  const owner = new Map()
+  for (const p of out.plans) for (const f of p.files) (owner.get(f) || owner.set(f, []).get(f)).push(p.id)
+  for (const [f, who] of owner) {
+    for (let a = 0; a < who.length; a++) for (let b = a + 1; b < who.length; b++) {
+      if (!before(who[a]).has(who[b]) && !before(who[b]).has(who[a])) problems.push(`${who[a]} and ${who[b]} both edit ${f} but neither is after the other`)
     }
   }
 }

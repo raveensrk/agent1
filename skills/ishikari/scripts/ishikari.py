@@ -61,11 +61,19 @@ def die(msg):
     sys.exit(1)
 
 
-def write_atomic(path, text):
-    """Write via a temp file and rename, so a crash never leaves half a file."""
+def read_text(path):
+    """Read a file as text with "\n" lines, and say which line ending it used."""
+    with open(path, newline="") as f:
+        raw = f.read()
+    return raw.replace("\r\n", "\n"), ("\r\n" if "\r\n" in raw else "\n")
+
+
+def write_atomic(path, text, eol="\n"):
+    """Write via a temp file and rename, so a crash never leaves half a file.
+    The file keeps its line ending, so a CRLF file stays CRLF."""
     tmp = f"{path}.{os.getpid()}.tmp"
-    with open(tmp, "w") as f:
-        f.write(text)
+    with open(tmp, "w", newline="") as f:
+        f.write(text.replace("\n", eol))
     os.replace(tmp, path)
 
 
@@ -175,8 +183,9 @@ def req_add(path):
     if not entry:
         die("req add needs the entry on stdin")
     with locked(path):
-        text = open(path).read() if os.path.exists(path) else ""
-        write_atomic(path, (text.rstrip("\n") + "\n\n" if text.strip() else "") + entry + "\n")
+        text, eol = read_text(path) if os.path.exists(path) else ("", "\n")
+        entry = entry.replace("\r\n", "\n")
+        write_atomic(path, (text.rstrip("\n") + "\n\n" if text.strip() else "") + entry + "\n", eol)
     print(f"{path}: entry added")
 
 
@@ -188,7 +197,8 @@ def req_done(path, ids):
 
 
 def req_done_locked(path, ids):
-    lines = open(path).read().split("\n")
+    text, eol = read_text(path)
+    lines = text.split("\n")
     today = datetime.date.today().isoformat()
     heads = [k for k, l in enumerate(lines) if re.match(r"^\*+ ", l)]
     found = []
@@ -216,7 +226,7 @@ def req_done_locked(path, ids):
     missing = [i for i in ids if i not in found]
     if missing:
         die(f"no heading with :ID: {', '.join(missing)} in {path}")
-    write_atomic(path, "\n".join(lines))
+    write_atomic(path, "\n".join(lines), eol)
     print(f"{path}: done {', '.join(reversed(found))}")
 
 
@@ -287,6 +297,9 @@ def boards_locked(op, path, board, extra, data):
                     n += 1
                 fresh.append([f"{prefix}-{n}", *r])
             data = fresh
+        too_long = [r for r in data if len(r) > len(head)]
+        if too_long:
+            die(f"boards {op}: {board} has {len(head)} columns ({', '.join(head)}); a row has {len(too_long[0])} cells")
         index = {r[0]: k for k, r in enumerate(rows) if r}
         for raw in data:
             new = [cell(v) for v in raw]

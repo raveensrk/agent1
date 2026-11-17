@@ -28,8 +28,20 @@ export const meta = {
 
 const EFFORT = { merger: 'medium', janitor: 'low', philosopher: 'low', finisher: 'low' }
 
-const { env = {}, approved = [], together = null, drop = [], cleanup: isCleanup = false } = args
+const { env = {}, together = null, cleanup: isCleanup = false } = args
+const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
+const approved = items(args.approved)
+const drop = items(args.drop)
 const bad = []
+for (const k of ['approved', 'drop']) if (args[k] != null && !Array.isArray(args[k])) bad.push(`${k} must be a list`)
+// Branch names go into git commands: only Ishikari's own shape is allowed.
+const BRANCH = /^ishikari\/[A-Za-z0-9._-]+\/[a-z0-9_][a-z0-9_-]{0,40}$/
+const idsSeen = new Set()
+for (const t of [...approved, ...drop]) {
+  if (!BRANCH.test(t.branch)) bad.push(`task "${t.id}": bad branch "${t.branch}"`)
+  if (idsSeen.has(t.id)) bad.push(`task "${t.id}" is listed twice`)
+  idsSeen.add(t.id)
+}
 if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
 if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
 if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
@@ -234,7 +246,7 @@ ${write(rowsIf(false))}
   { label: 'finisher-ant', phase: 'Main', effort: EFFORT.finisher, schema: FINISH },
 ))
 
-const mainMoved = Boolean(fin && fin.moved)
+const mainMoved = Boolean(merged.length && fin && fin.moved === true)
 if (merged.length && !mainMoved) log(`main not moved: ${fin ? fin.reason : 'the finisher ant died twice'}`)
 return {
   stage: 'finish',

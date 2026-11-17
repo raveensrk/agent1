@@ -115,9 +115,32 @@ def test_guards():
         assert not [n for n in names if n.endswith((".lock", ".tmp"))], names  # nothing left in the repo
         assert "missing" in fails(home, "req", "done", os.path.join(repo, "nope.org"), "B-1")
 
+        crlf = os.path.join(repo, "crlf.org")
+        open(crlf, "w", newline="").write("* OPEN C\r\n:PROPERTIES:\r\n:ID: C-1\r\n:END:\r\n")
+        run(home, "req", "done", crlf, "C-1")
+        raw = open(crlf, newline="").read()
+        assert "* DONE C\r\n" in raw and "\n" not in raw.replace("\r\n", "")  # stays CRLF
+
+        assert "columns" in fails(home, "boards", "add", state, "critiques", "r9", stdin='[["a", "b", "c", "d"]]')
+
+
+def test_parallel_writers():
+    with tempfile.TemporaryDirectory() as home:
+        state = json.loads(run(home, "setup", make_repo(home)))["state"]
+        env = {**os.environ, "HOME": home}
+        procs = [subprocess.Popen([sys.executable, TOOL, "boards", "add", state, "critiques", "p"],
+                                  stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, env=env, text=True)
+                 for _ in range(30)]
+        for k, p in enumerate(procs):
+            p.communicate(json.dumps([[f"f{k}.py", f"c{k}"]]), timeout=TIMEOUT)
+            assert p.returncode == 0
+        text = open(os.path.join(state, "boards", "critiques.md")).read()
+        assert sum(1 for l in text.splitlines() if l.startswith("| p-")) == 30  # no row lost
+
 
 if __name__ == "__main__":
     test_setup_and_boards()
     test_workflows_config_and_req()
     test_guards()
+    test_parallel_writers()
     print("ok")

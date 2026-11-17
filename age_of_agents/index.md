@@ -52,6 +52,7 @@ its job. The build script runs that workflow in place of a worker ant.
     anything is built, the plan script rejects bad or unknown ids, loops in
     `after`, two tasks that edit one file without one being after the other,
     and a requirement that is not an `.org` file in the repo or has no `:ID:`.
+    File paths are normalised first, so `./a.py` and `a.py` count as one file.
 
 05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a time.
     It decides on its own, goes as far as it can, and commits all its work,
@@ -140,6 +141,14 @@ They run once per finish, on the merged result, before main moves.
   and the requirement entries. Each write holds a lock and replaces the file
   in one step, so two runs never lose each other's rows and a crash never
   leaves half a file. Lock files live in `~/.ishikari/locks`, never in the repo.
+- Never trust an ant's answer shape. The scripts check every reply: a missing
+  or broken field is an error, never a silent pass. A combined test counts only
+  when every task is reported merged and a commit is given. Main counts as moved
+  only when something was merged and the finisher says so. Branch names from
+  earlier rounds must look like `ishikari/<run>/<task>`, since they go into git
+  commands. The investigator asking the same question twice stops the run.
+- Board and requirement writes keep the file's own line endings, and a row with
+  more cells than the board has columns is refused.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
   The scripts keep their rows while a stage runs and hand them to the tool once

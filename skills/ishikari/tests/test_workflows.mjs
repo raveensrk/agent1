@@ -123,3 +123,55 @@ test('finish: dropped branches are kept, merged ones removed', async () => {
   assert.ok(fin.includes('   - ishikari/r1/a'))
   assert.ok(!fin.includes('   - ishikari/r1/b'))
 })
+
+// ---- stress: malformed input and half answers never crash or pass silently ----
+
+test('stress: plan survives broken ant replies', async () => {
+  for (const reply of [{}, { requirement: null }, { designWritten: true, plans: null }, { designWritten: true, plans: [{ id: 'a', files: null, after: 'b' }] }]) {
+    const { out } = await run('ishikari-plan.js', { env, task: 't', answered: 'x', findings: 'y' }, (p, o) =>
+      o.label.startsWith('investigator') ? clear : o.label === 'add-requirement-ant' ? (reply.requirement === null ? reply : goodReq) : reply)
+    assert.equal(out.stage, 'error', JSON.stringify(reply))
+  }
+})
+
+test('stress: plan sees "./x" and "x" as one file', async () => {
+  const { out } = await planWith([{ id: 'a', title: 'A', files: ['./x'] }, { id: 'b', title: 'B', files: ['x'] }])
+  assert.match(out.reason, /both edit x/)
+})
+
+test('stress: plan stops a repeated question', async () => {
+  const { out } = await run('ishikari-plan.js', { env, task: 't', answered: [{ question: 'Q?', answer: 'a' }] },
+    () => ({ ...clear, next: { question: ' q? ', answers: ['a'] } }))
+  assert.match(out.reason, /same question/)
+})
+
+test('stress: build refuses bad input and foreign branches', async () => {
+  let { out } = await run('ishikari-build.js', { env, plans: 'a' }, () => ({}))
+  assert.equal(out.stage, 'error')
+  ;({ out } = await run('ishikari-build.js', { env, bugs: [{ task: 'a', branch: 'x; rm -rf /', bug: 'b' }] }, () => ({})))
+  assert.match(out.tasks[0].bugs[0], /bad branch/)
+})
+
+test('stress: a half answer from the integrator is not a combined pass', async () => {
+  const { out } = await run('ishikari-build.js', { env, plans: [{ id: 'a' }, { id: 'b' }] }, (p, o) =>
+    o.label.startsWith('worker') ? { status: 'built', notes: '' }
+      : o.label.startsWith('inspector') ? { bugs: [] }
+      : o.label.startsWith('integrator') ? { sha: 's', results: [{ id: 'a', outcome: 'merged', detail: '' }] } : {})
+  assert.equal(out.together, null)
+})
+
+test('stress: finish refuses bad lists, foreign branches and duplicates', async () => {
+  const cases = [{ drop: 'x' }, { approved: [{ id: 'a', branch: 'main' }] },
+    { approved: [{ id: 'a', branch: 'ishikari/r1/a' }, { id: 'a', branch: 'ishikari/r1/a' }] }]
+  for (const c of cases) {
+    const { out } = await run('ishikari-finish.js', { env, ...c }, () => ({ moved: true }))
+    assert.equal(out.stage, 'error', JSON.stringify(c))
+  }
+})
+
+test('stress: finish never claims main moved when nothing merged', async () => {
+  const { out } = await run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }] }, (p, o) =>
+    o.label === 'merger-ant' ? { sha: '', results: [] } : { moved: true, reason: '' })
+  assert.equal(out.mainMoved, false)
+  assert.equal(out.waiting.length, 1)
+})

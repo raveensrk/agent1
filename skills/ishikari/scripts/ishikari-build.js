@@ -32,7 +32,9 @@ const MAX_TRIES = 3   // tries per bug before it is escalated
 const MAX_ROUNDS = 5  // fix rounds per task, so new bugs cannot loop forever
 const EFFORT = { worker: 'medium', inspector: 'medium', detective: 'high', integrator: 'medium', merger: 'medium', clerk: 'low' }
 
-const { env = {}, plans = [], bugs: bugsIn = [] } = args
+const { env = {} } = args
+const plans = Array.isArray(args.plans) ? args.plans.filter(p => p && typeof p === 'object') : []
+const bugsIn = Array.isArray(args.bugs) ? args.bugs.filter(b => b && typeof b === 'object') : []
 
 const bad = []
 if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
@@ -40,6 +42,8 @@ if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
 if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
 if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id like 20261117-0120')
 if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (args.plans != null && !Array.isArray(args.plans)) bad.push('plans must be a list')
+if (args.bugs != null && !Array.isArray(args.bugs)) bad.push('bugs must be a list')
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const BUILT = {
@@ -335,6 +339,8 @@ for (const b of bugsIn) {
   if (!bugTasks[branch]) {
     const id = id0
     if (!/^[a-z0-9_][a-z0-9_-]{0,40}$/.test(id)) problems[id] = `bad task id "${id}" in bugs`
+    // Branch names go into git commands: only Ishikari's own shape is allowed.
+    else if (!/^ishikari\/[A-Za-z0-9._-]+\/[a-z0-9_][a-z0-9_-]{0,40}$/.test(branch)) problems[id] = `bad branch "${branch}" in bugs`
     bugTasks[branch] = makeTask(id, branch, {
       ...(fresh ? { plan: '(none: the bug below is the whole job)' } : {}),
       after: Array.isArray(b.after) ? b.after.map(String) : [],
@@ -472,8 +478,15 @@ for (let round = 1; round <= 2; round++) {
   phase('Combined')
   const r = await twice(() => combine(passing, round))
   if (!r) { log('combined test skipped: the integrator ant died twice'); break }
-  const outcome = Object.fromEntries((r.results || []).map(x => [x.id, x]))
+  const outcome = Object.fromEntries((Array.isArray(r.results) ? r.results : []).filter(x => x && x.id).map(x => [x.id, x]))
   const clashes = passing.filter(t => outcome[t.id] && ['conflict', 'tests failed'].includes(outcome[t.id].outcome))
+  // A pass counts only when every task is reported merged and a commit is given:
+  // a silent or half answer is not proof that they work together.
+  const unproven = passing.filter(t => !outcome[t.id] || (outcome[t.id].outcome !== 'merged' && !clashes.includes(t)))
+  if (!clashes.length && (unproven.length || !r.sha)) {
+    log(`combined test not proven: ${unproven.length ? `no merge reported for ${unproven.map(t => t.id).join(', ')}` : 'no commit returned'}; finish merges and tests on its own`)
+    break
+  }
   if (!clashes.length) {
     together = { branch: `ishikari/${env.run}/_together`, sha: r.sha, tasks: passing.map(t => t.id) }
     break
