@@ -302,6 +302,7 @@ boards: Boards (only the board tool writes them) {
 }
 
 always_on: Upkeep ants (before main moves) {
+  label.near: outside-bottom-center
   left: 1900
   top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
