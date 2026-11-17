@@ -4,8 +4,10 @@
 The things a window is made of.
 Part of the [[file:gui.org][GUI requirements]], which say what holds for all of it: the toolkit, the look, motion and performance.
 
-* Need clear distinction between things that i can click or do action on and things i cant
-* Interaction things in the app must be clear and distinct
+* Things I can act on look different from things I cannot
+- Anything clickable or actable looks it: a button, a link, a control
+- Nothing that cannot be acted on looks clickable
+- A clickable button looks like a button
 * Buttons
 ** A reference shows one way to build them
 - [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
@@ -13,7 +15,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Its window checks, [[file:demo/cljfx/test/demo/window_check.clj][window_check.clj]], are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check=, run in =demo/cljfx=
 - This requirement decides, not the reference: where the two differ, the reference is wrong
-** Clickable things look like buttons
 ** One tinted glass button a page, the main action; every other toolbar button is regular glass, and a button in the page is plain
 ** Buttons answer a press
 - Hover: the colour eases to its hover shade in 120 ms
