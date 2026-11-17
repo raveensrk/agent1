@@ -389,11 +389,27 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-***** cargo :core:
+***** rustup :core:
 :PROPERTIES:
+:URL: https://rustup.rs
 :NEEDS: [[*Rust][Rust]]
 :END:
+Installs Rust and keeps it updated
+***** cargo :core:
+:PROPERTIES:
+:NEEDS: [[*rustup][rustup]]
+:END:
 Rust build tool and package manager
+***** clippy :core:
+:PROPERTIES:
+:NEEDS: [[*cargo][cargo]]
+:END:
+Linter, run as cargo clippy
+***** rustfmt :core:
+:PROPERTIES:
+:NEEDS: [[*cargo][cargo]]
+:END:
+Formatter, run as cargo fmt
 **** Go :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
