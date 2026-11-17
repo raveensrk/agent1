@@ -14,6 +14,19 @@ with one report.
 Ishikari is a higher-order workflow: a plan can name another saved workflow as
 its job. The build script runs that workflow in place of a worker ant.
 
+## Flowchart
+
+One task, top to bottom: each diamond is a yes or no decision, and
+the only box that waits for you is the bold one, the investigator's question.
+Everything after it runs on its own. D2 source:
+[`ishikari-flowchart.d2`](ishikari-flowchart.d2), rendered with the dagre
+layout by [`render.sh`](render.sh).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="ishikari-flowchart-dark.svg">
+  <img alt="Ishikari flowchart" src="ishikari-flowchart.svg">
+</picture>
+
 ## Flow
 
 01. **Task in.** The user gives a task. It can be anything.
@@ -186,19 +199,6 @@ and stops to ask the user only in step 2.
    the next plan stage, and a cleanup run gets no janitor. The philosopher's
    new critiques are listed in the result. Once the check passes,
    `ishikari.py req done` marks the run's requirements DONE.
-
-## Flowchart
-
-Start here. One task, top to bottom: each diamond is a yes or no decision, and
-the only box that waits for you is the bold one, the investigator's question.
-Everything after it runs on its own. D2 source:
-[`ishikari-flowchart.d2`](ishikari-flowchart.d2), rendered with the dagre
-layout by [`render.sh`](render.sh).
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="ishikari-flowchart-dark.svg">
-  <img alt="Ishikari flowchart" src="ishikari-flowchart.svg">
-</picture>
 
 ## Diagram
 
