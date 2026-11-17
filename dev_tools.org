@@ -19,7 +19,7 @@ comma-separated items are needed; "a or b" needs only one of them.
 *** Computer :ROOT:GUI:
 *** Touch Typing :Skills:
 :PROPERTIES:
-:NEEDS: [[*Computer][Computer]] (Hello)
+:NEEDS: [[*Computer][Computer]]
 :END:
 ** Shell
 *** Bash :Environment:core:
@@ -540,7 +540,7 @@ Small, fast web UI components. diet_tracker's window.
 Clojure Dialect with c++ interop
 ** Fonts
 :PROPERTIES:
-:NEEDS: [[*GUI][GUI]]
+:NEEDS: [[*Computer][Computer]]
 :END:
 *** Freetype
 :PROPERTIES:
