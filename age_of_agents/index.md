@@ -72,13 +72,18 @@ its job. The build script runs that workflow in place of a worker ant.
       changed base is merged in first; a failed base blocks the task.
     - **Re-check:** after each fix it checks every open bug again, by its id.
 
-08. **Detective Ant** takes the bugs still open from round 2 on, finds the cause
-    and writes a fix plan, but never writes code. A worker ant builds the fix,
-    and the inspector re-checks each open bug by its id. Each round sees every
-    earlier round's cause, plan and outcome, so the detective never repeats a
-    failed idea. A bug still open after 3 tries drops the task from the run, and tasks built
-    on it drop too; the final report lists them.
-    An ant that crashes is retried once and never counts as a bug.
+08. **Detective Ant**: finds why a bug is still open after a failed fix. It
+    reads only; it never writes code.
+    - **Round 1** needs no detective: the worker builds the inspector's first
+      fix plan.
+    - **Round 2 on:** for each bug still open, it finds the cause and writes
+      the next fix plan. A worker ant builds it, and the inspector re-checks
+      each open bug by its id.
+    - **Memory:** each round sees every earlier round's cause, plan and
+      outcome, so it never repeats a failed idea.
+    - **Give up:** a bug still open after 3 tries drops the task, and tasks
+      built on it drop too; the final report lists them.
+    - An ant that crashes is retried once and never counts as a bug.
 
 09. **Combined test, by the Integrator Ant.** Tasks are built and inspected
     alone, so two can pass alone and still break when combined. When every
@@ -265,23 +270,23 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
-  together: Combined test\nIntegrator Ant: all passing tasks\nmerged in a scratch copy, tested once {class: node; style.stroke: ${check-line}}
+  together: Combined test\nIntegrator Ant\nmerges passing tasks\nin a scratch copy,\ntests once {class: node; style.stroke: ${check-line}}
   monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
 fix: 4. Fix {
-  left: 2100
+  left: 2350
   top: 0
   direction: down
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
   bounty: Bug bounty board {shape: cylinder; class: node; style.stroke: ${fix-line}}
-  detective: Detective ant\nplans fixes from round 2,\nwrites no code {class: node; style.stroke: ${fix-line}}
-  bounty -> detective: spawn {class: bug}
+  detective: Detective Ant\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {class: node; style.stroke: ${fix-line}}
+  bounty -> detective: bug still open\nafter round 1 {class: bug}
 }
 
 finish: 5. Finish {
-  left: 2700
+  left: 3000
   top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
   merger: Merger ant\nstraight line in a\nscratch copy, tests once {class: node; style.stroke: ${finish-line}}
@@ -316,7 +321,7 @@ finish.finisher -> build.bulletin: main moved,\nset "done" {class: ok}
 always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
-  left: 2700
+  left: 3000
   top: 700
   grid-columns: 1
   grid-gap: 0

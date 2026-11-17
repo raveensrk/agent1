@@ -69,23 +69,23 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
-  together: Combined test\nIntegrator Ant: all passing tasks\nmerged in a scratch copy, tested once {class: node; style.stroke: ${check-line}}
+  together: Combined test\nIntegrator Ant\nmerges passing tasks\nin a scratch copy,\ntests once {class: node; style.stroke: ${check-line}}
   monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
 fix: 4. Fix {
-  left: 2100
+  left: 2350
   top: 0
   direction: down
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
   bounty: Bug bounty board {shape: cylinder; class: node; style.stroke: ${fix-line}}
-  detective: Detective ant\nplans fixes from round 2,\nwrites no code {class: node; style.stroke: ${fix-line}}
-  bounty -> detective: spawn {class: bug}
+  detective: Detective Ant\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {class: node; style.stroke: ${fix-line}}
+  bounty -> detective: bug still open\nafter round 1 {class: bug}
 }
 
 finish: 5. Finish {
-  left: 2700
+  left: 3000
   top: 0
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
   merger: Merger ant\nstraight line in a\nscratch copy, tests once {class: node; style.stroke: ${finish-line}}
@@ -120,7 +120,7 @@ finish.finisher -> build.bulletin: main moved,\nset "done" {class: ok}
 always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
-  left: 2700
+  left: 3000
   top: 700
   grid-columns: 1
   grid-gap: 0
