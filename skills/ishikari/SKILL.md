@@ -2,14 +2,16 @@
 name: ishikari
 metadata:
   scope: global
-description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it together, and merge it in a straight line - stopping only to ask the user. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
+description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it together, and merge it in a straight line - asking the user only while planning, then running on its own. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
 argument-hint: "<task> [repo path]"
 ---
 
 # Ishikari
 
 Drive three workflows for one task. A running workflow cannot ask the user, so
-this skill runs them in turn and asks between them.
+this skill runs them in turn. It asks the user only in step 2, Plan. Approving
+the plans approves the whole run, merge to main included. After that, never
+ask: decide by the rules in steps 3 and 4 and report at the end.
 
 Design, rules and diagram:
 [age_of_agents/index.md](../../age_of_agents/index.md).
@@ -31,7 +33,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## Rules
 
-- Ask every question with the `/ask-simple` skill. Never answer for the user.
+- Ask every question with the `/ask-simple` skill, and only in step 2. Never
+  answer for the user.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
 - Never edit code, boards, requirements or branches yourself. Ants and
@@ -64,34 +67,33 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
     `python3 <env.tool> boards remove <env.state> critiques`;
   - save `testCommand` and `checkCommand` with
     `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
-- A cleanup plan from the last finish changes no behaviour: this plan
-  approval is its only gate. If the build then returns it `awaiting review`
-  with no bugs, go straight to finish with `cleanup: true`, without asking
-  again; show the result after.
+- A cleanup plan from the last finish runs like any task, with `cleanup: true`
+  on its finish.
 
 ## 3. Build
 
 - Run `env.workflows.build` with `{env, plans}`. Later rounds pass `bugs`
   instead of new plans.
-- Final review: for each task show status, notes, nits, base problems and fix
-  history. Show escalated, blocked and error tasks with their bugs. Offer the
-  diff: `git -C <repo> diff <main>...<branch>`.
-- Ask which tasks to approve, which to send back (with the user's guidance) and
-  which to drop. Tasks sent back go to a new build round as
-  `bugs: [{task, branch, bug, after, history, guidance}]`.
+- Do not ask. Approve every `awaiting review` task. Drop every `escalated`,
+  `blocked` and `error` task, and every task whose `after` holds a dropped
+  one. Keep each dropped task, its bugs and fix history for the report.
 
 ## 4. Finish
 
 - Run `env.workflows.finish` with `{env, approved, together, drop}`, plus
   `cleanup: true` for a cleanup run. `approved` items are `{id, branch, after}`
   from the build result.
-- `mainMoved: false`: show the reason. Nothing is lost; run finish again once it
-  is fixed.
-- `bugs` and `waiting`: offer a new build round for them.
-- `check`: if it ran and failed, show its output and offer a build round for
-  the failure. Do not mark requirements done.
-- Once main moved and `check` passed (or the user saw the app work), run
+- `bugs` and `waiting`: run a new build round for them with
+  `bugs: [{task, branch, bug, after, history}]`, then finish again, without
+  asking. At most 2 such rounds per run; after that drop what is left.
+- `check`: if it ran and failed, run one build round for the failure as a bug,
+  then finish again. If it still fails, stop and report its output. Do not
+  mark requirements done.
+- `mainMoved: false` with no bugs left to fix: stop and report the reason.
+  Nothing is lost; finish can run again once it is fixed.
+- Once main moved and `check` passed, run
   `python3 <env.tool> req done <requirement file> <ids>` for the run's
   requirements and commit only that file.
-- Report what landed on main, the check, each new critique (one line each from
-  `critiques`) and any cleanup plan.
+- Report once, at the end: what landed on main, each task's notes and nits,
+  each dropped task with why and its bugs, the check, each new critique (one
+  line each from `critiques`) and any cleanup plan, offered as the next task.

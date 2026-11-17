@@ -53,15 +53,16 @@ steps: {
     (check.together -> fix.bounty)[0].style.opacity: 1
     (fix.detective -> build.aw)[0].style.opacity: 1
     (build.aw -> check.monitor)[0].style.opacity: 1
-    (fix.detective -> user)[0].style.opacity: 1
+    (fix.detective -> build.bulletin)[0].style.opacity: 1
   }
   6-finish: {
     finish.style.opacity: 1
     finish.merger.style.opacity: 1
-    (build.bulletin -> user)[0].style.opacity: 1
-    (user -> finish.merger)[0].style.opacity: 1
+    (build.bulletin -> finish.merger)[0].style.opacity: 1
     finish.finisher.style.opacity: 1
     (finish.finisher -> build.bulletin)[0].style.opacity: 1
+    user.style.opacity: 1
+    (finish.finisher -> user)[0].style.opacity: 1
     (always_on -> finish.finisher)[0].style.opacity: 1
     (finish.merger -> fix.bounty)[0].style.opacity: 1
   }

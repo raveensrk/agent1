@@ -107,14 +107,14 @@ check.together -> fix.bounty: clash {class: bug}
 check.inspector -> fix.bounty: bugs found,\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
-fix.detective -> user: escalate after\n3 tries on a bug {class: bug}
-build.bulletin -> user: final review {class: ok}
+fix.detective -> build.bulletin: dropped after\n3 tries on a bug {class: bug}
 build.aw -> fix.bounty: stuck {class: bug}
-user -> finish.merger: approved {class: ok}
+build.bulletin -> finish.merger: passing tasks,\nno review {class: ok}
 finish.merger -> fix.bounty: merge failed {class: bug}
 finish.merger -> always_on: then {class: flow}
 always_on -> finish.finisher: then {class: flow}
 finish.finisher -> build.bulletin: main moved,\nset "done" {class: ok}
+finish.finisher -> user: final report {class: ok}
 always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {

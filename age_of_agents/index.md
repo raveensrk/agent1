@@ -6,8 +6,10 @@ Design documentation and design bible for Ishikari, a workflow where AI agents
 ## Goal
 
 Take any task from the user and finish it with many ants working in parallel.
-The user is asked only at fixed gates: task review, requirement and plan
-approval, final review, and escalations. Everything between runs on its own.
+The user is asked only while planning: task review questions, then requirement
+and plan approval. Approving the plans also approves merging the result to
+main. Build, check, fix, merge and upkeep run on their own, and the run ends
+with one report.
 
 Ishikari is a higher-order workflow: a plan can name another saved workflow as
 its job. The build script runs that workflow in place of a worker ant.
@@ -37,8 +39,7 @@ its job. The build script runs that workflow in place of a worker ant.
 
 05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a time.
     It decides on its own, goes as far as it can, and commits all its work,
-    including the docs its change affects, so the user reviews docs with the
-    code. A worker that gets stuck reports why, and that becomes a bug.
+    including the docs its change affects, so docs land with the code. A worker that gets stuck reports why, and that becomes a bug.
 
 06. **Anti-monitor.** The build script itself does this job. It starts every
     ant, so it knows the moment a worker finishes and starts that task's
@@ -49,26 +50,28 @@ its job. The build script runs that workflow in place of a worker ant.
     those tasks are final; if one of them changed, their final version is merged
     in first, and if one failed, this task is blocked. For real bugs it also
     writes the first fix plan, which saves a detective in round 1. Style points
-    go to the final review as notes.
+    go to the final report as notes.
 
 08. **Detective Ant** takes the bugs still open from round 2 on, finds the cause
     and writes a fix plan, but never writes code. A worker ant builds the fix,
     and the inspector re-checks each open bug by its id. Each round sees every
     earlier round's cause, plan and outcome, so the detective never repeats a
-    failed idea. A bug still open after 3 tries escalates the task to the user.
+    failed idea. A bug still open after 3 tries drops the task from the run, and tasks built
+    on it drop too; the final report lists them.
     An ant that crashes is retried once and never counts as a bug.
 
 09. **Together test.** When every task is done, a merger ant merges all passing
     tasks in a straight line in a scratch copy and runs the tests once. A task
     that clashes takes in the tasks it clashes with and goes back through the
-    fix loop, and the test runs once more. The user then does the final review.
+    fix loop, and the test runs once more. No one reviews by hand.
 
-10. **Merger Ant** runs after the final review. It adds the approved tasks'
+10. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
     dependency order, and tests once. When the approved tasks are exactly the
     ones tested together, it reuses that result. It refuses a task whose base
-    the user did not approve. A failed merge goes back to the next build as a
-    bug. Main moves forward only as a fast-forward, which git refuses if it
+    was dropped. A failed merge, or a task left waiting, goes back to a new
+    build round on its own, at most 2 rounds; what is left is dropped and
+    reported. Main moves forward only as a fast-forward, which git refuses if it
     would overwrite local edits.
 
 ## Upkeep ants
@@ -85,8 +88,9 @@ They run once per finish, on the merged result, before main moves.
 
 - Ants work in parallel wherever nothing forces an order. Fix rounds, tasks in
   `after` and merges run in order.
-- Only the main session asks the user questions. Ants report questions and
-  escalations in their results.
+- Only the main session asks the user questions, and only in the plan stage.
+  Ants report problems in their results; after planning, the main session
+  decides by the fixed rules in the skill and reports at the end.
 - Only worker ants write code. Every other ant reads, plans, reviews, merges or
   posts to a board.
 - At most 5 worker ants run at the same time, fix workers included. Upkeep ants
@@ -114,7 +118,8 @@ They run once per finish, on the merged result, before main moves.
 ## Running Ishikari
 
 A running workflow cannot stop to ask the user, so Ishikari is three workflows.
-The main session answers between them, at the gates above.
+The main session asks the user only between plan runs; after plan approval it
+drives build and finish on its own.
 
 | Workflow          | Stages                      | Ends with            |
 | ----------------- | --------------------------- | -------------------- |
@@ -127,7 +132,7 @@ The scripts: [`ishikari-plan.js`](../skills/ishikari/scripts/ishikari-plan.js),
 [`ishikari-finish.js`](../skills/ishikari/scripts/ishikari-finish.js).
 
 The [`/ishikari`](../skills/ishikari/SKILL.md) command runs all four steps below
-and stops only to ask the user.
+and stops to ask the user only in step 2.
 
 1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
    copies the board templates, copies the three scripts into
@@ -141,10 +146,9 @@ and stops only to ask the user.
    `ishikari.py req add` writes the requirement (none for a refactor), the main
    session commits it, and `ishikari.py boards remove` drops the answered
    critiques. `ishikari.py config` saves the test and check commands.
-3. Run `ishikari-build` with `env` and the approved plans. Do the final review
-   with each task's notes, nits and fix history. Escalated or rejected tasks
-   come back in a later build as `bugs`, with the user's guidance. A cleanup
-   plan that builds clean skips this review: its plan approval was its gate.
+3. Run `ishikari-build` with `env` and the approved plans. Every task
+   `awaiting review` is approved without asking. Escalated, blocked and error
+   tasks, and tasks built on them, are dropped and listed in the report.
 4. Run `ishikari-finish` with `env`, the approved tasks, the build's `together`
    result and any tasks to drop. One task with no `after` skips the trial
    merge: its inspector already tested it. After main moves, the finisher runs
@@ -275,14 +279,14 @@ check.together -> fix.bounty: clash {class: bug}
 check.inspector -> fix.bounty: bugs found,\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
-fix.detective -> user: escalate after\n3 tries on a bug {class: bug}
-build.bulletin -> user: final review {class: ok}
+fix.detective -> build.bulletin: dropped after\n3 tries on a bug {class: bug}
 build.aw -> fix.bounty: stuck {class: bug}
-user -> finish.merger: approved {class: ok}
+build.bulletin -> finish.merger: passing tasks,\nno review {class: ok}
 finish.merger -> fix.bounty: merge failed {class: bug}
 finish.merger -> always_on: then {class: flow}
 always_on -> finish.finisher: then {class: flow}
 finish.finisher -> build.bulletin: main moved,\nset "done" {class: ok}
+finish.finisher -> user: final report {class: ok}
 always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
@@ -335,7 +339,7 @@ Animated version, one stage every 6 seconds:
 Car tour, one task driven slowly along the exact path it takes:
 [`ishikari-flow.svg`](ishikari-flow.svg), built by [`flow.py`](flow.py). Open it
 in a browser; it needs its script to run. It drives two routes: a bug fixed on
-the first try, and a stuck worker escalated after 3 tries. The −, pause and +
+the first try, and a stuck worker dropped after 3 tries. The −, pause and +
 buttons, or the keys `+`, `-` and space, change speed live. Click a block to see
 only its arrows and the blocks they join; click it again, click empty space or
 press Esc to go back to the tour.
