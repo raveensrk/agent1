@@ -59,13 +59,18 @@ its job. The build script runs that workflow in place of a worker ant.
     ant, so it knows the moment a worker finishes and starts that task's
     inspector at once.
 
-07. **Inspector Ant** checks the task's own work against its plan and the
-    design, where a name or interface that differs is a bug, and runs the
-    tests in the task's worktree. A task built on others is inspected only after
-    those tasks are final; if one of them changed, their final version is merged
-    in first, and if one failed, this task is blocked. For real bugs it also
-    writes the first fix plan, which saves a detective in round 1. Style points
-    go to the final report as notes.
+07. **Inspector Ant**: one per built task, started the moment the task or a
+    fix for it is built. It reads only; it never changes code.
+    - **Checks:** the task's own work against its plan, and against
+      `architecture.md`: a name or interface that differs from the design is a
+      bug. It runs the tests in the task's worktree.
+    - **Pass:** no bugs. The task waits for the together test. Style points go
+      to the final report as notes.
+    - **Fail:** each bug goes to the bug bounty board, with how to see it. It
+      also writes the first fix plan, so round 1 needs no detective.
+    - **Tasks built on others** are checked only once those are final. A
+      changed base is merged in first; a failed base blocks the task.
+    - **Re-check:** after each fix it checks every open bug again, by its id.
 
 08. **Detective Ant** takes the bugs still open from round 2 on, finds the cause
     and writes a fix plan, but never writes code. A worker ant builds the fix,
@@ -256,10 +261,10 @@ check: 3. Check {
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
-  inspector: Inspector ant {class: node; style.stroke: ${check-line}}
+  inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
   together: Together test\nmerger ant, scratch copy {class: node; style.stroke: ${check-line}}
-  monitor -> inspector: spawn per built\ntask or fix {class: flow}
-  inspector -> together: all tasks\nchecked {class: ok}
+  monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
+  inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
 fix: 4. Fix {
@@ -295,7 +300,7 @@ plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> build.bulletin: work together {class: ok}
 check.together -> fix.bounty: clash {class: bug}
-check.inspector -> fix.bounty: bugs found,\nfirst fix plan {class: bug}
+check.inspector -> fix.bounty: fail: bugs +\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
 fix.detective -> build.bulletin: dropped after\n3 tries on a bug {class: bug}

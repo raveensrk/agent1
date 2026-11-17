@@ -68,10 +68,10 @@ check: 3. Check {
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
-  inspector: Inspector ant {class: node; style.stroke: ${check-line}}
+  inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
   together: Together test\nmerger ant, scratch copy {class: node; style.stroke: ${check-line}}
-  monitor -> inspector: spawn per built\ntask or fix {class: flow}
-  inspector -> together: all tasks\nchecked {class: ok}
+  monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
+  inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
 fix: 4. Fix {
@@ -107,7 +107,7 @@ plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> build.bulletin: work together {class: ok}
 check.together -> fix.bounty: clash {class: bug}
-check.inspector -> fix.bounty: bugs found,\nfirst fix plan {class: bug}
+check.inspector -> fix.bounty: fail: bugs +\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}
 fix.detective -> build.bulletin: dropped after\n3 tries on a bug {class: bug}
