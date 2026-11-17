@@ -11,20 +11,23 @@ legend.**.style.opacity: 1
 legend.**.(** -> **)[*].style.opacity: 1
 
 steps: {
-  1-review: {
-    plan.style.opacity: 1
-    plan.task.style.opacity: 1
-    plan.arta.style.opacity: 1
-    plan.(task -> arta)[0].style.opacity: 1
+  1-ask: {
+    ask.style.opacity: 1
+    ask.task.style.opacity: 1
+    ask.arta.style.opacity: 1
+    ask.(task -> arta)[0].style.opacity: 1
     user.style.opacity: 1
-    (plan.arta <-> user)[0].style.opacity: 1
-    plan.research.style.opacity: 1
-    plan.(arta <-> research)[0].style.opacity: 1
+    (ask.arta <-> user)[0].style.opacity: 1
+    ask.research.style.opacity: 1
+    ask.(arta <-> research)[0].style.opacity: 1
+    ask.report.style.opacity: 1
+    ask.(arta -> report)[0].style.opacity: 1
   }
   2-requirement: {
+    plan.style.opacity: 1
     plan.aara.style.opacity: 1
     plan.plans.style.opacity: 1
-    plan.(arta -> aara)[0].style.opacity: 1
+    (ask.report -> plan.aara)[0].style.opacity: 1
     plan.arch.style.opacity: 1
     plan.(aara -> arch)[0].style.opacity: 1
     plan.(arch -> plans)[0].style.opacity: 1
@@ -74,8 +77,8 @@ steps: {
     boards.critiques.style.opacity: 1
     always_on.philosopher.style.opacity: 1
     (always_on.philosopher -> boards.critiques)[0].style.opacity: 1
-    (always_on.janitor -> plan.plans)[0].style.opacity: 1
+    (always_on.janitor -> ask.task)[0].style.opacity: 1
     (finish.merger -> always_on)[0].style.opacity: 1
-    (boards.critiques -> plan.arta)[0].style.opacity: 1
+    (boards.critiques -> ask.arta)[0].style.opacity: 1
   }
 }

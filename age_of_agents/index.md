@@ -254,33 +254,41 @@ user: User (me) {
   style: {fill: "#FDE68A"; stroke: "#B45309"; font-color: ${text}}
 }
 
-plan: 1. Plan {
+ask: 1. Ask - one live agent, run by the skill {
   left: 0
   top: 0
   direction: down
-  style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
+  style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2; stroke-dash: 4}
   task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
-  arta: Investigator Ant {class: node; style.stroke: ${plan-line}}
+  arta: Investigator Ant\nstays alive, reads repo once,\ngets each answer as a message {class: node; style.stroke: ${plan-line}}
   research: Researcher Ants\nup to 5, web + computer {style.multiple: true; class: node; style.stroke: ${plan-line}}
+  report: investigation_report.md {shape: page; class: node; style.stroke: ${plan-line}}
+  task -> arta: review {class: flow}
+  arta <-> research: facts, it waits {class: flow; style.stroke-dash: 3}
+  arta -> report: nothing unclear:\nwrite report {class: ok}
+}
+
+plan: 2. Plan workflow {
+  left: 620
+  top: 0
+  direction: down
+  style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
   aara: Add Requirement Ant {class: node; style.stroke: ${plan-line}}
   arch: Architect Ant\narchitecture.md {class: node; style.stroke: ${plan-line}}
   plans: Worker plans\none per worker ant {shape: page; class: node; style.stroke: ${plan-line}; style.multiple: true}
-  task -> arta: review {class: flow}
-  arta <-> research: facts {class: flow; style.stroke-dash: 3}
-  arta -> aara: investigation_report.md {class: ok}
   aara -> arch: requirement {class: flow}
   arch -> plans: design,\nwrite plans {class: flow}
 }
 
-build: 2. Build {
-  left: 560
+build: 3. Build {
+  left: 1180
   top: 0
   style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
   aw: Worker Ants\ncode, tests and docs,\none worktree each, max 5 {style.multiple: true; class: node; style.stroke: ${build-line}}
 }
 
-check: 3. Check {
-  left: 1440
+check: 4. Check {
+  left: 1900
   top: 0
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
@@ -291,16 +299,16 @@ check: 3. Check {
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
-fix: 4. Fix {
-  left: 2350
+fix: 5. Fix {
+  left: 2750
   top: 0
   direction: up
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
   detective: Detective Ant\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {class: node; style.stroke: ${fix-line}}
 }
 
-finish: 5. Finish {
-  left: 3000
+finish: 6. Finish {
+  left: 3350
   top: 0
   direction: right
   grid-columns: 2
@@ -310,8 +318,8 @@ finish: 5. Finish {
 }
 
 boards: Boards (only the board tool writes them) {
-  left: 900
-  top: 700
+  left: 1000
+  top: 820
   direction: right
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   bulletin: Bulletin board\none row per task {shape: cylinder; class: node; style.stroke: ${build-line}}
@@ -320,9 +328,9 @@ boards: Boards (only the board tool writes them) {
 }
 
 always_on: Upkeep ants (before main moves) {
+  left: 2100
+  top: 820
   label.near: outside-bottom-center
-  left: 1900
-  top: 700
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\nwrites a cleanup plan {class: node; style.stroke: ${always-line}}
   philosopher: Philosopher ant\n5 best critiques of the merge {class: node; style.stroke: ${always-line}}
@@ -331,7 +339,8 @@ always_on: Upkeep ants (before main moves) {
 build.aw -> boards.bulletin: built {class: flow}
 boards.bounty -> fix.detective: bug still open\nafter round 1 {class: bug}
 always_on.philosopher -> boards.critiques: critique {class: flow; style.stroke-dash: 3}
-plan.arta <-> user: up to 4 questions\na round, /ask-simple {class: flow}
+ask.report -> plan.aara: report {class: ok}
+ask.arta <-> user: up to 4 questions\na round, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> boards.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
 check.together -> boards.bulletin: pass: they\nwork combined {class: ok}
@@ -346,11 +355,11 @@ finish.merger -> boards.bounty: merge failed {class: bug}
 finish.merger -> always_on: then {class: flow}
 always_on -> finish.finisher: then {class: flow}
 finish.finisher -> boards.bulletin: main moved,\nset "done" {class: ok}
-always_on.janitor -> plan.plans: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
+always_on.janitor -> ask.task: cleanup plan,\noffered next time {class: flow; style.stroke-dash: 3}
 
 legend: Legend {
-  left: 3000
-  top: 700
+  left: 3350
+  top: 820
   grid-columns: 1
   grid-gap: 0
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
@@ -383,7 +392,7 @@ legend: Legend {
     s -> t {class: flow; style.stroke-dash: 3}
   }
 }
-boards.critiques -> plan.arta: turned into questions\nfor the next task {class: flow; style.stroke-dash: 3}
+boards.critiques -> ask.arta: turned into questions\nfor the next task {class: flow; style.stroke-dash: 3}
 ```
 
 <picture>
