@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 600" width="1020" height="600" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">
+<title>Ishikari: one task's journey</title>
+<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#64748b"/></marker>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#f87171"/></marker>
+<marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#4ade80"/></marker></defs>
+<rect width="1020" height="600" fill="#0b1120"/>
+<text x="40" y="50" fill="#e2e8f0" font-size="24" font-weight="700">Ishikari - one task's journey</text>
+<text x="40" y="76" fill="#94a3b8" font-size="14">The glowing ant is the task. It fails check once, goes through Fix, then passes and merges.</text>
+<line x1="220" y1="170" x2="228" y2="170" stroke="#64748b" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="410" y1="170" x2="418" y2="170" stroke="#64748b" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="600" y1="170" x2="608" y2="170" stroke="#64748b" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="790" y1="170" x2="798" y2="170" stroke="#64748b" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M680,232 L640,318" stroke="#f87171" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#arr)"/><text x="672" y="285" fill="#f87171" font-size="12">bug</text>
+<path d="M570,318 L530,232" stroke="#94a3b8" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#ar)"/><text x="490" y="285" fill="#94a3b8" font-size="12">fix plan</text>
+<rect x="34" y="104" width="192" height="132" rx="16" fill="none" stroke="#60a5fa" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0000;0.0571" values="0;1;0"/></rect>
+<rect x="40" y="110" width="180" height="120" rx="12" fill="#111827" stroke="#60a5fa" stroke-width="2"/>
+<text x="54" y="140" fill="#60a5fa" font-size="17" font-weight="700">1. Ask</text>
+<text x="54" y="168" fill="#e2e8f0" font-size="13">Investigator ant</text>
+<text x="54" y="188" fill="#94a3b8" font-size="12">asks you, writes report</text>
+<rect x="224" y="104" width="192" height="132" rx="16" fill="none" stroke="#60a5fa" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0800;0.1371" values="0;1;0"/></rect>
+<rect x="230" y="110" width="180" height="120" rx="12" fill="#111827" stroke="#60a5fa" stroke-width="2"/>
+<text x="244" y="140" fill="#60a5fa" font-size="17" font-weight="700">2. Plan</text>
+<text x="244" y="168" fill="#e2e8f0" font-size="13">Requirement + Architect</text>
+<text x="244" y="188" fill="#94a3b8" font-size="12">one plan per worker</text>
+<rect x="414" y="104" width="192" height="132" rx="16" fill="none" stroke="#4ade80" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.1886;0.2457;0.5543;0.6114" values="0;1;0;1;0"/></rect>
+<rect x="420" y="110" width="180" height="120" rx="12" fill="#111827" stroke="#4ade80" stroke-width="2"/>
+<text x="434" y="140" fill="#4ade80" font-size="17" font-weight="700">3. Build</text>
+<text x="434" y="168" fill="#e2e8f0" font-size="13">Worker ants x5</text>
+<text x="434" y="188" fill="#94a3b8" font-size="12">one worktree each</text>
+<rect x="604" y="104" width="192" height="132" rx="16" fill="none" stroke="#fbbf24" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.2971;0.3543;0.6629;0.7200" values="0;1;0;1;0"/></rect>
+<rect x="610" y="110" width="180" height="120" rx="12" fill="#111827" stroke="#fbbf24" stroke-width="2"/>
+<text x="624" y="140" fill="#fbbf24" font-size="17" font-weight="700">4. Check</text>
+<text x="624" y="168" fill="#e2e8f0" font-size="13">Inspector ants</text>
+<text x="624" y="188" fill="#94a3b8" font-size="12">then combined test</text>
+<rect x="794" y="104" width="192" height="132" rx="16" fill="none" stroke="#a78bfa" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.7771" values="0;1"/></rect>
+<rect x="800" y="110" width="180" height="120" rx="12" fill="#111827" stroke="#a78bfa" stroke-width="2"/>
+<text x="814" y="140" fill="#a78bfa" font-size="17" font-weight="700">6. Finish</text>
+<text x="814" y="168" fill="#e2e8f0" font-size="13">Merger + Finisher</text>
+<text x="814" y="188" fill="#94a3b8" font-size="12">main moves forward</text>
+<rect x="509" y="314" width="192" height="112" rx="16" fill="none" stroke="#fb7185" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.4229;0.4914" values="0;1;0"/></rect>
+<rect x="515" y="320" width="180" height="100" rx="12" fill="#111827" stroke="#fb7185" stroke-width="2"/>
+<text x="529" y="350" fill="#fb7185" font-size="17" font-weight="700">5. Fix</text>
+<text x="529" y="378" fill="#e2e8f0" font-size="13">Detective ant</text>
+<text x="529" y="398" fill="#94a3b8" font-size="12">writes next fix plan</text>
+<circle cx="440" cy="210" r="5" fill="#4ade80" opacity="0.8"><animate attributeName="cy" values="210;202;210" dur="0.8s" begin="0.0s" repeatCount="indefinite"/></circle>
+<circle cx="470" cy="210" r="5" fill="#4ade80" opacity="0.8"><animate attributeName="cy" values="210;202;210" dur="0.8s" begin="0.15s" repeatCount="indefinite"/></circle>
+<circle cx="500" cy="210" r="5" fill="#4ade80" opacity="0.8"><animate attributeName="cy" values="210;202;210" dur="0.8s" begin="0.3s" repeatCount="indefinite"/></circle>
+<circle cx="530" cy="210" r="5" fill="#4ade80" opacity="0.8"><animate attributeName="cy" values="210;202;210" dur="0.8s" begin="0.44999999999999996s" repeatCount="indefinite"/></circle>
+<circle cx="560" cy="210" r="5" fill="#4ade80" opacity="0.8"><animate attributeName="cy" values="210;202;210" dur="0.8s" begin="0.6s" repeatCount="indefinite"/></circle>
+<circle cx="130" cy="330" r="22" fill="#78350f" stroke="#fbbf24" stroke-width="2"/><text x="130" y="336" fill="#fde68a" font-size="14" text-anchor="middle" font-weight="700">you</text>
+<line x1="130" y1="232" x2="130" y2="306" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 4"><animate attributeName="stroke-dashoffset" values="0;-16" dur="0.6s" repeatCount="indefinite"/></line><text x="140" y="275" fill="#fbbf24" font-size="12">up to 4 questions</text>
+<text x="280" y="470" fill="#64748b" font-size="13" font-weight="700">BOARDS - only the board tool writes them</text>
+<rect x="275" y="480" width="210" height="80" rx="14" fill="none" stroke="#4ade80" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.7200;0.7886;0.8857;0.9600" values="0;1;0;1;0"/></rect>
+<rect x="280" y="485" width="200" height="70" rx="10" fill="#0f172a" stroke="#4ade80" stroke-width="1.5"/><ellipse cx="380" cy="485" rx="100" ry="6" fill="#1e293b" stroke="#4ade80" stroke-width="1.5"/>
+<text x="380" y="517" fill="#e2e8f0" font-size="14" text-anchor="middle">Bulletin board</text><text x="380" y="538" fill="#94a3b8" font-size="12" text-anchor="middle">one row per task</text>
+<rect x="495" y="480" width="210" height="80" rx="14" fill="none" stroke="#f87171" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.3543;0.4229" values="0;1;0"/></rect>
+<rect x="500" y="485" width="200" height="70" rx="10" fill="#0f172a" stroke="#f87171" stroke-width="1.5"/><ellipse cx="600" cy="485" rx="100" ry="6" fill="#1e293b" stroke="#f87171" stroke-width="1.5"/>
+<text x="600" y="517" fill="#e2e8f0" font-size="14" text-anchor="middle">Bug bounty board</text><text x="600" y="538" fill="#94a3b8" font-size="12" text-anchor="middle">one row per bug</text>
+<rect x="715" y="480" width="210" height="80" rx="14" fill="none" stroke="#94a3b8" stroke-width="4" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.8286;0.8857" values="0;1;0"/></rect>
+<rect x="720" y="485" width="200" height="70" rx="10" fill="#0f172a" stroke="#94a3b8" stroke-width="1.5"/><ellipse cx="820" cy="485" rx="100" ry="6" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="820" y="517" fill="#e2e8f0" font-size="14" text-anchor="middle">Critiques board</text><text x="820" y="538" fill="#94a3b8" font-size="12" text-anchor="middle">philosopher ant</text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Investigator ant reads the repo once and asks you questions.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0000;0.0800" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Plan workflow: requirement, architecture, one plan per worker.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.0800;0.1886" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Worker ants build in parallel, one git worktree each.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.1886;0.2971" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Inspector ant runs the tests...<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.2971;0.3543" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">...a bug! It goes on the bug bounty board.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.3543;0.4229" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Detective ant finds why and writes the next fix plan.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.4229;0.5543" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">A worker ant builds the fix.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.5543;0.6629" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Re-inspected and combined test passes. Bulletin updated.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.6629;0.7771" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Merger lines tasks up straight; upkeep ants critique and tidy.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.7771;0.8857" values="0;1;0"/></text>
+<text x="1000" y="440" fill="#e2e8f0" font-size="15" text-anchor="end" opacity="0">Finisher fast-forwards main. Done.<animate attributeName="opacity" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.0000;0.8857" values="0;1"/></text>
+<path d="M130,170 L320,170 L510,170 L700,170 L605,370 L510,170 L700,170 L890,170" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="2 6"/>
+<g filter="url(#glow)"><circle r="11" fill="#60a5fa"><animate attributeName="fill" dur="17.5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0;0.3371;0.5811" values="#60a5fa;#f87171;#4ade80"/>
+<animateMotion dur="17.5s" repeatCount="indefinite" path="M130,170 L320,170 L510,170 L700,170 L605,370 L510,170 L700,170 L890,170" keyPoints="0;1;1" keyTimes="0;0.8;1" calcMode="linear"/></circle>
+<text font-size="12" text-anchor="middle" y="4" fill="#0b1120" font-weight="700">ant<animateMotion dur="17.5s" repeatCount="indefinite" path="M130,170 L320,170 L510,170 L700,170 L605,370 L510,170 L700,170 L890,170" keyPoints="0;1;1" keyTimes="0;0.8;1" calcMode="linear"/></text></g>
+</svg>
