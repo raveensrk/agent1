@@ -1,54 +1,65 @@
 #+TITLE: Dev Tools
 #+STARTUP: fold
+#+SELECT_TAGS: core
+#+OPTIONS: H:1 toc:nil num:nil tags:nil
 
-Simple org copy of [[file:dev_tools.rec][dev_tools.rec]]. The recfile is the source;
-layout fields (Pos, Size, Kind, Fit, Color) are left out.
+The list of dev tools I prefer. This file is the source.
+
+Only current tools and AI tools go here. Tools I tried, used before, or want
+to try go in work dev_tools_archive.md:
+https://github.com/raveensrk/work/blob/main/deck/tools/dev_tools_archive.md
+A tool lives in one file only.
 
 The list is ordered: of two tools that share a tag, the one written first
-is preferred. The NEEDS property lists the prerequisites (edges into a tool):
-all of the comma-separated items are needed; "a or b" (an Any group in the
-rec file) needs only one of them.
+is preferred. The NEEDS property lists the prerequisites: all of the
+comma-separated items are needed; "a or b" needs only one of them.
 
 * Tools by group
 ** Terminal
-*** Ghostty :base:beginner:Terminal:
+*** Ghostty :Terminal:core:
 :PROPERTIES:
 :URL: https://github.com/ghostty-org/ghostty
 :NEEDS: [[*Touch Typing][Touch Typing]]
 :END:
-*** iterm2
+*** iterm2 :optional:
 ** LLM data
-*** models :beginner:extra:AI:
+*** models :AI:
 :PROPERTIES:
 :URL: https://github.com/reyamira/models
 :NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for browsing AI models and comparing benchmarks
-*** llmfit :extra:beginner:AI:
+*** llmfit :AI:
 :PROPERTIES:
 :URL: https://github.com/AlexsJones/llmfit
 :NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for finding LLMs that fit local hardware
+*** ollama :AI:core:
+:PROPERTIES:
+:URL: https://github.com/ollama/ollama
+:NEEDS: [[*AI][AI]]
+:END:
+Run LLMs locally
 ** Browser
-*** Firefox :base:beginner:Web_Browser:
+*** Firefox :Web_Browser:core:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]]
 :END:
-*** Chrome :extra:beginner:Web_Browser:
+*** Chrome :Web_Browser:core:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]]
 :END:
-*** Safari :extra:beginner:Web_Browser:
+*** Safari :Web_Browser:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]]
 :END:
 ** VPN
-*** WireGuard :extra:intermediate:Network:
+*** WireGuard :intermediate:Network:
 :PROPERTIES:
 :NEEDS: [[*VPN][VPN]]
 :END:
-*** Tailscale :base:intermediate:Network:Web:
+*** Tailscale :intermediate:Network:Web:core:
 :PROPERTIES:
 :NEEDS: [[*VPN][VPN]]
 :END:
@@ -58,75 +69,91 @@ TUI and CLI for finding LLMs that fit local hardware
 :NEEDS: [[*VPN][VPN]]
 :END:
 ** Editor
-*** Vim :base:beginner:Text_Editing:
+*** Vim :core:
 :PROPERTIES:
 :NEEDS: [[*Text Editor][Text Editor]]
 :END:
-*** universal-ctags :beginner:extra:Text_Editing:
+*** universal-ctags :core:
 :PROPERTIES:
 :NEEDS: [[*Text Editor][Text Editor]]
 :END:
-*** Vim script :intermediate:extra:Programming_Languages:Editor_and_Tooling_Extension:
+*** Vim script :intermediate:Programming_Languages:Editor_and_Tooling_Extension:
 :PROPERTIES:
 :NEEDS: [[*Vim][Vim]]
 :END:
-*** Emacs :adv:
+*** Emacs :core:
 :PROPERTIES:
 :NEEDS: [[*Text Editor][Text Editor]]
 :END:
 ** Productivity
-*** fzf :max:easy:Command_Line:
+*** fzf :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** ripgrep :base:beginner:Command_Line:
+Text filtering
+*** ripgrep :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** fd :beginner:extra:Command_Line:
+Faster grep
+*** fd :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** urlview :extra:beginner:Command_Line:
+Faster find
+*** urlview
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** zoxide :extra:beginner:Command_Line:
+*** zoxide :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** ranger :extra:easy:Command_Line:
+Faster directory switching
+*** ranger :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** newsboat :extra:easy:Reading_and_RSS:
+File manager
+*** direnv :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
+Per-folder environment variables
+*** watch :core:
+:PROPERTIES:
+:NEEDS: [[*Productivity][Productivity]]
+:END:
+*** parallel :core:
+:PROPERTIES:
+:NEEDS: [[*Productivity][Productivity]]
+:END:
+GNU parallel
+*** newsboat
 *** E-Mail
-**** Himalaya :extra:easy:E_Mail:
+**** Himalaya :E_Mail:
 :PROPERTIES:
 :URL: https://github.com/pimalaya/himalaya
 :NEEDS: [[*newsboat][newsboat]]
 :END:
-**** Himalaya-Tui :extra:easy:E_Mail:
+**** Himalaya-Tui :E_Mail:
 :PROPERTIES:
 :URL: https://github.com/pimalaya/himalaya-tui
 :NEEDS: [[*Himalaya][Himalaya]]
 :END:
-**** Mutt / Neomutt :extra:expert:E_Mail:
+**** Mutt / Neomutt :expert:E_Mail:
 :PROPERTIES:
 :NEEDS: [[*newsboat][newsboat]]
 :END:
 *** Multiplexer
-**** tmux :expert:extra:Command_Line:
+**** tmux :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
 **** Rex
-**** Herdr :extra:intermediate:AI:
+**** Herdr :core:
 :PROPERTIES:
-:NEEDS: [[*pi][pi]] or [[*Claude][Claude]] or [[*Codex and ChatGPT][Codex and ChatGPT]] or [[*Crush][Crush]]
+:NEEDS: [[*pi][pi]] or [[*Claude Code][Claude Code]] or [[*Codex and ChatGPT][Codex and ChatGPT]] or [[*Crush][Crush]]
 :END:
 terminal multiplexer for coding agents
 ** Communication
@@ -134,152 +161,177 @@ terminal multiplexer for coding agents
 **** Whatsapp
 ***** wacli
 ** Data interchange File Format
-*** JSON :base:easy:Programming_Languages:Data_and_Query:
+*** JSON :Programming_Languages:Data_and_Query:
 :PROPERTIES:
 :NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
-*** YAML :extra:easy:Programming_Languages:Data_and_Query:
+*** YAML :Programming_Languages:Data_and_Query:
 :PROPERTIES:
 :NEEDS: [[*JSON][JSON]]
 :END:
-*** TOML :extra:intermediate:Formats:Markup_Data_and_Config:
+*** TOML :intermediate:Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*JSON][JSON]]
 :END:
-*** JSON Lines :extra:intermediate:Formats:Markup_Data_and_Config:
+*** JSON Lines :intermediate:Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*JSON][JSON]]
 :END:
-*** recfile (GNU recutils) :extra:easy:Formats:Markup_Data_and_Config:
+*** recfile (GNU recutils) :core:
 :PROPERTIES:
 :NEEDS: [[*Database][Database]]
 :END:
 plain-text records; recsel, recfix, rec2csv
 ** SCM
-*** Git :base:beginner:Version_Control:CLI:
+*** Git :core:
 :PROPERTIES:
 :NEEDS: [[*Version Control][Version Control]]
 :END:
-*** lazygit :base:easy:Version_Control:TUI:
+*** lazygit :core:
 :PROPERTIES:
 :NEEDS: [[*Git][Git]]
 :END:
-*** Forgejo :base:advanced:Code_Forge:
+*** Forgejo :core:
 :PROPERTIES:
 :NEEDS: [[*lazygit][lazygit]]
 :END:
-*** fj :base:advanced:Code_Forge:CLI:
+*** fj :core:
 :PROPERTIES:
 :NEEDS: [[*Forgejo][Forgejo]]
 :END:
+*** gh :core:
+:PROPERTIES:
+:URL: https://cli.github.com
+:NEEDS: [[*Git][Git]]
+:END:
+GitHub CLI
 ** Structured Query Language
-*** jq :extra:intermediate:Command_Line:
+*** jq :core:
 :PROPERTIES:
 :NEEDS: [[*JSON][JSON]]
 :END:
-*** SQL :extra:intermediate:Programming_Languages:Data_and_Query:
+*** yq :core:
+*** SQL :intermediate:Programming_Languages:Data_and_Query:
 :PROPERTIES:
 :NEEDS: [[*JSON][JSON]]
 :END:
-*** SQLite :extra:intermediate:Programming_Languages:Data_and_Query:
+*** SQLite :core:
 :PROPERTIES:
 :NEEDS: [[*SQL][SQL]]
 :END:
 ** Game Engine
-*** LÖVE (love2d) :extra:easy:Programming_Languages:Games_and_2D_Graphics:
+*** LÖVE (love2d) :Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
 :NEEDS: [[*Lua][Lua]]
 :END:
-*** Bevy :max:expert:Programming_Languages:Games_and_2D_Graphics:
+*** Bevy :expert:Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
 :NEEDS: [[*Rust][Rust]]
 :END:
 *** Gadot
 ** HDL
-*** verible :base:advanced:Semiconductor:SystemVerilog_and_UVM:
+*** verible :core:
 :PROPERTIES:
 :NEEDS: [[*SystemVerilog][SystemVerilog]]
 :END:
-*** verilator :base:advanced:Semiconductor:SystemVerilog_and_UVM:
+*** verilator :core:
 :PROPERTIES:
 :NEEDS: [[*SystemVerilog][SystemVerilog]]
 :END:
-*** SystemVerilog :base:intermediate:Programming_Languages:Hardware_Design_and_Verification:
+*** SystemVerilog :intermediate:Programming_Languages:Hardware_Design_and_Verification:
 :PROPERTIES:
 :NEEDS: [[*Hardware][Hardware]]
 :END:
+*** peakrdl :core:
+:PROPERTIES:
+:URL: https://github.com/SystemRDL/PeakRDL
+:NEEDS: [[*SystemVerilog][SystemVerilog]]
+:END:
+SystemRDL register generator
+** Requirements
+*** doorstop :core:
+:PROPERTIES:
+:URL: https://github.com/doorstop-dev/doorstop
+:NEEDS: [[*Python][Python]]
+:END:
+Requirements management; doorstop-gui for the GUI
 ** Finance
-*** hledger :extra:intermediate:Finance:
+*** hledger :intermediate:Finance:
 :PROPERTIES:
 :NEEDS: [[*Ledger CLI][Ledger CLI]]
 :END:
-*** Ledger CLI :extra:intermediate:Finance:
+*** Ledger CLI :intermediate:Finance:
 :PROPERTIES:
 :NEEDS: [[*Finance][Finance]]
 :END:
 ** AI Coding Agents
-*** pi :base:easy:AI:
+*** pi :core:
 :PROPERTIES:
 :NEEDS: [[*AI][AI]]
 :END:
-*** Claude :base:easy:AI:
+*** Claude Code :core:
 :PROPERTIES:
 :NEEDS: [[*AI][AI]]
 :END:
-*** Codex and ChatGPT :extra:easy:AI:
+*** Codex and ChatGPT :core:
 :PROPERTIES:
 :NEEDS: [[*AI][AI]]
 :END:
-*** Crush :extra:easy:AI:
+*** Crush :AI:
 :PROPERTIES:
 :URL: https://github.com/charmbracelet/crush
 :NEEDS: [[*AI][AI]]
 :END:
+*** opencode :core:
+:PROPERTIES:
+:URL: https://github.com/sst/opencode
+:NEEDS: [[*AI][AI]]
+:END:
 ** System Admin
-*** rsync :extra:easy:Command_Line:
+*** rsync :core:
 :PROPERTIES:
 :NEEDS: [[*Sys Admin][Sys Admin]]
 :END:
-*** GNU Stow :extra:easy:Command_Line:
+*** GNU Stow :core:
 :PROPERTIES:
 :NEEDS: [[*Sys Admin][Sys Admin]]
 :END:
-*** Homebrew :base:beginner:Command_Line:
+*** Homebrew :macos:core:
 :PROPERTIES:
 :NEEDS: [[*Package Managers][Package Managers]]
 :END:
 ** Entertainment
-*** mpv :beginner:extra:Command_Line:
+*** mpv :
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
 :END:
-*** qBittorrent :extra:beginner:Torrent:
+*** qBittorrent :Torrent:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]]
 :END:
 ** Security
-*** Bitwarden :base:beginner:Password_Managers:
+*** Bitwarden :core:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]]
 :END:
 ** Documentation
-*** pandoc :extra:intermediate:Command_Line:
+*** pandoc :core:
 :PROPERTIES:
 :NEEDS: [[*Markdown][Markdown]]
 :END:
-*** Mermaid :extra:easy:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
+*** Mermaid :Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
 :PROPERTIES:
 :NEEDS: [[*Markdown][Markdown]]
 :END:
-*** Markdown :base:Formats:Markup_Data_and_Config:
+*** Markdown :Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*Vim][Vim]]
 :END:
-*** LaTeX :max:intermediate:Formats:Markup_Data_and_Config:
+*** LaTeX :intermediate:Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*Markdown][Markdown]]
 :END:
-*** PDF :max:advanced:Formats:Publish:
+*** PDF :advanced:Formats:Publish:
 :PROPERTIES:
 :NEEDS: [[*LaTeX][LaTeX]]
 :END:
@@ -299,13 +351,14 @@ plain-text records; recsel, recfix, rec2csv
 :NEEDS: [[*C][C]]
 :END:
 ** Data Visualization
-*** Graphviz :extra:intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
+*** Graphviz
 :PROPERTIES:
 :URL: https://graphviz.org
 :NEEDS: [[*JSON][JSON]]
 :END:
 dot lays out dev_tools_path.svg
-*** Excalidraw :extra:advanced:Diagrams_Flowcharts_and_Drawings:Drawing:
+*** d2
+*** Excalidraw :advanced:Diagrams_Flowcharts_and_Drawings:Drawing:
 :PROPERTIES:
 :URL: https://github.com/excalidraw/excalidraw
 :NEEDS: [[*SVG][SVG]]
@@ -315,7 +368,7 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :PROPERTIES:
 :NEEDS: [[*JavaScript][JavaScript]]
 :END:
-*** SVG :extra:intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
+*** SVG :intermediate:Diagrams_Flowcharts_and_Drawings:Diagram_Formats:
 :PROPERTIES:
 :NEEDS: [[*YAML][YAML]]
 :END:
@@ -326,59 +379,63 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 :END:
 ** Programming Languages
 *** Systems Programming Languages
-**** Zig :max:expert:Programming_Languages:Systems_and_Native:
+**** Zig :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-**** Rust :extra:expert:Programming_Languages:Systems_and_Native:
+**** Rust :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-**** Go :extra:expert:Programming_Languages:Systems_and_Native:
+**** Go :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-**** C :base:beginner:Programming_Languages:Systems_and_Native:
+**** C :Programming_Languages:Systems_and_Native:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-**** Makefile :base:easy:Formats:Markup_Data_and_Config:
+**** Makefile :Formats:Markup_Data_and_Config:core:
 :PROPERTIES:
 :NEEDS: [[*Build systems][Build systems]]
 :END:
 *** General Purpose Programming Language
-**** Swift :max:expert:Programming_Languages:Apple_Platforms:
+**** Swift :expert:Programming_Languages:Apple_Platforms:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-**** Python :base:easy:Programming_Languages:Automation_and_Scripting:
+**** Python :Programming_Languages:Automation_and_Scripting:core:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
+:END:
+***** pytest :core:
+:PROPERTIES:
+:NEEDS: [[*Python][Python]]
 :END:
 *** Scripting Languages
-**** Lua :extra:easy:Programming_Languages:Games_and_2D_Graphics:
+**** Lua :Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
 *** Experimental Programming Languages
-**** Jai :max:advanced:Programming_Languages:Games_and_2D_Graphics:
+**** Jai :advanced:Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
 *** Web
-**** JavaScript :extra:intermediate:Programming_Languages:Web:
+**** JavaScript :intermediate:Programming_Languages:Web:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-**** TypeScript :extra:intermediate:Programming_Languages:Web:
+**** TypeScript :intermediate:Programming_Languages:Web:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-**** HTML :extra:easy:Formats:Markup_Data_and_Config:
+**** HTML :Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
-**** CSS :extra:intermediate:Formats:Markup_Data_and_Config:
+**** CSS :intermediate:Formats:Markup_Data_and_Config:
 :PROPERTIES:
 :NEEDS: [[*Web][Web]]
 :END:
@@ -390,7 +447,7 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 Video.js v10 - open source media player framework for HTML and React.
 ** Lisp Family of Languages
 *** REPL
-*** Fennel :max:expert:Programming_Languages:Games_and_2D_Graphics:
+*** Fennel :expert:Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
 :NEEDS: [[*Lua][Lua]]
 :END:
@@ -436,16 +493,26 @@ Small, fast web UI components. diet_tracker's window.
 :END:
 Clojure Dialect with c++ interop
 * Ungrouped
-** Touch Typing :base:beginner:Skills:
+** Touch Typing :Skills:
 :PROPERTIES:
 :NEEDS: [[*Computer][Computer]] (Hello)
 :END:
-** Bash :base:beginner:Environment:
+** Bash :Environment:core:
 :PROPERTIES:
 :NEEDS: [[*Ghostty][Ghostty]]
 :END:
 also stands for shell scripting; prefer Bash over POSIX sh
-** Computer :base:beginner:ROOT:GUI:
+*** shellcheck :core:
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
+Bash linter
+*** shfmt :core:
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
+Bash formatter
+** Computer :ROOT:GUI:
 ** Build systems
 :PROPERTIES:
 :NEEDS: [[*Bash][Bash]]
