@@ -91,7 +91,33 @@ def test_workflows_config_and_req():
         assert r.returncode == 1 and "Z-9" in r.stderr
 
 
+def fails(home, *args, stdin=None):
+    r = subprocess.run([sys.executable, TOOL, *args], input=stdin, env={**os.environ, "HOME": home},
+                       capture_output=True, text=True, timeout=TIMEOUT)
+    assert r.returncode == 1, r.stdout
+    return r.stderr
+
+
+def test_guards():
+    with tempfile.TemporaryDirectory() as home:
+        repo = make_repo(home)
+        state = json.loads(run(home, "setup", repo))["state"]
+        assert "not valid JSON" in fails(home, "boards", "write", state, "bulletin", stdin="[oops")
+        assert "JSON list" in fails(home, "boards", "write", state, "bulletin", stdin='{"a": 1}')
+        assert "non-empty JSON list" in fails(home, "boards", "write", state, "bulletin", stdin='["x"]')
+        assert "list of ids" in fails(home, "boards", "remove", state, "critiques", stdin='[["x"]]')
+        board = open(os.path.join(state, "boards", "bulletin.md")).read()
+        assert "| Task" in board  # a refused write leaves the board as it was
+
+        org = os.path.join(repo, "requirements.org")
+        run(home, "req", "add", org, stdin="* OPEN B\n:PROPERTIES:\n:ID: B-1\n:END:\n")
+        names = os.listdir(repo)
+        assert not [n for n in names if n.endswith((".lock", ".tmp"))], names  # nothing left in the repo
+        assert "missing" in fails(home, "req", "done", os.path.join(repo, "nope.org"), "B-1")
+
+
 if __name__ == "__main__":
     test_setup_and_boards()
     test_workflows_config_and_req()
+    test_guards()
     print("ok")

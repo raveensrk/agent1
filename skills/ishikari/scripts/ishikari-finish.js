@@ -13,7 +13,8 @@ export const meta = {
 //   env: { repo, state, run, main, tool, testCommand?, checkCommand? },
 //   approved: [{ id, branch, after? }],      passing tasks (from ishikari-build)
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
-//   drop?: [{ id, branch }],                 tasks the user gave up on: removed
+//   drop?: [{ id, branch }],                 tasks dropped by the rules: marked dropped;
+//                                            their branches are kept for a later look
 //   cleanup?: boolean,                       this run built a cleanup plan: no janitor, so
 //                                            cleanups never chain
 // }
@@ -135,8 +136,8 @@ the repo's main checkout. Return the final commit of ${scratch} as sha.`,
 const merged = order.filter(t => results[t.id] && results[t.id].outcome === 'merged')
 const failed = order.filter(t => results[t.id] && ['conflict', 'tests failed'].includes(results[t.id].outcome))
 const waiting = order.filter(t => !merged.includes(t) && !failed.includes(t)).map(t => ({
-  id: t.id, branch: t.branch, after: t.after || [],
-  why: results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it',
+  task: t.id, id: t.id, branch: t.branch, after: t.after || [],
+  bug: `not merged: ${results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it'}`,
 }))
 const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge', bug: `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
@@ -185,14 +186,14 @@ const rowsIf = moved => [
   ...merged.map(t => [key(t), moved ? 'done' : 'waiting', 'merger ant', '-']),
   ...failed.map(t => [key(t), 'merge failed', 'merger ant', '-']),
   ...waiting.map(t => [key(t), 'waiting', 'merger ant', '-']),
-  ...drop.map(t => [key(t), 'dropped', 'user', '-']),
+  ...drop.map(t => [key(t), 'dropped', 'main session', '-']),
 ]
 const write = rows => rows.length
   ? `python3 ${env.tool} boards write ${env.state} bulletin <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'
-const remove = [...merged.map(t => t.branch), ...drop.map(t => t.branch), `ishikari/${env.run}/_together`, scratch]
+const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch]
 const FINISH = {
   type: 'object',
   properties: {

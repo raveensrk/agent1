@@ -209,11 +209,22 @@ repo. Where the report and your own idea differ, the report wins.
 Follow the /add-requirement skill up to the draft. Show it can be built with
 evidence from the repo's code and docs. Only if that is not enough, write a
 throwaway spike in a temporary folder outside the repo, and delete it after.
-Check for duplicates and conflicts. Write no files: the main session writes the
-requirements file from your entry.`,
+Check for duplicates and conflicts. Give file as an absolute path to an .org
+file inside ${env.repo}, and give the entry an :ID: property. Write no files:
+the main session writes the requirements file from your entry.`,
   { label: 'add-requirement-ant', phase: 'Requirement', effort: EFFORT.requirement, schema: REQUIRED },
 ))
 if (!req) return { stage: 'error', reason: 'the add requirement ant died twice' }
+// The main session appends the entry to this file and commits it: it must be
+// an org file inside this repo, and the entry must carry an :ID: for req done.
+if (req.requirement.needed) {
+  const rf = String(req.requirement.file || '')
+  const why = []
+  if (!rf.startsWith(env.repo + '/') || rf.includes('/../') || !rf.endsWith('.org')) why.push(`file "${rf}" is not an .org file inside ${env.repo}`)
+  if (!String(req.requirement.entry || '').trim()) why.push('the entry is empty')
+  else if (!/^:ID:\s+\S+/m.test(req.requirement.entry)) why.push('the entry has no :ID: line')
+  if (why.length) return { stage: 'error', reason: `the requirement needs fixing: ${why.join('; ')}`, review, requirement: req.requirement }
+}
 
 // ---- design and plans: the architect ant ----
 phase('Design')
@@ -262,6 +273,23 @@ const visit = (id, path) => {
   seen[id] = 'done'
 }
 out.plans.forEach(p => visit(p.id, []))
+// Two tasks that edit the same file must run in order, one after the other;
+// in parallel, their merge would conflict.
+const before = id => {
+  const acc = new Set()
+  const walk = x => (byId[x] && byId[x].after || []).forEach(d => { if (!acc.has(d)) { acc.add(d); walk(d) } })
+  walk(id)
+  return acc
+}
+if (!problems.length) {
+  const owner = {}
+  for (const p of out.plans) for (const f of p.files || []) (owner[f] = owner[f] || []).push(p.id)
+  for (const [f, list] of Object.entries(owner)) {
+    for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
+      if (!before(list[a]).has(list[b]) && !before(list[b]).has(list[a])) problems.push(`${list[a]} and ${list[b]} both edit ${f} but neither is after the other`)
+    }
+  }
+}
 if (!out.plans.length) problems.push('the planner returned no plans')
 if (problems.length) return { stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: req.requirement, plans: out.plans }
 

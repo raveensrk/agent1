@@ -15,9 +15,11 @@ export const meta = {
 //   env: { repo, state, run, main, tool, testCommand? },  from `ishikari.py setup`, plus
 //                                                          testCommand from ishikari-plan
 //   plans: [{ id, title, after?, workflow? }],             approved plans from ishikari-plan
-//   bugs?: [{ task, branch, bug, kind?, after?, guidance?, history? }]
-//          open work from earlier runs: escalations, rejected tasks, failed merges.
-//          kind 'merge' means the branch must take in the current main first.
+//   bugs?: [{ task, branch?, bug, kind?, after?, guidance?, history? }]
+//          open work from earlier rounds: failed merges, waiting tasks, a failed
+//          app check. kind 'merge' means the branch must take in the current
+//          main first. No branch (a failed app check): a new task <task> starts
+//          from main, and the bug is its whole job.
 // }
 // Returns { stage: 'build', tasks, together } or { stage: 'error', reason }.
 // Task status: 'awaiting review', 'escalated', 'blocked' or 'error'.
@@ -327,11 +329,14 @@ tasks.forEach(t => visit(t.id, []))
 // ---- tasks from open bugs: one fix loop per branch ----
 const bugTasks = {}
 for (const b of bugsIn) {
-  const branch = String(b.branch || '')
-  if (!branch) continue
+  const fresh = !b.branch
+  const id0 = String(b.task || (fresh ? 'check-fix' : String(b.branch).split('/').pop()))
+  const branch = fresh ? branchOf(id0) : String(b.branch)
   if (!bugTasks[branch]) {
-    const id = String(b.task || branch.split('/').pop())
+    const id = id0
+    if (!/^[a-z0-9_][a-z0-9_-]{0,40}$/.test(id)) problems[id] = `bad task id "${id}" in bugs`
     bugTasks[branch] = makeTask(id, branch, {
+      ...(fresh ? { plan: '(none: the bug below is the whole job)' } : {}),
       after: Array.isArray(b.after) ? b.after.map(String) : [],
       history: Array.isArray(b.history) ? b.history : [],
       texts: [],
@@ -491,8 +496,10 @@ for (let round = 1; round <= 2; round++) {
       if (!task.after.includes(d)) task.after.push(d)
       if (!task.bases.includes(merge[k])) task.bases.push(merge[k])
     })
-    task.firstStep = `First merge ${merge.join(' and ')} into your branch, because yours clashes with them.`
-    const err = await fixLoop(task, [`does not work with ${need.join(', ')}: ${outcome[task.id].detail}`])
+    // The first task in the order has nothing before it to take in: its own
+    // tests failed on main as it is now, so it fixes that alone.
+    task.firstStep = merge.length ? `First merge ${merge.join(' and ')} into your branch, because yours clashes with them.` : `First merge the current ${env.main} into your branch.`
+    const err = await fixLoop(task, [need.length ? `does not work with ${need.join(', ')}: ${outcome[task.id].detail}` : `fails on top of ${env.main}: ${outcome[task.id].detail}`])
     if (err) return end(task, 'error', [err])
     return end(task, task.bugs.some(b => b.open) ? 'escalated' : 'awaiting review', [])
   })))
@@ -502,13 +509,14 @@ for (let round = 1; round <= 2; round++) {
 const writes = [['bulletin', Object.values(bulletin)], ['bounty', Object.values(bounty)]].filter(([, rows]) => rows.length)
 if (writes.length) {
   phase('Boards')
-  await agent(
+  const clerk = await agent(
     `You are Ishikari's board clerk. Run exactly these commands and nothing else:
 ${writes.map(([board, rows]) => `python3 ${env.tool} boards write ${env.state} ${board} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`).join('\n')}`,
     { label: 'board-clerk', phase: 'Boards', effort: EFFORT.clerk },
   )
+  if (clerk == null) log('board write skipped: the board clerk died; the boards miss this stage')
 }
 
 return { stage: 'build', tasks: all.map(t => t.result), together }

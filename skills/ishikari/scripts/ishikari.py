@@ -39,7 +39,9 @@ tables stay aligned and no row is lost.
 Boards: bulletin, bounty, critiques.
 """
 
+import contextlib
 import datetime
+import fcntl
 import hashlib
 import json
 import os
@@ -57,6 +59,36 @@ CONFIG_KEYS = ("testCommand", "checkCommand")
 def die(msg):
     print(f"ishikari: {msg}", file=sys.stderr)
     sys.exit(1)
+
+
+def write_atomic(path, text):
+    """Write via a temp file and rename, so a crash never leaves half a file."""
+    tmp = f"{path}.{os.getpid()}.tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+@contextlib.contextmanager
+def locked(path):
+    """Hold an exclusive lock on path: two runs never lose each other's rows.
+    Lock files live under ~/.ishikari/locks, never beside a file in the repo."""
+    folder = os.path.join(os.path.expanduser("~"), ".ishikari", "locks")
+    os.makedirs(folder, exist_ok=True)
+    name = hashlib.sha1(os.path.realpath(path).encode()).hexdigest()[:16]
+    with open(os.path.join(folder, f"{name}.lock"), "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def read_json_stdin(what):
+    try:
+        return json.load(sys.stdin)
+    except ValueError as e:
+        die(f"{what}: stdin is not valid JSON ({e})")
 
 
 def git(repo, *args):
@@ -134,10 +166,7 @@ def config(state, key, value):
         data[key] = value
     else:
         data.pop(key, None)
-    tmp = config_path(state) + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, config_path(state))
+    write_atomic(config_path(state), json.dumps(data, indent=2))
     print(json.dumps(data))
 
 
@@ -145,13 +174,20 @@ def req_add(path):
     entry = sys.stdin.read().strip("\n")
     if not entry:
         die("req add needs the entry on stdin")
-    text = open(path).read() if os.path.exists(path) else ""
-    with open(path, "w") as f:
-        f.write((text.rstrip("\n") + "\n\n" if text.strip() else "") + entry + "\n")
+    with locked(path):
+        text = open(path).read() if os.path.exists(path) else ""
+        write_atomic(path, (text.rstrip("\n") + "\n\n" if text.strip() else "") + entry + "\n")
     print(f"{path}: entry added")
 
 
 def req_done(path, ids):
+    if not os.path.exists(path):
+        die(f"missing {path}")
+    with locked(path):
+        req_done_locked(path, ids)
+
+
+def req_done_locked(path, ids):
     lines = open(path).read().split("\n")
     today = datetime.date.today().isoformat()
     heads = [k for k, l in enumerate(lines) if re.match(r"^\*+ ", l)]
@@ -180,8 +216,7 @@ def req_done(path, ids):
     missing = [i for i in ids if i not in found]
     if missing:
         die(f"no heading with :ID: {', '.join(missing)} in {path}")
-    with open(path, "w") as f:
-        f.write("\n".join(lines))
+    write_atomic(path, "\n".join(lines))
     print(f"{path}: done {', '.join(reversed(found))}")
 
 
@@ -213,10 +248,7 @@ def save(path, before, head, rows, after):
     widths = [max([len(head[k])] + [len(r[k]) for r in rows] + [3]) for k in range(len(head))]
     fmt = lambda r: "| " + " | ".join(c.ljust(widths[k]) for k, c in enumerate(r)) + " |"
     table = [fmt(head), "| " + " | ".join("-" * w for w in widths) + " |"] + [fmt(r) for r in rows]
-    tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        f.write("\n".join(before + table + after).rstrip("\n") + "\n")
-    os.replace(tmp, path)
+    write_atomic(path, "\n".join(before + table + after).rstrip("\n") + "\n")
 
 
 def boards(op, state, board, extra):
@@ -225,7 +257,19 @@ def boards(op, state, board, extra):
     path = os.path.join(state, "boards", f"{board}.md")
     if not os.path.exists(path):
         die(f"missing {path}; run setup first")
-    data = json.load(sys.stdin)
+    data = read_json_stdin(f"boards {op}")
+    if not isinstance(data, list):
+        die(f"boards {op}: stdin must be a JSON list")
+    if op == "remove":
+        if not all(isinstance(k, (str, int)) for k in data):
+            die("boards remove: stdin must be a JSON list of ids")
+    elif not all(isinstance(r, list) and r for r in data):
+        die(f"boards {op}: each row must be a non-empty JSON list of cells")
+    with locked(path):
+        boards_locked(op, path, board, extra, data)
+
+
+def boards_locked(op, path, board, extra, data):
     before, head, rows, after = load(path)
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     time_col = head.index("Time") if "Time" in head else None
