@@ -49,19 +49,52 @@ Default shell on macOS
 :NEEDS: [[*Touch Typing][Touch Typing]]
 :END:
 *** iterm2 :optional:
-** LLM data
-*** models :AI:
+** AI
+:PROPERTIES:
+:NEEDS: [[*Ghostty][Ghostty]]
+:END:
+*** LLM data
+**** models :AI:
 :PROPERTIES:
 :URL: https://github.com/reyamira/models
 :NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for browsing AI models and comparing benchmarks
-*** llmfit :AI:
+**** llmfit :AI:
 :PROPERTIES:
 :URL: https://github.com/AlexsJones/llmfit
 :NEEDS: [[*AI][AI]]
 :END:
 TUI and CLI for finding LLMs that fit local hardware
+*** AI Coding Agents
+**** pi :core:
+:PROPERTIES:
+:NEEDS: [[*AI][AI]]
+:END:
+**** Claude Code :core:
+:PROPERTIES:
+:NEEDS: [[*AI][AI]]
+:END:
+**** Codex and ChatGPT :core:
+:PROPERTIES:
+:NEEDS: [[*AI][AI]]
+:END:
+**** Crush :AI:
+:PROPERTIES:
+:URL: https://github.com/charmbracelet/crush
+:NEEDS: [[*AI][AI]]
+:END:
+**** opencode :core:
+:PROPERTIES:
+:URL: https://github.com/sst/opencode
+:NEEDS: [[*AI][AI]]
+:END:
+**** ollama :AI:core:
+:PROPERTIES:
+:URL: https://github.com/ollama/ollama
+:NEEDS: [[*AI][AI]]
+:END:
+Run LLMs locally
 ** Browser
 *** Firefox :Web_Browser:core:
 :PROPERTIES:
@@ -93,13 +126,16 @@ TUI and CLI for finding LLMs that fit local hardware
 :NEEDS: [[*VPN][VPN]]
 :END:
 ** Editor
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** Vim :core:
 :PROPERTIES:
-:NEEDS: [[*Text Editor][Text Editor]]
+:NEEDS: [[*Editor][Editor]]
 :END:
 *** universal-ctags :core:
 :PROPERTIES:
-:NEEDS: [[*Text Editor][Text Editor]]
+:NEEDS: [[*Editor][Editor]]
 :END:
 *** Vim script :intermediate:Programming_Languages:Editor_and_Tooling_Extension:
 :PROPERTIES:
@@ -107,7 +143,7 @@ TUI and CLI for finding LLMs that fit local hardware
 :END:
 *** Emacs :core:
 :PROPERTIES:
-:NEEDS: [[*Text Editor][Text Editor]]
+:NEEDS: [[*Editor][Editor]]
 :END:
 ** Productivity
 :PROPERTIES:
@@ -200,15 +236,22 @@ terminal multiplexer for coding agents
 :PROPERTIES:
 :NEEDS: [[*JSON][JSON]]
 :END:
+** Database
+:PROPERTIES:
+:NEEDS: [[*Ghostty][Ghostty]]
+:END:
 *** recfile (GNU recutils) :core:
 :PROPERTIES:
 :NEEDS: [[*Database][Database]]
 :END:
 plain-text records; recsel, recfix, rec2csv
 ** SCM
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** Git :core:
 :PROPERTIES:
-:NEEDS: [[*Version Control][Version Control]]
+:NEEDS: [[*SCM][SCM]]
 :END:
 *** lazygit :core:
 :PROPERTIES:
@@ -253,6 +296,9 @@ GitHub CLI
 :END:
 *** Gadot
 ** HDL
+:PROPERTIES:
+:NEEDS: [[*Programming Languages][Programming Languages]]
+:END:
 *** verible :core:
 :PROPERTIES:
 :NEEDS: [[*SystemVerilog][SystemVerilog]]
@@ -263,7 +309,7 @@ GitHub CLI
 :END:
 *** SystemVerilog :intermediate:Programming_Languages:Hardware_Design_and_Verification:
 :PROPERTIES:
-:NEEDS: [[*Hardware][Hardware]]
+:NEEDS: [[*HDL][HDL]]
 :END:
 *** peakrdl :core:
 :PROPERTIES:
@@ -296,47 +342,21 @@ Requirements management; doorstop-gui for the GUI
 :PROPERTIES:
 :NEEDS: [[*Finance][Finance]]
 :END:
-** AI Coding Agents
-*** pi :core:
-:PROPERTIES:
-:NEEDS: [[*AI][AI]]
-:END:
-*** Claude Code :core:
-:PROPERTIES:
-:NEEDS: [[*AI][AI]]
-:END:
-*** Codex and ChatGPT :core:
-:PROPERTIES:
-:NEEDS: [[*AI][AI]]
-:END:
-*** Crush :AI:
-:PROPERTIES:
-:URL: https://github.com/charmbracelet/crush
-:NEEDS: [[*AI][AI]]
-:END:
-*** opencode :core:
-:PROPERTIES:
-:URL: https://github.com/sst/opencode
-:NEEDS: [[*AI][AI]]
-:END:
-*** ollama :AI:core:
-:PROPERTIES:
-:URL: https://github.com/ollama/ollama
-:NEEDS: [[*AI][AI]]
-:END:
-Run LLMs locally
 ** System Admin
+:PROPERTIES:
+:NEEDS: [[*Bash][Bash]]
+:END:
 *** rsync :core:
 :PROPERTIES:
-:NEEDS: [[*Sys Admin][Sys Admin]]
+:NEEDS: [[*System Admin][System Admin]]
 :END:
 *** GNU Stow :core:
 :PROPERTIES:
-:NEEDS: [[*Sys Admin][Sys Admin]]
+:NEEDS: [[*System Admin][System Admin]]
 :END:
 *** Homebrew :macos:core:
 :PROPERTIES:
-:NEEDS: [[*Package Managers][Package Managers]]
+:NEEDS: [[*System Admin][System Admin]]
 :END:
 ** Entertainment
 *** mpv :
@@ -422,48 +442,48 @@ hand-drawn style whiteboard, self-hosted from ~/dot/config/excalidraw/compose.ya
 *** Systems Programming Languages
 **** Zig :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 **** Rust :expert:Programming_Languages:Systems_and_Native:core:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 Rust and its tooling: rustup, cargo, clippy, rustfmt
 **** Go :expert:Programming_Languages:Systems_and_Native:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 **** C :Programming_Languages:Systems_and_Native:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 **** C++ :avoid:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 **** Makefile :Formats:Markup_Data_and_Config:core:
 :PROPERTIES:
-:NEEDS: [[*Build systems][Build systems]]
+:NEEDS: [[*Bash][Bash]]
 :END:
 *** General Purpose Programming Language
 **** Swift :expert:Programming_Languages:Apple_Platforms:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 **** Python :Programming_Languages:Automation_and_Scripting:core:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 Python and its tooling: pytest, pylint, black
 *** Scripting Languages
 **** Lua :Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 *** Experimental Programming Languages
 **** Jai :advanced:Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 *** Web
 :PROPERTIES:
@@ -499,7 +519,7 @@ Video.js v10 - open source media player framework for HTML and React.
 :END:
 *** Lisp :adv:
 :PROPERTIES:
-:NEEDS: [[*Software][Software]]
+:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 *** Racket :expert:avoid:
 :PROPERTIES:
@@ -546,43 +566,6 @@ Clojure Dialect with c++ interop
 :PROPERTIES:
 :URL: https://freetype.org/index.html
 :NEEDS: [[*Fonts][Fonts]]
-:END:
-* Categories
-** Build systems
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Package Managers
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Database
-:PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
-:END:
-** AI
-:PROPERTIES:
-:NEEDS: [[*Ghostty][Ghostty]]
-:END:
-** Version Control
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Sys Admin
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Text Editor
-:PROPERTIES:
-:NEEDS: [[*Bash][Bash]]
-:END:
-** Hardware
-:PROPERTIES:
-:NEEDS: [[*Programming Languages][Programming Languages]]
-:END:
-** Software
-:PROPERTIES:
-:NEEDS: [[*Programming Languages][Programming Languages]]
 :END:
 * Notes
 ** Note 1
