@@ -120,10 +120,6 @@ File manager
 :NEEDS: [[*Productivity][Productivity]]
 :END:
 Per-folder environment variables
-*** watch :core:
-:PROPERTIES:
-:NEEDS: [[*Productivity][Productivity]]
-:END:
 *** parallel :core:
 :PROPERTIES:
 :NEEDS: [[*Productivity][Productivity]]
@@ -299,10 +295,6 @@ Requirements management; doorstop-gui for the GUI
 :NEEDS: [[*Sys Admin][Sys Admin]]
 :END:
 *** GNU Stow :core:
-:PROPERTIES:
-:NEEDS: [[*Sys Admin][Sys Admin]]
-:END:
-*** ssh :core:
 :PROPERTIES:
 :NEEDS: [[*Sys Admin][Sys Admin]]
 :END:
