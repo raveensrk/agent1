@@ -411,21 +411,7 @@ Rust and its tooling: rustup, cargo, clippy, rustfmt
 :PROPERTIES:
 :NEEDS: [[*Software][Software]]
 :END:
-***** pytest
-:PROPERTIES:
-:NEEDS: [[*Python][Python]]
-:END:
-***** pylint
-:PROPERTIES:
-:NEEDS: [[*Python][Python]]
-:END:
-Linter: reports bugs and style problems
-***** black
-:PROPERTIES:
-:URL: https://github.com/psf/black
-:NEEDS: [[*Python][Python]]
-:END:
-Formatter: rewrites code into one style
+Python and its tooling: pytest, pylint, black
 *** Scripting Languages
 **** Lua :Programming_Languages:Games_and_2D_Graphics:
 :PROPERTIES:
