@@ -278,7 +278,7 @@ check: 3. Check {
 fix: 4. Fix {
   left: 2350
   top: 0
-  direction: down
+  direction: up
   style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
   bounty: Bug bounty board {shape: cylinder; class: node; style.stroke: ${fix-line}}
   detective: Detective Ant\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {class: node; style.stroke: ${fix-line}}
