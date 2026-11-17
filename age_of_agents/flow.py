@@ -36,7 +36,7 @@ ROUTES = [
             ["plan.(arta <-> research)[0]", True, "They report back."],
             ["(plan.arta <-> user)[0]", False, "It asks you one question at a time."],
             ["(plan.arta <-> user)[0]", True, "You answer. The review is done."],
-            ["plan.(arta -> aara)[0]", False, "Your answers go to the add requirement ant."],
+            ["plan.(arta -> aara)[0]", False, "It writes the investigation report for the add requirement ant."],
             ["plan.(aara -> plans)[0]", False, "It drafts the requirement and writes the plans."],
             ["(plan.plans -> build.aw)[0]", False, "Worker ants start, each in its own worktree."],
             ["build.(aw -> bulletin)[0]", False, "A worker finishes its build."],

@@ -18,18 +18,22 @@ its job. The build script runs that workflow in place of a worker ant.
 
 01. **Task in.** The user gives a task. It can be anything.
 
-02. **Investigator Ant** has one goal: understand what the user wants, well
-    enough that no later ant needs to ask. It critiques the task, finds the
+02. **Investigator Ant** has one goal: a bulletproof investigation report, so
+    no later ant needs to ask. It critiques the task, finds the
     repo's test command and reads the critiques board: each critique that
     matters becomes a question. When it lacks facts it sends up to 5
     **Researcher Ants** in parallel; they search the web and the whole computer,
     read only, never secrets, and report back. It asks one question at a time,
     with `/ask-simple`, never a batch, and picks each question after the last
     answer. Each question shows a best-guess count: "Question 2 of about 5". It
-    stops once nothing important is unclear; with no questions the flow goes
-    straight on.
+    stops once nothing important is unclear, then writes
+    `investigation_report.md` in the run's plans folder: goal, scope, every
+    decision, facts with sources, constraints, risks, assumptions, acceptance
+    checks and commands. Every claim cites an answer, a fact or the repo.
 
-03. **Add Requirement Ant** drafts a requirement with the `/add-requirement`
+03. **Add Requirement Ant** reads only the investigation report and the repo.
+    Where the report and its own idea differ, the report wins. It drafts a
+    requirement with the `/add-requirement`
     skill and writes one plan per worker ant. It shows the requirement can be
     built from the repo's code and docs, and only writes a throwaway spike,
     outside the repo, when that is not enough. It never asks the user: it builds on
@@ -224,7 +228,7 @@ plan: 1. Plan {
   plans: Worker plans\n(temporary area) {shape: page; class: node; style.stroke: ${plan-line}}
   task -> arta: review {class: flow}
   arta <-> research: facts {class: flow; style.stroke-dash: 3}
-  arta -> aara: your answers {class: ok}
+  arta -> aara: investigation_report.md {class: ok}
   aara -> plans: draft requirement,\nwrite plans {class: flow}
 }
 

@@ -23,7 +23,7 @@ export const meta = {
 //                                           ask question; remaining is the best
 //                                           guess of questions left after it
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
-//   { stage: 'plans', review, requirement, plans, testCommand, checkCommand, answeredCritiques }
+//   { stage: 'plans', report, review, requirement, plans, testCommand, checkCommand, answeredCritiques }
 // requirement.needed is false for a change with no new behaviour (a refactor):
 // then nothing is written to the requirements file.
 //   { stage: 'error', reason }
@@ -46,6 +46,8 @@ if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
 Use absolute paths only. Change nothing in the repo.`
 const critiques = `${env.state}/boards/critiques.md`
+const planDir = `${env.state}/plans/${env.run}`
+const reportFile = `${planDir}/investigation_report.md`
 
 const REVIEW = {
   type: 'object',
@@ -67,6 +69,7 @@ const REVIEW = {
       },
       required: ['question', 'answers'],
     },
+    reportWritten: { type: 'boolean', description: 'true once next.question is empty and the investigation report is written' },
     remaining: { type: 'integer', description: 'best guess of questions still to ask after next; 0 if none' },
     blocker: { type: 'string', description: 'why the task cannot be done at all as asked; empty if it can' },
     testCommand: { type: 'string', description: 'the one command that runs the repo\'s tests from its root' },
@@ -147,8 +150,9 @@ for (let round = 0; round <= MAX_RESEARCH; round++) {
     `You are the investigator ant of the Ishikari workflow.
 ${where}
 Task: ${task}
-Your goal: understand what the user wants, well enough that every later ant
-can finish the task with no more questions. Read the repo enough to judge it.
+Your goal: collect every fact and decision the task needs, so your
+investigation report is bulletproof: the add requirement ant plans from it
+alone, and no later ant ever needs to ask. Read the repo enough to judge it.
 Critique it: gaps, risks, unclear scope.
 ${asked}${known}Read ${critiques}. A critique that matters for this task becomes a question;
 put that row's Id in the question's "critique" field. Leave the rest alone.
@@ -156,7 +160,15 @@ Ask nothing the repo, the research or an earlier answer already settles.
 ${round < MAX_RESEARCH ? `If facts you need are missing, list them in research, at most ${MAX_RESEARCHERS}, and leave next empty: researcher ants look them up and you run again.` : 'Research is done for this question: leave research empty.'}
 Otherwise give the single most important next question in next, the
 /ask-simple way, and guess how many remain after it. Leave next.question
-empty once nothing important is unclear.
+empty once nothing important is unclear. Then, and only then, write the
+investigation report to ${reportFile} (make the folder if needed; write no
+other file) and set reportWritten. The report has these sections:
+Goal (in the user's words, then restated); Scope (in, out); Decisions (every
+question, the answer, and what it means; a skipped answer takes the
+recommended one); Facts (each with its path or URL); Constraints; Risks and
+how to handle each; Assumptions (anything not confirmed, with why it is safe);
+Acceptance (testable checks that prove the task is done); Commands (test and
+app check). Every claim cites an answer, a fact or the repo. No secrets.
 If the task cannot be done at all as asked, say why in blocker.
 ${env.testCommand ? `The repo's test command is \`${env.testCommand}\`: return it as testCommand.` : 'Find the one command that runs the repo\'s tests from its root.'}
 ${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it as checkCommand.` : 'Find the one command that builds and checks the real app (install hook, launch check); empty if there is none.'}`,
@@ -173,19 +185,18 @@ if (review.blocker) return { stage: 'blocked', reason: review.blocker, review, f
 if (review.next && review.next.question) {
   return { stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review }
 }
+if (!review.reportWritten) return { stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings }
 
 // ---- requirement and plans, in one ant ----
 phase('Plans')
-const decided = answered.length
-  ? `The user's answers:\n${answered.map(q => `- ${q.question} -> ${q.answer || '(skipped: use the recommended answer)'}`).join('\n')}\n`
-  : ''
-const planDir = `${env.state}/plans/${env.run}`
 const out = await twice(() => agent(
   `You are the add requirement ant of the Ishikari workflow.
 ${where}
 Task: ${task}
-Review: ${JSON.stringify({ summary: review.summary, critique: review.critique })}
-${findings.length ? `Research:\n${findings.map(f => `- ${f}`).join('\n')}\n` : ''}${decided}1. Requirement: follow the /add-requirement skill up to the draft. Show it can be
+Read the investigation report ${reportFile} first. It holds the goal, scope,
+the user's decisions, facts, risks and acceptance checks: build only on it and
+the repo. Where the report and your own idea differ, the report wins.
+1. Requirement: follow the /add-requirement skill up to the draft. Show it can be
    built with evidence from the repo's code and docs. Only if that is not enough,
    write a throwaway spike in a temporary folder outside the repo, and delete it
    after. Check for duplicates and conflicts. Do not write the requirements file:
@@ -228,6 +239,7 @@ if (problems.length) return { stage: 'error', reason: `the plans need fixing: ${
 
 return {
   stage: 'plans',
+  report: reportFile,
   review,
   requirement: out.requirement,
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
