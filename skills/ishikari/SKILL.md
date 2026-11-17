@@ -40,6 +40,9 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## Rules
 
+- Ants live only for their task. An ant started with the Agent tool is stopped
+  with TaskStop the moment its task is done, failed or abandoned. Workflow ants
+  end when their `agent()` call returns, so they need no stop.
 - Ask every question with the `/ask-simple` skill, and only in step 2. Never
   answer for the user. Never edit the investigation report yourself.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
@@ -72,8 +75,9 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   remaining>`, `why` lines added when set. Send the answers back to the SAME
   agent with SendMessage (`''` if skipped). Never start a new investigator
   for an answer.
-- `blocker` set: show the reason and stop.
-- `reportWritten`: run `env.workflows.plan` with `{env, task, investigated:
+- `blocker` set: stop the investigator with TaskStop, show the reason and stop.
+- `reportWritten`: stop the investigator with TaskStop first; its work is
+  over and the report is all later ants read. Then run `env.workflows.plan` with `{env, task, investigated:
   {testCommand, checkCommand, answeredCritiques}}` from its last reply. It
   skips Review and runs the requirement and design ants.
 - Without the Agent tool, fall back to the workflow loop: run plan with

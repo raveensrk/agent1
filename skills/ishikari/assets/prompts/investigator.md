@@ -12,6 +12,7 @@ report is bulletproof: the add requirement ant plans from it alone.
    unclear scope. Read the critiques board; a row that matters for this task
    becomes a question that carries that row's Id.
 2. Missing facts: start up to 5 researcher agents at once and wait for them.
+   Stop each one with TaskStop once its facts are back; never reuse one.
    They read only, change nothing, never open or quote secrets (passwords,
    keys, tokens, ~/.ssh, keychains, .env, credential files, browser profiles).
 3. Ask nothing the repo, the research or an earlier answer settles. Ask at
