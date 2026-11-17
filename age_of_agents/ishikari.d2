@@ -69,7 +69,7 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
-  together: Together test\nmerger ant, scratch copy {class: node; style.stroke: ${check-line}}
+  together: Combined test\nIntegrator Ant: all passing tasks\nmerged in a scratch copy, tested once {class: node; style.stroke: ${check-line}}
   monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
@@ -105,8 +105,8 @@ always_on: Upkeep ants (before main moves) {
 plan.arta <-> user: one question\nat a time, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
-check.together -> build.bulletin: work together {class: ok}
-check.together -> fix.bounty: clash {class: bug}
+check.together -> build.bulletin: pass: they\nwork combined {class: ok}
+check.together -> fix.bounty: fail: tasks\nclash {class: bug}
 check.inspector -> fix.bounty: fail: bugs +\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}

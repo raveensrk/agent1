@@ -1,12 +1,12 @@
 export const meta = {
   name: 'ishikari-build',
-  description: 'Ishikari stage 2: worker ants build the plans, inspector ants check them, detective ants plan fixes, then all passing tasks are tested together',
+  description: 'Ishikari stage 2: worker ants build the plans, inspector ants check them, detective ants plan fixes, then the integrator ant tests all passing tasks combined',
   whenToUse: 'After ishikari-plan returns plans. Ends with task results; the main session approves passing tasks without asking.',
   phases: [
     { title: 'Build', detail: 'worker ants, at most 5 at once, one worktree each' },
     { title: 'Check', detail: 'one inspector ant per built task' },
     { title: 'Fix', detail: 'detective plans, worker builds, inspector re-checks; 3 tries per bug' },
-    { title: 'Together', detail: 'merger ant merges all passing tasks in a scratch copy and tests once' },
+    { title: 'Combined', detail: 'integrator ant merges all passing tasks in a scratch copy and tests once' },
     { title: 'Boards', detail: 'one board write at the end' },
   ],
 }
@@ -28,7 +28,7 @@ export const meta = {
 const MAX_WORKERS = 5
 const MAX_TRIES = 3   // tries per bug before it is escalated
 const MAX_ROUNDS = 5  // fix rounds per task, so new bugs cannot loop forever
-const EFFORT = { worker: 'medium', inspector: 'medium', detective: 'high', merger: 'medium', clerk: 'low' }
+const EFFORT = { worker: 'medium', inspector: 'medium', detective: 'high', integrator: 'medium', merger: 'medium', clerk: 'low' }
 
 const { env = {}, plans = [], bugs: bugsIn = [] } = args
 
@@ -417,7 +417,7 @@ await parallel([
 ])
 const all = [...tasks, ...Object.values(bugTasks)]
 
-// ---- together: merge every passing task in a scratch copy, test once ----
+// ---- combined test: the integrator ant merges every passing task in a scratch copy, test once ----
 function mergeOrder(list) {
   const ids = new Set(list.map(t => t.id))
   const out = []
@@ -436,7 +436,8 @@ function combine(list, round) {
   const branch = `ishikari/${env.run}/_together`
   const tree = treeOf(branch)
   return agent(
-    `You are the merger ant of the Ishikari workflow, doing a trial merge.
+    `You are the integrator ant of the Ishikari workflow. You run the combined test:
+a trial merge that never touches main.
 ${where}
 Work only in a scratch worktree: ${tree} on branch ${branch}.
 Start fresh: if that worktree or branch exists, remove them
@@ -455,7 +456,7 @@ and test after each merge. Report that task as "tests failed" with the failing
 tests and the tasks merged before it, leave it out, and go on until the tests pass.
 Report every task. Never write or fix code yourself, and never touch ${env.main}.
 Return the final commit of ${branch} as sha.`,
-    { label: `merger-ant:together${round}`, phase: 'Together', effort: EFFORT.merger, schema: COMBINE },
+    { label: `integrator-ant:combined${round}`, phase: 'Combined', effort: EFFORT.integrator, schema: COMBINE },
   )
 }
 
@@ -463,9 +464,9 @@ let together = null
 for (let round = 1; round <= 2; round++) {
   const passing = mergeOrder(all.filter(t => t.result && t.result.status === 'awaiting review'))
   if (passing.length < 2) break
-  phase('Together')
+  phase('Combined')
   const r = await twice(() => combine(passing, round))
-  if (!r) { log('together check skipped: the merger ant died twice'); break }
+  if (!r) { log('combined test skipped: the integrator ant died twice'); break }
   const outcome = Object.fromEntries((r.results || []).map(x => [x.id, x]))
   const clashes = passing.filter(t => outcome[t.id] && ['conflict', 'tests failed'].includes(outcome[t.id].outcome))
   if (!clashes.length) {

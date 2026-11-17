@@ -64,7 +64,7 @@ its job. The build script runs that workflow in place of a worker ant.
     - **Checks:** the task's own work against its plan, and against
       `architecture.md`: a name or interface that differs from the design is a
       bug. It runs the tests in the task's worktree.
-    - **Pass:** no bugs. The task waits for the together test. Style points go
+    - **Pass:** no bugs. The task waits for the combined test. Style points go
       to the final report as notes.
     - **Fail:** each bug goes to the bug bounty board, with how to see it. It
       also writes the first fix plan, so round 1 needs no detective.
@@ -80,15 +80,18 @@ its job. The build script runs that workflow in place of a worker ant.
     on it drop too; the final report lists them.
     An ant that crashes is retried once and never counts as a bug.
 
-09. **Together test.** When every task is done, a merger ant merges all passing
-    tasks in a straight line in a scratch copy and runs the tests once. A task
+09. **Combined test, by the Integrator Ant.** Tasks are built and inspected
+    alone, so two can pass alone and still break when combined. When every
+    task is done, the integrator ant merges all passing tasks in a straight
+    line in a scratch copy, a throwaway copy that never touches main, and runs
+    the tests once. It is a dress rehearsal for the merger ant in Finish. A task
     that clashes takes in the tasks it clashes with and goes back through the
     fix loop, and the test runs once more. No one reviews by hand.
 
 10. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
     dependency order, and tests once. When the approved tasks are exactly the
-    ones tested together, it reuses that result. It refuses a task whose base
+    ones in the combined test, it reuses that result. It refuses a task whose base
     was dropped. A failed merge, or a task left waiting, goes back to a new
     build round on its own, at most 2 rounds; what is left is dropped and
     reported. Main moves forward only as a fast-forward, which git refuses if it
@@ -145,7 +148,7 @@ investigator ant's questions; after that it drives everything on its own.
 | Workflow          | Stages                      | Ends with            |
 | ----------------- | --------------------------- | -------------------- |
 | `ishikari-plan`   | review, plans               | plans to build       |
-| `ishikari-build`  | build, check, fix, together | tasks to review      |
+| `ishikari-build`  | build, check, fix, combined | tasks to merge       |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 
 The scripts: [`ishikari-plan.js`](../skills/ishikari/scripts/ishikari-plan.js),
@@ -171,7 +174,7 @@ and stops to ask the user only in step 2.
    `awaiting review` is approved without asking. Escalated, blocked and error
    tasks, and tasks built on them, are dropped and listed in the report.
 4. Run `ishikari-finish` with `env`, the approved tasks, the build's `together`
-   result and any tasks to drop. One task with no `after` skips the trial
+   result (the combined test's) and any tasks to drop. One task with no `after` skips the trial
    merge: its inspector already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app. Failed merges come back in
    the next build as `bugs`; the janitor's cleanup plan, based on main, goes to
@@ -262,7 +265,7 @@ check: 3. Check {
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
   monitor: Anti-monitor ant\n(the build script) {class: node; style.stroke: ${check-line}}
   inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {style.multiple: true; class: node; style.stroke: ${check-line}}
-  together: Together test\nmerger ant, scratch copy {class: node; style.stroke: ${check-line}}
+  together: Combined test\nIntegrator Ant: all passing tasks\nmerged in a scratch copy, tested once {class: node; style.stroke: ${check-line}}
   monitor -> inspector: start one as soon as\na task or fix is built {class: flow}
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
@@ -298,8 +301,8 @@ always_on: Upkeep ants (before main moves) {
 plan.arta <-> user: one question\nat a time, /ask-simple {class: flow}
 plan.plans -> build.aw: start in parallel {class: flow}
 check.monitor -> build.bulletin: board tool writes\nonce per stage {class: flow; style.stroke-dash: 3}
-check.together -> build.bulletin: work together {class: ok}
-check.together -> fix.bounty: clash {class: bug}
+check.together -> build.bulletin: pass: they\nwork combined {class: ok}
+check.together -> fix.bounty: fail: tasks\nclash {class: bug}
 check.inspector -> fix.bounty: fail: bugs +\nfirst fix plan {class: bug}
 fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.monitor: fix built,\nre-inspect {class: flow}

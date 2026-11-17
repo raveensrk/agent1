@@ -2,7 +2,7 @@
 name: ishikari
 metadata:
   scope: global
-description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it together, and merge it in a straight line - asking the user only while planning, then running on its own. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
+description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it combined, and merge it in a straight line - asking the user only while planning, then running on its own. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
 argument-hint: "<task> [repo path]"
 ---
 
@@ -23,7 +23,7 @@ Design, rules and diagram:
 | ---------------------------- | -------------------------------------------- |
 | `scripts/ishikari.py`        | setup, config; only writer of boards, reqs   |
 | `scripts/ishikari-plan.js`   | investigate, requirement, design, plans      |
-| `scripts/ishikari-build.js`  | build, check, fix, test together             |
+| `scripts/ishikari-build.js`  | build, check, fix, combined test             |
 | `scripts/ishikari-finish.js` | merge, upkeep, move main                     |
 | `assets/boards/*.md`         | board templates: bulletin, bounty, critiques |
 
