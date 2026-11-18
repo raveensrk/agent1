@@ -26,7 +26,23 @@
                                            "\" font-size=\"" size "\" text-anchor=\"" anchor "\" font-weight=\"" weight "\">" (esc l) "</text>"))
                             lines))))
 
-(defn d [pts] (str "M" (str/join " L" (map (fn [[x y]] (str x "," y)) pts))))
+(def CURVE 60) ; corner radius: every bend in a line is a smooth curve, not a sharp corner
+(defn- fmt [v] (let [r (/ (Math/round (* 10.0 v)) 10.0)] (if (== r (Math/floor r)) (str (long r)) (str r))))
+(defn d
+  "SVG path through pts; each inner corner is rounded with a quadratic curve
+  of up to CURVE px, never more than half of either segment."
+  [pts]
+  (let [p (fn [[x y]] (str (fmt x) "," (fmt y)))
+        toward (fn [[ax ay] [bx by] r]
+                 (let [len (Math/hypot (- bx ax) (- by ay))]
+                   [(+ ax (* r (/ (- bx ax) len))) (+ ay (* r (/ (- by ay) len)))]))
+        dist (fn [[ax ay] [bx by]] (Math/hypot (- bx ax) (- by ay)))]
+    (str "M" (p (first pts))
+         (apply str
+                (for [[a b c] (partition 3 1 pts)
+                      :let [r (min CURVE (/ (dist a b) 2) (/ (dist b c) 2))]]
+                  (str " L" (p (toward b a r)) " Q" (p b) " " (p (toward b c r)))))
+         (when (> (count pts) 1) (str " L" (p (last pts)))))))
 
 (def R1 200) (def R2 440) (def R3 760)
 (def X 1900)              ; where each row wraps down to the next
