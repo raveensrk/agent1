@@ -121,10 +121,10 @@
 <circle cx="1580" cy="1520" r="9" fill="#F1F5F9"/>
 <text class="h" x="1580" y="1460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">checkCommand</text>
 <text class="h" x="1580" y="1479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">the finisher ant builds and checks the app,</text><text class="h" x="1580" y="1495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">only when main moved and checkCommand is set</text>
-<rect x="1566" y="1646" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<circle cx="1580" cy="1660" r="16" fill="#0B1120"/><path d="M1592,1653 A13,13 0 1 0 1593,1663" fill="none" stroke="#F1F5F9" stroke-width="4" stroke-linecap="round"/><path d="M1585,1650 L1594,1651 L1595,1642" fill="none" stroke="#F1F5F9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 <text class="h" x="1606" y="1656" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">check-fix round</text>
 <text class="h" x="1606" y="1675" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">a failed check: one build round</text><text class="h" x="1606" y="1691" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">from the moved main</text>
-<rect x="1766" y="1506" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<circle cx="1780" cy="1520" r="16" fill="#0B1120"/><path d="M1767,1521 L1776,1531 L1794,1508" fill="none" stroke="#F1F5F9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 <text class="h" x="1780" y="1554" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">req done</text>
 <text class="h" x="1780" y="1573" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">the main session marks the kept :ID:s</text><text class="h" x="1780" y="1589" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">once the check passed, or there is none</text>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#60A5FA" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">1</text><animateMotion dur="20s" begin="0s" repeatCount="indefinite"><mpath href="#L-plan"/></animateMotion></g>

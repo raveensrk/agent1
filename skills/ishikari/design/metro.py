@@ -68,8 +68,8 @@ stations = [
  (1180,R4,"Finisher ant",["fast-forwards main, removes worktrees,","appends the stage rows, runs the check"],"x",L_UP),
  (1340,R4,"MAIN",["fast-forward only,","never pushed"],"main",L_DN),
  (1580,R4,"checkCommand",["the finisher ant builds and checks the app,","only when main moved and checkCommand is set"],"st",L_UP),
- (1580,1660,"check-fix round",["a failed check: one build round","from the moved main"],"term",RIGHT),
- (1780,R4,"req done",["the main session marks the kept :ID:s","once the check passed, or there is none"],"term",L_DN),
+ (1580,1660,"check-fix round",["a failed check: one build round","from the moved main"],"retry",RIGHT),
+ (1780,R4,"req done",["the main session marks the kept :ID:s","once the check passed, or there is none"],"done",L_DN),
 ]
 o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">')
 o.append('<title>Ishikari metro map, readable</title>')
@@ -106,8 +106,6 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
         o.append(hexm(x, y, 16, BG, TXT, 5))
     elif kind == "x":
         o.append(f'<circle cx="{x}" cy="{y}" r="14" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
-    elif kind == "term":
-        o.append(f'<rect x="{x-14}" y="{y-14}" width="28" height="28" rx="7" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
     elif kind == "log":  # an open logbook: two pages, a spine, ruled lines
         pg = lambda sx: f'<path d="M{x},{y-10} Q{x+sx*9},{y-15} {x+sx*18},{y-11} L{x+sx*18},{y+13} Q{x+sx*9},{y+9} {x},{y+14} Z" fill="{BG}" stroke="{TXT}" stroke-width="3" stroke-linejoin="round"/>'
         o.append(pg(-1) + pg(1) + f'<line x1="{x}" y1="{y-10}" x2="{x}" y2="{y+14}" stroke="{TXT}" stroke-width="3"/>')
@@ -141,6 +139,9 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
         o.append(f'<line x1="{x-9}" y1="{y-16}" x2="{x-9}" y2="{y+16}" stroke="{TXT}" stroke-width="4" stroke-linecap="round"/>'
                  f'<rect x="{x-9}" y="{y-16}" width="22" height="16" fill="{BG}" stroke="{TXT}" stroke-width="3"/>'
                  + "".join(f'<rect x="{x-9+i*5.5}" y="{y-16+j*5.33}" width="5.5" height="5.33" fill="{TXT}"/>' for i in range(4) for j in range(3) if (i + j) % 2 == 0))
+    elif kind == "done":  # a bold check mark
+        o.append(f'<circle cx="{x}" cy="{y}" r="16" fill="{BG}"/>'
+                 f'<path d="M{x-13},{y+1} L{x-4},{y+11} L{x+14},{y-12}" fill="none" stroke="{TXT}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>')
     elif kind == "end":
         o.append(f'<line x1="{x-16}" y1="{y}" x2="{x+16}" y2="{y}" stroke="{TXT}" stroke-width="7" stroke-linecap="round"/>')
     else:
