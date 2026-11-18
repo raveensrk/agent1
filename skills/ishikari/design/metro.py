@@ -47,15 +47,15 @@ stations = [
  (1440,R1,"Worker plans",["one per worker ant:","title, files, after"],"st",L_DN),
  (200,R2,"Worker Ants  ∥",["max 5, one worktree each,","code + tests + docs","stuck: next fix round"],"x",(0,-74,"middle")),
  (760,R2,"Inspector Ants  ∥",["one per built task: plan + design,","runs tests (reuses worker's if clean)"],"x",(0,-60,"middle")),
- (1040,R2,"Combined test",["Integrator Ant merges passing","tasks in a scratch copy, tests once"],"x",(0,-60,"middle")),
+ (1040,R2,"Integrator Ant",["merges passing tasks in a scratch","copy, tests once: the combined test"],"x",(0,-60,"middle")),
  (1320,660,"Logbook",["bulletin + bug bounty boards,","written at the end of build and","of finish. For you; no ant reads it.","~/.ishikari/<repo>-<hash>/boards/"],"log",(26,-4,"start")),
  (620,700,"Detective Ants  ∥",["finds why, writes the next","fix plan, never code"],"x",(-26,34,"end")),
  (620,770,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",(26,-4,"start")),
  (200,R3,"Merger ant",["straight line or build's trial","merge; Verifier Ant: git cherry"],"x",(0,-58,"middle")),
  (200,1170,"merge failed",["next build round; also when the","verifier finds a task missing"],"term",(26,-4,"start")),
  (440,R3,"Janitor ant",["cleanup plan for this run's mess,","built + checked before main moves"],"x",L_UP),
- (560,1150,"Cleanup worker",["builds it on top of the merge"],"st",(0,34,"middle")),
- (760,1150,"Cleanup inspector",["plan + tests = combined test;","fail: one fix round"],"st",(0,-60,"middle")),
+ (560,1150,"Worker ant",["builds the cleanup on top of the merge"],"st",(0,34,"middle")),
+ (760,1150,"Inspector ant",["checks the cleanup: plan + combined test;","fail: one fix round"],"st",(0,-60,"middle")),
  (760,1260,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
  (1200,R3,"Philosopher ant",["after the cleanup: reviews the merged","tasks and the cleanup; 1 best critique","(--critiques N), never blocks"],"x",(26,40,"start")),
  (1200,950,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"log",(-26,-4,"end")),
@@ -89,7 +89,7 @@ o.append(txt(1052, 640, ["fail: tasks clash,", "merge, then fix loop"], RED, 13)
 o.append(txt(250, 684, ["fix plan back to a worker  ·  max 2 extra build rounds"], RED, 13))
 def is_ant(nm):
     n = nm.lower()
-    return " ant" in n or n in ("combined test", "cleanup worker", "cleanup inspector")
+    return " ant" in n
 def hexm(x, y, r, fill, stroke, sw):
     pts = " ".join(f"{x + r * dx:.1f},{y + r * dy:.1f}" for dx, dy in [(-1,0),(-0.5,-0.87),(0.5,-0.87),(1,0),(0.5,0.87),(-0.5,0.87)])
     return f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
