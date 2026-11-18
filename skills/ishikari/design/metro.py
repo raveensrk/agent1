@@ -168,7 +168,12 @@ for i, (c, n, t) in enumerate(rows):
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')
     o.append(f'<rect x="{kx+70}" y="{y-9}" width="34" height="18" rx="5" fill="#FDE047" stroke="{c}" stroke-width="2"/><text x="{kx+87}" y="{y+4}" font-size="11" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>')
     o.append(txt(kx + 114, y + 5, [t], TXT, 13))
-o.append(txt(kx + 360, ky + 30, ["dashed:", "a side branch", "⬡ an ant (AI agent)", "↻ back to build, 🗑 dropped", "○ interchange", "stacked ∥: parallel"], SUB, 12))
+o.append(txt(kx + 360, ky + 30, ["dashed:", "a side branch", "⬡ an ant (AI agent)", "↻ back to build", "", "○ interchange", "stacked ∥: parallel"], SUB, 12, lh=16))
+by = ky + 30 + 4 * 16 - 4  # a small bin, drawn: an emoji renders differently per browser
+o.append(f'<path d="M{kx+361},{by-3} L{kx+369},{by-3} L{kx+368},{by+5} L{kx+362},{by+5} Z" fill="none" stroke="{SUB}" stroke-width="1.5" stroke-linejoin="round"/>'
+         f'<line x1="{kx+359.5}" y1="{by-5}" x2="{kx+370.5}" y2="{by-5}" stroke="{SUB}" stroke-width="1.5" stroke-linecap="round"/>'
+         f'<path d="M{kx+363},{by-5} L{kx+363},{by-7} L{kx+367},{by-7} L{kx+367},{by-5}" fill="none" stroke="{SUB}" stroke-width="1.2"/>')
+o.append(txt(kx + 375, ky + 30 + 4 * 16, ["dropped"], SUB, 12))
 o.append('</svg>')
 out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro.svg")
 with open(out, "w", encoding="utf-8") as f:
