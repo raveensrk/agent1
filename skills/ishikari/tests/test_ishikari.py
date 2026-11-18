@@ -29,7 +29,7 @@ KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "add-requirement-ant": "Add requirement ant", "architect-ant": "Architect ant",
     "worker-ant": "Worker ants  ∥",
     "detective-ant": "Detective ants  ∥", "integrator-ant": "Integrator ant",
-    "merger-ant": "Merger ant", "janitor-ant": "Janitor ant",
+    "janitor-ant": "Janitor ant",
     "juror-ant": "Juror ants  ∥", "judge-ant": "Judge ant", "finisher-ant": "Finisher ant",
     "logbook-clerk": "Logbook",
 }
@@ -80,18 +80,18 @@ def test_setup_and_logbook():
         run(home, "log", "append", state, stdin=json.dumps([
             {"run": "r1", "task": "x", "who": "worker ant", "event": "awaiting review"},
             {"run": "r1", "task": "x", "who": "inspector ant", "event": "bug open", "detail": "line one\nline two", "tries": 2}]))
-        run(home, "log", "append", state, stdin=json.dumps([{"run": "r1", "task": "x", "who": "merger ant", "event": "done"}]))
+        run(home, "log", "append", state, stdin=json.dumps([{"run": "r1", "task": "x", "who": "integrator ant", "event": "done"}]))
         run(home, "log", "note", state, "check", "the", "auth", "flow")
         text = open(book).read()
         assert text.count("Task: x") == 3  # append only: nothing replaced
         assert "Detail: line one\n+ line two" in text and "Tries: 2" in text
         assert "Who: you\nEvent: note\nDetail: check the auth flow" in text
         status = run(home, "log", "status", state, "r1")
-        assert "r1/x  done  merger ant" in status and "bug open" not in status
+        assert "r1/x  done  integrator ant" in status and "bug open" not in status
         if shutil.which("recsel"):  # the file is a valid recfile
             out = subprocess.run(["recsel", "-t", "Entry", "-e", "Event = 'done'", "-P", "Who", book],
                                  capture_output=True, text=True, timeout=TIMEOUT)
-            assert out.returncode == 0 and out.stdout.strip() == "merger ant", out.stderr
+            assert out.returncode == 0 and out.stdout.strip() == "integrator ant", out.stderr
 
 
 def test_workflows_config_and_req():
@@ -270,7 +270,7 @@ def test_metro_map():
         for kind in set(KIND.findall(src)):
             assert kind in KIND_STATION, f"{os.path.basename(script)}: no station for {kind}"
             assert KIND_STATION[kind] in names, f"{os.path.basename(script)}: {KIND_STATION[kind]} not on the map"
-    counts = {"Merger ant": 2, "Worker ant": 1, "Inspector ant": 0, "Detective ant": 1, "Judge ant": 2,
+    counts = {"Integrator ant": 3, "Worker ant": 1, "Inspector ant": 0, "Detective ant": 1, "Judge ant": 2,
               "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
