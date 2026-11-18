@@ -51,10 +51,10 @@ stations = [
  # row 2: build, check, fix
  (200,R2,"Worker ants  ∥",["max 5, one worktree each,","code + tests + docs;","stuck: next fix round"],"x",(0,-84,"middle")),
  (760,R2,"Detective ants  ∥",["one per built task: checks it against plan +","design, runs tests (reuses the worker's if clean);","finds each bug's cause and plans its fix"],"x",(0,-86,"middle")),
- (1200,R2,"Integrator ant: combined test",["merges passing tasks in a scratch","copy, tests once: the combined test;","fewer than 2 passing tasks: no combined test"],"x",(0,-78,"middle")),
+ (1200,R2,"Integrator ant",["merges passing tasks in a scratch","copy, tests once: the combined test;","fewer than 2 passing tasks: no combined test"],"x",(0,-78,"middle")),
  (660,750,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",RIGHT),
  # row 3: merge and cleanup
- (200,R3,"Integrator ant: merge",["merges in a straight line in a scratch copy,","or reuses build's trial merge; then checks","its own merge with git cherry"],"x",(0,-70,"middle")),
+ (200,R3,"Integrator ant",["merges in a straight line in a scratch copy,","or reuses build's trial merge; then checks","its own merge with git cherry"],"x",(0,-70,"middle")),
  (480,1180,"merge failed",["a conflict, failed tests, or a task","git finds missing: next build round;","max 2 extra build rounds"],"term",RIGHT),
  (760,R3,"Janitor ant",["cleans up dead code and mess itself: edits,","runs the tests, commits, lands it only if","they pass. Skipped under 100 changed lines;","a cleanup run has no janitor"],"x",(0,-88,"middle")),
  (760,1210,"Dropped cleanup",["tests failed: branch kept,","its note offered as the next Task"],"term",RIGHT),
@@ -63,7 +63,7 @@ stations = [
  (J1,R4,"Judge ant",["scores the run 0-10: does the code","match the plans? its own call, not an average"],"x",L_UP),
  (500,DIP4,"Worker ant",["closes the judge's gaps"],"st",L_DN),
  (660,DIP4,"Detective ant",["checks the fix, runs the tests"],"st",L_UP),
- (820,DIP4,"Integrator ant: fast-forward",["fast-forwards the scratch copy to the fix;","the fix lands only through this fast-forward"],"st",L_DN),
+ (820,DIP4,"Integrator ant",["fast-forwards the scratch copy to the fix;","the fix lands only through this fast-forward"],"st",L_DN),
  (J2,DIP4,"Judge ant",["scores again; still below 7:","main moves, verdict flagged"],"st",(14,34,"start")),
  (1180,R4,"Finisher ant",["fast-forwards main, removes worktrees,","appends the stage rows, runs the check"],"x",L_UP),
  (1340,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
