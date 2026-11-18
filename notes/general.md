@@ -14,3 +14,4 @@ Ai agents read epub better than pdf. Mobi file format is worst.
 - `/batch` migration
 - `/simplify`
 - `/loop`
+- `/workflows` - Multi-Agent workflows / Dynamic workflows in claude

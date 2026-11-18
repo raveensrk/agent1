@@ -75,6 +75,7 @@ TUI and CLI for finding LLMs that fit local hardware
 :PROPERTIES:
 :NEEDS: [[*AI][AI]]
 :END:
+- =/workflows=
 **** Codex and ChatGPT :core:
 :PROPERTIES:
 :NEEDS: [[*AI][AI]]
@@ -567,6 +568,11 @@ Clojure Dialect with c++ interop
 :URL: https://freetype.org/index.html
 :NEEDS: [[*Fonts][Fonts]]
 :END:
+** Build Systems
+*** Bazel :core:
+*** Chisel :experimental:
+*** FuseSOC :experimental:
+*** PULP :experimental:
 * Notes
 ** Note 1
 Reduce Abstractions
