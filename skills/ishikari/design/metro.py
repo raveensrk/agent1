@@ -1,8 +1,8 @@
 # Build ishikari-metro.svg: the metro map laid out for reading.
-# Three rows read left to right like text; cross-row links are short
+# Four rows read left to right like text; cross-row links are short
 # transfer spurs with a named destination instead of long lines.
 import os
-W, H = 1720, 1230
+W, H = 1720, 1640
 BG = "#0B1120"; TXT = "#F1F5F9"; SUB = "#A8B3C7"
 BLUE = "#60A5FA"; GREEN = "#4ADE80"; RED = "#F87171"; GOLD = "#FBBF24"; PURP = "#C4B5FD"; TEAL = "#2DD4BF"; GREY = "#94A3B8"
 o = []
@@ -12,12 +12,12 @@ def txt(x, y, lines, fill=TXT, size=14, anchor="start", weight="400", lh=None):
     return "".join(f'<text class="h" x="{x}" y="{y + i * lh}" fill="{fill}" font-size="{size}" text-anchor="{anchor}" font-weight="{weight}">{esc(l)}</text>' for i, l in enumerate(lines))
 def d(pts): return "M" + " L".join(f"{x},{y}" for x, y in pts)
 
-R1, R2, R3 = 200, 520, 980
+R1, R2, R3, R4 = 200, 520, 980, 1440
 lines = [  # name, colour, points, width, dash
  ("plan",  BLUE,  [(120,R1),(1440,R1),(1600,R1),(1600,360),(60,360),(60,R2),(200,R2)], 12, ""),
  ("ask",   GOLD,  [(440,R1),(440,90)], 7, ""),
  ("res",   BLUE,  [(440,R1),(440,290)], 7, ""),
- ("build", GREEN, [(200,R2),(1320,R2),(1600,R2),(1600,820),(60,820),(60,R3),(1290,R3)], 12, ""),
+ ("build", GREEN, [(200,R2),(1320,R2),(1600,R2),(1600,820),(60,820),(60,R3),(1600,R3),(1600,1290),(60,1290),(60,R4),(560,R4)], 12, ""),
  ("bugin", RED,   [(760,R2),(760,640),(700,700),(620,700)], 8, ""),
  ("clash", RED,   [(1040,R2),(1040,700),(620,700)], 6, "10 6"),
  ("bugout",RED,   [(620,700),(240,700),(200,660),(200,R2)], 8, ""),
@@ -28,8 +28,8 @@ lines = [  # name, colour, points, width, dash
  ("tidy",  TEAL,  [(440,R3),(500,1050),(560,1050),(760,1050),(940,1050),(1000,R3)], 9, ""),
  ("tdrop", TEAL,  [(760,1050),(760,1160)], 6, "10 6"),
  ("crit",  GREY,  [(1000,R3),(1000,880)], 6, "4 6"),
- ("after", PURP,  [(1290,R3),(1630,R3)], 9, ""),
- ("cfix",  PURP,  [(1450,R3),(1450,1070)], 6, "10 6"),
+ ("after", PURP,  [(560,R4),(1160,R4)], 9, ""),
+ ("cfix",  PURP,  [(860,R4),(860,1530)], 6, "10 6"),
 ]
 # x, y, name, sub lines, kind, label anchor (dx, dy, anchor)
 L_UP = (0, -52, "middle"); L_DN = (0, 34, "middle")
@@ -56,11 +56,11 @@ stations = [
  (760,1160,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
  (1000,R3,"Philosopher ant",["alongside the cleanup,","1 best critique (--critiques N)"],"x",(26,40,"start")),
  (1000,880,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"term",(-26,-4,"end")),
- (1150,R3,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
- (1290,R3,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
- (1450,R3,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
- (1450,1070,"check-fix round",["from the moved main, once"],"term",(26,-4,"start")),
- (1630,R3,"req done",["marks the kept :ID:s"],"term",(0,-52,"middle")),
+ (300,R4,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
+ (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
+ (860,R4,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
+ (860,1530,"check-fix round",["from the moved main, once"],"term",(26,-4,"start")),
+ (1160,R4,"req done",["marks the kept :ID:s"],"term",(0,-52,"middle")),
 ]
 o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif">')
 o.append('<title>Ishikari metro map, readable</title>')
@@ -70,13 +70,14 @@ o.append(f'<rect width="{W}" height="{H}" fill="{BG}"/>')
 o.append(txt(40, 44, ["ISHIKARI METRO"], TXT, 28, weight="800"))
 o.append(txt(330, 44, ["Read it like a page: each row left to right, then wrap to the next row."], SUB, 15))
 # row bands
-for y, label, c in [(R1, "1 ASK  ·  2 PLAN", BLUE), (R2, "3 BUILD  ·  4 CHECK  ·  5 FIX", GREEN), (R3, "6 FINISH", GREEN)]:
+for y, label, c in [(R1, "1 ASK  ·  2 PLAN", BLUE), (R2, "3 BUILD  ·  4 CHECK  ·  5 FIX", GREEN), (R3, "6 FINISH: MERGE + CLEANUP", GREEN), (R4, "6 FINISH: MAIN MOVES", GREEN)]:
     o.append(txt(W - 30, y - 100 if y != R1 else 120, [label], c, 13, "end", "800"))
 for name, c, pts, w, dash in lines:
     o.append(f'<path id="L-{name}" d="{d(pts)}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linejoin="round" stroke-linecap="round"' + (f' stroke-dasharray="{dash}" class="flow"' if dash else '') + '/>')
 o.append(txt(1612, 290, ["to row 2"], BLUE, 13, weight="700"))
 o.append(txt(480, 474, ["built: the script starts", "its inspector at once"], GREEN, 13, "middle"))
 o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
+o.append(txt(1612, 1140, ["to row 4"], GREEN, 13, weight="700"))
 o.append(txt(1330, 590, ["end of build: written once"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
 o.append(txt(480, 604, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
@@ -116,7 +117,7 @@ for n, path, c, sec, beg in trains:
 for path, sec in [("ask", 6), ("res", 5)]:
     o.append(f'<circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="{sec}s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-{path}"/></animateMotion></circle>')
 # key
-kx, ky = 1000, 1066
+kx, ky = 1260, 1390
 o.append(f'<rect x="{kx}" y="{ky}" width="420" height="150" rx="12" fill="#0F172A" stroke="#334155"/>')
 rows = [(BLUE, "1", "task on the plan line"), (GREEN, "2-6", "five worker tasks to MAIN"), (RED, "7-8", "a bug through the fix loop"),
         (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves")]

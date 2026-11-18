@@ -229,7 +229,7 @@ stands alone as the bridge to the next run: the philosopher writes it and the
 next run's investigator reads it. All boards live in the state folder, outside
 the repo.
 
-An animated metro map: three rows read left to right, and short transfer spurs
+An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Built by [`metro.py`](metro.py);
 run `python3 metro.py` after a flow change.
 
