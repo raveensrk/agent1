@@ -290,12 +290,19 @@ def test_metro_map():
         assert names.count(name) == n, (name, names.count(name))
     for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand", "req done"):
         assert name in names, name
-    groups = [g for g in ET.parse(SVG).getroot().iter(NS + "g") if g.get("class") == "st"]
+    root = ET.parse(SVG).getroot()
+    every = [g for g in root.iter(NS + "g") if "ck" in (g.get("class") or "").split()]
+    groups = [g for g in every if "st" in g.get("class").split()]
     assert len(groups) == len(names), (len(groups), len(names))  # every station is clickable
     for g in groups:
         assert (g.findtext(NS + "title") or "").endswith("Click for more."), g.get("data-i")
         assert re.fullmatch(r"st-[a-z][a-z0-9-]*", g.get("id") or ""), g.get("id")
-    assert len({g.get("id") for g in groups}) == len(groups)  # ids are unique
+    assert len({g.get("id") for g in every}) == len(every)  # ids are unique
+    for g in every:  # everything clickable says what it is
+        assert (g.findtext(NS + "title") or "").endswith("Click for more."), g.get("id")
+    clickable_texts = {id(t) for g in every for t in g.iter(NS + "text")}
+    loose = [t.text for t in root.iter(NS + "text") if t.get("class") == "h" and id(t) not in clickable_texts]
+    assert not loose, f"text with nothing to click: {loose}"
     for spur in ("merge failed: to Worker ants, row 2", "cleanup failed: to Task, row 1 (next run)", "dropped", "check failed: to Worker ants, row 2 (new task)"):
         assert spur in strings_all(texts), spur
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))

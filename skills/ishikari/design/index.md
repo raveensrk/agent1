@@ -257,8 +257,11 @@ An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Every agent label in the three scripts has a
 station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
-Hover a station for a one-line tooltip; open the SVG itself in a browser and
-click a station for a panel with its full story and source (Esc closes it).
+Everything on the map says what it is: stations, lines, spurs, junctions,
+notes, row labels, the moving cars and the key. Hover for a one-line tooltip;
+open the SVG itself in a browser and click for a panel with the full story
+(Esc closes it). Lines and notes take their text from `about-lines` and
+`about-notes` in `metro.clj`; the build fails on one without text.
 Each station has a fixed id (`merger`) and a position code worked out on
 each build (`r3s1`: row 3, station 1), shown small beside its name.
 `ishikari-metro.svg#merger` or `#r3s1` opens that station's panel. Its text

@@ -314,15 +314,59 @@
                 (conj out (str "<circle cx=\"" (+ x 5) "\" cy=\"" (+ ky 136) "\" r=\"5\" fill=\"" c "\"/>")
                       (txt (+ x 14) (+ ky 140) [t] :fill SUB :size 12))))))))
 
+;; ---- everything on the map is clickable ----
+;; Each clickable thing registers {id name code tip about src x y} here while
+;; the map is drawn; the panel script gets the whole list. Stations come from
+;; `details`; the rest from `about-lines`, `about-notes` and the items below.
+
+(def about-lines
+  "Line name -> [name tip about]. \"none\" lines are invisible train routes."
+  {"plan"    ["Plan line" "Rows 1 to 2: from your task to the worker plans." "The blue line carries one task from Task through the investigator, the report, the requirement and the architect to the worker plans, then wraps down to row 2 where building starts."]
+   "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
+   "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
+   "g1"      ["Build line" "Rows 2 to 4: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
+   "fix"     ["Fix loop" "A bug goes back to the worker and is re-checked." "Yellow means a warning: the detective found a bug and planned its fix. The worker builds the fix and the detective re-checks, up to 3 tries per bug and 3 fix rounds."]
+   "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through the fix loop. 2 rounds at most."]
+   "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "After 3 tries on one bug or 3 fix rounds the task drops, and tasks built on it drop too. Its branch is kept for a later look and the final report lists it."]
+   "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
+   "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
+   "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks, the merger fast-forwards the fix, and the judge scores again. Only one round."]
+   "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, and the main session marks the requirements done."]
+   "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops and requirements are not marked done."]})
+
+(def about-notes
+  "Note id -> [name about] for the coloured notes along the lines."
+  {"to-row-2"  ["Row wrap" "The line continues on the next row; read the map like a page."]
+   "to-row-3"  ["Row wrap" "The line continues on the next row; read the map like a page."]
+   "to-row-4"  ["Row wrap" "The line continues on the next row; read the map like a page."]
+   "saved-workflow" ["Saved workflow" "A plan may name another saved workflow as its job. The build script then runs that workflow in place of a worker ant, so Ishikari can drive other workflows."]
+   "built"     ["Detective starts at once" "No ant watches for finished work: the build script starts every ant, so it starts the task's detective the moment the worker returns."]
+   "bugs"      ["Fix loop rule" "The detective's fix plan goes back to the worker, the worker builds it, and the detective re-checks every open bug by id. 3 tries per bug."]
+   "clash"     ["Clash rule" "A task whose merge breaks the combined test takes in the tasks it clashes with, then goes through the fix loop. 2 rounds."]
+   "no-fix"    ["Judge passed" "Green: a score of 7 or more, or no gaps, means no fix round and main moves."]
+   "fix-round" ["Judge fix rule" "A score below 7 with gaps starts one fix round."]
+   "fix-fails" ["Failed judge fix" "Red: if the judge's fix fails, its branch is kept, main moves anyway and the verdict says why."]})
+
+(def items (atom []))
+
+(defn clickable
+  "Wrap body in a clickable group with a tooltip, and register what it is."
+  [{:keys [id name code tip about src x y cls]} & body]
+  (when (some #(= id (:id %)) @items) (throw (ex-info (str "duplicate clickable id " id) {})))
+  (let [i (count @items)]
+    (swap! items conj {:id id :name name :code (or code "") :tip tip :about about :src (or src "") :x x :y y})
+    (str "<g class=\"ck" (when cls (str " " cls)) "\" id=\"" (if (= cls "st") "st-" "it-") id "\" data-i=\"" i "\" tabindex=\"0\" role=\"button\">"
+         "<title>" (esc (str name (when code (str " (" code ")")) ": " tip " Click for more.")) "</title>"
+         (apply str body) "</g>")))
+
 (defn panel
   "The click panel: an HTML box in a foreignObject, filled by a small script.
   Scripts run only when the SVG is opened directly; as an <img> the map stays
   plain and the hover tooltips still work."
   []
-  (let [data (json/generate-string
-              (vec (for [[id x y nm] stations]
-                     (assoc (select-keys (detail id) [:about :src]) :id id :code (code id) :name (str/replace nm "  ∥" "") :x x :y y))))]
-    [(str "<style>.st{cursor:pointer}.st:hover text,.st:focus text{text-decoration:underline}.st:focus{outline:none}"
+  (let [data (json/generate-string @items)]
+    [(str "<style>.ck{cursor:pointer}.ck:hover text,.ck:focus text{text-decoration:underline}.ck:focus{outline:none}"
+          ".hit{stroke:transparent;fill:none;pointer-events:stroke}"
           "#pn{display:none}#pn.on{display:block}"
           "#pn div{box-sizing:border-box;width:420px;padding:14px 16px;border-radius:12px;background:#111A2E;border:1.5px solid " INDIGO ";"
           "color:" TXT ";font:14px/1.45 ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif;box-shadow:0 8px 30px #000a}"
@@ -332,85 +376,115 @@
      (str "<script><![CDATA[\n"
           "(function(){\n"
           "var D=" (str/replace data "]]>" "]]\\u003e") ";\n"
-          "var W=" W ",H=" H ",pn=document.getElementById('pn'),box=pn.firstChild;\n"
-          "function show(i){var d=D[i];box.querySelector('b').textContent=d.name;box.querySelector('small').textContent=d.id+' \u00b7 '+d.code;box.querySelector('p').textContent=d.about;\n"
-          " box.querySelector('code').textContent=d.src;pn.classList.add('on');\n"
-          " var h=box.offsetHeight||200,x=d.x+30,y=d.y-20;if(x+420>W-10)x=d.x-450;if(x<10)x=10;if(y+h>H-10)y=H-10-h;if(y<10)y=10;\n"
+          "var W=" W ",H=" H ",svg=document.documentElement,pn=document.getElementById('pn'),box=pn.firstChild;\n"
+          "function show(i,px,py){var d=D[i];box.querySelector('b').textContent=d.name;\n"
+          " box.querySelector('small').textContent=d.id+(d.code?' \\u00b7 '+d.code:'');box.querySelector('p').textContent=d.about;\n"
+          " box.querySelector('code').textContent=d.src;box.querySelector('code').style.display=d.src?'':'none';pn.classList.add('on');\n"
+          " var ax=px==null?d.x:px,ay=py==null?d.y:py,h=box.offsetHeight||200,x=ax+30,y=ay-20;\n"
+          " if(x+420>W-10)x=ax-450;if(x<10)x=10;if(y+h>H-10)y=H-10-h;if(y<10)y=10;\n"
           " pn.setAttribute('x',x);pn.setAttribute('y',y);pn.setAttribute('height',h+4);}\n"
+          "function at(e){var p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}\n"
           "function hide(){pn.classList.remove('on');}\n"
-          "document.querySelectorAll('.st').forEach(function(g){\n"
-          " g.addEventListener('click',function(e){e.stopPropagation();show(+g.dataset.i);});\n"
+          "document.querySelectorAll('.ck').forEach(function(g){\n"
+          " g.addEventListener('click',function(e){e.stopPropagation();var p=at(e);show(+g.dataset.i,p.x,p.y);});\n"
           " g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();show(+g.dataset.i);}});});\n"
           "pn.addEventListener('click',function(e){e.stopPropagation();if(e.target.tagName==='i')hide();});\n"
           "document.addEventListener('click',hide);\n"
           "document.addEventListener('keydown',function(e){if(e.key==='Escape')hide();});\n"
-          "function fromHash(){var id=location.hash.replace(/^#(st-)?/,'');for(var i=0;i<D.length;i++)if(D[i].id===id||D[i].code===id){show(i);return;}}\n"
+          "function fromHash(){var id=location.hash.replace(/^#((st|it)-)?/,'');for(var i=0;i<D.length;i++)if(D[i].id===id||D[i].code===id){show(i);return;}}\n"
           "window.addEventListener('hashchange',fromHash);fromHash();\n"
           "})();\n"
           "]]></script>")]))
 
-(defn svg []
+(defn note [id x y lines & opts]
+  (let [[nm about] (or (about-notes id) (throw (ex-info (str "no about for note " id) {})))]
+    (clickable {:id id :name nm :tip (first lines) :about about :x x :y y} (apply txt x y lines opts))))
+
+(defn svg-body []
   (concat
    [(str "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " W " " H "\" width=\"" W "\" height=\"" H "\" font-family=\"ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif\">")
     "<title>Ishikari metro map, readable</title>"
     "<defs><filter id=\"g\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\"><feGaussianBlur stdDeviation=\"3\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter></defs>"
     (str "<style>.h{paint-order:stroke;stroke:" BG ";stroke-width:5px;stroke-linejoin:round}.flow{animation:f 1.2s linear infinite}@keyframes f{to{stroke-dashoffset:-32}}</style>")
     (str "<rect width=\"" W "\" height=\"" H "\" fill=\"" BG "\"/>")
-    (txt 40 44 ["ISHIKARI METRO"] :size 28 :weight "800")
-    (txt 330 44 ["Read it like a page: each row left to right, then wrap to the next row."] :fill SUB :size 15)]
+    (clickable {:id "title" :name "Ishikari metro map" :tip "How to read this map."
+                :about "Ishikari runs a task with many ants in parallel. Read the map like a page: each row left to right, then wrap to the next. Hexagons are ants (AI agents), pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
+                :src "skills/ishikari/design/index.md" :x 40 :y 44}
+               (txt 40 44 ["ISHIKARI METRO"] :size 28 :weight "800")
+               (txt 330 44 ["Read it like a page: each row left to right, then wrap to the next row."] :fill SUB :size 15))]
    ;; row bands
-   (for [[y label c] [[R1 "1 ASK  ·  2 PLAN" BLUE] [R2 "3 BUILD  ·  4 CHECK  ·  5 FIX" INDIGO]
-                      [R3 "6 FINISH: MERGE  ·  CLEANUP" INDIGO] [R4 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO]]]
-     (txt (- W 30) (if (= y R1) 120 (- y 100)) [label] :fill c :size 13 :anchor "end" :weight "800"))
-   (for [[name c pts w dash] lines]
-     (str "<path id=\"L-" name "\" d=\"" (d pts) "\" fill=\"none\" stroke=\"" c "\" stroke-width=\"" w "\" stroke-linejoin=\"round\" stroke-linecap=\"round\""
-          (when (seq dash) (str " stroke-dasharray=\"" dash "\" class=\"flow\"")) "/>"))
-   [(txt (+ X 12) 290 ["to row 2"] :fill BLUE :size 13 :weight "700")
-    ]
+   (for [[k y label c about] [[1 R1 "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2: the investigator asks you its questions, then the plan stage writes the requirement, the design and one plan per task. The only row where you are asked anything."]
+                              [2 R2 "3 BUILD  ·  4 CHECK  ·  5 FIX" INDIGO "Steps 3 to 5: worker ants build the plans in parallel, detective ants check each one and plan fixes, and the integrator tests all passing tasks together."]
+                              [3 R3 "6 FINISH: MERGE  ·  CLEANUP" INDIGO "Step 6, first half: the merger lands the tasks in a scratch copy and the janitor cleans up after them. Main has not moved yet."]
+                              [4 R4 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half: the judge scores the run against the plans, the finisher moves main forward and runs the check, and the requirements are marked done."]]]
+     (clickable {:id (str "row-" k) :name (str "Row " k) :tip label :about about :src "skills/ishikari/SKILL.md" :x (- W 30) :y (if (= y R1) 120 (- y 100))}
+                (txt (- W 30) (if (= y R1) 120 (- y 100)) [label] :fill c :size 13 :anchor "end" :weight "800")))
+   (for [[name c pts w dash] lines
+         :let [path (str "<path id=\"L-" name "\" d=\"" (d pts) "\" fill=\"none\" stroke=\"" c "\" stroke-width=\"" w "\" stroke-linejoin=\"round\" stroke-linecap=\"round\""
+                         (when (seq dash) (str " stroke-dasharray=\"" dash "\" class=\"flow\"")) "/>")]]
+     (if (= c "none")
+       path
+       (let [[nm tip about] (or (about-lines name) (throw (ex-info (str "no about for line " name) {})))
+             [x y] (nth pts (quot (count pts) 2))]
+         (clickable {:id (str "line-" name) :name nm :tip tip :about about :x x :y y}
+                    path (str "<path class=\"hit\" d=\"" (d pts) "\" stroke-width=\"20\"/>")))))
+   [(note "to-row-2" (+ X 12) 290 ["to row 2"] :fill BLUE :size 13 :weight "700")]
    (for [[ln to more lead below cap] spurs
          :let [[_ c pts] (or (some #(when (= (first %) ln) %) lines) (throw (ex-info (str "no line " ln) {})))
                [x y] (last pts)
                [_ _ ty nm] (when to (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {}))))
-               head (str lead (when to (str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)))]]
+               head (str lead (when to (str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)))
+               [lname _ labout] (about-lines ln)]]
      (str
       ;; a spur that leaves a line between stations gets a junction dot, so it never branches from nowhere
       (let [[sx sy] (first pts)]
         (when-not (some (fn [[_ x2 y2]] (and (= x2 sx) (= y2 sy))) stations)
-          (str "<circle cx=\"" sx "\" cy=\"" sy "\" r=\"8\" fill=\"" TXT "\" stroke=\"" c "\" stroke-width=\"3\"/>")))
-     (if (= cap :bin)
-       (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
-            (txt (+ x 26) (+ y 14) [head] :fill c :size 13 :weight "700")
-            (txt (+ x 26) (+ y 31) (or below []) :fill c :size 13 :lh 16))
-       (str (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")
-            (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16)))))
-   [
-    (txt 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
-    (txt 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
-    (txt 240 664 ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"] :fill GOLD :size 13)
-    (txt (+ X 12) 700 ["to row 3"] :fill INDIGO :size 13 :weight "700")
-    (txt (+ X 12) 1240 ["to row 4"] :fill INDIGO :size 13 :weight "700")
-    (txt 1212 690 ["fail: tasks clash: the task takes" "them in, then the fix loop; 2 rounds"] :fill GOLD :size 13)
-    (txt 720 (- R4 14) ["7+, or no gaps: no fix round"] :fill GREEN :size 13 :anchor "middle" :weight "700")
-    (txt 440 1612 ["below 7 and gaps: one fix round"] :fill GOLD :size 13 :anchor "end" :weight "700")
-    (txt 740 1720 ["a failed fix keeps its branch;" "the verdict says why"] :fill RED :size 13 :anchor "middle")]
-   (mapcat (fn [i [id x y nm sub kind [dx dy an]]]
-             (let [{:keys [tip]} (detail id)]
-               (concat [(str "<g class=\"st\" id=\"st-" id "\" data-i=\"" i "\" tabindex=\"0\" role=\"button\"><title>" (esc (str (str/replace nm "  ∥" "") " (" (code id) "): " tip " Click for more.")) "</title>")]
-                       (icon x y nm kind)
-                       [(str/replace (txt (+ x dx) (+ y dy) [nm] :size 16 :anchor an :weight "700")
-                                     "</text>" (str "<tspan dx=\"5\" font-size=\"11\" font-weight=\"400\" fill=\"" GREY "\">" (code id) "</tspan></text>"))
-                        (txt (+ x dx) (+ y dy 19) sub :fill SUB :size 13 :anchor an :lh 16)
-                        "</g>"])))
-           (range) stations)
-   (for [[n path c sec beg] trains]
-     (str "<g filter=\"url(#g)\"><rect x=\"-14\" y=\"-11\" width=\"28\" height=\"22\" rx=\"6\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\"/>"
-          "<text y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
-          "<animateMotion dur=\"" sec "s\" begin=\"" (- beg) "s\" repeatCount=\"indefinite\"><mpath href=\"#L-" path "\"/></animateMotion></g>"))
-   (for [[path sec] [["ask" 6] ["res" 5]]]
-     (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>"))
-   (legend)
-   (panel)
-   ["</svg>"]))
+          (clickable {:id (str "junction-" ln) :name "Junction" :tip (str "Where the " (str/lower-case lname) " leaves the line.")
+                      :about (str "Not a station: the point where the " (str/lower-case lname) " branches off. " labout) :x sx :y sy}
+                     (str "<circle cx=\"" sx "\" cy=\"" sy "\" r=\"8\" fill=\"" TXT "\" stroke=\"" c "\" stroke-width=\"3\"/>"))))
+      (clickable {:id (str "spur-" ln) :name lname :tip head :about labout :x x :y y}
+                 (if (= cap :bin)
+                   (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
+                        (txt (+ x 26) (+ y 14) [head] :fill c :size 13 :weight "700")
+                        (txt (+ x 26) (+ y 31) (or below []) :fill c :size 13 :lh 16))
+                   (str (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")
+                        (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16))))))
+   [(note "saved-workflow" 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
+    (note "built" 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
+    (note "bugs" 240 664 ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"] :fill GOLD :size 13)
+    (note "to-row-3" (+ X 12) 700 ["to row 3"] :fill INDIGO :size 13 :weight "700")
+    (note "to-row-4" (+ X 12) 1240 ["to row 4"] :fill INDIGO :size 13 :weight "700")
+    (note "clash" 1212 690 ["fail: tasks clash: the task takes" "them in, then the fix loop; 2 rounds"] :fill GOLD :size 13)
+    (note "no-fix" 720 (- R4 14) ["7+, or no gaps: no fix round"] :fill GREEN :size 13 :anchor "middle" :weight "700")
+    (note "fix-round" 440 1612 ["below 7 and gaps: one fix round"] :fill GOLD :size 13 :anchor "end" :weight "700")
+    (note "fix-fails" 740 1720 ["a failed fix keeps its branch;" "the verdict says why"] :fill RED :size 13 :anchor "middle")]
+   (for [[id x y nm sub kind [dx dy an]] stations
+         :let [{:keys [tip about src]} (detail id)]]
+     (clickable {:id id :cls "st" :name (str/replace nm "  ∥" "") :code (code id) :tip tip :about about :src src :x x :y y}
+                (apply str (icon x y nm kind))
+                (str/replace (txt (+ x dx) (+ y dy) [nm] :size 16 :anchor an :weight "700")
+                             "</text>" (str "<tspan dx=\"5\" font-size=\"11\" font-weight=\"400\" fill=\"" GREY "\">" (code id) "</tspan></text>"))
+                (txt (+ x dx) (+ y dy 19) sub :fill SUB :size 13 :anchor an :lh 16)))
+   (for [[n path c sec beg] trains
+         :let [[lname] (about-lines (if (= path "build") "g1" (if (= path "fixloop") "fix" path)))]]
+     (clickable {:id (str "train-" n) :name (str "Car " n) :tip (str "A sample task riding the " (str/lower-case lname) ".")
+                 :about (str "The numbered cars are sample tasks moving through the run, so you can follow one. Car " n " rides the " (str/lower-case lname) "; the key in the bottom right says what each number shows.") :x 0 :y 0}
+                (str "<g filter=\"url(#g)\"><rect x=\"-14\" y=\"-11\" width=\"28\" height=\"22\" rx=\"6\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\"/>"
+                     "<text y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
+                     "<animateMotion dur=\"" sec "s\" begin=\"" (- beg) "s\" repeatCount=\"indefinite\"><mpath href=\"#L-" path "\"/></animateMotion></g>")))
+   (for [[path sec what] [["ask" 6 "a round of questions"] ["res" 5 "a burst of research"]]]
+     (clickable {:id (str "dot-" path) :name "Moving dot" :tip (str "Shows " what ".")
+                 :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x 440 :y 200}
+                (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
+   [(clickable {:id "key" :name "Key" :tip "What the cars, symbols and colours mean."
+                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, stacked shapes parallel ants, dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
+                :x 1440 :y 1770}
+               (apply str (legend)))]))
+
+(defn svg []
+  (reset! items [])
+  (let [body (doall (svg-body))]
+    (concat body (panel) ["</svg>"])))
 
 (def short-help "metro.clj: build ishikari-metro.svg, the Ishikari metro map. Usage: bb metro.clj [OUT]")
 (def full-help (str short-help "
