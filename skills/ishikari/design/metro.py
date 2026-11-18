@@ -17,24 +17,21 @@ def d(pts): return "M" + " L".join(f"{x},{y}" for x, y in pts)
 R1, R2, R3, R4 = 200, 540, 1080, 1520
 X = 1900  # where each row wraps down to the next
 J1, J2 = 400, 1000  # first and second Judge ant (the gold judge-fix dip runs between)
-DIP3, DIP4 = 1170, 1610  # y of the cleanup dip (row 3) and the judge-fix dip (row 4)
+DIP4 = 1610  # y of the judge-fix dip (row 4)
 lines = [  # name, colour, points, width, dash
  ("plan",  BLUE,  [(120,R1),(X,R1),(X,370),(60,370),(60,R2),(200,R2)], 12, ""),
  ("ask",   GOLD,  [(440,R1),(440,90)], 7, ""),
  ("res",   BLUE,  [(440,R1),(440,300)], 7, ""),
- # "build" is the trains' route only (drawn invisible): it follows the cleanup branch through row 3.
- ("build", "none", [(200,R2),(X,R2),(X,860),(60,860),(60,R3),(760,R3),(800,DIP3),(1520,DIP3),(1580,R3),(X,R3),(X,1400),(60,1400),(60,R4),(1340,R4)], 12, ""),
- ("g1",    GREEN, [(200,R2),(X,R2),(X,860),(60,860),(60,R3),(760,R3)], 12, ""),
- ("g2",    GREEN, [(1580,R3),(X,R3),(X,1400),(60,1400),(60,R4),(1340,R4)], 12, ""),
+ # "build" is the trains' route only (drawn invisible).
+ ("build", "none", [(200,R2),(X,R2),(X,860),(60,860),(60,R3),(X,R3),(X,1400),(60,1400),(60,R4),(1340,R4)], 12, ""),
+ ("g1",    GREEN, [(200,R2),(X,R2),(X,860),(60,860),(60,R3),(X,R3),(X,1400),(60,1400),(60,R4),(1340,R4)], 12, ""),
  ("bugin", RED,   [(760,R2),(760,660),(700,720),(620,720)], 8, ""),
  ("clash", RED,   [(1200,R2),(1200,720),(620,720)], 6, "10 6"),
  ("bugout",RED,   [(620,720),(240,720),(200,680),(200,R2)], 8, ""),
  ("r1",    RED,   [(760,R2),(730,600),(230,600),(200,R2)], 5, ""),
  ("drop",  RED,   [(620,720),(620,790)], 6, ""),
  ("mfail", RED,   [(480,R3),(480,1180)], 6, "10 6"),
- ("tidy",  TEAL,  [(760,R3),(800,DIP3),(1520,DIP3),(1580,R3)], 9, ""),
- ("tloop", TEAL,  [(1240,DIP3),(1240,1270),(940,1270),(940,DIP3)], 6, ""),
- ("tdrop", TEAL,  [(1240,1270),(1340,1340)], 6, "10 6"),
+ ("tdrop", TEAL,  [(760,R3),(760,1200)], 6, "10 6"),
  ("jfix",  GOLD,  [(J1,R4),(460,DIP4),(J2,DIP4),(1060,R4)], 9, ""),
  ("after", PURP,  [(1340,R4),(1780,R4)], 9, ""),
  ("cfix",  PURP,  [(1580,R4),(1580,1660)], 6, "10 6"),
@@ -61,13 +58,8 @@ stations = [
  # row 3: merge and cleanup
  (200,R3,"Merger ant",["merges in a straight line in a scratch copy,","or reuses build's trial merge; then checks","its own merge with git cherry"],"x",(0,-70,"middle")),
  (480,1180,"merge failed",["a conflict, failed tests, or a task","git finds missing: next build round;","max 2 extra build rounds"],"term",RIGHT),
- (760,R3,"Janitor ant",["plans a cleanup of this run's mess; skipped","under 100 changed lines;","a cleanup run has no janitor"],"x",(0,-70,"middle")),
- (940,DIP3,"Worker ant",["builds the cleanup on the merge"],"st",(0,-44,"middle")),
- (1240,DIP3,"Inspector ant",["checks the cleanup, runs the tests;","fail: one fix round: detective, worker, inspector"],"st",L_UP),
- (1090,1270,"Detective ant",["finds why, plans the one fix"],"st",L_DN),
- (1340,1340,"Dropped cleanup",["still failing: branch kept,","plan offered as the next Task"],"term",RIGHT),
- (1460,DIP3,"Merger ant",["fast-forwards the scratch copy","to the checked cleanup"],"st",L_DN),
- (1580,R3,"cleanup done",["landed or dropped;","nothing to clean also goes straight here"],"x",L_UP),
+ (760,R3,"Janitor ant",["cleans up dead code and mess itself: edits,","runs the tests, commits, lands it only if","they pass. Skipped under 100 changed lines;","a cleanup run has no janitor"],"x",(0,-88,"middle")),
+ (760,1210,"Dropped cleanup",["tests failed: branch kept,","its note offered as the next Task"],"term",RIGHT),
  # row 4: judge, then main moves
  (160,R4,"Juror ants  ∥",["one per merged task, 5 at once;","only with 3+ merged tasks"],"x",L_DN),
  (J1,R4,"Judge ant",["scores the run 0-10: does the code","match the plans? its own call, not an average"],"x",L_UP),
@@ -133,7 +125,7 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
 # numbered trains
 trains = [(1, "plan", BLUE, 20, 0), (2, "build", GREEN, 28, 0), (3, "build", GREEN, 28, 5.6), (4, "build", GREEN, 28, 11.2),
           (5, "build", GREEN, 28, 16.8), (6, "build", GREEN, 28, 22.4), (7, "bugin", RED, 5, 0), (8, "bugout", RED, 8, 0),
-          (9, "tidy", TEAL, 8, 0), (10, "after", PURP, 5, 0), (11, "jfix", GOLD, 5, 0)]
+          (10, "after", PURP, 5, 0), (11, "jfix", GOLD, 5, 0)]
 for n, path, c, sec, beg in trains:
     o.append(f'<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="{c}" stroke-width="3"/>'
              f'<text y="5" font-size="14" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>'
@@ -144,7 +136,7 @@ for path, sec in [("ask", 6), ("res", 5)]:
 kx, ky = 1440, 1770
 o.append(f'<rect x="{kx}" y="{ky}" width="500" height="160" rx="12" fill="#0F172A" stroke="#334155"/>')
 rows = [(BLUE, "1", "task on the plan line"), (GREEN, "2-6", "five worker tasks to MAIN"), (RED, "7-8", "a bug through the fix loop"),
-        (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves"), (GOLD, "11", "the judge's fix round: below 7 and gaps")]
+        (PURP, "10", "after main moves"), (GOLD, "11", "the judge's fix round, below 7")]
 for i, (c, n, t) in enumerate(rows):
     y = ky + 24 + i * 20
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')

@@ -41,7 +41,7 @@ NOTES = {  # architecture.md "Required note texts"
     "N5": "only with 3+ merged tasks",
     "N6": "a plan may run a saved workflow in place of a worker ant",
     "N7": "max 2 extra build rounds",
-    "N8": "fail: one fix round: detective, worker, inspector",
+    "N8": "runs the tests, commits, lands it only if",
     "N9": "the main session pipes it into ishikari.py req add",
     "N10": "the fix lands only through this fast-forward",
     "N11": "logbook clerk ant: appends each ant's entry",
@@ -270,12 +270,12 @@ def test_metro_map():
         for kind in set(KIND.findall(src)):
             assert kind in KIND_STATION, f"{os.path.basename(script)}: no station for {kind}"
             assert KIND_STATION[kind] in names, f"{os.path.basename(script)}: {KIND_STATION[kind]} not on the map"
-    counts = {"Merger ant": 3, "Worker ant": 2, "Inspector ant": 2, "Detective ant": 1, "Judge ant": 2,
+    counts = {"Merger ant": 2, "Worker ant": 1, "Inspector ant": 1, "Detective ant": 0, "Judge ant": 2,
               "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
     for name in ("Task", "You", "investigation_report.md", "Worker plans", "Dropped", "merge failed",
-                 "cleanup done", "Dropped cleanup", "MAIN", "checkCommand", "check-fix round", "req done"):
+                 "Dropped cleanup", "MAIN", "checkCommand", "check-fix round", "req done"):
         assert name in names, name
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)

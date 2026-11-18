@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, build and check the janitor cleanup on top, let the judge score it against the plans, move main forward',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the janitor cleans up on top, let the judge score it against the plans, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'janitor plans a cleanup, a worker builds it, an inspector checks it; then the judge scores the run, one fix round below 7' },
+    { title: 'Upkeep', detail: 'janitor cleans up, tests and commits itself; then the judge scores the run, one fix round below 7' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -272,11 +272,11 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
     : `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
 // ---- upkeep on the merged result, before main moves ----
-// The janitor plans a cleanup of this run's mess; a worker ant builds it on top
-// of the scratch branch, an inspector checks it, with one fix round (detective,
-// worker, inspector). Passed: the scratch branch fast-forwards to it, so the
-// cleanup lands as its own commits after the tasks. Failed: it is dropped, its
-// branch kept, its plan offered next time. Then the judge ant scores the result.
+// The janitor cleans up this run's mess itself, in its own worktree on top of
+// the scratch branch: it edits, runs the tests, commits, and fast-forwards the
+// scratch branch to its cleanup only if they pass. No other ant takes part.
+// Failed: the cleanup is dropped, its branch kept, its note offered next time.
+// Then the judge ant scores the result.
 let cleanup = null
 let verdict = null
 const PASS = 7
@@ -291,7 +291,6 @@ const cleanBranch = `ishikari/${env.run}/_cleanup`
 const cleanTree = treeOf(cleanBranch)
 const cleanPlan = `${env.state}/plans/${env.run}/cleanup.md`
 let cleanKept = false
-let readyFF = null
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
@@ -299,61 +298,38 @@ if (merged.length) {
     const small = linesChanged != null && linesChanged < JANITOR_MIN_LINES
     if (small) log(`janitor skipped: ${linesChanged} lines changed, under ${JANITOR_MIN_LINES}`)
     const jan = isCleanup || small ? null : await ant(
-      `You are the janitor ant of the Ishikari workflow.
+      `You are the janitor ant of the Ishikari workflow. You clean up and commit
+the cleanup yourself; no other ant checks it, so be careful and small.
 ${where}
 Read the merged code in ${scratchTree}. Find dead code, bloat, duplication and mess
 left by the tasks just merged (${names}), and only that: leave the rest of the repo
-alone. Only worker ants write code, so if something needs cleaning, write a
-complete cleanup plan a worker ant can build without questions to ${cleanPlan}.
-A worker builds it now, on top of ${scratch}. Say it changes no behaviour, and
-name the files it touches. Change nothing else.`,
+alone, and change no behaviour.
+If nothing needs cleaning, change nothing and set changed to false.
+Otherwise:
+1. Create your worktree: \`git -C ${env.repo} worktree add -b ${cleanBranch} ${cleanTree} ${scratch}\`
+   (if it exists, remove it and the branch first).
+2. Make the cleanup there, then ${tests} inside ${cleanTree}.
+3. Commit on ${cleanBranch} in small commits, no merge commits. Write what you
+   changed and why, in a few lines, to ${cleanPlan}.
+4. Only if the tests pass: \`git -C ${scratchTree} merge --ff-only ${cleanBranch}\`, and
+   return the new commit of ${scratch} as sha. If the tests fail or git refuses,
+   leave ${scratch} alone and say why in reason.
+Never touch ${env.main} or the repo's main checkout.`,
       { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
-        schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
+        schema: { type: 'object', properties: {
+          changed: { type: 'boolean' }, title: { type: 'string' }, testsPassed: { type: 'boolean' },
+          landed: { type: 'boolean', description: `true only if ${scratch} was fast-forwarded to the cleanup` },
+          sha: { type: 'string' }, reason: { type: 'string' },
+        }, required: ['changed', 'title', 'testsPassed', 'landed'] } },
     )
-    if (jan && jan.needed) {
-      const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
-      const CHECKED = { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] }
-      const build = (extra) => ant(
-        `You are a worker ant of the Ishikari workflow, building the janitor's cleanup.
-${where}
-Plan: ${cleanPlan}.${extra}
-Work only in the worktree ${cleanTree} on branch ${cleanBranch}. If it does not exist,
-create it with \`git -C ${env.repo} worktree add -b ${cleanBranch} ${cleanTree} ${scratch}\`.
-Change no behaviour. Keep the tests passing (${tests} inside ${cleanTree}).
-Commit your work on ${cleanBranch} in small commits, no merge commits. Never touch
-${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
-        { label: extra ? 'worker-ant:cleanup:fix' : 'worker-ant:cleanup', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
-      )
-      const inspect = (round) => ant(
-        `You are an inspector ant of the Ishikari workflow, checking the janitor's cleanup.
-${where}
-Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}, built on ${scratch}
-(every task of this run, merged). Check that it follows the plan, changes no
-behaviour and touches only this run's mess, then ${tests} inside ${cleanTree}:
-these tests are the combined test. Return each problem in "bugs", or an empty
-list. Never fix anything.`,
-        { label: `inspector-ant:cleanup:${round}`, phase: 'Upkeep', effort: EFFORT.inspector, schema: CHECKED },
-      )
-      const drop = reason => ({ title: jan.title, file: cleanPlan, branch: cleanBranch, landed: false, reason })
-      let b = await build('')
-      let bugs = b && b.status === 'built' ? (await inspect(1) || { bugs: ['the inspector ant died'] }).bugs : [b ? 'worker stuck: ' + b.notes : 'the worker ant died']
-      if (bugs.length) {
-        const det = await ant(
-          `You are the detective ant of the Ishikari workflow. The janitor's cleanup failed its check.
-${where}
-Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}. Bugs:
-${bugs.map(x => `- ${x}`).join('\n')}
-Find why, and write the fix plan in "plan" for a worker ant. Never write code.`,
-          { label: 'detective-ant:cleanup', phase: 'Upkeep', effort: EFFORT.detective,
-            schema: { type: 'object', properties: { cause: { type: 'string' }, plan: { type: 'string' } }, required: ['cause', 'plan'] } },
-        )
-        b = det ? await build(`\nIt failed its check. Fix plan from the detective ant:\n${det.plan}`) : null
-        bugs = b && b.status === 'built' ? (await inspect(2) || { bugs: ['the inspector ant died'] }).bugs : ['fix not built']
-      }
-      if (bugs.length) {
-        cleanup = drop(bugs.join('; '))
-        cleanKept = true
-      } else readyFF = jan
+    if (!jan || !jan.changed) return
+    if (jan.landed && jan.testsPassed && typeof jan.sha === 'string' && /^[0-9a-f]{7,64}$/.test(jan.sha)) {
+      cleanup = { title: jan.title, landed: true }
+      sha = jan.sha
+    } else {
+      cleanup = { title: jan.title, file: cleanPlan, branch: cleanBranch, landed: false,
+        reason: jan.reason || (jan.testsPassed ? 'the scratch branch was not fast-forwarded' : 'the tests failed') }
+      cleanKept = true
     }
   }
   const fastForwardTo = async (branch, label) => {
@@ -368,10 +344,7 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
     if (ff && ff.ok) { sha = ff.sha || sha; return true }
     return false
   }
-  const fastForward = async () => {
-    if (await fastForwardTo(cleanBranch, 'merger-ant:cleanup')) cleanup = { title: readyFF.title, landed: true }
-    else { cleanup = { title: readyFF.title, file: cleanPlan, branch: cleanBranch, landed: false, reason: 'could not fast-forward the scratch branch' }; cleanKept = true }
-  }
+
   // The judge ant scores the whole run, cleanup included, against the plans.
   // Below PASS: one fix round (worker, inspector), then a second score. Still
   // below PASS: main moves anyway and the report flags it.
@@ -463,7 +436,6 @@ an empty list. Never fix anything.`,
       : { ...verdict, fixed: true, reason: 'the judge ant died on its second look' }
   }
   await janitorChain()
-  if (readyFF) await fastForward()
   await judgeRun()
 }
 

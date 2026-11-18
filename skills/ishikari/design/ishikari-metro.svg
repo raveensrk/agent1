@@ -12,18 +12,15 @@
 <path id="L-plan" d="M120,200 L1900,200 L1900,370 L60,370 L60,540 L200,540" fill="none" stroke="#60A5FA" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-ask" d="M440,200 L440,90" fill="none" stroke="#FBBF24" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-res" d="M440,200 L440,300" fill="none" stroke="#60A5FA" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-build" d="M200,540 L1900,540 L1900,860 L60,860 L60,1080 L760,1080 L800,1170 L1520,1170 L1580,1080 L1900,1080 L1900,1400 L60,1400 L60,1520 L1340,1520" fill="none" stroke="none" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-g1" d="M200,540 L1900,540 L1900,860 L60,860 L60,1080 L760,1080" fill="none" stroke="#4ADE80" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-g2" d="M1580,1080 L1900,1080 L1900,1400 L60,1400 L60,1520 L1340,1520" fill="none" stroke="#4ADE80" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+<path id="L-build" d="M200,540 L1900,540 L1900,860 L60,860 L60,1080 L1900,1080 L1900,1400 L60,1400 L60,1520 L1340,1520" fill="none" stroke="none" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+<path id="L-g1" d="M200,540 L1900,540 L1900,860 L60,860 L60,1080 L1900,1080 L1900,1400 L60,1400 L60,1520 L1340,1520" fill="none" stroke="#4ADE80" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-bugin" d="M760,540 L760,660 L700,720 L620,720" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-clash" d="M1200,540 L1200,720 L620,720" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-bugout" d="M620,720 L240,720 L200,680 L200,540" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-r1" d="M760,540 L730,600 L230,600 L200,540" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-drop" d="M620,720 L620,790" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-mfail" d="M480,1080 L480,1180" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
-<path id="L-tidy" d="M760,1080 L800,1170 L1520,1170 L1580,1080" fill="none" stroke="#2DD4BF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-tloop" d="M1240,1170 L1240,1270 L940,1270 L940,1170" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-tdrop" d="M1240,1270 L1340,1340" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
+<path id="L-tdrop" d="M760,1080 L760,1200" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-jfix" d="M400,1520 L460,1610 L1000,1610 L1060,1520" fill="none" stroke="#FBBF24" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-after" d="M1340,1520 L1780,1520" fill="none" stroke="#C4B5FD" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-cfix" d="M1580,1520 L1580,1660" fill="none" stroke="#C4B5FD" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
@@ -93,26 +90,11 @@
 <text class="h" x="506" y="1176" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">merge failed</text>
 <text class="h" x="506" y="1195" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">a conflict, failed tests, or a task</text><text class="h" x="506" y="1211" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">git finds missing: next build round;</text><text class="h" x="506" y="1227" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">max 2 extra build rounds</text>
 <polygon points="744.0,1080.0 752.0,1066.1 768.0,1066.1 776.0,1080.0 768.0,1093.9 752.0,1093.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="760" y="1010" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Janitor ant</text>
-<text class="h" x="760" y="1029" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">plans a cleanup of this run's mess; skipped</text><text class="h" x="760" y="1045" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">under 100 changed lines;</text><text class="h" x="760" y="1061" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">a cleanup run has no janitor</text>
-<polygon points="924.0,1170.0 932.0,1156.1 948.0,1156.1 956.0,1170.0 948.0,1183.9 932.0,1183.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="940" y="1126" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker ant</text>
-<text class="h" x="940" y="1145" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">builds the cleanup on the merge</text>
-<polygon points="1224.0,1170.0 1232.0,1156.1 1248.0,1156.1 1256.0,1170.0 1248.0,1183.9 1232.0,1183.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1240" y="1110" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector ant</text>
-<text class="h" x="1240" y="1129" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">checks the cleanup, runs the tests;</text><text class="h" x="1240" y="1145" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fail: one fix round: detective, worker, inspector</text>
-<polygon points="1074.0,1270.0 1082.0,1256.1 1098.0,1256.1 1106.0,1270.0 1098.0,1283.9 1082.0,1283.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1090" y="1304" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Detective ant</text>
-<text class="h" x="1090" y="1323" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">finds why, plans the one fix</text>
-<rect x="1326" y="1326" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1366" y="1336" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped cleanup</text>
-<text class="h" x="1366" y="1355" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">still failing: branch kept,</text><text class="h" x="1366" y="1371" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">plan offered as the next Task</text>
-<polygon points="1444.0,1170.0 1452.0,1156.1 1468.0,1156.1 1476.0,1170.0 1468.0,1183.9 1452.0,1183.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1460" y="1204" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Merger ant</text>
-<text class="h" x="1460" y="1223" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forwards the scratch copy</text><text class="h" x="1460" y="1239" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">to the checked cleanup</text>
-<circle cx="1580" cy="1080" r="14" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1580" y="1020" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">cleanup done</text>
-<text class="h" x="1580" y="1039" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">landed or dropped;</text><text class="h" x="1580" y="1055" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">nothing to clean also goes straight here</text>
+<text class="h" x="760" y="992" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Janitor ant</text>
+<text class="h" x="760" y="1011" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">cleans up dead code and mess itself: edits,</text><text class="h" x="760" y="1027" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">runs the tests, commits, lands it only if</text><text class="h" x="760" y="1043" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">they pass. Skipped under 100 changed lines;</text><text class="h" x="760" y="1059" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">a cleanup run has no janitor</text>
+<rect x="746" y="1196" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="786" y="1206" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped cleanup</text>
+<text class="h" x="786" y="1225" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">tests failed: branch kept,</text><text class="h" x="786" y="1241" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">its note offered as the next Task</text>
 <polygon points="154.0,1510.0 162.0,1496.1 178.0,1496.1 186.0,1510.0 178.0,1523.9 162.0,1523.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="149.0,1515.0 157.0,1501.1 173.0,1501.1 181.0,1515.0 173.0,1528.9 157.0,1528.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
 <polygon points="144.0,1520.0 152.0,1506.1 168.0,1506.1 176.0,1520.0 168.0,1533.9 152.0,1533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="160" y="1554" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Juror ants  ∥</text>
@@ -155,7 +137,6 @@
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#4ADE80" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">6</text><animateMotion dur="28s" begin="-22.4s" repeatCount="indefinite"><mpath href="#L-build"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">7</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-bugin"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">8</text><animateMotion dur="8s" begin="0s" repeatCount="indefinite"><mpath href="#L-bugout"/></animateMotion></g>
-<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#2DD4BF" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">9</text><animateMotion dur="8s" begin="0s" repeatCount="indefinite"><mpath href="#L-tidy"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#C4B5FD" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">10</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-after"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#FBBF24" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">11</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-jfix"/></animateMotion></g>
 <circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></circle>
@@ -170,14 +151,11 @@
 <line x1="1456" y1="1834" x2="1500" y2="1834" stroke="#F87171" stroke-width="7" stroke-linecap="round"/>
 <rect x="1510" y="1825" width="34" height="18" rx="5" fill="#FDE047" stroke="#F87171" stroke-width="2"/><text x="1527" y="1838" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">7-8</text>
 <text class="h" x="1554" y="1839" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">a bug through the fix loop</text>
-<line x1="1456" y1="1854" x2="1500" y2="1854" stroke="#2DD4BF" stroke-width="7" stroke-linecap="round"/>
-<rect x="1510" y="1845" width="34" height="18" rx="5" fill="#FDE047" stroke="#2DD4BF" stroke-width="2"/><text x="1527" y="1858" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">9</text>
-<text class="h" x="1554" y="1859" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">the janitor's cleanup</text>
-<line x1="1456" y1="1874" x2="1500" y2="1874" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round"/>
-<rect x="1510" y="1865" width="34" height="18" rx="5" fill="#FDE047" stroke="#C4B5FD" stroke-width="2"/><text x="1527" y="1878" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">10</text>
-<text class="h" x="1554" y="1879" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">after main moves</text>
-<line x1="1456" y1="1894" x2="1500" y2="1894" stroke="#FBBF24" stroke-width="7" stroke-linecap="round"/>
-<rect x="1510" y="1885" width="34" height="18" rx="5" fill="#FDE047" stroke="#FBBF24" stroke-width="2"/><text x="1527" y="1898" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">11</text>
-<text class="h" x="1554" y="1899" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">the judge's fix round: below 7 and gaps</text>
+<line x1="1456" y1="1854" x2="1500" y2="1854" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round"/>
+<rect x="1510" y="1845" width="34" height="18" rx="5" fill="#FDE047" stroke="#C4B5FD" stroke-width="2"/><text x="1527" y="1858" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">10</text>
+<text class="h" x="1554" y="1859" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">after main moves</text>
+<line x1="1456" y1="1874" x2="1500" y2="1874" stroke="#FBBF24" stroke-width="7" stroke-linecap="round"/>
+<rect x="1510" y="1865" width="34" height="18" rx="5" fill="#FDE047" stroke="#FBBF24" stroke-width="2"/><text x="1527" y="1878" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">11</text>
+<text class="h" x="1554" y="1879" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">the judge's fix round, below 7</text>
 <text class="h" x="1800" y="1800" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">dashed:</text><text class="h" x="1800" y="1816" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a side branch</text><text class="h" x="1800" y="1832" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">⬡ an ant (AI agent)</text><text class="h" x="1800" y="1848" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">■ terminus</text><text class="h" x="1800" y="1864" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">○ interchange</text><text class="h" x="1800" y="1880" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">stacked ∥: parallel</text>
 </svg>

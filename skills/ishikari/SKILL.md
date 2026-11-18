@@ -66,7 +66,6 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 | Same question twice (2b)             | error | plan same-question         |
 | Build rounds for merge bugs, waiting | 2     | skill rule, step 4         |
 | Check-fix rounds                     | 1     | finish `checkFixDone`      |
-| Cleanup fix rounds                   | 1     | finish                     |
 | Janitor runs at changed lines        | 100+  | finish `JANITOR_MIN_LINES` |
 | Judge pass score (out of 10)         | 7     | finish `PASS`              |
 | Judge fix rounds                     | 1     | finish                     |

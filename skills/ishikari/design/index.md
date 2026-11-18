@@ -117,14 +117,14 @@ its job. The build script runs that workflow in place of a worker ant.
 
 They run once per finish, on the merged result, before main moves.
 
-- **Janitor ant** finds mess left by the merged tasks, and only that, and writes
-  a cleanup plan. A worker ant builds it at once on top of the merged scratch
-  copy, and an inspector ant checks it and runs the tests: the combined test.
-  A failed check gets one fix round (detective, worker, inspector). Passed: the
-  cleanup lands as its own commits after the tasks, in the same main move.
-  Still failing: it is dropped, main moves with the tasks alone, the cleanup
-  branch is kept and the next plan stage hands its plan to the investigator ant,
-  which may ask about it. One cleanup per run: a dropped cleanup's own run gets
+- **Janitor ant** finds mess left by the merged tasks, and only that: dead
+  code, bloat, duplication. It does the cleanup itself, with no other ant: in
+  its own worktree on top of the merged scratch copy it edits, runs the tests,
+  commits, writes a short note of what it changed, and fast-forwards the scratch
+  copy to its cleanup only if the tests pass. The cleanup then lands as its own
+  commits after the tasks, in the same main move. Tests failing: it is dropped,
+  main moves with the tasks alone, the cleanup branch is kept and the next plan
+  stage hands its note to the investigator ant, which may ask about it. One cleanup per run: a dropped cleanup's own run gets
   no janitor, so cleanups never chain. A small run gets no janitor either: under 100
   lines added or changed, by the merger's `git diff --shortstat`.
 - **Judge ant** gives the final verdict. It runs after the janitor's cleanup has
@@ -151,8 +151,8 @@ They run once per finish, on the merged result, before main moves.
 - Only the main session asks the user questions, and only in the plan stage.
   Ants report problems in their results; after planning, the main session
   decides by the fixed rules in the skill and reports at the end.
-- Only worker ants write code. Every other ant reads, plans, reviews, merges or
-  records to the logbook.
+- Only worker ants and the janitor ant write code. Every other ant reads,
+  plans, reviews, merges or records to the logbook.
 - At most 5 worker ants run at the same time, fix workers included. Upkeep ants
   and the ants of a saved workflow do not count.
 - A worker ant never resets an existing branch: a fix round reuses the task's
@@ -230,8 +230,8 @@ and stops to ask the user only in step 2.
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
    waiting tasks come back in the next build as `bugs`. The
-   janitor's cleanup is built and checked inside finish, with its own one fix
-   round, and lands with the tasks; only a dropped cleanup's plan goes to the
+   janitor makes, tests and commits its cleanup inside finish, and it lands
+   with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The judge's
    verdict (score, gaps, flagged) is in the result. Once the check passes,
    `ishikari.py req done` marks the run's requirements DONE. The skill's
@@ -259,8 +259,7 @@ task's latest event), `recsel` or any editor.
 
 An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Every agent label in the three scripts has a
-station, helper ants included (the fast-forward merger, the cleanup
-detective, the jurors), and short notes name each skipped step. Built by
+station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
 [`metro.py`](metro.py); run `python3 metro.py` after a flow change.
 `test_metro_map` in [`test_ishikari.py`](../tests/test_ishikari.py) checks it
 against the scripts.
