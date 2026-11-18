@@ -168,7 +168,7 @@ for i, (c, n, t) in enumerate(rows):
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')
     o.append(f'<rect x="{kx+70}" y="{y-9}" width="34" height="18" rx="5" fill="#FDE047" stroke="{c}" stroke-width="2"/><text x="{kx+87}" y="{y+4}" font-size="11" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>')
     o.append(txt(kx + 114, y + 5, [t], TXT, 13))
-o.append(txt(kx + 360, ky + 30, ["dashed:", "a side branch", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "stacked ∥: parallel"], SUB, 12))
+o.append(txt(kx + 360, ky + 30, ["dashed:", "a side branch", "⬡ an ant (AI agent)", "↻ back to build, 🗑 dropped", "○ interchange", "stacked ∥: parallel"], SUB, 12))
 o.append('</svg>')
 out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro.svg")
 with open(out, "w", encoding="utf-8") as f:
