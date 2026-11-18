@@ -4,11 +4,13 @@
 
 Process: [[file:../../requirements/requirements.org][Requirements requirements]].
 
-* OPEN [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
+* DONE [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
 :PROPERTIES:
 :ID:          ISH-1
 :CREATED:     2026-11-18
 :LAST_EDITED: 2026-11-18
+:APPROVED:    2026-11-18
+:IMPLEMENTED: 2026-11-18
 :VERIFY:      "tests/test_ishikari.py test_metro_map"
 :VERIFY+:     "tests/test_workflows.mjs plan: every planning ant gets its own logbook entry at once"
 :VERIFY+:     "tests/test_workflows.mjs plan: a live investigation logs one investigated entry"
