@@ -263,6 +263,24 @@
    (legend)
    ["</svg>"]))
 
+(def short-help "metro.clj: build ishikari-metro.svg, the Ishikari metro map. Usage: bb metro.clj [OUT]")
+(def full-help (str short-help "
+
+Four rows read left to right like text; cross-row links are short transfer
+spurs with a named destination instead of long lines.
+
+  bb metro.clj          write ishikari-metro.svg beside this script
+  bb metro.clj OUT      write the map to OUT
+  bb metro.clj -h       short help;  help: this text
+
+Run it after a flow change. test_metro_map in tests/test_ishikari.py checks
+the committed SVG matches a fresh build."))
+
+(case (first *command-line-args*)
+  ("-h" "--help") (do (println short-help) (System/exit 0))
+  "help" (do (println full-help) (System/exit 0))
+  nil)
+
 (let [out (or (first *command-line-args*)
               (str (fs/path (fs/parent (fs/absolutize *file*)) "ishikari-metro.svg")))]
   (spit out (str/join "\n" (svg))))
