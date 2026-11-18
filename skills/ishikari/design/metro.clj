@@ -200,7 +200,7 @@
 ;; line name (in lines), target station id (nil: the line ends here), extra
 ;; words, lead-in, lines below, end cap (:bin: drawn at the end, label beside it)
 (def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"]]
-            ["drop" nil "" "dropped" ["after 3 tries on a bug or" "3 fix rounds; branch kept"] :bin]
+            ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] :bin]
             ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"]]
             ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"]]])
 
@@ -344,7 +344,7 @@
    "g1"      ["Build line" "Rows 2 to 3: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
    "fix"     ["Fix loop" "A bug goes back to the worker and is re-checked." "Yellow means a warning: the detective found a bug and planned its fix. The worker builds the fix and the detective re-checks, up to 3 tries per bug and 3 fix rounds."]
    "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through the fix loop. 2 rounds at most."]
-   "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "After 3 tries on one bug or 3 fix rounds the task drops, and tasks built on it drop too. Its branch is kept for a later look and the final report lists it."]
+   "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "A task drops when a bug is still open after 3 tries, when 3 fix rounds end with bugs open (both: escalated), when its worker is blocked or hits an error, or when its after names a task that dropped: tasks built on it drop too. The main session drops it without asking; it never reaches finish or main and nothing sends it back. Its branch is kept for a later look, and the final report lists it with why it dropped, its bugs and fix history."]
    "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
    "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks, the merger fast-forwards the fix, and the judge scores again. Only one round."]
