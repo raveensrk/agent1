@@ -3,9 +3,11 @@
 set -eu
 cd "$(dirname "$0")"
 tmp=$(mktemp "${TMPDIR:-/tmp}/ishikari-dark.XXXXXX")
-trap 'rm -f "$tmp" "$tmp.d2"' EXIT
-trap 'exit 1' INT TERM HUP
 pids=""
+light=""
+trap 'rm -f "$tmp" "$tmp.d2"' EXIT
+# On interrupt, stop the background renders too.
+trap 'kill $light $pids 2>/dev/null; exit 1' INT TERM HUP
 fail=0
 # Light render; flow.py reads its output.
 d2 --layout=tala ishikari.d2 "${1:-ishikari.svg}" &
