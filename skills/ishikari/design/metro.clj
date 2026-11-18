@@ -49,9 +49,7 @@
    ["tnext"   RED    [[760 R3] [760 1180]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
    ["after"   GREEN  [[1340 R4] [1780 R4]] 9 ""]
-   ["cfix"    RED    [[1580 R4] [1580 1660]] 6 "10 6"]
-   ;; cback: check-fix, a new task for the worker ants
-   ["cback"   RED    [[1580 1660] [1580 1725]] 6 "10 6"]])
+   ["cfix"    RED    [[1580 R4] [1580 1690]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
 
 ;; id, x, y, name, sub lines, kind, label anchor [dx dy anchor].
 ;; The id never changes and is what spurs, details and links use; the short
@@ -85,7 +83,6 @@
    ["finisher" 1180 R4 "Finisher ant" ["fast-forwards main, removes worktrees," "appends the stage rows, runs the check"] "x" L-UP]
    ["main" 1340 R4 "MAIN" ["fast-forward only," "never pushed"] "main" L-DN]
    ["check" 1580 R4 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
-   ["check-fix" 1580 1660 "check-fix round" ["a failed check: one build round" "from the moved main"] "retry" RIGHT]
    ["req-done" 1780 R4 "req done" ["the main session marks the kept :ID:s" "once the check passed, or there is none"] "done" L-DN]])
 
 ;; What a click on a station shows: a short line for the hover tooltip, the
@@ -159,11 +156,8 @@
                   :about "Moves only as a fast-forward, never a merge commit, and is never pushed. Push it yourself when you are happy."
                   :src "SKILL.md#4-finish"}
    "check" {:tip "Builds and checks the app after main moves."
-                          :about "The finisher ant runs the repo's saved checkCommand, only when main moved and the command is set. A failure starts one check-fix round."
+                          :about "The finisher ant runs the repo's saved checkCommand, only when main moved and the command is set. A failure starts one check-fix round. The check-fix round is one build round from the moved main, as a new task named check-fix. If the check still fails after it, the run stops and reports the output, and requirements are not marked done."
                           :src "ishikari.py config <state> checkCommand <cmd>"}
-   "check-fix" {:tip "A failed check: one build round."
-                             :about "One build round from the moved main, as a new task named check-fix. If the check still fails after it, the run stops and reports the output, and requirements are not marked done."
-                             :src "SKILL.md#4-finish"}
    "req-done" {:tip "Marks this run's requirements DONE."
                       :about "The main session runs ishikari.py req done with the :ID:s kept in planning, once the check passed or there is none. Skipped when the repo has no requirements file."
                       :src "scripts/ishikari.py (req done)"}})
@@ -191,7 +185,7 @@
 (def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"]]
             ["drop" nil "" "dropped" ["after 3 tries on a bug or" "3 fix rounds; branch kept"] :bin]
             ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"]]
-            ["cback" "workers" " (new task)"]])
+            ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"]]])
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
 
@@ -200,7 +194,7 @@
                             (format "%.1f,%.1f" (double (+ x (* r dx))) (double (+ y (* r dy))))))]
     (str "<polygon points=\"" pts "\" fill=\"" fill "\" stroke=\"" stroke "\" stroke-width=\"" sw "\"/>")))
 
-(def ICON {"drop" RED "retry" RED "done" GREEN "main" GREEN}) ; icon colour by meaning
+(def ICON {"drop" RED "done" GREEN "main" GREEN}) ; icon colour by meaning
 
 (defn page
   "A page with a folded corner."
@@ -247,12 +241,6 @@
                     (str "<line x1=\"" (+ x (* k 5)) "\" y1=\"" (- y 3) "\" x2=\"" (+ x (* k 4.4)) "\" y2=\"" (+ y 10)
                          "\" stroke=\"" GREY "\" stroke-width=\"2\"/>")))]
 
-      (= kind "retry") ; a loop arrow: an open circle with an arrowhead, back to build
-      [(str "<circle cx=\"" x "\" cy=\"" y "\" r=\"16\" fill=\"" BG "\"/>"
-            "<path d=\"M" (+ x 12) "," (- y 7) " A13,13 0 1 0 " (+ x 13) "," (+ y 3) "\" fill=\"none\" stroke=\"" IC "\" stroke-width=\"4\" stroke-linecap=\"round\"/>"
-            "<path d=\"M" (+ x 5) "," (- y 10) " L" (+ x 14) "," (- y 9) " L" (+ x 15) "," (- y 18)
-            "\" fill=\"none\" stroke=\"" IC "\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>")]
-
       (= kind "task") ; a clipboard: board, clip, two ruled lines
       [(str "<rect x=\"" (- x 12) "\" y=\"" (- y 14) "\" width=\"24\" height=\"30\" rx=\"3\" fill=\"" BG "\" stroke=\"" TXT "\" stroke-width=\"4\"/>"
             "<rect x=\"" (- x 6) "\" y=\"" (- y 18) "\" width=\"12\" height=\"7\" rx=\"2\" fill=\"" TXT "\"/>"
@@ -298,9 +286,8 @@
         lx (+ kx 360) ly (+ ky 30)
         key (fn [i label] [(txt (+ lx 16) (+ ly (* i 16)) [label] :fill SUB :size 12) (+ lx 6) (+ ly (* i 16) -4)])
         [k2 ax ay] (key 2 "an ant (AI agent)")
-        [k3 bx by] (key 3 "back to build")
-        [k4 cx cy] (key 4 "dropped")
-        [k5 ix iy] (key 5 "interchange")]
+        [k4 cx cy] (key 3 "dropped")
+        [k5 ix iy] (key 4 "interchange")]
     (concat
      [(str "<rect x=\"" kx "\" y=\"" ky "\" width=\"500\" height=\"160\" rx=\"12\" fill=\"#0F172A\" stroke=\"#334155\"/>")]
      (mapcat (fn [i [c n t]]
@@ -312,16 +299,13 @@
              (range) rows)
      [(txt lx ly ["dashed:" "a side branch"] :fill SUB :size 12 :lh 16)
       k2 (hexm ax ay 6 "none" SUB 1.5)
-      k3 (str "<path d=\"M" (+ bx 4.5) "," (- by 3) " A5,5 0 1 0 " (+ bx 5) "," (+ by 1) "\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>"
-              "<path d=\"M" (+ bx 2) "," (- by 4) " L" (+ bx 5) "," (- by 3.5) " L" (+ bx 5.5) "," (- by 7)
-              "\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>")
       k4 (str "<path d=\"M" (- cx 4) "," (- cy 2) " L" (+ cx 4) "," (- cy 2) " L" (+ cx 3) "," (+ cy 6) " L" (- cx 3) "," (+ cy 6)
               " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>"
               "<line x1=\"" (- cx 5.5) "\" y1=\"" (- cy 4) "\" x2=\"" (+ cx 5.5) "\" y2=\"" (- cy 4) "\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>"
               "<path d=\"M" (- cx 2) "," (- cy 4) " L" (- cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 4)
               "\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.2\"/>")
       k5 (str "<circle cx=\"" ix "\" cy=\"" iy "\" r=\"5\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>")
-      (txt lx (+ ly (* 6 16)) ["stacked ∥: parallel"] :fill SUB :size 12)]
+      (txt lx (+ ly (* 5 16)) ["stacked ∥: parallel"] :fill SUB :size 12)]
      ;; colour key: what each colour means
      (loop [x (+ kx 16) [[c t] & more] [[GREEN "done"] [RED "failed"] [GOLD "warning"] [BLUE "plan"] [INDIGO "build"]] out []]
        (if-not c

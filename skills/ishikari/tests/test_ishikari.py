@@ -288,7 +288,7 @@ def test_metro_map():
               "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
-    for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand", "check-fix round", "req done"):
+    for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand", "req done"):
         assert name in names, name
     groups = [g for g in ET.parse(SVG).getroot().iter(NS + "g") if g.get("class") == "st"]
     assert len(groups) == len(names), (len(groups), len(names))  # every station is clickable
@@ -296,7 +296,7 @@ def test_metro_map():
         assert (g.findtext(NS + "title") or "").endswith("Click for more."), g.get("data-i")
         assert re.fullmatch(r"st-[a-z][a-z0-9-]*", g.get("id") or ""), g.get("id")
     assert len({g.get("id") for g in groups}) == len(groups)  # ids are unique
-    for spur in ("merge failed: to Worker ants, row 2", "cleanup failed: to Task, row 1 (next run)", "dropped", "to Worker ants, row 2 (new task)"):
+    for spur in ("merge failed: to Worker ants, row 2", "cleanup failed: to Task, row 1 (next run)", "dropped", "check failed: to Worker ants, row 2 (new task)"):
         assert spur in strings_all(texts), spur
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
