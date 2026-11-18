@@ -15,6 +15,6 @@ by registering this repo with [install.py](../install.py).
   one; otherwise plans moves and renames, applied on a branch after a yes.
 - [shop](./shop/SKILL.md) - Finds a product across Indian stores and lists the top 5 (more on request) by review-weighted rating, with pictures, prices and links.
 - [test-cua-driver-with-freeform](./test-cua-driver-with-freeform/SKILL.md) - Smoke-tests cua-driver by drawing a house on a new Freeform board and reports each capability as pass or fail.
-- [tutor](./tutor/SKILL.md) - Teaches any topic chapter by chapter in the Tutor web app: animated SVG lessons, quizzes, and FSRS flashcards saved as markdown.
 - [trim](./trim/SKILL.md) - Finds features too complex for the project's goal and reports each with its lines of code and a simpler way.
 - [task-router-2](~/repos/task-router-2/resources/skills/task-router-2/SKILL.md) - Tasks as one Markdown file each, written by the `task-router-2` CLI. Lives in the task-router-2 repo; `task-router-2 skill install` installs it.
+- [tutor](~/repos/tutor/resources/skills/tutor/SKILL.md) - Teaches any topic in the Tutor web app: diagram-led 16:9 slides with judged animated SVGs, quizzes and FSRS flashcards. Lives in the tutor repo; `tutor skill install` installs it.
