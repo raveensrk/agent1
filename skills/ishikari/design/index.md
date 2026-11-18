@@ -100,7 +100,7 @@ its job. The build script runs that workflow in place of a worker ant.
 09. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
     dependency order, and tests once. It may reuse the combined test's merge
-    (see [Finish](../skills/ishikari/SKILL.md#4-finish)). It refuses a task
+    (see [Finish](../SKILL.md#4-finish)). It refuses a task
     whose base was dropped. A failed merge, or a task left waiting, goes back
     to a new build round on its own; what is left after the last round is
     dropped and reported. Main moves forward only as a fast-forward, which git
@@ -147,7 +147,7 @@ They run once per finish, on the merged result, before main moves.
   None of it is ever committed, and the repo's main checkout is touched only by the
   final fast-forward.
 - Only Ishikari's tool,
-  [`ishikari.py`](../skills/ishikari/scripts/ishikari.py), writes the boards
+  [`ishikari.py`](../scripts/ishikari.py), writes the boards
   and the requirement entries. Each write holds a lock and replaces the file
   in one step, so two runs never lose each other's rows and a crash never
   leaves half a file. Lock files live in `~/.ishikari/locks`, never in the repo.
@@ -164,7 +164,7 @@ They run once per finish, on the merged result, before main moves.
   later. Only merged tasks' branches and scratch branches are removed.
   The scripts keep their rows while a stage runs and hand them to the tool once
   when the stage ends. The files in
-  [`assets/boards/`](../skills/ishikari/assets/boards/) are the templates it
+  [`assets/boards/`](../assets/boards/) are the templates it
   starts from.
 - Each ant thinks only as hard as its job needs: low for the board clerk,
   finisher and upkeep ants; medium for the investigator, researchers, add
@@ -183,11 +183,11 @@ investigator ant's questions; after that it drives everything on its own.
 | `ishikari-build`  | build, check, fix, combined | tasks to merge       |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 
-The scripts: [`ishikari-plan.js`](../skills/ishikari/scripts/ishikari-plan.js),
-[`ishikari-build.js`](../skills/ishikari/scripts/ishikari-build.js) and
-[`ishikari-finish.js`](../skills/ishikari/scripts/ishikari-finish.js).
+The scripts: [`ishikari-plan.js`](../scripts/ishikari-plan.js),
+[`ishikari-build.js`](../scripts/ishikari-build.js) and
+[`ishikari-finish.js`](../scripts/ishikari-finish.js).
 
-The [`/ishikari`](../skills/ishikari/SKILL.md) command runs all four steps below
+The [`/ishikari`](../SKILL.md) command runs all four steps below
 and stops to ask the user only in step 2.
 
 1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
@@ -197,7 +197,7 @@ and stops to ask the user only in step 2.
    script paths, and the repo's saved `testCommand` and `checkCommand`.
 2. The live investigator asks its questions, then `ishikari-plan` writes the
    requirement, design and plans (see
-   [Plan](../skills/ishikari/SKILL.md#2-plan)). The plans go straight to
+   [Plan](../SKILL.md#2-plan)). The plans go straight to
    build. First `ishikari.py req add` writes the requirement (none for a
    refactor), the main
    session commits it, and `ishikari.py boards remove` drops the answered
@@ -216,7 +216,7 @@ and stops to ask the user only in step 2.
    next plan stage, and that cleanup run gets no janitor. The philosopher's
    new critiques are listed in the result. Once the check passes,
    `ishikari.py req done` marks the run's requirements DONE. The skill's
-   [Limits](../skills/ishikari/SKILL.md#limits) table is the source of truth
+   [Limits](../SKILL.md#limits) table is the source of truth
    for every loop cap.
 
 ## Diagram
@@ -227,26 +227,10 @@ Logbook: the board tool writes them once at the end of build and once at the end
 of finish, for you to read after a run; no ant reads them. The critiques board
 stands alone as the bridge to the next run: the philosopher writes it and the
 next run's investigator reads it. All boards live in the state folder, outside
-the repo. D2 source: [`ishikari.d2`](ishikari.d2), rendered with the TALA layout
-by [`render.sh`](render.sh) to a light and a dark SVG.
+the repo.
 
-Colors: each stage has its own color. Green arrows are approvals, red arrows are
-bugs, gray arrows are normal flow. Dashed arrows only log, watch or comment. The
-legend in the diagram shows the arrow colors.
+An animated metro map: three rows read left to right, and short transfer spurs
+name where a cross-row link goes. Built by [`metro-clean.py`](metro-clean.py);
+run `python3 metro-clean.py` after a flow change.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="ishikari-dark.svg">
-  <img alt="Ishikari workflow" src="ishikari.svg">
-</picture>
-
-Animated version, one stage every 6 seconds:
-[`ishikari-animated.svg`](ishikari-animated.svg), from
-[`ishikari-animated.d2`](ishikari-animated.d2).
-
-Car tour, one task driven slowly along the exact path it takes:
-[`ishikari-flow.svg`](ishikari-flow.svg), built by [`flow.py`](flow.py). Open it
-in a browser; it needs its script to run. It drives two routes: a bug fixed on
-the first try, and a stuck worker dropped after 3 tries. The −, pause and +
-buttons, or the keys `+`, `-` and space, change speed live. Click a block to see
-only its arrows and the blocks they join; click it again, click empty space or
-press Esc to go back to the tour.
+![Ishikari metro map](ishikari-metro-clean.svg)
