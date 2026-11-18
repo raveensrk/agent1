@@ -402,18 +402,17 @@ test('finish: a dropped task inside the trial merge, or an added task it is buil
 
 test('finish: git decides what merged, not the merger report', async () => {
   const { out } = await finishRun({ approved: [T('a'), T('b'), T('c')] }, (o, p) =>
-    o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'b', outcome: 'merged', detail: '' }, { id: 'c', outcome: 'conflict', detail: 'x' }] }
-      : o.label === 'verifier-ant' ? (assert.ok(p.includes(`cherry ${SHA} <branch>`) && p.includes('- a: ishikari/r1/a')), { landed: ['a'], missing: ['b', 'c'] }) : null)
+    o.label === 'merger-ant' ? (assert.ok(p.includes('cherry <sha> <branch>') && p.includes('- a: ishikari/r1/a')),
+      { sha: SHA, results: [{ id: 'b', outcome: 'merged', detail: '' }, { id: 'c', outcome: 'conflict', detail: 'x' }], landed: ['a'], missing: ['b', 'c'] }) : null)
   assert.deepEqual(out.merged, ['a'])
   assert.deepEqual(out.waiting, [])
   assert.deepEqual(out.bugs.map(b => b.task), ['b', 'c'])
   assert.match(out.bugs[0].bug, /conflict.*said merged/)
 })
 
-test('finish: a garbled verifier answer falls back to the merger report', async () => {
+test('finish: a garbled git cherry check falls back to the merger report', async () => {
   const { out } = await finishRun({ approved: [T('a'), T('b')] }, o =>
-    o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] }
-      : o.label === 'verifier-ant' ? { landed: ['a'], missing: [] } : null)
+    o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }], landed: ['a'], missing: [] } : null)
   assert.deepEqual(out.merged, ['a', 'b'])
 })
 
@@ -434,7 +433,7 @@ test('finish: one check-fix round, a second is refused', async () => {
   assert.equal(out.stage, 'error')
 })
 
-// ---- judge round 1: judge after the ff, tip checks, verifier strictness ----
+// ---- judge round 1: judge after the ff, tip checks, git cherry strictness ----
 test('finish: the judge reads after the cleanup fast-forward', async () => {
   const { calls } = await run('ishikari-finish.js', { env, approved: [T('a')] }, async (p, o) => {
     if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
@@ -460,23 +459,21 @@ test('finish: both trial-merge reuse paths check each reused branch tip', async 
 
 test('finish: a stale branch tip leads the merger to the full merge, and git is still asked', async () => {
   const { out, calls } = await finishRun({ approved: [T('a'), T('b')], together: { sha: TOG, tasks: ['a', 'b'] } }, o =>
-    o.label === 'merger-ant' ? { sha: SHA, fastPath: false, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] }
-      : o.label === 'verifier-ant' ? { landed: ['a', 'b'], missing: [] } : null)
-  assert.ok(calls.includes('verifier-ant'))
+    o.label === 'merger-ant' ? { sha: SHA, fastPath: false, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }], landed: ['a', 'b'], missing: [] } : null)
+  assert.ok(!calls.includes('verifier-ant'))
   assert.deepEqual(out.merged, ['a', 'b'])
 })
 
-test('finish: no verifier after an exact fast path', async () => {
-  const { calls } = await finishRun({ approved: [T('a'), T('b')], together: { sha: TOG, tasks: ['a', 'b'] } }, o =>
-    o.label === 'merger-ant' ? { sha: TOG, fastPath: true, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] } : null)
-  assert.ok(!calls.includes('verifier-ant'))
+test('finish: an exact fast path is trusted over its git cherry check', async () => {
+  const { out } = await finishRun({ approved: [T('a'), T('b')], together: { sha: TOG, tasks: ['a', 'b'] } }, o =>
+    o.label === 'merger-ant' ? { sha: TOG, fastPath: true, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }], landed: [], missing: ['a', 'b'] } : null)
+  assert.deepEqual(out.merged, ['a', 'b'])
 })
 
-test('finish: unknown or extra verifier ids fall back to the merger report', async () => {
+test('finish: unknown or extra git cherry ids fall back to the merger report', async () => {
   for (const v of [{ landed: ['a', 'zz'], missing: ['b'] }, { landed: ['a', 'b'], missing: ['b'] }]) {
     const { out } = await finishRun({ approved: [T('a'), T('b')] }, o =>
-      o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'conflict', detail: 'x' }] }
-        : o.label === 'verifier-ant' ? v : null)
+      o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'conflict', detail: 'x' }], ...v } : null)
     assert.deepEqual(out.merged, ['a'], JSON.stringify(v))
     assert.deepEqual(out.bugs.map(b => b.task), ['b'])
   }
@@ -552,7 +549,7 @@ test('finish: the logbook gets the tasks, the cleanup, the verdict and the main 
 // ---- logbook: one entry the moment each ant finishes ----
 test('finish: every ant gets its own logbook entry at once, the finisher excepted', async () => {
   const { out, instant } = await judgeRun([{ score: 4, gaps: ['g'] }, { score: 8, gaps: [] }])
-  const got = instant.map(p => logged(p)[0])
+  const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
     'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
     'inspector ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8',
@@ -564,7 +561,7 @@ test('finish: every ant gets its own logbook entry at once, the finisher excepte
 test('build: an ant entry names its task, and a dead ant is logged as died', async () => {
   const { instant } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
     o.label.startsWith('worker') ? null : {})
-  const got = instant.map(p => logged(p)[0])
+  const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.slice(0, 2), [{ run: 'r1', task: 'a', who: 'worker ant', event: 'died' }, { run: 'r1', task: 'a', who: 'worker ant', event: 'died' }])
 })
 
@@ -583,7 +580,7 @@ test('plan: every planning ant gets its own logbook entry at once', async () => 
     return onePlan
   }, slowClerk)
   assert.equal(out.stage, 'plans')
-  const got = instant.map(p => logged(p)[0])
+  const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
     'investigator ant: research needed', 'researcher ant: found', 'researcher ant: found',
     'investigator ant: report written', 'add-requirement ant: requirement drafted', 'architect ant: 1 plan written',
@@ -599,7 +596,7 @@ test('plan: every planning ant gets its own logbook entry at once', async () => 
 test('plan: a live investigation logs one investigated entry', async () => {
   const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
     o.label === 'add-requirement-ant' ? goodReq : onePlan)
-  const got = instant.map(p => logged(p)[0])
+  const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got[0], { run: 'r1', who: 'investigator ant', event: 'investigated', detail: '/s/plans/r1/investigation_report.md' })
   assert.equal(got.filter(e => e.who === 'investigator ant').length, 1)
   assert.equal(got.filter(e => e.who === 'researcher ant').length, 0)
@@ -613,7 +610,7 @@ test('plan: a dead planning ant is logged as died and never blocks the run', asy
     o.label === 'add-requirement-ant' ? (++r === 1 ? null : goodReq) : onePlan,
   () => { throw new Error('logbook down') })
   assert.equal(out.stage, 'plans')
-  const reqs = instant.map(p => logged(p)[0]).filter(e => e.who === 'add-requirement ant')
+  const reqs = instant.flatMap(p => logged(p)).filter(e => e.who === 'add-requirement ant')
   assert.equal(reqs.length, 2)
   assert.deepEqual(reqs[0], { run: 'r1', who: 'add-requirement ant', event: 'died' })
   assert.equal(reqs[1].event, 'requirement drafted')
@@ -623,7 +620,7 @@ test('plan: a dead planning ant is logged as died and never blocks the run', asy
     o.label === 'add-requirement-ant' ? goodReq : null,
   () => new Promise(res => setTimeout(() => { settled++; res({}) }, 5)))
   assert.equal(second.out.stage, 'error')
-  const arch = second.instant.map(p => logged(p)[0]).filter(e => e.who === 'architect ant')
+  const arch = second.instant.flatMap(p => logged(p)).filter(e => e.who === 'architect ant')
   assert.deepEqual(arch.map(e => `${e.who}: ${e.event}`), ['architect ant: died', 'architect ant: died'])
   assert.equal(settled, second.instant.length)
 })
@@ -670,4 +667,29 @@ test('every ant in all three scripts runs on opus at low effort', async () => {
   for (const s of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js']) assert.ok(seen.some(x => x[0] === s), s)
   const off = seen.filter(([, , model, effort]) => model !== 'opus' || effort !== 'low')
   assert.deepEqual(off, [])
+})
+
+// ---- speed: janitor only for bigger changes; one logbook writer at a time ----
+test('finish: the janitor is skipped under 100 changed lines, runs at 100, runs when lines are unknown', async () => {
+  const go = lines => finishRun({ approved: [T('a')], cleanup: false }, o =>
+    o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }], landed: ['a'], missing: [], ...(lines == null ? {} : { lines }) }
+      : o.label === 'janitor-ant' ? { needed: false, title: '' } : null)
+  assert.ok(!(await go(99)).calls.includes('janitor-ant'))
+  assert.ok((await go(100)).calls.includes('janitor-ant'))
+  assert.ok((await go()).calls.includes('janitor-ant'))
+  const { prompts } = await go(5)
+  assert.ok(prompts['merger-ant'].includes('diff --shortstat main <sha>'))
+})
+
+test('logbook: one clerk at a time, later entries batched, none lost', async () => {
+  let live = 0, peak = 0
+  const slow = () => { live++; peak = Math.max(peak, live); return new Promise(r => setTimeout(() => { live--; r({}) }, 5)) }
+  const ids = ['a', 'b', 'c', 'd']
+  const { instant } = await run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, async (p, o) =>
+    o.label === 'merger-ant' ? { sha: SHA, results: ids.map(id => ({ id, outcome: 'merged', detail: '' })), landed: ids, missing: [] }
+      : o.label.startsWith('juror') || o.label.startsWith('judge') ? { score: 9, gaps: [] } : { moved: true, reason: '' }, slow)
+  assert.equal(peak, 1)
+  const entries = instant.flatMap(p => logged(p))
+  assert.equal(entries.filter(e => e.who === 'juror ant').length, 4)
+  assert.ok(instant.length < entries.length)  // the jurors' entries were batched
 })

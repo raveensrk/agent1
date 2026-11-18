@@ -53,24 +53,25 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## Limits
 
-| Cap                                    | Value | Where                  |
-| -------------------------------------- | ----- | ---------------------- |
-| Workers at once                        | 5     | build `MAX_WORKERS`    |
-| Tries per bug, then escalated          | 3     | build `MAX_TRIES`      |
-| Fix rounds per task                    | 3     | build `MAX_ROUNDS`     |
-| Combined test rounds                   | 2     | build                  |
-| Questions per `/ask-simple` call       | 4     | investigator prompt    |
-| Questions in all (live investigator)   | 8     | investigator prompt    |
-| Research bursts per question (2b)      | 2     | plan `MAX_RESEARCH`    |
-| Researchers per burst (2b)             | 5     | plan `MAX_RESEARCHERS` |
-| Same question twice (2b)               | error | plan same-question     |
-| Build rounds for merge bugs, waiting   | 2     | skill rule, step 4     |
-| Check-fix rounds                       | 1     | finish `checkFixDone`  |
-| Cleanup fix rounds                     | 1     | finish                 |
-| Judge pass score (out of 10)           | 7     | finish `PASS`          |
-| Judge fix rounds                       | 1     | finish                 |
-| Jurors at once (3+ tasks)              | 5     | finish `MAX_JURORS`    |
-| Files per worker plan, about           | 3     | architect prompt       |
+| Cap                                  | Value | Where                      |
+| ------------------------------------ | ----- | -------------------------- |
+| Workers at once                      | 5     | build `MAX_WORKERS`        |
+| Tries per bug, then escalated        | 3     | build `MAX_TRIES`          |
+| Fix rounds per task                  | 3     | build `MAX_ROUNDS`         |
+| Combined test rounds                 | 2     | build                      |
+| Questions per `/ask-simple` call     | 4     | investigator prompt        |
+| Questions in all (live investigator) | 8     | investigator prompt        |
+| Research bursts per question (2b)    | 2     | plan `MAX_RESEARCH`        |
+| Researchers per burst (2b)           | 5     | plan `MAX_RESEARCHERS`     |
+| Same question twice (2b)             | error | plan same-question         |
+| Build rounds for merge bugs, waiting | 2     | skill rule, step 4         |
+| Check-fix rounds                     | 1     | finish `checkFixDone`      |
+| Cleanup fix rounds                   | 1     | finish                     |
+| Janitor runs at changed lines        | 100+  | finish `JANITOR_MIN_LINES` |
+| Judge pass score (out of 10)         | 7     | finish `PASS`              |
+| Judge fix rounds                     | 1     | finish                     |
+| Jurors at once (3+ tasks)            | 5     | finish `MAX_JURORS`        |
+| Files per worker plan, about         | 3     | architect prompt           |
 
 ## 1. Setup
 
@@ -170,7 +171,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   - it reuses build's trial merge (`together.sha`) when the approved set
     matches it or only adds tasks, and git shows main and each reused branch
     tip are ancestors of it; else it merges from main;
-  - a verifier ant checks each merged task with `git cherry`; a task the
+  - the merger ant then checks its own merge with `git cherry`; a task the
     merger called merged but git finds missing comes back as a merge bug;
   - after the cleanup, the judge ant scores the whole run 0-10 against the
     plans (report, architecture, worker plans). With 3+ tasks it first

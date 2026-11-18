@@ -147,9 +147,9 @@ async function twice(fn) {
 
 // ---- logbook, written the moment each ant finishes ----
 // Every ant call goes through ant(): when the ant replies, a logbook clerk
-// appends one entry for it at once, without holding up the run. The stage's
+// queues one entry for it, and a single clerk appends the queue at once,
+// without holding up the run. The stage's
 // summary entries are still appended at the end.
-const pendingLogs = []
 const summarize = (kind, r) => {
   if (r == null) return 'died'
   if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : 'passed'
@@ -162,15 +162,25 @@ const summarize = (kind, r) => {
   if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
   return 'finished'
 }
+// One logbook clerk at a time: entries that arrive while it writes wait in
+// a queue, and the next clerk appends them all in one go as soon as it ends.
+const logQueue = []
+let logWriter = null
 const logNow = entries => {
-  const p = agent(
-    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+  logQueue.push(...entries)
+  if (!logWriter) logWriter = (async () => {
+    while (logQueue.length) {
+      const batch = logQueue.splice(0)
+      await agent(
+        `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries)}
+${JSON.stringify(batch)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-  ).catch(() => null)
-  pendingLogs.push(p)
+        { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+      ).catch(() => null)
+    }
+    logWriter = null
+  })()
 }
 async function ant(prompt, opts) {
   const r = await agent(prompt, { ...opts, model: MODEL })
@@ -180,7 +190,7 @@ async function ant(prompt, opts) {
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
 }
-const logsDone = () => Promise.all(pendingLogs)
+const logsDone = async () => { while (logWriter) await logWriter }
 
 function work(task, job, phase, step) {
   const start = task.bases[0] || env.main

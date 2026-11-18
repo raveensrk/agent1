@@ -140,10 +140,9 @@ async function twice(fn) {
 
 // ---- logbook, written the moment each ant replies ----
 // Every workflow ant call goes through ant(): when the ant replies, a
-// logbook clerk appends one entry for it at once, without holding up the
+// entry for it is queued, and a single clerk appends the queue at once, without holding up the
 // run. The live investigator runs outside this script, so it gets one
 // 'investigated' entry instead.
-const pendingLogs = []
 const summarize = r => {
   if (r == null) return 'died'
   if (typeof r.findings === 'string') return 'found'
@@ -155,15 +154,25 @@ const summarize = r => {
   if (r.reportWritten === true) return 'report written'
   return 'finished'
 }
+// One logbook clerk at a time: entries that arrive while it writes wait in
+// a queue, and the next clerk appends them all in one go as soon as it ends.
+const logQueue = []
+let logWriter = null
 const logNow = entries => {
-  const p = agent(
-    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+  logQueue.push(...entries)
+  if (!logWriter) logWriter = (async () => {
+    while (logQueue.length) {
+      const batch = logQueue.splice(0)
+      await agent(
+        `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries)}
+${JSON.stringify(batch)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-  ).catch(() => null)
-  pendingLogs.push(p)
+        { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+      ).catch(() => null)
+    }
+    logWriter = null
+  })()
 }
 async function ant(prompt, opts) {
   const r = await agent(prompt, { ...opts, model: MODEL })
@@ -172,7 +181,7 @@ async function ant(prompt, opts) {
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
 }
-const logsDone = () => Promise.all(pendingLogs)
+const logsDone = async () => { while (logWriter) await logWriter }
 const done = async result => { await logsDone(); return result }
 
 // ---- review: one question per run, research when facts are missing ----

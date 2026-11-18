@@ -79,9 +79,9 @@ async function twice(fn) {
 
 // ---- logbook, written the moment each ant finishes ----
 // Every ant call goes through ant(): when the ant replies, a logbook clerk
-// appends one entry for it at once, without holding up the run. The stage's
+// queues one entry for it, and a single clerk appends the queue at once,
+// without holding up the run. The stage's
 // summary entries are still appended at the end.
-const pendingLogs = []
 const summarize = (kind, r) => {
   if (r == null) return 'died'
   if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : 'passed'
@@ -94,15 +94,25 @@ const summarize = (kind, r) => {
   if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
   return 'finished'
 }
+// One logbook clerk at a time: entries that arrive while it writes wait in
+// a queue, and the next clerk appends them all in one go as soon as it ends.
+const logQueue = []
+let logWriter = null
 const logNow = entries => {
-  const p = agent(
-    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+  logQueue.push(...entries)
+  if (!logWriter) logWriter = (async () => {
+    while (logQueue.length) {
+      const batch = logQueue.splice(0)
+      await agent(
+        `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries)}
+${JSON.stringify(batch)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-  ).catch(() => null)
-  pendingLogs.push(p)
+        { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+      ).catch(() => null)
+    }
+    logWriter = null
+  })()
 }
 async function ant(prompt, opts) {
   const r = await agent(prompt, { ...opts, model: MODEL })
@@ -113,13 +123,16 @@ async function ant(prompt, opts) {
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
 }
-const logsDone = () => Promise.all(pendingLogs)
+const logsDone = async () => { while (logWriter) await logWriter }
 
 const COMBINE = {
   type: 'object',
   properties: {
     sha: { type: 'string', description: 'final commit of the scratch branch' },
     fastPath: { type: 'boolean', description: 'true only if you took the fast path and stopped there' },
+    landed: { type: 'array', items: { type: 'string' }, description: 'task ids git cherry finds in sha' },
+    missing: { type: 'array', items: { type: 'string' }, description: 'task ids git cherry does not find in sha' },
+    lines: { type: 'integer', description: `lines added plus lines deleted between ${'main'} and sha` },
     results: {
       type: 'array',
       items: {
@@ -151,6 +164,8 @@ approved.forEach(place)
 const results = {}
 let sha = null
 let trusted = false
+let merge = null
+let linesChanged = null  // from the merger's git diff --shortstat; null if it gave none
 if (order.length) {
   phase('Merge')
   const tog = together && typeof together.sha === 'string' && /^[0-9a-f]{7,64}$/.test(together.sha) &&
@@ -211,7 +226,13 @@ task whose merge makes them fail (rebuild from ${env.main} and test after each
 merge), report it as "tests failed", leave it and every task built on it out, and
 go on until the tests pass.
 Report every task. Never write or fix code yourself. Never touch ${env.main} or
-the repo's main checkout. Return the final commit of ${scratch} as sha.`,
+the repo's main checkout. Return the final commit of ${scratch} as sha.
+Last, even after a fast path, check your own work with git, never from memory:
+- For each task branch, run \`git -C ${env.repo} cherry <sha> <branch>\`. The task landed if
+  git succeeds and no output line starts with "+". Put landed ids in "landed" and
+  every other task id in "missing".
+- Run \`git -C ${env.repo} diff --shortstat ${env.main} <sha>\` and return insertions plus
+  deletions as "lines" (0 if it prints nothing).`,
     { label: 'merger-ant', phase: 'Merge', effort: EFFORT.merger, schema: COMBINE },
   ))
   if (!r) return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` }
@@ -220,30 +241,20 @@ the repo's main checkout. Return the final commit of ${scratch} as sha.`,
   // merge after its ancestor checks) needs no second look.
   trusted = Boolean(r.fastPath === true && (one || sameSet))
   for (const x of r.results || []) if (x && typeof x === 'object') results[String(x.id)] = x
+  if (Number.isInteger(r.lines) && r.lines >= 0) linesChanged = r.lines
+  merge = r
 }
 
-// Do not trust the report: git says which tasks' commits are in the scratch branch.
-// \`git cherry\` matches by patch, so cherry-picked commits count. A dead or garbled
-// answer falls back to the merger's report.
+// The merger's own git cherry check says which tasks' commits are in the scratch
+// branch. \`git cherry\` matches by patch, so cherry-picked commits count. A
+// missing or garbled check falls back to the merger's outcome report.
 let landed = null
-if (order.length && !trusted && typeof sha === 'string' && /^[0-9a-f]{7,64}$/.test(sha)) {
-  const v = await ant(
-    `Check which Ishikari task branches landed in a commit. Change nothing.
-${where}
-For each branch below, run \`git -C ${env.repo} cherry ${sha} <branch>\`. The task landed
-if git succeeds and no output line starts with "+". Return the ids that landed in
-"landed" and the rest in "missing".
-${order.map(t => `- ${t.id}: ${t.branch}`).join('\n')}`,
-    { label: 'verifier-ant', phase: 'Merge', effort: 'low',
-      schema: { type: 'object', properties: { landed: { type: 'array', items: { type: 'string' } }, missing: { type: 'array', items: { type: 'string' } } }, required: ['landed', 'missing'] } },
-  )
-  if (v && Array.isArray(v.landed) && Array.isArray(v.missing)) {
-    const l = new Set(v.landed.map(String)), m = new Set(v.missing.map(String))
-    // Every task answered exactly once and nothing else, else the answer is not used.
-    if (l.size + m.size === order.length && order.every(t => l.has(t.id) !== m.has(t.id))) landed = l
-    else log('verifier answer does not match the tasks: using the merger report')
-  } else log('verifier ant gave no answer: using the merger report')
-}
+if (order.length && !trusted && merge && Array.isArray(merge.landed) && Array.isArray(merge.missing)) {
+  const l = new Set(merge.landed.map(String)), m = new Set(merge.missing.map(String))
+  // Every task answered exactly once and nothing else, else the check is not used.
+  if (l.size + m.size === order.length && order.every(t => l.has(t.id) !== m.has(t.id))) landed = l
+  else log('merger git cherry check does not match the tasks: using its outcome report')
+} else if (order.length && !trusted) log('merger gave no git cherry check: using its outcome report')
 
 // Check what the merger said against what was asked: nothing goes missing.
 const said = t => results[t.id] && results[t.id].outcome
@@ -271,6 +282,7 @@ let verdict = null
 const PASS = 7
 const MAX_JURORS = 5  // juror ants at once
 const MIN_JURY = 3    // fewer merged tasks: the judge works alone
+const JANITOR_MIN_LINES = 100  // fewer lines added or changed: no janitor
 const planDir = `${env.state}/plans/${env.run}`
 const fixBranch = `ishikari/${env.run}/_judgefix`
 const fixTree = treeOf(fixBranch)
@@ -284,7 +296,9 @@ if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
   const janitorChain = async () => {
-    const jan = isCleanup ? null : await ant(
+    const small = linesChanged != null && linesChanged < JANITOR_MIN_LINES
+    if (small) log(`janitor skipped: ${linesChanged} lines changed, under ${JANITOR_MIN_LINES}`)
+    const jan = isCleanup || small ? null : await ant(
       `You are the janitor ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}. Find dead code, bloat, duplication and mess

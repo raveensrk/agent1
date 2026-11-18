@@ -51,7 +51,7 @@ stations = [
  (1100,R1,"Add requirement ant",["drafts the requirement entry;","the main session pipes it into ishikari.py req add"],"st",L_DN),
  (1420,R1,"Architect ant",["writes architecture.md","and one plan per task"],"st",L_UP),
  (1700,R1,"Worker plans",["one per task: title, files, after;","checked before anything is built"],"st",L_DN),
- (1370,40,"Logbook",["logbook clerk ant: appends each ant's entry","the moment the ant replies, in plan, build and finish.","The live investigator gets only an investigated entry.","Build and finish add a summary at the end. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",RIGHT),
+ (1370,40,"Logbook",["logbook clerk ant: appends each ant's entry","the moment the ant replies, one clerk at a time, in plan, build and finish.","The live investigator gets only an investigated entry.","Build and finish add a summary at the end. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",RIGHT),
  # row 2: build, check, fix
  (200,R2,"Worker ants  ∥",["max 5, one worktree each,","code + tests + docs;","stuck: next fix round"],"x",(0,-84,"middle")),
  (760,R2,"Inspector ants  ∥",["one per built task: plan + design,","runs tests (reuses the worker's if clean)"],"x",(0,-70,"middle")),
@@ -59,10 +59,9 @@ stations = [
  (620,720,"Detective ants  ∥",["round 2 on: finds why, writes","the next fix plan, never code"],"x",(-26,34,"end")),
  (620,790,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",RIGHT),
  # row 3: merge and cleanup
- (200,R3,"Merger ant",["merges in a straight line in a scratch","copy, or reuses build's trial merge"],"x",L_UP),
- (480,R3,"Verifier ant",["git cherry: which tasks landed;","skipped after an exact fast path"],"x",L_UP),
+ (200,R3,"Merger ant",["merges in a straight line in a scratch copy,","or reuses build's trial merge; then checks","its own merge with git cherry"],"x",(0,-70,"middle")),
  (480,1180,"merge failed",["a conflict, failed tests, or a task","git finds missing: next build round;","max 2 extra build rounds"],"term",RIGHT),
- (760,R3,"Janitor ant",["plans a cleanup of this run's mess;","a cleanup run has no janitor"],"x",L_UP),
+ (760,R3,"Janitor ant",["plans a cleanup of this run's mess; skipped","under 100 changed lines;","a cleanup run has no janitor"],"x",(0,-70,"middle")),
  (940,DIP3,"Worker ant",["builds the cleanup on the merge"],"st",(0,-44,"middle")),
  (1240,DIP3,"Inspector ant",["checks the cleanup, runs the tests;","fail: one fix round: detective, worker, inspector"],"st",L_UP),
  (1090,1270,"Detective ant",["finds why, plans the one fix"],"st",L_DN),

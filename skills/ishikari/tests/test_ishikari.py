@@ -29,7 +29,7 @@ KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "add-requirement-ant": "Add requirement ant", "architect-ant": "Architect ant",
     "worker-ant": "Worker ants  ∥", "inspector-ant": "Inspector ants  ∥",
     "detective-ant": "Detective ants  ∥", "integrator-ant": "Integrator ant",
-    "merger-ant": "Merger ant", "verifier-ant": "Verifier ant", "janitor-ant": "Janitor ant",
+    "merger-ant": "Merger ant", "janitor-ant": "Janitor ant",
     "juror-ant": "Juror ants  ∥", "judge-ant": "Judge ant", "finisher-ant": "Finisher ant",
     "logbook-clerk": "Logbook",
 }
@@ -271,7 +271,7 @@ def test_metro_map():
             assert kind in KIND_STATION, f"{os.path.basename(script)}: no station for {kind}"
             assert KIND_STATION[kind] in names, f"{os.path.basename(script)}: {KIND_STATION[kind]} not on the map"
     counts = {"Merger ant": 3, "Worker ant": 2, "Inspector ant": 2, "Detective ant": 1, "Judge ant": 2,
-              "Verifier ant": 1, "Juror ants  ∥": 1, "Logbook": 1}
+              "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
     for name in ("Task", "You", "investigation_report.md", "Worker plans", "Dropped", "merge failed",

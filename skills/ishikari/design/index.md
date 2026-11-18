@@ -125,7 +125,8 @@ They run once per finish, on the merged result, before main moves.
   Still failing: it is dropped, main moves with the tasks alone, the cleanup
   branch is kept and the next plan stage hands its plan to the investigator ant,
   which may ask about it. One cleanup per run: a dropped cleanup's own run gets
-  no janitor, so cleanups never chain.
+  no janitor, so cleanups never chain. A small run gets no janitor either: under 100
+  lines added or changed, by the merger's `git diff --shortstat`.
 - **Judge ant** gives the final verdict. It runs after the janitor's cleanup has
   landed or been dropped, reads the plans (investigation report, architecture
   and every worker plan) and the merged code with the cleanup on top, and
@@ -169,7 +170,8 @@ They run once per finish, on the merged result, before main moves.
   each other's entries. Requirement writes replace the file in one step, so a
   crash never leaves half a file; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
 - Every workflow ant's reply is logged the moment it comes, in plan, build and
-  finish, through a logbook clerk ant; a failed append never blocks or fails
+  finish, through a logbook clerk ant, one clerk at a time: replies that come
+  while it writes wait in a queue and go in its next append; a failed append never blocks or fails
   the run. The live investigator gets only the `investigated` entry
   `ishikari-plan` logs for it. Build and finish also append a summary at the
   end of the stage.
@@ -243,21 +245,21 @@ from ant to ant directly. The Logbook sits apart: a shared ledger, one plain
 text recfile per repo, `~/.ishikari/<repo>-<hash>/logbook.rec`, outside the
 repo. It is append only: nothing in it is ever changed or removed. In the
 map's words: logbook clerk ant: appends each ant's entry the moment the ant
-replies, in plan, build and finish. The live investigator gets only an
+replies, one clerk at a time, in plan, build and finish. The live investigator gets only an
 investigated entry. Build and finish add a summary at the end. No ant reads it.
 Each entry says who, the task and what came of it (built, 2 bugs found, score
 6, died); the clerk appends it while the run goes on, and a failed append never
 blocks or fails the run. The live investigator runs outside any workflow, so
 `ishikari-plan` logs one `investigated` entry for it, with the report path. The
 summaries hold each task's status, each bug with its tries, the cleanup, the
-judge's verdict and whether main moved. The cost: one small
-clerk call per ant call. You add your own notes with `ishikari.py log note`; they are notes,
+judge's verdict and whether main moved. The cost: at most one small clerk
+call per ant call, fewer when replies arrive together. You add your own notes with `ishikari.py log note`; they are notes,
 never orders. Read it with `ishikari.py log status` (each
 task's latest event), `recsel` or any editor.
 
 An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Every agent label in the three scripts has a
-station, helper ants included (verifier, the fast-forward merger, the cleanup
+station, helper ants included (the fast-forward merger, the cleanup
 detective, the jurors), and short notes name each skipped step. Built by
 [`metro.py`](metro.py); run `python3 metro.py` after a flow change.
 `test_metro_map` in [`test_ishikari.py`](../tests/test_ishikari.py) checks it
