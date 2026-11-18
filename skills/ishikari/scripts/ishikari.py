@@ -109,8 +109,9 @@ def git(repo, *args):
 
 def main_branch(repo):
     head = git(repo, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
-    if head and "/" in head:
-        return head.split("/", 1)[1]
+    name = head.split("/", 1)[1] if head and "/" in head else None
+    if name and git(repo, "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"):
+        return name
     for name in ("main", "master", "trunk"):
         if git(repo, "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"):
             return name
@@ -119,7 +120,7 @@ def main_branch(repo):
 
 def check_main(top, main):
     if not git(top, "rev-parse", "--verify", "--quiet", f"refs/heads/{main}"):
-        die(f"main branch {main} does not exist in {top}")
+        die(f"main branch {main} does not exist in {top}; pass --main <branch>")
     current = git(top, "branch", "--show-current")
     if current != main:
         die(f"{top} is on {current or 'a detached HEAD'}, not the main branch {main}; check out {main} first")
@@ -136,6 +137,9 @@ def setup(repo, main=None):
     if not top:
         die(f"not a git repo: {repo}")
     top = os.path.realpath(top)
+    common = git(top, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if common and os.path.basename(common) == ".git":
+        top = os.path.realpath(os.path.dirname(common))  # a linked worktree: use the main checkout
     main = main or main_branch(top)
     check_main(top, main)
     tag = hashlib.sha1(top.encode()).hexdigest()[:8]
@@ -335,10 +339,16 @@ def boards_locked(op, path, board, extra, data):
 
 
 def run(argv):
-    if len(argv) == 2 and argv[0] == "setup":
-        return setup(argv[1])
-    if len(argv) == 4 and argv[0] == "setup" and argv[2] == "--main" and argv[3]:
-        return setup(argv[1], argv[3])
+    if argv[:1] == ["setup"]:
+        rest, main = argv[1:], None
+        if "--main" in rest:
+            k = rest.index("--main")
+            main = rest[k + 1] if k + 1 < len(rest) else None
+            rest = rest[:k] + rest[k + 2:]
+            if not main:
+                die("setup: --main needs a branch name")
+        if len(rest) == 1:
+            return setup(rest[0], main)
     if len(argv) in (4, 5) and argv[0] == "boards" and argv[1] in ("write", "add", "remove"):
         return boards(argv[1], argv[2], argv[3], argv[4] if len(argv) == 5 else None)
     if len(argv) == 4 and argv[0] == "config":

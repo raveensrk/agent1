@@ -160,6 +160,18 @@ def test_main_branch_and_run_id():
         git_in(repo, "add", "f")
         assert "uncommitted" in fails(home, "setup", repo)
         git_in(repo, "commit", "-q", "-m", "f")
+        assert json.loads(run(home, "setup", "--main", "main", repo))["main"] == "main"  # --main first
+
+        wt = os.path.join(home, "wt")
+        git_in(repo, "worktree", "add", "-q", "-b", "side", wt)
+        env = json.loads(run(home, "setup", wt))  # a linked worktree resolves to the main checkout
+        assert env["repo"] == os.path.realpath(repo) and env["main"] == "main", env
+
+        git_in(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+        git_in(repo, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/gone")
+        assert json.loads(run(home, "setup", repo))["main"] == "main"  # origin/HEAD with no local branch is skipped
+        assert fails(home, "setup", repo, "--main", "gone").strip().endswith("; pass --main <branch>")
+
         ids = {json.loads(run(home, "setup", repo))["run"] for _ in range(5)}
         assert len(ids) == 5, ids  # same second, still distinct
         assert all(re.fullmatch(r"\d{8}-\d{6}-[0-9a-f]{4}", i) for i in ids), ids
