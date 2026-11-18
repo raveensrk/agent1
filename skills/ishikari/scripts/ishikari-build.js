@@ -1,11 +1,11 @@
 export const meta = {
   name: 'ishikari-build',
-  description: 'Ishikari stage 2: worker ants build the plans, inspector ants check them, detective ants plan fixes, then the integrator ant tests all passing tasks combined',
+  description: 'Ishikari stage 2: worker ants build the plans, detective ants check them and plan fixes, then the integrator ant tests all passing tasks combined',
   whenToUse: 'After ishikari-plan returns plans. Ends with task results; the main session approves passing tasks without asking.',
   phases: [
     { title: 'Build', detail: 'worker ants, at most 5 at once, one worktree each' },
-    { title: 'Check', detail: 'one inspector ant per built task' },
-    { title: 'Fix', detail: 'detective plans, worker builds, inspector re-checks; 3 tries per bug' },
+    { title: 'Check', detail: 'one detective ant per built task: checks it, plans any fix' },
+    { title: 'Fix', detail: 'worker builds the plan, detective re-checks and plans the next; 3 tries per bug' },
     { title: 'Combined', detail: 'integrator ant merges all passing tasks in a scratch copy and tests once' },
     { title: 'Logbook', detail: 'each ant\'s entry the moment it replies; the stage summary at the end' },
   ],
@@ -33,7 +33,7 @@ const MAX_ROUNDS = 3  // fix rounds per task, so new bugs cannot loop forever
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { worker: 'low', inspector: 'low', detective: 'low', integrator: 'low', merger: 'low', clerk: 'low' }
+const EFFORT = { worker: 'low', detective: 'low', integrator: 'low', merger: 'low', clerk: 'low' }
 
 const { env = {} } = args
 const plans = Array.isArray(args.plans) ? args.plans.filter(p => p && typeof p === 'object') : []
@@ -61,7 +61,7 @@ const BUILT = {
   required: ['status', 'notes'],
 }
 
-const INSPECTION = {
+const DETECTION = {
   type: 'object',
   properties: {
     fixed: {
@@ -72,19 +72,10 @@ const INSPECTION = {
     bugs: { type: 'array', items: { type: 'string' }, description: 'real bugs in this task\'s own work, each with how to see it' },
     nits: { type: 'array', items: { type: 'string' }, description: 'style points and small doubts; never fixed in the loop' },
     baseProblems: { type: 'array', items: { type: 'string' }, description: 'problems in code that came from the branches this task is built on' },
-    cause: { type: 'string', description: 'first check only, if there are bugs: their cause' },
-    plan: { type: 'string', description: 'first check only, if there are bugs: a complete fix plan a worker ant can build without questions' },
+    cause: { type: 'string', description: 'if any bug is open or new: its cause' },
+    plan: { type: 'string', description: 'if any bug is open or new: a complete fix plan a worker ant can build without questions' },
   },
   required: ['bugs'],
-}
-
-const FIX_PLAN = {
-  type: 'object',
-  properties: {
-    cause: { type: 'string' },
-    plan: { type: 'string', description: 'complete fix plan a worker ant can build without questions' },
-  },
-  required: ['cause', 'plan'],
 }
 
 const COMBINE = {
@@ -185,7 +176,7 @@ ISHIKARI_ROWS_END`,
 async function ant(prompt, opts) {
   const r = await agent(prompt, { ...opts, model: MODEL })
   const [kind, a, b] = String(opts.label).split(':')
-  const task = kind === 'juror-ant' ? b : ['worker-ant', 'inspector-ant', 'detective-ant'].includes(kind) && a ? a : undefined
+  const task = kind === 'juror-ant' ? b : ['worker-ant', 'detective-ant'].includes(kind) && a ? a : undefined
   logNow([{ run: env.run, ...(task ? { task } : {}), who: kind.replace('-ant', ' ant'), event: summarize(kind, r),
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
@@ -233,7 +224,7 @@ function runChild(task) {
   })
 }
 
-// The worker's own test run, reused when the inspector finds the same commit.
+// The worker's own test run, reused when the detective finds the same commit.
 function testsFor(task, built) {
   if (!built || !/^[0-9a-f]{7,40}$/.test(built.sha || '') || typeof built.testsPassed !== 'boolean') {
     return `${tests} inside that worktree.`
@@ -244,66 +235,60 @@ If HEAD is ${built.sha} and the status is empty, reuse that result and do not
 run the tests again. Otherwise ${testsLower} inside that worktree.`
 }
 
-function inspect(task, open, step, built) {
+// The detective ant checks a built task and, when it finds bugs, plans their fix.
+// On a re-check it also says which open bugs are fixed and plans the next fix
+// for the rest, with every earlier round in hand. No other ant checks or plans.
+function detect(task, open, step, built) {
   const own = task.bases.length
     ? `It is built on ${task.bases.join(', ')}. Code from those branches belongs to other tasks:
 list its problems in baseProblems, never in bugs. This task's own commits are
 \`git -C ${env.repo} log --no-merges ${task.branch} --not ${[env.main, ...task.bases].join(' ')}\`.`
     : `This task's own changes are \`git -C ${env.repo} diff ${env.main}...${task.branch}\`.`
+  const past = task.history.map(h => `Round ${h.round}:
+  bugs: ${h.bugs.join('; ')}
+  cause found: ${h.cause}
+  fix plan: ${h.plan}
+  outcome: ${h.outcome || 'unknown'}`).join('\n')
   const ask = open
     ? `Re-check these open bugs. For each id, say in "fixed" whether it is fixed now:
 ${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}
-Then list in bugs only NEW real bugs: ones the fix caused, or that break the plan.`
+Then list in bugs only NEW real bugs: ones the fix caused, or that break the plan.
+${past ? `Earlier fix rounds:\n${past}\n` : ''}If any bug is still open or new, debug it: find the cause and write a complete fix
+plan for a worker ant. Do not repeat a cause or plan that already failed: say why
+it failed and try a different approach.`
     : `List real bugs: behaviour that breaks the plan, or a failing test. If there are
-any, also find their cause and write a complete fix plan for a worker ant; you
-never write code yourself.`
+any, also find their cause and write a complete fix plan for a worker ant.`
   return ant(
-    `You are the inspector ant of the Ishikari workflow.
+    `You are the detective ant of the Ishikari workflow: you check the task and plan
+the fix for every bug you find. You never write code yourself.
 ${where}
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
 Check it against its plan and the run's design ${designOf(task)}: a name or interface
 that differs from the design is a bug.
 ${own}
-${testsFor(task, built)} Do not copy the repo anywhere else, and do not
+${task.notes.length ? `The worker's notes: ${task.notes.join(' / ')}\n` : ''}${task.guidance ? `The user's guidance: ${task.guidance}\n` : ''}${testsFor(task, built)} Do not copy the repo anywhere else, and do not
 edit tracked files.
 ${ask}
 Put style points and small doubts in nits, not in bugs. Check that the docs
 match the change.`,
-    { label: `inspector-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.inspector, schema: INSPECTION },
-  )
-}
-
-function detective(task, open, history, round) {
-  const past = history.map(h => `Round ${h.round}:
-  bugs: ${h.bugs.join('; ')}
-  cause found: ${h.cause}
-  fix plan: ${h.plan}
-  outcome: ${h.outcome || 'unknown'}`).join('\n')
-  return ant(
-    `You are the detective ant of the Ishikari workflow.
-${where}
-Task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
-${task.bases.length ? `It is built on ${task.bases.join(', ')}.\n` : ''}${task.notes.length ? `The worker's notes: ${task.notes.join(' / ')}\n` : ''}These bugs are open:
-${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}
-${task.guidance ? `The user's guidance: ${task.guidance}\n` : ''}${past ? `Earlier fix rounds failed:\n${past}\nDo not repeat a cause or plan that already failed. Say why it failed and try a different approach.\n` : ''}Debug and find the cause. You never write code: write a complete fix plan for
-a worker ant instead. Change no files.`,
-    { label: `detective-ant:${task.id}:fix${round}`, phase: 'Fix', effort: EFFORT.detective, schema: FIX_PLAN },
+    { label: `detective-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.detective, schema: DETECTION },
   )
 }
 
 // Fix loop with each bug tracked by id: MAX_TRIES tries per bug, at most MAX_ROUNDS
-// rounds. A round = detective plans, worker builds, inspector re-checks.
-// Returns an error text if an ant died twice, else null.
-// firstFix: the inspector's own fix plan for round 1, which saves a detective.
+// rounds. A round = worker builds the detective's plan, the detective re-checks
+// and plans the next fix. Returns an error text if an ant died twice, else null.
+// firstFix: the detective's fix plan from its first check.
 async function fixLoop(task, texts, firstFix) {
   texts.forEach(t => task.addBug(t))
+  let nextFix = firstFix
   for (let round = 1; round <= MAX_ROUNDS; round++) {
     const open = task.bugs.filter(b => b.open)
     if (!open.length || open.some(b => b.tries >= MAX_TRIES)) break
     open.forEach(b => { b.tries++ })
     log(`${task.id}: fix round ${round} for ${open.map(b => b.id).join(', ')}`)
-    const fix = round === 1 && firstFix && firstFix.plan ? firstFix : await twice(() => detective(task, open, task.history, round))
-    if (!fix) return 'the detective ant died twice'
+    const fix = nextFix && nextFix.plan ? nextFix
+      : { cause: '(the detective gave no cause)', plan: `Fix these bugs:\n${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}` }
     const entry = { round, bugs: open.map(b => `${b.id}: ${b.text}`), cause: fix.cause, plan: fix.plan }
     task.history.push(entry)
     const first = task.firstStep ? `${task.firstStep}\n` : ''
@@ -313,8 +298,9 @@ async function fixLoop(task, texts, firstFix) {
     task.touched()
     task.notes.push(built.notes)
     if (built.status === 'stuck') { entry.outcome = `worker stuck: ${built.notes}`; continue }
-    const check = await twice(() => inspect(task, open, `recheck${round}`, built))
-    if (!check) return 'the inspector ant died twice'
+    const check = await twice(() => detect(task, open, `recheck${round}`, built))
+    if (!check) return 'the detective ant died twice'
+    nextFix = check
     const done = new Set((check.fixed || []).filter(f => f.fixed).map(f => f.id))
     open.forEach(b => { if (done.has(b.id)) b.open = false })
     task.nits.push(...(check.nits || []))
@@ -344,9 +330,9 @@ function makeTask(id, branch, extra) {
 
 function end(task, status, why) {
   const open = task.bugs.filter(b => b.open)
-  task.bugs.forEach(b => note({ task: task.id, who: 'inspector ant',
+  task.bugs.forEach(b => note({ task: task.id, who: 'detective ant',
     event: `bug ${!b.open ? 'fixed' : status === 'escalated' ? 'escalated' : 'open'}`, detail: `${b.id}: ${b.text}`, tries: b.tries }))
-  const ant = { 'awaiting review': 'inspector ant', escalated: 'detective ant', blocked: 'build script', error: 'build script' }[status]
+  const ant = { 'awaiting review': 'detective ant', escalated: 'detective ant', blocked: 'build script', error: 'build script' }[status]
   note({ task: task.id, who: ant, event: status, ...(why && why.length ? { detail: why.join('; ') } : {}) })
   task.result = {
     id: task.id, branch: task.branch, worktree: task.tree, plan: task.plan, status,
@@ -433,16 +419,16 @@ async function runTask(task) {
   if (!first) return end(task, 'error', ['the worker ant died twice'])
   task.notes.push(first.notes)
   let last = first
-  let inspected = false
+  let checked = false
   if (first.status === 'stuck') {
     const err = await fixLoop(task, [`stuck: ${first.notes}`])
     if (err) return end(task, 'error', [err])
     if (task.bugs.some(b => b.open)) return end(task, 'escalated', [])
-    inspected = true
+    checked = true
   }
   task.markBuilt(true)
 
-  // Inspect only once every base is final. A base that failed blocks this
+  // Check only once every base is final. A base that failed blocks this
   // task; a base that changed after this task started is merged in first.
   const finals = await Promise.all(task.after.map(d => byId[d].doneP))
   const failed = task.after.filter((d, k) => finals[k].status !== 'awaiting review')
@@ -453,16 +439,16 @@ async function runTask(task) {
     task.touched()
     task.notes.push(up.notes)
     last = up
-    inspected = false
+    checked = false
     if (up.status === 'stuck') {
       const err = await fixLoop(task, [`could not take in the latest ${task.bases.join(', ')}: ${up.notes}`])
       if (err) return end(task, 'error', [err])
-      inspected = true
+      checked = true
     }
   }
-  if (!inspected) {
-    const check = await twice(() => inspect(task, null, 'check', last))
-    if (!check) return end(task, 'error', ['the inspector ant died twice'])
+  if (!checked) {
+    const check = await twice(() => detect(task, null, 'check', last))
+    if (!check) return end(task, 'error', ['the detective ant died twice'])
     task.nits.push(...(check.nits || []))
     task.baseProblems.push(...(check.baseProblems || []))
     if (check.bugs.length) {

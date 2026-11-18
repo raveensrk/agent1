@@ -39,7 +39,7 @@ export const meta = {
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { merger: 'low', janitor: 'low', worker: 'low', inspector: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
+const EFFORT = { merger: 'low', janitor: 'low', worker: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
@@ -118,7 +118,7 @@ async function ant(prompt, opts) {
   const r = await agent(prompt, { ...opts, model: MODEL })
   const [kind, a, b] = String(opts.label).split(':')
   if (kind === 'finisher-ant') return r  // it appends the stage's entries itself
-  const task = kind === 'juror-ant' ? b : ['worker-ant', 'inspector-ant', 'detective-ant'].includes(kind) && a ? a : undefined
+  const task = kind === 'juror-ant' ? b : ['worker-ant', 'detective-ant'].includes(kind) && a ? a : undefined
   logNow([{ run: env.run, ...(task ? { task } : {}), who: kind.replace('-ant', ' ant'), event: summarize(kind, r),
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
@@ -180,7 +180,7 @@ if (order.length) {
     ? added : null
   const one = !sameSet && !onTop && order.length === 1 && !(order[0].after || []).length ? order[0] : null
   const fast = one
-    ? `Fast path: one task, already tested by its inspector. If
+    ? `Fast path: one task, already tested by its detective. If
 \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${one.branch}\` succeeds and
 \`git -C ${env.repo} log --merges ${env.main}..${one.branch}\` prints nothing, create the worktree with
 \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${one.branch}\`, report the task
@@ -346,7 +346,7 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
   }
 
   // The judge ant scores the whole run, cleanup included, against the plans.
-  // Below PASS: one fix round (worker, inspector), then a second score. Still
+  // Below PASS: one fix round (worker, detective), then a second score. Still
   // below PASS: main moves anyway and the report flags it.
   // MIN_JURY or more tasks: the judge delegates, one juror ant per task (at most
   // MAX_JURORS at once), and decides the run's score from their reports.
@@ -417,17 +417,17 @@ ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you canno
     let bugs = ['the worker ant died']
     if (b && b.status === 'built') {
       const c = await ant(
-        `You are an inspector ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
+        `You are a detective ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
 ${where}
 Gaps:
 ${first.gaps.map(g => `- ${g}`).join('\n')}
 Code: ${fixTree}, branch ${fixBranch}, built on ${scratch}. Check that it closes the gaps
 and breaks nothing, then ${tests} inside ${fixTree}. Return each problem in "bugs", or
 an empty list. Never fix anything.`,
-        { label: 'inspector-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.inspector,
+        { label: 'detective-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.detective,
           schema: { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] } },
       )
-      bugs = c ? c.bugs : ['the inspector ant died']
+      bugs = c ? c.bugs : ['the detective ant died']
     } else if (b) bugs = ['worker stuck: ' + b.notes]
     if (bugs.length || !(await fastForwardTo(fixBranch, 'merger-ant:judge-fix'))) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
     const second = await judgeOnce(2)

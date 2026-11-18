@@ -25,11 +25,10 @@ lines = [  # name, colour, points, width, dash
  # "build" is the trains' route only (drawn invisible).
  ("build", "none", [(200,R2),(X,R2),(X,860),(60,860),(60,R3),(X,R3),(X,1400),(60,1400),(60,R4),(1340,R4)], 12, ""),
  ("g1",    GREEN, [(200,R2),(X,R2),(X,860),(60,860),(60,R3),(X,R3),(X,1400),(60,1400),(60,R4),(1340,R4)], 12, ""),
- ("bugin", RED,   [(760,R2),(760,660),(700,720),(620,720)], 8, ""),
- ("clash", RED,   [(1200,R2),(1200,720),(620,720)], 6, "10 6"),
- ("bugout",RED,   [(620,720),(240,720),(200,680),(200,R2)], 8, ""),
- ("r1",    RED,   [(760,R2),(730,600),(230,600),(200,R2)], 5, ""),
- ("drop",  RED,   [(620,720),(620,790)], 6, ""),
+ ("fix",   RED,   [(760,R2),(730,640),(230,640),(200,R2)], 8, ""),
+ ("fixloop", "none", [(200,R2),(760,R2),(730,640),(230,640),(200,R2)], 8, ""),
+ ("clash", RED,   [(1200,R2),(1200,700),(800,700),(760,R2)], 6, "10 6"),
+ ("drop",  RED,   [(660,640),(660,740)], 6, ""),
  ("mfail", RED,   [(480,R3),(480,1180)], 6, "10 6"),
  ("tdrop", TEAL,  [(760,R3),(760,1200)], 6, "10 6"),
  ("jfix",  GOLD,  [(J1,R4),(460,DIP4),(J2,DIP4),(1060,R4)], 9, ""),
@@ -51,10 +50,9 @@ stations = [
  (1370,40,"Logbook",["logbook clerk ant: appends each ant's entry","the moment the ant replies, one clerk at a time, in plan, build and finish.","The live investigator gets only an investigated entry.","Build and finish add a summary at the end. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",RIGHT),
  # row 2: build, check, fix
  (200,R2,"Worker ants  ∥",["max 5, one worktree each,","code + tests + docs;","stuck: next fix round"],"x",(0,-84,"middle")),
- (760,R2,"Inspector ants  ∥",["one per built task: plan + design,","runs tests (reuses the worker's if clean)"],"x",(0,-70,"middle")),
+ (760,R2,"Detective ants  ∥",["one per built task: checks it against plan +","design, runs tests (reuses the worker's if clean);","finds each bug's cause and plans its fix"],"x",(0,-86,"middle")),
  (1200,R2,"Integrator ant",["merges passing tasks in a scratch","copy, tests once: the combined test;","fewer than 2 passing tasks: no combined test"],"x",(0,-78,"middle")),
- (620,720,"Detective ants  ∥",["round 2 on: finds why, writes","the next fix plan, never code"],"x",(-26,34,"end")),
- (620,790,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",RIGHT),
+ (660,750,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",RIGHT),
  # row 3: merge and cleanup
  (200,R3,"Merger ant",["merges in a straight line in a scratch copy,","or reuses build's trial merge; then checks","its own merge with git cherry"],"x",(0,-70,"middle")),
  (480,1180,"merge failed",["a conflict, failed tests, or a task","git finds missing: next build round;","max 2 extra build rounds"],"term",RIGHT),
@@ -64,7 +62,7 @@ stations = [
  (160,R4,"Juror ants  ∥",["one per merged task, 5 at once;","only with 3+ merged tasks"],"x",L_DN),
  (J1,R4,"Judge ant",["scores the run 0-10: does the code","match the plans? its own call, not an average"],"x",L_UP),
  (500,DIP4,"Worker ant",["closes the judge's gaps"],"st",L_DN),
- (660,DIP4,"Inspector ant",["checks the fix, runs the tests"],"st",L_UP),
+ (660,DIP4,"Detective ant",["checks the fix, runs the tests"],"st",L_UP),
  (820,DIP4,"Merger ant",["fast-forwards the scratch copy to the fix;","the fix lands only through this fast-forward"],"st",L_DN),
  (J2,DIP4,"Judge ant",["scores again; still below 7:","main moves, verdict flagged"],"st",(14,34,"start")),
  (1180,R4,"Finisher ant",["fast-forwards main, removes worktrees,","appends the stage rows, runs the check"],"x",L_UP),
@@ -87,13 +85,11 @@ for name, c, pts, w, dash in lines:
     o.append(f'<path id="L-{name}" d="{d(pts)}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linejoin="round" stroke-linecap="round"' + (f' stroke-dasharray="{dash}" class="flow"' if dash else '') + '/>')
 o.append(txt(X + 12, 290, ["to row 2"], BLUE, 13, weight="700"))
 o.append(txt(262, R2 - 108, ["a plan may run a saved workflow in place of a worker ant"], SUB, 13, "middle"))
-o.append(txt(480, 494, ["built: the script starts", "its inspector at once"], GREEN, 13, "middle"))
+o.append(txt(480, 494, ["built: the script starts", "its detective at once"], GREEN, 13, "middle"))
+o.append(txt(240, 664, ["bugs: the detective's fix plan goes back to the worker;", "the worker builds it, the detective re-checks; 3 tries per bug"], RED, 13))
 o.append(txt(X + 12, 700, ["to row 3"], GREEN, 13, weight="700"))
 o.append(txt(X + 12, 1240, ["to row 4"], GREEN, 13, weight="700"))
-o.append(txt(772, 660, ["still open after round 1:", "the script hands it over"], RED, 13))
-o.append(txt(480, 624, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
-o.append(txt(1212, 660, ["fail: tasks clash: the task takes", "them in, then the fix loop; 2 rounds"], RED, 13))
-o.append(txt(250, 704, ["fix plan back to a worker"], RED, 13))
+o.append(txt(1212, 690, ["fail: tasks clash: the task takes", "them in, then the fix loop; 2 rounds"], RED, 13))
 o.append(txt(720, R4 - 14, ["7+, or no gaps: no fix round"], GREEN, 13, "middle", "700"))
 o.append(txt(440, 1612, ["below 7 and gaps: one fix round"], GOLD, 13, "end", "700"))
 o.append(txt(740, 1720, ["a failed fix keeps its branch;", "the verdict says why"], GOLD, 13, "middle"))
@@ -124,7 +120,7 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
     o.append(txt(x + dx, y + dy + 19, sub, SUB, 13, an, lh=16))
 # numbered trains
 trains = [(1, "plan", BLUE, 20, 0), (2, "build", GREEN, 28, 0), (3, "build", GREEN, 28, 5.6), (4, "build", GREEN, 28, 11.2),
-          (5, "build", GREEN, 28, 16.8), (6, "build", GREEN, 28, 22.4), (7, "bugin", RED, 5, 0), (8, "bugout", RED, 8, 0),
+          (5, "build", GREEN, 28, 16.8), (6, "build", GREEN, 28, 22.4), (7, "fixloop", RED, 8, 0), (8, "fixloop", RED, 8, 4),
           (10, "after", PURP, 5, 0), (11, "jfix", GOLD, 5, 0)]
 for n, path, c, sec, beg in trains:
     o.append(f'<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="{c}" stroke-width="3"/>'

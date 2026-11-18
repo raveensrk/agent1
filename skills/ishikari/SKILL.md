@@ -139,7 +139,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 ## 3. Build
 
 - Run `env.workflows.build` with `{env, plans}`. Later rounds pass `bugs`
-  instead of new plans. An inspector reuses its worker's test result only when
+  instead of new plans. A detective reuses its worker's test result only when
   the worktree's HEAD is the worker's sha and the tree is clean.
 - Do not ask. Approve every `awaiting review` task. Drop every `escalated`,
   `blocked` and `error` task, and every task whose `after` holds a dropped
@@ -176,7 +176,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
     plans (report, architecture, worker plans). With 3+ tasks it first
     sends one juror ant per task (5 at once) and decides from their reports;
     the score is its own call, not an average. Below 7: one fix round
-    (worker, inspector), then a second score. Still below 7: main moves
+    (worker, detective), then a second score. Still below 7: main moves
     anyway and `verdict.flagged` is true.
 - Report once, at the end: what landed on main, each task's notes and nits,
   each dropped task with why and its bugs, the check, the judge's `verdict` (score,

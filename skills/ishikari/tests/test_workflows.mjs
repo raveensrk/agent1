@@ -89,9 +89,8 @@ test('build: a failed app check becomes its own task from main', async () => {
   const prompts = []
   const { out } = await run('ishikari-build.js', { env, bugs: [{ task: 'check-fix', bug: 'app does not start' }] }, (p, o) => {
     prompts.push(p)
-    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
-    if (o.label.startsWith('inspector')) return { fixed: [{ id: 'check-fix#1', fixed: true }], bugs: [] }
+    if (o.label.startsWith('detective')) return { fixed: [{ id: 'check-fix#1', fixed: true }], bugs: [] }
     return {}
   })
   assert.equal(out.stage, 'build')
@@ -103,10 +102,9 @@ test('build: a failed app check becomes its own task from main', async () => {
 
 test('build: a bug still open after 3 tries escalates', async () => {
   const { out } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
-    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
-    if (o.label === 'inspector-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
-    if (o.label.startsWith('inspector')) return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
+    if (o.label === 'detective-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
+    if (o.label.startsWith('detective')) return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
     return {}
   })
   assert.equal(out.tasks[0].status, 'escalated')
@@ -116,16 +114,15 @@ test('build: a bug still open after 3 tries escalates', async () => {
 test('build: a task that keeps finding new bugs gives up after MAX_ROUNDS (3) rounds', async () => {
   let n = 0
   const { out, calls } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
-    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', sha: 'abc1234', testsPassed: true, testSummary: 'ok' }
-    if (o.label === 'inspector-ant:a:check') return { bugs: ['bug0'], cause: 'c', plan: 'p' }
+    if (o.label === 'detective-ant:a:check') return { bugs: ['bug0'], cause: 'c', plan: 'p' }
     n++
     return { fixed: [{ id: `a#${n}`, fixed: true }], bugs: [`bug${n}`] }
   })
   assert.equal(out.tasks[0].status, 'escalated')
   assert.deepEqual(calls.filter(c => c.startsWith('worker-ant:a:fix')), ['worker-ant:a:fix1', 'worker-ant:a:fix2', 'worker-ant:a:fix3'])
   assert.equal(out.tasks[0].tries, 1)
-  assert.ok(calls.includes('inspector-ant:a:recheck3'))
+  assert.ok(calls.includes('detective-ant:a:recheck3'))
   assert.ok(!calls.some(c => c.includes('fix4')))
 })
 
@@ -135,7 +132,6 @@ async function buildPrompts(args, worker, inspector = () => ({ bugs: [] })) {
   await run('ishikari-build.js', { env, ...args }, (p, o) => {
     prompts[o.label] = p
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', ...worker(o.label) }
-    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
     return inspector(o.label)
   })
   return prompts
@@ -143,7 +139,7 @@ async function buildPrompts(args, worker, inspector = () => ({ bugs: [] })) {
 
 test('build: no valid worker sha means the inspector runs the tests itself', async () => {
   for (const extra of [{}, { sha: 'zzz', testsPassed: true, testSummary: 's' }]) {
-    const ins = (await buildPrompts({ plans: [{ id: 'a' }] }, () => extra))['inspector-ant:a:check']
+    const ins = (await buildPrompts({ plans: [{ id: 'a' }] }, () => extra))['detective-ant:a:check']
     assert.ok(ins.includes("Run the repo's tests inside that worktree."))
     assert.ok(!ins.includes('reuse'))
   }
@@ -152,26 +148,26 @@ test('build: no valid worker sha means the inspector runs the tests itself', asy
 test('build: each recheck gets that round\'s worker sha', async () => {
   const pr = await buildPrompts({ plans: [{ id: 'a' }] },
     l => ({ sha: l.endsWith('build') ? 'aaa1111' : 'bbb2222', testsPassed: true, testSummary: 's' }),
-    l => l === 'inspector-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
-  assert.ok(pr['inspector-ant:a:check'].includes('aaa1111'))
-  assert.ok(pr['inspector-ant:a:recheck1'].includes('bbb2222'))
-  assert.ok(!pr['inspector-ant:a:recheck1'].includes('aaa1111'))
-  assert.ok(pr['inspector-ant:a:recheck1'].includes('status --porcelain'))
+    l => l === 'detective-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
+  assert.ok(pr['detective-ant:a:check'].includes('aaa1111'))
+  assert.ok(pr['detective-ant:a:recheck1'].includes('bbb2222'))
+  assert.ok(!pr['detective-ant:a:recheck1'].includes('aaa1111'))
+  assert.ok(pr['detective-ant:a:recheck1'].includes('status --porcelain'))
 })
 
 test('build: after a merge update the check uses the update worker sha', async () => {
   const pr = await buildPrompts({ plans: [{ id: 'a' }, { id: 'b', after: ['a'] }] },
     l => ({ sha: l === 'worker-ant:b:update' ? 'ccc3333' : 'aaa1111', testsPassed: true, testSummary: 's' }),
-    l => l === 'inspector-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
+    l => l === 'detective-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
   assert.ok(pr['worker-ant:b:update'])
-  assert.ok(pr['inspector-ant:b:check'].includes('ccc3333'))
+  assert.ok(pr['detective-ant:b:check'].includes('ccc3333'))
 })
 
 test('build: the test command is kept exactly', async () => {
   const pr = await buildPrompts({ env: { ...env, testCommand: 'make TEST=Foo' }, plans: [{ id: 'a' }] },
     () => ({ sha: 'aaa1111', testsPassed: false, testSummary: 's' }))
   assert.ok(pr['worker-ant:a:build'].includes('`make TEST=Foo`'))
-  assert.ok(pr['inspector-ant:a:check'].includes('run the tests with `make TEST=Foo`'))
+  assert.ok(pr['detective-ant:a:check'].includes('run the tests with `make TEST=Foo`'))
 })
 
 test('build: the inspector gets the worker sha and reuses its test result', async () => {
@@ -181,7 +177,7 @@ test('build: the inspector gets the worker sha and reuses its test result', asyn
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', sha: 'deadbee1', testsPassed: true, testSummary: '12 passed' }
     return { bugs: [] }
   })
-  const ins = prompts['inspector-ant:a:check']
+  const ins = prompts['detective-ant:a:check']
   assert.ok(ins.includes('deadbee1'))
   assert.ok(ins.includes('12 passed'))
   assert.ok(ins.includes('reuse that result'))
@@ -253,7 +249,7 @@ function judgeRun(scores, answer = () => null) {
     if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label.startsWith('judge-ant')) return scores[k++]
     return answer(o) || (o.label.startsWith('worker') ? { status: 'built', notes: '' }
-      : o.label.startsWith('inspector') ? { bugs: [] }
+      : o.label.startsWith('detective') ? { bugs: [] }
       : o.label === 'merger-ant:judge-fix' ? { ok: true, sha: 'fff' } : { moved: true, reason: '' })
   }).then(r => ({ ...r, prompts }))
 }
@@ -268,7 +264,7 @@ test('finish: a judge score of 7 or more needs no fix round', async () => {
 
 test('finish: a low judge score gets one fix round, then a second score', async () => {
   const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['x missing'] }, { score: 8, gaps: [] }])
-  assert.deepEqual(calls.slice(1, 6), ['judge-ant:1', 'worker-ant:judge-fix', 'inspector-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
+  assert.deepEqual(calls.slice(1, 6), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
   assert.ok(prompts['worker-ant:judge-fix'].includes('- x missing'))
   assert.deepEqual(out.verdict, { score: 8, gaps: [], fixed: true, flagged: false, first: 4 })
   assert.equal(out.sha, 'fff')
@@ -285,7 +281,7 @@ test('finish: still low after the fix round, main moves and the verdict is flagg
 
 test('finish: a judge fix that fails its check is not landed, branch kept, flagged', async () => {
   const { out, calls, prompts } = await judgeRun([{ score: 2, gaps: ['g'] }],
-    o => o.label === 'inspector-ant:judge-fix' ? { bugs: ['broke y'] } : null)
+    o => o.label === 'detective-ant:judge-fix' ? { bugs: ['broke y'] } : null)
   assert.ok(!calls.includes('merger-ant:judge-fix'))
   assert.ok(!calls.includes('judge-ant:2'))
   assert.equal(out.verdict.flagged, true)
@@ -335,7 +331,7 @@ test('stress: build refuses bad input and foreign branches', async () => {
 test('stress: a half answer from the integrator is not a combined pass', async () => {
   const { out } = await run('ishikari-build.js', { env, plans: [{ id: 'a' }, { id: 'b' }] }, (p, o) =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' }
-      : o.label.startsWith('inspector') ? { bugs: [] }
+      : o.label.startsWith('detective') ? { bugs: [] }
       : o.label.startsWith('integrator') ? { sha: 's', results: [{ id: 'a', outcome: 'merged', detail: '' }] } : {})
   assert.equal(out.together, null)
 })
@@ -522,16 +518,15 @@ test('build: the logbook clerk appends each task and each bug once', async () =>
   const prompts = {}
   await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
     prompts[o.label] = p
-    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
-    if (o.label === 'inspector-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
-    if (o.label.startsWith('inspector')) return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
+    if (o.label === 'detective-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
+    if (o.label.startsWith('detective')) return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
     return {}
   })
   const p = prompts['logbook-clerk']
   assert.ok(p.includes('python3 /t/ishikari.py log append /s'))
   assert.deepEqual(logged(p), [
-    { run: 'r1', task: 'a', who: 'inspector ant', event: 'bug escalated', detail: 'a#1: broken', tries: 3 },
+    { run: 'r1', task: 'a', who: 'detective ant', event: 'bug escalated', detail: 'a#1: broken', tries: 3 },
     { run: 'r1', task: 'a', who: 'detective ant', event: 'escalated' },
   ])
 })
@@ -551,7 +546,7 @@ test('finish: every ant gets its own logbook entry at once, the finisher excepte
   const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
     'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
-    'inspector ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8',
+    'detective ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8',
   ])
   assert.ok(got.every(e => e.run === 'r1'))
   assert.equal(out.mainMoved, true)
@@ -658,7 +653,7 @@ test('every ant in all three scripts runs on opus at low effort', async () => {
   await spy('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) =>
     o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
   await spy('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
-    o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('inspector') ? { bugs: [] } : {})
+    o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('detective') ? { bugs: [] } : {})
   await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
     o.label === 'merger-ant' ? { sha: 'abc', results: ['a', 'b', 'c'].map(id => ({ id, outcome: 'merged', detail: '' })) }
       : o.label === 'janitor-ant' ? { changed: false, title: '', testsPassed: true, landed: false }
@@ -691,4 +686,35 @@ test('logbook: one clerk at a time, later entries batched, none lost', async () 
   const entries = instant.flatMap(p => logged(p))
   assert.equal(entries.filter(e => e.who === 'juror ant').length, 4)
   assert.ok(instant.length < entries.length)  // the jurors' entries were batched
+})
+
+// ---- one detective: it checks, and plans every fix ----
+test('build: the detective checks and plans each fix itself, with the history, no other ant', async () => {
+  let k = 0
+  const prompts = {}
+  const { out, calls } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
+    prompts[o.label] = p
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    if (o.label === 'detective-ant:a:check') return { bugs: ['broken'], cause: 'c1', plan: 'plan one' }
+    return ++k === 1 ? { fixed: [{ id: 'a#1', fixed: false }], bugs: [], cause: 'c2', plan: 'plan two' }
+      : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] }
+  })
+  assert.equal(out.tasks[0].status, 'awaiting review')
+  assert.ok(!calls.some(c => c.startsWith('inspector')))
+  assert.deepEqual(calls.filter(c => c.startsWith('detective')), ['detective-ant:a:check', 'detective-ant:a:recheck1', 'detective-ant:a:recheck2'])
+  assert.ok(prompts['worker-ant:a:fix1'].includes('plan one'))
+  assert.ok(prompts['worker-ant:a:fix2'].includes('plan two'))
+  assert.ok(prompts['detective-ant:a:recheck2'].includes('fix plan: plan one'))
+  assert.ok(prompts['detective-ant:a:recheck2'].includes('Do not repeat a cause or plan that already failed'))
+})
+
+test('build: a re-check with no plan still gives the worker the open bugs', async () => {
+  const prompts = {}
+  await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
+    prompts[o.label] = p
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    if (o.label === 'detective-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
+    return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
+  })
+  assert.ok(prompts['worker-ant:a:fix2'].includes('Fix these bugs:\n- a#1: broken'))
 })

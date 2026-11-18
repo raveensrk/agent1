@@ -14,11 +14,10 @@
 <path id="L-res" d="M440,200 L440,300" fill="none" stroke="#60A5FA" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-build" d="M200,540 L1900,540 L1900,860 L60,860 L60,1080 L1900,1080 L1900,1400 L60,1400 L60,1520 L1340,1520" fill="none" stroke="none" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-g1" d="M200,540 L1900,540 L1900,860 L60,860 L60,1080 L1900,1080 L1900,1400 L60,1400 L60,1520 L1340,1520" fill="none" stroke="#4ADE80" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-bugin" d="M760,540 L760,660 L700,720 L620,720" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-clash" d="M1200,540 L1200,720 L620,720" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
-<path id="L-bugout" d="M620,720 L240,720 L200,680 L200,540" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-r1" d="M760,540 L730,600 L230,600 L200,540" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-<path id="L-drop" d="M620,720 L620,790" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<path id="L-fix" d="M760,540 L730,640 L230,640 L200,540" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+<path id="L-fixloop" d="M200,540 L760,540 L730,640 L230,640 L200,540" fill="none" stroke="none" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+<path id="L-clash" d="M1200,540 L1200,700 L800,700 L760,540" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
+<path id="L-drop" d="M660,640 L660,740" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-mfail" d="M480,1080 L480,1180" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-tdrop" d="M760,1080 L760,1200" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-jfix" d="M400,1520 L460,1610 L1000,1610 L1060,1520" fill="none" stroke="#FBBF24" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
@@ -26,13 +25,11 @@
 <path id="L-cfix" d="M1580,1520 L1580,1660" fill="none" stroke="#C4B5FD" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <text class="h" x="1912" y="290" fill="#60A5FA" font-size="13" text-anchor="start" font-weight="700">to row 2</text>
 <text class="h" x="262" y="432" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">a plan may run a saved workflow in place of a worker ant</text>
-<text class="h" x="480" y="494" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">built: the script starts</text><text class="h" x="480" y="511" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">its inspector at once</text>
+<text class="h" x="480" y="494" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">built: the script starts</text><text class="h" x="480" y="511" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">its detective at once</text>
+<text class="h" x="240" y="664" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">bugs: the detective's fix plan goes back to the worker;</text><text class="h" x="240" y="681" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">the worker builds it, the detective re-checks; 3 tries per bug</text>
 <text class="h" x="1912" y="700" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 3</text>
 <text class="h" x="1912" y="1240" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 4</text>
-<text class="h" x="772" y="660" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">still open after round 1:</text><text class="h" x="772" y="677" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">the script hands it over</text>
-<text class="h" x="480" y="624" fill="#F87171" font-size="13" text-anchor="middle" font-weight="400">round 1: the inspector's own fix plan</text>
-<text class="h" x="1212" y="660" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">fail: tasks clash: the task takes</text><text class="h" x="1212" y="677" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">them in, then the fix loop; 2 rounds</text>
-<text class="h" x="250" y="704" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">fix plan back to a worker</text>
+<text class="h" x="1212" y="690" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">fail: tasks clash: the task takes</text><text class="h" x="1212" y="707" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">them in, then the fix loop; 2 rounds</text>
 <text class="h" x="720" y="1506" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="700">7+, or no gaps: no fix round</text>
 <text class="h" x="440" y="1612" fill="#FBBF24" font-size="13" text-anchor="end" font-weight="700">below 7 and gaps: one fix round</text>
 <text class="h" x="740" y="1720" fill="#FBBF24" font-size="13" text-anchor="middle" font-weight="400">a failed fix keeps its branch;</text><text class="h" x="740" y="1737" fill="#FBBF24" font-size="13" text-anchor="middle" font-weight="400">the verdict says why</text>
@@ -71,18 +68,14 @@
 <text class="h" x="200" y="475" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">max 5, one worktree each,</text><text class="h" x="200" y="491" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">code + tests + docs;</text><text class="h" x="200" y="507" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">stuck: next fix round</text>
 <polygon points="754.0,530.0 762.0,516.1 778.0,516.1 786.0,530.0 778.0,543.9 762.0,543.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="749.0,535.0 757.0,521.1 773.0,521.1 781.0,535.0 773.0,548.9 757.0,548.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
 <polygon points="744.0,540.0 752.0,526.1 768.0,526.1 776.0,540.0 768.0,553.9 752.0,553.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="760" y="470" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector ants  ∥</text>
-<text class="h" x="760" y="489" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per built task: plan + design,</text><text class="h" x="760" y="505" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">runs tests (reuses the worker's if clean)</text>
+<text class="h" x="760" y="454" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Detective ants  ∥</text>
+<text class="h" x="760" y="473" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per built task: checks it against plan +</text><text class="h" x="760" y="489" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">design, runs tests (reuses the worker's if clean);</text><text class="h" x="760" y="505" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">finds each bug's cause and plans its fix</text>
 <polygon points="1184.0,540.0 1192.0,526.1 1208.0,526.1 1216.0,540.0 1208.0,553.9 1192.0,553.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1200" y="462" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Integrator ant</text>
 <text class="h" x="1200" y="481" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">merges passing tasks in a scratch</text><text class="h" x="1200" y="497" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">copy, tests once: the combined test;</text><text class="h" x="1200" y="513" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fewer than 2 passing tasks: no combined test</text>
-<polygon points="614.0,710.0 622.0,696.1 638.0,696.1 646.0,710.0 638.0,723.9 622.0,723.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="609.0,715.0 617.0,701.1 633.0,701.1 641.0,715.0 633.0,728.9 617.0,728.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
-<polygon points="604.0,720.0 612.0,706.1 628.0,706.1 636.0,720.0 628.0,733.9 612.0,733.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="594" y="754" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Detective ants  ∥</text>
-<text class="h" x="594" y="773" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">round 2 on: finds why, writes</text><text class="h" x="594" y="789" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">the next fix plan, never code</text>
-<rect x="606" y="776" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="646" y="786" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped</text>
-<text class="h" x="646" y="805" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after 3 tries on a bug or</text><text class="h" x="646" y="821" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">3 fix rounds; branch kept</text>
+<rect x="646" y="736" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="686" y="746" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped</text>
+<text class="h" x="686" y="765" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after 3 tries on a bug or</text><text class="h" x="686" y="781" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">3 fix rounds; branch kept</text>
 <polygon points="184.0,1080.0 192.0,1066.1 208.0,1066.1 216.0,1080.0 208.0,1093.9 192.0,1093.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="200" y="1010" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Merger ant</text>
 <text class="h" x="200" y="1029" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">merges in a straight line in a scratch copy,</text><text class="h" x="200" y="1045" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">or reuses build's trial merge; then checks</text><text class="h" x="200" y="1061" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">its own merge with git cherry</text>
@@ -106,7 +99,7 @@
 <text class="h" x="500" y="1644" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker ant</text>
 <text class="h" x="500" y="1663" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">closes the judge's gaps</text>
 <polygon points="644.0,1610.0 652.0,1596.1 668.0,1596.1 676.0,1610.0 668.0,1623.9 652.0,1623.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="660" y="1550" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector ant</text>
+<text class="h" x="660" y="1550" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Detective ant</text>
 <text class="h" x="660" y="1569" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">checks the fix, runs the tests</text>
 <polygon points="804.0,1610.0 812.0,1596.1 828.0,1596.1 836.0,1610.0 828.0,1623.9 812.0,1623.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="820" y="1644" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Merger ant</text>
@@ -135,8 +128,8 @@
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#4ADE80" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">4</text><animateMotion dur="28s" begin="-11.2s" repeatCount="indefinite"><mpath href="#L-build"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#4ADE80" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">5</text><animateMotion dur="28s" begin="-16.8s" repeatCount="indefinite"><mpath href="#L-build"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#4ADE80" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">6</text><animateMotion dur="28s" begin="-22.4s" repeatCount="indefinite"><mpath href="#L-build"/></animateMotion></g>
-<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">7</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-bugin"/></animateMotion></g>
-<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">8</text><animateMotion dur="8s" begin="0s" repeatCount="indefinite"><mpath href="#L-bugout"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">7</text><animateMotion dur="8s" begin="0s" repeatCount="indefinite"><mpath href="#L-fixloop"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">8</text><animateMotion dur="8s" begin="-4s" repeatCount="indefinite"><mpath href="#L-fixloop"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#C4B5FD" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">10</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-after"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#FBBF24" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">11</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-jfix"/></animateMotion></g>
 <circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></circle>

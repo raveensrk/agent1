@@ -68,35 +68,28 @@ its job. The build script runs that workflow in place of a worker ant.
     including the docs its change affects, so docs land with the code. A worker
     that gets stuck reports why, and that becomes a bug.
 
-06. **Inspector Ant**: one per built task, started the moment the task or a
+06. **Detective Ant**: one per built task, started the moment the task or a
     fix for it is built. No ant watches for that: the build script starts every
-    ant, so it starts the inspector as soon as the worker returns. It reads only; it never changes code.
+    ant, so it starts the detective as soon as the worker returns. It checks
+    the task and plans every fix; it never changes code.
     - **Checks:** the task's own work against its plan, and against
       `architecture.md`: a name or interface that differs from the design is a
       bug. It runs the tests in the task's worktree.
     - **Pass:** no bugs. The task waits for the combined test. Style points go
       to the final report as notes.
-    - **Fail:** it returns each bug, with how to see it, and the first fix
-      plan, so round 1 needs no detective. The build script keeps the bugs and
-      hands them to the next ant; the logbook only records them.
+    - **Fail:** it returns each bug, with how to see it, its cause and a fix
+      plan. A worker ant builds the plan, and the detective re-checks every
+      open bug by its id and plans the next fix for any still open. The build
+      script keeps the bugs and hands them on; the logbook only records them.
+    - **Memory:** each re-check sees every earlier round's cause, plan and
+      outcome, so it never repeats a failed idea.
     - **Tasks built on others** are checked only once those are final. A
       changed base is merged in first; a failed base blocks the task.
-    - **Re-check:** after each fix it checks every open bug again, by its id.
-
-07. **Detective Ant**: finds why a bug is still open after a failed fix. It
-    reads only; it never writes code.
-    - **Round 1** needs no detective: the worker builds the inspector's first
-      fix plan.
-    - **Round 2 on:** for each bug still open, it finds the cause and writes
-      the next fix plan. A worker ant builds it, and the inspector re-checks
-      each open bug by its id.
-    - **Memory:** each round sees every earlier round's cause, plan and
-      outcome, so it never repeats a failed idea.
     - **Give up:** a bug still open after its last try drops the task, and tasks
       built on it drop too; the final report lists them.
     - An ant that crashes is retried once and never counts as a bug.
 
-08. **Combined test, by the Integrator Ant.** Tasks are built and inspected
+07. **Combined test, by the Integrator Ant.** Tasks are built and inspected
     alone, so two can pass alone and still break when combined. When every
     task is done, the integrator ant merges all passing tasks in a straight
     line in a scratch copy, a throwaway copy that never touches main, and runs
@@ -104,7 +97,7 @@ its job. The build script runs that workflow in place of a worker ant.
     that clashes takes in the tasks it clashes with and goes back through the
     fix loop, and the test runs once more. No one reviews by hand.
 
-09. **Merger Ant** runs straight after. It adds every passing task's
+08. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
     dependency order, and tests once. It may reuse the combined test's merge
     (see [Finish](../SKILL.md#4-finish)). It refuses a task
@@ -137,7 +130,7 @@ They run once per finish, on the merged result, before main moves.
   how the tasks fit together and decides the score itself; it is not an
   average. One or two tasks: the judge works alone. At 7 or more, main moves. Below
   7 with gaps, one fix round: a worker ant closes the gaps on top of the
-  merged scratch copy, an inspector ant checks it and runs the tests, a merger
+  merged scratch copy, a detective ant checks it and runs the tests, a merger
   ant fast-forwards the scratch copy to it (the only way the fix lands), and
   the judge scores again. Still below 7, or the fix failed (its branch is kept
   and the verdict says why): main moves anyway and the verdict is
@@ -226,7 +219,7 @@ and stops to ask the user only in step 2.
    tasks, and tasks built on them, are dropped and listed in the report.
 4. Run `ishikari-finish` with `env`, the approved tasks, the build's `together`
    result (the combined test's) and any tasks to drop. One task with no `after`
-   skips the trial merge: its inspector already tested it. After main moves, the finisher runs
+   skips the trial merge: its detective already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
    waiting tasks come back in the next build as `bugs`. The
