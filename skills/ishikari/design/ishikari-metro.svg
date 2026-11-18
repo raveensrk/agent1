@@ -24,12 +24,14 @@
 <path id="L-mfail" d="M200,1080 L200,1170" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-tidy" d="M440,1080 L500,1150 L560,1150 L760,1150 L940,1150 L1000,1080" fill="none" stroke="#2DD4BF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-tdrop" d="M760,1150 L760,1260" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
-<path id="L-jfix" d="M1200,1080 L1200,1180" fill="none" stroke="#FBBF24" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
+<path id="L-jfix" d="M1180,1080 L1230,1170 L1470,1170 L1540,1080" fill="none" stroke="#FBBF24" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-after" d="M560,1540 L1160,1540" fill="none" stroke="#C4B5FD" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-cfix" d="M860,1540 L860,1630" fill="none" stroke="#C4B5FD" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <text class="h" x="1612" y="290" fill="#60A5FA" font-size="13" text-anchor="start" font-weight="700">to row 2</text>
 <text class="h" x="480" y="474" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">built: the script starts</text><text class="h" x="480" y="491" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="400">its inspector at once</text>
 <text class="h" x="1612" y="680" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 3</text>
+<text class="h" x="1360" y="1066" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="700">7+: main moves</text>
+<text class="h" x="1192" y="1140" fill="#FBBF24" font-size="13" text-anchor="end" font-weight="700">below 7: one fix round</text>
 <text class="h" x="1612" y="1240" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 4</text>
 <text class="h" x="1330" y="590" fill="#94A3B8" font-size="13" text-anchor="start" font-weight="400">end of build: written once</text>
 <text class="h" x="772" y="640" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">still open after round 1:</text><text class="h" x="772" y="657" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">the script hands it over</text>
@@ -100,13 +102,19 @@
 <rect x="746" y="1246" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="786" y="1256" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped cleanup</text>
 <text class="h" x="786" y="1275" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept, plan offered as</text><text class="h" x="786" y="1291" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the next run's Task</text>
-<polygon points="1194.0,1070.0 1202.0,1056.1 1218.0,1056.1 1226.0,1070.0 1218.0,1083.9 1202.0,1083.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="1189.0,1075.0 1197.0,1061.1 1213.0,1061.1 1221.0,1075.0 1213.0,1088.9 1197.0,1088.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
-<polygon points="1184.0,1080.0 1192.0,1066.1 1208.0,1066.1 1216.0,1080.0 1208.0,1093.9 1192.0,1093.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1200" y="990" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Judge ant  ∥</text>
-<text class="h" x="1200" y="1009" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">final verdict: 2+ tasks, one juror ant each</text><text class="h" x="1200" y="1025" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">(5 at once); judge decides the score 0-10:</text><text class="h" x="1200" y="1041" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">does the code match the plans? 7+: main moves</text>
-<rect x="1186" y="1166" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1226" y="1176" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">judge fix round</text>
-<text class="h" x="1226" y="1195" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">below 7: a worker closes the gaps,</text><text class="h" x="1226" y="1211" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">an inspector checks, judged again;</text><text class="h" x="1226" y="1227" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">still low: main moves, flagged</text>
+<polygon points="1174.0,1070.0 1182.0,1056.1 1198.0,1056.1 1206.0,1070.0 1198.0,1083.9 1182.0,1083.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="1169.0,1075.0 1177.0,1061.1 1193.0,1061.1 1201.0,1075.0 1193.0,1088.9 1177.0,1088.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
+<polygon points="1164.0,1080.0 1172.0,1066.1 1188.0,1066.1 1196.0,1080.0 1188.0,1093.9 1172.0,1093.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="1180" y="990" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Judge ant  ∥</text>
+<text class="h" x="1180" y="1009" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">final verdict: 2+ tasks, one juror ant each</text><text class="h" x="1180" y="1025" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">(5 at once); judge decides the score 0-10:</text><text class="h" x="1180" y="1041" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">does the code match the plans?</text>
+<polygon points="1254.0,1170.0 1262.0,1156.1 1278.0,1156.1 1286.0,1170.0 1278.0,1183.9 1262.0,1183.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="1270" y="1204" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker ant</text>
+<text class="h" x="1270" y="1223" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">closes the judge's gaps</text>
+<polygon points="1354.0,1170.0 1362.0,1156.1 1378.0,1156.1 1386.0,1170.0 1378.0,1183.9 1362.0,1183.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="1370" y="1130" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector ant</text>
+<text class="h" x="1370" y="1149" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">checks, runs tests</text>
+<polygon points="1454.0,1170.0 1462.0,1156.1 1478.0,1156.1 1486.0,1170.0 1478.0,1183.9 1462.0,1183.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="1470" y="1204" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Judge ant again</text>
+<text class="h" x="1470" y="1223" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">7+ or still low: main moves;</text><text class="h" x="1470" y="1239" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">still low = flagged</text>
 <circle cx="1000" cy="1080" r="9" fill="#F1F5F9"/>
 <text class="h" x="1000" y="1040" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">cleanup done</text>
 <text class="h" x="1000" y="1059" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">landed or dropped</text>
@@ -135,6 +143,7 @@
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#F87171" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">8</text><animateMotion dur="8s" begin="0s" repeatCount="indefinite"><mpath href="#L-bugout"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#2DD4BF" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">9</text><animateMotion dur="8s" begin="0s" repeatCount="indefinite"><mpath href="#L-tidy"/></animateMotion></g>
 <g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#C4B5FD" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">10</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-after"/></animateMotion></g>
+<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="#FBBF24" stroke-width="3"/><text y="5" font-size="14" font-weight="800" fill="#0B1120" text-anchor="middle">11</text><animateMotion dur="5s" begin="0s" repeatCount="indefinite"><mpath href="#L-jfix"/></animateMotion></g>
 <circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-ask"/></animateMotion></circle>
 <circle r="7" fill="#FDE047" filter="url(#g)"><animateMotion dur="5s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#L-res"/></animateMotion></circle>
 <rect x="1260" y="1480" width="430" height="160" rx="12" fill="#0F172A" stroke="#334155"/>
@@ -153,5 +162,8 @@
 <line x1="1276" y1="1584" x2="1320" y2="1584" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round"/>
 <rect x="1330" y="1575" width="34" height="18" rx="5" fill="#FDE047" stroke="#C4B5FD" stroke-width="2"/><text x="1347" y="1588" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">10</text>
 <text class="h" x="1374" y="1589" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">after main moves</text>
+<line x1="1276" y1="1604" x2="1320" y2="1604" stroke="#FBBF24" stroke-width="7" stroke-linecap="round"/>
+<rect x="1330" y="1595" width="34" height="18" rx="5" fill="#FDE047" stroke="#FBBF24" stroke-width="2"/><text x="1347" y="1608" font-size="11" font-weight="800" fill="#0B1120" text-anchor="middle">11</text>
+<text class="h" x="1374" y="1609" fill="#F1F5F9" font-size="13" text-anchor="start" font-weight="400">the judge's fix round, below 7</text>
 <text class="h" x="1580" y="1510" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">dashed:</text><text class="h" x="1580" y="1526" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a branch or</text><text class="h" x="1580" y="1542" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">a log</text><text class="h" x="1580" y="1558" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">⬡ an ant (AI agent)</text><text class="h" x="1580" y="1574" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">■ terminus</text><text class="h" x="1580" y="1590" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">○ interchange</text><text class="h" x="1580" y="1606" fill="#A8B3C7" font-size="12" text-anchor="start" font-weight="400">stacked ∥: parallel</text>
 </svg>

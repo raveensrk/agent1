@@ -30,7 +30,7 @@ lines = [  # name, colour, points, width, dash
  ("mfail", RED,   [(200,R3),(200,1170)], 6, "10 6"),
  ("tidy",  TEAL,  [(440,R3),(500,1150),(560,1150),(760,1150),(940,1150),(1000,R3)], 9, ""),
  ("tdrop", TEAL,  [(760,1150),(760,1260)], 6, "10 6"),
- ("jfix",  GOLD,  [(1200,R3),(1200,1180)], 6, "10 6"),
+ ("jfix",  GOLD,  [(1180,R3),(1230,1170),(1470,1170),(1540,R3)], 9, ""),
  ("after", PURP,  [(560,R4),(1160,R4)], 9, ""),
  ("cfix",  PURP,  [(860,R4),(860,1630)], 6, "10 6"),
 ]
@@ -57,8 +57,10 @@ stations = [
  (560,1150,"Worker ant",["builds the cleanup on top of the merge"],"st",(0,34,"middle")),
  (760,1150,"Inspector ant",["checks the cleanup: plan + combined test;","fail: one fix round"],"st",(0,-60,"middle")),
  (760,1260,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
- (1200,R3,"Judge ant  ∥",["final verdict: 2+ tasks, one juror ant each","(5 at once); judge decides the score 0-10:","does the code match the plans? 7+: main moves"],"x",(0,-90,"middle")),
- (1200,1180,"judge fix round",["below 7: a worker closes the gaps,","an inspector checks, judged again;","still low: main moves, flagged"],"term",(26,-4,"start")),
+ (1180,R3,"Judge ant  ∥",["final verdict: 2+ tasks, one juror ant each","(5 at once); judge decides the score 0-10:","does the code match the plans?"],"x",(0,-90,"middle")),
+ (1270,1170,"Worker ant",["closes the judge's gaps"],"st",(0,34,"middle")),
+ (1370,1170,"Inspector ant",["checks, runs tests"],"st",(0,-40,"middle")),
+ (1470,1170,"Judge ant again",["7+ or still low: main moves;","still low = flagged"],"st",(0,34,"middle")),
  (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
  (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
@@ -81,6 +83,8 @@ for name, c, pts, w, dash in lines:
 o.append(txt(1612, 290, ["to row 2"], BLUE, 13, weight="700"))
 o.append(txt(480, 474, ["built: the script starts", "its inspector at once"], GREEN, 13, "middle"))
 o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
+o.append(txt(1360, R3 - 14, ["7+: main moves"], GREEN, 13, "middle", "700"))
+o.append(txt(1192, 1140, ["below 7: one fix round"], GOLD, 13, "end", "700"))
 o.append(txt(1612, 1240, ["to row 4"], GREEN, 13, weight="700"))
 o.append(txt(1330, 590, ["end of build: written once"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
@@ -113,7 +117,7 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
 # numbered trains
 trains = [(1, "plan", BLUE, 20, 0), (2, "build", GREEN, 28, 0), (3, "build", GREEN, 28, 5.6), (4, "build", GREEN, 28, 11.2),
           (5, "build", GREEN, 28, 16.8), (6, "build", GREEN, 28, 22.4), (7, "bugin", RED, 5, 0), (8, "bugout", RED, 8, 0),
-          (9, "tidy", TEAL, 8, 0), (10, "after", PURP, 5, 0)]
+          (9, "tidy", TEAL, 8, 0), (10, "after", PURP, 5, 0), (11, "jfix", GOLD, 5, 0)]
 for n, path, c, sec, beg in trains:
     o.append(f'<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="{c}" stroke-width="3"/>'
              f'<text y="5" font-size="14" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>'
@@ -124,7 +128,7 @@ for path, sec in [("ask", 6), ("res", 5)]:
 kx, ky = 1260, 1480
 o.append(f'<rect x="{kx}" y="{ky}" width="430" height="160" rx="12" fill="#0F172A" stroke="#334155"/>')
 rows = [(BLUE, "1", "task on the plan line"), (GREEN, "2-6", "five worker tasks to MAIN"), (RED, "7-8", "a bug through the fix loop"),
-        (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves")]
+        (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves"), (GOLD, "11", "the judge's fix round, below 7")]
 for i, (c, n, t) in enumerate(rows):
     y = ky + 24 + i * 20
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')
