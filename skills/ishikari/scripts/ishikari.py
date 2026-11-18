@@ -7,8 +7,10 @@ so no entry is lost and the file stays a valid recfile.
 
   ishikari.py setup <repo> [--main <branch>]
       Make the state folder for <repo> and print the run's env as JSON:
-      {repo, state, run, main, tool, workflows}, plus testCommand and
-      checkCommand once they are saved. workflows holds the paths of the
+      {repo, state, run, main, tool, workflows, requirements}, plus
+      testCommand and checkCommand once they are saved. requirements lists
+      the repo's tracked requirements.org and requirements/*.org files,
+      absolute; empty means no add requirement ant and no req add/done. workflows holds the paths of the
       plan, build and finish scripts, copied into <repo>/.git/ishikari/,
       inside the working directory, where the Workflow tool may load them.
       Everything else Ishikari keeps (logbook, plans, worktrees, config)
@@ -163,9 +165,19 @@ def setup(repo, main=None):
         "main": main,
         "tool": os.path.abspath(__file__),
         "workflows": copy_workflows(top),
+        "requirements": requirement_files(top),
     }
     env.update(read_config(state))
     print(json.dumps(env, indent=2))
+
+
+def requirement_files(top):
+    """Tracked requirements.org and requirements/*.org files, at any depth."""
+    out = git(top, "ls-files", "-z", "--", "*.org") or ""
+    keep = [f for f in out.split("\0") if f and (
+        os.path.basename(f) == "requirements.org"
+        or os.path.basename(os.path.dirname(f)) == "requirements")]
+    return sorted(os.path.join(top, f) for f in keep)
 
 
 def copy_workflows(top):

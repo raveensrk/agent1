@@ -45,6 +45,7 @@ NOTES = {  # architecture.md "Required note texts"
     "N9": "the main session pipes it into ishikari.py req add",
     "N10": "the fix lands only through this fast-forward",
     "N11": "logbook clerk ant: appends each ant's entry",
+    "N12": "no requirements file: no add requirement ant",
 }
 
 
@@ -73,6 +74,15 @@ def test_setup_and_logbook():
         assert env["state"].startswith(os.path.join(home, ".ishikari", "app-"))
         for k in ("plan", "build", "finish"):
             assert os.path.isfile(env["workflows"][k]), k
+        assert env["requirements"] == []
+        for f in ("requirements.org", "docs/requirements/cli.org", "notes.org", "requirements/x.txt"):
+            os.makedirs(os.path.dirname(os.path.join(repo, f)), exist_ok=True)
+            open(os.path.join(repo, f), "w").close()
+        subprocess.run(["git", "-C", repo, "add", "."], check=True, timeout=TIMEOUT)
+        subprocess.run(["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "r"], check=True, timeout=TIMEOUT)
+        top = os.path.realpath(repo)
+        assert json.loads(run(home, "setup", repo))["requirements"] == [
+            os.path.join(top, "docs/requirements/cli.org"), os.path.join(top, "requirements.org")]
         state = env["state"]
         book = os.path.join(state, "logbook.rec")
         assert "%rec: Entry" in open(book).read()

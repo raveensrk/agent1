@@ -44,7 +44,7 @@ stations = [
  (440,90,"You",["up to 4 questions a round (/ask-simple),","8 in all; answering approves the whole run"],"term",(26,-6,"start")),
  (440,300,"Researcher ants  ∥",["up to 5 at once, web + computer,","read only; the investigator waits"],"end",(24,-4,"start")),
  (780,R1,"investigation_report.md",["written when nothing is unclear;","the investigator is stopped"],"st",L_DN),
- (1100,R1,"Add requirement ant",["drafts the requirement entry;","the main session pipes it into ishikari.py req add"],"st",L_DN),
+ (1100,R1,"Add requirement ant",["drafts the requirement entry;","the main session pipes it into ishikari.py req add;","no requirements file: no add requirement ant"],"st",L_DN),
  (1420,R1,"Architect ant",["writes architecture.md","and one plan per task"],"st",L_UP),
  (1700,R1,"Worker plans",["one per task: title, files, after;","checked before anything is built"],"st",L_DN),
  (1370,40,"Logbook",["logbook clerk ant: appends each ant's entry","the moment the ant replies, one clerk at a time, in plan, build and finish.","The live investigator gets only an investigated entry.","Build and finish add a summary at the end. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",RIGHT),

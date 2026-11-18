@@ -44,7 +44,10 @@ its job. The build script runs that workflow in place of a worker ant.
     `/add-requirement` skill and shows it can be built from the repo's code and
     docs, writing a throwaway spike outside the repo only when that is not
     enough. It never asks the user, and never designs or plans. The main session
-    pipes its entry into `ishikari.py req add` and commits it.
+    pipes its entry into `ishikari.py req add` and commits it. It runs only
+    when the repo keeps a `requirements.org` or `requirements/*.org` file
+    (setup lists them as `env.requirements`); with none, the architect plans
+    from the report alone and nothing is added or marked done.
 
 03b. **Architect Ant** reads the report and the requirement and writes
     `architecture.md` beside the report: the parts of the change, the files each
@@ -207,12 +210,12 @@ and stops to ask the user only in step 2.
    starts the logbook if there is none, copies the three scripts into
    `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
-   script paths, and the repo's saved `testCommand` and `checkCommand`.
+   script paths, the repo's requirements files, and the repo's saved `testCommand` and `checkCommand`.
 2. The live investigator asks its questions, then `ishikari-plan` writes the
    requirement, design and plans (see
    [Plan](../SKILL.md#2-plan)). The plans go straight to
    build. First `ishikari.py req add` writes the requirement (none for a
-   refactor), the main
+   refactor or a repo with no requirements file), the main
    session commits it. `ishikari.py config` saves the test and check commands.
 3. Run `ishikari-build` with `env` and the plans. Every task
    `awaiting review` is approved without asking. Escalated, blocked and error

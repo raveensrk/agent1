@@ -10,7 +10,8 @@ export const meta = {
 }
 
 // args: {
-//   env: { repo, state, run, main, tool },  from `ishikari.py setup`
+//   env: { repo, state, run, main, tool, requirements? },  from `ishikari.py setup`;
+//                                           requirements: [] skips the add requirement ant
 //   task: string,                           the task, in the user's words
 //   answered?: [{ question, answer }],     every question asked so far, in order;
 //                                           answer '' if skipped
@@ -261,8 +262,12 @@ if (!review.reportWritten) return done({ stage: 'error', reason: `the investigat
 }
 
 // ---- requirement: the add requirement ant only adds ----
-phase('Requirement')
-const req = await twice(() => ant(
+// A repo with no requirements files (env.requirements is []) has no
+// requirements approach: no add requirement ant, nothing to write or mark done.
+const noReqs = Array.isArray(env.requirements) && !env.requirements.length
+if (noReqs) log('add requirement ant skipped: the repo has no requirements file')
+else phase('Requirement')
+const req = noReqs ? { requirement: { needed: false, file: '', entry: '', proof: 'the repo has no requirements file' } } : await twice(() => ant(
   `You are the add requirement ant of the Ishikari workflow. Your one job: the
 requirement. Do not design or plan the work.
 ${where}
@@ -273,7 +278,7 @@ Follow the /add-requirement skill up to the draft. Show it can be built with
 evidence from the repo's code and docs. Only if that is not enough, write a
 throwaway spike in a temporary folder outside the repo, and delete it after.
 Check for duplicates and conflicts. Give file as an absolute path to an .org
-file inside ${env.repo}, and give the entry an :ID: property. Write no files:
+file inside ${env.repo}${Array.isArray(env.requirements) ? `, one of: ${env.requirements.join(', ')}` : ''}, and give the entry an :ID: property. Write no files:
 the main session writes the requirements file from your entry.`,
   { label: 'add-requirement-ant', phase: 'Requirement', effort: EFFORT.requirement, schema: REQUIRED },
 ))
@@ -297,7 +302,7 @@ ${where}
 Task: ${task}
 Read the investigation report ${reportFile} first. Where the report and your
 own idea differ, the report wins.
-${req.requirement.needed ? `The requirement, from the add requirement ant (${req.requirement.file}):\n${req.requirement.entry}\n` : 'This change adds no behaviour, so it has no requirement.\n'}1. Design: write ${designFile}: the parts of the change, the files each part
+${req.requirement.needed ? `The requirement, from the add requirement ant (${req.requirement.file}):\n${req.requirement.entry}\n` : noReqs ? 'This repo keeps no requirements file, so the change has no requirement.\n' : 'This change adds no behaviour, so it has no requirement.\n'}1. Design: write ${designFile}: the parts of the change, the files each part
    owns, and every name, interface and data shape that crosses between parts,
    exact, so worker ants building in parallel fit together. Map each of the
    report's acceptance checks to the part that proves it.

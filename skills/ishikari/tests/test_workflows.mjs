@@ -352,6 +352,27 @@ test('stress: finish never claims main moved when nothing merged', async () => {
   assert.equal(out.waiting.length, 1)
 })
 
+test('plan: a repo with no requirements file skips the add requirement ant', async () => {
+  const prompts = {}
+  const { out, calls } = await run('ishikari-plan.js', { env: { ...env, requirements: [] }, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) => {
+    prompts[o.label] = p
+    return { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+  })
+  assert.equal(out.stage, 'plans')
+  assert.equal(out.requirement.needed, false)
+  assert.ok(!calls.includes('add-requirement-ant'))
+  assert.match(prompts['architect-ant'], /keeps no requirements file/)
+})
+
+test('plan: listed requirements files go to the add requirement ant', async () => {
+  const prompts = {}
+  await run('ishikari-plan.js', { env: { ...env, requirements: ['/r/requirements.org'] }, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) => {
+    prompts[o.label] = p
+    return o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+  })
+  assert.match(prompts['add-requirement-ant'], /one of: \/r\/requirements\.org/)
+})
+
 test('plan: a live investigation skips Review', async () => {
   const { out, calls } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '' } }, (p, o) =>
     o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })

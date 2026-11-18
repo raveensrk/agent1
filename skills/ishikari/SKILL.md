@@ -114,7 +114,9 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
    over and the report is all later ants read. Then run `env.workflows.plan`
    with `{env, task, investigated: {testCommand, checkCommand}}` from its
    last reply. It skips Review, logs one `investigated` entry with the report
-   path, then runs the requirement and design ants.
+   path, then runs the requirement and design ants. With `env.requirements`
+   empty (the repo keeps no `requirements.org` or `requirements/*.org`), it
+   skips the add requirement ant and returns `requirement.needed: false`.
 
 ### 2b. Fallback (no Agent tool)
 
@@ -165,7 +167,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   Nothing is lost; finish can run again once it is fixed.
 - Once main moved and `check` passed (or there is no `checkCommand`), run
   `python3 <env.tool> req done <requirement file> <ids>` with the `:ID:`
-  values kept in step 2, and commit only that file.
+  values kept in step 2, and commit only that file. No ids kept (no
+  requirement, or `env.requirements` is empty): skip it.
 - How finish works, so its results read right:
   - it reuses build's trial merge (`together.sha`) when the approved set
     matches it or only adds tasks, and git shows main and each reused branch
