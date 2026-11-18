@@ -44,8 +44,16 @@ Topic folder name: lowercase snake_case, e.g. `tcp_congestion`.
 
 Per chapter, `<slug>/`:
 
-- `lesson.md` - short sections, one concept each, sized to minutes-per-day.
-  Embed figures as `![caption](name.svg)` (relative paths).
+- `lesson.md` - a deck of **slides** for a 16:9 computer screen; the page
+  never scrolls. Each `##` section is one slide (or separate slides with a
+  line containing only `---`, which then wins over `##`). A slide under
+  40 words joins the next one. Per slide, at most:
+  - 140 words of prose, 14 code lines, 1 figure
+  - a figure goes on the right, text on the left, so keep slide text short
+    when it has a figure
+  Split a long section into two slides rather than cram it. Embed figures as
+  `![caption](name.svg)` (relative paths). `tutor check` prints `warn` lines
+  for slides over these limits: fix them by splitting.
 - `*.svg` - animated figures (rules below).
 - `quiz.edn` - 2-4 questions that test understanding, not recall of wording:
   `[{:q "..." :choices ["a" "b" "c"] :answer 1 :why "..."}]` (`:answer` is a 0-based index).
@@ -67,15 +75,18 @@ Write only the next one chapter at a time, unless the user asks for more.
 
 - Self-contained: inline `<style>`, no scripts, no external fonts or images.
   Animate with CSS `@keyframes` or SMIL `<animate>`; loop with `repeatCount="indefinite"`.
-- Set `viewBox`, width <= 720. Text >= 12px. Must be valid XML (escape `<`, `&`).
+- Set `viewBox`, width <= 720; landscape shape (wider than tall) fits the
+  right half of a slide best. Text >= 12px. Must be valid XML (escape `<`, `&`).
 - Show the mechanism step by step (a state changing over time), with a caption
   line per step. Add `@media (prefers-color-scheme: dark)` colors.
 - One idea per figure. Example: `~/repos/tutor/example/binary_search/01_halving/halving.svg`.
 
 ## 4. Launch
 
-Run `tutor check <topic>`, then `tutor start`, then give the user the link
-`<url>/#/c/<topic>/<slug>`. Lesson -> quiz -> cards happens in the page; the
+Run `tutor check <topic>` (no errors, no `warn` lines), then `tutor start`, then give the user the link
+`<url>/#/c/<topic>/<slug>`. A chapter plays as one slide sequence on a
+16:9 stage (arrow keys or Prev/Next): lesson slides, then one quiz question
+per slide, then one flashcard per slide; the
 user clicks Save card, and the app writes `cards/<id>.md` + `cards/<id>.svg`.
 Reviews are at `<url>/#/review`.
 
