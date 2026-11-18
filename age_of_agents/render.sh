@@ -2,7 +2,9 @@
 # Render ishikari.d2 to light and dark SVGs with the TALA layout.
 set -eu
 cd "$(dirname "$0")"
-tmp=$(mktemp -t ishikari-dark.XXXXXX)
+tmp=$(mktemp "${TMPDIR:-/tmp}/ishikari-dark.XXXXXX")
+trap 'rm -f "$tmp" "$tmp.d2"' EXIT
+trap 'exit 1' INT TERM HUP
 pids=""
 fail=0
 # Light render; flow.py reads its output.
@@ -26,12 +28,7 @@ sed -e 's/plan-fill: "#DBEAFE"/plan-fill: "#172554"/' \
     -e 's/ok: "#16A34A"/ok: "#4ADE80"/' \
     -e 's/flow: "#475569"/flow: "#CBD5E1"/' \
     ishikari.d2 > "$tmp.d2"
-{
-    d2 --layout=tala --theme=200 "$tmp.d2" "${2:-ishikari-dark.svg}"
-    rc=$?
-    rm -f "$tmp" "$tmp.d2"
-    exit $rc
-} &
+d2 --layout=tala --theme=200 "$tmp.d2" "${2:-ishikari-dark.svg}" &
 pids="$pids $!"
 if [ $# -eq 0 ]; then
     # Slow animated walk through the stages, 6 s a frame.
