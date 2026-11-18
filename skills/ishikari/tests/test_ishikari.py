@@ -288,7 +288,7 @@ def test_metro_map():
               "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
-    for name in ("Task", "You", "investigation_report.md", "Worker plans", "Dropped", "merge failed",
+    for name in ("Task", "You", "investigation_report.md", "Worker plans", "Dropped",
                  "Dropped cleanup", "MAIN", "checkCommand", "check-fix round", "req done"):
         assert name in names, name
     groups = [g for g in ET.parse(SVG).getroot().iter(NS + "g") if g.get("class") == "st"]
@@ -297,7 +297,7 @@ def test_metro_map():
         assert (g.findtext(NS + "title") or "").endswith("Click for more."), g.get("data-i")
         assert re.fullmatch(r"st-[a-z][a-z0-9-]*", g.get("id") or ""), g.get("id")
     assert len({g.get("id") for g in groups}) == len(groups)  # ids are unique
-    for spur in ("to Worker ants, row 2", "to Task, row 1 (next run)", "to Worker ants, row 2 (new task)"):
+    for spur in ("merge failed: to Worker ants, row 2", "to Task, row 1 (next run)", "to Worker ants, row 2 (new task)"):
         assert spur in strings_all(texts), spur
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
@@ -306,7 +306,7 @@ def test_metro_map():
         assert any(note in s for s in strings), nid
     for nid in ("N7", "N11"):
         assert sum(NOTES[nid] in s for s in strings) == 1, nid
-    mf = next(t for t in texts if t["size"] == 16 and t["s"] == "merge failed")
+    mf = next(t for t in texts if t["s"].startswith("merge failed: to Worker ants"))  # the merger's spur
     n7 = next(t for t in texts if NOTES["N7"] in t["s"])
     assert n7["x"] == mf["x"] and 0 < n7["y"] - mf["y"] <= 60
     for s in strings:

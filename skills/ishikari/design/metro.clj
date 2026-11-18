@@ -45,8 +45,7 @@
    ["fixloop" "none" [[200 R2] [760 R2] [730 640] [230 640] [200 R2]] 8 ""]
    ["clash"   GOLD   [[1200 R2] [1200 700] [800 700] [760 R2]] 6 "10 6"]
    ["drop"    RED    [[660 640] [660 740]] 6 ""]
-   ["mfail"   RED    [[480 R3] [480 1180]] 6 "10 6"]
-   ["mback"   RED    [[480 1180] [480 1250]] 6 "10 6"] ; merge failed: spur back to the worker ants
+   ["mback"   RED    [[200 R3] [200 1160]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tdrop"   RED    [[760 R3] [760 1200]] 6 "10 6"]
    ["tnext"   RED    [[760 1210] [760 1280]] 6 "10 6"] ; dropped cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
@@ -77,7 +76,6 @@
    ["dropped" 660 750 "Dropped" ["after 3 tries on a bug or" "3 fix rounds; branch kept"] "drop" RIGHT]
    ;; row 3: merge and cleanup
    ["merger" 200 R3 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -70 "middle"]]
-   ["merge-failed" 480 1180 "merge failed" ["a conflict, failed tests, or missing in git:" "the worker ant merges main, fixes it," "detective re-checks; max 2 extra build rounds"] "retry" [-26 -4 "end"]]
    ["janitor" 760 R3 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -88 "middle"]]
    ["dropped-cleanup" 760 1210 "Dropped cleanup" ["tests failed: branch kept," "its note offered as the next Task"] "drop" RIGHT]
    ;; row 4: judge, then main moves
@@ -136,12 +134,9 @@
    "dropped" {:tip "A task that could not be fixed."
                     :about "After 3 tries on one bug or 3 fix rounds, the task drops, and tasks built on it drop too. Its branch is kept for a later look, and the final report lists it."
                     :src "scripts/ishikari-build.js"}
-   "merger" {:tip "Merges the approved tasks for real, then checks with git."
-                       :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main."
+   "merger" {:tip "Merges the approved tasks for real, then checks with git; failures go back to the workers."
+                       :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main. A conflict, failed tests, or a task git finds missing goes back to the worker ant on its own branch: it merges the current main, fixes the bug, the detective re-checks, the integrator tests again, and finish retries the merge. Tasks that merged cleanly are not rebuilt. At most 2 extra build rounds; what is left drops and is reported."
                        :src "scripts/ishikari-finish.js (Merge phase)"}
-   "merge-failed" {:tip "Back to the worker ant on the task's own branch."
-                         :about "A conflict, failed tests, or a task git finds missing goes back to build on its own, as a fix task on the same branch; nothing is re-planned. The worker ant first merges the current main into the branch, then fixes the bug. The detective re-checks and runs the tests (3 tries per bug, 3 fix rounds), the integrator runs the combined test again, and finish tries the merge once more. Tasks that merged cleanly are not rebuilt. At most 2 extra build rounds; what is left after that drops and is reported."
-                         :src "SKILL.md#4-finish"}
    "janitor" {:tip "Cleans up mess the run left, by itself."
                         :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor."
                         :src "scripts/ishikari-finish.js (Upkeep phase)"}
@@ -200,8 +195,10 @@
              [id (str "r" r "s" (inc k))])))
 
 ;; spurs: a short dashed line from a station to a label naming where it goes.
-;; line name (in lines), target station id, extra words for the label
-(def spurs [["mback" "workers" ""] ["tnext" "task" " (next run)"] ["cback" "workers" " (new task)"]])
+;; line name (in lines), target station id, extra words, lead-in, lines below
+(def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"]]
+            ["tnext" "task" " (next run)"]
+            ["cback" "workers" " (new task)"]])
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
 
@@ -393,11 +390,12 @@
           (when (seq dash) (str " stroke-dasharray=\"" dash "\" class=\"flow\"")) "/>"))
    [(txt (+ X 12) 290 ["to row 2"] :fill BLUE :size 13 :weight "700")
     ]
-   (for [[ln to more] spurs
+   (for [[ln to more lead below] spurs
          :let [[_ c pts] (or (some #(when (= (first %) ln) %) lines) (throw (ex-info (str "no line " ln) {})))
                [x y] (last pts)
                [_ _ ty nm] (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {})))]]
-     (txt x (+ y 22) [(str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)] :fill c :size 13 :anchor "middle" :weight "700"))
+     (str (txt x (+ y 22) [(str lead "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)] :fill c :size 13 :anchor "middle" :weight "700")
+          (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16)))
    [
     (txt 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
     (txt 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
