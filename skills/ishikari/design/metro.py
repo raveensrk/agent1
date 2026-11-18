@@ -106,8 +106,10 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
         o.append(f'<circle cx="{x}" cy="{y}" r="14" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
     elif kind == "term":
         o.append(f'<rect x="{x-14}" y="{y-14}" width="28" height="28" rx="7" fill="{BG}" stroke="{TXT}" stroke-width="5"/>')
-    elif kind == "log":
-        o.append(f'<rect x="{x-14}" y="{y-14}" width="28" height="28" rx="4" fill="{BG}" stroke="{GREY}" stroke-width="3" stroke-dasharray="4 3"/>')
+    elif kind == "log":  # an open logbook: two pages, a spine, ruled lines
+        pg = lambda sx: f'<path d="M{x},{y-10} Q{x+sx*9},{y-15} {x+sx*18},{y-11} L{x+sx*18},{y+13} Q{x+sx*9},{y+9} {x},{y+14} Z" fill="{BG}" stroke="{TXT}" stroke-width="3" stroke-linejoin="round"/>'
+        o.append(pg(-1) + pg(1) + f'<line x1="{x}" y1="{y-10}" x2="{x}" y2="{y+14}" stroke="{TXT}" stroke-width="3"/>')
+        o.append("".join(f'<line x1="{x+sx*4}" y1="{y-4+k*6}" x2="{x+sx*14}" y2="{y-5+k*6}" stroke="{GREY}" stroke-width="1.5"/>' for sx in (-1, 1) for k in range(3)))
     elif kind == "end":
         o.append(f'<line x1="{x-16}" y1="{y}" x2="{x+16}" y2="{y}" stroke="{TXT}" stroke-width="7" stroke-linecap="round"/>')
     else:
