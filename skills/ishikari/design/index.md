@@ -70,7 +70,7 @@ its job. The build script runs that workflow in place of a worker ant.
       to the final report as notes.
     - **Fail:** it returns each bug, with how to see it, and the first fix
       plan, so round 1 needs no detective. The build script keeps the bugs and
-      hands them to the next ant; the bug bounty board only logs them.
+      hands them to the next ant; the logbook only records them.
     - **Tasks built on others** are checked only once those are final. A
       changed base is merged in first; a failed base blocks the task.
     - **Re-check:** after each fix it checks every open bug again, by its id.
@@ -141,7 +141,7 @@ They run once per finish, on the merged result, before main moves.
   Ants report problems in their results; after planning, the main session
   decides by the fixed rules in the skill and reports at the end.
 - Only worker ants write code. Every other ant reads, plans, reviews, merges or
-  posts to a board.
+  records to the logbook.
 - At most 5 worker ants run at the same time, fix workers included. Upkeep ants
   and the ants of a saved workflow do not count.
 - A worker ant never resets an existing branch: a fix round reuses the task's
@@ -149,15 +149,15 @@ They run once per finish, on the merged result, before main moves.
 - Each run has its own id, and every branch is `ishikari/<run>/<task>`, so a new
   task never builds on an old task's branch.
 - Ishikari keeps everything outside the repo, in its state folder
-  `~/.ishikari/<repo>-<hash>/`: the boards, the plans, the worktrees and the
+  `~/.ishikari/<repo>-<hash>/`: the logbook, the plans, the worktrees and the
   saved commands. The only copy inside the repo is the scripts, under `.git`.
   None of it is ever committed, and the repo's main checkout is touched only by the
   final fast-forward.
 - Only Ishikari's tool,
-  [`ishikari.py`](../scripts/ishikari.py), writes the boards
-  and the requirement entries. Each write holds a lock and replaces the file
-  in one step, so two runs never lose each other's rows and a crash never
-  leaves half a file. Lock files live in `~/.ishikari/locks`, never in the repo.
+  [`ishikari.py`](../scripts/ishikari.py), writes the logbook
+  and the requirement entries. Each write holds a lock, so two runs never lose
+  each other's entries. Requirement writes replace the file in one step, so a
+  crash never leaves half a file; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
 - Never trust an ant's answer shape. The scripts check every reply: a missing
   or broken field is an error, never a silent pass. A combined test counts only
   when every task is reported merged and a commit is given. Main counts as moved
@@ -165,15 +165,14 @@ They run once per finish, on the merged result, before main moves.
   earlier rounds must look like `ishikari/<run>/<task>`, since they go into git
   commands. In the fallback plan loop (no Agent tool), the investigator
   asking a question it already asked stops the run.
-- Board and requirement writes keep the file's own line endings, and a row with
-  more cells than the board has columns is refused.
+- Requirement writes keep the file's own line endings. A logbook entry with an
+  unknown field, or without run, who or event, is refused, and a newline in a
+  value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
-  The scripts keep their rows while a stage runs and hand them to the tool once
-  when the stage ends. The files in
-  [`assets/boards/`](../assets/boards/) are the templates it
-  starts from.
-- Each ant thinks only as hard as its job needs: low for the board clerk,
+  The scripts keep their entries while a stage runs and hand them to the tool
+  once when the stage ends.
+- Each ant thinks only as hard as its job needs: low for the logbook clerk,
   finisher and upkeep ants; medium for the investigator, researchers, add
   requirement ant, workers, inspectors and merger; high for the architect and
   the detective.
@@ -198,7 +197,7 @@ The [`/ishikari`](../SKILL.md) command runs all four steps below
 and stops to ask the user only in step 2.
 
 1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
-   copies the board templates, copies the three scripts into
+   starts the logbook if there is none, copies the three scripts into
    `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
    script paths, and the repo's saved `testCommand` and `checkCommand`.
@@ -228,10 +227,14 @@ and stops to ask the user only in step 2.
 ## Diagram
 
 Stages run left to right: plan, build, check, fix, finish. The scripts hand work
-from ant to ant directly. The bulletin and bug bounty boards sit apart in the
-Logbook: the board tool writes them once at the end of build and once at the end
-of finish, for you to read after a run; no ant reads them. All boards live in the state folder, outside
-the repo.
+from ant to ant directly. The Logbook sits apart: a shared ledger, one plain
+text recfile per repo, `~/.ishikari/<repo>-<hash>/logbook.rec`, outside the
+repo. It is append only: nothing in it is ever changed or removed. The scripts
+append one batch at the end of build and one at the end of finish: each task's
+status, each bug with its tries, the cleanup, the judge's verdict and whether
+main moved. You add your own notes with `ishikari.py log note`; they are notes,
+never orders. No ant reads it. Read it with `ishikari.py log status` (each
+task's latest event), `recsel` or any editor.
 
 An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Built by [`metro.py`](metro.py);

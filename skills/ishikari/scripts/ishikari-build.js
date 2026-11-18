@@ -7,7 +7,7 @@ export const meta = {
     { title: 'Check', detail: 'one inspector ant per built task' },
     { title: 'Fix', detail: 'detective plans, worker builds, inspector re-checks; 3 tries per bug' },
     { title: 'Combined', detail: 'integrator ant merges all passing tasks in a scratch copy and tests once' },
-    { title: 'Boards', detail: 'one board write at the end' },
+    { title: 'Logbook', detail: 'one logbook append at the end' },
   ],
 }
 
@@ -25,7 +25,7 @@ export const meta = {
 // Task status: 'awaiting review', 'escalated', 'blocked' or 'error'.
 //
 // Nothing here touches the repo's main checkout: every ant works in a
-// worktree under the state folder, and the boards live there too.
+// worktree under the state folder, and the logbook lives there too.
 
 const MAX_WORKERS = 5
 const MAX_TRIES = 3   // tries per bug before it is escalated
@@ -120,10 +120,9 @@ repo's main checkout, and never touch any other repo.`
 const testsLower = env.testCommand ? `run the tests with \`${env.testCommand}\`` : 'run the repo\'s tests'
 const tests = testsLower[0].toUpperCase() + testsLower.slice(1)
 
-// ---- board rows: kept here, written once at the end by the board tool ----
-const bulletin = {}
-const bounty = {}
-const row = (board, cells) => { board[cells[0]] = cells }
+// ---- logbook entries: kept here, appended once at the end by the tool ----
+const entries = []
+const note = e => entries.push({ run: env.run, ...e })
 
 // ---- worker limit: a finishing worker hands its slot straight to the next ----
 let running = 0
@@ -295,10 +294,10 @@ function makeTask(id, branch, extra) {
 
 function end(task, status, why) {
   const open = task.bugs.filter(b => b.open)
-  task.bugs.forEach(b => row(bounty, [b.id, `${env.run}/${task.id}`, b.text,
-    !b.open ? 'fixed' : status === 'escalated' ? 'escalated' : 'open', String(b.tries)]))
+  task.bugs.forEach(b => note({ task: task.id, who: 'inspector ant',
+    event: `bug ${!b.open ? 'fixed' : status === 'escalated' ? 'escalated' : 'open'}`, detail: `${b.id}: ${b.text}`, tries: b.tries }))
   const ant = { 'awaiting review': 'inspector ant', escalated: 'detective ant', blocked: 'build script', error: 'build script' }[status]
-  row(bulletin, [`${env.run}/${task.id}`, status, ant, '-'])
+  note({ task: task.id, who: ant, event: status, ...(why && why.length ? { detail: why.join('; ') } : {}) })
   task.result = {
     id: task.id, branch: task.branch, worktree: task.tree, plan: task.plan, status,
     after: task.after, bugs: [...why, ...open.map(b => `${b.id}: ${b.text}`)],
@@ -536,18 +535,17 @@ for (let round = 1; round <= 2; round++) {
   })))
 }
 
-// ---- one board write for the whole stage ----
-const writes = [['bulletin', Object.values(bulletin)], ['bounty', Object.values(bounty)]].filter(([, rows]) => rows.length)
-if (writes.length) {
-  phase('Boards')
+// ---- one logbook append for the whole stage ----
+if (entries.length) {
+  phase('Logbook')
   const clerk = await agent(
-    `You are Ishikari's board clerk. Run exactly these commands and nothing else:
-${writes.map(([board, rows]) => `python3 ${env.tool} boards write ${env.state} ${board} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(rows)}
-ISHIKARI_ROWS_END`).join('\n')}`,
-    { label: 'board-clerk', phase: 'Boards', effort: EFFORT.clerk },
+    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
+${JSON.stringify(entries)}
+ISHIKARI_ROWS_END`,
+    { label: 'logbook-clerk', phase: 'Logbook', effort: EFFORT.clerk },
   )
-  if (clerk == null) log('board write skipped: the board clerk died; the boards miss this stage')
+  if (clerk == null) log('logbook append skipped: the logbook clerk died; the logbook misses this stage')
 }
 
 return { stage: 'build', tasks: all.map(t => t.result), together }

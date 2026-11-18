@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Ishikari's own tool: sets up a run and writes the boards.
+"""Ishikari's own tool: sets up a run and keeps the logbook.
 
-The workflow scripts cannot touch files, and an ant rewriting a markdown
-table by hand gets it wrong. Every board write goes through this tool, so
-tables stay aligned and no row is lost.
+The workflow scripts cannot touch files, and an ant editing a shared file by
+hand gets it wrong. Every logbook write goes through this tool, under a lock,
+so no entry is lost and the file stays a valid recfile.
 
   ishikari.py setup <repo> [--main <branch>]
       Make the state folder for <repo> and print the run's env as JSON:
@@ -11,7 +11,7 @@ tables stay aligned and no row is lost.
       checkCommand once they are saved. workflows holds the paths of the
       plan, build and finish scripts, copied into <repo>/.git/ishikari/,
       inside the working directory, where the Workflow tool may load them.
-      Everything else Ishikari keeps (boards, plans, worktrees, config)
+      Everything else Ishikari keeps (logbook, plans, worktrees, config)
       lives in the state folder, outside the repo, so none of it is ever
       committed. The main branch is origin/HEAD, else main, master or
       trunk; pass --main when none exists. The repo must be checked out
@@ -28,11 +28,17 @@ tables stay aligned and no row is lost.
       Mark the headings with these :ID:s DONE: :LAST_EDITED: and
       :IMPLEMENTED: become today, and :APPROVED: is added if missing.
 
-  ishikari.py boards write <state> <board>      rows as JSON on stdin
-      Add rows, or replace the row with the same first cell. A "Time"
-      cell left as "-" or "" gets the current time.
+  ishikari.py log append <state>                entries as JSON on stdin
+      Append entries to <state>/logbook.rec, a GNU recfile (read it with
+      recsel, grep or any editor). Each entry is an object with run, who
+      and event, and optionally task, detail, tries and score. Time is
+      added. The logbook is append only: nothing is ever changed or removed.
 
-Boards: bulletin, bounty.
+  ishikari.py log note <state> <text>...
+      Append your own note (Who: you). Ants never act on notes.
+
+  ishikari.py log status <state> [<run>]
+      Print each task's latest event, oldest first, for one run or all.
 """
 
 import contextlib
@@ -48,8 +54,14 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES = os.path.join(os.path.dirname(HERE), "assets", "boards")
-BOARDS = ("bulletin", "bounty")
+LOGBOOK = "logbook.rec"
+LOG_FIELDS = ("run", "task", "who", "event", "detail", "tries", "score")
+LOG_HEAD = """# Ishikari logbook: one entry per event, append only.
+# Write with `ishikari.py log append` or `ishikari.py log note`; read with recsel.
+%rec: Entry
+%mandatory: Time Run Who Event
+%type: Time date
+"""
 CONFIG_KEYS = ("testCommand", "checkCommand")
 
 
@@ -138,12 +150,12 @@ def setup(repo, main=None):
     check_main(top, main)
     tag = hashlib.sha1(top.encode()).hexdigest()[:8]
     state = os.path.join(os.path.expanduser("~"), ".ishikari", f"{os.path.basename(top)}-{tag}")
-    for sub in ("boards", "plans", "worktrees"):
+    for sub in ("plans", "worktrees"):
         os.makedirs(os.path.join(state, sub), exist_ok=True)
-    for name in BOARDS:
-        dst = os.path.join(state, "boards", f"{name}.md")
-        if not os.path.exists(dst):
-            shutil.copy(os.path.join(TEMPLATES, f"{name}.md"), dst)
+    book = os.path.join(state, LOGBOOK)
+    with locked(book):
+        if not os.path.exists(book):
+            write_atomic(book, LOG_HEAD)
     env = {
         "repo": top,
         "state": state,
@@ -247,72 +259,75 @@ def req_done_locked(path, ids):
     print(f"{path}: done {', '.join(reversed(found))}")
 
 
-def cell(value):
-    text = " ".join(str(value).split())
-    return text.replace("|", "\\|") or "-"
+def rec_value(value):
+    """One recfile value: extra lines continue with "+ ", blanks become "-"."""
+    lines = str(value).replace("\r\n", "\n").split("\n")
+    lines = [" ".join(l.split()) for l in lines]
+    while lines and not lines[-1]:
+        lines.pop()
+    return "\n+ ".join(lines) or "-"
 
 
-def split_row(line):
-    parts = re.split(r"(?<!\\)\|", line.strip())[1:-1]
-    return [p.strip() for p in parts]
-
-
-def load(path):
-    lines = open(path).read().splitlines()
-    for i in range(len(lines) - 1):
-        if lines[i].startswith("|") and re.match(r"^\|(\s*:?-+:?\s*\|)+$", lines[i + 1].strip()):
-            head = split_row(lines[i])
-            end = i + 2
-            while end < len(lines) and lines[end].startswith("|"):
-                end += 1
-            rows = [split_row(line) for line in lines[i + 2:end]]
-            return lines[:i], head, rows, lines[end:]
-    die(f"no table in {path}")
-
-
-def save(path, before, head, rows, after):
-    rows = [(r + ["-"] * len(head))[: len(head)] for r in rows]
-    widths = [max([len(head[k])] + [len(r[k]) for r in rows] + [3]) for k in range(len(head))]
-    fmt = lambda r: "| " + " | ".join(c.ljust(widths[k]) for k, c in enumerate(r)) + " |"
-    table = [fmt(head), "| " + " | ".join("-" * w for w in widths) + " |"] + [fmt(r) for r in rows]
-    write_atomic(path, "\n".join(before + table + after).rstrip("\n") + "\n")
-
-
-def boards(state, board):
-    if board not in BOARDS:
-        die(f"unknown board {board}; use one of {', '.join(BOARDS)}")
-    path = os.path.join(state, "boards", f"{board}.md")
+def log_path(state):
+    path = os.path.join(state, LOGBOOK)
     if not os.path.exists(path):
         die(f"missing {path}; run setup first")
-    data = read_json_stdin("boards write")
-    if not isinstance(data, list):
-        die("boards write: stdin must be a JSON list")
-    if not all(isinstance(r, list) and r for r in data):
-        die("boards write: each row must be a non-empty JSON list of cells")
+    return path
+
+
+def log_append(state, entries):
+    path = log_path(state)
+    if not isinstance(entries, list) or not entries:
+        die("log append: stdin must be a non-empty JSON list of entries")
+    now = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+    records = []
+    for e in entries:
+        if not isinstance(e, dict):
+            die("log append: each entry must be a JSON object")
+        unknown = sorted(set(e) - set(LOG_FIELDS))
+        if unknown:
+            die(f"log append: unknown field {unknown[0]}; use {', '.join(LOG_FIELDS)}")
+        missing = [k for k in ("run", "who", "event") if not str(e.get(k, "")).strip()]
+        if missing:
+            die(f"log append: an entry has no {missing[0]}")
+        rec = [f"Time: {now}"] + [f"{k.capitalize()}: {rec_value(e[k])}" for k in LOG_FIELDS if e.get(k) not in (None, "")]
+        records.append("\n".join(rec))
     with locked(path):
-        boards_locked(path, board, data)
+        with open(path, "a") as f:
+            f.write("".join(f"\n{r}\n" for r in records))
+    print(f"logbook: {len(records)} entries added")
 
 
-def boards_locked(path, board, data):
-    before, head, rows, after = load(path)
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    time_col = head.index("Time") if "Time" in head else None
-    too_long = [r for r in data if len(r) > len(head)]
-    if too_long:
-        die(f"boards write: {board} has {len(head)} columns ({', '.join(head)}); a row has {len(too_long[0])} cells")
-    index = {r[0]: k for k, r in enumerate(rows) if r}
-    for raw in data:
-        new = [cell(v) for v in raw]
-        new = (new + ["-"] * len(head))[: len(head)]
-        if time_col is not None and new[time_col] in ("-", ""):
-            new[time_col] = now
-        if new[0] in index:
-            rows[index[new[0]]] = new
-        else:
-            index[new[0]] = len(rows)
-            rows.append(new)
-    save(path, before, head, rows, after)
-    print(f"{board}: {len(rows)} rows")
+def log_read(state):
+    """Every entry as a dict, oldest first."""
+    out, cur, last = [], {}, None
+    for line in read_text(log_path(state))[0].split("\n") + [""]:
+        if not line.strip():
+            if cur:
+                out.append(cur)
+            cur, last = {}, None
+        elif line.startswith(("#", "%")):
+            continue
+        elif line.startswith("+") and last:
+            cur[last] += "\n" + line[2:]
+        elif ":" in line:
+            last, value = line.split(":", 1)
+            cur[last] = value.strip()
+    return out
+
+
+def log_status(state, run=None):
+    latest = {}
+    for e in log_read(state):
+        if e.get("Task") and (run is None or e.get("Run") == run):
+            latest[(e.get("Run"), e["Task"])] = e
+    rows = [(f"{k[0]}/{k[1]}", e.get("Event", ""), e.get("Who", ""), e.get("Time", "")) for k, e in latest.items()]
+    if not rows:
+        print("no tasks in the logbook" + (f" for run {run}" if run else ""))
+        return
+    widths = [max(len(r[i]) for r in rows) for i in range(4)]
+    for r in rows:
+        print("  ".join(c.ljust(widths[i]) for i, c in enumerate(r)).rstrip())
 
 
 def run(argv):
@@ -326,8 +341,12 @@ def run(argv):
                 die("setup: --main needs a branch name")
         if len(rest) == 1:
             return setup(rest[0], main)
-    if len(argv) == 4 and argv[:2] == ["boards", "write"]:
-        return boards(argv[2], argv[3])
+    if len(argv) == 3 and argv[:2] == ["log", "append"]:
+        return log_append(argv[2], read_json_stdin("log append"))
+    if len(argv) >= 4 and argv[:2] == ["log", "note"]:
+        return log_append(argv[2], [{"run": "-", "who": "you", "event": "note", "detail": " ".join(argv[3:])}])
+    if len(argv) in (3, 4) and argv[:2] == ["log", "status"]:
+        return log_status(argv[2], argv[3] if len(argv) == 4 else None)
     if len(argv) == 4 and argv[0] == "config":
         return config(argv[1], argv[2], argv[3])
     if len(argv) == 3 and argv[:2] == ["req", "add"]:

@@ -411,17 +411,23 @@ an empty list. Never fix anything.`,
   await judgeRun()
 }
 
-// ---- move main forward, clean up, write the bulletin ----
+// ---- move main forward, clean up, append to the logbook ----
 phase('Main')
-const key = t => `${runOf(t.branch)}/${t.id}`
+const entry = (t, event, who) => ({ run: runOf(t.branch), task: t.id, who, event })
+const upkeep = [
+  ...(cleanup ? [{ run: env.run, who: 'janitor ant', event: cleanup.landed ? 'cleanup landed' : 'cleanup dropped', detail: cleanup.landed ? cleanup.title : `${cleanup.title}: ${cleanup.reason}` }] : []),
+  ...(verdict ? [{ run: env.run, who: 'judge ant', event: verdict.flagged ? 'verdict flagged' : 'verdict', score: verdict.score == null ? '-' : verdict.score, detail: [...(verdict.fixed ? [`after one fix round (first score ${verdict.first == null ? '-' : verdict.first})`] : []), ...verdict.gaps, ...(verdict.reason ? [verdict.reason] : [])].join('\n') }] : []),
+]
 const rowsIf = moved => [
-  ...merged.map(t => [key(t), moved ? 'done' : 'waiting', 'merger ant', '-']),
-  ...failed.map(t => [key(t), 'merge failed', 'merger ant', '-']),
-  ...waiting.map(t => [key(t), 'waiting', 'merger ant', '-']),
-  ...drop.map(t => [key(t), 'dropped', 'main session', '-']),
+  ...merged.map(t => entry(t, moved ? 'done' : 'waiting', 'merger ant')),
+  ...failed.map(t => entry(t, 'merge failed', 'merger ant')),
+  ...waiting.map(t => entry(t, 'waiting', 'merger ant')),
+  ...drop.map(t => entry(t, 'dropped', 'main session')),
+  ...upkeep,
+  ...(merged.length ? [{ run: env.run, who: 'finisher ant', event: moved ? 'main moved' : 'main not moved', detail: moved ? sha || '' : 'see the run report' }] : []),
 ]
 const write = rows => rows.length
-  ? `python3 ${env.tool} boards write ${env.state} bulletin <<'ISHIKARI_ROWS_END'
+  ? `python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'

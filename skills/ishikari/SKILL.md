@@ -19,16 +19,15 @@ Design, rules and diagram:
 
 ## Files
 
-| File                             | Job                                     |
-| -------------------------------- | --------------------------------------- |
-| `scripts/ishikari.py`            | setup, config; sole boards, reqs writer |
-| `scripts/ishikari-plan.js`       | investigate, requirement, design, plans |
-| `scripts/ishikari-build.js`      | build, check, fix, combined test        |
-| `scripts/ishikari-finish.js`     | merge, upkeep, move main                |
-| `assets/boards/*.md`             | templates: bulletin, bounty             |
-| `assets/prompts/investigator.md` | the live investigator ant's brief       |
-| `tests/test_ishikari.py`         | tool: setup, boards, reqs, guards       |
-| `tests/test_workflows.mjs`       | script logic, with stand-in ants        |
+| File                             | Job                                      |
+| -------------------------------- | ---------------------------------------- |
+| `scripts/ishikari.py`            | setup, config; sole logbook, reqs writer |
+| `scripts/ishikari-plan.js`       | investigate, requirement, design, plans  |
+| `scripts/ishikari-build.js`      | build, check, fix, combined test         |
+| `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
+| `assets/prompts/investigator.md` | the live investigator ant's brief        |
+| `tests/test_ishikari.py`         | tool: setup, logbook, reqs, guards       |
+| `tests/test_workflows.mjs`       | script logic, with stand-in ants         |
 
 Tests: `timeout 120 python3 tests/test_ishikari.py` and
 `timeout 120 node --test tests/test_workflows.mjs`.
@@ -47,7 +46,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   answer for the user. Never edit the investigation report yourself.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
-- Never edit code, boards, requirements or branches yourself. Ants and
+- Never edit code, the logbook, requirements or branches yourself. Ants and
   `ishikari.py` do.
 - Never push. Main moves only by the finisher's fast-forward.
 - Any result with `stage: 'error'`: show `reason` and stop.
@@ -55,7 +54,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 ## Limits
 
 | Cap                                    | Value | Where                  |
-| -------------------------------------- | ----- | ---------------------- |
+| -------------------------------- | ---------------------------------------- |
 | Workers at once                        | 5     | build `MAX_WORKERS`    |
 | Tries per bug, then escalated          | 3     | build `MAX_TRIES`      |
 | Fix rounds per task                    | 3     | build `MAX_ROUNDS`     |
@@ -181,3 +180,5 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   each dropped task with why and its bugs, the check, the judge's `verdict` (score,
   gaps; say FLAGGED when `flagged`) and the cleanup: `landed`, or dropped with its
   `reason` and `branch`, its plan offered as the next task.
+  End with where the full record is: `python3 <env.tool> log status <env.state>
+  <env.run>`.

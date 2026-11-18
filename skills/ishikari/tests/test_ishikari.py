@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import re
 import subprocess
 import sys
@@ -35,7 +36,7 @@ def make_repo(root):
     return repo
 
 
-def test_setup_and_boards():
+def test_setup_and_logbook():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
         env = json.loads(run(home, "setup", repo))
@@ -43,18 +44,25 @@ def test_setup_and_boards():
         assert env["state"].startswith(os.path.join(home, ".ishikari", "app-"))
         for k in ("plan", "build", "finish"):
             assert os.path.isfile(env["workflows"][k]), k
-        for b in ("bulletin", "bounty"):
-            assert os.path.isfile(os.path.join(env["state"], "boards", f"{b}.md"))
-
         state = env["state"]
-        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["r/p", "why | so?", "worker ant", "-"]]))
-        text = open(os.path.join(state, "boards", "bulletin.md")).read()
-        assert "why \\| so?" in text
+        book = os.path.join(state, "logbook.rec")
+        assert "%rec: Entry" in open(book).read()
 
-        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["r/x", "building", "worker ant", "-"]]))
-        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["r/x", "done", "merger ant", "-"]]))
-        text = open(os.path.join(state, "boards", "bulletin.md")).read()
-        assert text.count("r/x") == 1 and "done" in text and "building" not in text
+        run(home, "log", "append", state, stdin=json.dumps([
+            {"run": "r1", "task": "x", "who": "worker ant", "event": "awaiting review"},
+            {"run": "r1", "task": "x", "who": "inspector ant", "event": "bug open", "detail": "line one\nline two", "tries": 2}]))
+        run(home, "log", "append", state, stdin=json.dumps([{"run": "r1", "task": "x", "who": "merger ant", "event": "done"}]))
+        run(home, "log", "note", state, "check", "the", "auth", "flow")
+        text = open(book).read()
+        assert text.count("Task: x") == 3  # append only: nothing replaced
+        assert "Detail: line one\n+ line two" in text and "Tries: 2" in text
+        assert "Who: you\nEvent: note\nDetail: check the auth flow" in text
+        status = run(home, "log", "status", state, "r1")
+        assert "r1/x  done  merger ant" in status and "bug open" not in status
+        if shutil.which("recsel"):  # the file is a valid recfile
+            out = subprocess.run(["recsel", "-t", "Entry", "-e", "Event = 'done'", "-P", "Who", book],
+                                 capture_output=True, text=True, timeout=TIMEOUT)
+            assert out.returncode == 0 and out.stdout.strip() == "merger ant", out.stderr
 
 
 def test_workflows_config_and_req():
@@ -98,12 +106,14 @@ def test_guards():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
         state = json.loads(run(home, "setup", repo))["state"]
-        assert "not valid JSON" in fails(home, "boards", "write", state, "bulletin", stdin="[oops")
-        assert "JSON list" in fails(home, "boards", "write", state, "bulletin", stdin='{"a": 1}')
-        assert "non-empty JSON list" in fails(home, "boards", "write", state, "bulletin", stdin='["x"]')
-        assert "unknown board" in fails(home, "boards", "write", state, "critiques", stdin='[["x"]]')
-        board = open(os.path.join(state, "boards", "bulletin.md")).read()
-        assert "| Task" in board  # a refused write leaves the board as it was
+        book = os.path.join(state, "logbook.rec")
+        before = open(book).read()
+        assert "not valid JSON" in fails(home, "log", "append", state, stdin="[oops")
+        assert "non-empty JSON list" in fails(home, "log", "append", state, stdin='{"a": 1}')
+        assert "JSON object" in fails(home, "log", "append", state, stdin='["x"]')
+        assert "unknown field" in fails(home, "log", "append", state, stdin='[{"run": "r", "who": "w", "event": "e", "colour": "red"}]')
+        assert "no who" in fails(home, "log", "append", state, stdin='[{"run": "r", "event": "e"}]')
+        assert open(book).read() == before  # a refused write adds nothing
 
         org = os.path.join(repo, "requirements.org")
         run(home, "req", "add", org, stdin="* OPEN B\n:PROPERTIES:\n:ID: B-1\n:END:\n")
@@ -117,21 +127,19 @@ def test_guards():
         raw = open(crlf, newline="").read()
         assert "* DONE C\r\n" in raw and "\n" not in raw.replace("\r\n", "")  # stays CRLF
 
-        assert "columns" in fails(home, "boards", "write", state, "bulletin", stdin='[["a", "b", "c", "d", "e", "f", "g"]]')
-
 
 def test_parallel_writers():
     with tempfile.TemporaryDirectory() as home:
         state = json.loads(run(home, "setup", make_repo(home)))["state"]
         env = {**os.environ, "HOME": home}
-        procs = [subprocess.Popen([sys.executable, TOOL, "boards", "write", state, "bulletin"],
+        procs = [subprocess.Popen([sys.executable, TOOL, "log", "append", state],
                                   stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, env=env, text=True)
                  for _ in range(30)]
         for k, p in enumerate(procs):
-            p.communicate(json.dumps([[f"p/{k}", "done", "worker ant", "-"]]), timeout=TIMEOUT)
+            p.communicate(json.dumps([{"run": "p", "task": str(k), "who": "worker ant", "event": "done"}]), timeout=TIMEOUT)
             assert p.returncode == 0
-        text = open(os.path.join(state, "boards", "bulletin.md")).read()
-        assert sum(1 for l in text.splitlines() if l.startswith("| p/")) == 30  # no row lost
+        text = open(os.path.join(state, "logbook.rec")).read()
+        assert text.count("Run: p\n") == 30  # no entry lost
 
 
 def git_in(repo, *args):
@@ -172,7 +180,7 @@ def test_main_branch_and_run_id():
         assert all(re.fullmatch(r"\d{8}-\d{6}-[0-9a-f]{4}", i) for i in ids), ids
 
 
-def test_req_and_board_gaps():
+def test_req_and_log_gaps():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
         state = json.loads(run(home, "setup", repo))["state"]
@@ -194,18 +202,16 @@ def test_req_and_board_gaps():
         run(home, "config", state, "checkCommand", "")
         assert json.load(open(os.path.join(state, "config.json"))) == {}  # empty value forgets the key
 
-        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["a|b", "x | y", "ant", "-"]]))
-        assert "x \\| y" in open(os.path.join(state, "boards", "bulletin.md")).read()
-        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["a|b", "done", "ant", "-"]]))
-        text = open(os.path.join(state, "boards", "bulletin.md")).read()
-        assert text.count("a\\|b") == 1 and "x \\| y" not in text and "| done" in text, text  # escaped id matches
+        run(home, "log", "append", state, stdin=json.dumps([{"run": "r", "task": "a|b", "who": "ant", "event": "x | y", "detail": "Event: fake\n\nRun: injected"}]))
+        entries = [l for l in open(os.path.join(state, "logbook.rec")).read().split("\n\n") if "Task: a|b" in l]
+        assert len(entries) == 1 and "+ -" not in entries[0] and "Run: injected" not in entries[0].replace("+ Run: injected", "")  # a newline never starts a new field
 
 
 if __name__ == "__main__":
-    test_setup_and_boards()
+    test_setup_and_logbook()
     test_workflows_config_and_req()
     test_guards()
     test_parallel_writers()
     test_main_branch_and_run_id()
-    test_req_and_board_gaps()
+    test_req_and_log_gaps()
     print("ok")

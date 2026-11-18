@@ -513,3 +513,33 @@ test('finish: many tasks, one juror per task, at most 5 at once, judge sees thei
   assert.ok(j.includes('not an average'))
   assert.equal(out.verdict.score, 8)
 })
+
+// ---- logbook: one append per stage, through the tool ----
+const logged = p => JSON.parse(p.split("<<'ISHIKARI_ROWS_END'\n")[1].split('\nISHIKARI_ROWS_END')[0])
+
+test('build: the logbook clerk appends each task and each bug once', async () => {
+  const prompts = {}
+  await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
+    prompts[o.label] = p
+    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    if (o.label === 'inspector-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
+    if (o.label.startsWith('inspector')) return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
+    return {}
+  })
+  const p = prompts['logbook-clerk']
+  assert.ok(p.includes('python3 /t/ishikari.py log append /s'))
+  assert.deepEqual(logged(p), [
+    { run: 'r1', task: 'a', who: 'inspector ant', event: 'bug escalated', detail: 'a#1: broken', tries: 3 },
+    { run: 'r1', task: 'a', who: 'detective ant', event: 'escalated' },
+  ])
+})
+
+test('finish: the logbook gets the tasks, the cleanup, the verdict and the main move', async () => {
+  const { prompts } = await judgeRun([{ score: 5, gaps: ['g1'] }, { score: 6, gaps: ['g2'] }])
+  const moved = logged(prompts['finisher-ant'])
+  assert.deepEqual(moved.map(e => e.event), ['done', 'verdict flagged', 'main moved'])
+  assert.equal(moved[1].score, 6)
+  assert.equal(moved[1].detail, 'after one fix round (first score 5)\ng2')
+  assert.ok(prompts['finisher-ant'].includes('log append /s'))
+})
