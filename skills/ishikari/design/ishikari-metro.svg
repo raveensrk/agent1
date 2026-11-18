@@ -90,14 +90,14 @@
 <text class="h" x="226" y="1166" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">merge failed</text>
 <text class="h" x="226" y="1185" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">next build round; also when the</text><text class="h" x="226" y="1201" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">verifier finds a task missing</text>
 <polygon points="424.0,1080.0 432.0,1066.1 448.0,1066.1 456.0,1080.0 448.0,1093.9 432.0,1093.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="440" y="1028" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Janitor ant</text>
-<text class="h" x="440" y="1047" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="440" y="1063" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">built + checked before main moves</text>
+<text class="h" x="466" y="1022" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Janitor ant</text>
+<text class="h" x="466" y="1041" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="466" y="1057" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">built + checked before main moves</text>
 <polygon points="544.0,1150.0 552.0,1136.1 568.0,1136.1 576.0,1150.0 568.0,1163.9 552.0,1163.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="560" y="1184" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Cleanup worker</text>
 <text class="h" x="560" y="1203" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">builds it on top of the merge</text>
 <polygon points="744.0,1150.0 752.0,1136.1 768.0,1136.1 776.0,1150.0 768.0,1163.9 752.0,1163.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="760" y="1184" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Cleanup inspector</text>
-<text class="h" x="760" y="1203" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">plan + tests = combined test;</text><text class="h" x="760" y="1219" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fail: one fix round</text>
+<text class="h" x="760" y="1090" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Cleanup inspector</text>
+<text class="h" x="760" y="1109" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">plan + tests = combined test;</text><text class="h" x="760" y="1125" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fail: one fix round</text>
 <rect x="746" y="1246" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="786" y="1256" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped cleanup</text>
 <text class="h" x="786" y="1275" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept, plan offered as</text><text class="h" x="786" y="1291" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the next run's Task</text>
