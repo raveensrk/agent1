@@ -2,8 +2,12 @@
 # Render ishikari.d2 to light and dark SVGs with the TALA layout.
 set -eu
 cd "$(dirname "$0")"
-d2 --layout=tala ishikari.d2 "${1:-ishikari.svg}"
-tmp=$(mktemp -t ishikari-dark)
+tmp=$(mktemp -t ishikari-dark.XXXXXX)
+pids=""
+fail=0
+# Light render; flow.py reads its output.
+d2 --layout=tala ishikari.d2 "${1:-ishikari.svg}" &
+light=$!
 sed -e 's/plan-fill: "#DBEAFE"/plan-fill: "#172554"/' \
     -e 's/plan-line: "#2563EB"/plan-line: "#60A5FA"/' \
     -e 's/build-fill: "#DCFCE7"/build-fill: "#052E16"/' \
@@ -22,15 +26,34 @@ sed -e 's/plan-fill: "#DBEAFE"/plan-fill: "#172554"/' \
     -e 's/ok: "#16A34A"/ok: "#4ADE80"/' \
     -e 's/flow: "#475569"/flow: "#CBD5E1"/' \
     ishikari.d2 > "$tmp.d2"
-d2 --layout=tala --theme=200 "$tmp.d2" "${2:-ishikari-dark.svg}"
-rm -f "$tmp" "$tmp.d2"
-# Slow animated walk through the stages, 6 s a frame.
-[ $# -eq 0 ] && d2 --layout=tala --animate-interval=6000 ishikari-animated.d2 ishikari-animated.svg
-# Car tour along the exact path, built from ishikari.svg.
-[ $# -eq 0 ] && python3 flow.py
-# Full dark animated diagram, hand laid out.
-[ $# -eq 0 ] && python3 journey.py
-# Subway map view.
-[ $# -eq 0 ] && python3 metro.py
-# Readable subway map view.
-[ $# -eq 0 ] && python3 metro-clean.py
+{
+    d2 --layout=tala --theme=200 "$tmp.d2" "${2:-ishikari-dark.svg}"
+    rc=$?
+    rm -f "$tmp" "$tmp.d2"
+    exit $rc
+} &
+pids="$pids $!"
+if [ $# -eq 0 ]; then
+    # Slow animated walk through the stages, 6 s a frame.
+    d2 --layout=tala --animate-interval=6000 ishikari-animated.d2 ishikari-animated.svg &
+    pids="$pids $!"
+    # Full dark animated diagram, hand laid out.
+    python3 journey.py &
+    pids="$pids $!"
+    # Subway map view.
+    python3 metro.py &
+    pids="$pids $!"
+    # Readable subway map view.
+    python3 metro-clean.py &
+    pids="$pids $!"
+fi
+wait "$light" || fail=1
+if [ $# -eq 0 ] && [ "$fail" -eq 0 ]; then
+    # Car tour along the exact path, built from ishikari.svg.
+    python3 flow.py &
+    pids="$pids $!"
+fi
+for pid in $pids; do
+    wait "$pid" || fail=1
+done
+exit "$fail"

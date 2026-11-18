@@ -127,4 +127,5 @@ for i, (c, n, t) in enumerate(rows):
     o.append(txt(kx + 114, y + 5, [t], TXT, 13))
 o.append(txt(kx + 320, ky + 30, ["dashed:", "a branch or", "a log", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "stacked ∥: parallel"], SUB, 12))
 o.append('</svg>')
-open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro-clean.svg"), "w").write("\n".join(o))
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro-clean.svg"), "w") as f:
+    f.write("\n".join(o))

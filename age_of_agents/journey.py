@@ -1,5 +1,7 @@
 # Build ishikari-journey.svg: every node and edge of ishikari.d2, dark, animated.
-import re,math
+import math
+import os
+import re
 C=dict(plan="#60A5FA",build="#4ADE80",check="#FBBF24",fix="#FB7185",finish="#A78BFA",always="#94A3B8")
 F=dict(plan="#172554",build="#052E16",check="#451A03",fix="#4C0519",finish="#2E1065",always="#1E293B")
 BUG="#F87171";OK="#4ADE80";FLOW="#CBD5E1";TXT="#E2E8F0";SUB="#94A3B8"
@@ -183,4 +185,5 @@ for s,a,b in seg_t:
 o.append(f'<g opacity="0">{text(W-40,40,["Done. Report once: what landed, dropped tasks, critiques, cleanup plan."],"#FDE047",16,"end","700")}{win([(D*MOVE,D)])}</g>')
 o.append(f'<circle r="9" fill="#FDE047" stroke="#0B1120" stroke-width="2" filter="url(#antglow)"><animateMotion dur="{D}s" repeatCount="indefinite" path="{path}" keyPoints="0;1;1" keyTimes="0;{MOVE};1" calcMode="linear"/></circle>')
 o.append('</svg>')
-open(__import__("os").path.join(__import__("os").path.dirname(__file__),"ishikari-journey.svg"),"w").write("\n".join(o))
+with open(os.path.join(os.path.dirname(__file__), "ishikari-journey.svg"), "w") as f:
+    f.write("\n".join(o))

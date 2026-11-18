@@ -162,4 +162,5 @@ for name in what:
     o.append(txt(tx - 422, ty + 342 + row * 15, [what[name]], TXT, 11))
     row += 1
 o.append('</svg>')
-open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro.svg"), "w").write("\n".join(o))
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro.svg"), "w") as f:
+    f.write("\n".join(o))
