@@ -122,7 +122,11 @@ They run once per finish, on the merged result, before main moves.
   landed or been dropped, reads the plans (investigation report, architecture
   and every worker plan) and the merged code with the cleanup on top, and
   scores the whole run 0-10 on one question: does the implementation match the
-  plans? It lists each gap as a concrete fix. At 7 or more, main moves. Below
+  plans? It lists each gap as a concrete fix. With two or more tasks it
+  delegates first: one **Juror ant** per task, up to 5 at once, each scoring
+  its task against that task's plan. The judge weighs their reports, checks
+  how the tasks fit together and decides the score itself; it is not an
+  average. One task: the judge works alone. At 7 or more, main moves. Below
   7, one fix round: a worker ant closes the gaps on top of the merged scratch
   copy, an inspector ant checks it and runs the tests, and the judge scores
   again. Still below 7, or the fix failed: main moves anyway and the verdict is

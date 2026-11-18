@@ -36,7 +36,7 @@ export const meta = {
 // The repo's main checkout is touched once, at the end, by a fast-forward
 // that git refuses if it would overwrite anything.
 
-const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', judge: 'medium', finisher: 'low' }
+const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', judge: 'medium', juror: 'medium', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
@@ -228,6 +228,7 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
 let cleanup = null
 let verdict = null
 const PASS = 7
+const MAX_JURORS = 5  // juror ants at once
 const planDir = `${env.state}/plans/${env.run}`
 const fixBranch = `ishikari/${env.run}/_judgefix`
 const fixTree = treeOf(fixBranch)
@@ -318,21 +319,51 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
   // The judge ant scores the whole run, cleanup included, against the plans.
   // Below PASS: one fix round (worker, inspector), then a second score. Still
   // below PASS: main moves anyway and the report flags it.
+  // More than one task: the judge delegates, one juror ant per task (at most
+  // MAX_JURORS at once), and decides the run's score from their reports.
+  const SCORED = { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] }
+  const juror = (t, round) => agent(
+    `You are a juror ant of the Ishikari workflow, helping the judge ant.
+${where}
+Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md. The run's
+plans: ${planDir} (investigation_report.md, architecture.md). Read the merged code in
+${scratchTree}, the code that will land on ${env.main}, and judge only this task:
+does it match its plan? Score it 0 to 10 and list each gap as a short, concrete fix
+a worker ant can build without questions. Never change anything.`,
+    { label: `juror-ant:${round}:${t.id}`, phase: 'Upkeep', effort: EFFORT.juror, schema: SCORED },
+  )
+  const jury = async (round) => {
+    if (merged.length < 2) return []
+    const out = []
+    for (let k = 0; k < merged.length; k += MAX_JURORS) {
+      const batch = merged.slice(k, k + MAX_JURORS)
+      const got = []
+      await parallel(batch.map((t, i) => async () => { got[i] = await juror(t, round) }))
+      batch.forEach((t, i) => out.push({ id: t.id, report: got[i] && Number.isInteger(got[i].score) ? got[i] : null }))
+    }
+    return out
+  }
   const judgeOnce = async (round) => {
+    const reports = await jury(round)
+    const juryText = reports.length ? `
+Your jury has judged each task against its plan:
+${reports.map(x => x.report ? `- ${x.id}: ${x.report.score}/10${(x.report.gaps || []).length ? `; gaps: ${x.report.gaps.join('; ')}` : ''}` : `- ${x.id}: no report (the juror died): judge this task yourself`).join('\n')}
+Weigh their reports, check how the tasks fit together, then decide the run's score
+yourself: it is not an average. Keep every gap you agree with.` : ''
     const j = await agent(
       `You are the judge ant of the Ishikari workflow.
 ${where}
 Read the plans for this run in ${planDir}: investigation_report.md (the user's task
 and goal), architecture.md and every worker plan. Then read the merged code in
 ${scratchTree}, the code that will land on ${env.main}: the tasks (${names}) with the
-janitor's cleanup on top if it landed.
+janitor's cleanup on top if it landed.${juryText}
 Judge one thing: does the implementation match the plans? Score the whole run from
 0 to 10, where 10 means every planned behaviour is built as planned and nothing
 unplanned was added. List each gap in "gaps" as a short, concrete fix a worker ant
 can build without questions: what is missing or wrong, and in which file.
 Never change anything.`,
       { label: `judge-ant:${round}`, phase: 'Upkeep', effort: EFFORT.judge,
-        schema: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] } },
+        schema: SCORED },
     )
     return j && Number.isInteger(j.score) ? { score: Math.max(0, Math.min(10, j.score)), gaps: Array.isArray(j.gaps) ? j.gaps.map(String) : [] } : null
   }

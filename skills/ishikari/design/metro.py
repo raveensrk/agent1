@@ -57,7 +57,7 @@ stations = [
  (560,1150,"Worker ant",["builds the cleanup on top of the merge"],"st",(0,34,"middle")),
  (760,1150,"Inspector ant",["checks the cleanup: plan + combined test;","fail: one fix round"],"st",(0,-60,"middle")),
  (760,1260,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
- (1200,R3,"Judge ant",["final verdict: scores the run 0-10:","does the code match the plans?","7+: main moves"],"x",(0,-90,"middle")),
+ (1200,R3,"Judge ant  ∥",["final verdict: 2+ tasks, one juror ant each","(5 at once); judge decides the score 0-10:","does the code match the plans? 7+: main moves"],"x",(0,-90,"middle")),
  (1200,1180,"judge fix round",["below 7: a worker closes the gaps,","an inspector checks, judged again;","still low: main moves, flagged"],"term",(26,-4,"start")),
  (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),

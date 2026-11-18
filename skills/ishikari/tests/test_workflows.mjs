@@ -482,3 +482,34 @@ test('finish: checkFixDone must be a boolean', async () => {
   assert.equal(out.stage, 'error')
   assert.match(out.reason, /checkFixDone/)
 })
+
+// ---- jury: one juror ant per task, the judge decides ----
+test('finish: one task, the judge works alone', async () => {
+  const { calls } = await judgeRun([{ score: 9, gaps: [] }])
+  assert.ok(!calls.some(c => c.startsWith('juror')))
+})
+
+test('finish: many tasks, one juror per task, at most 5 at once, judge sees their reports', async () => {
+  const ids = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+  let live = 0, peak = 0
+  const prompts = {}
+  const { out, calls } = await run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, async (p, o) => {
+    prompts[o.label] = p
+    if (o.label === 'merger-ant') return { sha: 'abc', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
+    if (o.label.startsWith('juror')) {
+      live++; peak = Math.max(peak, live)
+      await new Promise(r => setTimeout(r, 2)); live--
+      return o.label.endsWith(':c') ? null : { score: 6, gaps: [`gap in ${o.label.split(':')[2]}`] }
+    }
+    if (o.label.startsWith('judge')) return { score: 8, gaps: [] }
+    return { moved: true, reason: '' }
+  })
+  assert.equal(calls.filter(c => c.startsWith('juror-ant:1:')).length, 7)
+  assert.ok(peak <= 5)
+  assert.ok(prompts['juror-ant:1:b'].includes('/s/plans/r1/b.md'))
+  const j = prompts['judge-ant:1']
+  assert.ok(j.includes('- a: 6/10; gaps: gap in a'))
+  assert.ok(j.includes('- c: no report'))
+  assert.ok(j.includes('not an average'))
+  assert.equal(out.verdict.score, 8)
+})
