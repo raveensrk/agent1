@@ -260,6 +260,10 @@ def metro_texts(path):
     return out, w, h
 
 
+def strings_all(texts):
+    return [t["s"] for t in texts]
+
+
 def text_box(t):
     w = len(t["s"]) * t["size"] * (0.6 if t["weight"] >= 700 else 0.55)
     x0 = {"start": t["x"], "middle": t["x"] - w / 2, "end": t["x"] - w}[t["anchor"]]
@@ -291,6 +295,10 @@ def test_metro_map():
     assert len(groups) == len(names), (len(groups), len(names))  # every station is clickable
     for g in groups:
         assert (g.findtext(NS + "title") or "").endswith("Click for more."), g.get("data-i")
+        assert re.fullmatch(r"st-[a-z][a-z0-9-]*", g.get("id") or ""), g.get("id")
+    assert len({g.get("id") for g in groups}) == len(groups)  # ids are unique
+    for spur in ("to Worker ants, row 2", "to Task, row 1 (next run)", "to Worker ants, row 2 (new task)"):
+        assert spur in strings_all(texts), spur
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
     strings = [t["s"] for t in texts]

@@ -259,8 +259,12 @@ station, helper ants included (the fast-forward merger, the jurors), and short n
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
 Hover a station for a one-line tooltip; open the SVG itself in a browser and
 click a station for a panel with its full story and source (Esc closes it).
-Each station's text lives in `details` in `metro.clj`; the build fails
-without one.
+Each station has a fixed id (`merger`) and a position code worked out on
+each build (`r3s1`: row 3, station 1), shown small beside its name.
+`ishikari-metro.svg#merger` or `#r3s1` opens that station's panel. Its text
+lives in `details` in `metro.clj`, keyed by id; spurs name their target by
+id too. The build fails on a missing detail, a duplicate id or a spur to an
+unknown station.
 `test_metro_map` in [`test_ishikari.py`](../tests/test_ishikari.py) checks it
 against the scripts.
 
