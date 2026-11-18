@@ -260,6 +260,17 @@ def metro_texts(path):
     return out, w, h
 
 
+def panel_items(path):
+    """What each clickable thing's panel says: the D list in the map's script."""
+    src = open(path, encoding="utf-8").read()
+    return json.loads(re.search(r"var D=(\[.*?\]);\n", src, re.S).group(1))
+
+
+def panel_strings(path):
+    """Every line of panel text, the short rules the map no longer draws included."""
+    return [s for it in panel_items(path) for s in [it["name"], it["tip"], it["about"], *it["sub"]]]
+
+
 def strings_all(texts):
     return [t["s"] for t in texts]
 
@@ -308,13 +319,16 @@ def test_metro_map():
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
     strings = [t["s"] for t in texts]
+    # The map draws names only; the notes live in the click panels.
+    panel = panel_strings(SVG)
     for nid, note in NOTES.items():
-        assert any(note in s for s in strings), nid
-    for nid in ("N7", "N11"):
-        assert sum(NOTES[nid] in s for s in strings) == 1, nid
-    mf = next(t for t in texts if t["s"].startswith("merge failed: to Worker ants"))  # the merger's spur
-    n7 = next(t for t in texts if NOTES["N7"] in t["s"])
-    assert n7["x"] == mf["x"] and 0 < n7["y"] - mf["y"] <= 60
+        assert any(note in s for s in panel), nid
+    items = {it["id"]: it for it in panel_items(SVG)}
+    assert NOTES["N7"] in items["spur-mback"]["sub"]  # on the merger's failed-merge spur
+    assert items["logbook"]["sub"][0] == NOTES["N11"]
+    key_x = 1440  # the key (bottom right) keeps its small explanatory text
+    drawn = [t["s"] for t in texts if t["size"] == 13 and t["weight"] < 700 and t["x"] < key_x]
+    assert not drawn, f"descriptions drawn on the map: {drawn}"
     for s in strings:
         for bad in ("req add, keeps", "Judge ant  ∥", "Verifier Ant"):
             assert bad not in s, s
@@ -336,12 +350,9 @@ def test_docs_match_build():
             break
         if line.startswith("|"):
             assert line.count("|") == 4, line
-    texts, _, _ = metro_texts(SVG)
-    book = next(t for t in texts if t["size"] == 16 and t["s"] == "Logbook")
-    note = sorted((t for t in texts if t["size"] == 13 and t["x"] == book["x"] and 0 < t["y"] - book["y"] <= 100),
-                  key=lambda t: t["y"])
-    assert note[0]["s"] == "logbook clerk ant: appends each ant's entry"
-    sentence = " ".join(t["s"] for t in note[:4])
+    note = next(it for it in panel_items(SVG) if it["id"] == "logbook")["sub"]
+    assert note[0] == "logbook clerk ant: appends each ant's entry"
+    sentence = " ".join(note[:4])
     index = " ".join(open(os.path.join(SKILL, "design", "index.md"), encoding="utf-8").read().replace("`", "").split())
     assert sentence in index, sentence
     build = open(SCRIPTS[1], encoding="utf-8").read()

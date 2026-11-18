@@ -257,7 +257,9 @@ An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Every agent label in the three scripts has a
 station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
-Everything on the map says what it is: stations, lines, spurs, junctions,
+The map draws names only, to stay simple; every description and short
+rule lives in the item's tooltip and click panel. Everything on the map says
+what it is: stations, lines, spurs, junctions,
 notes, row labels, the moving cars and the key. Hover for a one-line tooltip;
 open the SVG itself in a browser and click for a panel with the full story
 (Esc closes it). Lines and notes take their text from `about-lines` and

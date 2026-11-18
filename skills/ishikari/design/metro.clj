@@ -46,19 +46,19 @@
    ["clash"   GOLD   [[1200 R2] [1200 700] [800 700] [760 R2]] 6 "10 6"]
    ["drop"    RED    [[660 640] [660 730]] 6 "10 6"]
    ["mback"   RED    [[200 R3] [200 1160]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
-   ["tnext"   RED    [[760 R3] [760 1180]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
+   ["tnext"   RED    [[760 R3] [760 1160]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
    ["after"   GREEN  [[1340 R4] [1780 R4]] 9 ""]
-   ["cfix"    RED    [[1580 R4] [1580 1690]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
+   ["cfix"    RED    [[1580 R4] [1580 1600]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
 
 ;; id, x, y, name, sub lines, kind, label anchor [dx dy anchor].
 ;; The id never changes and is what spurs, details and links use; the short
 ;; code (r3s1: row 3, station 1) is worked out from position on each build.
-(def L-UP [0 -60 "middle"]) (def L-DN [0 34 "middle"]) (def RIGHT [26 -4 "start"])
+(def L-UP [0 -28 "middle"]) (def L-DN [0 34 "middle"]) (def RIGHT [26 -4 "start"])
 (def stations
   [;; row 1: ask and plan
    ["task" 120 R1 "Task" ["you give it, or a" "dropped cleanup plan"] "task" L-DN]
-   ["investigator" 440 R1 "Investigator ant" ["one live agent run by the skill: reads" "the repo once, gets each answer as a message;" "no Agent tool: the plan workflow runs it"] "x" [-22 -74 "end"]]
+   ["investigator" 440 R1 "Investigator ant" ["one live agent run by the skill: reads" "the repo once, gets each answer as a message;" "no Agent tool: the plan workflow runs it"] "x" [-22 -14 "end"]]
    ["you" 440 90 "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you" [26 -6 "start"]]
    ["researchers" 440 300 "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end" [24 -4 "start"]]
    ["report" 780 R1 "investigation_report.md" ["written when nothing is unclear;" "the investigator is stopped"] "file" L-DN]
@@ -67,12 +67,12 @@
    ["plans" 1700 R1 "Worker plans" ["one per task: title, files, after;" "checked before anything is built"] "files" L-DN]
    ["logbook" 1370 40 "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build and finish." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log" RIGHT]
    ;; row 2: build, check, fix
-   ["workers" 200 R2 "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x" [0 -84 "middle"]]
-   ["detectives" 760 R2 "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x" [0 -86 "middle"]]
-   ["integrator" 1200 R2 "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x" [0 -78 "middle"]]
+   ["workers" 200 R2 "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x" [0 -28 "middle"]]
+   ["detectives" 760 R2 "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x" [0 -28 "middle"]]
+   ["integrator" 1200 R2 "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x" [0 -28 "middle"]]
    ;; row 3: merge and cleanup
-   ["merger" 200 R3 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -70 "middle"]]
-   ["janitor" 760 R3 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -88 "middle"]]
+   ["merger" 200 R3 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -28 "middle"]]
+   ["janitor" 760 R3 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -28 "middle"]]
    ;; row 4: judge, then main moves
    ["jurors" 160 R4 "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x" L-DN]
    ["judge" J1 R4 "Judge ant" ["scores the run 0-10: does the code" "match the plans? its own call, not an average"] "x" L-UP]
@@ -335,26 +335,26 @@
    "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops and requirements are not marked done."]})
 
 (def about-notes
-  "Note id -> [name about] for the coloured notes along the lines."
+  "Note id -> [name about] for the notes still drawn on the map: only the row wraps."
   {"to-row-2"  ["Row wrap" "The line continues on the next row; read the map like a page."]
    "to-row-3"  ["Row wrap" "The line continues on the next row; read the map like a page."]
-   "to-row-4"  ["Row wrap" "The line continues on the next row; read the map like a page."]
-   "saved-workflow" ["Saved workflow" "A plan may name another saved workflow as its job. The build script then runs that workflow in place of a worker ant, so Ishikari can drive other workflows."]
-   "built"     ["Detective starts at once" "No ant watches for finished work: the build script starts every ant, so it starts the task's detective the moment the worker returns."]
-   "bugs"      ["Fix loop rule" "The detective's fix plan goes back to the worker, the worker builds it, and the detective re-checks every open bug by id. 3 tries per bug."]
-   "clash"     ["Clash rule" "A task whose merge breaks the combined test takes in the tasks it clashes with, then goes through the fix loop. 2 rounds."]
-   "no-fix"    ["Judge passed" "Green: a score of 7 or more, or no gaps, means no fix round and main moves."]
-   "fix-round" ["Judge fix rule" "A score below 7 with gaps starts one fix round."]
-   "fix-fails" ["Failed judge fix" "Red: if the judge's fix fails, its branch is kept, main moves anyway and the verdict says why."]})
+   "to-row-4"  ["Row wrap" "The line continues on the next row; read the map like a page."]})
+
+(def line-notes
+  "Line name -> the short rules once written beside it, now shown in its panel."
+  {"g1"    ["a plan may run a saved workflow in place of a worker ant" "built: the script starts its detective at once" "7+, or no gaps: no fix round"]
+   "fix"   ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"]
+   "clash" ["fail: tasks clash: the task takes them in, then the fix loop; 2 rounds"]
+   "jfix"  ["below 7 and gaps: one fix round" "a failed fix keeps its branch; the verdict says why"]})
 
 (def items (atom []))
 
 (defn clickable
   "Wrap body in a clickable group with a tooltip, and register what it is."
-  [{:keys [id name code tip about src x y cls]} & body]
+  [{:keys [id name code tip about src sub x y cls]} & body]
   (when (some #(= id (:id %)) @items) (throw (ex-info (str "duplicate clickable id " id) {})))
   (let [i (count @items)]
-    (swap! items conj {:id id :name name :code (or code "") :tip tip :about about :src (or src "") :x x :y y})
+    (swap! items conj {:id id :name name :code (or code "") :tip tip :about about :src (or src "") :sub (vec sub) :x x :y y})
     (str "<g class=\"ck" (when cls (str " " cls)) "\" id=\"" (if (= cls "st") "st-" "it-") id "\" data-i=\"" i "\" tabindex=\"0\" role=\"button\">"
          "<title>" (esc (str name (when code (str " (" code ")")) ": " tip " Click for more.")) "</title>"
          (apply str body) "</g>")))
@@ -370,15 +370,16 @@
           "#pn{display:none}#pn.on{display:block}"
           "#pn div{box-sizing:border-box;width:420px;padding:14px 16px;border-radius:12px;background:#111A2E;border:1.5px solid " INDIGO ";"
           "color:" TXT ";font:14px/1.45 ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif;box-shadow:0 8px 30px #000a}"
-          "#pn b{display:block;font-size:17px}#pn small{display:block;color:" SUB ";font:12px ui-monospace,monospace;margin:2px 0 8px}#pn p{margin:0 0 10px}#pn code{color:" SUB ";font-size:12px}"
+          "#pn b{display:block;font-size:17px}#pn small{display:block;color:" SUB ";font:12px ui-monospace,monospace;margin:2px 0 8px}#pn p{margin:0 0 10px}#pn p.sum{color:" SUB "}#pn p.sum:empty{display:none}#pn code{color:" SUB ";font-size:12px}"
           "#pn i{float:right;font-style:normal;color:" SUB ";cursor:pointer}</style>")
-     "<foreignObject id=\"pn\" x=\"0\" y=\"0\" width=\"420\" height=\"400\"><div xmlns=\"http://www.w3.org/1999/xhtml\"><i title=\"Close (Esc)\">✕</i><b></b><small></small><p></p><code></code></div></foreignObject>"
+     "<foreignObject id=\"pn\" x=\"0\" y=\"0\" width=\"420\" height=\"400\"><div xmlns=\"http://www.w3.org/1999/xhtml\"><i title=\"Close (Esc)\">✕</i><b></b><small></small><p class=\"sum\"></p><p class=\"about\"></p><code></code></div></foreignObject>"
      (str "<script><![CDATA[\n"
           "(function(){\n"
           "var D=" (str/replace data "]]>" "]]\\u003e") ";\n"
           "var W=" W ",H=" H ",svg=document.documentElement,pn=document.getElementById('pn'),box=pn.firstChild;\n"
           "function show(i,px,py){var d=D[i];box.querySelector('b').textContent=d.name;\n"
-          " box.querySelector('small').textContent=d.id+(d.code?' \\u00b7 '+d.code:'');box.querySelector('p').textContent=d.about;\n"
+          " box.querySelector('small').textContent=d.id+(d.code?' \\u00b7 '+d.code:'');\n"
+          " box.querySelector('p.sum').textContent=(d.sub||[]).join(' ');box.querySelector('p.about').textContent=d.about;\n"
           " box.querySelector('code').textContent=d.src;box.querySelector('code').style.display=d.src?'':'none';pn.classList.add('on');\n"
           " var ax=px==null?d.x:px,ay=py==null?d.y:py,h=box.offsetHeight||200,x=ax+30,y=ay-20;\n"
           " if(x+420>W-10)x=ax-450;if(x<10)x=10;if(y+h>H-10)y=H-10-h;if(y<10)y=10;\n"
@@ -426,7 +427,7 @@
        path
        (let [[nm tip about] (or (about-lines name) (throw (ex-info (str "no about for line " name) {})))
              [x y] (nth pts (quot (count pts) 2))]
-         (clickable {:id (str "line-" name) :name nm :tip tip :about about :x x :y y}
+         (clickable {:id (str "line-" name) :name nm :tip tip :about about :sub (line-notes name) :x x :y y}
                     path (str "<path class=\"hit\" d=\"" (d pts) "\" stroke-width=\"20\"/>")))))
    [(note "to-row-2" (+ X 12) 290 ["to row 2"] :fill BLUE :size 13 :weight "700")]
    (for [[ln to more lead below cap] spurs
@@ -442,29 +443,20 @@
           (clickable {:id (str "junction-" ln) :name "Junction" :tip (str "Where the " (str/lower-case lname) " leaves the line.")
                       :about (str "Not a station: the point where the " (str/lower-case lname) " branches off. " labout) :x sx :y sy}
                      (str "<circle cx=\"" sx "\" cy=\"" sy "\" r=\"8\" fill=\"" TXT "\" stroke=\"" c "\" stroke-width=\"3\"/>"))))
-      (clickable {:id (str "spur-" ln) :name lname :tip head :about labout :x x :y y}
+      (clickable {:id (str "spur-" ln) :name lname :tip head :about labout :sub below :x x :y y}
                  (if (= cap :bin)
                    (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
-                        (txt (+ x 26) (+ y 14) [head] :fill c :size 13 :weight "700")
-                        (txt (+ x 26) (+ y 31) (or below []) :fill c :size 13 :lh 16))
-                   (str (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")
-                        (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16))))))
-   [(note "saved-workflow" 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
-    (note "built" 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
-    (note "bugs" 240 664 ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"] :fill GOLD :size 13)
-    (note "to-row-3" (+ X 12) 700 ["to row 3"] :fill INDIGO :size 13 :weight "700")
-    (note "to-row-4" (+ X 12) 1240 ["to row 4"] :fill INDIGO :size 13 :weight "700")
-    (note "clash" 1212 690 ["fail: tasks clash: the task takes" "them in, then the fix loop; 2 rounds"] :fill GOLD :size 13)
-    (note "no-fix" 720 (- R4 14) ["7+, or no gaps: no fix round"] :fill GREEN :size 13 :anchor "middle" :weight "700")
-    (note "fix-round" 440 1612 ["below 7 and gaps: one fix round"] :fill GOLD :size 13 :anchor "end" :weight "700")
-    (note "fix-fails" 740 1720 ["a failed fix keeps its branch;" "the verdict says why"] :fill RED :size 13 :anchor "middle")]
+                        (txt (+ x 26) (+ y 22) [head] :fill c :size 13 :weight "700"))
+                   (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")))))
+   [(note "to-row-3" (+ X 12) 700 ["to row 3"] :fill INDIGO :size 13 :weight "700")
+    (note "to-row-4" (+ X 12) 1240 ["to row 4"] :fill INDIGO :size 13 :weight "700")]
    (for [[id x y nm sub kind [dx dy an]] stations
          :let [{:keys [tip about src]} (detail id)]]
-     (clickable {:id id :cls "st" :name (str/replace nm "  ∥" "") :code (code id) :tip tip :about about :src src :x x :y y}
+     (clickable {:id id :cls "st" :name (str/replace nm "  ∥" "") :code (code id) :tip tip :about about :src src :sub sub :x x :y y}
                 (apply str (icon x y nm kind))
                 (str/replace (txt (+ x dx) (+ y dy) [nm] :size 16 :anchor an :weight "700")
                              "</text>" (str "<tspan dx=\"5\" font-size=\"11\" font-weight=\"400\" fill=\"" GREY "\">" (code id) "</tspan></text>"))
-                (txt (+ x dx) (+ y dy 19) sub :fill SUB :size 13 :anchor an :lh 16)))
+                ))
    (for [[n path c sec beg] trains
          :let [[lname] (about-lines (if (= path "build") "g1" (if (= path "fixloop") "fix" path)))]]
      (clickable {:id (str "train-" n) :name (str "Car " n) :tip (str "A sample task riding the " (str/lower-case lname) ".")
