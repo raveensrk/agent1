@@ -485,9 +485,13 @@
          :let [[lname] (about-lines (if (= path "build") "g1" (case path "fixloop" "fix" "jfixrun" "jfix" path)))]]
      (clickable {:id (str "train-" n) :name (str "Car " n) :tip (str "A sample task riding the " (str/lower-case lname) ".")
                  :about (str "The numbered cars are sample tasks moving through the run, so you can follow one. Car " n " rides the " (str/lower-case lname) "; the key in the bottom right says what each number shows.") :x 0 :y 0}
-                (str "<g filter=\"url(#g)\"><rect x=\"-14\" y=\"-11\" width=\"28\" height=\"22\" rx=\"6\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\"/>"
-                     "<text y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
-                     "<animateMotion dur=\"" sec "s\" begin=\"" (- beg) "s\" repeatCount=\"indefinite\"><mpath href=\"#L-" path "\"/></animateMotion></g>")))
+                ;; the car body turns with the track (rotate="auto"), its nose pointing the way it goes;
+                ;; the number rides the same path without turning, so it never reads upside down
+                (let [move (fn [rot] (str "<animateMotion dur=\"" sec "s\" begin=\"" (- beg) "s\" repeatCount=\"indefinite\"" rot "><mpath href=\"#L-" path "\"/></animateMotion>"))]
+                  (str "<g filter=\"url(#g)\"><path d=\"M-16,-11 H6 Q9,-11 11,-8 L18,0 L11,8 Q9,11 6,11 H-16 Q-19,11 -19,8 V-8 Q-19,-11 -16,-11 Z\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"
+                       (move " rotate=\"auto\"") "</g>"
+                       "<g><text y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
+                       (move "") "</g>"))))
    (for [[path sec what] [["ask" 6 "a round of questions"] ["res" 5 "a burst of research"]]]
      (clickable {:id (str "dot-" path) :name "Moving dot" :tip (str "Shows " what ".")
                  :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x 440 :y 200}
