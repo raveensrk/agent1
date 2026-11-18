@@ -372,12 +372,17 @@
                [x y] (last pts)
                [_ _ ty nm] (when to (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {}))))
                head (str lead (when to (str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)))]]
+     (str
+      ;; a spur that leaves a line between stations gets a junction dot, so it never branches from nowhere
+      (let [[sx sy] (first pts)]
+        (when-not (some (fn [[_ x2 y2]] (and (= x2 sx) (= y2 sy))) stations)
+          (str "<circle cx=\"" sx "\" cy=\"" sy "\" r=\"8\" fill=\"" TXT "\" stroke=\"" c "\" stroke-width=\"3\"/>")))
      (if (= cap :bin)
        (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
             (txt (+ x 26) (+ y 14) [head] :fill c :size 13 :weight "700")
             (txt (+ x 26) (+ y 31) (or below []) :fill c :size 13 :lh 16))
        (str (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")
-            (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16))))
+            (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16)))))
    [
     (txt 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
     (txt 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
