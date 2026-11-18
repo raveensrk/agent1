@@ -8,7 +8,7 @@
             [babashka.fs :as fs]
             [cheshire.core :as json]))
 
-(def W 2000) (def H 1380)
+(def W 2000) (def H 1160)
 (def BG "#0B1120") (def TXT "#F1F5F9") (def SUB "#A8B3C7")
 (def BLUE "#60A5FA") (def GREEN "#4ADE80") (def RED "#F87171") (def GOLD "#FBBF24") (def GREY "#94A3B8")
 (def INDIGO "#818CF8")
@@ -28,12 +28,12 @@
 
 (defn d [pts] (str "M" (str/join " L" (map (fn [[x y]] (str x "," y)) pts))))
 
-(def R1 200) (def R2 440) (def R3 760) (def R4 980)
+(def R1 200) (def R2 440) (def R3 760)
 (def X 1900)              ; where each row wraps down to the next
 (def J1 400) (def J2 1000) ; first and second Judge ant (the gold judge-fix dip runs between)
-(def DIP4 1070)           ; y of the judge-fix dip (row 4)
+(def DIP3 850)            ; y of the judge-fix dip (row 3)
 
-(def trunk [[200 R2] [X R2] [X 670] [60 670] [60 R3] [X R3] [X 900] [60 900] [60 R4] [1340 R4]])
+(def trunk [[200 R2] [X R2] [X 670] [60 670] [60 R3] [1340 R3]])
 (def lines ; name, colour, points, width, dash
   [["plan"    BLUE   [[120 R1] [X R1] [X 350] [60 350] [60 R2] [200 R2]] 12 ""]
    ["ask"     BLUE   [[440 R1] [440 90]] 7 ""]
@@ -45,11 +45,11 @@
    ["fixloop" "none" [[200 R2] [760 R2] [730 540] [230 540] [200 R2]] 8 ""]
    ["clash"   GOLD   [[1200 R2] [1200 600] [800 600] [760 R2]] 6 "10 6"]
    ["drop"    RED    [[660 540] [660 610]] 6 "10 6"]
-   ["mback"   RED    [[200 R3] [200 830]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
-   ["tnext"   RED    [[760 R3] [760 830]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
-   ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
-   ["after"   GREEN  [[1340 R4] [1780 R4]] 9 ""]
-   ["cfix"    RED    [[1580 R4] [1580 1060]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
+   ["mback"   RED    [[1460 R2] [1460 530]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
+   ["tnext"   RED    [[1720 R2] [1720 590]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
+   ["jfix"    GOLD   [[J1 R3] [460 DIP3] [J2 DIP3] [1060 R3]] 9 ""]
+   ["after"   GREEN  [[1340 R3] [1780 R3]] 9 ""]
+   ["cfix"    RED    [[1580 R3] [1580 840]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
 
 ;; id, x, y, name, sub lines, kind, label anchor [dx dy anchor].
 ;; The id never changes and is what spurs, details and links use; the short
@@ -66,24 +66,23 @@
    ["architect" 1420 R1 "Architect ant" ["writes architecture.md" "and one plan per task"] "st" L-UP]
    ["plans" 1700 R1 "Worker plans" ["one per task: title, files, after;" "checked before anything is built"] "files" L-DN]
    ["logbook" 1370 40 "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build and finish." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log" RIGHT]
-   ;; row 2: build, check, fix
+   ;; row 2: build, check, fix, then merge and clean up
    ["workers" 200 R2 "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x" [0 -28 "middle"]]
    ["detectives" 760 R2 "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x" [0 -28 "middle"]]
    ["integrator" 1200 R2 "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x" [0 -28 "middle"]]
-   ;; row 3: merge and cleanup
-   ["merger" 200 R3 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -28 "middle"]]
-   ["janitor" 760 R3 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -28 "middle"]]
-   ;; row 4: judge, then main moves
-   ["jurors" 160 R4 "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x" L-DN]
-   ["judge" J1 R4 "Judge ant" ["scores the run 0-10: does the code" "match the plans? its own call, not an average"] "x" L-UP]
-   ["judge-fix-worker" 500 DIP4 "Worker ant" ["closes the judge's gaps"] "st" L-DN]
-   ["judge-fix-detective" 660 DIP4 "Detective ant" ["checks the fix, runs the tests"] "st" L-UP]
-   ["judge-fix-merger" 820 DIP4 "Merger ant" ["fast-forwards the scratch copy to the fix;" "the fix lands only through this fast-forward"] "st" L-DN]
-   ["judge-again" J2 DIP4 "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st" [14 34 "start"]]
-   ["finisher" 1180 R4 "Finisher ant" ["fast-forwards main, removes worktrees," "appends the stage rows, runs the check"] "x" L-UP]
-   ["main" 1340 R4 "MAIN" ["fast-forward only," "never pushed"] "main" L-DN]
-   ["check" 1580 R4 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
-   ["req-done" 1780 R4 "req done" ["the main session marks the kept :ID:s" "once the check passed, or there is none"] "done" L-DN]])
+   ["merger" 1460 R2 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -28 "middle"]]
+   ["janitor" 1720 R2 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -28 "middle"]]
+   ;; row 3: judge, then main moves
+   ["jurors" 160 R3 "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x" L-DN]
+   ["judge" J1 R3 "Judge ant" ["scores the run 0-10: does the code" "match the plans? its own call, not an average"] "x" L-UP]
+   ["judge-fix-worker" 500 DIP3 "Worker ant" ["closes the judge's gaps"] "st" L-DN]
+   ["judge-fix-detective" 660 DIP3 "Detective ant" ["checks the fix, runs the tests"] "st" L-UP]
+   ["judge-fix-merger" 820 DIP3 "Merger ant" ["fast-forwards the scratch copy to the fix;" "the fix lands only through this fast-forward"] "st" L-DN]
+   ["judge-again" J2 DIP3 "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st" [14 34 "start"]]
+   ["finisher" 1180 R3 "Finisher ant" ["fast-forwards main, removes worktrees," "appends the stage rows, runs the check"] "x" L-UP]
+   ["main" 1340 R3 "MAIN" ["fast-forward only," "never pushed"] "main" L-DN]
+   ["check" 1580 R3 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
+   ["req-done" 1780 R3 "req done" ["the main session marks the kept :ID:s" "once the check passed, or there is none"] "done" L-DN]])
 
 ;; What a click on a station shows: a short line for the hover tooltip, the
 ;; full story for the panel, and where it lives. Keyed by [name x]: some names
@@ -171,12 +170,12 @@
     (when (not= (count m) (count stations)) (throw (ex-info "station ids must be unique" {})))
     m))
 
-(defn row-of [y] (cond (< y 350) 1 (< y 670) 2 (< y 900) 3 :else 4)) ; split at the row wraps
+(defn row-of [y] (cond (< y 350) 1 (< y 670) 2 :else 3)) ; split at the row wraps
 
 (def code
   "id -> short position code like r3s1: row, then station number left to right;\n  at the same x, the station on the row line comes first."
   (into {} (for [[r sts] (group-by (fn [[_ _ y]] (row-of y)) stations)
-                 [k [id]] (map-indexed vector (sort-by (fn [[_ x y]] [x (abs (- y ([R1 R2 R3 R4] (dec r))))]) sts))]
+                 [k [id]] (map-indexed vector (sort-by (fn [[_ x y]] [x (abs (- y ([R1 R2 R3] (dec r))))]) sts))]
              [id (str "r" r "s" (inc k))])))
 
 ;; spurs: a short dashed line from a station to a label naming where it goes.
@@ -279,7 +278,7 @@
 (defn legend
   "The key box in the bottom right."
   []
-  (let [kx 1440 ky 1190
+  (let [kx 1440 ky 970
         rows [[BLUE "1" "task on the plan line"] [INDIGO "2-6" "five worker tasks to MAIN"] [GOLD "7-8" "a bug through the fix loop"]
               [GREEN "10" "after main moves"] [GOLD "11" "the judge's fix round, below 7"]]
         ;; right column: each symbol drawn, not typed, so every browser shows the same
@@ -324,7 +323,7 @@
   {"plan"    ["Plan line" "Rows 1 to 2: from your task to the worker plans." "The blue line carries one task from Task through the investigator, the report, the requirement and the architect to the worker plans, then wraps down to row 2 where building starts."]
    "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
    "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
-   "g1"      ["Build line" "Rows 2 to 4: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
+   "g1"      ["Build line" "Rows 2 to 3: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
    "fix"     ["Fix loop" "A bug goes back to the worker and is re-checked." "Yellow means a warning: the detective found a bug and planned its fix. The worker builds the fix and the detective re-checks, up to 3 tries per bug and 3 fix rounds."]
    "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through the fix loop. 2 rounds at most."]
    "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "After 3 tries on one bug or 3 fix rounds the task drops, and tasks built on it drop too. Its branch is kept for a later look and the final report lists it."]
@@ -338,7 +337,7 @@
   "Note id -> [name about] for the notes still drawn on the map: only the row wraps."
   {"to-row-2"  ["Row wrap" "The line continues on the next row; read the map like a page."]
    "to-row-3"  ["Row wrap" "The line continues on the next row; read the map like a page."]
-   "to-row-4"  ["Row wrap" "The line continues on the next row; read the map like a page."]})
+})
 
 (def line-notes
   "Line name -> the short rules once written beside it, now shown in its panel."
@@ -415,9 +414,8 @@
                (txt 330 44 ["Read it like a page: each row left to right, then wrap to the next row."] :fill SUB :size 15))]
    ;; row bands
    (for [[k y label c about] [[1 R1 "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2: the investigator asks you its questions, then the plan stage writes the requirement, the design and one plan per task. The only row where you are asked anything."]
-                              [2 R2 "3 BUILD  ·  4 CHECK  ·  5 FIX" INDIGO "Steps 3 to 5: worker ants build the plans in parallel, detective ants check each one and plan fixes, and the integrator tests all passing tasks together."]
-                              [3 R3 "6 FINISH: MERGE  ·  CLEANUP" INDIGO "Step 6, first half: the merger lands the tasks in a scratch copy and the janitor cleans up after them. Main has not moved yet."]
-                              [4 R4 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half: the judge scores the run against the plans, the finisher moves main forward and runs the check, and the requirements are marked done."]]]
+                              [2 R2 "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6: worker ants build the plans in parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
+                              [3 R3 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half: the judge scores the run against the plans, the finisher moves main forward and runs the check, and the requirements are marked done."]]]
      (clickable {:id (str "row-" k) :name (str "Row " k) :tip label :about about :src "skills/ishikari/SKILL.md" :x (- W 30) :y (if (= y R1) 120 (- y 50))}
                 (txt (- W 30) (if (= y R1) 120 (- y 50)) [label] :fill c :size 13 :anchor "end" :weight "800")))
    (for [[name c pts w dash] lines
@@ -448,8 +446,16 @@
                    (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
                         (txt (+ x 26) (+ y 22) [head] :fill c :size 13 :weight "700"))
                    (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")))))
-   [(note "to-row-3" (+ X 12) 560 ["to row 3"] :fill INDIGO :size 13 :weight "700")
-    (note "to-row-4" (+ X 12) 830 ["to row 4"] :fill INDIGO :size 13 :weight "700")]
+   ;; a loop that rejoins a line between stations gets a junction dot too
+   (for [ln ["jfix"]
+         :let [[_ c pts] (some #(when (= (first %) ln) %) lines)
+               [sx sy] (last pts)
+               [lname _ labout] (about-lines ln)]
+         :when (not-any? (fn [[_ x2 y2]] (and (= x2 sx) (= y2 sy))) stations)]
+     (clickable {:id (str "junction-" ln "-end") :name "Junction" :tip (str "Where the " (str/lower-case lname) " rejoins the line.")
+                 :about (str "Not a station: the point where the " (str/lower-case lname) " rejoins. " labout) :x sx :y sy}
+                (str "<circle cx=\"" sx "\" cy=\"" sy "\" r=\"8\" fill=\"" TXT "\" stroke=\"" c "\" stroke-width=\"3\"/>")))
+   [(note "to-row-3" (+ X 12) 560 ["to row 3"] :fill INDIGO :size 13 :weight "700")]
    (for [[id x y nm sub kind [dx dy an]] stations
          :let [{:keys [tip about src]} (detail id)]]
      (clickable {:id id :cls "st" :name (str/replace nm "  ∥" "") :code (code id) :tip tip :about about :src src :sub sub :x x :y y}
