@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 TOOL = os.path.join(os.path.dirname(HERE), "scripts", "ishikari.py")
 TIMEOUT = 30  # seconds for each call
 SKILL = os.path.dirname(HERE)
-METRO = os.path.join(SKILL, "design", "metro.py")
+METRO = os.path.join(SKILL, "design", "metro.clj")
 SVG = os.path.join(SKILL, "design", "ishikari-metro.svg")
 SCRIPTS = [os.path.join(SKILL, "scripts", f"ishikari-{n}.js") for n in ("plan", "build", "finish")]
 NS = "{http://www.w3.org/2000/svg}"
@@ -269,10 +269,10 @@ def text_box(t):
 def test_metro_map():
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "map.svg")
-        subprocess.run([sys.executable, METRO, out], check=True, timeout=TIMEOUT)
+        subprocess.run(["bb", METRO, out], check=True, timeout=TIMEOUT)
         assert os.path.isfile(out)
         with open(out, "rb") as a, open(SVG, "rb") as b:
-            assert a.read() == b.read(), "ishikari-metro.svg is stale: run python3 design/metro.py"
+            assert a.read() == b.read(), "ishikari-metro.svg is stale: run bb design/metro.clj"
     texts, w, h = metro_texts(SVG)
     names = [t["s"] for t in texts if t["size"] == 16]
     for script in SCRIPTS:
