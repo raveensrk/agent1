@@ -26,7 +26,7 @@ its job. The build script runs that workflow in place of a worker ant.
     read only, never secrets, and report back. It is one live agent for the
     whole talk, run by the skill, not a workflow: it reads the repo once and
     gets each answer as a message. It asks up to 4 independent questions at
-    a time with `/ask-simple`, at most 8 in all, with a best-guess count:
+    a time with `/ask-simple`, with a best-guess count:
     "Questions 1-3 of about 5". It
     stops once nothing important is unclear, then writes
     `investigation_report.md` in the run's plans folder: goal, scope, every
@@ -85,7 +85,7 @@ its job. The build script runs that workflow in place of a worker ant.
       each open bug by its id.
     - **Memory:** each round sees every earlier round's cause, plan and
       outcome, so it never repeats a failed idea.
-    - **Give up:** a bug still open after 3 tries drops the task, and tasks
+    - **Give up:** a bug still open after its last try drops the task, and tasks
       built on it drop too; the final report lists them.
     - An ant that crashes is retried once and never counts as a bug.
 
@@ -119,10 +119,12 @@ They run once per finish, on the merged result, before main moves.
   branch is kept and the next plan stage hands its plan to the investigator ant,
   which may ask about it. One cleanup per run: a dropped cleanup's own run gets
   no janitor, so cleanups never chain.
-- **Philosopher ant** runs after the cleanup, on the code that will land, and
-  questions all the merged work together and keeps its best critiques: 1 by
-  default, set with `--critiques N` (0 skips it). It only comments, in the critiques board, and never blocks. On
-  the next task, the investigator ant turns the ones that matter into questions.
+- **Philosopher ant** runs alongside the janitor's cleanup, on the merged code,
+  and questions all the merged work together and keeps its best critiques: 1
+  by default, set with `--critiques N` (0 skips it). It only comments, in the
+  critiques board, and never blocks. The scratch branch fast-forwards to the
+  cleanup only after both end. On the next task, the investigator ant turns
+  the ones that matter into questions.
 
 ## Rules
 
@@ -193,11 +195,11 @@ and stops to ask the user only in step 2.
    `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
    script paths, and the repo's saved `testCommand` and `checkCommand`.
-2. Run `ishikari-plan` with `env` and the task. While it returns a question,
-   ask it alone with `/ask-simple`, then run again with every answer so far
-   and the research findings; a skipped answer means "use the recommended
-   one". The plans go straight to build. First
-   `ishikari.py req add` writes the requirement (none for a refactor), the main
+2. The live investigator asks its questions, then `ishikari-plan` writes the
+   requirement, design and plans (see
+   [Plan](../skills/ishikari/SKILL.md#2-plan)). The plans go straight to
+   build. First `ishikari.py req add` writes the requirement (none for a
+   refactor), the main
    session commits it, and `ishikari.py boards remove` drops the answered
    critiques. `ishikari.py config` saves the test and check commands.
 3. Run `ishikari-build` with `env` and the plans. Every task
@@ -213,8 +215,9 @@ and stops to ask the user only in step 2.
    round, and lands with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The philosopher's
    new critiques are listed in the result. Once the check passes,
-   `ishikari.py req done` marks the run's requirements DONE. Every loop cap
-   is in the skill's [Limits](../skills/ishikari/SKILL.md#limits) table.
+   `ishikari.py req done` marks the run's requirements DONE. The skill's
+   [Limits](../skills/ishikari/SKILL.md#limits) table is the source of truth
+   for every loop cap.
 
 ## Diagram
 

@@ -11,24 +11,24 @@ argument-hint: "<task> [repo path] [--critiques N]"
 Drive three workflows for one task. A running workflow cannot ask the user, so
 this skill runs them in turn. It asks the user only the investigator ant's
 questions in step 2. Answering them approves the whole run, merge to main
-included. Never ask for approval of the requirement or the plans. After that, never
-ask: decide by the rules in steps 3 and 4 and report at the end.
+included. Never ask for approval of the requirement or the plans. After that,
+never ask: decide by the rules in steps 3 and 4 and report at the end.
 
 Design, rules and diagram:
 [age_of_agents/index.md](../../age_of_agents/index.md).
 
 ## Files
 
-| File                         | Job                                          |
-| ---------------------------- | -------------------------------------------- |
-| `scripts/ishikari.py`        | setup, config; only writer of boards, reqs   |
-| `scripts/ishikari-plan.js`   | investigate, requirement, design, plans      |
-| `scripts/ishikari-build.js`  | build, check, fix, combined test             |
-| `scripts/ishikari-finish.js` | merge, upkeep, move main                     |
-| `assets/boards/*.md`         | board templates: bulletin, bounty, critiques |
-| `assets/prompts/investigator.md` | the live investigator ant's brief      |
-| `tests/test_ishikari.py`    | the tool: setup, boards, requirements, guards |
-| `tests/test_workflows.mjs`   | the scripts' own logic, with stand-in ants   |
+| File                             | Job                                     |
+| -------------------------------- | --------------------------------------- |
+| `scripts/ishikari.py`            | setup, config; sole boards, reqs writer |
+| `scripts/ishikari-plan.js`       | investigate, requirement, design, plans |
+| `scripts/ishikari-build.js`      | build, check, fix, combined test        |
+| `scripts/ishikari-finish.js`     | merge, upkeep, move main                |
+| `assets/boards/*.md`             | templates: bulletin, bounty, critiques  |
+| `assets/prompts/investigator.md` | the live investigator ant's brief       |
+| `tests/test_ishikari.py`         | tool: setup, boards, reqs, guards       |
+| `tests/test_workflows.mjs`       | script logic, with stand-in ants        |
 
 Tests: `timeout 120 python3 tests/test_ishikari.py` and
 `timeout 120 node --test tests/test_workflows.mjs`.
@@ -64,8 +64,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 | Questions in all (live investigator)   | 8     | investigator prompt    |
 | Research bursts per question (2b)      | 2     | plan `MAX_RESEARCH`    |
 | Researchers per burst (2b)             | 5     | plan `MAX_RESEARCHERS` |
-| Same question twice (2b)               | error | plan                   |
-| Build rounds for merge bugs, waiting   | 2     | this skill, step 4     |
+| Same question twice (2b)               | error | plan same-question     |
+| Build rounds for merge bugs, waiting   | 2     | skill rule, step 4     |
 | Check-fix rounds                       | 1     | finish `checkFixDone`  |
 | Cleanup fix rounds                     | 1     | finish                 |
 
@@ -83,8 +83,12 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   checkout. That checkout must be on the main branch with no uncommitted
   tracked changes.
 - Setup stops with a message:
-  - no main branch found: ask the user which branch, rerun with `--main`;
-  - wrong branch or uncommitted changes: show the message and stop.
+  - `no main branch in <repo>: ...; pass --main <branch>` or
+    `main branch <m> does not exist in <top>; pass --main <branch>`: ask the
+    user which branch, rerun with `--main`;
+  - `<top> is on <x>, not the main branch <m>; check out <m> first`,
+    `<top> has uncommitted changes; commit or stash them first` or
+    `not a git repo: <repo>`: show the message and stop.
 
 ## 2. Plan
 
@@ -155,7 +159,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   drop what is left.
 - `checkFix` set (check failed, no check-fix yet): run one build round with
   `bugs: [checkFix]`: no branch, so a new task starts from the moved main.
-  Then finish again with `checkFixDone: true`. `checkFixRefused`: the check
+  Then finish again with `checkFixDone: true` (finish also assumes it when
+  `check-fix` is in `approved` or `drop`). `checkFixRefused`: the check
   still fails; stop and report `check.output`. Do not mark requirements done.
 - `mainMoved: false` with no bugs left to fix: stop and report the reason.
   Nothing is lost; finish can run again once it is fixed.
