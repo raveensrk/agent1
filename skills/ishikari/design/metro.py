@@ -55,7 +55,7 @@ stations = [
  (660,750,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"drop",RIGHT),
  # row 3: merge and cleanup
  (200,R3,"Merger ant",["merges in a straight line in a scratch copy,","or reuses build's trial merge; then checks","its own merge with git cherry"],"x",(0,-70,"middle")),
- (480,1180,"merge failed",["a conflict, failed tests, or a task","git finds missing: next build round;","max 2 extra build rounds"],"term",RIGHT),
+ (480,1180,"merge failed",["a conflict, failed tests, or a task","git finds missing: next build round;","max 2 extra build rounds"],"retry",RIGHT),
  (760,R3,"Janitor ant",["cleans up dead code and mess itself: edits,","runs the tests, commits, lands it only if","they pass. Skipped under 100 changed lines;","a cleanup run has no janitor"],"x",(0,-88,"middle")),
  (760,1210,"Dropped cleanup",["tests failed: branch kept,","its note offered as the next Task"],"drop",RIGHT),
  # row 4: judge, then main moves
@@ -125,6 +125,10 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
                  f'<line x1="{x-15}" y1="{y-12}" x2="{x+15}" y2="{y-12}" stroke="{TXT}" stroke-width="4" stroke-linecap="round"/>'
                  f'<path d="M{x-5},{y-12} L{x-5},{y-17} L{x+5},{y-17} L{x+5},{y-12}" fill="none" stroke="{TXT}" stroke-width="3" stroke-linejoin="round"/>')
         o.append("".join(f'<line x1="{x+k*5}" y1="{y-3}" x2="{x+k*4.4}" y2="{y+10}" stroke="{GREY}" stroke-width="2"/>' for k in (-1, 0, 1)))
+    elif kind == "retry":  # a loop arrow: an open circle with an arrowhead, back to build
+        o.append(f'<circle cx="{x}" cy="{y}" r="16" fill="{BG}"/>'
+                 f'<path d="M{x+12},{y-7} A13,13 0 1 0 {x+13},{y+3}" fill="none" stroke="{TXT}" stroke-width="4" stroke-linecap="round"/>'
+                 f'<path d="M{x+5},{y-10} L{x+14},{y-9} L{x+15},{y-18}" fill="none" stroke="{TXT}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>')
     elif kind == "end":
         o.append(f'<line x1="{x-16}" y1="{y}" x2="{x+16}" y2="{y}" stroke="{TXT}" stroke-width="7" stroke-linecap="round"/>')
     else:
