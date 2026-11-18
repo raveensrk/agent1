@@ -43,10 +43,10 @@ stations = [
  (440,R1,"Investigator ant",["one live agent run by the skill: reads","the repo once, gets each answer as a message;","no Agent tool: the plan workflow runs it"],"x",(-22,-74,"end")),
  (440,90,"You",["up to 4 questions a round (/ask-simple),","8 in all; answering approves the whole run"],"term",(26,-6,"start")),
  (440,300,"Researcher ants  ∥",["up to 5 at once, web + computer,","read only; the investigator waits"],"end",(24,-4,"start")),
- (780,R1,"investigation_report.md",["written when nothing is unclear;","the investigator is stopped"],"st",L_DN),
+ (780,R1,"investigation_report.md",["written when nothing is unclear;","the investigator is stopped"],"file",L_DN),
  (1100,R1,"Add requirement ant",["drafts the requirement entry;","the main session pipes it into ishikari.py req add;","no requirements file: no add requirement ant"],"st",L_DN),
  (1420,R1,"Architect ant",["writes architecture.md","and one plan per task"],"st",L_UP),
- (1700,R1,"Worker plans",["one per task: title, files, after;","checked before anything is built"],"st",L_DN),
+ (1700,R1,"Worker plans",["one per task: title, files, after;","checked before anything is built"],"files",L_DN),
  (1370,40,"Logbook",["logbook clerk ant: appends each ant's entry","the moment the ant replies, one clerk at a time, in plan, build and finish.","The live investigator gets only an investigated entry.","Build and finish add a summary at the end. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",RIGHT),
  # row 2: build, check, fix
  (200,R2,"Worker ants  ∥",["max 5, one worktree each,","code + tests + docs;","stuck: next fix round"],"x",(0,-84,"middle")),
@@ -112,6 +112,14 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
         pg = lambda sx: f'<path d="M{x},{y-10} Q{x+sx*9},{y-15} {x+sx*18},{y-11} L{x+sx*18},{y+13} Q{x+sx*9},{y+9} {x},{y+14} Z" fill="{BG}" stroke="{TXT}" stroke-width="3" stroke-linejoin="round"/>'
         o.append(pg(-1) + pg(1) + f'<line x1="{x}" y1="{y-10}" x2="{x}" y2="{y+14}" stroke="{TXT}" stroke-width="3"/>')
         o.append("".join(f'<line x1="{x+sx*4}" y1="{y-4+k*6}" x2="{x+sx*14}" y2="{y-5+k*6}" stroke="{GREY}" stroke-width="1.5"/>' for sx in (-1, 1) for k in range(3)))
+    elif kind in ("file", "files"):  # a page with a folded corner; "files" stacks two behind it
+        def page(px, py, sw):
+            return (f'<path d="M{px-11},{py-15} L{px+5},{py-15} L{px+11},{py-9} L{px+11},{py+15} L{px-11},{py+15} Z" fill="{BG}" stroke="{TXT}" stroke-width="{sw}" stroke-linejoin="round"/>'
+                    f'<path d="M{px+5},{py-15} L{px+5},{py-9} L{px+11},{py-9}" fill="none" stroke="{TXT}" stroke-width="{sw}" stroke-linejoin="round"/>')
+        if kind == "files":
+            o.append(page(x + 8, y - 8, 3) + page(x + 4, y - 4, 3))
+        o.append(page(x, y, 4))
+        o.append("".join(f'<line x1="{x-6}" y1="{y-3+k*6}" x2="{x+6}" y2="{y-3+k*6}" stroke="{GREY}" stroke-width="1.5"/>' for k in range(3)))
     elif kind == "end":
         o.append(f'<line x1="{x-16}" y1="{y}" x2="{x+16}" y2="{y}" stroke="{TXT}" stroke-width="7" stroke-linecap="round"/>')
     else:

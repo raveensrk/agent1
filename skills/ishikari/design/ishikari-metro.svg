@@ -46,7 +46,8 @@
 <polygon points="424.0,300.0 432.0,286.1 448.0,286.1 456.0,300.0 448.0,313.9 432.0,313.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="464" y="296" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Researcher ants  ∥</text>
 <text class="h" x="464" y="315" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">up to 5 at once, web + computer,</text><text class="h" x="464" y="331" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">read only; the investigator waits</text>
-<circle cx="780" cy="200" r="9" fill="#F1F5F9"/>
+<path d="M769,185 L785,185 L791,191 L791,215 L769,215 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="4" stroke-linejoin="round"/><path d="M785,185 L785,191 L791,191" fill="none" stroke="#F1F5F9" stroke-width="4" stroke-linejoin="round"/>
+<line x1="774" y1="197" x2="786" y2="197" stroke="#94A3B8" stroke-width="1.5"/><line x1="774" y1="203" x2="786" y2="203" stroke="#94A3B8" stroke-width="1.5"/><line x1="774" y1="209" x2="786" y2="209" stroke="#94A3B8" stroke-width="1.5"/>
 <text class="h" x="780" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">investigation_report.md</text>
 <text class="h" x="780" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">written when nothing is unclear;</text><text class="h" x="780" y="269" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">the investigator is stopped</text>
 <polygon points="1084.0,200.0 1092.0,186.1 1108.0,186.1 1116.0,200.0 1108.0,213.9 1092.0,213.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
@@ -55,7 +56,9 @@
 <polygon points="1404.0,200.0 1412.0,186.1 1428.0,186.1 1436.0,200.0 1428.0,213.9 1412.0,213.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1420" y="140" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Architect ant</text>
 <text class="h" x="1420" y="159" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">writes architecture.md</text><text class="h" x="1420" y="175" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">and one plan per task</text>
-<circle cx="1700" cy="200" r="9" fill="#F1F5F9"/>
+<path d="M1697,177 L1713,177 L1719,183 L1719,207 L1697,207 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><path d="M1713,177 L1713,183 L1719,183" fill="none" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><path d="M1693,181 L1709,181 L1715,187 L1715,211 L1693,211 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><path d="M1709,181 L1709,187 L1715,187" fill="none" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/>
+<path d="M1689,185 L1705,185 L1711,191 L1711,215 L1689,215 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="4" stroke-linejoin="round"/><path d="M1705,185 L1705,191 L1711,191" fill="none" stroke="#F1F5F9" stroke-width="4" stroke-linejoin="round"/>
+<line x1="1694" y1="197" x2="1706" y2="197" stroke="#94A3B8" stroke-width="1.5"/><line x1="1694" y1="203" x2="1706" y2="203" stroke="#94A3B8" stroke-width="1.5"/><line x1="1694" y1="209" x2="1706" y2="209" stroke="#94A3B8" stroke-width="1.5"/>
 <text class="h" x="1700" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Worker plans</text>
 <text class="h" x="1700" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per task: title, files, after;</text><text class="h" x="1700" y="269" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">checked before anything is built</text>
 <path d="M1370,30 Q1361,25 1352,29 L1352,53 Q1361,49 1370,54 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><path d="M1370,30 Q1379,25 1388,29 L1388,53 Q1379,49 1370,54 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><line x1="1370" y1="30" x2="1370" y2="54" stroke="#F1F5F9" stroke-width="3"/>
