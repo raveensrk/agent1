@@ -18,9 +18,9 @@ lines = [  # name, colour, points, width, dash
  ("ask",   GOLD,  [(440,R1),(440,90)], 7, ""),
  ("res",   BLUE,  [(440,R1),(440,290)], 7, ""),
  # "build" is the trains' route only (drawn invisible): it follows the cleanup branch through row 3.
- ("build", "none", [(200,R2),(1320,R2),(1600,R2),(1600,820),(60,820),(60,R3),(320,R3),(440,R3),(500,1150),(1020,1150),(1080,R3),(1600,R3),(1600,1390),(60,1390),(60,R4),(560,R4)], 12, ""),
- ("g1",    GREEN, [(200,R2),(1320,R2),(1600,R2),(1600,820),(60,820),(60,R3),(320,R3)], 12, ""),
- ("g2",    GREEN, [(1080,R3),(1600,R3),(1600,1390),(60,1390),(60,R4),(560,R4)], 12, ""),
+ ("build", "none", [(200,R2),(1320,R2),(1600,R2),(1600,820),(60,820),(60,R3),(440,R3),(500,1150),(940,1150),(1000,R3),(1600,R3),(1600,1390),(60,1390),(60,R4),(560,R4)], 12, ""),
+ ("g1",    GREEN, [(200,R2),(1320,R2),(1600,R2),(1600,820),(60,820),(60,R3),(440,R3)], 12, ""),
+ ("g2",    GREEN, [(1000,R3),(1600,R3),(1600,1390),(60,1390),(60,R4),(560,R4)], 12, ""),
  ("bugin", RED,   [(760,R2),(760,640),(700,700),(620,700)], 8, ""),
  ("clash", RED,   [(1040,R2),(1040,700),(620,700)], 6, "10 6"),
  ("bugout",RED,   [(620,700),(240,700),(200,660),(200,R2)], 8, ""),
@@ -28,9 +28,9 @@ lines = [  # name, colour, points, width, dash
  ("logA",  GREY,  [(1320,R2),(1320,646)], 4, "4 6"),
  ("drop",  RED,   [(620,700),(620,770)], 6, ""),
  ("mfail", RED,   [(200,R3),(200,1170)], 6, "10 6"),
- ("tidy",  TEAL,  [(320,R3),(440,R3),(500,1150),(560,1150),(760,1150),(1020,1150),(1080,R3)], 9, ""),
+ ("tidy",  TEAL,  [(440,R3),(500,1150),(560,1150),(760,1150),(940,1150),(1000,R3)], 9, ""),
  ("tdrop", TEAL,  [(760,1150),(760,1260)], 6, "10 6"),
- ("phil",  PINK,  [(320,R3),(380,950),(1020,950),(1080,R3)], 9, ""),
+ ("crit",  GREY,  [(1200,R3),(1200,950)], 6, "4 6"),
  ("after", PURP,  [(560,R4),(1160,R4)], 9, ""),
  ("cfix",  PURP,  [(860,R4),(860,1630)], 6, "10 6"),
 ]
@@ -53,14 +53,13 @@ stations = [
  (620,770,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",(26,-4,"start")),
  (200,R3,"Merger ant",["straight line or build's trial","merge; Verifier Ant: git cherry"],"x",(0,-58,"middle")),
  (200,1170,"merge failed",["next build round; also when the","verifier finds a task missing"],"term",(26,-4,"start")),
- (440,R3,"Janitor ant",["cleanup plan for this run's mess,","built + checked before main moves"],"x",(26,-58,"start")),
+ (440,R3,"Janitor ant",["cleanup plan for this run's mess,","built + checked before main moves"],"x",L_UP),
  (560,1150,"Cleanup worker",["builds it on top of the merge"],"st",(0,34,"middle")),
  (760,1150,"Cleanup inspector",["plan + tests = combined test;","fail: one fix round"],"st",(0,-60,"middle")),
  (760,1260,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
- (320,R3,"",[],"st",L_UP),
- (560,950,"Philosopher ant",["reviews the merged tasks, not the cleanup;","1 best critique (--critiques N), never blocks"],"x",(0,-68,"middle")),
- (840,950,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"log",(0,34,"middle")),
- (1080,R3,"both done",["main moves next, on row 4"],"st",(26,40,"start")),
+ (1200,R3,"Philosopher ant",["after the cleanup: reviews the merged","tasks and the cleanup; 1 best critique","(--critiques N), never blocks"],"x",(26,40,"start")),
+ (1200,950,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"log",(-26,-4,"end")),
+ (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
  (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
  (860,R4,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
@@ -82,7 +81,6 @@ for name, c, pts, w, dash in lines:
 o.append(txt(1612, 290, ["to row 2"], BLUE, 13, weight="700"))
 o.append(txt(480, 474, ["built: the script starts", "its inspector at once"], GREEN, 13, "middle"))
 o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
-o.append(txt(200, 905, ["after the merge, two jobs at once"], PINK, 13, "middle", "700"))
 o.append(txt(1612, 1240, ["to row 4"], GREEN, 13, weight="700"))
 o.append(txt(1330, 590, ["end of build: written once"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
@@ -115,7 +113,7 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
 # numbered trains
 trains = [(1, "plan", BLUE, 20, 0), (2, "build", GREEN, 28, 0), (3, "build", GREEN, 28, 5.6), (4, "build", GREEN, 28, 11.2),
           (5, "build", GREEN, 28, 16.8), (6, "build", GREEN, 28, 22.4), (7, "bugin", RED, 5, 0), (8, "bugout", RED, 8, 0),
-          (9, "tidy", TEAL, 8, 0), (10, "after", PURP, 5, 0), (11, "phil", PINK, 8, 0)]
+          (9, "tidy", TEAL, 8, 0), (10, "after", PURP, 5, 0)]
 for n, path, c, sec, beg in trains:
     o.append(f'<g filter="url(#g)"><rect x="-14" y="-11" width="28" height="22" rx="6" fill="#FDE047" stroke="{c}" stroke-width="3"/>'
              f'<text y="5" font-size="14" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>'
@@ -126,7 +124,7 @@ for path, sec in [("ask", 6), ("res", 5)]:
 kx, ky = 1260, 1480
 o.append(f'<rect x="{kx}" y="{ky}" width="430" height="160" rx="12" fill="#0F172A" stroke="#334155"/>')
 rows = [(BLUE, "1", "task on the plan line"), (GREEN, "2-6", "five worker tasks to MAIN"), (RED, "7-8", "a bug through the fix loop"),
-        (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves"), (PINK, "11", "the philosopher, alongside")]
+        (TEAL, "9", "the janitor's cleanup"), (PURP, "10", "after main moves")]
 for i, (c, n, t) in enumerate(rows):
     y = ky + 24 + i * 20
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')

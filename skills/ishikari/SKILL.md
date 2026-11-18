@@ -173,8 +173,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
     tip are ancestors of it; else it merges from main;
   - a verifier ant checks each merged task with `git cherry`; a task the
     merger called merged but git finds missing comes back as a merge bug;
-  - the philosopher runs in parallel with the janitor's cleanup; the scratch
-    branch fast-forwards to the cleanup after both end.
+  - the philosopher runs after the janitor's cleanup has landed or been
+    dropped, so its critiques cover the cleanup too.
 - Report once, at the end: what landed on main, each task's notes and nits,
   each dropped task with why and its bugs, the check, each new critique (one
   line each from `critiques`) and the cleanup: `landed`, or dropped with its

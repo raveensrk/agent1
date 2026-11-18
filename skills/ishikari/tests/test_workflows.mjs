@@ -210,15 +210,14 @@ function finishWith(answer) {
   }).then(r => ({ ...r, fin: prompts.find(p => p.includes('finisher ant')) }))
 }
 
-test('finish: a checked cleanup lands before main moves, philosopher beside it', async () => {
+test('finish: a checked cleanup lands before main moves, philosopher after it', async () => {
   const { out, calls, fin } = await finishWith(o =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' }
       : o.label.startsWith('inspector') ? { bugs: [] }
       : o.label === 'merger-ant:cleanup' ? { ok: true, sha: 'def' } : null)
   assert.deepEqual(out.cleanup, { title: 'tidy', landed: true })
   assert.equal(out.sha, 'def')
-  assert.deepEqual(calls.filter(c => c !== 'philosopher-ant').slice(1, 5), ['janitor-ant', 'worker-ant:cleanup', 'inspector-ant:cleanup:1', 'merger-ant:cleanup'])
-  assert.ok(calls.includes('philosopher-ant'))
+  assert.deepEqual(calls.slice(1, 6), ['janitor-ant', 'worker-ant:cleanup', 'inspector-ant:cleanup:1', 'merger-ant:cleanup', 'philosopher-ant'])
   assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
 })
 
@@ -319,7 +318,7 @@ test('plan: a live investigation skips Review', async () => {
   assert.ok(!calls.some(c => c.startsWith('investigator')))
 })
 
-// ---- finish: parallel philosopher, trial-merge reuse, verified merges, check-fix cap ----
+// ---- finish: philosopher after cleanup, trial-merge reuse, verified merges, check-fix cap ----
 const SHA = 'aaaaaaa', TOG = 'bbbbbbb'
 const T = id => ({ id, branch: `ishikari/r1/${id}` })
 function finishRun(args, answer) {
@@ -330,14 +329,12 @@ function finishRun(args, answer) {
   }).then(r => ({ ...r, prompts }))
 }
 
-test('finish: the philosopher runs beside the janitor chain', async () => {
-  let release
-  const gate = new Promise(r => { release = r })
+test('finish: the philosopher starts only after the janitor ends', async () => {
+  let janitorDone = false
   const { out } = await run('ishikari-finish.js', { env, approved: [T('a')] }, async (p, o) => {
     if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
-    // The janitor waits for the philosopher: sequential code would hang here.
-    if (o.label === 'janitor-ant') { await gate; return { needed: false, title: '' } }
-    if (o.label === 'philosopher-ant') { release(); return { critiques: [{ target: 't', critique: 'c' }] } }
+    if (o.label === 'janitor-ant') { await new Promise(r => setTimeout(r, 5)); janitorDone = true; return { needed: false, title: '' } }
+    if (o.label === 'philosopher-ant') { assert.ok(janitorDone); return { critiques: [{ target: 't', critique: 'c' }] } }
     return { moved: true, reason: '' }
   })
   assert.equal(out.critiques.length, 1)
@@ -397,8 +394,8 @@ test('finish: one check-fix round, a second is refused', async () => {
   assert.equal(out.stage, 'error')
 })
 
-// ---- judge round 1: ff after the philosopher, tip checks, verifier strictness ----
-test('finish: the cleanup fast-forward waits for the philosopher', async () => {
+// ---- judge round 1: philosopher after the ff, tip checks, verifier strictness ----
+test('finish: the philosopher reads after the cleanup fast-forward', async () => {
   const { calls } = await run('ishikari-finish.js', { env, approved: [T('a')] }, async (p, o) => {
     if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label === 'janitor-ant') return { needed: true, title: 'tidy' }
@@ -408,7 +405,7 @@ test('finish: the cleanup fast-forward waits for the philosopher', async () => {
     if (o.label === 'merger-ant:cleanup') return { ok: true, sha: 'def' }
     return { moved: true, reason: '' }
   })
-  assert.ok(calls.indexOf('merger-ant:cleanup') > calls.indexOf('philosopher-ant'))
+  assert.ok(calls.indexOf('philosopher-ant') > calls.indexOf('merger-ant:cleanup'))
 })
 
 test('finish: both trial-merge reuse paths check each reused branch tip', async () => {

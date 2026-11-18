@@ -308,15 +308,16 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
     if (ff && ff.ok) { cleanup = { title: readyFF.title, landed: true }; sha = ff.sha || sha }
     else { cleanup = { title: readyFF.title, file: cleanPlan, branch: cleanBranch, landed: false, reason: 'could not fast-forward the scratch branch' }; cleanKept = true }
   }
-  // The philosopher only reads ${scratchTree} and the cleanup works in its own
-  // worktree, so they run side by side; the scratch branch moves only after both.
+  // The philosopher runs after the cleanup has landed or been dropped, so it
+  // reads the code that will land on main, cleanup included.
   const philosopher = async () => {
     const phil = maxCritiques === 0 ? null : await agent(
       `You are the philosopher ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}, the code that will land on ${env.main}, and
-question the work just merged (${names}) as a whole: design, scope, missing cases,
-how the tasks fit together.
+question the work just merged (${names}) as a whole, with the janitor's cleanup if it
+landed: design, scope, missing cases, how the tasks fit together.
+The cleanup's own commits sit on top: ${'`'}git -C ${scratchTree} log --oneline${'`'} shows them.
 Keep only your ${maxCritiques === 1 ? 'single most useful critique' : `${maxCritiques} most useful critiques`}, as short, concrete questions. Add them
 with exactly this command, filling in the rows:
 python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROWS_END'
@@ -328,8 +329,9 @@ Return the same critiques in "critiques". Change nothing else, and never block t
     )
     if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques.slice(0, maxCritiques)
   }
-  await parallel([janitorChain, philosopher])
+  await janitorChain()
   if (readyFF) await fastForward()
+  await philosopher()
 }
 
 // ---- move main forward, clean up, write the bulletin ----

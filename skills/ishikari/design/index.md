@@ -119,12 +119,12 @@ They run once per finish, on the merged result, before main moves.
   branch is kept and the next plan stage hands its plan to the investigator ant,
   which may ask about it. One cleanup per run: a dropped cleanup's own run gets
   no janitor, so cleanups never chain.
-- **Philosopher ant** runs alongside the janitor's cleanup, on the merged code,
-  and questions all the merged work together and keeps its best critiques: 1
-  by default, set with `--critiques N` (0 skips it). It only comments, in the
-  critiques board, and never blocks. The scratch branch fast-forwards to the
-  cleanup only after both end. On the next task, the investigator ant turns
-  the ones that matter into questions.
+- **Philosopher ant** runs after the janitor's cleanup has landed or been
+  dropped, on the merged code with the cleanup on top, and questions all the
+  merged work together and keeps its best critiques: 1 by default, set with
+  `--critiques N` (0 skips it). It only comments, in the critiques board, and
+  never blocks. On the next task, the investigator ant turns the ones that
+  matter into questions.
 
 ## Rules
 
