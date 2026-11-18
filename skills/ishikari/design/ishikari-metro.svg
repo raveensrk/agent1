@@ -20,6 +20,7 @@
 <path id="L-bugout" d="M620,700 L240,700 L200,660 L200,520" fill="none" stroke="#F87171" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-r1" d="M760,520 L730,580 L230,580 L200,520" fill="none" stroke="#F87171" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-logA" d="M1320,520 L1320,646" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 6" class="flow"/>
+<path id="L-logB" d="M300,1540 L300,1630" fill="none" stroke="#94A3B8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 6" class="flow"/>
 <path id="L-drop" d="M620,700 L620,770" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-mfail" d="M200,1080 L200,1170" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-tidy" d="M440,1080 L500,1150 L560,1150 L760,1150 L940,1150 L1000,1080" fill="none" stroke="#2DD4BF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
@@ -33,7 +34,7 @@
 <text class="h" x="1360" y="1066" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="700">7+: main moves</text>
 <text class="h" x="1192" y="1140" fill="#FBBF24" font-size="13" text-anchor="end" font-weight="700">below 7: one fix round</text>
 <text class="h" x="1612" y="1240" fill="#4ADE80" font-size="13" text-anchor="start" font-weight="700">to row 4</text>
-<text class="h" x="1330" y="590" fill="#94A3B8" font-size="13" text-anchor="start" font-weight="400">end of build: written once</text>
+<text class="h" x="1330" y="590" fill="#94A3B8" font-size="13" text-anchor="start" font-weight="400">end of build: one batch</text>
 <text class="h" x="772" y="640" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">still open after round 1:</text><text class="h" x="772" y="657" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">the script hands it over</text>
 <text class="h" x="480" y="604" fill="#F87171" font-size="13" text-anchor="middle" font-weight="400">round 1: the inspector's own fix plan</text>
 <text class="h" x="1052" y="640" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">fail: tasks clash,</text><text class="h" x="1052" y="657" fill="#F87171" font-size="13" text-anchor="start" font-weight="400">merge, then fix loop</text>
@@ -122,6 +123,10 @@
 <polygon points="284.0,1540.0 292.0,1526.1 308.0,1526.1 316.0,1540.0 308.0,1553.9 292.0,1553.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="300" y="1488" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="300" y="1507" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forwards main, cleans</text><text class="h" x="300" y="1523" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">up, appends to the logbook</text>
+<path d="M300,1630 Q291,1625 282,1629 L282,1653 Q291,1649 300,1654 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><path d="M300,1630 Q309,1625 318,1629 L318,1653 Q309,1649 300,1654 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="3" stroke-linejoin="round"/><line x1="300" y1="1630" x2="300" y2="1654" stroke="#F1F5F9" stroke-width="3"/>
+<line x1="296" y1="1636" x2="286" y2="1635" stroke="#94A3B8" stroke-width="1.5"/><line x1="296" y1="1642" x2="286" y2="1641" stroke="#94A3B8" stroke-width="1.5"/><line x1="296" y1="1648" x2="286" y2="1647" stroke="#94A3B8" stroke-width="1.5"/><line x1="304" y1="1636" x2="314" y2="1635" stroke="#94A3B8" stroke-width="1.5"/><line x1="304" y1="1642" x2="314" y2="1641" stroke="#94A3B8" stroke-width="1.5"/><line x1="304" y1="1648" x2="314" y2="1647" stroke="#94A3B8" stroke-width="1.5"/>
+<text class="h" x="326" y="1636" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Logbook</text>
+<text class="h" x="326" y="1655" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">end of finish: a second batch,</text><text class="h" x="326" y="1671" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">same file as above</text>
 <rect x="546" y="1526" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="560" y="1574" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">MAIN</text>
 <text class="h" x="560" y="1593" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forward only,</text><text class="h" x="560" y="1609" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">never pushed</text>

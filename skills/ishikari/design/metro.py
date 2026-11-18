@@ -26,6 +26,7 @@ lines = [  # name, colour, points, width, dash
  ("bugout",RED,   [(620,700),(240,700),(200,660),(200,R2)], 8, ""),
  ("r1",    RED,   [(760,R2),(730,580),(230,580),(200,R2)], 5, ""),
  ("logA",  GREY,  [(1320,R2),(1320,646)], 4, "4 6"),
+ ("logB",  GREY,  [(300,R4),(300,1630)], 4, "4 6"),
  ("drop",  RED,   [(620,700),(620,770)], 6, ""),
  ("mfail", RED,   [(200,R3),(200,1170)], 6, "10 6"),
  ("tidy",  TEAL,  [(440,R3),(500,1150),(560,1150),(760,1150),(940,1150),(1000,R3)], 9, ""),
@@ -63,6 +64,7 @@ stations = [
  (1470,1170,"Judge ant again",["7+ or still low: main moves;","still low = flagged"],"st",(0,34,"middle")),
  (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, appends to the logbook"],"st",L_UP),
+ (300,1640,"Logbook",["end of finish: a second batch,","same file as above"],"log",(26,-4,"start")),
  (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
  (860,R4,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
  (860,1630,"check-fix round",["from the moved main, once"],"term",(26,-4,"start")),
@@ -86,7 +88,7 @@ o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
 o.append(txt(1360, R3 - 14, ["7+: main moves"], GREEN, 13, "middle", "700"))
 o.append(txt(1192, 1140, ["below 7: one fix round"], GOLD, 13, "end", "700"))
 o.append(txt(1612, 1240, ["to row 4"], GREEN, 13, weight="700"))
-o.append(txt(1330, 590, ["end of build: written once"], GREY, 13))
+o.append(txt(1330, 590, ["end of build: one batch"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
 o.append(txt(480, 604, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
 o.append(txt(1052, 640, ["fail: tasks clash,", "merge, then fix loop"], RED, 13))
