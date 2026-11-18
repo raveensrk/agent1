@@ -19,8 +19,14 @@ export const meta = {
 //                                            default 1, 0 skips the philosopher
 //   cleanup?: boolean,                       this run built a dropped cleanup plan: no janitor,
 //                                            so cleanups never chain
+//   checkFixDone?: boolean,                  a check-fix round already ran (also true when a
+//                                            task is named check-fix): a failed check is not
+//                                            offered for a second round
 // }
-// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, critiques, check }
+// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, critiques, check,
+//           checkFixDone, checkFix }
+// checkFix: the bug for one check-fix build round ({task: 'check-fix', bug}) when the
+// check failed and no round ran yet; null otherwise (checkFixRefused: true when the cap hit).
 //      or { stage: 'error', reason }.
 // bugs go into the next ishikari-build run. cleanup: {title, landed: true} when the
 // janitor's cleanup was built, checked and landed with the tasks; {title, file,
@@ -37,7 +43,9 @@ const maxCritiques = args.critiques == null ? 1 : args.critiques
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
 const approved = items(args.approved)
 const drop = items(args.drop)
+const checkFixDone = args.checkFixDone === true || [...approved, ...drop].some(t => t.id === 'check-fix')
 const bad = []
+if (args.checkFixDone != null && typeof args.checkFixDone !== 'boolean') bad.push('checkFixDone must be true or false')
 for (const k of ['approved', 'drop']) if (args[k] != null && !Array.isArray(args[k])) bad.push(`${k} must be a list`)
 // Branch names go into git commands: only Ishikari's own shape is allowed.
 const BRANCH = /^ishikari\/[A-Za-z0-9._-]+\/[a-z0-9_][a-z0-9_-]{0,40}$/
@@ -104,9 +112,17 @@ const results = {}
 let sha = null
 if (order.length) {
   phase('Merge')
-  const sameSet = together && together.sha && Array.isArray(together.tasks) &&
-    together.tasks.length === order.length && order.every(t => together.tasks.includes(t.id))
-  const one = !sameSet && order.length === 1 && !(order[0].after || []).length ? order[0] : null
+  const tog = together && typeof together.sha === 'string' && /^[0-9a-f]{7,64}$/.test(together.sha) &&
+    Array.isArray(together.tasks) ? new Set(together.tasks.map(String)) : null
+  const sameSet = Boolean(tog) && tog.size === order.length && order.every(t => tog.has(t.id))
+  // Added tasks only: together must hold nothing outside this set (a task dropped
+  // since build is inside it), and no task in it may be built on an added one
+  // (it would have to come later in the line). Anything else: full merge.
+  const added = tog && !sameSet && tog.size && [...tog].every(id => ids.has(id))
+    ? order.filter(t => !tog.has(t.id)) : []
+  const onTop = added.length && order.filter(t => tog.has(t.id)).every(t => !(t.after || []).some(d => added.some(a => a.id === d)))
+    ? added : null
+  const one = !sameSet && !onTop && order.length === 1 && !(order[0].after || []).length ? order[0] : null
   const fast = one
     ? `Fast path: one task, already tested by its inspector. If
 \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${one.branch}\` succeeds and
@@ -119,6 +135,15 @@ on top of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor 
 succeeds, create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
 report every task as "merged", return that commit as sha, and stop. Otherwise do the
 normal steps below.\n`
+    : onTop
+    ? `Fast path: build's trial merge ${together.sha} already holds ${[...tog].join(', ')} on top
+of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
+succeeds, create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
+report those tasks as "merged", then add only these tasks on top, in this order, as
+in the steps below: ${onTop.map(t => t.id).join(', ')}. ${tests[0].toUpperCase() + tests.slice(1)} once inside ${scratchTree}.
+If they pass, return the final commit as sha and stop. If anything conflicts or the
+tests fail, remove the worktree and branch and do the normal steps below from the start.
+If the ancestor check fails, do the normal steps below.\n`
     : ''
   const r = await twice(() => agent(
     `You are the merger ant of the Ishikari workflow.
@@ -147,15 +172,39 @@ the repo's main checkout. Return the final commit of ${scratch} as sha.`,
   ))
   if (!r) return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` }
   sha = r.sha
-  for (const x of r.results || []) results[x.id] = x
+  for (const x of r.results || []) if (x && typeof x === 'object') results[String(x.id)] = x
+}
+
+// Do not trust the report: git says which tasks' commits are in the scratch branch.
+// \`git cherry\` matches by patch, so cherry-picked commits count. A dead or garbled
+// answer falls back to the merger's report.
+let landed = null
+if (order.length && typeof sha === 'string' && /^[0-9a-f]{7,64}$/.test(sha)) {
+  const v = await agent(
+    `Check which Ishikari task branches landed in a commit. Change nothing.
+${where}
+For each branch below, run \`git -C ${env.repo} cherry ${sha} <branch>\`. The task landed
+if git succeeds and no output line starts with "+". Return the ids that landed in
+"landed" and the rest in "missing".
+${order.map(t => `- ${t.id}: ${t.branch}`).join('\n')}`,
+    { label: 'verifier-ant', phase: 'Merge', effort: 'low',
+      schema: { type: 'object', properties: { landed: { type: 'array', items: { type: 'string' } }, missing: { type: 'array', items: { type: 'string' } } }, required: ['landed', 'missing'] } },
+  )
+  if (v && Array.isArray(v.landed) && Array.isArray(v.missing)) {
+    const l = new Set(v.landed.map(String)), m = new Set(v.missing.map(String))
+    // Every task answered exactly once, else the answer is not used.
+    if (order.every(t => l.has(t.id) !== m.has(t.id))) landed = l
+  }
 }
 
 // Check what the merger said against what was asked: nothing goes missing.
-const merged = order.filter(t => results[t.id] && results[t.id].outcome === 'merged')
-const failed = order.filter(t => results[t.id] && ['conflict', 'tests failed'].includes(results[t.id].outcome))
+const said = t => results[t.id] && results[t.id].outcome
+const merged = order.filter(t => landed ? landed.has(t.id) : said(t) === 'merged')
+const failed = order.filter(t => !merged.includes(t) && ['conflict', 'tests failed'].includes(said(t)))
 const waiting = order.filter(t => !merged.includes(t) && !failed.includes(t)).map(t => ({
   task: t.id, id: t.id, branch: t.branch, after: t.after || [],
-  bug: `not merged: ${results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it'}`,
+  bug: `not merged: ${said(t) === 'merged' ? 'the merger said merged, but its commits are not in the result'
+    : results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it'}`,
 }))
 const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge', bug: `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
@@ -174,8 +223,9 @@ let cleanKept = false
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
-  const jan = isCleanup ? null : await agent(
-    `You are the janitor ant of the Ishikari workflow.
+  const janitorChain = async () => {
+    const jan = isCleanup ? null : await agent(
+      `You are the janitor ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}. Find dead code, bloat, duplication and mess
 left by the tasks just merged (${names}), and only that: leave the rest of the repo
@@ -183,14 +233,14 @@ alone. Only worker ants write code, so if something needs cleaning, write a
 complete cleanup plan a worker ant can build without questions to ${cleanPlan}.
 A worker builds it now, on top of ${scratch}. Say it changes no behaviour, and
 name the files it touches. Change nothing else.`,
-    { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
-      schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
-  )
-  if (jan && jan.needed) {
-    const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
-    const CHECKED = { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] }
-    const build = (extra) => agent(
-      `You are a worker ant of the Ishikari workflow, building the janitor's cleanup.
+      { label: 'janitor-ant', phase: 'Upkeep', effort: EFFORT.janitor,
+        schema: { type: 'object', properties: { needed: { type: 'boolean' }, title: { type: 'string' } }, required: ['needed', 'title'] } },
+    )
+    if (jan && jan.needed) {
+      const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
+      const CHECKED = { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] }
+      const build = (extra) => agent(
+        `You are a worker ant of the Ishikari workflow, building the janitor's cleanup.
 ${where}
 Plan: ${cleanPlan}.${extra}
 Work only in the worktree ${cleanTree} on branch ${cleanBranch}. If it does not exist,
@@ -198,52 +248,56 @@ create it with \`git -C ${env.repo} worktree add -b ${cleanBranch} ${cleanTree} 
 Change no behaviour. Keep the tests passing (${tests} inside ${cleanTree}).
 Commit your work on ${cleanBranch} in small commits, no merge commits. Never touch
 ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
-      { label: extra ? 'worker-ant:cleanup:fix' : 'worker-ant:cleanup', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
-    )
-    const inspect = (round) => agent(
-      `You are an inspector ant of the Ishikari workflow, checking the janitor's cleanup.
+        { label: extra ? 'worker-ant:cleanup:fix' : 'worker-ant:cleanup', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
+      )
+      const inspect = (round) => agent(
+        `You are an inspector ant of the Ishikari workflow, checking the janitor's cleanup.
 ${where}
 Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}, built on ${scratch}
 (every task of this run, merged). Check that it follows the plan, changes no
 behaviour and touches only this run's mess, then ${tests} inside ${cleanTree}:
 these tests are the combined test. Return each problem in "bugs", or an empty
 list. Never fix anything.`,
-      { label: `inspector-ant:cleanup:${round}`, phase: 'Upkeep', effort: EFFORT.inspector, schema: CHECKED },
-    )
-    const drop = reason => ({ title: jan.title, file: cleanPlan, branch: cleanBranch, landed: false, reason })
-    let b = await build('')
-    let bugs = b && b.status === 'built' ? (await inspect(1) || { bugs: ['the inspector ant died'] }).bugs : [b ? 'worker stuck: ' + b.notes : 'the worker ant died']
-    if (bugs.length) {
-      const det = await agent(
-        `You are the detective ant of the Ishikari workflow. The janitor's cleanup failed its check.
+        { label: `inspector-ant:cleanup:${round}`, phase: 'Upkeep', effort: EFFORT.inspector, schema: CHECKED },
+      )
+      const drop = reason => ({ title: jan.title, file: cleanPlan, branch: cleanBranch, landed: false, reason })
+      let b = await build('')
+      let bugs = b && b.status === 'built' ? (await inspect(1) || { bugs: ['the inspector ant died'] }).bugs : [b ? 'worker stuck: ' + b.notes : 'the worker ant died']
+      if (bugs.length) {
+        const det = await agent(
+          `You are the detective ant of the Ishikari workflow. The janitor's cleanup failed its check.
 ${where}
 Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}. Bugs:
 ${bugs.map(x => `- ${x}`).join('\n')}
 Find why, and write the fix plan in "plan" for a worker ant. Never write code.`,
-        { label: 'detective-ant:cleanup', phase: 'Upkeep', effort: EFFORT.detective,
-          schema: { type: 'object', properties: { cause: { type: 'string' }, plan: { type: 'string' } }, required: ['cause', 'plan'] } },
-      )
-      b = det ? await build(`\nIt failed its check. Fix plan from the detective ant:\n${det.plan}`) : null
-      bugs = b && b.status === 'built' ? (await inspect(2) || { bugs: ['the inspector ant died'] }).bugs : ['fix not built']
-    }
-    if (bugs.length) {
-      cleanup = drop(bugs.join('; '))
-      cleanKept = true
-    } else {
-      const ff = await agent(
-        `Fast-forward the Ishikari scratch branch to the checked cleanup.
+          { label: 'detective-ant:cleanup', phase: 'Upkeep', effort: EFFORT.detective,
+            schema: { type: 'object', properties: { cause: { type: 'string' }, plan: { type: 'string' } }, required: ['cause', 'plan'] } },
+        )
+        b = det ? await build(`\nIt failed its check. Fix plan from the detective ant:\n${det.plan}`) : null
+        bugs = b && b.status === 'built' ? (await inspect(2) || { bugs: ['the inspector ant died'] }).bugs : ['fix not built']
+      }
+      if (bugs.length) {
+        cleanup = drop(bugs.join('; '))
+        cleanKept = true
+      } else {
+        const ff = await agent(
+          `Fast-forward the Ishikari scratch branch to the checked cleanup.
 ${where}
 Run \`git -C ${scratchTree} merge --ff-only ${cleanBranch}\`. If git refuses, change
 nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
-        { label: 'merger-ant:cleanup', phase: 'Upkeep', effort: 'low',
-          schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
-      )
-      if (ff && ff.ok) { cleanup = { title: jan.title, landed: true }; sha = ff.sha || sha }
-      else { cleanup = drop('could not fast-forward the scratch branch'); cleanKept = true }
-    }
+          { label: 'merger-ant:cleanup', phase: 'Upkeep', effort: 'low',
+            schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
+        )
+        if (ff && ff.ok) { cleanup = { title: jan.title, landed: true }; sha = ff.sha || sha }
+        else { cleanup = drop('could not fast-forward the scratch branch'); cleanKept = true }
+      }
   }
-  const phil = maxCritiques === 0 ? null : await agent(
-    `You are the philosopher ant of the Ishikari workflow.
+  }
+  // The philosopher only reads ${scratchTree} (the cleanup works in its own
+  // worktree), so it runs beside the janitor chain.
+  const philosopher = async () => {
+    const phil = maxCritiques === 0 ? null : await agent(
+      `You are the philosopher ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}, the code that will land on ${env.main}, and
 question the work just merged (${names}) as a whole: design, scope, missing cases,
@@ -254,10 +308,12 @@ python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROW
 [["<target file or task>", "<critique>"], ...]
 ISHIKARI_ROWS_END
 Return the same critiques in "critiques". Change nothing else, and never block the work.`,
-    { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
-      schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
-  )
-  if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques.slice(0, maxCritiques)
+      { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
+        schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
+    )
+    if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques.slice(0, maxCritiques)
+  }
+  await parallel([janitorChain, philosopher])
 }
 
 // ---- move main forward, clean up, write the bulletin ----
@@ -315,6 +371,7 @@ ${write(rowsIf(false))}
   { label: 'finisher-ant', phase: 'Main', effort: EFFORT.finisher, schema: FINISH },
 ))
 
+const check = fin && fin.check ? fin.check : { ran: false, ok: false, output: '' }
 const mainMoved = Boolean(merged.length && fin && fin.moved === true)
 if (merged.length && !mainMoved) log(`main not moved: ${fin ? fin.reason : 'the finisher ant died twice'}`)
 return {
@@ -328,5 +385,8 @@ return {
   waiting,
   cleanup,
   critiques,
-  check: fin && fin.check ? fin.check : { ran: false, ok: false, output: '' },
+  check,
+  checkFixDone,
+  checkFix: check.ran && !check.ok && !checkFixDone ? { task: 'check-fix', bug: check.output || 'the app check failed' } : null,
+  checkFixRefused: Boolean(check.ran && !check.ok && checkFixDone),
 }

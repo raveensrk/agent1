@@ -210,14 +210,15 @@ function finishWith(answer) {
   }).then(r => ({ ...r, fin: prompts.find(p => p.includes('finisher ant')) }))
 }
 
-test('finish: a checked cleanup lands before main moves, philosopher after it', async () => {
+test('finish: a checked cleanup lands before main moves, philosopher beside it', async () => {
   const { out, calls, fin } = await finishWith(o =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' }
       : o.label.startsWith('inspector') ? { bugs: [] }
       : o.label === 'merger-ant:cleanup' ? { ok: true, sha: 'def' } : null)
   assert.deepEqual(out.cleanup, { title: 'tidy', landed: true })
   assert.equal(out.sha, 'def')
-  assert.deepEqual(calls.slice(1, 6), ['janitor-ant', 'worker-ant:cleanup', 'inspector-ant:cleanup:1', 'merger-ant:cleanup', 'philosopher-ant'])
+  assert.deepEqual(calls.filter(c => c !== 'philosopher-ant').slice(1, 5), ['janitor-ant', 'worker-ant:cleanup', 'inspector-ant:cleanup:1', 'merger-ant:cleanup'])
+  assert.ok(calls.includes('philosopher-ant'))
   assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
 })
 
@@ -316,4 +317,82 @@ test('plan: a live investigation skips Review', async () => {
   assert.equal(out.testCommand, 'npm test')
   assert.deepEqual(out.answeredCritiques, ['c1'])
   assert.ok(!calls.some(c => c.startsWith('investigator')))
+})
+
+// ---- finish: parallel philosopher, trial-merge reuse, verified merges, check-fix cap ----
+const SHA = 'aaaaaaa', TOG = 'bbbbbbb'
+const T = id => ({ id, branch: `ishikari/r1/${id}` })
+function finishRun(args, answer) {
+  const prompts = {}
+  return run('ishikari-finish.js', { env, cleanup: true, ...args }, (p, o) => {
+    prompts[o.label] = p
+    return answer(o, p) || (o.label === 'philosopher-ant' ? { critiques: [] } : { moved: true, reason: '' })
+  }).then(r => ({ ...r, prompts }))
+}
+
+test('finish: the philosopher runs beside the janitor chain', async () => {
+  let release
+  const gate = new Promise(r => { release = r })
+  const { out } = await run('ishikari-finish.js', { env, approved: [T('a')] }, async (p, o) => {
+    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    // The janitor waits for the philosopher: sequential code would hang here.
+    if (o.label === 'janitor-ant') { await gate; return { needed: false, title: '' } }
+    if (o.label === 'philosopher-ant') { release(); return { critiques: [{ target: 't', critique: 'c' }] } }
+    return { moved: true, reason: '' }
+  })
+  assert.equal(out.critiques.length, 1)
+  assert.equal(out.mainMoved, true)
+})
+
+test('finish: an added task goes on top of the reused trial merge', async () => {
+  const { prompts } = await finishRun({ approved: [T('a'), T('b'), { ...T('c'), after: ['a'] }], together: { sha: TOG, tasks: ['a', 'b'] } },
+    o => o.label === 'merger-ant' ? { sha: SHA, results: [] } : null)
+  const m = prompts['merger-ant']
+  assert.ok(m.includes(`worktree add -b ishikari/r1/_finish /s/worktrees/ishikari__r1___finish ${TOG}`))
+  assert.ok(m.includes('add only these tasks on top, in this order, as\nin the steps below: c.'))
+})
+
+test('finish: a dropped task inside the trial merge, or an added task it is built on, means a full merge', async () => {
+  for (const args of [
+    { approved: [T('a')], together: { sha: TOG, tasks: ['a', 'b'] } },
+    { approved: [T('a'), { ...T('b'), after: ['c'] }, T('c')], together: { sha: TOG, tasks: ['a', 'b'] } },
+    { approved: [T('a'), T('b')], together: { sha: 'not a sha', tasks: ['a'] } },
+  ]) {
+    const { prompts } = await finishRun(args, o => o.label === 'merger-ant' ? { sha: SHA, results: [] } : null)
+    assert.ok(!prompts['merger-ant'].includes(TOG), JSON.stringify(args))
+  }
+})
+
+test('finish: git decides what merged, not the merger report', async () => {
+  const { out } = await finishRun({ approved: [T('a'), T('b'), T('c')] }, (o, p) =>
+    o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'b', outcome: 'merged', detail: '' }, { id: 'c', outcome: 'conflict', detail: 'x' }] }
+      : o.label === 'verifier-ant' ? (assert.ok(p.includes(`cherry ${SHA} <branch>`) && p.includes('- a: ishikari/r1/a')), { landed: ['a'], missing: ['b', 'c'] }) : null)
+  assert.deepEqual(out.merged, ['a'])
+  assert.deepEqual(out.waiting.map(w => w.id), ['b'])
+  assert.match(out.waiting[0].bug, /said merged/)
+  assert.deepEqual(out.bugs.map(b => b.task), ['c'])
+})
+
+test('finish: a garbled verifier answer falls back to the merger report', async () => {
+  const { out } = await finishRun({ approved: [T('a'), T('b')] }, o =>
+    o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] }
+      : o.label === 'verifier-ant' ? { landed: ['a'], missing: [] } : null)
+  assert.deepEqual(out.merged, ['a', 'b'])
+})
+
+test('finish: one check-fix round, a second is refused', async () => {
+  const failing = o => o.label === 'merger-ant' ? { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    : o.label === 'finisher-ant' ? { moved: true, reason: '', check: { ran: true, ok: false, output: 'boom' } } : null
+  let { out } = await finishRun({ approved: [T('a')], env: { ...env, checkCommand: 'make' } }, failing)
+  assert.deepEqual(out.checkFix, { task: 'check-fix', bug: 'boom' })
+  assert.equal(out.checkFixDone, false)
+  ;({ out } = await finishRun({ approved: [T('a')], checkFixDone: true, env: { ...env, checkCommand: 'make' } }, failing))
+  assert.equal(out.checkFix, null)
+  assert.equal(out.checkFixRefused, true)
+  assert.equal(out.checkFixDone, true)
+  ;({ out } = await finishRun({ approved: [T('check-fix')], env: { ...env, checkCommand: 'make' } }, o =>
+    o.label === 'merger-ant' ? { sha: 'abc', results: [{ id: 'check-fix', outcome: 'merged', detail: '' }] } : failing(o)))
+  assert.equal(out.checkFix, null)
+  ;({ out } = await finishRun({ approved: [T('a')], checkFixDone: 'yes' }, failing))
+  assert.equal(out.stage, 'error')
 })
