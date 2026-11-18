@@ -170,8 +170,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   - it reuses build's trial merge (`together.sha`) when the approved set
     matches it or only adds tasks, and git shows main and each reused branch
     tip are ancestors of it; else it merges from main;
-  - the integrator ant then checks its own merge with `git cherry`; a task the
-    integrator called merged but git finds missing comes back as a merge bug;
+  - the merger ant then checks its own merge with `git cherry`; a task the
+    merger called merged but git finds missing comes back as a merge bug;
   - after the cleanup, the judge ant scores the whole run 0-10 against the
     plans (report, architecture, worker plans). With 3+ tasks it first
     sends one juror ant per task (5 at once) and decides from their reports;

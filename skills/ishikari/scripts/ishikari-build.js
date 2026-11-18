@@ -33,7 +33,7 @@ const MAX_ROUNDS = 3  // fix rounds per task, so new bugs cannot loop forever
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { worker: 'low', detective: 'low', integrator: 'low', clerk: 'low' }
+const EFFORT = { worker: 'low', detective: 'low', integrator: 'low', merger: 'low', clerk: 'low' }
 
 const { env = {} } = args
 const plans = Array.isArray(args.plans) ? args.plans.filter(p => p && typeof p === 'object') : []

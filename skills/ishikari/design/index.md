@@ -93,11 +93,11 @@ its job. The build script runs that workflow in place of a worker ant.
     alone, so two can pass alone and still break when combined. When every
     task is done, the integrator ant merges all passing tasks in a straight
     line in a scratch copy, a throwaway copy that never touches main, and runs
-    the tests once. It is a dress rehearsal for its own merge in Finish. A task
+    the tests once. It is a dress rehearsal for the merger ant in Finish. A task
     that clashes takes in the tasks it clashes with and goes back through the
     fix loop, and the test runs once more. No one reviews by hand.
 
-08. **Integrator Ant, again,** runs straight after, in Finish. It adds every passing task's
+08. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
     dependency order, and tests once. It may reuse the combined test's merge
     (see [Finish](../SKILL.md#4-finish)). It refuses a task
@@ -119,7 +119,7 @@ They run once per finish, on the merged result, before main moves.
   main moves with the tasks alone, the cleanup branch is kept and the next plan
   stage hands its note to the investigator ant, which may ask about it. One cleanup per run: a dropped cleanup's own run gets
   no janitor, so cleanups never chain. A small run gets no janitor either: under 100
-  lines added or changed, by the integrator's `git diff --shortstat`.
+  lines added or changed, by the merger's `git diff --shortstat`.
 - **Judge ant** gives the final verdict. It runs after the janitor's cleanup has
   landed or been dropped, reads the plans (investigation report, architecture
   and every worker plan) and the merged code with the cleanup on top, and
@@ -130,7 +130,7 @@ They run once per finish, on the merged result, before main moves.
   how the tasks fit together and decides the score itself; it is not an
   average. One or two tasks: the judge works alone. At 7 or more, main moves. Below
   7 with gaps, one fix round: a worker ant closes the gaps on top of the
-  merged scratch copy, a detective ant checks it and runs the tests, the integrator
+  merged scratch copy, a detective ant checks it and runs the tests, a merger
   ant fast-forwards the scratch copy to it (the only way the fix lands), and
   the judge scores again. Still below 7, or the fix failed (its branch is kept
   and the verdict says why): main moves anyway and the verdict is
@@ -252,7 +252,7 @@ task's latest event), `recsel` or any editor.
 
 An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Every agent label in the three scripts has a
-station, helper ants included (the fast-forward integrator, the jurors), and short notes name each skipped step. Built by
+station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
 [`metro.py`](metro.py); run `python3 metro.py` after a flow change.
 `test_metro_map` in [`test_ishikari.py`](../tests/test_ishikari.py) checks it
 against the scripts.

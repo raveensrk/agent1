@@ -3,7 +3,7 @@ export const meta = {
   description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the janitor cleans up on top, let the judge score it against the plans, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
-    { title: 'Merge', detail: 'integrator ant merges the approved tasks in a scratch copy and tests once' },
+    { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
     { title: 'Upkeep', detail: 'janitor cleans up, tests and commits itself; then the judge scores the run, one fix round below 7' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
@@ -39,7 +39,7 @@ export const meta = {
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { integrator: 'low', janitor: 'low', worker: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
+const EFFORT = { merger: 'low', janitor: 'low', worker: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
@@ -165,7 +165,7 @@ const results = {}
 let sha = null
 let trusted = false
 let merge = null
-let linesChanged = null  // from the integrator's git diff --shortstat; null if it gave none
+let linesChanged = null  // from the merger's git diff --shortstat; null if it gave none
 if (order.length) {
   phase('Merge')
   const tog = together && typeof together.sha === 'string' && /^[0-9a-f]{7,64}$/.test(together.sha) &&
@@ -205,7 +205,7 @@ tests fail, remove the worktree and branch and do the normal steps below from th
 If any ancestor check or the worktree add fails, do the normal steps below.\n`
     : ''
   const r = await twice(() => ant(
-    `You are the integrator ant of the Ishikari workflow.
+    `You are the merger ant of the Ishikari workflow.
 ${where}
 Work only in a scratch worktree: ${scratchTree} on branch ${scratch}.
 If that worktree or branch exists, remove them first
@@ -233,9 +233,9 @@ Last, even after a fast path, check your own work with git, never from memory:
   every other task id in "missing".
 - Run \`git -C ${env.repo} diff --shortstat ${env.main} <sha>\` and return insertions plus
   deletions as "lines" (0 if it prints nothing).`,
-    { label: 'integrator-ant:merge', phase: 'Merge', effort: EFFORT.integrator, schema: COMBINE },
+    { label: 'merger-ant', phase: 'Merge', effort: EFFORT.merger, schema: COMBINE },
   ))
-  if (!r) return { stage: 'error', reason: `the integrator ant died twice; main was not touched. Check ${scratchTree}.` }
+  if (!r) return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` }
   sha = r.sha
   // An exact fast path (the commit is the task's own tip, or the tested trial
   // merge after its ancestor checks) needs no second look.
@@ -245,18 +245,18 @@ Last, even after a fast path, check your own work with git, never from memory:
   merge = r
 }
 
-// The integrator's own git cherry check says which tasks' commits are in the scratch
+// The merger's own git cherry check says which tasks' commits are in the scratch
 // branch. \`git cherry\` matches by patch, so cherry-picked commits count. A
-// missing or garbled check falls back to the integrator's outcome report.
+// missing or garbled check falls back to the merger's outcome report.
 let landed = null
 if (order.length && !trusted && merge && Array.isArray(merge.landed) && Array.isArray(merge.missing)) {
   const l = new Set(merge.landed.map(String)), m = new Set(merge.missing.map(String))
   // Every task answered exactly once and nothing else, else the check is not used.
   if (l.size + m.size === order.length && order.every(t => l.has(t.id) !== m.has(t.id))) landed = l
-  else log('integrator git cherry check does not match the tasks: using its outcome report')
-} else if (order.length && !trusted) log('integrator gave no git cherry check: using its outcome report')
+  else log('merger git cherry check does not match the tasks: using its outcome report')
+} else if (order.length && !trusted) log('merger gave no git cherry check: using its outcome report')
 
-// Check what the integrator said against what was asked: nothing goes missing.
+// Check what the merger said against what was asked: nothing goes missing.
 const said = t => results[t.id] && results[t.id].outcome
 const merged = order.filter(t => landed ? landed.has(t.id) : said(t) === 'merged')
 // Said merged but git disagrees (a conflict resolved by hand or a squash also
@@ -265,10 +265,10 @@ const unproven = t => !merged.includes(t) && said(t) === 'merged'
 const failed = order.filter(t => !merged.includes(t) && (unproven(t) || ['conflict', 'tests failed'].includes(said(t))))
 const waiting = order.filter(t => !merged.includes(t) && !failed.includes(t)).map(t => ({
   task: t.id, id: t.id, branch: t.branch, after: t.after || [],
-  bug: `not merged: ${results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the integrator did not report it'}`,
+  bug: `not merged: ${results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it'}`,
 }))
 const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge',
-  bug: unproven(t) ? 'merge failed (conflict): the integrator said merged, but git cherry finds its commits missing from the result; they may have been changed while merging'
+  bug: unproven(t) ? 'merge failed (conflict): the merger said merged, but git cherry finds its commits missing from the result; they may have been changed while merging'
     : `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
 // ---- upkeep on the merged result, before main moves ----
@@ -429,7 +429,7 @@ an empty list. Never fix anything.`,
       )
       bugs = c ? c.bugs : ['the detective ant died']
     } else if (b) bugs = ['worker stuck: ' + b.notes]
-    if (bugs.length || !(await fastForwardTo(fixBranch, 'integrator-ant:judge-fix'))) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
+    if (bugs.length || !(await fastForwardTo(fixBranch, 'merger-ant:judge-fix'))) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
     const second = await judgeOnce(2)
     verdict = second
       ? { score: second.score, gaps: second.gaps, fixed: true, flagged: second.score < PASS, first: first.score }
@@ -447,9 +447,9 @@ const upkeep = [
   ...(verdict ? [{ run: env.run, who: 'judge ant', event: verdict.flagged ? 'verdict flagged' : 'verdict', score: verdict.score == null ? '-' : verdict.score, detail: [...(verdict.fixed ? [`after one fix round (first score ${verdict.first == null ? '-' : verdict.first})`] : []), ...verdict.gaps, ...(verdict.reason ? [verdict.reason] : [])].join('\n') }] : []),
 ]
 const rowsIf = moved => [
-  ...merged.map(t => entry(t, moved ? 'done' : 'waiting', 'integrator ant')),
-  ...failed.map(t => entry(t, 'merge failed', 'integrator ant')),
-  ...waiting.map(t => entry(t, 'waiting', 'integrator ant')),
+  ...merged.map(t => entry(t, moved ? 'done' : 'waiting', 'merger ant')),
+  ...failed.map(t => entry(t, 'merge failed', 'merger ant')),
+  ...waiting.map(t => entry(t, 'waiting', 'merger ant')),
   ...drop.map(t => entry(t, 'dropped', 'main session')),
   ...upkeep,
   ...(merged.length ? [{ run: env.run, who: 'finisher ant', event: moved ? 'main moved' : 'main not moved', detail: moved ? sha || '' : 'see the run report' }] : []),
