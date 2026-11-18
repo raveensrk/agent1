@@ -64,7 +64,7 @@
 <polygon points="754.0,510.0 762.0,496.1 778.0,496.1 786.0,510.0 778.0,523.9 762.0,523.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="749.0,515.0 757.0,501.1 773.0,501.1 781.0,515.0 773.0,528.9 757.0,528.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
 <polygon points="744.0,520.0 752.0,506.1 768.0,506.1 776.0,520.0 768.0,533.9 752.0,533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="760" y="460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Inspector Ants  ∥</text>
-<text class="h" x="760" y="479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per built task: checks</text><text class="h" x="760" y="495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">plan + design, runs its tests</text>
+<text class="h" x="760" y="479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">one per built task: plan + design,</text><text class="h" x="760" y="495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">runs tests (reuses worker's if clean)</text>
 <polygon points="1024.0,520.0 1032.0,506.1 1048.0,506.1 1056.0,520.0 1048.0,533.9 1032.0,533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1040" y="460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Combined test</text>
 <text class="h" x="1040" y="479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">Integrator Ant merges passing</text><text class="h" x="1040" y="495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">tasks in a scratch copy, tests once</text>
@@ -77,13 +77,13 @@
 <text class="h" x="594" y="753" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">finds why, writes the next</text><text class="h" x="594" y="769" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">fix plan, never code</text>
 <rect x="606" y="756" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="646" y="766" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped</text>
-<text class="h" x="646" y="785" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after 3 tries on a bug,</text><text class="h" x="646" y="801" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept</text>
+<text class="h" x="646" y="785" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after 3 tries on a bug or</text><text class="h" x="646" y="801" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">3 fix rounds; branch kept</text>
 <polygon points="184.0,980.0 192.0,966.1 208.0,966.1 216.0,980.0 208.0,993.9 192.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="200" y="922" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Merger ant</text>
-<text class="h" x="200" y="941" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">straight line in a scratch</text><text class="h" x="200" y="957" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">copy, tests once, no review</text>
+<text class="h" x="200" y="941" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">straight line or build's trial</text><text class="h" x="200" y="957" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">merge; Verifier Ant: git cherry</text>
 <rect x="186" y="1056" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="226" y="1066" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">merge failed</text>
-<text class="h" x="226" y="1085" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">next build round,</text><text class="h" x="226" y="1101" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">back to the Worker Ants</text>
+<text class="h" x="226" y="1085" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">next build round; also when the</text><text class="h" x="226" y="1101" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">verifier finds a task missing</text>
 <polygon points="424.0,980.0 432.0,966.1 448.0,966.1 456.0,980.0 448.0,993.9 432.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="440" y="928" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Janitor ant</text>
 <text class="h" x="440" y="947" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="440" y="963" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">built + checked before main moves</text>
@@ -98,7 +98,7 @@
 <text class="h" x="786" y="1175" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept, plan offered as</text><text class="h" x="786" y="1191" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the next run's Task</text>
 <polygon points="984.0,980.0 992.0,966.1 1008.0,966.1 1016.0,980.0 1008.0,993.9 992.0,993.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1026" y="1020" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Philosopher ant</text>
-<text class="h" x="1026" y="1039" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after the cleanup:</text><text class="h" x="1026" y="1055" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">1 best critique (--critiques N)</text>
+<text class="h" x="1026" y="1039" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">alongside the cleanup,</text><text class="h" x="1026" y="1055" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">1 best critique (--critiques N)</text>
 <rect x="986" y="866" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="974" y="876" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Critiques board</text>
 <text class="h" x="974" y="895" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">bridge to the next run:</text><text class="h" x="974" y="911" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">its Investigator reads it</text><text class="h" x="974" y="927" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/critiques.md</text>

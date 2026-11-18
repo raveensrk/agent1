@@ -73,12 +73,12 @@ check: 4. Check {
   top: 0
   direction: down
   style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
-  inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {shape: hexagon; style.multiple: true; class: node; style.stroke: ${check-line}}
+  inspector: "Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests (reuses the\nworker's run if HEAD is its\nsha and the tree is clean)" {shape: hexagon; style.multiple: true; class: node; style.stroke: ${check-line}}
   together: Combined test\nIntegrator Ant\nmerges passing tasks\nin a scratch copy,\ntests once {shape: hexagon; class: node; style.stroke: ${check-line}}
   inspector -> together: pass, once every\ntask is checked {class: ok}
 }
 
-fix: 5. Fix {
+fix: "5. Fix (3 tries per bug, 3 rounds per task)" {
   left: 2750
   top: 0
   direction: up
@@ -92,7 +92,9 @@ finish: 6. Finish {
   direction: right
   grid-columns: 2
   style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
-  merger: Merger ant\nstraight line in a\nscratch copy, tests once {shape: hexagon; class: node; style.stroke: ${finish-line}}
+  merger: "Merger ant\nstraight line in a\nscratch copy, tests once;\nreuses build's trial merge\n(together.sha) if the set\nmatches or only adds tasks" {shape: hexagon; class: node; style.stroke: ${finish-line}}
+  verifier: Verifier ant\ngit cherry: each merged\ntask really landed {shape: hexagon; class: node; style.stroke: ${finish-line}}
+  merger -> verifier: then {class: flow}
   finisher: Finisher ant\nmoves main forward,\ncleans up {shape: hexagon; class: node; style.stroke: ${finish-line}}
 }
 
@@ -113,13 +115,13 @@ critiques: Critiques board\nthe bridge to the next run\n~/.ishikari/<repo>-<hash
   style.stroke: ${always-line}
 }
 
-always_on: Upkeep ants (before main moves) {
+always_on: "Upkeep ants (before main moves;\nscratch takes the cleanup once both end)" {
   left: 2100
   top: 820
   label.near: outside-bottom-center
   style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
   janitor: Janitor ant\ncleanup plan for this\nrun's mess, built now {shape: hexagon; class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\nafter the cleanup,\nbest critiques (1 by default,\n--critiques N) {shape: hexagon; class: node; style.stroke: ${always-line}}
+  philosopher: "Philosopher ant\nalongside the cleanup,\nbest critiques (1 by default,\n--critiques N)" {shape: hexagon; class: node; style.stroke: ${always-line}}
 }
 
 check.inspector -> fix.detective: bug still open after round 1:\nthe script hands it over {class: bug}
@@ -136,7 +138,8 @@ fix.detective -> build.aw: fix plan {class: flow}
 build.aw -> check.inspector: built: the build script starts\nits inspector at once (task or fix) {class: flow}
 build.aw -> fix.detective: stuck: next fix round {class: bug}
 finish.merger -> build.aw: merge failed:\nnext build round {class: bug}
-finish.merger -> always_on: then {class: flow}
+finish.verifier -> always_on: then {class: flow}
+finish.verifier -> build.aw: said merged, git finds\nit missing: merge bug,\nnext build round {class: bug}
 always_on -> finish.finisher: then {class: flow}
 always_on.janitor -> build.aw: cleanup plan,\nbuilt and checked\nbefore main moves {class: flow}
 always_on.janitor -> ask.task: dropped cleanup,\noffered next time {class: flow; style.stroke-dash: 3}

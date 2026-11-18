@@ -101,7 +101,7 @@
 <text class="h" x="1220" y="400" fill="#F87171" font-size="11" text-anchor="middle" font-weight="400">round 1 (lowest red track): the inspector's own fix plan</text>
 <text class="h" x="1550" y="300" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">fail: tasks clash,</text><text class="h" x="1550" y="314" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">merge, fix loop</text>
 <text class="h" x="1392" y="300" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">still open after</text><text class="h" x="1392" y="314" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">round 1: the script</text><text class="h" x="1392" y="328" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">hands it over</text>
-<text class="h" x="1708" y="700" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">merge failed:</text><text class="h" x="1708" y="714" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">next build round</text>
+<text class="h" x="1708" y="700" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">merge failed or</text><text class="h" x="1708" y="714" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">task missing:</text><text class="h" x="1708" y="728" fill="#F87171" font-size="11" text-anchor="start" font-weight="400">next build round</text>
 <text class="h" x="1220" y="380" fill="#4ADE80" font-size="11" text-anchor="middle" font-weight="400">built: script starts its inspector</text>
 <text class="h" x="1550" y="560" fill="#4ADE80" font-size="11" text-anchor="start" font-weight="400">pass: they work combined</text>
 <text class="h" x="1388" y="560" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">end of build</text>
@@ -144,7 +144,7 @@
 <polygon points="1374.0,411.0 1381.5,397.9 1396.5,397.9 1404.0,411.0 1396.5,424.1 1381.5,424.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/><polygon points="1369.5,415.5 1377.0,402.4 1392.0,402.4 1399.5,415.5 1392.0,428.6 1377.0,428.6" fill="#0B1120" stroke="#E2E8F0" stroke-width="3"/>
 <polygon points="1365.0,420.0 1372.5,406.9 1387.5,406.9 1395.0,420.0 1387.5,433.1 1372.5,433.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1380" cy="420" r="4" fill="#4ADE80"/>
 <text class="h" x="1380" y="452" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Inspector Ants  ∥</text>
-<text class="h" x="1380" y="469" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">one per built task,</text><text class="h" x="1380" y="483" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">checks plan + design, runs tests</text>
+<text class="h" x="1380" y="469" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">one per built task, plan + design;</text><text class="h" x="1380" y="483" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">runs tests (reuses worker's if clean)</text>
 <polygon points="1525.0,420.0 1532.5,406.9 1547.5,406.9 1555.0,420.0 1547.5,433.1 1532.5,433.1" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1540" cy="420" r="4" fill="#4ADE80"/>
 <text class="h" x="1562" y="416" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Combined test</text>
 <text class="h" x="1562" y="433" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">Integrator Ant merges passing</text><text class="h" x="1562" y="447" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">tasks in a scratch copy, tests once</text>
@@ -157,16 +157,16 @@
 <text class="h" x="1276" y="251" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">why is the bug still open?</text><text class="h" x="1276" y="265" fill="#94A3B8" font-size="11" text-anchor="end" font-weight="400">writes next fix plan, never code</text>
 <rect x="1286" y="86" width="28" height="28" rx="6" fill="#F87171" stroke="#E2E8F0" stroke-width="3"/>
 <text class="h" x="1322" y="96" fill="#E2E8F0" font-size="14" text-anchor="start" font-weight="700">Dropped</text>
-<text class="h" x="1322" y="113" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">after 3 tries on a bug</text><text class="h" x="1322" y="127" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">branch kept, not deleted</text>
+<text class="h" x="1322" y="113" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">after 3 tries on a bug or</text><text class="h" x="1322" y="127" fill="#94A3B8" font-size="11" text-anchor="start" font-weight="400">3 fix rounds; branch kept</text>
 <polygon points="1345.0,780.0 1352.5,767.0 1367.5,767.0 1375.0,780.0 1367.5,793.0 1352.5,793.0" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1360" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="1360" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Merger ant</text>
-<text class="h" x="1360" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">straight line in a scratch copy,</text><text class="h" x="1360" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">tests once, no review</text>
+<text class="h" x="1360" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">straight line, or build's trial</text><text class="h" x="1360" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">merge; verifier: git cherry</text>
 <polygon points="1145.0,780.0 1152.5,767.0 1167.5,767.0 1175.0,780.0 1167.5,793.0 1152.5,793.0" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="1160" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="1160" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Janitor ant</text>
 <text class="h" x="1160" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">cleanup plan for this run's mess,</text><text class="h" x="1160" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">built + checked before main moves</text>
 <polygon points="945.0,780.0 952.5,767.0 967.5,767.0 975.0,780.0 967.5,793.0 952.5,793.0" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="960" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="960" y="730" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Philosopher ant</text>
-<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">after the cleanup,</text><text class="h" x="960" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">1 best critique (--critiques N)</text>
+<text class="h" x="960" y="747" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">alongside the cleanup,</text><text class="h" x="960" y="761" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">1 best critique (--critiques N)</text>
 <polygon points="745.0,780.0 752.5,767.0 767.5,767.0 775.0,780.0 767.5,793.0 752.5,793.0" fill="#0B1120" stroke="#E2E8F0" stroke-width="4"/><circle cx="760" cy="780" r="4" fill="#4ADE80"/>
 <text class="h" x="760" y="812" fill="#E2E8F0" font-size="14" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="760" y="829" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">moves main, cleans up,</text><text class="h" x="760" y="843" fill="#94A3B8" font-size="11" text-anchor="middle" font-weight="400">sets rows done</text>
