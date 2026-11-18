@@ -368,9 +368,9 @@ test('finish: git decides what merged, not the merger report', async () => {
     o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'b', outcome: 'merged', detail: '' }, { id: 'c', outcome: 'conflict', detail: 'x' }] }
       : o.label === 'verifier-ant' ? (assert.ok(p.includes(`cherry ${SHA} <branch>`) && p.includes('- a: ishikari/r1/a')), { landed: ['a'], missing: ['b', 'c'] }) : null)
   assert.deepEqual(out.merged, ['a'])
-  assert.deepEqual(out.waiting.map(w => w.id), ['b'])
-  assert.match(out.waiting[0].bug, /said merged/)
-  assert.deepEqual(out.bugs.map(b => b.task), ['c'])
+  assert.deepEqual(out.waiting, [])
+  assert.deepEqual(out.bugs.map(b => b.task), ['b', 'c'])
+  assert.match(out.bugs[0].bug, /conflict.*said merged/)
 })
 
 test('finish: a garbled verifier answer falls back to the merger report', async () => {
@@ -395,4 +395,58 @@ test('finish: one check-fix round, a second is refused', async () => {
   assert.equal(out.checkFix, null)
   ;({ out } = await finishRun({ approved: [T('a')], checkFixDone: 'yes' }, failing))
   assert.equal(out.stage, 'error')
+})
+
+// ---- judge round 1: ff after the philosopher, tip checks, verifier strictness ----
+test('finish: the cleanup fast-forward waits for the philosopher', async () => {
+  const { calls } = await run('ishikari-finish.js', { env, approved: [T('a')] }, async (p, o) => {
+    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    if (o.label === 'janitor-ant') return { needed: true, title: 'tidy' }
+    if (o.label.startsWith('worker')) return { status: 'built', notes: '' }
+    if (o.label.startsWith('inspector')) return { bugs: [] }
+    if (o.label === 'philosopher-ant') { await new Promise(r => setTimeout(r, 5)); return { critiques: [] } }
+    if (o.label === 'merger-ant:cleanup') return { ok: true, sha: 'def' }
+    return { moved: true, reason: '' }
+  })
+  assert.ok(calls.indexOf('merger-ant:cleanup') > calls.indexOf('philosopher-ant'))
+})
+
+test('finish: both trial-merge reuse paths check each reused branch tip', async () => {
+  for (const approved of [[T('a'), T('b')], [T('a'), T('b'), T('c')]]) {
+    const { prompts } = await finishRun({ approved, together: { sha: TOG, tasks: ['a', 'b'] } },
+      o => o.label === 'merger-ant' ? { sha: SHA, results: [] } : null)
+    const m = prompts['merger-ant']
+    assert.ok(m.includes(`merge-base --is-ancestor <branch> ${TOG}`))
+    assert.ok(/If any (ancestor )?check or the worktree add fails, do the normal steps/.test(m))
+  }
+})
+
+test('finish: a stale branch tip leads the merger to the full merge, and git is still asked', async () => {
+  const { out, calls } = await finishRun({ approved: [T('a'), T('b')], together: { sha: TOG, tasks: ['a', 'b'] } }, o =>
+    o.label === 'merger-ant' ? { sha: SHA, fastPath: false, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] }
+      : o.label === 'verifier-ant' ? { landed: ['a', 'b'], missing: [] } : null)
+  assert.ok(calls.includes('verifier-ant'))
+  assert.deepEqual(out.merged, ['a', 'b'])
+})
+
+test('finish: no verifier after an exact fast path', async () => {
+  const { calls } = await finishRun({ approved: [T('a'), T('b')], together: { sha: TOG, tasks: ['a', 'b'] } }, o =>
+    o.label === 'merger-ant' ? { sha: TOG, fastPath: true, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] } : null)
+  assert.ok(!calls.includes('verifier-ant'))
+})
+
+test('finish: unknown or extra verifier ids fall back to the merger report', async () => {
+  for (const v of [{ landed: ['a', 'zz'], missing: ['b'] }, { landed: ['a', 'b'], missing: ['b'] }]) {
+    const { out } = await finishRun({ approved: [T('a'), T('b')] }, o =>
+      o.label === 'merger-ant' ? { sha: SHA, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'conflict', detail: 'x' }] }
+        : o.label === 'verifier-ant' ? v : null)
+    assert.deepEqual(out.merged, ['a'], JSON.stringify(v))
+    assert.deepEqual(out.bugs.map(b => b.task), ['b'])
+  }
+})
+
+test('finish: checkFixDone must be a boolean', async () => {
+  const { out } = await finishRun({ approved: [T('a')], checkFixDone: 'yes' }, () => null)
+  assert.equal(out.stage, 'error')
+  assert.match(out.reason, /checkFixDone/)
 })

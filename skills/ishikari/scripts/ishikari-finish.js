@@ -24,7 +24,7 @@ export const meta = {
 //                                            offered for a second round
 // }
 // Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, critiques, check,
-//           checkFixDone, checkFix }
+//           checkFixDone, checkFix, checkFixRefused }
 // checkFix: the bug for one check-fix build round ({task: 'check-fix', bug}) when the
 // check failed and no round ran yet; null otherwise (checkFixRefused: true when the cap hit).
 //      or { stage: 'error', reason }.
@@ -80,6 +80,7 @@ const COMBINE = {
   type: 'object',
   properties: {
     sha: { type: 'string', description: 'final commit of the scratch branch' },
+    fastPath: { type: 'boolean', description: 'true only if you took the fast path and stopped there' },
     results: {
       type: 'array',
       items: {
@@ -110,6 +111,7 @@ approved.forEach(place)
 
 const results = {}
 let sha = null
+let trusted = false
 if (order.length) {
   phase('Merge')
   const tog = together && typeof together.sha === 'string' && /^[0-9a-f]{7,64}$/.test(together.sha) &&
@@ -128,22 +130,25 @@ if (order.length) {
 \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${one.branch}\` succeeds and
 \`git -C ${env.repo} log --merges ${env.main}..${one.branch}\` prints nothing, create the worktree with
 \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${one.branch}\`, report the task
-as "merged", return that commit as sha, and stop. Otherwise do the normal steps below.\n`
+as "merged", return that commit as sha, set fastPath to true, and stop. Otherwise do the normal steps below.\n`
     : sameSet
     ? `Fast path: build's trial merge ${together.sha} already holds exactly these tasks
 on top of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
-succeeds, create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
-report every task as "merged", return that commit as sha, and stop. Otherwise do the
-normal steps below.\n`
+succeeds, and \`git -C ${env.repo} merge-base --is-ancestor <branch> ${together.sha}\` succeeds for
+every branch below (no task moved on since), create the worktree with
+\`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
+report every task as "merged", return that commit as sha, set fastPath to true, and stop.
+If any check or the worktree add fails, do the normal steps below.\n`
     : onTop
     ? `Fast path: build's trial merge ${together.sha} already holds ${[...tog].join(', ')} on top
 of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
-succeeds, create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
+succeeds, and \`git -C ${env.repo} merge-base --is-ancestor <branch> ${together.sha}\` succeeds for
+each of ${order.filter(t => tog.has(t.id)).map(t => t.branch).join(', ')} (no task moved on since), create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
 report those tasks as "merged", then add only these tasks on top, in this order, as
 in the steps below: ${onTop.map(t => t.id).join(', ')}. ${tests[0].toUpperCase() + tests.slice(1)} once inside ${scratchTree}.
 If they pass, return the final commit as sha and stop. If anything conflicts or the
 tests fail, remove the worktree and branch and do the normal steps below from the start.
-If the ancestor check fails, do the normal steps below.\n`
+If any ancestor check or the worktree add fails, do the normal steps below.\n`
     : ''
   const r = await twice(() => agent(
     `You are the merger ant of the Ishikari workflow.
@@ -172,6 +177,9 @@ the repo's main checkout. Return the final commit of ${scratch} as sha.`,
   ))
   if (!r) return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` }
   sha = r.sha
+  // An exact fast path (the commit is the task's own tip, or the tested trial
+  // merge after its ancestor checks) needs no second look.
+  trusted = Boolean(r.fastPath === true && (one || sameSet))
   for (const x of r.results || []) if (x && typeof x === 'object') results[String(x.id)] = x
 }
 
@@ -179,7 +187,7 @@ the repo's main checkout. Return the final commit of ${scratch} as sha.`,
 // \`git cherry\` matches by patch, so cherry-picked commits count. A dead or garbled
 // answer falls back to the merger's report.
 let landed = null
-if (order.length && typeof sha === 'string' && /^[0-9a-f]{7,64}$/.test(sha)) {
+if (order.length && !trusted && typeof sha === 'string' && /^[0-9a-f]{7,64}$/.test(sha)) {
   const v = await agent(
     `Check which Ishikari task branches landed in a commit. Change nothing.
 ${where}
@@ -192,21 +200,26 @@ ${order.map(t => `- ${t.id}: ${t.branch}`).join('\n')}`,
   )
   if (v && Array.isArray(v.landed) && Array.isArray(v.missing)) {
     const l = new Set(v.landed.map(String)), m = new Set(v.missing.map(String))
-    // Every task answered exactly once, else the answer is not used.
-    if (order.every(t => l.has(t.id) !== m.has(t.id))) landed = l
-  }
+    // Every task answered exactly once and nothing else, else the answer is not used.
+    if (l.size + m.size === order.length && order.every(t => l.has(t.id) !== m.has(t.id))) landed = l
+    else log('verifier answer does not match the tasks: using the merger report')
+  } else log('verifier ant gave no answer: using the merger report')
 }
 
 // Check what the merger said against what was asked: nothing goes missing.
 const said = t => results[t.id] && results[t.id].outcome
 const merged = order.filter(t => landed ? landed.has(t.id) : said(t) === 'merged')
-const failed = order.filter(t => !merged.includes(t) && ['conflict', 'tests failed'].includes(said(t)))
+// Said merged but git disagrees (a conflict resolved by hand or a squash also
+// looks like this): a merge bug, so build looks at it, not a silent wait.
+const unproven = t => !merged.includes(t) && said(t) === 'merged'
+const failed = order.filter(t => !merged.includes(t) && (unproven(t) || ['conflict', 'tests failed'].includes(said(t))))
 const waiting = order.filter(t => !merged.includes(t) && !failed.includes(t)).map(t => ({
   task: t.id, id: t.id, branch: t.branch, after: t.after || [],
-  bug: `not merged: ${said(t) === 'merged' ? 'the merger said merged, but its commits are not in the result'
-    : results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it'}`,
+  bug: `not merged: ${results[t.id] ? (results[t.id].detail || 'a task it is built on was not merged') : 'the merger did not report it'}`,
 }))
-const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge', bug: `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
+const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || [], kind: 'merge',
+  bug: unproven(t) ? 'merge failed (conflict): the merger said merged, but git cherry finds its commits missing from the result; they may have been changed while merging'
+    : `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
 // ---- upkeep on the merged result, before main moves ----
 // The janitor plans a cleanup of this run's mess; a worker ant builds it on top
@@ -220,6 +233,7 @@ const cleanBranch = `ishikari/${env.run}/_cleanup`
 const cleanTree = treeOf(cleanBranch)
 const cleanPlan = `${env.state}/plans/${env.run}/cleanup.md`
 let cleanKept = false
+let readyFF = null
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
@@ -279,22 +293,23 @@ Find why, and write the fix plan in "plan" for a worker ant. Never write code.`,
       if (bugs.length) {
         cleanup = drop(bugs.join('; '))
         cleanKept = true
-      } else {
-        const ff = await agent(
-          `Fast-forward the Ishikari scratch branch to the checked cleanup.
+      } else readyFF = jan
+    }
+  }
+  const fastForward = async () => {
+    const ff = await agent(
+      `Fast-forward the Ishikari scratch branch to the checked cleanup.
 ${where}
 Run \`git -C ${scratchTree} merge --ff-only ${cleanBranch}\`. If git refuses, change
 nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
-          { label: 'merger-ant:cleanup', phase: 'Upkeep', effort: 'low',
-            schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
-        )
-        if (ff && ff.ok) { cleanup = { title: jan.title, landed: true }; sha = ff.sha || sha }
-        else { cleanup = drop('could not fast-forward the scratch branch'); cleanKept = true }
-      }
+      { label: 'merger-ant:cleanup', phase: 'Upkeep', effort: 'low',
+        schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
+    )
+    if (ff && ff.ok) { cleanup = { title: readyFF.title, landed: true }; sha = ff.sha || sha }
+    else { cleanup = { title: readyFF.title, file: cleanPlan, branch: cleanBranch, landed: false, reason: 'could not fast-forward the scratch branch' }; cleanKept = true }
   }
-  }
-  // The philosopher only reads ${scratchTree} (the cleanup works in its own
-  // worktree), so it runs beside the janitor chain.
+  // The philosopher only reads ${scratchTree} and the cleanup works in its own
+  // worktree, so they run side by side; the scratch branch moves only after both.
   const philosopher = async () => {
     const phil = maxCritiques === 0 ? null : await agent(
       `You are the philosopher ant of the Ishikari workflow.
@@ -314,6 +329,7 @@ Return the same critiques in "critiques". Change nothing else, and never block t
     if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques.slice(0, maxCritiques)
   }
   await parallel([janitorChain, philosopher])
+  if (readyFF) await fastForward()
 }
 
 // ---- move main forward, clean up, write the bulletin ----
