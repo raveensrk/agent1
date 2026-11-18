@@ -450,7 +450,7 @@
          :let [[_ c pts] (or (some #(when (= (first %) ln) %) lines) (throw (ex-info (str "no line " ln) {})))
                [x y] (last pts)
                [_ _ ty nm] (when to (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {}))))
-               head (str lead (when to (str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)))
+               head (str lead (when to (str "to " (str/replace nm "  ∥" "") " " (code to) more)))
                [lname _ labout] (about-lines ln)]]
      (str
       ;; a spur that leaves a line between stations gets a junction dot, so it never branches from nowhere

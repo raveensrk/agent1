@@ -314,7 +314,7 @@ def test_metro_map():
     clickable_texts = {id(t) for g in every for t in g.iter(NS + "text")}
     loose = [t.text for t in root.iter(NS + "text") if t.get("class") == "h" and id(t) not in clickable_texts]
     assert not loose, f"text with nothing to click: {loose}"
-    for spur in ("merge failed: to Worker ants, row 2", "cleanup failed: to Task, row 1 (next run)", "dropped", "check failed: to Worker ants, row 2 (new task)"):
+    for spur in ("merge failed: to Worker ants r2s1", "cleanup failed: to Task r1s1 (next run)", "dropped", "check failed: to Worker ants r2s1 (new task)"):
         assert spur in strings_all(texts), spur
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
