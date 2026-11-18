@@ -48,9 +48,12 @@
    ["mfail"   RED    [[480 R3] [480 1180]] 6 "10 6"]
    ["mback"   RED    [[480 1180] [480 1250]] 6 "10 6"] ; merge failed: spur back to the worker ants
    ["tdrop"   RED    [[760 R3] [760 1200]] 6 "10 6"]
+   ["tnext"   RED    [[760 1210] [760 1280]] 6 "10 6"] ; dropped cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
    ["after"   GREEN  [[1340 R4] [1780 R4]] 9 ""]
-   ["cfix"    RED    [[1580 R4] [1580 1660]] 6 "10 6"]])
+   ["cfix"    RED    [[1580 R4] [1580 1660]] 6 "10 6"]
+   ;; cback: check-fix, a new task for the worker ants
+   ["cback"   RED    [[1580 1660] [1580 1725]] 6 "10 6"]])
 
 ;; x, y, name, sub lines, kind, label anchor [dx dy anchor]
 (def L-UP [0 -60 "middle"]) (def L-DN [0 34 "middle"]) (def RIGHT [26 -4 "start"])
@@ -368,6 +371,8 @@
           (when (seq dash) (str " stroke-dasharray=\"" dash "\" class=\"flow\"")) "/>"))
    [(txt (+ X 12) 290 ["to row 2"] :fill BLUE :size 13 :weight "700")
     (txt 480 1272 ["to Worker ants, row 2"] :fill RED :size 13 :anchor "middle" :weight "700")
+    (txt 760 1302 ["to Task, row 1 (next run)"] :fill RED :size 13 :anchor "middle" :weight "700")
+    (txt 1580 1747 ["to Worker ants, row 2 (new task)"] :fill RED :size 13 :anchor "middle" :weight "700")
     (txt 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
     (txt 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
     (txt 240 664 ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"] :fill GOLD :size 13)

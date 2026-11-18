@@ -21,11 +21,15 @@
 <path id="L-mfail" d="M480,1080 L480,1180" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-mback" d="M480,1180 L480,1250" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-tdrop" d="M760,1080 L760,1200" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
+<path id="L-tnext" d="M760,1210 L760,1280" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-jfix" d="M400,1520 L460,1610 L1000,1610 L1060,1520" fill="none" stroke="#FBBF24" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-after" d="M1340,1520 L1780,1520" fill="none" stroke="#4ADE80" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-cfix" d="M1580,1520 L1580,1660" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
+<path id="L-cback" d="M1580,1660 L1580,1725" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <text class="h" x="1912" y="290" fill="#60A5FA" font-size="13" text-anchor="start" font-weight="700">to row 2</text>
 <text class="h" x="480" y="1272" fill="#F87171" font-size="13" text-anchor="middle" font-weight="700">to Worker ants, row 2</text>
+<text class="h" x="760" y="1302" fill="#F87171" font-size="13" text-anchor="middle" font-weight="700">to Task, row 1 (next run)</text>
+<text class="h" x="1580" y="1747" fill="#F87171" font-size="13" text-anchor="middle" font-weight="700">to Worker ants, row 2 (new task)</text>
 <text class="h" x="262" y="432" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">a plan may run a saved workflow in place of a worker ant</text>
 <text class="h" x="480" y="494" fill="#818CF8" font-size="13" text-anchor="middle" font-weight="400">built: the script starts</text><text class="h" x="480" y="511" fill="#818CF8" font-size="13" text-anchor="middle" font-weight="400">its detective at once</text>
 <text class="h" x="240" y="664" fill="#FBBF24" font-size="13" text-anchor="start" font-weight="400">bugs: the detective's fix plan goes back to the worker;</text><text class="h" x="240" y="681" fill="#FBBF24" font-size="13" text-anchor="start" font-weight="400">the worker builds it, the detective re-checks; 3 tries per bug</text>
