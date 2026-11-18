@@ -71,7 +71,7 @@
    [660 750 "Dropped" ["after 3 tries on a bug or" "3 fix rounds; branch kept"] "drop" RIGHT]
    ;; row 3: merge and cleanup
    [200 R3 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -70 "middle"]]
-   [480 1180 "merge failed" ["a conflict, failed tests, or a task" "git finds missing: next build round;" "max 2 extra build rounds"] "retry" RIGHT]
+   [480 1180 "merge failed" ["a conflict, failed tests, or missing in git:" "the worker ant merges main, fixes it," "detective re-checks; max 2 extra build rounds"] "retry" [-26 -4 "end"]]
    [760 R3 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -88 "middle"]]
    [760 1210 "Dropped cleanup" ["tests failed: branch kept," "its note offered as the next Task"] "drop" RIGHT]
    ;; row 4: judge, then main moves
@@ -133,8 +133,8 @@
    ["Merger ant" 200] {:tip "Merges the approved tasks for real, then checks with git."
                        :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main."
                        :src "scripts/ishikari-finish.js (Merge phase)"}
-   ["merge failed" 480] {:tip "A conflict or failed tests: back to build."
-                         :about "A conflict, failed tests, or a task git finds missing goes back to a new build round on its own. At most 2 extra build rounds; what is left after that drops and is reported."
+   ["merge failed" 480] {:tip "Back to the worker ant on the task's own branch."
+                         :about "A conflict, failed tests, or a task git finds missing goes back to build on its own, as a fix task on the same branch; nothing is re-planned. The worker ant first merges the current main into the branch, then fixes the bug. The detective re-checks and runs the tests (3 tries per bug, 3 fix rounds), the integrator runs the combined test again, and finish tries the merge once more. Tasks that merged cleanly are not rebuilt. At most 2 extra build rounds; what is left after that drops and is reported."
                          :src "SKILL.md#4-finish"}
    ["Janitor ant" 760] {:tip "Cleans up mess the run left, by itself."
                         :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor."
