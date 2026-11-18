@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, build and check the janitor cleanup on top, run the philosopher, move main forward',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, build and check the janitor cleanup on top, let the judge score it against the plans, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'janitor plans a cleanup, a worker builds it, an inspector checks it; then the philosopher' },
+    { title: 'Upkeep', detail: 'janitor plans a cleanup, a worker builds it, an inspector checks it; then the judge scores the run, one fix round below 7' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -15,15 +15,13 @@ export const meta = {
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
 //   drop?: [{ id, branch }],                 tasks dropped by the rules: marked dropped;
 //                                            their branches are kept for a later look
-//   critiques?: number,                      most critiques the philosopher keeps, 0-20;
-//                                            default 1, 0 skips the philosopher
 //   cleanup?: boolean,                       this run built a dropped cleanup plan: no janitor,
 //                                            so cleanups never chain
 //   checkFixDone?: boolean,                  a check-fix round already ran (also true when a
 //                                            task is named check-fix): a failed check is not
 //                                            offered for a second round
 // }
-// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, critiques, check,
+// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, verdict, check,
 //           checkFixDone, checkFix, checkFixRefused }
 // checkFix: the bug for one check-fix build round ({task: 'check-fix', bug}) when the
 // check failed and no round ran yet; null otherwise (checkFixRefused: true when the cap hit).
@@ -31,15 +29,16 @@ export const meta = {
 // bugs go into the next ishikari-build run. cleanup: {title, landed: true} when the
 // janitor's cleanup was built, checked and landed with the tasks; {title, file,
 // branch, landed: false, reason} when it was dropped, offered to the next
-// ishikari-plan run as a suggested task.
+// ishikari-plan run as a suggested task. verdict: the judge ant's {score (0-10),
+// gaps, fixed, flagged, first?, reason?}; flagged when the last score is below 7,
+// and main moves anyway. null when nothing was merged.
 //
 // The repo's main checkout is touched once, at the end, by a fast-forward
 // that git refuses if it would overwrite anything.
 
-const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', philosopher: 'low', finisher: 'low' }
+const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', judge: 'medium', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
-const maxCritiques = args.critiques == null ? 1 : args.critiques
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
 const approved = items(args.approved)
 const drop = items(args.drop)
@@ -55,7 +54,6 @@ for (const t of [...approved, ...drop]) {
   if (idsSeen.has(t.id)) bad.push(`task "${t.id}" is listed twice`)
   idsSeen.add(t.id)
 }
-if (!Number.isInteger(maxCritiques) || maxCritiques < 0 || maxCritiques > 20) bad.push('critiques must be a whole number from 0 to 20')
 if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
 if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
 if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
@@ -226,9 +224,14 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
 // of the scratch branch, an inspector checks it, with one fix round (detective,
 // worker, inspector). Passed: the scratch branch fast-forwards to it, so the
 // cleanup lands as its own commits after the tasks. Failed: it is dropped, its
-// branch kept, its plan offered next time. Then the philosopher reads the result.
+// branch kept, its plan offered next time. Then the judge ant scores the result.
 let cleanup = null
-let critiques = []
+let verdict = null
+const PASS = 7
+const planDir = `${env.state}/plans/${env.run}`
+const fixBranch = `ishikari/${env.run}/_judgefix`
+const fixTree = treeOf(fixBranch)
+let fixKept = false
 const cleanBranch = `ishikari/${env.run}/_cleanup`
 const cleanTree = treeOf(cleanBranch)
 const cleanPlan = `${env.state}/plans/${env.run}/cleanup.md`
@@ -296,42 +299,85 @@ Find why, and write the fix plan in "plan" for a worker ant. Never write code.`,
       } else readyFF = jan
     }
   }
-  const fastForward = async () => {
+  const fastForwardTo = async (branch, label) => {
     const ff = await agent(
-      `Fast-forward the Ishikari scratch branch to the checked cleanup.
+      `Fast-forward the Ishikari scratch branch to the checked branch ${branch}.
 ${where}
-Run \`git -C ${scratchTree} merge --ff-only ${cleanBranch}\`. If git refuses, change
+Run \`git -C ${scratchTree} merge --ff-only ${branch}\`. If git refuses, change
 nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
-      { label: 'merger-ant:cleanup', phase: 'Upkeep', effort: 'low',
+      { label, phase: 'Upkeep', effort: 'low',
         schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
     )
-    if (ff && ff.ok) { cleanup = { title: readyFF.title, landed: true }; sha = ff.sha || sha }
+    if (ff && ff.ok) { sha = ff.sha || sha; return true }
+    return false
+  }
+  const fastForward = async () => {
+    if (await fastForwardTo(cleanBranch, 'merger-ant:cleanup')) cleanup = { title: readyFF.title, landed: true }
     else { cleanup = { title: readyFF.title, file: cleanPlan, branch: cleanBranch, landed: false, reason: 'could not fast-forward the scratch branch' }; cleanKept = true }
   }
-  // The philosopher runs after the cleanup has landed or been dropped, so it
-  // reads the code that will land on main, cleanup included.
-  const philosopher = async () => {
-    const phil = maxCritiques === 0 ? null : await agent(
-      `You are the philosopher ant of the Ishikari workflow.
+  // The judge ant scores the whole run, cleanup included, against the plans.
+  // Below PASS: one fix round (worker, inspector), then a second score. Still
+  // below PASS: main moves anyway and the report flags it.
+  const judgeOnce = async (round) => {
+    const j = await agent(
+      `You are the judge ant of the Ishikari workflow.
 ${where}
-Read the merged code in ${scratchTree}, the code that will land on ${env.main}, and
-question the work just merged (${names}) as a whole, with the janitor's cleanup if it
-landed: design, scope, missing cases, how the tasks fit together.
-The cleanup's own commits sit on top: ${'`'}git -C ${scratchTree} log --oneline${'`'} shows them.
-Keep only your ${maxCritiques === 1 ? 'single most useful critique' : `${maxCritiques} most useful critiques`}, as short, concrete questions. Add them
-with exactly this command, filling in the rows:
-python3 ${env.tool} boards add ${env.state} critiques ${env.run} <<'ISHIKARI_ROWS_END'
-[["<target file or task>", "<critique>"], ...]
-ISHIKARI_ROWS_END
-Return the same critiques in "critiques". Change nothing else, and never block the work.`,
-      { label: 'philosopher-ant', phase: 'Upkeep', effort: EFFORT.philosopher,
-        schema: { type: 'object', properties: { critiques: { type: 'array', items: { type: 'object', properties: { target: { type: 'string' }, critique: { type: 'string' } }, required: ['target', 'critique'] } } }, required: ['critiques'] } },
+Read the plans for this run in ${planDir}: investigation_report.md (the user's task
+and goal), architecture.md and every worker plan. Then read the merged code in
+${scratchTree}, the code that will land on ${env.main}: the tasks (${names}) with the
+janitor's cleanup on top if it landed.
+Judge one thing: does the implementation match the plans? Score the whole run from
+0 to 10, where 10 means every planned behaviour is built as planned and nothing
+unplanned was added. List each gap in "gaps" as a short, concrete fix a worker ant
+can build without questions: what is missing or wrong, and in which file.
+Never change anything.`,
+      { label: `judge-ant:${round}`, phase: 'Upkeep', effort: EFFORT.judge,
+        schema: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] } },
     )
-    if (phil && Array.isArray(phil.critiques)) critiques = phil.critiques.slice(0, maxCritiques)
+    return j && Number.isInteger(j.score) ? { score: Math.max(0, Math.min(10, j.score)), gaps: Array.isArray(j.gaps) ? j.gaps.map(String) : [] } : null
+  }
+  const judgeRun = async () => {
+    const first = await judgeOnce(1)
+    if (!first) { verdict = { score: null, gaps: [], fixed: false, flagged: true, reason: 'the judge ant died' }; return }
+    verdict = { score: first.score, gaps: first.gaps, fixed: false, flagged: first.score < PASS }
+    if (first.score >= PASS || !first.gaps.length) return
+    const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
+    const b = await agent(
+      `You are a worker ant of the Ishikari workflow, closing the judge ant's gaps.
+${where}
+The judge scored the run ${first.score}/10 against the plans in ${planDir}. Gaps:
+${first.gaps.map(g => `- ${g}`).join('\n')}
+Work only in the worktree ${fixTree} on branch ${fixBranch}. If it does not exist,
+create it with \`git -C ${env.repo} worktree add -b ${fixBranch} ${fixTree} ${scratch}\`.
+Close the gaps so the code matches the plans. Keep the tests passing (${tests} inside
+${fixTree}). Commit on ${fixBranch} in small commits, no merge commits. Never touch
+${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
+      { label: 'worker-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
+    )
+    let bugs = ['the worker ant died']
+    if (b && b.status === 'built') {
+      const c = await agent(
+        `You are an inspector ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
+${where}
+Gaps:
+${first.gaps.map(g => `- ${g}`).join('\n')}
+Code: ${fixTree}, branch ${fixBranch}, built on ${scratch}. Check that it closes the gaps
+and breaks nothing, then ${tests} inside ${fixTree}. Return each problem in "bugs", or
+an empty list. Never fix anything.`,
+        { label: 'inspector-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.inspector,
+          schema: { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] } },
+      )
+      bugs = c ? c.bugs : ['the inspector ant died']
+    } else if (b) bugs = ['worker stuck: ' + b.notes]
+    if (bugs.length || !(await fastForwardTo(fixBranch, 'merger-ant:judge-fix'))) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
+    const second = await judgeOnce(2)
+    verdict = second
+      ? { score: second.score, gaps: second.gaps, fixed: true, flagged: second.score < PASS, first: first.score }
+      : { ...verdict, fixed: true, reason: 'the judge ant died on its second look' }
   }
   await janitorChain()
   if (readyFF) await fastForward()
-  await philosopher()
+  await judgeRun()
 }
 
 // ---- move main forward, clean up, write the bulletin ----
@@ -348,7 +394,7 @@ const write = rows => rows.length
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'
-const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(cleanKept ? [] : [cleanBranch])]
+const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
 const FINISH = {
   type: 'object',
   properties: {
@@ -402,7 +448,7 @@ return {
   bugs,
   waiting,
   cleanup,
-  critiques,
+  verdict,
   check,
   checkFixDone,
   checkFix: check.ran && !check.ok && !checkFixDone ? { task: 'check-fix', bug: check.output || 'the app check failed' } : null,

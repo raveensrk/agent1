@@ -12,10 +12,10 @@ export const meta = {
 // args: {
 //   env: { repo, state, run, main, tool },  from `ishikari.py setup`
 //   task: string,                           the task, in the user's words
-//   answered?: [{ question, answer, critique? }],  every question asked so far, in order;
+//   answered?: [{ question, answer }],     every question asked so far, in order;
 //                                           answer '' if skipped
 //   findings?: string[],                    research notes from earlier runs
-//   investigated?: { testCommand, checkCommand, answeredCritiques },
+//   investigated?: { testCommand, checkCommand },
 //                                           set when a live investigator agent,
 //                                           run by the skill, already asked the
 //                                           user and wrote the investigation
@@ -29,12 +29,12 @@ export const meta = {
 //                                           ask question; remaining is the best
 //                                           guess of questions left after it
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
-//   { stage: 'plans', report, design, review, requirement, plans, testCommand, checkCommand, answeredCritiques }
+//   { stage: 'plans', report, design, review, requirement, plans, testCommand, checkCommand }
 // requirement.needed is false for a change with no new behaviour (a refactor):
 // then nothing is written to the requirements file.
 //   { stage: 'error', reason }
 // Nothing is committed here. Without asking, the main session then commits
-// the requirement and removes answeredCritiques from the critiques board.
+// the requirement.
 
 const EFFORT = { review: 'medium', researcher: 'medium', requirement: 'medium', architect: 'high' }
 const MAX_RESEARCHERS = 5  // researcher ants at once
@@ -51,7 +51,6 @@ if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
 Use absolute paths only. Change nothing in the repo.`
-const critiques = `${env.state}/boards/critiques.md`
 const planDir = `${env.state}/plans/${env.run}`
 const reportFile = `${planDir}/investigation_report.md`
 const designFile = `${planDir}/architecture.md`
@@ -72,7 +71,6 @@ const REVIEW = {
         question: { type: 'string' },
         why: { type: 'string', description: 'one plain line on why it matters; empty if obvious' },
         answers: { type: 'array', items: { type: 'string' }, description: '2-4 short answers, recommended first and marked (Recommended)' },
-        critique: { type: 'string', description: 'the Id of the critiques board row this question came from; empty if none' },
       },
       required: ['question', 'answers'],
     },
@@ -174,9 +172,7 @@ Your goal: collect every fact and decision the task needs, so your
 investigation report is bulletproof: the add requirement ant plans from it
 alone, and no later ant ever needs to ask. Read the repo enough to judge it.
 Critique it: gaps, risks, unclear scope.
-${asked}${known}Read ${critiques}. A critique that matters for this task becomes a question;
-put that row's Id in the question's "critique" field. Leave the rest alone.
-Ask nothing the repo, the research or an earlier answer already settles.
+${asked}${known}Ask nothing the repo, the research or an earlier answer already settles.
 ${round < MAX_RESEARCH ? `If facts you need are missing, list them in research, at most ${MAX_RESEARCHERS}, and leave next empty: researcher ants look them up and you run again.` : 'Research is done for this question: leave research empty.'}
 Otherwise give the single most important next question in next, the
 /ask-simple way, and guess how many remain after it. Leave next.question
@@ -326,5 +322,4 @@ return {
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: review.testCommand,
   checkCommand: review.checkCommand || '',
-  answeredCritiques: inv ? list(inv.answeredCritiques).map(String) : answered.filter(q => q.answer && q.critique).map(q => q.critique),
 }

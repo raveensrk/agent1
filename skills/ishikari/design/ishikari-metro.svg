@@ -7,7 +7,7 @@
 <text class="h" x="330" y="44" fill="#A8B3C7" font-size="15" text-anchor="start" font-weight="400">Read it like a page: each row left to right, then wrap to the next row.</text>
 <text class="h" x="1690" y="120" fill="#60A5FA" font-size="13" text-anchor="end" font-weight="800">1 ASK  ·  2 PLAN</text>
 <text class="h" x="1690" y="420" fill="#4ADE80" font-size="13" text-anchor="end" font-weight="800">3 BUILD  ·  4 CHECK  ·  5 FIX</text>
-<text class="h" x="1690" y="980" fill="#4ADE80" font-size="13" text-anchor="end" font-weight="800">6 FINISH: MERGE + CLEANUP</text>
+<text class="h" x="1690" y="980" fill="#4ADE80" font-size="13" text-anchor="end" font-weight="800">6 FINISH: MERGE · CLEANUP · JUDGE</text>
 <text class="h" x="1690" y="1440" fill="#4ADE80" font-size="13" text-anchor="end" font-weight="800">6 FINISH: MAIN MOVES</text>
 <path id="L-plan" d="M120,200 L1440,200 L1600,200 L1600,360 L60,360 L60,520 L200,520" fill="none" stroke="#60A5FA" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-ask" d="M440,200 L440,90" fill="none" stroke="#FBBF24" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
@@ -24,7 +24,7 @@
 <path id="L-mfail" d="M200,1080 L200,1170" fill="none" stroke="#F87171" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-tidy" d="M440,1080 L500,1150 L560,1150 L760,1150 L940,1150 L1000,1080" fill="none" stroke="#2DD4BF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-tdrop" d="M760,1150 L760,1260" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
-<path id="L-crit" d="M1200,1080 L1200,950" fill="none" stroke="#94A3B8" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 6" class="flow"/>
+<path id="L-jfix" d="M1200,1080 L1200,1180" fill="none" stroke="#FBBF24" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <path id="L-after" d="M560,1540 L1160,1540" fill="none" stroke="#C4B5FD" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
 <path id="L-cfix" d="M860,1540 L860,1630" fill="none" stroke="#C4B5FD" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 6" class="flow"/>
 <text class="h" x="1612" y="290" fill="#60A5FA" font-size="13" text-anchor="start" font-weight="700">to row 2</text>
@@ -101,11 +101,11 @@
 <text class="h" x="786" y="1256" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Dropped cleanup</text>
 <text class="h" x="786" y="1275" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">branch kept, plan offered as</text><text class="h" x="786" y="1291" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">the next run's Task</text>
 <polygon points="1184.0,1080.0 1192.0,1066.1 1208.0,1066.1 1216.0,1080.0 1208.0,1093.9 1192.0,1093.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="1226" y="1120" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">Philosopher ant</text>
-<text class="h" x="1226" y="1139" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">after the cleanup: reviews the merged</text><text class="h" x="1226" y="1155" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">tasks and the cleanup; 1 best critique</text><text class="h" x="1226" y="1171" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">(--critiques N), never blocks</text>
-<rect x="1186" y="936" width="28" height="28" rx="4" fill="#0B1120" stroke="#94A3B8" stroke-width="3" stroke-dasharray="4 3"/>
-<text class="h" x="1174" y="946" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Critiques board</text>
-<text class="h" x="1174" y="965" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">bridge to the next run:</text><text class="h" x="1174" y="981" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">its Investigator reads it</text><text class="h" x="1174" y="997" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/critiques.md</text>
+<text class="h" x="1200" y="990" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Judge ant</text>
+<text class="h" x="1200" y="1009" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">final verdict: scores the run 0-10:</text><text class="h" x="1200" y="1025" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">does the code match the plans?</text><text class="h" x="1200" y="1041" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">7+: main moves</text>
+<rect x="1186" y="1166" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<text class="h" x="1226" y="1176" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">judge fix round</text>
+<text class="h" x="1226" y="1195" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">below 7: a worker closes the gaps,</text><text class="h" x="1226" y="1211" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">an inspector checks, judged again;</text><text class="h" x="1226" y="1227" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">still low: main moves, flagged</text>
 <circle cx="1000" cy="1080" r="9" fill="#F1F5F9"/>
 <text class="h" x="1000" y="1040" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">cleanup done</text>
 <text class="h" x="1000" y="1059" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">landed or dropped</text>

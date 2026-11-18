@@ -30,7 +30,7 @@ lines = [  # name, colour, points, width, dash
  ("mfail", RED,   [(200,R3),(200,1170)], 6, "10 6"),
  ("tidy",  TEAL,  [(440,R3),(500,1150),(560,1150),(760,1150),(940,1150),(1000,R3)], 9, ""),
  ("tdrop", TEAL,  [(760,1150),(760,1260)], 6, "10 6"),
- ("crit",  GREY,  [(1200,R3),(1200,950)], 6, "4 6"),
+ ("jfix",  GOLD,  [(1200,R3),(1200,1180)], 6, "10 6"),
  ("after", PURP,  [(560,R4),(1160,R4)], 9, ""),
  ("cfix",  PURP,  [(860,R4),(860,1630)], 6, "10 6"),
 ]
@@ -57,8 +57,8 @@ stations = [
  (560,1150,"Worker ant",["builds the cleanup on top of the merge"],"st",(0,34,"middle")),
  (760,1150,"Inspector ant",["checks the cleanup: plan + combined test;","fail: one fix round"],"st",(0,-60,"middle")),
  (760,1260,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
- (1200,R3,"Philosopher ant",["after the cleanup: reviews the merged","tasks and the cleanup; 1 best critique","(--critiques N), never blocks"],"x",(26,40,"start")),
- (1200,950,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"log",(-26,-4,"end")),
+ (1200,R3,"Judge ant",["final verdict: scores the run 0-10:","does the code match the plans?","7+: main moves"],"x",(0,-90,"middle")),
+ (1200,1180,"judge fix round",["below 7: a worker closes the gaps,","an inspector checks, judged again;","still low: main moves, flagged"],"term",(26,-4,"start")),
  (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
  (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
@@ -74,7 +74,7 @@ o.append(f'<rect width="{W}" height="{H}" fill="{BG}"/>')
 o.append(txt(40, 44, ["ISHIKARI METRO"], TXT, 28, weight="800"))
 o.append(txt(330, 44, ["Read it like a page: each row left to right, then wrap to the next row."], SUB, 15))
 # row bands
-for y, label, c in [(R1, "1 ASK  ·  2 PLAN", BLUE), (R2, "3 BUILD  ·  4 CHECK  ·  5 FIX", GREEN), (R3, "6 FINISH: MERGE + CLEANUP", GREEN), (R4, "6 FINISH: MAIN MOVES", GREEN)]:
+for y, label, c in [(R1, "1 ASK  ·  2 PLAN", BLUE), (R2, "3 BUILD  ·  4 CHECK  ·  5 FIX", GREEN), (R3, "6 FINISH: MERGE · CLEANUP · JUDGE", GREEN), (R4, "6 FINISH: MAIN MOVES", GREEN)]:
     o.append(txt(W - 30, y - 100 if y != R1 else 120, [label], c, 13, "end", "800"))
 for name, c, pts, w, dash in lines:
     o.append(f'<path id="L-{name}" d="{d(pts)}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linejoin="round" stroke-linecap="round"' + (f' stroke-dasharray="{dash}" class="flow"' if dash else '') + '/>')

@@ -3,7 +3,7 @@ name: ishikari
 metadata:
   scope: global
 description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it combined, and merge it in a straight line - asking the user only while planning, then running on its own. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
-argument-hint: "<task> [repo path] [--critiques N]"
+argument-hint: "<task> [repo path]"
 ---
 
 # Ishikari
@@ -25,7 +25,7 @@ Design, rules and diagram:
 | `scripts/ishikari-plan.js`       | investigate, requirement, design, plans |
 | `scripts/ishikari-build.js`      | build, check, fix, combined test        |
 | `scripts/ishikari-finish.js`     | merge, upkeep, move main                |
-| `assets/boards/*.md`             | templates: bulletin, bounty, critiques  |
+| `assets/boards/*.md`             | templates: bulletin, bounty             |
 | `assets/prompts/investigator.md` | the live investigator ant's brief       |
 | `tests/test_ishikari.py`         | tool: setup, boards, reqs, guards       |
 | `tests/test_workflows.mjs`       | script logic, with stand-in ants        |
@@ -68,11 +68,12 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 | Build rounds for merge bugs, waiting   | 2     | skill rule, step 4     |
 | Check-fix rounds                       | 1     | finish `checkFixDone`  |
 | Cleanup fix rounds                     | 1     | finish                 |
+| Judge pass score (out of 10)           | 7     | finish `PASS`          |
+| Judge fix rounds                       | 1     | finish                 |
 
 ## 1. Setup
 
-- Repo: the path in the arguments, else the current repo. `--critiques N`: the
-  most critiques the philosopher keeps per run, 0-20, default 1; 0 skips it.
+- Repo: the path in the arguments, else the current repo.
   Task: the rest of the arguments; if there is none, ask for it.
 - Run `python3 <skill>/scripts/ishikari.py setup <repo> [--main <branch>]`.
   Keep its JSON as `env` for every step. Its `workflows` field holds the three
@@ -96,8 +97,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 1. Start ONE investigator with the Agent tool (general-purpose). Its prompt is
    [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
-   inputs: `env.repo`, `env.main`, `env.state`, the task, the critiques board
-   `<env.state>/boards/critiques.md`, the report path
+   inputs: `env.repo`, `env.main`, `env.state`, the task, the report path
    `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`
    and `env.checkCommand` when saved. If the last finish dropped a cleanup,
    add one line to the task: `Also consider the cleanup plan at <file>.` The
@@ -110,15 +110,15 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 3. `blocker` set: stop the investigator with TaskStop, show the reason and stop.
 4. `reportWritten`: stop the investigator with TaskStop first; its work is
    over and the report is all later ants read. Then run `env.workflows.plan`
-   with `{env, task, investigated: {testCommand, checkCommand,
-   answeredCritiques}}` from its last reply. It skips Review and runs the
+   with `{env, task, investigated: {testCommand, checkCommand}}` from its
+   last reply. It skips Review and runs the
    requirement and design ants.
 
 ### 2b. Fallback (no Agent tool)
 
 1. Run `env.workflows.plan` with `{env, task}`.
 2. On `question`, ask it and run again with `answered` (append
-   `{question, answer, critique}`) and `findings` from the last result.
+   `{question, answer}`) and `findings` from the last result.
 3. A question already in `answered` returns `stage: 'error'`.
 
 ### 2c. Plans
@@ -129,8 +129,6 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   - if `requirement.needed`, pipe `requirement.entry` into
     `python3 <env.tool> req add <requirement.file>` and commit only that file.
     Keep the entry's `:ID:` values: step 4 marks them done;
-  - pipe the `answeredCritiques` JSON into
-    `python3 <env.tool> boards remove <env.state> critiques`;
   - save `testCommand` and `checkCommand` with
     `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
 - A run whose task is a dropped cleanup plan passes `cleanup: true` to finish,
@@ -149,8 +147,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## 4. Finish
 
-- Run `env.workflows.finish` with `{env, approved, together, drop, critiques}`
-  (`critiques` is N from step 1), plus
+- Run `env.workflows.finish` with `{env, approved, together, drop}`, plus
   `cleanup: true` for a cleanup run. `approved` items are `{id, branch, after}`
   from the build result.
 - `bugs` and `waiting`: run a new build round with both lists as `bugs`; each
@@ -173,9 +170,11 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
     tip are ancestors of it; else it merges from main;
   - a verifier ant checks each merged task with `git cherry`; a task the
     merger called merged but git finds missing comes back as a merge bug;
-  - the philosopher runs after the janitor's cleanup has landed or been
-    dropped, so its critiques cover the cleanup too.
+  - after the cleanup, the judge ant scores the whole run 0-10 against the
+    plans (report, architecture, worker plans). Below 7: one fix round
+    (worker, inspector), then a second score. Still below 7: main moves
+    anyway and `verdict.flagged` is true.
 - Report once, at the end: what landed on main, each task's notes and nits,
-  each dropped task with why and its bugs, the check, each new critique (one
-  line each from `critiques`) and the cleanup: `landed`, or dropped with its
+  each dropped task with why and its bugs, the check, the judge's `verdict` (score,
+  gaps; say FLAGGED when `flagged`) and the cleanup: `landed`, or dropped with its
   `reason` and `branch`, its plan offered as the next task.

@@ -43,18 +43,13 @@ def test_setup_and_boards():
         assert env["state"].startswith(os.path.join(home, ".ishikari", "app-"))
         for k in ("plan", "build", "finish"):
             assert os.path.isfile(env["workflows"][k]), k
-        for b in ("bulletin", "bounty", "critiques"):
+        for b in ("bulletin", "bounty"):
             assert os.path.isfile(os.path.join(env["state"], "boards", f"{b}.md"))
 
         state = env["state"]
-        run(home, "boards", "add", state, "critiques", "r1",
-            stdin=json.dumps([["a.py", "why | so?"], ["b.py", "and this"]]))
-        text = open(os.path.join(state, "boards", "critiques.md")).read()
-        assert "r1-1" in text and "r1-2" in text and "why \\| so?" in text
-
-        run(home, "boards", "remove", state, "critiques", stdin=json.dumps(["r1-1"]))
-        text = open(os.path.join(state, "boards", "critiques.md")).read()
-        assert "r1-1" not in text and "r1-2" in text
+        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["r/p", "why | so?", "worker ant", "-"]]))
+        text = open(os.path.join(state, "boards", "bulletin.md")).read()
+        assert "why \\| so?" in text
 
         run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["r/x", "building", "worker ant", "-"]]))
         run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["r/x", "done", "merger ant", "-"]]))
@@ -106,7 +101,7 @@ def test_guards():
         assert "not valid JSON" in fails(home, "boards", "write", state, "bulletin", stdin="[oops")
         assert "JSON list" in fails(home, "boards", "write", state, "bulletin", stdin='{"a": 1}')
         assert "non-empty JSON list" in fails(home, "boards", "write", state, "bulletin", stdin='["x"]')
-        assert "list of ids" in fails(home, "boards", "remove", state, "critiques", stdin='[["x"]]')
+        assert "unknown board" in fails(home, "boards", "write", state, "critiques", stdin='[["x"]]')
         board = open(os.path.join(state, "boards", "bulletin.md")).read()
         assert "| Task" in board  # a refused write leaves the board as it was
 
@@ -122,21 +117,21 @@ def test_guards():
         raw = open(crlf, newline="").read()
         assert "* DONE C\r\n" in raw and "\n" not in raw.replace("\r\n", "")  # stays CRLF
 
-        assert "columns" in fails(home, "boards", "add", state, "critiques", "r9", stdin='[["a", "b", "c", "d"]]')
+        assert "columns" in fails(home, "boards", "write", state, "bulletin", stdin='[["a", "b", "c", "d", "e", "f", "g"]]')
 
 
 def test_parallel_writers():
     with tempfile.TemporaryDirectory() as home:
         state = json.loads(run(home, "setup", make_repo(home)))["state"]
         env = {**os.environ, "HOME": home}
-        procs = [subprocess.Popen([sys.executable, TOOL, "boards", "add", state, "critiques", "p"],
+        procs = [subprocess.Popen([sys.executable, TOOL, "boards", "write", state, "bulletin"],
                                   stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, env=env, text=True)
                  for _ in range(30)]
         for k, p in enumerate(procs):
-            p.communicate(json.dumps([[f"f{k}.py", f"c{k}"]]), timeout=TIMEOUT)
+            p.communicate(json.dumps([[f"p/{k}", "done", "worker ant", "-"]]), timeout=TIMEOUT)
             assert p.returncode == 0
-        text = open(os.path.join(state, "boards", "critiques.md")).read()
-        assert sum(1 for l in text.splitlines() if l.startswith("| p-")) == 30  # no row lost
+        text = open(os.path.join(state, "boards", "bulletin.md")).read()
+        assert sum(1 for l in text.splitlines() if l.startswith("| p/")) == 30  # no row lost
 
 
 def git_in(repo, *args):

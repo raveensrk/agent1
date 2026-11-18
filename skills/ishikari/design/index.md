@@ -19,9 +19,8 @@ its job. The build script runs that workflow in place of a worker ant.
 01. **Task in.** The user gives a task. It can be anything.
 
 02. **Investigator Ant** has one goal: a bulletproof investigation report, so
-    no later ant needs to ask. It critiques the task, finds the
-    repo's test command and reads the critiques board: each critique that
-    matters becomes a question. When it lacks facts it sends up to 5
+    no later ant needs to ask. It critiques the task and finds the
+    repo's test command. When it lacks facts it sends up to 5
     **Researcher Ants** in parallel; they search the web and the whole computer,
     read only, never secrets, and report back. It is one live agent for the
     whole talk, run by the skill, not a workflow: it reads the repo once and
@@ -39,7 +38,7 @@ its job. The build script runs that workflow in place of a worker ant.
     `/add-requirement` skill and shows it can be built from the repo's code and
     docs, writing a throwaway spike outside the repo only when that is not
     enough. It never asks the user, and never designs or plans. The main session
-    then commits the requirement and removes the critiques the user answered.
+    then commits the requirement.
 
 03b. **Architect Ant** reads the report and the requirement and writes
     `architecture.md` beside the report: the parts of the change, the files each
@@ -119,12 +118,16 @@ They run once per finish, on the merged result, before main moves.
   branch is kept and the next plan stage hands its plan to the investigator ant,
   which may ask about it. One cleanup per run: a dropped cleanup's own run gets
   no janitor, so cleanups never chain.
-- **Philosopher ant** runs after the janitor's cleanup has landed or been
-  dropped, on the merged code with the cleanup on top, and questions all the
-  merged work together and keeps its best critiques: 1 by default, set with
-  `--critiques N` (0 skips it). It only comments, in the critiques board, and
-  never blocks. On the next task, the investigator ant turns the ones that
-  matter into questions.
+- **Judge ant** gives the final verdict. It runs after the janitor's cleanup has
+  landed or been dropped, reads the plans (investigation report, architecture
+  and every worker plan) and the merged code with the cleanup on top, and
+  scores the whole run 0-10 on one question: does the implementation match the
+  plans? It lists each gap as a concrete fix. At 7 or more, main moves. Below
+  7, one fix round: a worker ant closes the gaps on top of the merged scratch
+  copy, an inspector ant checks it and runs the tests, and the judge scores
+  again. Still below 7, or the fix failed: main moves anyway and the verdict is
+  flagged in the report. The judge never blocks main, so a run never gets
+  stuck on a score.
 
 ## Rules
 
@@ -200,8 +203,7 @@ and stops to ask the user only in step 2.
    [Plan](../SKILL.md#2-plan)). The plans go straight to
    build. First `ishikari.py req add` writes the requirement (none for a
    refactor), the main
-   session commits it, and `ishikari.py boards remove` drops the answered
-   critiques. `ishikari.py config` saves the test and check commands.
+   session commits it. `ishikari.py config` saves the test and check commands.
 3. Run `ishikari-build` with `env` and the plans. Every task
    `awaiting review` is approved without asking. Escalated, blocked and error
    tasks, and tasks built on them, are dropped and listed in the report.
@@ -213,8 +215,8 @@ and stops to ask the user only in step 2.
    waiting tasks come back in the next build as `bugs`. The
    janitor's cleanup is built and checked inside finish, with its own one fix
    round, and lands with the tasks; only a dropped cleanup's plan goes to the
-   next plan stage, and that cleanup run gets no janitor. The philosopher's
-   new critiques are listed in the result. Once the check passes,
+   next plan stage, and that cleanup run gets no janitor. The judge's
+   verdict (score, gaps, flagged) is in the result. Once the check passes,
    `ishikari.py req done` marks the run's requirements DONE. The skill's
    [Limits](../SKILL.md#limits) table is the source of truth
    for every loop cap.
@@ -224,9 +226,7 @@ and stops to ask the user only in step 2.
 Stages run left to right: plan, build, check, fix, finish. The scripts hand work
 from ant to ant directly. The bulletin and bug bounty boards sit apart in the
 Logbook: the board tool writes them once at the end of build and once at the end
-of finish, for you to read after a run; no ant reads them. The critiques board
-stands alone as the bridge to the next run: the philosopher writes it and the
-next run's investigator reads it. All boards live in the state folder, outside
+of finish, for you to read after a run; no ant reads them. All boards live in the state folder, outside
 the repo.
 
 An animated metro map: four rows read left to right, and short transfer spurs
