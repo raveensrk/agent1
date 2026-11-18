@@ -8,7 +8,7 @@
             [babashka.fs :as fs]
             [cheshire.core :as json]))
 
-(def W 2000) (def H 1960)
+(def W 2000) (def H 1380)
 (def BG "#0B1120") (def TXT "#F1F5F9") (def SUB "#A8B3C7")
 (def BLUE "#60A5FA") (def GREEN "#4ADE80") (def RED "#F87171") (def GOLD "#FBBF24") (def GREY "#94A3B8")
 (def INDIGO "#818CF8")
@@ -28,28 +28,28 @@
 
 (defn d [pts] (str "M" (str/join " L" (map (fn [[x y]] (str x "," y)) pts))))
 
-(def R1 200) (def R2 540) (def R3 1080) (def R4 1520)
+(def R1 200) (def R2 440) (def R3 760) (def R4 980)
 (def X 1900)              ; where each row wraps down to the next
 (def J1 400) (def J2 1000) ; first and second Judge ant (the gold judge-fix dip runs between)
-(def DIP4 1610)           ; y of the judge-fix dip (row 4)
+(def DIP4 1070)           ; y of the judge-fix dip (row 4)
 
-(def trunk [[200 R2] [X R2] [X 860] [60 860] [60 R3] [X R3] [X 1400] [60 1400] [60 R4] [1340 R4]])
+(def trunk [[200 R2] [X R2] [X 670] [60 670] [60 R3] [X R3] [X 900] [60 900] [60 R4] [1340 R4]])
 (def lines ; name, colour, points, width, dash
-  [["plan"    BLUE   [[120 R1] [X R1] [X 370] [60 370] [60 R2] [200 R2]] 12 ""]
+  [["plan"    BLUE   [[120 R1] [X R1] [X 350] [60 350] [60 R2] [200 R2]] 12 ""]
    ["ask"     BLUE   [[440 R1] [440 90]] 7 ""]
    ["res"     BLUE   [[440 R1] [440 300]] 7 ""]
    ;; "build" is the trains' route only (drawn invisible).
    ["build"   "none" trunk 12 ""]
    ["g1"      INDIGO trunk 12 ""]
-   ["fix"     GOLD   [[760 R2] [730 640] [230 640] [200 R2]] 8 ""]
-   ["fixloop" "none" [[200 R2] [760 R2] [730 640] [230 640] [200 R2]] 8 ""]
-   ["clash"   GOLD   [[1200 R2] [1200 700] [800 700] [760 R2]] 6 "10 6"]
-   ["drop"    RED    [[660 640] [660 730]] 6 "10 6"]
-   ["mback"   RED    [[200 R3] [200 1160]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
-   ["tnext"   RED    [[760 R3] [760 1160]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
+   ["fix"     GOLD   [[760 R2] [730 540] [230 540] [200 R2]] 8 ""]
+   ["fixloop" "none" [[200 R2] [760 R2] [730 540] [230 540] [200 R2]] 8 ""]
+   ["clash"   GOLD   [[1200 R2] [1200 600] [800 600] [760 R2]] 6 "10 6"]
+   ["drop"    RED    [[660 540] [660 610]] 6 "10 6"]
+   ["mback"   RED    [[200 R3] [200 830]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
+   ["tnext"   RED    [[760 R3] [760 830]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
    ["after"   GREEN  [[1340 R4] [1780 R4]] 9 ""]
-   ["cfix"    RED    [[1580 R4] [1580 1600]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
+   ["cfix"    RED    [[1580 R4] [1580 1060]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
 
 ;; id, x, y, name, sub lines, kind, label anchor [dx dy anchor].
 ;; The id never changes and is what spurs, details and links use; the short
@@ -60,7 +60,7 @@
    ["task" 120 R1 "Task" ["you give it, or a" "dropped cleanup plan"] "task" L-DN]
    ["investigator" 440 R1 "Investigator ant" ["one live agent run by the skill: reads" "the repo once, gets each answer as a message;" "no Agent tool: the plan workflow runs it"] "x" [-22 -14 "end"]]
    ["you" 440 90 "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you" [26 -6 "start"]]
-   ["researchers" 440 300 "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end" [24 -4 "start"]]
+   ["researchers" 440 290 "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end" [24 -4 "start"]]
    ["report" 780 R1 "investigation_report.md" ["written when nothing is unclear;" "the investigator is stopped"] "file" L-DN]
    ["add-requirement" 1100 R1 "Add requirement ant" ["drafts the requirement entry;" "the main session pipes it into ishikari.py req add;" "no requirements file: no add requirement ant"] "st" L-DN]
    ["architect" 1420 R1 "Architect ant" ["writes architecture.md" "and one plan per task"] "st" L-UP]
@@ -171,7 +171,7 @@
     (when (not= (count m) (count stations)) (throw (ex-info "station ids must be unique" {})))
     m))
 
-(defn row-of [y] (cond (< y 450) 1 (< y 900) 2 (< y 1450) 3 :else 4))
+(defn row-of [y] (cond (< y 350) 1 (< y 670) 2 (< y 900) 3 :else 4)) ; split at the row wraps
 
 (def code
   "id -> short position code like r3s1: row, then station number left to right;\n  at the same x, the station on the row line comes first."
@@ -279,7 +279,7 @@
 (defn legend
   "The key box in the bottom right."
   []
-  (let [kx 1440 ky 1770
+  (let [kx 1440 ky 1190
         rows [[BLUE "1" "task on the plan line"] [INDIGO "2-6" "five worker tasks to MAIN"] [GOLD "7-8" "a bug through the fix loop"]
               [GREEN "10" "after main moves"] [GOLD "11" "the judge's fix round, below 7"]]
         ;; right column: each symbol drawn, not typed, so every browser shows the same
@@ -418,8 +418,8 @@
                               [2 R2 "3 BUILD  ·  4 CHECK  ·  5 FIX" INDIGO "Steps 3 to 5: worker ants build the plans in parallel, detective ants check each one and plan fixes, and the integrator tests all passing tasks together."]
                               [3 R3 "6 FINISH: MERGE  ·  CLEANUP" INDIGO "Step 6, first half: the merger lands the tasks in a scratch copy and the janitor cleans up after them. Main has not moved yet."]
                               [4 R4 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half: the judge scores the run against the plans, the finisher moves main forward and runs the check, and the requirements are marked done."]]]
-     (clickable {:id (str "row-" k) :name (str "Row " k) :tip label :about about :src "skills/ishikari/SKILL.md" :x (- W 30) :y (if (= y R1) 120 (- y 100))}
-                (txt (- W 30) (if (= y R1) 120 (- y 100)) [label] :fill c :size 13 :anchor "end" :weight "800")))
+     (clickable {:id (str "row-" k) :name (str "Row " k) :tip label :about about :src "skills/ishikari/SKILL.md" :x (- W 30) :y (if (= y R1) 120 (- y 50))}
+                (txt (- W 30) (if (= y R1) 120 (- y 50)) [label] :fill c :size 13 :anchor "end" :weight "800")))
    (for [[name c pts w dash] lines
          :let [path (str "<path id=\"L-" name "\" d=\"" (d pts) "\" fill=\"none\" stroke=\"" c "\" stroke-width=\"" w "\" stroke-linejoin=\"round\" stroke-linecap=\"round\""
                          (when (seq dash) (str " stroke-dasharray=\"" dash "\" class=\"flow\"")) "/>")]]
@@ -448,8 +448,8 @@
                    (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
                         (txt (+ x 26) (+ y 22) [head] :fill c :size 13 :weight "700"))
                    (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")))))
-   [(note "to-row-3" (+ X 12) 700 ["to row 3"] :fill INDIGO :size 13 :weight "700")
-    (note "to-row-4" (+ X 12) 1240 ["to row 4"] :fill INDIGO :size 13 :weight "700")]
+   [(note "to-row-3" (+ X 12) 560 ["to row 3"] :fill INDIGO :size 13 :weight "700")
+    (note "to-row-4" (+ X 12) 830 ["to row 4"] :fill INDIGO :size 13 :weight "700")]
    (for [[id x y nm sub kind [dx dy an]] stations
          :let [{:keys [tip about src]} (detail id)]]
      (clickable {:id id :cls "st" :name (str/replace nm "  ∥" "") :code (code id) :tip tip :about about :src src :sub sub :x x :y y}
