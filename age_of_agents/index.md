@@ -99,12 +99,12 @@ its job. The build script runs that workflow in place of a worker ant.
 
 09. **Merger Ant** runs straight after. It adds every passing task's
     commits in a straight line, with no merge commits, in a scratch copy, in
-    dependency order, and tests once. When the approved tasks are exactly the
-    ones in the combined test, it reuses that result. It refuses a task whose base
-    was dropped. A failed merge, or a task left waiting, goes back to a new
-    build round on its own, at most 2 rounds; what is left is dropped and
-    reported. Main moves forward only as a fast-forward, which git refuses if it
-    would overwrite local edits.
+    dependency order, and tests once. It may reuse the combined test's merge
+    (see [Finish](../skills/ishikari/SKILL.md#4-finish)). It refuses a task
+    whose base was dropped. A failed merge, or a task left waiting, goes back
+    to a new build round on its own; what is left after the last round is
+    dropped and reported. Main moves forward only as a fast-forward, which git
+    refuses if it would overwrite local edits.
 
 ## Upkeep ants
 
@@ -154,7 +154,8 @@ They run once per finish, on the merged result, before main moves.
   when every task is reported merged and a commit is given. Main counts as moved
   only when something was merged and the finisher says so. Branch names from
   earlier rounds must look like `ishikari/<run>/<task>`, since they go into git
-  commands. The investigator asking the same question twice stops the run.
+  commands. In the fallback plan loop (no Agent tool), the investigator
+  asking a question it already asked stops the run.
 - Board and requirement writes keep the file's own line endings, and a row with
   more cells than the board has columns is refused.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
@@ -207,12 +208,13 @@ and stops to ask the user only in step 2.
    skips the trial merge: its inspector already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
-   waiting tasks come back in the next build as `bugs`, at most 2 rounds. The
+   waiting tasks come back in the next build as `bugs`. The
    janitor's cleanup is built and checked inside finish, with its own one fix
    round, and lands with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The philosopher's
    new critiques are listed in the result. Once the check passes,
-   `ishikari.py req done` marks the run's requirements DONE.
+   `ishikari.py req done` marks the run's requirements DONE. Every loop cap
+   is in the skill's [Limits](../skills/ishikari/SKILL.md#limits) table.
 
 ## Diagram
 
@@ -228,200 +230,6 @@ by [`render.sh`](render.sh) to a light and a dark SVG.
 Colors: each stage has its own color. Green arrows are approvals, red arrows are
 bugs, gray arrows are normal flow. Dashed arrows only log, watch or comment. The
 legend in the diagram shows the arrow colors.
-
-```d2
-# Colors live in vars. render.sh swaps them for the dark version.
-vars: {
-  plan-fill: "#DBEAFE"
-  plan-line: "#2563EB"
-  build-fill: "#DCFCE7"
-  build-line: "#16A34A"
-  check-fill: "#FEF3C7"
-  check-line: "#D97706"
-  fix-fill: "#FFE4E6"
-  fix-line: "#E11D48"
-  finish-fill: "#EDE9FE"
-  finish-line: "#7C3AED"
-  always-fill: "#F1F5F9"
-  always-line: "#64748B"
-  node-fill: "#FFFFFF"
-  text: "#0F172A"
-  bug: "#DC2626"
-  ok: "#16A34A"
-  flow: "#475569"
-}
-
-classes: {
-  node: {style: {fill: ${node-fill}; font-color: ${text}; stroke-width: 2}}
-  bug: {style: {stroke: ${bug}; font-color: ${bug}; stroke-width: 2}}
-  ok: {style: {stroke: ${ok}; font-color: ${ok}; stroke-width: 2}}
-  flow: {style: {stroke: ${flow}; font-color: ${flow}}}
-}
-
-direction: right
-
-user: User (me) {
-  shape: person
-  width: 80
-  height: 80
-  style: {fill: "#FDE68A"; stroke: "#B45309"; font-color: ${text}}
-}
-
-ask: 1. Ask - one live agent, run by the skill {
-  left: 0
-  top: 0
-  direction: down
-  style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2; stroke-dash: 4}
-  task: Task {shape: oval; class: node; style.stroke: ${plan-line}}
-  arta: Investigator Ant\nstays alive, reads repo once,\ngets each answer as a message {shape: hexagon; class: node; style.stroke: ${plan-line}}
-  research: Researcher Ants\nup to 5, web + computer {shape: hexagon; style.multiple: true; class: node; style.stroke: ${plan-line}}
-  report: investigation_report.md {shape: page; class: node; style.stroke: ${plan-line}}
-  task -> arta: review {class: flow}
-  arta <-> research: facts, it waits {class: flow; style.stroke-dash: 3}
-  arta -> report: nothing unclear:\nwrite report {class: ok}
-}
-
-plan: 2. Plan workflow {
-  left: 760
-  top: 0
-  direction: down
-  style: {fill: ${plan-fill}; stroke: ${plan-line}; font-color: ${plan-line}; stroke-width: 2}
-  aara: Add Requirement Ant {shape: hexagon; class: node; style.stroke: ${plan-line}}
-  arch: Architect Ant\narchitecture.md {shape: hexagon; class: node; style.stroke: ${plan-line}}
-  plans: Worker plans\none per worker ant {shape: page; class: node; style.stroke: ${plan-line}; style.multiple: true}
-  aara -> arch: requirement {class: flow}
-  arch -> plans: design,\nwrite plans {class: flow}
-}
-
-build: 3. Build {
-  left: 1180
-  top: 0
-  style: {fill: ${build-fill}; stroke: ${build-line}; font-color: ${build-line}; stroke-width: 2}
-  aw: Worker Ants\ncode, tests and docs,\none worktree each, max 5 {shape: hexagon; style.multiple: true; class: node; style.stroke: ${build-line}}
-}
-
-check: 4. Check {
-  left: 1900
-  top: 0
-  direction: down
-  style: {fill: ${check-fill}; stroke: ${check-line}; font-color: ${check-line}; stroke-width: 2}
-  inspector: Inspector Ants\none per built task,\nchecks plan + design,\nruns its tests {shape: hexagon; style.multiple: true; class: node; style.stroke: ${check-line}}
-  together: Combined test\nIntegrator Ant\nmerges passing tasks\nin a scratch copy,\ntests once {shape: hexagon; class: node; style.stroke: ${check-line}}
-  inspector -> together: pass, once every\ntask is checked {class: ok}
-}
-
-fix: 5. Fix {
-  left: 2750
-  top: 0
-  direction: up
-  style: {fill: ${fix-fill}; stroke: ${fix-line}; font-color: ${fix-line}; stroke-width: 2}
-  detective: Detective Ant\none per task with a bug, in parallel:\nfinds why a bug is still open\nafter a failed fix, writes the\nnext fix plan, never code {shape: hexagon; style.multiple: true; class: node; style.stroke: ${fix-line}}
-}
-
-finish: 6. Finish {
-  left: 3350
-  top: 0
-  direction: right
-  grid-columns: 2
-  style: {fill: ${finish-fill}; stroke: ${finish-line}; font-color: ${finish-line}; stroke-width: 2}
-  merger: Merger ant\nstraight line in a\nscratch copy, tests once {shape: hexagon; class: node; style.stroke: ${finish-line}}
-  finisher: Finisher ant\nmoves main forward,\ncleans up {shape: hexagon; class: node; style.stroke: ${finish-line}}
-}
-
-logbook: Logbook - for you, no ant reads it\n~/.ishikari/<repo>-<hash>/boards/ {
-  left: 1000
-  top: 820
-  direction: right
-  style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2; stroke-dash: 4}
-  bulletin: Bulletin board\none row per task {shape: cylinder; class: node; style.stroke: ${build-line}}
-  bounty: Bug bounty board\none row per bug {shape: cylinder; class: node; style.stroke: ${fix-line}}
-}
-
-critiques: Critiques board\nthe bridge to the next run\n~/.ishikari/<repo>-<hash>/boards/critiques.md {
-  left: 1650
-  top: 1150
-  shape: cylinder
-  class: node
-  style.stroke: ${always-line}
-}
-
-always_on: Upkeep ants (before main moves) {
-  left: 2100
-  top: 820
-  label.near: outside-bottom-center
-  style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  janitor: Janitor ant\ncleanup plan for this\nrun's mess, built now {shape: hexagon; class: node; style.stroke: ${always-line}}
-  philosopher: Philosopher ant\nafter the cleanup,\nbest critiques (1 by default,\n--critiques N) {shape: hexagon; class: node; style.stroke: ${always-line}}
-}
-
-check.inspector -> fix.detective: bug still open after round 1:\nthe script hands it over {class: bug}
-always_on.philosopher -> critiques: critique {class: flow; style.stroke-dash: 3}
-check -> logbook: end of build: every\ntask and bug, once {class: flow; style.stroke-dash: 3}
-finish -> logbook: end of finish:\nmerged tasks "done" {class: flow; style.stroke-dash: 3}
-ask.report -> plan.aara: report {class: ok}
-ask.arta <-> user: up to 4 questions\na round, /ask-simple {class: flow}
-plan.plans -> build.aw: start in parallel {class: flow}
-check.together -> finish.merger: pass: they work combined,\nmain session approves them {class: ok}
-check.together -> build.aw: fail: tasks clash,\nmerge them, then fix loop {class: bug}
-check.inspector -> build.aw: fail: round 1 uses\nthe inspector's fix plan {class: bug}
-fix.detective -> build.aw: fix plan {class: flow}
-build.aw -> check.inspector: built: the build script starts\nits inspector at once (task or fix) {class: flow}
-build.aw -> fix.detective: stuck: next fix round {class: bug}
-finish.merger -> build.aw: merge failed:\nnext build round {class: bug}
-finish.merger -> always_on: then {class: flow}
-always_on -> finish.finisher: then {class: flow}
-always_on.janitor -> build.aw: cleanup plan,\nbuilt and checked\nbefore main moves {class: flow}
-always_on.janitor -> ask.task: dropped cleanup,\noffered next time {class: flow; style.stroke-dash: 3}
-
-legend: Legend {
-  left: 3350
-  top: 820
-  grid-columns: 1
-  grid-gap: 0
-  style: {fill: ${always-fill}; stroke: ${always-line}; font-color: ${always-line}; stroke-width: 2}
-  r1: "" {
-    direction: right
-    style: {fill: transparent; stroke: transparent}
-    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${ok}; stroke: ${ok}}}
-    t: approval {shape: text; style.font-color: ${text}}
-    s -> t {class: ok}
-  }
-  r2: "" {
-    direction: right
-    style: {fill: transparent; stroke: transparent}
-    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${bug}; stroke: ${bug}}}
-    t: bug {shape: text; style.font-color: ${text}}
-    s -> t {class: bug}
-  }
-  r3: "" {
-    direction: right
-    style: {fill: transparent; stroke: transparent}
-    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${flow}; stroke: ${flow}}}
-    t: normal flow {shape: text; style.font-color: ${text}}
-    s -> t {class: flow}
-  }
-  r4: "" {
-    direction: right
-    style: {fill: transparent; stroke: transparent}
-    s: "" {shape: circle; width: 12; height: 12; style: {fill: ${flow}; stroke: ${flow}}}
-    t: log, watch or comment {shape: text; style.font-color: ${text}}
-    s -> t {class: flow; style.stroke-dash: 3}
-  }
-  r5: "" {
-    direction: right
-    style: {fill: transparent; stroke: transparent}
-    s: "" {shape: hexagon; width: 30; height: 18; style: {fill: ${node-fill}; stroke: ${text}}}
-    t: hexagon: an ant (an AI agent) {shape: text; style.font-color: ${text}}
-  }
-  r6: "" {
-    direction: right
-    style: {fill: transparent; stroke: transparent}
-    s: "" {shape: hexagon; width: 30; height: 18; style: {multiple: true; fill: ${node-fill}; stroke: ${text}}}
-    t: stacked: many run in parallel\nsingle: one at a time {shape: text; style.font-color: ${text}}
-  }
-}
-critiques -> ask.arta: turned into questions\nfor the next task {class: flow; style.stroke-dash: 3}
-```
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="ishikari-dark.svg">

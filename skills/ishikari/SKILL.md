@@ -52,38 +52,73 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 - Never push. Main moves only by the finisher's fast-forward.
 - Any result with `stage: 'error'`: show `reason` and stop.
 
+## Limits
+
+| Cap                                    | Value | Where                  |
+| -------------------------------------- | ----- | ---------------------- |
+| Workers at once                        | 5     | build `MAX_WORKERS`    |
+| Tries per bug, then escalated          | 3     | build `MAX_TRIES`      |
+| Fix rounds per task                    | 3     | build `MAX_ROUNDS`     |
+| Combined test rounds                   | 2     | build                  |
+| Questions per `/ask-simple` call       | 4     | investigator prompt    |
+| Questions in all (live investigator)   | 8     | investigator prompt    |
+| Research bursts per question (2b)      | 2     | plan `MAX_RESEARCH`    |
+| Researchers per burst (2b)             | 5     | plan `MAX_RESEARCHERS` |
+| Same question twice (2b)               | error | plan                   |
+| Build rounds for merge bugs, waiting   | 2     | this skill, step 4     |
+| Check-fix rounds                       | 1     | finish `checkFixDone`  |
+| Cleanup fix rounds                     | 1     | finish                 |
+
 ## 1. Setup
 
 - Repo: the path in the arguments, else the current repo. `--critiques N`: the
   most critiques the philosopher keeps per run, 0-20, default 1; 0 skips it.
   Task: the rest of the arguments; if there is none, ask for it.
-- Run `python3 <skill>/scripts/ishikari.py setup <repo>`. Keep its JSON as `env`
-  for every step. Its `workflows` field holds the three script paths. It also
-  holds `testCommand` and `checkCommand` once saved for this repo.
+- Run `python3 <skill>/scripts/ishikari.py setup <repo> [--main <branch>]`.
+  Keep its JSON as `env` for every step. Its `workflows` field holds the three
+  script paths. It also holds `testCommand` and `checkCommand` once saved for
+  this repo. `env.run` is `YYYYmmdd-HHMMSS-xxxx` (4 hex digits).
+- Main branch: `origin/HEAD` if a local branch of that name exists, else
+  `main`, `master`, `trunk`. From a linked worktree, setup uses the main
+  checkout. That checkout must be on the main branch with no uncommitted
+  tracked changes.
+- Setup stops with a message:
+  - no main branch found: ask the user which branch, rerun with `--main`;
+  - wrong branch or uncommitted changes: show the message and stop.
 
 ## 2. Plan
 
-- Start ONE investigator with the Agent tool (general-purpose). Its prompt is
-  [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
-  inputs: `env.repo`, `env.main`, `env.state`, the task, the critiques board
-  `<env.state>/boards/critiques.md`, the report path
-  `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`
-  and `env.checkCommand` when saved. If the last finish dropped a cleanup,
-  add one line to the task: `Also consider the cleanup plan at <file>.` The
-  investigator decides whether to ask about it; never ask yourself.
-- It replies with JSON. While `questions` is not empty, ask them all in one
-  `/ask-simple` call (up to 4), headed `Questions <n>-<m> of about <m +
-  remaining>`, `why` lines added when set. Send the answers back to the SAME
-  agent with SendMessage (`''` if skipped). Never start a new investigator
-  for an answer.
-- `blocker` set: stop the investigator with TaskStop, show the reason and stop.
-- `reportWritten`: stop the investigator with TaskStop first; its work is
-  over and the report is all later ants read. Then run `env.workflows.plan` with `{env, task, investigated:
-  {testCommand, checkCommand, answeredCritiques}}` from its last reply. It
-  skips Review and runs the requirement and design ants.
-- Without the Agent tool, fall back to the workflow loop: run plan with
-  `{env, task}`; on `question`, ask it and run again with `answered` (append
-  `{question, answer, critique}`) and `findings` from the last result.
+### 2a. Live investigator
+
+1. Start ONE investigator with the Agent tool (general-purpose). Its prompt is
+   [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
+   inputs: `env.repo`, `env.main`, `env.state`, the task, the critiques board
+   `<env.state>/boards/critiques.md`, the report path
+   `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`
+   and `env.checkCommand` when saved. If the last finish dropped a cleanup,
+   add one line to the task: `Also consider the cleanup plan at <file>.` The
+   investigator decides whether to ask about it; never ask yourself.
+2. It replies with JSON. While `questions` is not empty, ask them all in one
+   `/ask-simple` call (up to 4), headed `Questions <n>-<m> of about <m +
+   remaining>`, `why` lines added when set. Send the answers back to the SAME
+   agent with SendMessage (`''` if skipped). Never start a new investigator
+   for an answer.
+3. `blocker` set: stop the investigator with TaskStop, show the reason and stop.
+4. `reportWritten`: stop the investigator with TaskStop first; its work is
+   over and the report is all later ants read. Then run `env.workflows.plan`
+   with `{env, task, investigated: {testCommand, checkCommand,
+   answeredCritiques}}` from its last reply. It skips Review and runs the
+   requirement and design ants.
+
+### 2b. Fallback (no Agent tool)
+
+1. Run `env.workflows.plan` with `{env, task}`.
+2. On `question`, ask it and run again with `answered` (append
+   `{question, answer, critique}`) and `findings` from the last result.
+3. A question already in `answered` returns `stage: 'error'`.
+
+### 2c. Plans
+
 - `plans`: do not ask. Show the `report` path (`investigation_report.md`), the
   `design` path (`architecture.md`), the requirement and each plan's title,
   files and `after` as a note, then:
@@ -100,7 +135,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 ## 3. Build
 
 - Run `env.workflows.build` with `{env, plans}`. Later rounds pass `bugs`
-  instead of new plans.
+  instead of new plans. An inspector reuses its worker's test result only when
+  the worktree's HEAD is the worker's sha and the tree is clean.
 - Do not ask. Approve every `awaiting review` task. Drop every `escalated`,
   `blocked` and `error` task, and every task whose `after` holds a dropped
   one. Keep each dropped task, its bugs and fix history for the report. A
@@ -117,15 +153,23 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   item already holds `{task, branch, bug, after}`. Then finish again with that
   build's results, without asking. At most 2 such rounds per run; after that
   drop what is left.
-- `check`: if it ran and failed, run one build round with
-  `bugs: [{task: 'check-fix', bug: <check.output>}]`: no branch, so a new task
-  starts from the moved main. Then finish again. If the check still fails, stop
-  and report its output. Do not mark requirements done.
+- `checkFix` set (check failed, no check-fix yet): run one build round with
+  `bugs: [checkFix]`: no branch, so a new task starts from the moved main.
+  Then finish again with `checkFixDone: true`. `checkFixRefused`: the check
+  still fails; stop and report `check.output`. Do not mark requirements done.
 - `mainMoved: false` with no bugs left to fix: stop and report the reason.
   Nothing is lost; finish can run again once it is fixed.
 - Once main moved and `check` passed (or there is no `checkCommand`), run
   `python3 <env.tool> req done <requirement file> <ids>` with the `:ID:`
   values kept in step 2, and commit only that file.
+- How finish works, so its results read right:
+  - it reuses build's trial merge (`together.sha`) when the approved set
+    matches it or only adds tasks, and git shows main and each reused branch
+    tip are ancestors of it; else it merges from main;
+  - a verifier ant checks each merged task with `git cherry`; a task the
+    merger called merged but git finds missing comes back as a merge bug;
+  - the philosopher runs in parallel with the janitor's cleanup; the scratch
+    branch fast-forwards to the cleanup after both end.
 - Report once, at the end: what landed on main, each task's notes and nits,
   each dropped task with why and its bugs, the check, each new critique (one
   line each from `critiques`) and the cleanup: `landed`, or dropped with its
