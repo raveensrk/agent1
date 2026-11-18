@@ -25,8 +25,6 @@ lines = [  # name, colour, points, width, dash
  ("clash", RED,   [(1040,R2),(1040,700),(620,700)], 6, "10 6"),
  ("bugout",RED,   [(620,700),(240,700),(200,660),(200,R2)], 8, ""),
  ("r1",    RED,   [(760,R2),(730,580),(230,580),(200,R2)], 5, ""),
- ("logA",  GREY,  [(1320,R2),(1320,646)], 4, "4 6"),
- ("logB",  GREY,  [(300,R4),(300,1630)], 4, "4 6"),
  ("drop",  RED,   [(620,700),(620,770)], 6, ""),
  ("mfail", RED,   [(200,R3),(200,1170)], 6, "10 6"),
  ("tidy",  TEAL,  [(440,R3),(500,1150),(560,1150),(760,1150),(940,1150),(1000,R3)], 9, ""),
@@ -49,7 +47,6 @@ stations = [
  (200,R2,"Worker Ants  ∥",["max 5, one worktree each,","code + tests + docs","stuck: next fix round"],"x",(0,-74,"middle")),
  (760,R2,"Inspector Ants  ∥",["one per built task: plan + design,","runs tests (reuses worker's if clean)"],"x",(0,-60,"middle")),
  (1040,R2,"Integrator Ant",["merges passing tasks in a scratch","copy, tests once: the combined test"],"x",(0,-60,"middle")),
- (1320,660,"Logbook",["shared ledger, append only: one entry","the moment each ant replies, plus a","summary per stage. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",(26,-4,"start")),
  (620,700,"Detective Ants  ∥",["finds why, writes the next","fix plan, never code"],"x",(-26,34,"end")),
  (620,770,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",(26,-4,"start")),
  (200,R3,"Merger ant",["straight line or build's trial","merge; Verifier Ant: git cherry"],"x",(0,-58,"middle")),
@@ -64,7 +61,7 @@ stations = [
  (1470,1170,"Judge ant again",["7+ or still low: main moves;","still low = flagged"],"st",(0,34,"middle")),
  (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, appends to the logbook"],"st",L_UP),
- (300,1640,"Logbook",["end of finish: the summary,","same file as above"],"log",(26,-4,"start")),
+ (1240,52,"Logbook",["every ant appends one entry the moment it replies;","each stage adds a summary. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",(26,-4,"start")),
  (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
  (860,R4,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
  (860,1630,"check-fix round",["from the moved main, once"],"term",(26,-4,"start")),
@@ -88,7 +85,6 @@ o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
 o.append(txt(1360, R3 - 14, ["7+: main moves"], GREEN, 13, "middle", "700"))
 o.append(txt(1192, 1140, ["below 7: one fix round"], GOLD, 13, "end", "700"))
 o.append(txt(1612, 1240, ["to row 4"], GREEN, 13, weight="700"))
-o.append(txt(1330, 590, ["end of build: the summary"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
 o.append(txt(480, 604, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
 o.append(txt(1052, 640, ["fail: tasks clash,", "merge, then fix loop"], RED, 13))
@@ -138,7 +134,7 @@ for i, (c, n, t) in enumerate(rows):
     o.append(f'<line x1="{kx+16}" y1="{y}" x2="{kx+60}" y2="{y}" stroke="{c}" stroke-width="7" stroke-linecap="round"/>')
     o.append(f'<rect x="{kx+70}" y="{y-9}" width="34" height="18" rx="5" fill="#FDE047" stroke="{c}" stroke-width="2"/><text x="{kx+87}" y="{y+4}" font-size="11" font-weight="800" fill="{BG}" text-anchor="middle">{n}</text>')
     o.append(txt(kx + 114, y + 5, [t], TXT, 13))
-o.append(txt(kx + 320, ky + 30, ["dashed:", "a branch or", "a log", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "stacked ∥: parallel"], SUB, 12))
+o.append(txt(kx + 320, ky + 30, ["dashed:", "a side branch", "⬡ an ant (AI agent)", "■ terminus", "○ interchange", "stacked ∥: parallel"], SUB, 12))
 o.append('</svg>')
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ishikari-metro.svg"), "w") as f:
     f.write("\n".join(o))
