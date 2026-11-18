@@ -267,6 +267,7 @@ let cleanup = null
 let verdict = null
 const PASS = 7
 const MAX_JURORS = 5  // juror ants at once
+const MIN_JURY = 3    // fewer merged tasks: the judge works alone
 const planDir = `${env.state}/plans/${env.run}`
 const fixBranch = `ishikari/${env.run}/_judgefix`
 const fixTree = treeOf(fixBranch)
@@ -357,7 +358,7 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
   // The judge ant scores the whole run, cleanup included, against the plans.
   // Below PASS: one fix round (worker, inspector), then a second score. Still
   // below PASS: main moves anyway and the report flags it.
-  // More than one task: the judge delegates, one juror ant per task (at most
+  // MIN_JURY or more tasks: the judge delegates, one juror ant per task (at most
   // MAX_JURORS at once), and decides the run's score from their reports.
   const SCORED = { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] }
   const juror = (t, round) => ant(
@@ -371,7 +372,7 @@ a worker ant can build without questions. Never change anything.`,
     { label: `juror-ant:${round}:${t.id}`, phase: 'Upkeep', effort: EFFORT.juror, schema: SCORED },
   )
   const jury = async (round) => {
-    if (merged.length < 2) return []
+    if (merged.length < MIN_JURY) return []
     const out = []
     for (let k = 0; k < merged.length; k += MAX_JURORS) {
       const batch = merged.slice(k, k + MAX_JURORS)

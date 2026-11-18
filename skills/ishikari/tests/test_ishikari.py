@@ -38,7 +38,7 @@ NOTES = {  # architecture.md "Required note texts"
     "N2": "a cleanup run has no janitor",
     "N3": "below 7 and gaps: one fix round",
     "N4": "only when main moved and checkCommand is set",
-    "N5": "only with 2+ merged tasks",
+    "N5": "only with 3+ merged tasks",
     "N6": "a plan may run a saved workflow in place of a worker ant",
     "N7": "max 2 extra build rounds",
     "N8": "fail: one fix round: detective, worker, inspector",

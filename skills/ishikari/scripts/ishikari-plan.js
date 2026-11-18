@@ -290,13 +290,17 @@ ${req.requirement.needed ? `The requirement, from the add requirement ant (${req
    exact, so worker ants building in parallel fit together. Map each of the
    report's acceptance checks to the part that proves it.
 2. Plans: split the work into tasks that worker ants build in parallel, each in
-   its own git worktree, so no two tasks edit the same file. Give each task its
-   own test file. Merge tasks that would be too small to stand alone. Only when a
+   its own git worktree, so no two tasks edit the same file. Keep tasks small so
+   more run at once: at most about 3 files per task, splitting a big change by
+   files. Give each task its own test file. Merge tasks that would be too small
+   to stand alone. Only when a
    task must edit a file another task creates, put that task's id in its "after".
    Worker ants cannot ask questions, so each plan must be complete: files to
-   touch, exact behaviour, the interfaces from the design it uses or provides,
-   the acceptance checks it covers, tests to add, and the test command
+   touch, the behaviour wanted, the interfaces from the design it uses or
+   provides, the acceptance checks it covers, tests to add, and the test command
    \`${review.testCommand || 'the repo\'s test command'}\`.
+   Say what and where, not exact wording: never write out the text, labels or
+   code a worker writes. Keep each plan short.
    Write each plan to ${planDir}/<id>.md. Change no other files.`,
   { label: 'architect-ant', phase: 'Design', effort: EFFORT.architect, schema: PLANNED },
 ))

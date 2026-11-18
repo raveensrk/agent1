@@ -70,7 +70,7 @@ stations = [
  (1460,DIP3,"Merger ant",["fast-forwards the scratch copy","to the checked cleanup"],"st",L_DN),
  (1580,R3,"cleanup done",["landed or dropped;","nothing to clean also goes straight here"],"x",L_UP),
  # row 4: judge, then main moves
- (160,R4,"Juror ants  ∥",["one per merged task, 5 at once;","only with 2+ merged tasks"],"x",L_DN),
+ (160,R4,"Juror ants  ∥",["one per merged task, 5 at once;","only with 3+ merged tasks"],"x",L_DN),
  (J1,R4,"Judge ant",["scores the run 0-10: does the code","match the plans? its own call, not an average"],"x",L_UP),
  (500,DIP4,"Worker ant",["closes the judge's gaps"],"st",L_DN),
  (660,DIP4,"Inspector ant",["checks the fix, runs the tests"],"st",L_UP),

@@ -69,7 +69,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 | Cleanup fix rounds                     | 1     | finish                 |
 | Judge pass score (out of 10)           | 7     | finish `PASS`          |
 | Judge fix rounds                       | 1     | finish                 |
-| Jurors at once (2+ tasks)              | 5     | finish `MAX_JURORS`    |
+| Jurors at once (3+ tasks)              | 5     | finish `MAX_JURORS`    |
+| Files per worker plan, about           | 3     | architect prompt       |
 
 ## 1. Setup
 
@@ -171,7 +172,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   - a verifier ant checks each merged task with `git cherry`; a task the
     merger called merged but git finds missing comes back as a merge bug;
   - after the cleanup, the judge ant scores the whole run 0-10 against the
-    plans (report, architecture, worker plans). With 2+ tasks it first
+    plans (report, architecture, worker plans). With 3+ tasks it first
     sends one juror ant per task (5 at once) and decides from their reports;
     the score is its own call, not an average. Below 7: one fix round
     (worker, inspector), then a second score. Still below 7: main moves

@@ -627,3 +627,25 @@ test('plan: a dead planning ant is logged as died and never blocks the run', asy
   assert.deepEqual(arch.map(e => `${e.who}: ${e.event}`), ['architect ant: died', 'architect ant: died'])
   assert.equal(settled, second.instant.length)
 })
+
+// ---- speed: smaller plans, lighter plans, jury only for 3+ tasks ----
+test('finish: two tasks, the judge still works alone; three get a jury', async () => {
+  const go = ids => run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, (p, o) => {
+    if (o.label === 'merger-ant') return { sha: 'abc', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
+    if (o.label.startsWith('juror') || o.label.startsWith('judge')) return { score: 9, gaps: [] }
+    return { moved: true, reason: '' }
+  })
+  assert.ok(!(await go(['a', 'b'])).calls.some(c => c.startsWith('juror')))
+  assert.equal((await go(['a', 'b', 'c'])).calls.filter(c => c.startsWith('juror')).length, 3)
+})
+
+test('plan: the architect keeps plans small and says what and where, not exact words', async () => {
+  const prompts = {}
+  await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '' } }, (p, o) => {
+    prompts[o.label] = p
+    return o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+  })
+  const a = prompts['architect-ant']
+  assert.ok(a.includes('at most about 3 files per task'))
+  assert.ok(a.includes('what and where, not exact wording'))
+})
