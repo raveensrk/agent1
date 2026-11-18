@@ -63,9 +63,9 @@
    ["drop"    RED    [[660 540] [660 610]] 6 "10 6"]
    ["mback"   RED    [[1460 R2] [1460 530]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tnext"   RED    [[1720 R2] [1720 590]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
-   ["jfix"    GOLD   [[J1 R3] [460 DIP3] [J2 DIP3] [1060 R3]] 9 ""]
+   ["jfix"    GOLD   [[J1 R3] [440 DIP3] [1060 DIP3] [1120 R3]] 9 ""]
    ;; train 11's route: the judge's fix round rejoins and rides on to MAIN (drawn invisible)
-   ["jfixrun" "none"  [[J1 R3] [460 DIP3] [J2 DIP3] [1060 R3] [1340 R3]] 9 ""]
+   ["jfixrun" "none"  [[J1 R3] [440 DIP3] [1060 DIP3] [1120 R3] [1340 R3]] 9 ""]
    ["after"   GREEN  [[1340 R3] [1780 R3]] 9 ""]
    ["cfix"    RED    [[1580 R3] [1580 840]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
 
