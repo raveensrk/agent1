@@ -48,6 +48,8 @@
    ["mback"   RED    [[1460 R2] [1460 530]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tnext"   RED    [[1720 R2] [1720 590]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R3] [460 DIP3] [J2 DIP3] [1060 R3]] 9 ""]
+   ;; train 11's route: the judge's fix round rejoins and rides on to MAIN (drawn invisible)
+   ["jfixrun" "none"  [[J1 R3] [460 DIP3] [J2 DIP3] [1060 R3] [1340 R3]] 9 ""]
    ["after"   GREEN  [[1340 R3] [1780 R3]] 9 ""]
    ["cfix"    RED    [[1580 R3] [1580 840]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
 
@@ -273,7 +275,7 @@
 ;; numbered trains: number, route, colour, seconds per trip, start offset
 (def trains [[1 "plan" BLUE 20 0] [2 "build" INDIGO 28 0] [3 "build" INDIGO 28 5.6] [4 "build" INDIGO 28 11.2]
              [5 "build" INDIGO 28 16.8] [6 "build" INDIGO 28 22.4] [7 "fixloop" GOLD 8 0] [8 "fixloop" GOLD 8 4]
-             [10 "after" GREEN 5 0] [11 "jfix" GOLD 5 0]])
+             [10 "after" GREEN 5 0] [11 "jfixrun" GOLD 7 0]])
 
 (defn legend
   "The key box in the bottom right."
@@ -464,7 +466,7 @@
                              "</text>" (str "<tspan dx=\"5\" font-size=\"11\" font-weight=\"400\" fill=\"" GREY "\">" (code id) "</tspan></text>"))
                 ))
    (for [[n path c sec beg] trains
-         :let [[lname] (about-lines (if (= path "build") "g1" (if (= path "fixloop") "fix" path)))]]
+         :let [[lname] (about-lines (if (= path "build") "g1" (case path "fixloop" "fix" "jfixrun" "jfix" path)))]]
      (clickable {:id (str "train-" n) :name (str "Car " n) :tip (str "A sample task riding the " (str/lower-case lname) ".")
                  :about (str "The numbered cars are sample tasks moving through the run, so you can follow one. Car " n " rides the " (str/lower-case lname) "; the key in the bottom right says what each number shows.") :x 0 :y 0}
                 (str "<g filter=\"url(#g)\"><rect x=\"-14\" y=\"-11\" width=\"28\" height=\"22\" rx=\"6\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\"/>"
