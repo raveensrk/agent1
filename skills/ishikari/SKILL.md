@@ -15,7 +15,7 @@ included. Never ask for approval of the requirement or the plans. After that,
 never ask: decide by the rules in steps 3 and 4 and report at the end.
 
 Design, rules and diagram:
-[age_of_agents/index.md](../../age_of_agents/index.md).
+[design/index.md](design/index.md).
 
 ## Files
 
