@@ -13,10 +13,15 @@ const env = { repo: '/r', state: '/s', run: 'r1', main: 'main', tool: '/t/ishika
 function run(name, args, ant) {
   const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
   const calls = []
-  const agent = async (p, o) => { calls.push(o.label); return ant(p, o) }
+  const instant = []
+  // Instant logbook appends go to their own list, so call order reads as the run.
+  const agent = async (p, o) => {
+    if (o.label === 'logbook-clerk:now') { instant.push(p); return {} }
+    calls.push(o.label); return ant(p, o)
+  }
   const parallel = fns => Promise.all(fns.map(f => f()))
   const body = new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)
-  return body(args, agent, parallel, () => {}, () => {}, async () => ({})).then(out => ({ out, calls }))
+  return body(args, agent, parallel, () => {}, () => {}, async () => ({})).then(out => ({ out, calls, instant }))
 }
 
 const clear = { summary: '', critique: [], research: [], next: { question: '', answers: [] }, remaining: 0, reportWritten: true, blocker: '', testCommand: 't', checkCommand: '' }
@@ -542,4 +547,23 @@ test('finish: the logbook gets the tasks, the cleanup, the verdict and the main 
   assert.equal(moved[1].score, 6)
   assert.equal(moved[1].detail, 'after one fix round (first score 5)\ng2')
   assert.ok(prompts['finisher-ant'].includes('log append /s'))
+})
+
+// ---- logbook: one entry the moment each ant finishes ----
+test('finish: every ant gets its own logbook entry at once, the finisher excepted', async () => {
+  const { out, instant } = await judgeRun([{ score: 4, gaps: ['g'] }, { score: 8, gaps: [] }])
+  const got = instant.map(p => logged(p)[0])
+  assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
+    'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
+    'inspector ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8',
+  ])
+  assert.ok(got.every(e => e.run === 'r1'))
+  assert.equal(out.mainMoved, true)
+})
+
+test('build: an ant entry names its task, and a dead ant is logged as died', async () => {
+  const { instant } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
+    o.label.startsWith('worker') ? null : {})
+  const got = instant.map(p => logged(p)[0])
+  assert.deepEqual(got.slice(0, 2), [{ run: 'r1', task: 'a', who: 'worker ant', event: 'died' }, { run: 'r1', task: 'a', who: 'worker ant', event: 'died' }])
 })

@@ -180,5 +180,6 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   each dropped task with why and its bugs, the check, the judge's `verdict` (score,
   gaps; say FLAGGED when `flagged`) and the cleanup: `landed`, or dropped with its
   `reason` and `branch`, its plan offered as the next task.
-  End with where the full record is: `python3 <env.tool> log status <env.state>
+  Every ant's result is in the logbook the moment it replies, so a crashed run
+  still leaves its trail. End with where the full record is: `python3 <env.tool> log status <env.state>
   <env.run>`.

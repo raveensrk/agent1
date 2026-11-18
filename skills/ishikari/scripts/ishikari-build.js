@@ -142,10 +142,47 @@ async function twice(fn) {
   return first != null ? first : fn()
 }
 
+// ---- logbook, written the moment each ant finishes ----
+// Every ant call goes through ant(): when the ant replies, a logbook clerk
+// appends one entry for it at once, without holding up the run. The stage's
+// summary entries are still appended at the end.
+const pendingLogs = []
+const summarize = (kind, r) => {
+  if (r == null) return 'died'
+  if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : 'passed'
+  if (typeof r.status === 'string') return r.status
+  if (Number.isInteger(r.score)) return `score ${r.score}`
+  if (Array.isArray(r.results)) return `merged ${r.results.filter(x => x && x.outcome === 'merged').length} of ${r.results.length}`
+  if (typeof r.needed === 'boolean') return r.needed ? 'cleanup planned' : 'nothing to clean'
+  if (typeof r.plan === 'string') return 'fix planned'
+  if (typeof r.ok === 'boolean') return r.ok ? 'fast-forwarded' : 'fast-forward refused'
+  if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
+  return 'finished'
+}
+const logNow = entries => {
+  const p = agent(
+    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
+${JSON.stringify(entries)}
+ISHIKARI_ROWS_END`,
+    { label: 'logbook-clerk:now', phase: 'Logbook', effort: 'low' },
+  ).catch(() => null)
+  pendingLogs.push(p)
+}
+async function ant(prompt, opts) {
+  const r = await agent(prompt, opts)
+  const [kind, a, b] = String(opts.label).split(':')
+  const task = kind === 'juror-ant' ? b : ['worker-ant', 'inspector-ant', 'detective-ant'].includes(kind) && a ? a : undefined
+  logNow([{ run: env.run, ...(task ? { task } : {}), who: kind.replace('-ant', ' ant'), event: summarize(kind, r),
+    ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
+  return r
+}
+const logsDone = () => Promise.all(pendingLogs)
+
 function work(task, job, phase, step) {
   const start = task.bases[0] || env.main
   const more = task.bases.slice(1)
-  const run = () => agent(
+  const run = () => ant(
     `You are a worker ant of the Ishikari workflow. You cannot ask questions:
 decide on your own and go as far as you can.
 ${where}
@@ -207,7 +244,7 @@ Then list in bugs only NEW real bugs: ones the fix caused, or that break the pla
     : `List real bugs: behaviour that breaks the plan, or a failing test. If there are
 any, also find their cause and write a complete fix plan for a worker ant; you
 never write code yourself.`
-  return agent(
+  return ant(
     `You are the inspector ant of the Ishikari workflow.
 ${where}
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
@@ -229,7 +266,7 @@ function detective(task, open, history, round) {
   cause found: ${h.cause}
   fix plan: ${h.plan}
   outcome: ${h.outcome || 'unknown'}`).join('\n')
-  return agent(
+  return ant(
     `You are the detective ant of the Ishikari workflow.
 ${where}
 Task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
@@ -463,7 +500,7 @@ function mergeOrder(list) {
 function combine(list, round) {
   const branch = `ishikari/${env.run}/_together`
   const tree = treeOf(branch)
-  return agent(
+  return ant(
     `You are the integrator ant of the Ishikari workflow. You run the combined test:
 a trial merge that never touches main.
 ${where}
@@ -548,4 +585,5 @@ ISHIKARI_ROWS_END`,
   if (clerk == null) log('logbook append skipped: the logbook clerk died; the logbook misses this stage')
 }
 
+await logsDone()
 return { stage: 'build', tasks: all.map(t => t.result), together }

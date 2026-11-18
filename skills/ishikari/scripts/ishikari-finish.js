@@ -74,6 +74,44 @@ async function twice(fn) {
   return first != null ? first : fn()
 }
 
+// ---- logbook, written the moment each ant finishes ----
+// Every ant call goes through ant(): when the ant replies, a logbook clerk
+// appends one entry for it at once, without holding up the run. The stage's
+// summary entries are still appended at the end.
+const pendingLogs = []
+const summarize = (kind, r) => {
+  if (r == null) return 'died'
+  if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : 'passed'
+  if (typeof r.status === 'string') return r.status
+  if (Number.isInteger(r.score)) return `score ${r.score}`
+  if (Array.isArray(r.results)) return `merged ${r.results.filter(x => x && x.outcome === 'merged').length} of ${r.results.length}`
+  if (typeof r.needed === 'boolean') return r.needed ? 'cleanup planned' : 'nothing to clean'
+  if (typeof r.plan === 'string') return 'fix planned'
+  if (typeof r.ok === 'boolean') return r.ok ? 'fast-forwarded' : 'fast-forward refused'
+  if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
+  return 'finished'
+}
+const logNow = entries => {
+  const p = agent(
+    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
+${JSON.stringify(entries)}
+ISHIKARI_ROWS_END`,
+    { label: 'logbook-clerk:now', phase: 'Logbook', effort: 'low' },
+  ).catch(() => null)
+  pendingLogs.push(p)
+}
+async function ant(prompt, opts) {
+  const r = await agent(prompt, opts)
+  const [kind, a, b] = String(opts.label).split(':')
+  if (kind === 'finisher-ant') return r  // it appends the stage's entries itself
+  const task = kind === 'juror-ant' ? b : ['worker-ant', 'inspector-ant', 'detective-ant'].includes(kind) && a ? a : undefined
+  logNow([{ run: env.run, ...(task ? { task } : {}), who: kind.replace('-ant', ' ant'), event: summarize(kind, r),
+    ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
+  return r
+}
+const logsDone = () => Promise.all(pendingLogs)
+
 const COMBINE = {
   type: 'object',
   properties: {
@@ -148,7 +186,7 @@ If they pass, return the final commit as sha and stop. If anything conflicts or 
 tests fail, remove the worktree and branch and do the normal steps below from the start.
 If any ancestor check or the worktree add fails, do the normal steps below.\n`
     : ''
-  const r = await twice(() => agent(
+  const r = await twice(() => ant(
     `You are the merger ant of the Ishikari workflow.
 ${where}
 Work only in a scratch worktree: ${scratchTree} on branch ${scratch}.
@@ -186,7 +224,7 @@ the repo's main checkout. Return the final commit of ${scratch} as sha.`,
 // answer falls back to the merger's report.
 let landed = null
 if (order.length && !trusted && typeof sha === 'string' && /^[0-9a-f]{7,64}$/.test(sha)) {
-  const v = await agent(
+  const v = await ant(
     `Check which Ishikari task branches landed in a commit. Change nothing.
 ${where}
 For each branch below, run \`git -C ${env.repo} cherry ${sha} <branch>\`. The task landed
@@ -242,7 +280,7 @@ if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
   const janitorChain = async () => {
-    const jan = isCleanup ? null : await agent(
+    const jan = isCleanup ? null : await ant(
       `You are the janitor ant of the Ishikari workflow.
 ${where}
 Read the merged code in ${scratchTree}. Find dead code, bloat, duplication and mess
@@ -257,7 +295,7 @@ name the files it touches. Change nothing else.`,
     if (jan && jan.needed) {
       const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
       const CHECKED = { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] }
-      const build = (extra) => agent(
+      const build = (extra) => ant(
         `You are a worker ant of the Ishikari workflow, building the janitor's cleanup.
 ${where}
 Plan: ${cleanPlan}.${extra}
@@ -268,7 +306,7 @@ Commit your work on ${cleanBranch} in small commits, no merge commits. Never tou
 ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
         { label: extra ? 'worker-ant:cleanup:fix' : 'worker-ant:cleanup', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
       )
-      const inspect = (round) => agent(
+      const inspect = (round) => ant(
         `You are an inspector ant of the Ishikari workflow, checking the janitor's cleanup.
 ${where}
 Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}, built on ${scratch}
@@ -282,7 +320,7 @@ list. Never fix anything.`,
       let b = await build('')
       let bugs = b && b.status === 'built' ? (await inspect(1) || { bugs: ['the inspector ant died'] }).bugs : [b ? 'worker stuck: ' + b.notes : 'the worker ant died']
       if (bugs.length) {
-        const det = await agent(
+        const det = await ant(
           `You are the detective ant of the Ishikari workflow. The janitor's cleanup failed its check.
 ${where}
 Plan: ${cleanPlan}. Code: ${cleanTree}, branch ${cleanBranch}. Bugs:
@@ -301,7 +339,7 @@ Find why, and write the fix plan in "plan" for a worker ant. Never write code.`,
     }
   }
   const fastForwardTo = async (branch, label) => {
-    const ff = await agent(
+    const ff = await ant(
       `Fast-forward the Ishikari scratch branch to the checked branch ${branch}.
 ${where}
 Run \`git -C ${scratchTree} merge --ff-only ${branch}\`. If git refuses, change
@@ -322,7 +360,7 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
   // More than one task: the judge delegates, one juror ant per task (at most
   // MAX_JURORS at once), and decides the run's score from their reports.
   const SCORED = { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] }
-  const juror = (t, round) => agent(
+  const juror = (t, round) => ant(
     `You are a juror ant of the Ishikari workflow, helping the judge ant.
 ${where}
 Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md. The run's
@@ -350,7 +388,7 @@ Your jury has judged each task against its plan:
 ${reports.map(x => x.report ? `- ${x.id}: ${x.report.score}/10${(x.report.gaps || []).length ? `; gaps: ${x.report.gaps.join('; ')}` : ''}` : `- ${x.id}: no report (the juror died): judge this task yourself`).join('\n')}
 Weigh their reports, check how the tasks fit together, then decide the run's score
 yourself: it is not an average. Keep every gap you agree with.` : ''
-    const j = await agent(
+    const j = await ant(
       `You are the judge ant of the Ishikari workflow.
 ${where}
 Read the plans for this run in ${planDir}: investigation_report.md (the user's task
@@ -373,7 +411,7 @@ Never change anything.`,
     verdict = { score: first.score, gaps: first.gaps, fixed: false, flagged: first.score < PASS }
     if (first.score >= PASS || !first.gaps.length) return
     const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
-    const b = await agent(
+    const b = await ant(
       `You are a worker ant of the Ishikari workflow, closing the judge ant's gaps.
 ${where}
 The judge scored the run ${first.score}/10 against the plans in ${planDir}. Gaps:
@@ -387,7 +425,7 @@ ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you canno
     )
     let bugs = ['the worker ant died']
     if (b && b.status === 'built') {
-      const c = await agent(
+      const c = await ant(
         `You are an inspector ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
 ${where}
 Gaps:
@@ -446,7 +484,7 @@ const FINISH = {
   },
   required: ['moved', 'reason'],
 }
-const fin = await twice(() => agent(
+const fin = await twice(() => ant(
   `You are Ishikari's finisher ant. Do these steps in order.
 ${where}
 1. ${merged.length ? `Move ${env.main} forward to ${scratch}, only as a fast-forward:
@@ -475,6 +513,7 @@ ${write(rowsIf(false))}
 const check = fin && fin.check ? fin.check : { ran: false, ok: false, output: '' }
 const mainMoved = Boolean(merged.length && fin && fin.moved === true)
 if (merged.length && !mainMoved) log(`main not moved: ${fin ? fin.reason : 'the finisher ant died twice'}`)
+await logsDone()
 return {
   stage: 'finish',
   mainMoved,

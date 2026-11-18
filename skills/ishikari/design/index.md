@@ -170,8 +170,8 @@ They run once per finish, on the merged result, before main moves.
   value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
-  The scripts keep their entries while a stage runs and hand them to the tool
-  once when the stage ends.
+  Each ant's entry is appended the moment it replies; the stage summary is
+  appended once when the stage ends.
 - Each ant thinks only as hard as its job needs: low for the logbook clerk,
   finisher and upkeep ants; medium for the investigator, researchers, add
   requirement ant, workers, inspectors and merger; high for the architect and
@@ -229,10 +229,13 @@ and stops to ask the user only in step 2.
 Stages run left to right: plan, build, check, fix, finish. The scripts hand work
 from ant to ant directly. The Logbook sits apart: a shared ledger, one plain
 text recfile per repo, `~/.ishikari/<repo>-<hash>/logbook.rec`, outside the
-repo. It is append only: nothing in it is ever changed or removed. The scripts
-append one batch at the end of build and one at the end of finish: each task's
-status, each bug with its tries, the cleanup, the judge's verdict and whether
-main moved. You add your own notes with `ishikari.py log note`; they are notes,
+repo. It is append only: nothing in it is ever changed or removed. The moment
+an ant replies, the script hands one entry for it (who, task, what came of it:
+built, 2 bugs found, score 6, died) to a low-effort logbook clerk ant, which
+appends it while the run goes on. Then the scripts append a summary at the end
+of build and at the end of finish: each task's status, each bug with its tries,
+the cleanup, the judge's verdict and whether main moved. The cost: one small
+clerk call per ant call. You add your own notes with `ishikari.py log note`; they are notes,
 never orders. No ant reads it. Read it with `ishikari.py log status` (each
 task's latest event), `recsel` or any editor.
 

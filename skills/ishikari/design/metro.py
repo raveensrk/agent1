@@ -49,7 +49,7 @@ stations = [
  (200,R2,"Worker Ants  ∥",["max 5, one worktree each,","code + tests + docs","stuck: next fix round"],"x",(0,-74,"middle")),
  (760,R2,"Inspector Ants  ∥",["one per built task: plan + design,","runs tests (reuses worker's if clean)"],"x",(0,-60,"middle")),
  (1040,R2,"Integrator Ant",["merges passing tasks in a scratch","copy, tests once: the combined test"],"x",(0,-60,"middle")),
- (1320,660,"Logbook",["shared ledger, append only:","tasks, bugs, verdict, main move,","your notes. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",(26,-4,"start")),
+ (1320,660,"Logbook",["shared ledger, append only: one entry","the moment each ant replies, plus a","summary per stage. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",(26,-4,"start")),
  (620,700,"Detective Ants  ∥",["finds why, writes the next","fix plan, never code"],"x",(-26,34,"end")),
  (620,770,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",(26,-4,"start")),
  (200,R3,"Merger ant",["straight line or build's trial","merge; Verifier Ant: git cherry"],"x",(0,-58,"middle")),
@@ -64,7 +64,7 @@ stations = [
  (1470,1170,"Judge ant again",["7+ or still low: main moves;","still low = flagged"],"st",(0,34,"middle")),
  (1000,R3,"cleanup done",["landed or dropped"],"st",(0,-40,"middle")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, appends to the logbook"],"st",L_UP),
- (300,1640,"Logbook",["end of finish: a second batch,","same file as above"],"log",(26,-4,"start")),
+ (300,1640,"Logbook",["end of finish: the summary,","same file as above"],"log",(26,-4,"start")),
  (560,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
  (860,R4,"checkCommand",["builds and checks the real app"],"st",(0,-52,"middle")),
  (860,1630,"check-fix round",["from the moved main, once"],"term",(26,-4,"start")),
@@ -88,7 +88,7 @@ o.append(txt(1612, 680, ["to row 3"], GREEN, 13, weight="700"))
 o.append(txt(1360, R3 - 14, ["7+: main moves"], GREEN, 13, "middle", "700"))
 o.append(txt(1192, 1140, ["below 7: one fix round"], GOLD, 13, "end", "700"))
 o.append(txt(1612, 1240, ["to row 4"], GREEN, 13, weight="700"))
-o.append(txt(1330, 590, ["end of build: one batch"], GREY, 13))
+o.append(txt(1330, 590, ["end of build: the summary"], GREY, 13))
 o.append(txt(772, 640, ["still open after round 1:", "the script hands it over"], RED, 13))
 o.append(txt(480, 604, ["round 1: the inspector's own fix plan"], RED, 13, "middle"))
 o.append(txt(1052, 640, ["fail: tasks clash,", "merge, then fix loop"], RED, 13))
