@@ -33,13 +33,13 @@
 <text class="h" x="720" y="1506" fill="#4ADE80" font-size="13" text-anchor="middle" font-weight="700">7+, or no gaps: no fix round</text>
 <text class="h" x="440" y="1612" fill="#FBBF24" font-size="13" text-anchor="end" font-weight="700">below 7 and gaps: one fix round</text>
 <text class="h" x="740" y="1720" fill="#FBBF24" font-size="13" text-anchor="middle" font-weight="400">a failed fix keeps its branch;</text><text class="h" x="740" y="1737" fill="#FBBF24" font-size="13" text-anchor="middle" font-weight="400">the verdict says why</text>
-<rect x="106" y="186" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<rect x="108" y="186" width="24" height="30" rx="3" fill="#0B1120" stroke="#F1F5F9" stroke-width="4"/><rect x="114" y="182" width="12" height="7" rx="2" fill="#F1F5F9"/><line x1="114" y1="198" x2="126" y2="198" stroke="#94A3B8" stroke-width="2"/><line x1="114" y1="205" x2="126" y2="205" stroke="#94A3B8" stroke-width="2"/>
 <text class="h" x="120" y="234" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Task</text>
 <text class="h" x="120" y="253" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">you give it, or a</text><text class="h" x="120" y="269" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">dropped cleanup plan</text>
 <polygon points="424.0,200.0 432.0,186.1 448.0,186.1 456.0,200.0 448.0,213.9 432.0,213.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="418" y="126" fill="#F1F5F9" font-size="16" text-anchor="end" font-weight="700">Investigator ant</text>
 <text class="h" x="418" y="145" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">one live agent run by the skill: reads</text><text class="h" x="418" y="161" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">the repo once, gets each answer as a message;</text><text class="h" x="418" y="177" fill="#A8B3C7" font-size="13" text-anchor="end" font-weight="400">no Agent tool: the plan workflow runs it</text>
-<rect x="426" y="76" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<circle cx="440" cy="90" r="17" fill="#0B1120"/><circle cx="440" cy="83" r="6.5" fill="#0B1120" stroke="#F1F5F9" stroke-width="4"/><path d="M427,105 Q427,92 440,92 Q453,92 453,105 Z" fill="#0B1120" stroke="#F1F5F9" stroke-width="4" stroke-linejoin="round"/>
 <text class="h" x="466" y="84" fill="#F1F5F9" font-size="16" text-anchor="start" font-weight="700">You</text>
 <text class="h" x="466" y="103" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">up to 4 questions a round (/ask-simple),</text><text class="h" x="466" y="119" fill="#A8B3C7" font-size="13" text-anchor="start" font-weight="400">8 in all; answering approves the whole run</text>
 <polygon points="434.0,290.0 442.0,276.1 458.0,276.1 466.0,290.0 458.0,303.9 442.0,303.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><polygon points="429.0,295.0 437.0,281.1 453.0,281.1 461.0,295.0 453.0,308.9 437.0,308.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/>
@@ -115,7 +115,7 @@
 <polygon points="1164.0,1520.0 1172.0,1506.1 1188.0,1506.1 1196.0,1520.0 1188.0,1533.9 1172.0,1533.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
 <text class="h" x="1180" y="1460" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Finisher ant</text>
 <text class="h" x="1180" y="1479" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forwards main, removes worktrees,</text><text class="h" x="1180" y="1495" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">appends the stage rows, runs the check</text>
-<rect x="1326" y="1506" width="28" height="28" rx="7" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
+<line x1="1331" y1="1504" x2="1331" y2="1536" stroke="#F1F5F9" stroke-width="4" stroke-linecap="round"/><rect x="1331" y="1504" width="22" height="16" fill="#0B1120" stroke="#F1F5F9" stroke-width="3"/><rect x="1331.0" y="1504.0" width="5.5" height="5.33" fill="#F1F5F9"/><rect x="1331.0" y="1514.66" width="5.5" height="5.33" fill="#F1F5F9"/><rect x="1336.5" y="1509.33" width="5.5" height="5.33" fill="#F1F5F9"/><rect x="1342.0" y="1504.0" width="5.5" height="5.33" fill="#F1F5F9"/><rect x="1342.0" y="1514.66" width="5.5" height="5.33" fill="#F1F5F9"/><rect x="1347.5" y="1509.33" width="5.5" height="5.33" fill="#F1F5F9"/>
 <text class="h" x="1340" y="1554" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">MAIN</text>
 <text class="h" x="1340" y="1573" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">fast-forward only,</text><text class="h" x="1340" y="1589" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">never pushed</text>
 <circle cx="1580" cy="1520" r="9" fill="#F1F5F9"/>

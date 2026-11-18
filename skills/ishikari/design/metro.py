@@ -39,9 +39,9 @@ lines = [  # name, colour, points, width, dash
 L_UP = (0, -60, "middle"); L_DN = (0, 34, "middle"); RIGHT = (26, -4, "start")
 stations = [
  # row 1: ask and plan
- (120,R1,"Task",["you give it, or a","dropped cleanup plan"],"term",L_DN),
+ (120,R1,"Task",["you give it, or a","dropped cleanup plan"],"task",L_DN),
  (440,R1,"Investigator ant",["one live agent run by the skill: reads","the repo once, gets each answer as a message;","no Agent tool: the plan workflow runs it"],"x",(-22,-74,"end")),
- (440,90,"You",["up to 4 questions a round (/ask-simple),","8 in all; answering approves the whole run"],"term",(26,-6,"start")),
+ (440,90,"You",["up to 4 questions a round (/ask-simple),","8 in all; answering approves the whole run"],"you",(26,-6,"start")),
  (440,300,"Researcher ants  ∥",["up to 5 at once, web + computer,","read only; the investigator waits"],"end",(24,-4,"start")),
  (780,R1,"investigation_report.md",["written when nothing is unclear;","the investigator is stopped"],"file",L_DN),
  (1100,R1,"Add requirement ant",["drafts the requirement entry;","the main session pipes it into ishikari.py req add;","no requirements file: no add requirement ant"],"st",L_DN),
@@ -66,7 +66,7 @@ stations = [
  (820,DIP4,"Merger ant",["fast-forwards the scratch copy to the fix;","the fix lands only through this fast-forward"],"st",L_DN),
  (J2,DIP4,"Judge ant",["scores again; still below 7:","main moves, verdict flagged"],"st",(14,34,"start")),
  (1180,R4,"Finisher ant",["fast-forwards main, removes worktrees,","appends the stage rows, runs the check"],"x",L_UP),
- (1340,R4,"MAIN",["fast-forward only,","never pushed"],"term",L_DN),
+ (1340,R4,"MAIN",["fast-forward only,","never pushed"],"main",L_DN),
  (1580,R4,"checkCommand",["the finisher ant builds and checks the app,","only when main moved and checkCommand is set"],"st",L_UP),
  (1580,1660,"check-fix round",["a failed check: one build round","from the moved main"],"term",RIGHT),
  (1780,R4,"req done",["the main session marks the kept :ID:s","once the check passed, or there is none"],"term",L_DN),
@@ -129,6 +129,18 @@ for x, y, nm, sub, kind, (dx, dy, an) in stations:
         o.append(f'<circle cx="{x}" cy="{y}" r="16" fill="{BG}"/>'
                  f'<path d="M{x+12},{y-7} A13,13 0 1 0 {x+13},{y+3}" fill="none" stroke="{TXT}" stroke-width="4" stroke-linecap="round"/>'
                  f'<path d="M{x+5},{y-10} L{x+14},{y-9} L{x+15},{y-18}" fill="none" stroke="{TXT}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>')
+    elif kind == "task":  # a clipboard: board, clip, two ruled lines
+        o.append(f'<rect x="{x-12}" y="{y-14}" width="24" height="30" rx="3" fill="{BG}" stroke="{TXT}" stroke-width="4"/>'
+                 f'<rect x="{x-6}" y="{y-18}" width="12" height="7" rx="2" fill="{TXT}"/>'
+                 + "".join(f'<line x1="{x-6}" y1="{y-2+k*7}" x2="{x+6}" y2="{y-2+k*7}" stroke="{GREY}" stroke-width="2"/>' for k in range(2)))
+    elif kind == "you":  # a person: head and shoulders
+        o.append(f'<circle cx="{x}" cy="{y}" r="17" fill="{BG}"/>'
+                 f'<circle cx="{x}" cy="{y-7}" r="6.5" fill="{BG}" stroke="{TXT}" stroke-width="4"/>'
+                 f'<path d="M{x-13},{y+15} Q{x-13},{y+2} {x},{y+2} Q{x+13},{y+2} {x+13},{y+15} Z" fill="{BG}" stroke="{TXT}" stroke-width="4" stroke-linejoin="round"/>')
+    elif kind == "main":  # a finish flag on a pole
+        o.append(f'<line x1="{x-9}" y1="{y-16}" x2="{x-9}" y2="{y+16}" stroke="{TXT}" stroke-width="4" stroke-linecap="round"/>'
+                 f'<rect x="{x-9}" y="{y-16}" width="22" height="16" fill="{BG}" stroke="{TXT}" stroke-width="3"/>'
+                 + "".join(f'<rect x="{x-9+i*5.5}" y="{y-16+j*5.33}" width="5.5" height="5.33" fill="{TXT}"/>' for i in range(4) for j in range(3) if (i + j) % 2 == 0))
     elif kind == "end":
         o.append(f'<line x1="{x-16}" y1="{y}" x2="{x+16}" y2="{y}" stroke="{TXT}" stroke-width="7" stroke-linecap="round"/>')
     else:
