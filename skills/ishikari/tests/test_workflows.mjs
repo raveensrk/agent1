@@ -108,6 +108,34 @@ test('build: a bug still open after 3 tries escalates', async () => {
   assert.equal(out.tasks[0].tries, 3)
 })
 
+test('build: a task that keeps finding new bugs gives up after MAX_ROUNDS (3) rounds', async () => {
+  let n = 0
+  const { out, calls } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
+    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', sha: 'abc1234', testsPassed: true, testSummary: 'ok' }
+    if (o.label === 'inspector-ant:a:check') return { bugs: ['bug0'], cause: 'c', plan: 'p' }
+    n++
+    return { fixed: [{ id: `a#${n}`, fixed: true }], bugs: [`bug${n}`] }
+  })
+  assert.equal(out.tasks[0].status, 'escalated')
+  assert.deepEqual(calls.filter(c => c.startsWith('worker-ant:a:fix')), ['worker-ant:a:fix1', 'worker-ant:a:fix2', 'worker-ant:a:fix3'])
+  assert.equal(out.tasks[0].tries, 1)
+})
+
+test('build: the inspector gets the worker sha and reuses its test result', async () => {
+  const prompts = {}
+  await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
+    prompts[o.label] = p
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', sha: 'deadbee1', testsPassed: true, testSummary: '12 passed' }
+    return { bugs: [] }
+  })
+  const ins = prompts['inspector-ant:a:check']
+  assert.ok(ins.includes('deadbee1'))
+  assert.ok(ins.includes('12 passed'))
+  assert.ok(ins.includes('do not run the tests again'))
+  assert.ok(prompts['worker-ant:a:build'].includes('as sha'))
+})
+
 test('finish: dropped branches are kept, merged ones removed', async () => {
   const prompts = []
   const { out } = await run('ishikari-finish.js', {

@@ -29,7 +29,7 @@ export const meta = {
 
 const MAX_WORKERS = 5
 const MAX_TRIES = 3   // tries per bug before it is escalated
-const MAX_ROUNDS = 5  // fix rounds per task, so new bugs cannot loop forever
+const MAX_ROUNDS = 3  // fix rounds per task, so new bugs cannot loop forever
 const EFFORT = { worker: 'medium', inspector: 'medium', detective: 'high', integrator: 'medium', merger: 'medium', clerk: 'low' }
 
 const { env = {} } = args
@@ -51,8 +51,11 @@ const BUILT = {
   properties: {
     status: { type: 'string', enum: ['built', 'stuck'] },
     notes: { type: 'string', description: 'what you did and any choice you made on your own; for stuck, what blocked you' },
+    sha: { type: 'string', description: 'HEAD commit of your branch after your last commit' },
+    testsPassed: { type: 'boolean', description: 'whether the tests passed on that commit' },
+    testSummary: { type: 'string', description: 'the test command you ran and its result: counts and any failing tests' },
   },
-  required: ['status', 'notes'],
+  required: ['status', 'notes', 'sha', 'testsPassed', 'testSummary'],
 }
 
 const INSPECTION = {
@@ -156,8 +159,9 @@ names and interfaces exactly.
 ${job}
 Also update the docs your change affects, inside this task.
 ${tests} inside your worktree before you finish. Commit all your work on
-${task.branch}, even unfinished work. Return status "stuck" if you cannot
-finish, with what blocked you in notes.`,
+${task.branch}, even unfinished work. Return the HEAD commit of ${task.branch}
+as sha, and the test result on that commit in testsPassed and testSummary.
+Return status "stuck" if you cannot finish, with what blocked you in notes.`,
     { label: `worker-ant:${task.id}:${step}`, phase, effort: EFFORT.worker, schema: BUILT },
   )
   return workerSlot(run)
@@ -179,7 +183,17 @@ function runChild(task) {
   })
 }
 
-function inspect(task, open, step) {
+// The worker's own test run, reused when the inspector finds the same commit.
+function testsFor(task, built) {
+  if (!built || !/^[0-9a-f]{7,40}$/.test(built.sha || '') || typeof built.testsPassed !== 'boolean') {
+    return `${tests} inside that worktree.`
+  }
+  return `The worker ant tested commit ${built.sha}: ${built.testsPassed ? 'passed' : 'FAILED'}. Its summary: ${built.testSummary || '(none)'}
+Run \`git -C ${task.tree} rev-parse HEAD\`. If it is ${built.sha}, reuse that result and
+do not run the tests again. Only if HEAD differs, ${tests.toLowerCase()} inside that worktree.`
+}
+
+function inspect(task, open, step, built) {
   const own = task.bases.length
     ? `It is built on ${task.bases.join(', ')}. Code from those branches belongs to other tasks:
 list its problems in baseProblems, never in bugs. This task's own commits are
@@ -199,7 +213,7 @@ Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${ta
 Check it against its plan and the run's design ${designOf(task)}: a name or interface
 that differs from the design is a bug.
 ${own}
-${tests} inside that worktree. Do not copy the repo anywhere else, and do not
+${testsFor(task, built)} Do not copy the repo anywhere else, and do not
 edit tracked files.
 ${ask}
 Put style points and small doubts in nits, not in bugs. Check that the docs
@@ -226,7 +240,7 @@ a worker ant instead. Change no files.`,
   )
 }
 
-// Fix loop with each bug tracked by id: 3 tries per bug, at most MAX_ROUNDS
+// Fix loop with each bug tracked by id: MAX_TRIES tries per bug, at most MAX_ROUNDS
 // rounds. A round = detective plans, worker builds, inspector re-checks.
 // Returns an error text if an ant died twice, else null.
 // firstFix: the inspector's own fix plan for round 1, which saves a detective.
@@ -248,7 +262,7 @@ async function fixLoop(task, texts, firstFix) {
     task.touched()
     task.notes.push(built.notes)
     if (built.status === 'stuck') { entry.outcome = `worker stuck: ${built.notes}`; continue }
-    const check = await twice(() => inspect(task, open, `recheck${round}`))
+    const check = await twice(() => inspect(task, open, `recheck${round}`, built))
     if (!check) return 'the inspector ant died twice'
     const done = new Set((check.fixed || []).filter(f => f.fixed).map(f => f.id))
     open.forEach(b => { if (done.has(b.id)) b.open = false })
@@ -367,6 +381,7 @@ async function runTask(task) {
   const first = await twice(() => task.workflow ? runChild(task) : work(task, 'Build the plan.', 'Build', 'build'))
   if (!first) return end(task, 'error', ['the worker ant died twice'])
   task.notes.push(first.notes)
+  let last = first
   let inspected = false
   if (first.status === 'stuck') {
     const err = await fixLoop(task, [`stuck: ${first.notes}`])
@@ -386,6 +401,7 @@ async function runTask(task) {
     if (!up) return end(task, 'error', ['the worker ant died twice'])
     task.touched()
     task.notes.push(up.notes)
+    last = up
     inspected = false
     if (up.status === 'stuck') {
       const err = await fixLoop(task, [`could not take in the latest ${task.bases.join(', ')}: ${up.notes}`])
@@ -394,7 +410,7 @@ async function runTask(task) {
     }
   }
   if (!inspected) {
-    const check = await twice(() => inspect(task, null, 'check'))
+    const check = await twice(() => inspect(task, null, 'check', last))
     if (!check) return end(task, 'error', ['the inspector ant died twice'])
     task.nits.push(...(check.nits || []))
     task.baseProblems.push(...(check.baseProblems || []))
