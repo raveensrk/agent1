@@ -53,8 +53,8 @@ stations = [
  (1700,R1,"Worker plans",["one per task: title, files, after;","checked before anything is built"],"st",L_DN),
  (1370,40,"Logbook",["logbook clerk ant: appends each ant's entry","the moment the ant replies, in plan, build and finish.","The live investigator gets only an investigated entry.","Build and finish add a summary at the end. No ant reads it.","~/.ishikari/<repo>-<hash>/logbook.rec"],"log",RIGHT),
  # row 2: build, check, fix
- (200,R2,"Worker ants  ∥",["max 5, one worktree each,","code + tests + docs;","stuck: next fix round"],"x",(0,-74,"middle")),
- (760,R2,"Inspector ants  ∥",["one per built task: plan + design,","runs tests (reuses the worker's if clean)"],"x",L_UP),
+ (200,R2,"Worker ants  ∥",["max 5, one worktree each,","code + tests + docs;","stuck: next fix round"],"x",(0,-84,"middle")),
+ (760,R2,"Inspector ants  ∥",["one per built task: plan + design,","runs tests (reuses the worker's if clean)"],"x",(0,-70,"middle")),
  (1200,R2,"Integrator ant",["merges passing tasks in a scratch","copy, tests once: the combined test;","fewer than 2 passing tasks: no combined test"],"x",(0,-78,"middle")),
  (620,720,"Detective ants  ∥",["round 2 on: finds why, writes","the next fix plan, never code"],"x",(-26,34,"end")),
  (620,790,"Dropped",["after 3 tries on a bug or","3 fix rounds; branch kept"],"term",RIGHT),
@@ -95,7 +95,7 @@ for y, label, c in [(R1, "1 ASK  ·  2 PLAN", BLUE), (R2, "3 BUILD  ·  4 CHECK 
 for name, c, pts, w, dash in lines:
     o.append(f'<path id="L-{name}" d="{d(pts)}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linejoin="round" stroke-linecap="round"' + (f' stroke-dasharray="{dash}" class="flow"' if dash else '') + '/>')
 o.append(txt(X + 12, 290, ["to row 2"], BLUE, 13, weight="700"))
-o.append(txt(90, 420, ["a plan may run a saved workflow in place of a worker ant"], SUB, 13))
+o.append(txt(262, R2 - 108, ["a plan may run a saved workflow in place of a worker ant"], SUB, 13, "middle"))
 o.append(txt(480, 494, ["built: the script starts", "its inspector at once"], GREEN, 13, "middle"))
 o.append(txt(X + 12, 700, ["to row 3"], GREEN, 13, weight="700"))
 o.append(txt(X + 12, 1240, ["to row 4"], GREEN, 13, weight="700"))
