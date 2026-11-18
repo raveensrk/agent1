@@ -185,10 +185,9 @@ They run once per finish, on the merged result, before main moves.
   value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
-- Each ant thinks only as hard as its job needs: low for the logbook clerk,
-  finisher and upkeep ants; medium for the investigator, researchers, add
-  requirement ant, workers, inspectors and merger; high for the architect and
-  the detective.
+- For now every ant runs on the latest Opus model at low effort, the live
+  investigator and its researchers included. Each script keeps a per-ant
+  EFFORT table and a MODEL setting, so one ant can be tuned later.
 
 ## Running Ishikari
 

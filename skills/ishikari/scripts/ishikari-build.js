@@ -30,7 +30,10 @@ export const meta = {
 const MAX_WORKERS = 5
 const MAX_TRIES = 3   // tries per bug before it is escalated
 const MAX_ROUNDS = 3  // fix rounds per task, so new bugs cannot loop forever
-const EFFORT = { worker: 'medium', inspector: 'medium', detective: 'high', integrator: 'medium', merger: 'medium', clerk: 'low' }
+// For now every ant runs on the latest Opus at low effort. To tune one ant,
+// change its entry here.
+const MODEL = 'opus'
+const EFFORT = { worker: 'low', inspector: 'low', detective: 'low', integrator: 'low', merger: 'low', clerk: 'low' }
 
 const { env = {} } = args
 const plans = Array.isArray(args.plans) ? args.plans.filter(p => p && typeof p === 'object') : []
@@ -165,12 +168,12 @@ const logNow = entries => {
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(entries)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', effort: 'low' },
+    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
   ).catch(() => null)
   pendingLogs.push(p)
 }
 async function ant(prompt, opts) {
-  const r = await agent(prompt, opts)
+  const r = await agent(prompt, { ...opts, model: MODEL })
   const [kind, a, b] = String(opts.label).split(':')
   const task = kind === 'juror-ant' ? b : ['worker-ant', 'inspector-ant', 'detective-ant'].includes(kind) && a ? a : undefined
   logNow([{ run: env.run, ...(task ? { task } : {}), who: kind.replace('-ant', ' ant'), event: summarize(kind, r),
@@ -580,7 +583,7 @@ if (entries.length) {
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(entries)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk', phase: 'Logbook', effort: EFFORT.clerk },
+    { label: 'logbook-clerk', phase: 'Logbook', model: MODEL, effort: EFFORT.clerk },
   )
   if (clerk == null) log('logbook append skipped: the logbook clerk died; the logbook misses this stage')
 }

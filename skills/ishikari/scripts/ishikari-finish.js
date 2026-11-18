@@ -36,7 +36,10 @@ export const meta = {
 // The repo's main checkout is touched once, at the end, by a fast-forward
 // that git refuses if it would overwrite anything.
 
-const EFFORT = { merger: 'medium', janitor: 'low', worker: 'medium', inspector: 'medium', detective: 'medium', judge: 'medium', juror: 'medium', finisher: 'low' }
+// For now every ant runs on the latest Opus at low effort. To tune one ant,
+// change its entry here.
+const MODEL = 'opus'
+const EFFORT = { merger: 'low', janitor: 'low', worker: 'low', inspector: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
@@ -97,12 +100,12 @@ const logNow = entries => {
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(entries)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', effort: 'low' },
+    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
   ).catch(() => null)
   pendingLogs.push(p)
 }
 async function ant(prompt, opts) {
-  const r = await agent(prompt, opts)
+  const r = await agent(prompt, { ...opts, model: MODEL })
   const [kind, a, b] = String(opts.label).split(':')
   if (kind === 'finisher-ant') return r  // it appends the stage's entries itself
   const task = kind === 'juror-ant' ? b : ['worker-ant', 'inspector-ant', 'detective-ant'].includes(kind) && a ? a : undefined

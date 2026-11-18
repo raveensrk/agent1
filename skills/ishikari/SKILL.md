@@ -96,7 +96,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ### 2a. Live investigator
 
-1. Start ONE investigator with the Agent tool (general-purpose). Its prompt is
+1. Start ONE investigator with the Agent tool (general-purpose, model `opus`,
+   effort `low` when the tool takes it; its researchers the same). Its prompt is
    [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
    inputs: `env.repo`, `env.main`, `env.state`, the task, the report path
    `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`

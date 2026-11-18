@@ -36,7 +36,10 @@ export const meta = {
 // Nothing is committed here. Without asking, the main session then commits
 // the requirement.
 
-const EFFORT = { review: 'medium', researcher: 'medium', requirement: 'medium', architect: 'high' }
+// For now every ant runs on the latest Opus at low effort. To tune one ant,
+// change its entry here.
+const MODEL = 'opus'
+const EFFORT = { review: 'low', researcher: 'low', requirement: 'low', architect: 'low' }
 const MAX_RESEARCHERS = 5  // researcher ants at once
 const MAX_RESEARCH = 2     // research bursts per question
 
@@ -158,12 +161,12 @@ const logNow = entries => {
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(entries)}
 ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', effort: 'low' },
+    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
   ).catch(() => null)
   pendingLogs.push(p)
 }
 async function ant(prompt, opts) {
-  const r = await agent(prompt, opts)
+  const r = await agent(prompt, { ...opts, model: MODEL })
   const kind = String(opts.label).split(':')[0]
   logNow([{ run: env.run, who: kind.replace('-ant', ' ant'), event: summarize(r),
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])

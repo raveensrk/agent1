@@ -649,3 +649,25 @@ test('plan: the architect keeps plans small and says what and where, not exact w
   assert.ok(a.includes('at most about 3 files per task'))
   assert.ok(a.includes('what and where, not exact wording'))
 })
+
+// ---- every ant: latest Opus, low effort ----
+test('every ant in all three scripts runs on opus at low effort', async () => {
+  const seen = []
+  const spy = (name, args, answer) => {
+    const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
+    const agent = async (p, o) => { seen.push([name, o.label, o.model, o.effort]); return answer(p, o) }
+    const parallel = fns => Promise.all(fns.map(f => f()))
+    return new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)(args, agent, parallel, () => {}, () => {}, async () => ({}))
+  }
+  await spy('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) =>
+    o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
+  await spy('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
+    o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('inspector') ? { bugs: [] } : {})
+  await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
+    o.label === 'merger-ant' ? { sha: 'abc', results: ['a', 'b', 'c'].map(id => ({ id, outcome: 'merged', detail: '' })) }
+      : o.label === 'janitor-ant' ? { needed: false, title: '' }
+      : o.label.startsWith('juror') || o.label.startsWith('judge') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
+  for (const s of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js']) assert.ok(seen.some(x => x[0] === s), s)
+  const off = seen.filter(([, , model, effort]) => model !== 'opus' || effort !== 'low')
+  assert.deepEqual(off, [])
+})
