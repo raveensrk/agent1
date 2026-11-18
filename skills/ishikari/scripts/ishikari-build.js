@@ -52,10 +52,10 @@ const BUILT = {
     status: { type: 'string', enum: ['built', 'stuck'] },
     notes: { type: 'string', description: 'what you did and any choice you made on your own; for stuck, what blocked you' },
     sha: { type: 'string', description: 'HEAD commit of your branch after your last commit' },
-    testsPassed: { type: 'boolean', description: 'whether the tests passed on that commit' },
+    testsPassed: { type: 'boolean', description: 'whether the tests passed on that commit; false if you did not run them' },
     testSummary: { type: 'string', description: 'the test command you ran and its result: counts and any failing tests' },
   },
-  required: ['status', 'notes', 'sha', 'testsPassed', 'testSummary'],
+  required: ['status', 'notes'],
 }
 
 const INSPECTION = {
@@ -117,7 +117,8 @@ const designOf = task => task.plan.startsWith('/') ? task.plan.replace(/[^/]*$/,
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
 Use absolute paths only, and run git as \`git -C <path> ...\`. Never work in the
 repo's main checkout, and never touch any other repo.`
-const tests = env.testCommand ? `Run the tests with \`${env.testCommand}\`` : 'Run the repo\'s tests'
+const testsLower = env.testCommand ? `run the tests with \`${env.testCommand}\`` : 'run the repo\'s tests'
+const tests = testsLower[0].toUpperCase() + testsLower.slice(1)
 
 // ---- board rows: kept here, written once at the end by the board tool ----
 const bulletin = {}
@@ -189,8 +190,9 @@ function testsFor(task, built) {
     return `${tests} inside that worktree.`
   }
   return `The worker ant tested commit ${built.sha}: ${built.testsPassed ? 'passed' : 'FAILED'}. Its summary: ${built.testSummary || '(none)'}
-Run \`git -C ${task.tree} rev-parse HEAD\`. If it is ${built.sha}, reuse that result and
-do not run the tests again. Only if HEAD differs, ${tests.toLowerCase()} inside that worktree.`
+Run \`git -C ${task.tree} rev-parse HEAD\` and \`git -C ${task.tree} status --porcelain\`.
+If HEAD is ${built.sha} and the status is empty, reuse that result and do not
+run the tests again. Otherwise ${testsLower} inside that worktree.`
 }
 
 function inspect(task, open, step, built) {
@@ -477,7 +479,7 @@ For each, run \`git cherry-pick --empty=drop $(git -C ${env.repo} rev-list --rev
 inside the worktree. If it conflicts, run \`git cherry-pick --abort\`, reset the
 scratch branch to where it was before this task, report "conflict" with the files
 and the ids of the tasks it clashes with, and go on to the next one.
-After all merges, ${tests.toLowerCase()} once inside ${tree}. If they fail, find
+After all merges, ${testsLower} once inside ${tree}. If they fail, find
 the first task whose merge makes them fail: rebuild the branch from ${env.main}
 and test after each merge. Report that task as "tests failed" with the failing
 tests and the tasks merged before it, leave it out, and go on until the tests pass.

@@ -120,6 +120,53 @@ test('build: a task that keeps finding new bugs gives up after MAX_ROUNDS (3) ro
   assert.equal(out.tasks[0].status, 'escalated')
   assert.deepEqual(calls.filter(c => c.startsWith('worker-ant:a:fix')), ['worker-ant:a:fix1', 'worker-ant:a:fix2', 'worker-ant:a:fix3'])
   assert.equal(out.tasks[0].tries, 1)
+  assert.ok(calls.includes('inspector-ant:a:recheck3'))
+  assert.ok(!calls.some(c => c.includes('fix4')))
+})
+
+// Prompts by label for a build run; worker(label) gives each worker's extra reply fields.
+async function buildPrompts(args, worker, inspector = () => ({ bugs: [] })) {
+  const prompts = {}
+  await run('ishikari-build.js', { env, ...args }, (p, o) => {
+    prompts[o.label] = p
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', ...worker(o.label) }
+    if (o.label.startsWith('detective')) return { cause: 'c', plan: 'p' }
+    return inspector(o.label)
+  })
+  return prompts
+}
+
+test('build: no valid worker sha means the inspector runs the tests itself', async () => {
+  for (const extra of [{}, { sha: 'zzz', testsPassed: true, testSummary: 's' }]) {
+    const ins = (await buildPrompts({ plans: [{ id: 'a' }] }, () => extra))['inspector-ant:a:check']
+    assert.ok(ins.includes("Run the repo's tests inside that worktree."))
+    assert.ok(!ins.includes('reuse'))
+  }
+})
+
+test('build: each recheck gets that round\'s worker sha', async () => {
+  const pr = await buildPrompts({ plans: [{ id: 'a' }] },
+    l => ({ sha: l.endsWith('build') ? 'aaa1111' : 'bbb2222', testsPassed: true, testSummary: 's' }),
+    l => l === 'inspector-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
+  assert.ok(pr['inspector-ant:a:check'].includes('aaa1111'))
+  assert.ok(pr['inspector-ant:a:recheck1'].includes('bbb2222'))
+  assert.ok(!pr['inspector-ant:a:recheck1'].includes('aaa1111'))
+  assert.ok(pr['inspector-ant:a:recheck1'].includes('status --porcelain'))
+})
+
+test('build: after a merge update the check uses the update worker sha', async () => {
+  const pr = await buildPrompts({ plans: [{ id: 'a' }, { id: 'b', after: ['a'] }] },
+    l => ({ sha: l === 'worker-ant:b:update' ? 'ccc3333' : 'aaa1111', testsPassed: true, testSummary: 's' }),
+    l => l === 'inspector-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
+  assert.ok(pr['worker-ant:b:update'])
+  assert.ok(pr['inspector-ant:b:check'].includes('ccc3333'))
+})
+
+test('build: the test command is kept exactly', async () => {
+  const pr = await buildPrompts({ env: { ...env, testCommand: 'make TEST=Foo' }, plans: [{ id: 'a' }] },
+    () => ({ sha: 'aaa1111', testsPassed: false, testSummary: 's' }))
+  assert.ok(pr['worker-ant:a:build'].includes('`make TEST=Foo`'))
+  assert.ok(pr['inspector-ant:a:check'].includes('run the tests with `make TEST=Foo`'))
 })
 
 test('build: the inspector gets the worker sha and reuses its test result', async () => {
@@ -132,7 +179,7 @@ test('build: the inspector gets the worker sha and reuses its test result', asyn
   const ins = prompts['inspector-ant:a:check']
   assert.ok(ins.includes('deadbee1'))
   assert.ok(ins.includes('12 passed'))
-  assert.ok(ins.includes('do not run the tests again'))
+  assert.ok(ins.includes('reuse that result'))
   assert.ok(prompts['worker-ant:a:build'].includes('as sha'))
 })
 
