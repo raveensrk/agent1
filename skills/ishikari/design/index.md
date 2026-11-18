@@ -257,6 +257,10 @@ An animated metro map: four rows read left to right, and short transfer spurs
 name where a cross-row link goes. Every agent label in the three scripts has a
 station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
+Hover a station for a one-line tooltip; open the SVG itself in a browser and
+click a station for a panel with its full story and source (Esc closes it).
+Each station's text lives in `details` in `metro.clj`; the build fails
+without one.
 `test_metro_map` in [`test_ishikari.py`](../tests/test_ishikari.py) checks it
 against the scripts.
 

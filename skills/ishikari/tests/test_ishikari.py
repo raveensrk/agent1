@@ -287,6 +287,10 @@ def test_metro_map():
     for name in ("Task", "You", "investigation_report.md", "Worker plans", "Dropped", "merge failed",
                  "Dropped cleanup", "MAIN", "checkCommand", "check-fix round", "req done"):
         assert name in names, name
+    groups = [g for g in ET.parse(SVG).getroot().iter(NS + "g") if g.get("class") == "st"]
+    assert len(groups) == len(names), (len(groups), len(names))  # every station is clickable
+    for g in groups:
+        assert (g.findtext(NS + "title") or "").endswith("Click for more."), g.get("data-i")
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
     strings = [t["s"] for t in texts]

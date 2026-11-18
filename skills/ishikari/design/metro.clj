@@ -5,7 +5,8 @@
 ;; Run: bb metro.clj [OUT]  (writes OUT, else ishikari-metro.svg beside it)
 (ns metro
   (:require [clojure.string :as str]
-            [babashka.fs :as fs]))
+            [babashka.fs :as fs]
+            [cheshire.core :as json]))
 
 (def W 2000) (def H 1960)
 (def BG "#0B1120") (def TXT "#F1F5F9") (def SUB "#A8B3C7")
@@ -85,6 +86,98 @@
    [1580 R4 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
    [1580 1660 "check-fix round" ["a failed check: one build round" "from the moved main"] "retry" RIGHT]
    [1780 R4 "req done" ["the main session marks the kept :ID:s" "once the check passed, or there is none"] "done" L-DN]])
+
+;; What a click on a station shows: a short line for the hover tooltip, the
+;; full story for the panel, and where it lives. Keyed by [name x]: some names
+;; appear twice. Every station needs one; the build fails without it.
+(def details
+  {["Task" 120] {:tip "The work you hand Ishikari."
+                 :about "Your task in your own words, or the note of a cleanup the last run dropped. Setup makes the run's state folder and env first; the main checkout must be on the main branch with no uncommitted changes."
+                 :src "SKILL.md#1-setup"}
+   ["Investigator ant" 440] {:tip "Asks you questions, then writes the investigation report."
+                             :about "One live agent run by the skill, not a workflow: it reads the repo once and gets each answer as a message. It critiques the task, finds the test command, and asks up to 4 independent questions at a time, about 8 in all. It stops once nothing important is unclear. Without the Agent tool the plan workflow runs it instead."
+                             :src "assets/prompts/investigator.md, SKILL.md#2a-live-investigator"}
+   ["You" 440] {:tip "You answer the investigator's questions."
+                :about "The only time Ishikari asks you anything. Questions come through /ask-simple, up to 4 at a time, about 8 in all. Answering approves the whole run, merge to main included."
+                :src "SKILL.md#2a-live-investigator"}
+   ["Researcher ants  ∥" 440] {:tip "Look up facts for the investigator."
+                               :about "Up to 5 at once, 2 bursts per question. They search the web and the whole computer, read only, never secrets, and report back. The investigator waits for them. Not logged when the live investigator sends them."
+                               :src "SKILL.md#limits"}
+   ["investigation_report.md" 780] {:tip "Everything learned while planning, written once."
+                                    :about "Goal, scope, every decision you made, facts with sources, constraints, risks, assumptions, acceptance checks and commands. Every claim cites an answer, a fact or the repo. Later ants read it instead of asking you. The main session never edits it."
+                                    :src "<state>/plans/<run>/investigation_report.md"}
+   ["Add requirement ant" 1100] {:tip "Drafts the requirement entry; skipped with no requirements file."
+                                 :about "Reads only the report and the repo; the report wins. Drafts the entry with /add-requirement and shows it can be built, with a throwaway spike only if needed. Never asks, designs or plans. The main session pipes the entry into ishikari.py req add. Runs only when setup finds requirements.org or requirements/*.org."
+                                 :src "scripts/ishikari-plan.js (Requirement phase)"}
+   ["Architect ant" 1420] {:tip "Writes architecture.md and one plan per task."
+                           :about "Designs the parts of the change, the files each owns, and every name, interface and data shape between them, so parallel workers fit. Maps each acceptance check to a part. Splits the work into tasks of about 3 files, no two editing one file, each with its own test file."
+                           :src "scripts/ishikari-plan.js (Design phase)"}
+   ["Worker plans" 1700] {:tip "One complete plan per task."
+                          :about "Workers cannot ask questions, so each plan is complete: title, files, after. The plan script rejects bad or unknown ids, loops in after, two tasks on one file, and a bad requirement, before anything is built."
+                          :src "<state>/plans/<run>/<task>.md"}
+   ["Logbook" 1370] {:tip "Every ant's reply, one entry each."
+                     :about "A recfile the logbook clerk appends to the moment an ant replies, one clerk at a time. Build and finish add a summary at the end. No ant reads it; read it with ishikari.py log status, recsel or an editor."
+                     :src "~/.ishikari/<repo>-<hash>/logbook.rec"}
+   ["Worker ants  ∥" 200] {:tip "Build the plans, one worktree each."
+                           :about "Up to 5 at a time, each in its own git worktree. Writes code, tests and the docs its change affects, decides on its own and commits all its work. A worker that gets stuck says why, and that becomes a bug for the next fix round. A plan may name a saved workflow to run instead."
+                           :src "scripts/ishikari-build.js"}
+   ["Detective ants  ∥" 760] {:tip "Check each built task and plan every fix."
+                              :about "One per task, started as soon as it is built. Checks the work against its plan and architecture.md, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; a worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code."
+                              :src "scripts/ishikari-build.js"}
+   ["Integrator ant" 1200] {:tip "Merges all passing tasks in a scratch copy and tests once."
+                            :about "Two tasks can pass alone and break together. It merges every passing task in a straight line in a throwaway copy and runs the tests once. A clashing task takes in the tasks it clashes with and goes back through the fix loop; 2 rounds. Skipped with fewer than 2 passing tasks."
+                            :src "scripts/ishikari-build.js (Combined phase)"}
+   ["Dropped" 660] {:tip "A task that could not be fixed."
+                    :about "After 3 tries on one bug or 3 fix rounds, the task drops, and tasks built on it drop too. Its branch is kept for a later look, and the final report lists it."
+                    :src "scripts/ishikari-build.js"}
+   ["Merger ant" 200] {:tip "Merges the approved tasks for real, then checks with git."
+                       :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main."
+                       :src "scripts/ishikari-finish.js (Merge phase)"}
+   ["merge failed" 480] {:tip "A conflict or failed tests: back to build."
+                         :about "A conflict, failed tests, or a task git finds missing goes back to a new build round on its own. At most 2 extra build rounds; what is left after that drops and is reported."
+                         :src "SKILL.md#4-finish"}
+   ["Janitor ant" 760] {:tip "Cleans up mess the run left, by itself."
+                        :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor."
+                        :src "scripts/ishikari-finish.js (Upkeep phase)"}
+   ["Dropped cleanup" 760] {:tip "A cleanup whose tests failed."
+                            :about "Main moves with the tasks alone. The cleanup branch is kept, and its note goes to the next plan stage as a suggested task, which the investigator may ask about."
+                            :src "scripts/ishikari-finish.js"}
+   ["Juror ants  ∥" 160] {:tip "Score each merged task against its plan."
+                          :about "One per merged task, up to 5 at once, only with 3 or more merged tasks. Each scores its task against that task's plan, and the judge weighs their reports."
+                          :src "scripts/ishikari-finish.js"}
+   ["Judge ant" 400] {:tip "Scores the whole run 0-10 against the plans."
+                      :about "Reads the investigation report, architecture and every worker plan, and the merged code with the cleanup on top. One question: does the code match the plans? The score is its own call, not an average. 7 or more, or no gaps: main moves. Below 7 with gaps: one fix round."
+                      :src "scripts/ishikari-finish.js"}
+   ["Worker ant" 500] {:tip "Closes the judge's gaps."
+                       :about "Builds the judge's gaps as one fix on top of the merged scratch copy."
+                       :src "scripts/ishikari-finish.js"}
+   ["Detective ant" 660] {:tip "Checks the judge fix."
+                          :about "Checks the fix and runs the tests. A failed fix keeps its branch and the verdict says why."
+                          :src "scripts/ishikari-finish.js"}
+   ["Merger ant" 820] {:tip "Lands the judge fix by fast-forward."
+                       :about "Fast-forwards the scratch copy to the fix. The fix lands only through this fast-forward."
+                       :src "scripts/ishikari-finish.js (merger-ant:judge-fix)"}
+   ["Judge ant" 1000] {:tip "Scores again after the fix."
+                       :about "Scores the run a second time. Still below 7: main moves anyway and the verdict is flagged. The judge never blocks main."
+                       :src "scripts/ishikari-finish.js"}
+   ["Finisher ant" 1180] {:tip "Moves main, cleans up, runs the check."
+                          :about "Fast-forwards main, which git refuses if it would overwrite local edits. Removes the worktrees, appends the stage's logbook rows, and runs checkCommand when it is set."
+                          :src "scripts/ishikari-finish.js (Main phase)"}
+   ["MAIN" 1340] {:tip "Your main branch, moved forward."
+                  :about "Moves only as a fast-forward, never a merge commit, and is never pushed. Push it yourself when you are happy."
+                  :src "SKILL.md#4-finish"}
+   ["checkCommand" 1580] {:tip "Builds and checks the app after main moves."
+                          :about "The finisher ant runs the repo's saved checkCommand, only when main moved and the command is set. A failure starts one check-fix round."
+                          :src "ishikari.py config <state> checkCommand <cmd>"}
+   ["check-fix round" 1580] {:tip "A failed check: one build round."
+                             :about "One build round from the moved main, as a new task named check-fix. If the check still fails after it, the run stops and reports the output, and requirements are not marked done."
+                             :src "SKILL.md#4-finish"}
+   ["req done" 1780] {:tip "Marks this run's requirements DONE."
+                      :about "The main session runs ishikari.py req done with the :ID:s kept in planning, once the check passed or there is none. Skipped when the repo has no requirements file."
+                      :src "scripts/ishikari.py (req done)"}})
+
+(defn detail [nm x]
+  (or (details [nm x]) (throw (ex-info (str "no detail for station " nm " at x " x) {}))))
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
 
@@ -223,6 +316,39 @@
                 (conj out (str "<circle cx=\"" (+ x 5) "\" cy=\"" (+ ky 136) "\" r=\"5\" fill=\"" c "\"/>")
                       (txt (+ x 14) (+ ky 140) [t] :fill SUB :size 12))))))))
 
+(defn panel
+  "The click panel: an HTML box in a foreignObject, filled by a small script.
+  Scripts run only when the SVG is opened directly; as an <img> the map stays
+  plain and the hover tooltips still work."
+  []
+  (let [data (json/generate-string
+              (vec (for [[x y nm _ _ _] stations]
+                     (assoc (select-keys (detail nm x) [:about :src]) :name (str/replace nm "  ∥" "") :x x :y y))))]
+    [(str "<style>.st{cursor:pointer}.st:hover text,.st:focus text{text-decoration:underline}.st:focus{outline:none}"
+          "#pn{display:none}#pn.on{display:block}"
+          "#pn div{box-sizing:border-box;width:420px;padding:14px 16px;border-radius:12px;background:#111A2E;border:1.5px solid " INDIGO ";"
+          "color:" TXT ";font:14px/1.45 ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif;box-shadow:0 8px 30px #000a}"
+          "#pn b{display:block;font-size:17px;margin-bottom:6px}#pn p{margin:0 0 10px}#pn code{color:" SUB ";font-size:12px}"
+          "#pn i{float:right;font-style:normal;color:" SUB ";cursor:pointer}</style>")
+     "<foreignObject id=\"pn\" x=\"0\" y=\"0\" width=\"420\" height=\"400\"><div xmlns=\"http://www.w3.org/1999/xhtml\"><i title=\"Close (Esc)\">✕</i><b></b><p></p><code></code></div></foreignObject>"
+     (str "<script><![CDATA[\n"
+          "(function(){\n"
+          "var D=" (str/replace data "]]>" "]]\\u003e") ";\n"
+          "var W=" W ",H=" H ",pn=document.getElementById('pn'),box=pn.firstChild;\n"
+          "function show(i){var d=D[i];box.querySelector('b').textContent=d.name;box.querySelector('p').textContent=d.about;\n"
+          " box.querySelector('code').textContent=d.src;pn.classList.add('on');\n"
+          " var h=box.offsetHeight||200,x=d.x+30,y=d.y-20;if(x+420>W-10)x=d.x-450;if(x<10)x=10;if(y+h>H-10)y=H-10-h;if(y<10)y=10;\n"
+          " pn.setAttribute('x',x);pn.setAttribute('y',y);pn.setAttribute('height',h+4);}\n"
+          "function hide(){pn.classList.remove('on');}\n"
+          "document.querySelectorAll('.st').forEach(function(g){\n"
+          " g.addEventListener('click',function(e){e.stopPropagation();show(+g.dataset.i);});\n"
+          " g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();show(+g.dataset.i);}});});\n"
+          "pn.addEventListener('click',function(e){e.stopPropagation();if(e.target.tagName==='i')hide();});\n"
+          "document.addEventListener('click',hide);\n"
+          "document.addEventListener('keydown',function(e){if(e.key==='Escape')hide();});\n"
+          "})();\n"
+          "]]></script>")]))
+
 (defn svg []
   (concat
    [(str "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " W " " H "\" width=\"" W "\" height=\"" H "\" font-family=\"ui-sans-serif,-apple-system,Helvetica,Arial,sans-serif\">")
@@ -249,11 +375,14 @@
     (txt 720 (- R4 14) ["7+, or no gaps: no fix round"] :fill GREEN :size 13 :anchor "middle" :weight "700")
     (txt 440 1612 ["below 7 and gaps: one fix round"] :fill GOLD :size 13 :anchor "end" :weight "700")
     (txt 740 1720 ["a failed fix keeps its branch;" "the verdict says why"] :fill RED :size 13 :anchor "middle")]
-   (mapcat (fn [[x y nm sub kind [dx dy an]]]
-             (concat (icon x y nm kind)
-                     [(txt (+ x dx) (+ y dy) [nm] :size 16 :anchor an :weight "700")
-                      (txt (+ x dx) (+ y dy 19) sub :fill SUB :size 13 :anchor an :lh 16)]))
-           stations)
+   (mapcat (fn [i [x y nm sub kind [dx dy an]]]
+             (let [{:keys [tip]} (detail nm x)]
+               (concat [(str "<g class=\"st\" data-i=\"" i "\" tabindex=\"0\" role=\"button\"><title>" (esc (str (str/replace nm "  ∥" "") ": " tip " Click for more.")) "</title>")]
+                       (icon x y nm kind)
+                       [(txt (+ x dx) (+ y dy) [nm] :size 16 :anchor an :weight "700")
+                        (txt (+ x dx) (+ y dy 19) sub :fill SUB :size 13 :anchor an :lh 16)
+                        "</g>"])))
+           (range) stations)
    (for [[n path c sec beg] trains]
      (str "<g filter=\"url(#g)\"><rect x=\"-14\" y=\"-11\" width=\"28\" height=\"22\" rx=\"6\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\"/>"
           "<text y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
@@ -261,6 +390,7 @@
    (for [[path sec] [["ask" 6] ["res" 5]]]
      (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>"))
    (legend)
+   (panel)
    ["</svg>"]))
 
 (def short-help "metro.clj: build ishikari-metro.svg, the Ishikari metro map. Usage: bb metro.clj [OUT]")
