@@ -31,6 +31,12 @@ its job. The build script runs that workflow in place of a worker ant.
     `investigation_report.md` in the run's plans folder: goal, scope, every
     decision, facts with sources, constraints, risks, assumptions, acceptance
     checks and commands. Every claim cites an answer, a fact or the repo.
+    It writes nothing to the logbook itself: it runs outside any workflow,
+    and the main session never writes the logbook. When `ishikari-plan`
+    starts after it, it logs one `investigated` entry with the report path;
+    the investigator's researchers are not logged. Without the Agent tool,
+    the plan workflow runs the investigator and its researcher ants itself,
+    and logs each reply.
 
 03. **Add Requirement Ant** only adds the requirement. It reads only the
     investigation report and the repo; where the report and its own idea
@@ -38,13 +44,15 @@ its job. The build script runs that workflow in place of a worker ant.
     `/add-requirement` skill and shows it can be built from the repo's code and
     docs, writing a throwaway spike outside the repo only when that is not
     enough. It never asks the user, and never designs or plans. The main session
-    then commits the requirement.
+    pipes its entry into `ishikari.py req add` and commits it.
 
 03b. **Architect Ant** reads the report and the requirement and writes
     `architecture.md` beside the report: the parts of the change, the files each
     part owns, and every name, interface and data shape that crosses between
     parts, so parallel workers fit together. It maps each acceptance check to
     the part that proves it, then writes one plan per worker ant.
+    Like every workflow ant, the add requirement ant and the architect ant
+    each get a logbook entry the moment they reply.
 
 04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
     split so no two edit the same file, and each task has its own test file.
@@ -127,9 +135,11 @@ They run once per finish, on the merged result, before main moves.
   its task against that task's plan. The judge weighs their reports, checks
   how the tasks fit together and decides the score itself; it is not an
   average. One task: the judge works alone. At 7 or more, main moves. Below
-  7, one fix round: a worker ant closes the gaps on top of the merged scratch
-  copy, an inspector ant checks it and runs the tests, and the judge scores
-  again. Still below 7, or the fix failed: main moves anyway and the verdict is
+  7 with gaps, one fix round: a worker ant closes the gaps on top of the
+  merged scratch copy, an inspector ant checks it and runs the tests, a merger
+  ant fast-forwards the scratch copy to it (the only way the fix lands), and
+  the judge scores again. Still below 7, or the fix failed (its branch is kept
+  and the verdict says why): main moves anyway and the verdict is
   flagged in the report. The judge never blocks main, so a run never gets
   stuck on a score.
 
@@ -158,6 +168,11 @@ They run once per finish, on the merged result, before main moves.
   and the requirement entries. Each write holds a lock, so two runs never lose
   each other's entries. Requirement writes replace the file in one step, so a
   crash never leaves half a file; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
+- Every workflow ant's reply is logged the moment it comes, in plan, build and
+  finish, through a logbook clerk ant; a failed append never blocks or fails
+  the run. The live investigator gets only the `investigated` entry
+  `ishikari-plan` logs for it. Build and finish also append a summary at the
+  end of the stage.
 - Never trust an ant's answer shape. The scripts check every reply: a missing
   or broken field is an error, never a silent pass. A combined test counts only
   when every task is reported merged and a commit is given. Main counts as moved
@@ -170,8 +185,6 @@ They run once per finish, on the merged result, before main moves.
   value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
-  Each ant's entry is appended the moment it replies; the stage summary is
-  appended once when the stage ends.
 - Each ant thinks only as hard as its job needs: low for the logbook clerk,
   finisher and upkeep ants; medium for the investigator, researchers, add
   requirement ant, workers, inspectors and merger; high for the architect and
@@ -229,18 +242,26 @@ and stops to ask the user only in step 2.
 Stages run left to right: plan, build, check, fix, finish. The scripts hand work
 from ant to ant directly. The Logbook sits apart: a shared ledger, one plain
 text recfile per repo, `~/.ishikari/<repo>-<hash>/logbook.rec`, outside the
-repo. It is append only: nothing in it is ever changed or removed. The moment
-an ant replies, the script hands one entry for it (who, task, what came of it:
-built, 2 bugs found, score 6, died) to a low-effort logbook clerk ant, which
-appends it while the run goes on. Then the scripts append a summary at the end
-of build and at the end of finish: each task's status, each bug with its tries,
-the cleanup, the judge's verdict and whether main moved. The cost: one small
+repo. It is append only: nothing in it is ever changed or removed. In the
+map's words: logbook clerk ant: appends each ant's entry the moment the ant
+replies, in plan, build and finish. The live investigator gets only an
+investigated entry. Build and finish add a summary at the end. No ant reads it.
+Each entry says who, the task and what came of it (built, 2 bugs found, score
+6, died); the clerk appends it while the run goes on, and a failed append never
+blocks or fails the run. The live investigator runs outside any workflow, so
+`ishikari-plan` logs one `investigated` entry for it, with the report path. The
+summaries hold each task's status, each bug with its tries, the cleanup, the
+judge's verdict and whether main moved. The cost: one small
 clerk call per ant call. You add your own notes with `ishikari.py log note`; they are notes,
-never orders. No ant reads it. Read it with `ishikari.py log status` (each
+never orders. Read it with `ishikari.py log status` (each
 task's latest event), `recsel` or any editor.
 
 An animated metro map: four rows read left to right, and short transfer spurs
-name where a cross-row link goes. Built by [`metro.py`](metro.py);
-run `python3 metro.py` after a flow change.
+name where a cross-row link goes. Every agent label in the three scripts has a
+station, helper ants included (verifier, the fast-forward merger, the cleanup
+detective, the jurors), and short notes name each skipped step. Built by
+[`metro.py`](metro.py); run `python3 metro.py` after a flow change.
+`test_metro_map` in [`test_ishikari.py`](../tests/test_ishikari.py) checks it
+against the scripts.
 
 ![Ishikari metro map](ishikari-metro.svg)

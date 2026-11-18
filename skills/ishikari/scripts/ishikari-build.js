@@ -7,7 +7,7 @@ export const meta = {
     { title: 'Check', detail: 'one inspector ant per built task' },
     { title: 'Fix', detail: 'detective plans, worker builds, inspector re-checks; 3 tries per bug' },
     { title: 'Combined', detail: 'integrator ant merges all passing tasks in a scratch copy and tests once' },
-    { title: 'Logbook', detail: 'one logbook append at the end' },
+    { title: 'Logbook', detail: 'each ant\'s entry the moment it replies; the stage summary at the end' },
   ],
 }
 

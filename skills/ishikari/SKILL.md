@@ -54,7 +54,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 ## Limits
 
 | Cap                                    | Value | Where                  |
-| -------------------------------- | ---------------------------------------- |
+| -------------------------------------- | ----- | ---------------------- |
 | Workers at once                        | 5     | build `MAX_WORKERS`    |
 | Tries per bug, then escalated          | 3     | build `MAX_TRIES`      |
 | Fix rounds per task                    | 3     | build `MAX_ROUNDS`     |
@@ -111,8 +111,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 4. `reportWritten`: stop the investigator with TaskStop first; its work is
    over and the report is all later ants read. Then run `env.workflows.plan`
    with `{env, task, investigated: {testCommand, checkCommand}}` from its
-   last reply. It skips Review and runs the
-   requirement and design ants.
+   last reply. It skips Review, logs one `investigated` entry with the report
+   path, then runs the requirement and design ants.
 
 ### 2b. Fallback (no Agent tool)
 
@@ -180,6 +180,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   each dropped task with why and its bugs, the check, the judge's `verdict` (score,
   gaps; say FLAGGED when `flagged`) and the cleanup: `landed`, or dropped with its
   `reason` and `branch`, its plan offered as the next task.
-  Every ant's result is in the logbook the moment it replies, so a crashed run
+  Every workflow ant's result is in the logbook the moment it replies (the live
+  investigator gets only an `investigated` entry), so a crashed run
   still leaves its trail. End with where the full record is: `python3 <env.tool> log status <env.state>
   <env.run>`.
