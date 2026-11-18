@@ -46,8 +46,7 @@
    ["clash"   GOLD   [[1200 R2] [1200 700] [800 700] [760 R2]] 6 "10 6"]
    ["drop"    RED    [[660 640] [660 740]] 6 ""]
    ["mback"   RED    [[200 R3] [200 1160]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
-   ["tdrop"   RED    [[760 R3] [760 1200]] 6 "10 6"]
-   ["tnext"   RED    [[760 1210] [760 1280]] 6 "10 6"] ; dropped cleanup: its note becomes the next Task
+   ["tnext"   RED    [[760 R3] [760 1180]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
    ["after"   GREEN  [[1340 R4] [1780 R4]] 9 ""]
    ["cfix"    RED    [[1580 R4] [1580 1660]] 6 "10 6"]
@@ -73,11 +72,9 @@
    ["workers" 200 R2 "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x" [0 -84 "middle"]]
    ["detectives" 760 R2 "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x" [0 -86 "middle"]]
    ["integrator" 1200 R2 "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x" [0 -78 "middle"]]
-   ["dropped" 660 750 "Dropped" ["after 3 tries on a bug or" "3 fix rounds; branch kept"] "drop" RIGHT]
    ;; row 3: merge and cleanup
    ["merger" 200 R3 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -70 "middle"]]
    ["janitor" 760 R3 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -88 "middle"]]
-   ["dropped-cleanup" 760 1210 "Dropped cleanup" ["tests failed: branch kept," "its note offered as the next Task"] "drop" RIGHT]
    ;; row 4: judge, then main moves
    ["jurors" 160 R4 "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x" L-DN]
    ["judge" J1 R4 "Judge ant" ["scores the run 0-10: does the code" "match the plans? its own call, not an average"] "x" L-UP]
@@ -126,23 +123,17 @@
                            :about "Up to 5 at a time, each in its own git worktree. Writes code, tests and the docs its change affects, decides on its own and commits all its work. A worker that gets stuck says why, and that becomes a bug for the next fix round. A plan may name a saved workflow to run instead."
                            :src "scripts/ishikari-build.js"}
    "detectives" {:tip "Check each built task and plan every fix."
-                              :about "One per task, started as soon as it is built. Checks the work against its plan and architecture.md, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; a worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code."
+                              :about "One per task, started as soon as it is built. Checks the work against its plan and architecture.md, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; a worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code. A dropped task's branch is kept for a later look, tasks built on it drop too, and the final report lists them."
                               :src "scripts/ishikari-build.js"}
    "integrator" {:tip "Merges all passing tasks in a scratch copy and tests once."
                             :about "Two tasks can pass alone and break together. It merges every passing task in a straight line in a throwaway copy and runs the tests once. A clashing task takes in the tasks it clashes with and goes back through the fix loop; 2 rounds. Skipped with fewer than 2 passing tasks."
                             :src "scripts/ishikari-build.js (Combined phase)"}
-   "dropped" {:tip "A task that could not be fixed."
-                    :about "After 3 tries on one bug or 3 fix rounds, the task drops, and tasks built on it drop too. Its branch is kept for a later look, and the final report lists it."
-                    :src "scripts/ishikari-build.js"}
    "merger" {:tip "Merges the approved tasks for real, then checks with git; failures go back to the workers."
                        :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main. A conflict, failed tests, or a task git finds missing goes back to the worker ant on its own branch: it merges the current main, fixes the bug, the detective re-checks, the integrator tests again, and finish retries the merge. Tasks that merged cleanly are not rebuilt. At most 2 extra build rounds; what is left drops and is reported."
                        :src "scripts/ishikari-finish.js (Merge phase)"}
    "janitor" {:tip "Cleans up mess the run left, by itself."
-                        :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor."
+                        :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor. Tests failing: the cleanup is dropped, main moves with the tasks alone, its branch is kept, and its note goes to the next run's Task, where the investigator may ask about it."
                         :src "scripts/ishikari-finish.js (Upkeep phase)"}
-   "dropped-cleanup" {:tip "A cleanup whose tests failed."
-                            :about "Main moves with the tasks alone. The cleanup branch is kept, and its note goes to the next plan stage as a suggested task, which the investigator may ask about."
-                            :src "scripts/ishikari-finish.js"}
    "jurors" {:tip "Score each merged task against its plan."
                           :about "One per merged task, up to 5 at once, only with 3 or more merged tasks. Each scores its task against that task's plan, and the judge weighs their reports."
                           :src "scripts/ishikari-finish.js"}
@@ -195,9 +186,11 @@
              [id (str "r" r "s" (inc k))])))
 
 ;; spurs: a short dashed line from a station to a label naming where it goes.
-;; line name (in lines), target station id, extra words, lead-in, lines below
+;; line name (in lines), target station id (nil: the line ends here), extra
+;; words, lead-in, lines below, end cap (:bin: drawn at the end, label beside it)
 (def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"]]
-            ["tnext" "task" " (next run)"]
+            ["drop" nil "" "dropped" ["after 3 tries on a bug or" "3 fix rounds; branch kept"] :bin]
+            ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"]]
             ["cback" "workers" " (new task)"]])
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
@@ -390,12 +383,17 @@
           (when (seq dash) (str " stroke-dasharray=\"" dash "\" class=\"flow\"")) "/>"))
    [(txt (+ X 12) 290 ["to row 2"] :fill BLUE :size 13 :weight "700")
     ]
-   (for [[ln to more lead below] spurs
+   (for [[ln to more lead below cap] spurs
          :let [[_ c pts] (or (some #(when (= (first %) ln) %) lines) (throw (ex-info (str "no line " ln) {})))
                [x y] (last pts)
-               [_ _ ty nm] (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {})))]]
-     (str (txt x (+ y 22) [(str lead "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)] :fill c :size 13 :anchor "middle" :weight "700")
-          (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16)))
+               [_ _ ty nm] (when to (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {}))))
+               head (str lead (when to (str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)))]]
+     (if (= cap :bin)
+       (str (apply str (icon x (+ y 10) "" "drop"))
+            (txt (+ x 26) (+ y 6) [head] :fill c :size 13 :weight "700")
+            (txt (+ x 26) (+ y 23) (or below []) :fill c :size 13 :lh 16))
+       (str (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")
+            (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16))))
    [
     (txt 262 (- R2 108) ["a plan may run a saved workflow in place of a worker ant"] :fill SUB :size 13 :anchor "middle")
     (txt 480 494 ["built: the script starts" "its detective at once"] :fill INDIGO :size 13 :anchor "middle")
