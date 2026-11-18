@@ -105,8 +105,8 @@
 <text class="h" x="320" y="1028" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700"></text>
 
 <polygon points="544.0,950.0 552.0,936.1 568.0,936.1 576.0,950.0 568.0,963.9 552.0,963.9" fill="#0B1120" stroke="#F1F5F9" stroke-width="5"/>
-<text class="h" x="560" y="898" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Philosopher ant</text>
-<text class="h" x="560" y="917" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">questions all the merged work;</text><text class="h" x="560" y="933" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">1 best critique (--critiques N), never blocks</text>
+<text class="h" x="560" y="882" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Philosopher ant</text>
+<text class="h" x="560" y="901" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">reviews the merged tasks, not the cleanup;</text><text class="h" x="560" y="917" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">1 best critique (--critiques N), never blocks</text>
 <rect x="826" y="936" width="28" height="28" rx="4" fill="#0B1120" stroke="#94A3B8" stroke-width="3" stroke-dasharray="4 3"/>
 <text class="h" x="840" y="984" fill="#F1F5F9" font-size="16" text-anchor="middle" font-weight="700">Critiques board</text>
 <text class="h" x="840" y="1003" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">bridge to the next run:</text><text class="h" x="840" y="1019" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">its Investigator reads it</text><text class="h" x="840" y="1035" fill="#A8B3C7" font-size="13" text-anchor="middle" font-weight="400">~/.ishikari/&lt;repo&gt;-&lt;hash&gt;/boards/critiques.md</text>

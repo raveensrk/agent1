@@ -58,7 +58,7 @@ stations = [
  (760,1150,"Cleanup inspector",["plan + tests = combined test;","fail: one fix round"],"st",(0,34,"middle")),
  (760,1260,"Dropped cleanup",["branch kept, plan offered as","the next run's Task"],"term",(26,-4,"start")),
  (320,R3,"",[],"st",L_UP),
- (560,950,"Philosopher ant",["questions all the merged work;","1 best critique (--critiques N), never blocks"],"x",L_UP),
+ (560,950,"Philosopher ant",["reviews the merged tasks, not the cleanup;","1 best critique (--critiques N), never blocks"],"x",(0,-68,"middle")),
  (840,950,"Critiques board",["bridge to the next run:","its Investigator reads it","~/.ishikari/<repo>-<hash>/boards/critiques.md"],"log",(0,34,"middle")),
  (1080,R3,"both done",["main moves next, on row 4"],"st",(26,40,"start")),
  (300,R4,"Finisher ant",["fast-forwards main, cleans","up, sets bulletin rows done"],"st",L_UP),
