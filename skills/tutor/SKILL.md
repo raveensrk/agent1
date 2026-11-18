@@ -50,7 +50,8 @@ Per chapter, `<slug>/`:
 - `lesson.md` - a deck of **slides** for a 16:9 computer screen; the page
   never scrolls. Each `##` section is one slide (or separate slides with a
   line containing only `---`, which then wins over `##`). A slide under
-  40 words joins the next one. **Show, do not tell**:
+  40 words with no figure joins the next one; a figure slide always stands
+  alone, so short figure slides are fine. **Show, do not tell**:
   - every concept slide has one figure (right) and at most 60 words (left):
     a heading, 2-4 short bullets or sentences, no paragraphs
   - text-only slides only for code (at most 14 lines)
