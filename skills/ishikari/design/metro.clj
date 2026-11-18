@@ -44,7 +44,7 @@
    ["fix"     GOLD   [[760 R2] [730 640] [230 640] [200 R2]] 8 ""]
    ["fixloop" "none" [[200 R2] [760 R2] [730 640] [230 640] [200 R2]] 8 ""]
    ["clash"   GOLD   [[1200 R2] [1200 700] [800 700] [760 R2]] 6 "10 6"]
-   ["drop"    RED    [[660 640] [660 740]] 6 ""]
+   ["drop"    RED    [[660 640] [660 730]] 6 "10 6"]
    ["mback"   RED    [[200 R3] [200 1160]] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tnext"   RED    [[760 R3] [760 1180]] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [[J1 R4] [460 DIP4] [J2 DIP4] [1060 R4]] 9 ""]
@@ -373,9 +373,9 @@
                [_ _ ty nm] (when to (or (by-id to) (throw (ex-info (str "spur " ln " goes to unknown station " to) {}))))
                head (str lead (when to (str "to " (str/replace nm "  ∥" "") ", row " (row-of ty) more)))]]
      (if (= cap :bin)
-       (str (apply str (icon x (+ y 10) "" "drop"))
-            (txt (+ x 26) (+ y 6) [head] :fill c :size 13 :weight "700")
-            (txt (+ x 26) (+ y 23) (or below []) :fill c :size 13 :lh 16))
+       (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
+            (txt (+ x 26) (+ y 14) [head] :fill c :size 13 :weight "700")
+            (txt (+ x 26) (+ y 31) (or below []) :fill c :size 13 :lh 16))
        (str (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")
             (txt x (+ y 39) (or below []) :fill c :size 13 :anchor "middle" :lh 16))))
    [
