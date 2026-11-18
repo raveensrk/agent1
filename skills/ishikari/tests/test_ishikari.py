@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -138,9 +139,66 @@ def test_parallel_writers():
         assert sum(1 for l in text.splitlines() if l.startswith("| p-")) == 30  # no row lost
 
 
+def git_in(repo, *args):
+    subprocess.run(["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                   check=True, timeout=TIMEOUT)
+
+
+def test_main_branch_and_run_id():
+    with tempfile.TemporaryDirectory() as home:
+        repo = os.path.join(home, "app")
+        os.makedirs(repo)
+        git_in(repo, "init", "-q", "-b", "feature")
+        git_in(repo, "commit", "-q", "--allow-empty", "-m", "init")
+        assert "--main" in fails(home, "setup", repo)  # a feature branch is never taken as main
+        assert json.loads(run(home, "setup", repo, "--main", "feature"))["main"] == "feature"
+        assert "does not exist" in fails(home, "setup", repo, "--main", "nope")
+        git_in(repo, "branch", "main")
+        assert "not the main branch main" in fails(home, "setup", repo)
+        git_in(repo, "checkout", "-q", "main")
+        open(os.path.join(repo, "f"), "w").write("x")
+        git_in(repo, "add", "f")
+        assert "uncommitted" in fails(home, "setup", repo)
+        git_in(repo, "commit", "-q", "-m", "f")
+        ids = {json.loads(run(home, "setup", repo))["run"] for _ in range(5)}
+        assert len(ids) == 5, ids  # same second, still distinct
+        assert all(re.fullmatch(r"\d{8}-\d{6}-[0-9a-f]{4}", i) for i in ids), ids
+
+
+def test_req_and_board_gaps():
+    with tempfile.TemporaryDirectory() as home:
+        repo = make_repo(home)
+        state = json.loads(run(home, "setup", repo))["state"]
+        org = os.path.join(home, "r.org")
+        for i in ("A-1", "A-2", "A-3"):
+            run(home, "req", "add", org, stdin=f"* OPEN {i}\n:PROPERTIES:\n:ID: {i}\n:END:\n")
+        out = run(home, "req", "done", org, "A-1", "A-3")
+        text = open(org).read()
+        assert "* DONE A-1" in text and "* OPEN A-2" in text and "* DONE A-3" in text, text
+        assert "A-1" in out and "A-3" in out and text.count(":IMPLEMENTED:") == 2
+
+        crlf = os.path.join(home, "c.org")
+        open(crlf, "w", newline="").write("#+TITLE: c\r\n")
+        run(home, "req", "add", crlf, stdin="* OPEN D\r\n:PROPERTIES:\r\n:ID: D-1\r\n:END:\r\n")
+        raw = open(crlf, newline="").read()
+        assert "* OPEN D\r\n" in raw and "\n" not in raw.replace("\r\n", "")  # added entry follows CRLF
+
+        run(home, "config", state, "checkCommand", "make lint")
+        run(home, "config", state, "checkCommand", "")
+        assert json.load(open(os.path.join(state, "config.json"))) == {}  # empty value forgets the key
+
+        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["a|b", "x | y", "ant", "-"]]))
+        assert "x \\| y" in open(os.path.join(state, "boards", "bulletin.md")).read()
+        run(home, "boards", "write", state, "bulletin", stdin=json.dumps([["a|b", "done", "ant", "-"]]))
+        text = open(os.path.join(state, "boards", "bulletin.md")).read()
+        assert text.count("a\\|b") == 1 and "x \\| y" not in text and "| done" in text, text  # escaped id matches
+
+
 if __name__ == "__main__":
     test_setup_and_boards()
     test_workflows_config_and_req()
     test_guards()
     test_parallel_writers()
+    test_main_branch_and_run_id()
+    test_req_and_board_gaps()
     print("ok")

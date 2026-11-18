@@ -5,7 +5,7 @@ The workflow scripts cannot touch files, and an ant rewriting a markdown
 table by hand gets it wrong. Every board write goes through this tool, so
 tables stay aligned and no row is lost.
 
-  ishikari.py setup <repo>
+  ishikari.py setup <repo> [--main <branch>]
       Make the state folder for <repo> and print the run's env as JSON:
       {repo, state, run, main, tool, workflows}, plus testCommand and
       checkCommand once they are saved. workflows holds the paths of the
@@ -13,7 +13,9 @@ tables stay aligned and no row is lost.
       inside the working directory, where the Workflow tool may load them.
       Everything else Ishikari keeps (boards, plans, worktrees, config)
       lives in the state folder, outside the repo, so none of it is ever
-      committed.
+      committed. The main branch is origin/HEAD, else main, master or
+      trunk; pass --main when none exists. The repo must be checked out
+      on it with no uncommitted changes.
 
   ishikari.py config <state> <key> <value>
       Save testCommand or checkCommand for this repo; setup prints them
@@ -47,6 +49,7 @@ import json
 import os
 import re
 import shutil
+import secrets
 import subprocess
 import sys
 
@@ -111,14 +114,30 @@ def main_branch(repo):
     for name in ("main", "master", "trunk"):
         if git(repo, "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"):
             return name
-    return git(repo, "branch", "--show-current") or die(f"no main branch found in {repo}")
+    die(f"no main branch in {repo}: no origin/HEAD, main, master or trunk; pass --main <branch>")
 
 
-def setup(repo):
+def check_main(top, main):
+    if not git(top, "rev-parse", "--verify", "--quiet", f"refs/heads/{main}"):
+        die(f"main branch {main} does not exist in {top}")
+    current = git(top, "branch", "--show-current")
+    if current != main:
+        die(f"{top} is on {current or 'a detached HEAD'}, not the main branch {main}; check out {main} first")
+    if git(top, "status", "--porcelain", "--untracked-files=no"):
+        die(f"{top} has uncommitted changes; commit or stash them first")
+
+
+def run_id():
+    return datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2)
+
+
+def setup(repo, main=None):
     top = git(os.path.abspath(repo), "rev-parse", "--show-toplevel")
     if not top:
         die(f"not a git repo: {repo}")
     top = os.path.realpath(top)
+    main = main or main_branch(top)
+    check_main(top, main)
     tag = hashlib.sha1(top.encode()).hexdigest()[:8]
     state = os.path.join(os.path.expanduser("~"), ".ishikari", f"{os.path.basename(top)}-{tag}")
     for sub in ("boards", "plans", "worktrees"):
@@ -130,8 +149,8 @@ def setup(repo):
     env = {
         "repo": top,
         "state": state,
-        "run": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-        "main": main_branch(top),
+        "run": run_id(),
+        "main": main,
         "tool": os.path.abspath(__file__),
         "workflows": copy_workflows(top),
     }
@@ -318,6 +337,8 @@ def boards_locked(op, path, board, extra, data):
 def run(argv):
     if len(argv) == 2 and argv[0] == "setup":
         return setup(argv[1])
+    if len(argv) == 4 and argv[0] == "setup" and argv[2] == "--main" and argv[3]:
+        return setup(argv[1], argv[3])
     if len(argv) in (4, 5) and argv[0] == "boards" and argv[1] in ("write", "add", "remove"):
         return boards(argv[1], argv[2], argv[3], argv[4] if len(argv) == 5 else None)
     if len(argv) == 4 and argv[0] == "config":
