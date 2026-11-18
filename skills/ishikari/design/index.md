@@ -38,6 +38,18 @@ its job. The build script runs that workflow in place of a worker ant.
     the plan workflow runs the investigator and its researcher ants itself,
     and logs each reply.
 
+    **Fast path.** With the report written, the investigator judges the task:
+    trivial means a small, known scope (1-2 files), no design choice and one
+    task; docs or config only helps but is not needed, and any question asked
+    makes it not trivial. On a trivial verdict the skill asks the user once to
+    confirm. Yes: no more ants run; the main session edits on a branch in a
+    worktree, runs the test and check commands there, fast-forwards main only
+    when both pass, adds and marks the requirement and logs one `fast path
+    landed` entry, all through `ishikari.py`. If the work turns out bigger or a
+    check keeps failing, it throws the edits away and runs the full plan with
+    `escalated` set: the planners read why, and a `fast path escalated` entry
+    is logged.
+
 03. **Add Requirement Ant** only adds the requirement. It reads only the
     investigation report and the repo; where the report and its own idea
     differ, the report wins. It drafts the requirement with the

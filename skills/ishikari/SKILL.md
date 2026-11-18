@@ -10,8 +10,8 @@ argument-hint: "<task> [repo path]"
 
 Drive three workflows for one task. A running workflow cannot ask the user, so
 this skill runs them in turn. It asks the user only the investigator ant's
-questions in step 2. Answering them approves the whole run, merge to main
-included. Never ask for approval of the requirement or the plans. After that,
+questions in step 2, plus one fast path confirm for a trivial task (2c).
+Answering them approves the whole run, merge to main included. Never ask for approval of the requirement or the plans. After that,
 never ask: decide by the rules in steps 3 and 4 and report at the end.
 
 Design, rules and diagram:
@@ -47,7 +47,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
 - Never edit code, the logbook, requirements or branches yourself. Ants and
-  `ishikari.py` do.
+  `ishikari.py` do. The one exception is the fast path (2c), and even there
+  the logbook and requirements go through `ishikari.py`.
 - Never push. Main moves only by the finisher's fast-forward.
 - Any result with `stage: 'error'`: show `reason` and stop.
 
@@ -117,6 +118,7 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
    path, then runs the requirement and design ants. With `env.requirements`
    empty (the repo keeps no `requirements.org` or `requirements/*.org`), it
    skips the add requirement ant and returns `requirement.needed: false`.
+   If the reply has `trivial: true`, go to 2c before running the plan.
 
 ### 2b. Fallback (no Agent tool)
 
@@ -124,8 +126,38 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
 2. On `question`, ask it and run again with `answered` (append
    `{question, answer}`) and `findings` from the last result.
 3. A question already in `answered` returns `stage: 'error'`.
+4. `trivial`: the report is written; go to 2c.
 
-### 2c. Plans
+### 2c. Fast path (trivial task)
+
+The investigator judged the task trivial (`trivialWhy`). No more ants run.
+
+1. Ask with `/ask-simple`: `This looks trivial: <trivialWhy>. Take the fast
+   path?` Answers: `Yes, fast path (Recommended)`, `No, full plan`. No: run
+   `env.workflows.plan` with `{env, task, investigated: {testCommand,
+   checkCommand}}` and go on at 2d.
+2. Yes: you do the work, the one exception to "never edit code yourself".
+   Read the report first; it is the spec.
+   - `git -C <env.repo> worktree add -b ishikari/<env.run>/fast
+     <env.state>/worktrees/<env.run>-fast <env.main>`; edit and commit there.
+   - In the worktree run `env.testCommand`, then `env.checkCommand` when set.
+   - Both pass: `git -C <env.repo> merge --ff-only ishikari/<env.run>/fast`,
+     then remove the worktree and delete the branch.
+   - With `env.requirements` set, draft the requirement entry the
+     /add-requirement way, pipe it into `python3 <env.tool> req add <file>`,
+     and after main moves run `req done` with its `:ID:`s; commit only that file.
+   - Log it: pipe `[{"run": env.run, "who": "main session", "event": "fast
+     path landed", "detail": "<sha>: <trivialWhy>"}]` into `python3 <env.tool>
+     log append <env.state>`.
+3. Escalate when the work turns out bigger (more than 2 files, a design
+   choice, more than one task) or a test or the check fails and a small fix
+   does not clear it: remove the worktree, delete the branch (the edits go),
+   and run `env.workflows.plan` with `{env, task, investigated: {testCommand,
+   checkCommand}, escalated: '<why>'}`. It logs the escalation and tells the
+   planners why. Go on at 2d; the run carries on without asking.
+4. Report what landed (sha, files), the tests and check, and the requirement.
+
+### 2d. Plans
 
 - `plans`: do not ask. Show the `report` path (`investigation_report.md`), the
   `design` path (`architecture.md`), the requirement and each plan's title,

@@ -739,3 +739,32 @@ test('build: a re-check with no plan still gives the worker the open bugs', asyn
   })
   assert.ok(prompts['worker-ant:a:fix2'].includes('Fix these bugs:\n- a#1: broken'))
 })
+
+// ---- fast path: a trivial task skips the plan, and an escalation reaches the planners ----
+test('plan: a trivial verdict returns stage trivial before any planner runs', async () => {
+  const { out, calls } = await planWith([], goodReq, { ...clear, trivial: true, trivialWhy: 'one label in one file' })
+  assert.equal(out.stage, 'trivial')
+  assert.equal(out.why, 'one label in one file')
+  assert.equal(out.report, '/s/plans/r1/investigation_report.md')
+  assert.equal(out.testCommand, 't')
+  assert.ok(!calls.includes('add-requirement-ant') && !calls.includes('architect-ant'))
+})
+
+test('plan: a task that needed questions is never trivial', async () => {
+  const { out } = await run('ishikari-plan.js', { env, task: 't', answered: [{ question: 'Q?', answer: 'a' }] }, (p, o) =>
+    o.label.startsWith('investigator') ? { ...clear, trivial: true }
+      : o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
+  assert.equal(out.stage, 'plans')
+})
+
+test('plan: an escalated fast path tells the planners why and logs it', async () => {
+  const prompts = {}
+  const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' }, escalated: 'touches 6 files' }, (p, o) => {
+    prompts[o.label] = p
+    return o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+  })
+  assert.equal(out.stage, 'plans')
+  assert.match(prompts['architect-ant'], /fast path was tried and given up: touches 6 files/)
+  assert.match(prompts['add-requirement-ant'], /fast path was tried and given up: touches 6 files/)
+  assert.ok(instant.some(p => /fast path escalated/.test(p)))
+})

@@ -28,3 +28,24 @@ The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows t
 - Build and finish behave exactly as before. ishikari.py does not change.
 - test_metro_map runs metro.clj (with bb) to a temporary path and checks four things in the SVG: every agent label kind from the three scripts has a station; the named stations and notes are there; no old wrong note is left; no two text boxes overlap, measured from each text element's x, y, font size and length.
 Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 and ishikari-build.js:160-180; plan agent labels at ishikari-plan.js:155,191,227,262; the test stand-in already swallows 'logbook-clerk:now' (tests/test_workflows.mjs:19); metro.py is a 140-line stdlib Python script writing plain <text class="h" x y font-size> elements that xml.etree can parse; ishikari.py log append accepts run, who, event, task, detail, score (design/index.md Rules); investigation report /Users/raveen_kumar_personal/.ishikari/agent1-997906a8/plans/20261118-225807-5c22/investigation_report.md (D1-D4, F1-F10).
+
+* DONE [#B] A trivial task takes a fast path with no planning or build ants  :ishikari:
+:PROPERTIES:
+:ID:          ISH-2
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_workflows.mjs plan: a trivial verdict returns stage trivial before any planner runs"
+:VERIFY+:     "tests/test_workflows.mjs plan: a task that needed questions is never trivial"
+:VERIFY+:     "tests/test_workflows.mjs plan: an escalated fast path tells the planners why and logs it"
+:VERIFY+:     "tests/test_ishikari.py test_metro_map"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+The investigator judges each task once its report is written, and a trivial task skips every later ant.
+- Trivial means all of: small, known scope (1-2 files, easy to find); one sensible way to do it, no design choice; one task that cannot be split. Docs or config only is a plus, not a must. A task that needed any question to the user is never trivial.
+- The live investigator replies with trivial and trivialWhy. In the fallback, ishikari-plan.js returns stage 'trivial' with why, report, testCommand and checkCommand before the requirement and architect ants run.
+- The skill asks the user once to confirm the fast path. No runs the full plan with investigated set.
+- On the fast path the main session edits on branch ishikari/<run>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It adds and marks the requirement and logs one "fast path landed" entry, all through ishikari.py.
+- Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and ishikari-plan.js runs with investigated and escalated: the add requirement and architect ants read why, and a "fast path escalated" entry is logged. The run then carries on without asking.
+- The metro map shows the fast path as a spur from the investigation report to MAIN.
+Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).

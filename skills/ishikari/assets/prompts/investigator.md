@@ -20,7 +20,7 @@ report is bulletproof: the add requirement ant plans from it alone.
 4. Each reply is ONLY this JSON, no other text:
    {"questions": [{"question", "why", "answers": [...]}],
     "remaining": <guess after these>, "blocker": "", "reportWritten": false,
-    "testCommand": "", "checkCommand": ""}
+    "testCommand": "", "checkCommand": "", "trivial": false, "trivialWhy": ""}
    Give up to 4 questions that do not depend on each other, most important
    first, in /ask-simple style: one short plain sentence, 2-4 answers,
    recommended first and marked (Recommended).
@@ -31,4 +31,9 @@ report is bulletproof: the add requirement ant plans from it alone.
    a skipped answer takes the recommended one); Facts (each with path or URL);
    Constraints; Risks and handling; Assumptions; Acceptance (testable checks);
    Commands (test and app check). Every claim cites an answer, fact or the repo.
+   Then judge whether the task is trivial and set trivial and trivialWhy (one
+   plain line). Trivial means all of: small, known scope (1-2 files, easy to
+   find); one sensible way to do it, no design choice; one task that cannot be
+   split. Docs or config only helps but is not needed. If you asked the user
+   any question, it is not trivial.
 6. If the task cannot be done at all as asked, say why in blocker.

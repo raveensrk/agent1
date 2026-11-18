@@ -21,6 +21,8 @@ export const meta = {
 //                                           run by the skill, already asked the
 //                                           user and wrote the investigation
 //                                           report: Review is skipped
+//   escalated?: string,                     why a fast path was given up; the
+//                                           requirement and architect ants are told
 // }
 // The investigator ant asks one question per run, chosen after every earlier
 // answer. To answer, run again with the same env and task, answered with the new
@@ -30,6 +32,11 @@ export const meta = {
 //                                           ask question; remaining is the best
 //                                           guess of questions left after it
 //   { stage: 'blocked', reason, review }   the task cannot be done as asked
+//   { stage: 'trivial', why, report, review, testCommand, checkCommand }
+//                                           the investigator judged the task trivial
+//                                           (fallback only): the main session asks the
+//                                           user and takes the fast path, or runs again
+//                                           with investigated set for the full plan
 //   { stage: 'plans', report, design, review, requirement, plans, testCommand, checkCommand }
 // requirement.needed is false for a change with no new behaviour (a refactor):
 // then nothing is written to the requirements file.
@@ -84,6 +91,8 @@ const REVIEW = {
     blocker: { type: 'string', description: 'why the task cannot be done at all as asked; empty if it can' },
     testCommand: { type: 'string', description: 'the one command that runs the repo\'s tests from its root' },
     checkCommand: { type: 'string', description: 'the one command that builds and checks the real app (install, launch check), from the repo root; empty if the repo has none' },
+    trivial: { type: 'boolean', description: 'true only when all hold: small, known scope (1-2 files, easy to find); one sensible way to do it, no design choice; one task that cannot be split. Docs or config only is a plus, not a must. Any question asked of the user makes it false' },
+    trivialWhy: { type: 'string', description: 'one plain line on why the task is or is not trivial' },
   },
   required: ['summary', 'critique', 'research', 'next', 'remaining', 'blocker', 'testCommand', 'checkCommand'],
 }
@@ -237,6 +246,10 @@ recommended one); Facts (each with its path or URL); Constraints; Risks and
 how to handle each; Assumptions (anything not confirmed, with why it is safe);
 Acceptance (testable checks that prove the task is done); Commands (test and
 app check). Every claim cites an answer, a fact or the repo. No secrets.
+With the report written, judge whether the task is trivial: small, known scope
+(1-2 files, easy to find), one sensible way to do it, and one task that cannot
+be split. Docs or config only helps but is not needed. If you asked the user
+anything, it is not trivial. Set trivial and say why in trivialWhy.
 If the task cannot be done at all as asked, say why in blocker.
 ${env.testCommand ? `The repo's test command is \`${env.testCommand}\`: return it as testCommand.` : 'Find the one command that runs the repo\'s tests from its root.'}
 ${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it as checkCommand.` : 'Find the one command that builds and checks the real app (install hook, launch check); empty if there is none.'}`,
@@ -259,7 +272,16 @@ if (review.next && review.next.question) {
   return done({ stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review })
 }
 if (!review.reportWritten) return done({ stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings })
+if (review.trivial === true && !answered.length) {
+  return done({ stage: 'trivial', why: String(review.trivialWhy || ''), report: reportFile, review, findings,
+    testCommand: review.testCommand || '', checkCommand: review.checkCommand || '' })
 }
+}
+
+// A fast path given up part way: the later ants learn why it was not trivial.
+const escalated = typeof args.escalated === 'string' && args.escalated.trim() ? args.escalated.trim() : ''
+const escalatedNote = escalated ? `A fast path was tried and given up: ${escalated}\nPlan for that.\n` : ''
+if (escalated) logNow([{ run: env.run, who: 'main session', event: 'fast path escalated', detail: escalated }])
 
 // ---- requirement: the add requirement ant only adds ----
 // A repo with no requirements files (env.requirements is []) has no
@@ -274,7 +296,7 @@ ${where}
 Task: ${task}
 Read the investigation report ${reportFile} first. Build only on it and the
 repo. Where the report and your own idea differ, the report wins.
-Follow the /add-requirement skill up to the draft. Show it can be built with
+${escalatedNote}Follow the /add-requirement skill up to the draft. Show it can be built with
 evidence from the repo's code and docs. Only if that is not enough, write a
 throwaway spike in a temporary folder outside the repo, and delete it after.
 Check for duplicates and conflicts. Give file as an absolute path to an .org
@@ -302,7 +324,7 @@ ${where}
 Task: ${task}
 Read the investigation report ${reportFile} first. Where the report and your
 own idea differ, the report wins.
-${req.requirement.needed ? `The requirement, from the add requirement ant (${req.requirement.file}):\n${req.requirement.entry}\n` : noReqs ? 'This repo keeps no requirements file, so the change has no requirement.\n' : 'This change adds no behaviour, so it has no requirement.\n'}1. Design: write ${designFile}: the parts of the change, the files each part
+${escalatedNote}${req.requirement.needed ? `The requirement, from the add requirement ant (${req.requirement.file}):\n${req.requirement.entry}\n` : noReqs ? 'This repo keeps no requirements file, so the change has no requirement.\n' : 'This change adds no behaviour, so it has no requirement.\n'}1. Design: write ${designFile}: the parts of the change, the files each part
    owns, and every name, interface and data shape that crosses between parts,
    exact, so worker ants building in parallel fit together. Map each of the
    report's acceptance checks to the part that proves it.

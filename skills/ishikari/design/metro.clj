@@ -67,7 +67,8 @@
    ;; train 11's route: the judge's fix round rejoins and rides on to MAIN (drawn invisible)
    ["jfixrun" "none"  [[J1 R3] [440 DIP3] [1060 DIP3] [1120 R3] [1340 R3]] 9 ""]
    ["after"   GREEN  [[1340 R3] [1780 R3]] 9 ""]
-   ["cfix"    RED    [[1580 R3] [1580 840]] 6 "10 6"]]) ; a failed check: a new task for the worker ants
+   ["cfix"    RED    [[1580 R3] [1580 840]] 6 "10 6"] ; a failed check: a new task for the worker ants
+   ["fast"    GREEN  [[780 R1] [780 120]] 6 "10 6"]]) ; a trivial task: the main session lands it straight on main
 
 ;; id, x, y, name, sub lines, kind, label anchor [dx dy anchor].
 ;; The id never changes and is what spurs, details and links use; the short
@@ -202,7 +203,8 @@
 (def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"]]
             ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] :bin]
             ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"]]
-            ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"]]])
+            ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"]]
+            ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"]]])
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
 
@@ -349,6 +351,7 @@
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
    "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks, the merger fast-forwards the fix, and the judge scores again. Only one round."]
    "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, and the main session marks the requirements done."]
+   "fast"    ["Fast path spur" "A trivial task skips the planning and build ants." "Once the report is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass, and adds and marks the requirement and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
    "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops and requirements are not marked done."]})
 
 (def about-notes
@@ -463,7 +466,8 @@
                  (if (= cap :bin)
                    (str (apply str (icon x (+ y 18) "" "drop")) ; handle top sits on the line end
                         (txt (+ x 26) (+ y 22) [head] :fill c :size 13 :weight "700"))
-                   (txt x (+ y 22) [head] :fill c :size 13 :anchor "middle" :weight "700")))))
+                   ;; a spur going up has its label above its end, not across the line
+                   (txt x (if (< y (second (first pts))) (- y 12) (+ y 22)) [head] :fill c :size 13 :anchor "middle" :weight "700")))))
    ;; a loop that rejoins a line between stations gets a junction dot too
    (for [ln ["jfix"]
          :let [[_ c pts] (some #(when (= (first %) ln) %) lines)
