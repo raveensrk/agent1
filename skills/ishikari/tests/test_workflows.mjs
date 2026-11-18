@@ -10,13 +10,13 @@ const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts')
 const env = { repo: '/r', state: '/s', run: 'r1', main: 'main', tool: '/t/ishikari.py' }
 
 // Run a workflow script body with a fake runtime. ant(prompt, opts) answers each agent call.
-function run(name, args, ant) {
+function run(name, args, ant, clerk = () => ({})) {
   const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
   const calls = []
   const instant = []
   // Instant logbook appends go to their own list, so call order reads as the run.
   const agent = async (p, o) => {
-    if (o.label === 'logbook-clerk:now') { instant.push(p); return {} }
+    if (o.label === 'logbook-clerk:now') { instant.push(p); return clerk(p) }
     calls.push(o.label); return ant(p, o)
   }
   const parallel = fns => Promise.all(fns.map(f => f()))
@@ -566,4 +566,64 @@ test('build: an ant entry names its task, and a dead ant is logged as died', asy
     o.label.startsWith('worker') ? null : {})
   const got = instant.map(p => logged(p)[0])
   assert.deepEqual(got.slice(0, 2), [{ run: 'r1', task: 'a', who: 'worker ant', event: 'died' }, { run: 'r1', task: 'a', who: 'worker ant', event: 'died' }])
+})
+
+// ---- plan: every planning ant writes the logbook ----
+const onePlan = { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+const live = { testCommand: 'npm test', checkCommand: '' }
+
+test('plan: every planning ant gets its own logbook entry at once', async () => {
+  let settled = 0
+  let n = 0
+  const slowClerk = () => new Promise(r => setTimeout(() => { settled++; r({}) }, 5))
+  const { out, instant } = await run('ishikari-plan.js', { env, task: 't' }, (p, o) => {
+    if (o.label.startsWith('investigator')) return ++n === 1 ? { ...clear, reportWritten: false, research: ['a', 'b'] } : clear
+    if (o.label.startsWith('researcher')) return { findings: 'f' }
+    if (o.label === 'add-requirement-ant') return goodReq
+    return onePlan
+  }, slowClerk)
+  assert.equal(out.stage, 'plans')
+  const got = instant.map(p => logged(p)[0])
+  assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
+    'investigator ant: research needed', 'researcher ant: found', 'researcher ant: found',
+    'investigator ant: report written', 'add-requirement ant: requirement drafted', 'architect ant: 1 plan written',
+  ])
+  assert.ok(got.every(e => e.run === 'r1' && !('task' in e) && typeof e.detail === 'string' && e.detail.length <= 400))
+  assert.ok(instant.every(p => p.includes('python3 /t/ishikari.py log append /s')))
+  assert.equal(settled, instant.length)
+  const { out: noTool } = await run('ishikari-plan.js', { env: { ...env, tool: '' }, task: 't' }, () => clear)
+  assert.equal(noTool.stage, 'error')
+  assert.match(noTool.reason, /env.tool/)
+})
+
+test('plan: a live investigation logs one investigated entry', async () => {
+  const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
+    o.label === 'add-requirement-ant' ? goodReq : onePlan)
+  const got = instant.map(p => logged(p)[0])
+  assert.deepEqual(got[0], { run: 'r1', who: 'investigator ant', event: 'investigated', detail: '/s/plans/r1/investigation_report.md' })
+  assert.equal(got.filter(e => e.who === 'investigator ant').length, 1)
+  assert.equal(got.filter(e => e.who === 'researcher ant').length, 0)
+  assert.deepEqual(got.map(e => e.who), ['investigator ant', 'add-requirement ant', 'architect ant'])
+  assert.equal(out.stage, 'plans')
+})
+
+test('plan: a dead planning ant is logged as died and never blocks the run', async () => {
+  let r = 0
+  const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
+    o.label === 'add-requirement-ant' ? (++r === 1 ? null : goodReq) : onePlan,
+  () => { throw new Error('logbook down') })
+  assert.equal(out.stage, 'plans')
+  const reqs = instant.map(p => logged(p)[0]).filter(e => e.who === 'add-requirement ant')
+  assert.equal(reqs.length, 2)
+  assert.deepEqual(reqs[0], { run: 'r1', who: 'add-requirement ant', event: 'died' })
+  assert.equal(reqs[1].event, 'requirement drafted')
+
+  let settled = 0
+  const second = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
+    o.label === 'add-requirement-ant' ? goodReq : null,
+  () => new Promise(res => setTimeout(() => { settled++; res({}) }, 5)))
+  assert.equal(second.out.stage, 'error')
+  const arch = second.instant.map(p => logged(p)[0]).filter(e => e.who === 'architect ant')
+  assert.deepEqual(arch.map(e => `${e.who}: ${e.event}`), ['architect ant: died', 'architect ant: died'])
+  assert.equal(settled, second.instant.length)
 })

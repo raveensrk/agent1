@@ -46,6 +46,7 @@ if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
 if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
 if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
 if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
 if (!task) bad.push('task is missing')
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
@@ -134,6 +135,43 @@ async function twice(fn) {
   return first != null ? first : fn()
 }
 
+// ---- logbook, written the moment each ant replies ----
+// Every workflow ant call goes through ant(): when the ant replies, a
+// logbook clerk appends one entry for it at once, without holding up the
+// run. The live investigator runs outside this script, so it gets one
+// 'investigated' entry instead.
+const pendingLogs = []
+const summarize = r => {
+  if (r == null) return 'died'
+  if (typeof r.findings === 'string') return 'found'
+  if (r.requirement && typeof r.requirement === 'object') return r.requirement.needed ? 'requirement drafted' : 'no requirement needed'
+  if (Array.isArray(r.plans)) return `${r.plans.length} plan${r.plans.length === 1 ? '' : 's'} written`
+  if (r.blocker) return 'blocked'
+  if (r.next && r.next.question) return 'question asked'
+  if (Array.isArray(r.research) && r.research.length) return 'research needed'
+  if (r.reportWritten === true) return 'report written'
+  return 'finished'
+}
+const logNow = entries => {
+  const p = agent(
+    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
+${JSON.stringify(entries)}
+ISHIKARI_ROWS_END`,
+    { label: 'logbook-clerk:now', phase: 'Logbook', effort: 'low' },
+  ).catch(() => null)
+  pendingLogs.push(p)
+}
+async function ant(prompt, opts) {
+  const r = await agent(prompt, opts)
+  const kind = String(opts.label).split(':')[0]
+  logNow([{ run: env.run, who: kind.replace('-ant', ' ant'), event: summarize(r),
+    ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
+  return r
+}
+const logsDone = () => Promise.all(pendingLogs)
+const done = async result => { await logsDone(); return result }
+
 // ---- review: one question per run, research when facts are missing ----
 const list = v => Array.isArray(v) ? v : []
 const answered = list(args.answered).filter(q => q && typeof q === 'object').map(q => ({ ...q, answer: String(q.answer || '').trim() }))
@@ -143,7 +181,7 @@ const asked = answered.length
   : ''
 
 function researcher(topic, k, round) {
-  return agent(
+  return ant(
     `You are a researcher ant of the Ishikari workflow. Find facts for the
 investigator ant, so it can ask the user better questions about this task:
 ${task}
@@ -160,11 +198,12 @@ let review = null
 const inv = args.investigated && typeof args.investigated === 'object' ? args.investigated : null
 if (inv) {
   review = { summary: 'investigated by the live investigator', testCommand: String(inv.testCommand || env.testCommand || ''), checkCommand: String(inv.checkCommand || env.checkCommand || '') }
+  logNow([{ run: env.run, who: 'investigator ant', event: 'investigated', detail: reportFile }])
 } else {
 phase('Review')
 for (let round = 0; round <= MAX_RESEARCH; round++) {
   const known = findings.length ? `Research so far:\n${findings.map(f => `- ${f}`).join('\n')}\n` : ''
-  review = await twice(() => agent(
+  review = await twice(() => ant(
     `You are the investigator ant of the Ishikari workflow.
 ${where}
 Task: ${task}
@@ -190,28 +229,28 @@ ${env.testCommand ? `The repo's test command is \`${env.testCommand}\`: return i
 ${env.checkCommand ? `The repo's app check is \`${env.checkCommand}\`: return it as checkCommand.` : 'Find the one command that builds and checks the real app (install hook, launch check); empty if there is none.'}`,
     { label: `investigator-ant:${answered.length}:${round}`, phase: 'Review', effort: EFFORT.review, schema: REVIEW },
   ))
-  if (!review) return { stage: 'error', reason: 'the investigator ant died twice' }
+  if (!review) return done({ stage: 'error', reason: 'the investigator ant died twice' })
   const topics = round < MAX_RESEARCH ? (review.research || []).slice(0, MAX_RESEARCHERS) : []
   if (!topics.length) break
   log(`research round ${round + 1}: ${topics.length} researcher ants`)
   const found = await parallel(topics.map((t, k) => () => twice(() => researcher(t, k, round))))
   topics.forEach((t, k) => findings.push(`${t}: ${found[k] ? found[k].findings : 'the researcher ant died twice'}`))
 }
-if (review.blocker) return { stage: 'blocked', reason: review.blocker, review, findings }
+if (review.blocker) return done({ stage: 'blocked', reason: review.blocker, review, findings })
 if (review.next && review.next.question) {
   // The same question twice means the investigator is going round in circles.
   const same = q => String(q).trim().toLowerCase()
   if (answered.some(q => same(q.question) === same(review.next.question))) {
-    return { stage: 'error', reason: `the investigator ant asked the same question again: ${review.next.question}`, review, findings }
+    return done({ stage: 'error', reason: `the investigator ant asked the same question again: ${review.next.question}`, review, findings })
   }
-  return { stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review }
+  return done({ stage: 'question', question: review.next, remaining: Math.max(0, review.remaining || 0), findings, review })
 }
-if (!review.reportWritten) return { stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings }
+if (!review.reportWritten) return done({ stage: 'error', reason: `the investigator ant did not write ${reportFile}`, review, findings })
 }
 
 // ---- requirement: the add requirement ant only adds ----
 phase('Requirement')
-const req = await twice(() => agent(
+const req = await twice(() => ant(
   `You are the add requirement ant of the Ishikari workflow. Your one job: the
 requirement. Do not design or plan the work.
 ${where}
@@ -226,7 +265,7 @@ file inside ${env.repo}, and give the entry an :ID: property. Write no files:
 the main session writes the requirements file from your entry.`,
   { label: 'add-requirement-ant', phase: 'Requirement', effort: EFFORT.requirement, schema: REQUIRED },
 ))
-if (!req || !req.requirement || typeof req.requirement !== 'object') return { stage: 'error', reason: 'the add requirement ant died twice or returned no requirement' }
+if (!req || !req.requirement || typeof req.requirement !== 'object') return done({ stage: 'error', reason: 'the add requirement ant died twice or returned no requirement' })
 // The main session appends the entry to this file and commits it: it must be
 // an org file inside this repo, and the entry must carry an :ID: for req done.
 if (req.requirement.needed) {
@@ -235,12 +274,12 @@ if (req.requirement.needed) {
   if (!rf.startsWith(env.repo + '/') || rf.includes('/../') || !rf.endsWith('.org')) why.push(`file "${rf}" is not an .org file inside ${env.repo}`)
   if (!String(req.requirement.entry || '').trim()) why.push('the entry is empty')
   else if (!/^:ID:\s+\S+/m.test(req.requirement.entry)) why.push('the entry has no :ID: line')
-  if (why.length) return { stage: 'error', reason: `the requirement needs fixing: ${why.join('; ')}`, review, requirement: req.requirement }
+  if (why.length) return done({ stage: 'error', reason: `the requirement needs fixing: ${why.join('; ')}`, review, requirement: req.requirement })
 }
 
 // ---- design and plans: the architect ant ----
 phase('Design')
-const out = await twice(() => agent(
+const out = await twice(() => ant(
   `You are the architect ant of the Ishikari workflow.
 ${where}
 Task: ${task}
@@ -261,7 +300,7 @@ ${req.requirement.needed ? `The requirement, from the add requirement ant (${req
    Write each plan to ${planDir}/<id>.md. Change no other files.`,
   { label: 'architect-ant', phase: 'Design', effort: EFFORT.architect, schema: PLANNED },
 ))
-if (!out || !Array.isArray(out.plans)) return { stage: 'error', reason: 'the architect ant died twice or returned no plan list' }
+if (!out || !Array.isArray(out.plans)) return done({ stage: 'error', reason: 'the architect ant died twice or returned no plan list' })
 // Normalise what the ant gave, so the checks below never trip on its shape:
 // files become clean repo-relative paths, so "./a.py" and "a.py" are one file.
 const norm = f => String(f).replace(/^\.\/+/, '').replace(/\/\.\//g, '/').replace(/\/+/g, '/').replace(/\/$/, '')
@@ -269,7 +308,7 @@ out.plans = out.plans.filter(p => p && typeof p === 'object').map(p => ({
   ...p, id: String(p.id || ''), title: String(p.title || ''),
   files: [...new Set(list(p.files).map(norm))], after: list(p.after).map(String),
 }))
-if (!out.designWritten) return { stage: 'error', reason: `the architect ant did not write ${designFile}` }
+if (!out.designWritten) return done({ stage: 'error', reason: `the architect ant did not write ${designFile}` })
 
 // ---- check the plans before anyone builds them ----
 const problems = []
@@ -311,9 +350,9 @@ if (!problems.length) {
   }
 }
 if (!out.plans.length) problems.push('the planner returned no plans')
-if (problems.length) return { stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: req.requirement, plans: out.plans }
+if (problems.length) return done({ stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: req.requirement, plans: out.plans })
 
-return {
+return done({
   stage: 'plans',
   report: reportFile,
   design: designFile,
@@ -322,4 +361,4 @@ return {
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: review.testCommand,
   checkCommand: review.checkCommand || '',
-}
+})
