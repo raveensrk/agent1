@@ -60,7 +60,7 @@
 (defn inward "p moved px towards the middle of the ring." [[x y] px]
   (let [len (Math/hypot (- x CX) (- y CY))] (along [x y] [CX CY] (/ px len))))
 
-(def A {"task" 12 "investigator" 32 "report" 52 "architect" 72 "plans" 92 "workers" 112 "detectives" 134
+(def A {"task" 12 "investigator" 32 "report" 52 "design" 72 "plans" 92 "workers" 112 "detectives" 134
         "integrator" 156 "merger" 176 "janitor" 194 "jurors" 206 "judge" 218 "docs" 270 "finisher" 284
         "main" 298 "check" 314 "retro" 330 "finished" 348})
 (defn P [id] (pt (A id) R))
@@ -109,12 +109,12 @@
 (def stations
   [
 (st "task" (on 12) "Task" ["you give it, or a" "dropped cleanup plan"] "task")
-   (st "investigator" (on 32 [(pt 35.5 (+ R 38)) "start"]) "Investigator ant" ["one live agent run by the skill: reads" "the repo once, gets each answer as a message;" "no Agent tool: the plan workflow runs it"] "x")
+   (st "investigator" (on 32 [(pt 35.5 (+ R 38)) "start"]) "Investigator ant" ["one live agent on Fable at max effort: it asks you," "proves the task can be built, designs it" "and writes every worker plan; no other ant plans"] "x")
    (st "you" (at (pt 26 (+ R 105)) [26 -6 "start"]) "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you")
    (st "researchers" (at (pt 32 (- R 95)) [-26 5 "end"]) "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end")
-   (st "report" (on 52) "investigation_report.md" ["written when nothing is unclear;" "the investigator is stopped"] "file")
-   (st "architect" (on 72) "Architect ant" ["proves it can be built, then writes" "architecture.md and one plan per task;" "not buildable: the run stops"] "st")
-   (st "plans" (on 92) "Worker plans" ["one per task: title, files, after;" "checked before anything is built"] "files")
+   (st "report" (on 52) "investigation_report.md" ["written when nothing is unclear;" "then the trivial verdict, then the design"] "file")
+   (st "design" (on 72) "architecture.md" ["the investigator's design: parts, files," "and every name and interface between parts;" "not buildable: it asks you, or the run stops"] "file")
+   (st "plans" (on 92) "Worker plans" ["one per task, written by the investigator;" "the plan script checks them before anything is built;" "problems go back to the investigator once"] "files")
    (st "workers" (on 112) "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x")
    (st "detectives" (on 134) "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x")
    (st "integrator" (on 156) "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x")
@@ -147,23 +147,23 @@
   {"task" {:tip "The work you hand Ishikari."
                  :about "Your task in your own words, or the note of a cleanup the last run dropped. Setup makes the run's state folder and env first; the main checkout must be on the main branch with no uncommitted changes."
                  :src "SKILL.md#1-setup"}
-   "investigator" {:tip "Asks you questions, then writes the investigation report."
-                             :about "One live agent run by the skill, not a workflow: it reads the repo once and gets each answer as a message. It critiques the task, finds the test command, and asks up to 4 independent questions at a time, about 8 in all. It stops once nothing important is unclear. Without the Agent tool the plan workflow runs it instead."
-                             :src "assets/prompts/investigator.md, SKILL.md#2a-live-investigator"}
+   "investigator" {:tip "Asks you questions, then designs the task and writes every plan."
+                             :about "One live agent run by the skill, not a workflow, on Fable at max effort; every other ant runs on Opus at low effort. It reads the repo once and gets each answer as a message. Part 1: it critiques the task, finds the test command, asks up to 4 independent questions at a time, 8 in all, writes the investigation report and judges whether the task is trivial. Part 2, when told to go on: it proves the task can be built, writes architecture.md and one plan per worker ant, and may ask you again when the design needs a choice. No other ant plans, so nothing is lost between ants. It stays alive until its plans pass the check or a fast path lands. Ishikari needs the Agent tool for it."
+                             :src "assets/prompts/investigator.md, SKILL.md#2a-investigate"}
    "you" {:tip "You answer the investigator's questions."
                 :about "The only time Ishikari asks you anything. Questions come through /ask-simple, up to 4 at a time, about 8 in all. Answering approves the whole run, merge to main included."
                 :src "SKILL.md#2a-live-investigator"}
    "researchers" {:tip "Look up facts for the investigator."
-                               :about "Up to 5 at once, 2 bursts per question. They search the web and the whole computer, read only, never secrets, and report back. The investigator waits for them. Not logged when the live investigator sends them."
+                               :about "Up to 5 at once, on Opus at low effort. They search the web and the whole computer, read only, never secrets, and report back. The investigator starts them and waits for them. They are not logged."
                                :src "SKILL.md#limits"}
    "report" {:tip "Everything learned while planning, written once."
-                                    :about "Goal, scope, every decision you made, facts with sources, constraints, risks, assumptions, acceptance checks and commands. Every claim cites an answer, a fact or the repo. Later ants read it instead of asking you. The main session never edits it."
+                                    :about "Goal, scope, every decision you made, facts with sources, constraints, risks, assumptions, acceptance checks and commands. Every claim cites an answer, a fact or the repo. Later ants read it instead of asking you. The main session never edits it. Once it is written the investigator gives its trivial verdict, then goes on to the design."
                                     :src "<state>/plans/<run>/investigation_report.md"}
-   "architect" {:tip "Proves the task can be built, then writes architecture.md and one plan per task."
-                           :about "Reads only the investigation report and the repo; the report wins. First it proves the task can be built from the repo's code and docs, with a throwaway spike outside the repo only if needed; if it cannot be built, the plan stage stops with the reason and nothing is built. Then it Designs the parts of the change, the files each owns, and every name, interface and data shape between them, so parallel workers fit. Maps each acceptance check to a part. Splits the work into tasks of about 3 files, no two editing one file, each with its own test file."
-                           :src "scripts/ishikari-plan.js (Design phase)"}
+   "design" {:tip "The investigator's design, so parallel workers fit together."
+             :about "Written by the investigator after the report, once it has proved the task can be built from the repo's code and docs (a throwaway spike outside the repo only if needed). It names the parts of the change, the files each part owns, and every name, interface and data shape that crosses between parts, and maps each acceptance check to the part that proves it. If the task cannot be built as asked it asks you; only when no answer can fix it, the run stops. Detectives treat a name or interface that differs from it as a bug."
+             :src "<state>/plans/<run>/architecture.md"}
    "plans" {:tip "One complete plan per task."
-                          :about "Workers cannot ask questions, so each plan is complete: title, files, after. The plan script rejects bad or unknown ids, loops in after, and two tasks on one file, before anything is built."
+                          :about "Written by the investigator. Workers cannot ask questions, so each plan is complete: title, files, after. The plan script, which runs no ant, rejects bad or unknown ids, loops in after, two tasks on one file and paths outside the repo, before anything is built. Problems go back to the investigator once; still wrong, the run stops."
                           :src "<state>/plans/<run>/<task>.md"}
    "logbook" {:tip "Every ant's reply, one entry each."
                      :about "A recfile the logbook clerk appends to the moment an ant replies, one clerk at a time. Build and finish add a summary at the end. No ant reads it; read it with ishikari.py log status, recsel or an editor."
@@ -379,7 +379,7 @@
 
 (def about-lines
   "Line name -> [name tip about]. \"none\" lines are invisible train routes."
-  {"plan"    ["Plan line" "The first stretch of the ring: from your task to the worker plans." "The blue line carries one task from Task through the investigator, the report and the architect to the worker plans, and on to the worker ants, where building starts."]
+  {"plan"    ["Plan line" "The first stretch of the ring: from your task to the worker plans." "The blue line carries one task from Task through the investigator, its report, its design and its worker plans, and on to the worker ants, where building starts."]
    "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
    "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
    "g1"      ["Build line" "The long stretch of the ring: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]

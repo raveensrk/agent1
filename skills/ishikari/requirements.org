@@ -12,13 +12,11 @@ Process: [[file:../../requirements/requirements.org][Requirements requirements]]
 :APPROVED:    2026-11-18
 :IMPLEMENTED: 2026-11-18
 :VERIFY:      "tests/test_ishikari.py test_metro_map"
-:VERIFY+:     "tests/test_workflows.mjs plan: every planning ant gets its own logbook entry at once"
-:VERIFY+:     "tests/test_workflows.mjs plan: a live investigation logs one investigated entry"
-:VERIFY+:     "tests/test_workflows.mjs plan: a dead planning ant is logged as died and never blocks the run"
+:VERIFY+:     "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice"
 :END:
 The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows the workflow exactly as ishikari-plan.js, ishikari-build.js and ishikari-finish.js run it, so a newcomer can read the whole run from it.
-- Plan-stage logging: ishikari-plan.js logs each researcher ant, fallback investigator ant and architect ant reply the moment it comes, with the same ant(), logNow, summarize and logsDone pattern as ishikari-finish.js. Each entry has run, who (label kind, -ant written as " ant") and event, plus detail when the ant replied. A dead ant is logged as died. A failed append never blocks or fails the run (.catch(() => null)), and every return awaits logsDone().
-- The live investigator runs outside any workflow and the main session never writes the logbook, so it does not log its own replies. When args.investigated is set, ishikari-plan.js logs one entry instead: who "investigator ant", event "investigated", detail the report path. Its researcher Agent-tool agents are not logged.
+- Plan-stage logging: ishikari-plan.js runs no planning ant; it logs its own check (plans checked or plans refused) through the same one-clerk queue as build and finish. A failed append never blocks or fails the run, and every return awaits logsDone().
+- The live investigator runs outside any workflow and the main session never writes the logbook, so it does not log its own replies. ishikari-plan.js logs one entry for it instead: who "investigator ant", event "investigated", detail the report path. Its researcher Agent-tool agents are not logged.
 - Every agent label in the four scripts has a station on the map. The judge-fix fast-forward (merger-ant:judge-fix), the judge-fix worker and detective ants and the juror ants each get their own station with the ant hexagon. The juror ants are a stacked ∥ station. The judge ant is a single station, not ∥.
 - The logbook clerk is named once, in the Logbook station's panel: "logbook clerk ant: appends each ant's entry". It is not drawn on every line.
 - The map draws names only; descriptions and short notes live in each item's tooltip and click panel. Short notes name each skipped step: fewer than 2 passing tasks skips the combined test; a cleanup run has no janitor; the judge fix runs only with a score below 7 and gaps; the check runs only when main moved and checkCommand is set; jurors run only with 3+ merged tasks; a plan may run a saved workflow in place of a worker ant.
@@ -32,9 +30,7 @@ Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 a
 :PROPERTIES:
 :ID:          ISH-2
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs plan: a trivial verdict returns stage trivial before any planner runs"
-:VERIFY+:     "tests/test_workflows.mjs plan: a task that needed questions is never trivial"
-:VERIFY+:     "tests/test_workflows.mjs plan: an escalated fast path tells the planners why and logs it"
+:VERIFY:      "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice"
 :VERIFY+:     "tests/test_ishikari.py test_metro_map"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
@@ -42,10 +38,10 @@ Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 a
 :END:
 The investigator judges each task once its report is written, and a trivial task skips every later ant.
 - Trivial means all of: small, known scope (1-2 files, easy to find); one sensible way to do it, no design choice; one task that cannot be split. Docs or config only is a plus, not a must. A task that needed any question to the user is never trivial.
-- The live investigator replies with trivial and trivialWhy. In the fallback, ishikari-plan.js returns stage 'trivial' with why, report, testCommand and checkCommand before the architect ant runs.
+- The live investigator replies with trivial and trivialWhy. It gives the verdict once the report is written, before it designs or plans.
 - The skill asks the user once to confirm the fast path. No runs the full plan with investigated set.
 - On the fast path the main session edits on branch ishikari/<run>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It checks first that the main checkout is on main and clean, never lands untested, and logs one "fast path landed" entry through ishikari.py.
-- Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and ishikari-plan.js runs with investigated and escalated: the architect ant reads why, and a "fast path escalated" entry is logged. The run then carries on without asking.
+- Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and the same investigator is told why and goes on to design and plan; ishikari-plan.js is passed escalated and logs a "fast path escalated" entry. The run then carries on without asking.
 - The metro map shows the fast path as a spur from the investigation report to MAIN.
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
 
@@ -100,3 +96,23 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - The main stations sit on one circle, clockwise from Task at the top to the Run report, with a gap at the top: a run ends, it does not loop.
 - Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
 - A station's position code is its place in the list (s8), shown beside its name; spurs name their target by it.
+
+* DONE [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
+:PROPERTIES:
+:ID:          ISH-6
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
+:VERIFY+:     "tests/test_workflows.mjs plan: plans that would clash or leave the repo come back as problems, never as an error or a pass"
+:VERIFY+:     "tests/test_workflows.mjs plan: bad arguments are an error"
+:VERIFY+:     "tests/test_ishikari.py test_metro_map"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+- One live investigator ant asks, proves the task can be built, and writes investigation_report.md, architecture.md and one plan per worker ant. There is no architect ant, so no ant turns one file into another.
+- It runs on Fable at max effort; its researcher ants and every other ant stay on Opus at low effort.
+- It works in two parts: the report and the trivial verdict, then, told to go on, the design and plans. While designing it may ask again, within 8 questions in all; the run stops as blocked only when no answer can fix it.
+- It stays alive until its plans pass the check or a fast path lands. An escalated fast path tells the same investigator why.
+- ishikari-plan.js runs no planning ant: it checks the plan list (ids, loops in after, two tasks on one file, paths inside the repo) and returns plans or problems. Problems go back to the investigator once; a second failure stops the run.
+- The no-Agent-tool fallback is removed: without the Agent tool Ishikari stops at the start.
+- The map shows architecture.md as a file station where the Architect ant stood.

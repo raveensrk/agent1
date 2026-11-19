@@ -6,7 +6,7 @@ Design documentation and design bible for Ishikari, a workflow where AI agents
 ## Goal
 
 Take any task from the user and finish it with many ants working in parallel.
-The user is asked only once: the investigator ant's questions. Answering
+The user is asked only by one ant: the investigator, while it plans. Answering
 them approves the whole run, merge to main included. The investigation report
 is the spec: there is no separate requirement. Build, check, fix, merge and upkeep run on their own,
 and the run ends with one report.
@@ -18,58 +18,64 @@ its job. The build script runs that workflow in place of a worker ant.
 
 01. **Task in.** The user gives a task. It can be anything.
 
-02. **Investigator Ant** has one goal: a bulletproof investigation report, so
-    no later ant needs to ask. It critiques the task and finds the
-    repo's test command. When it lacks facts it sends up to 5
-    **Researcher Ants** in parallel; they search the web and the whole computer,
-    read only, never secrets, and report back. A fact about a user interface
-    they judge with the `/ux` skill in review mode; its plan mode asks the user,
-    so they never use it. It is one live agent for the
-    whole talk, run by the skill, not a workflow: it reads the repo once and
-    gets each answer as a message. It asks up to 4 independent questions at
-    a time with `/ask-simple`, with a best-guess count:
-    "Questions 1-3 of about 5". It
-    stops once nothing important is unclear, then writes
+02. **Investigator Ant** does all the planning: it asks, proves the task can
+    be built, designs it and writes every worker plan. No other ant plans, so
+    nothing is lost between ants. It is one live agent for the whole talk, run
+    by the skill, not a workflow, on Fable at max effort: it reads the repo
+    once and gets each answer as a message. Ishikari needs the Agent tool for
+    it; without it the run stops at the start. It works in two parts.
+
+    **Part 1: investigate.** It critiques the task and finds the repo's test
+    command. When it lacks facts it sends up to 5 **Researcher Ants** in
+    parallel, on Opus at low effort; they search the web and the whole
+    computer, read only, never secrets, and report back. A fact about a user
+    interface they judge with the `/ux` skill in review mode; its plan mode
+    asks the user, so they never use it. It asks up to 4 independent questions
+    at a time with `/ask-simple`, with a best-guess count: "Questions 1-3 of
+    about 5", 8 in all. Once nothing important is unclear it writes
     `investigation_report.md` in the run's plans folder: goal, scope, every
     decision, facts with sources, constraints, risks, assumptions, acceptance
     checks and commands. Every claim cites an answer, a fact or the repo.
-    It writes nothing to the logbook itself: it runs outside any workflow,
-    and the main session never writes the logbook. When `ishikari-plan`
-    starts after it, it logs one `investigated` entry with the report path;
-    the investigator's researchers are not logged. Without the Agent tool,
-    the plan workflow runs the investigator and its researcher ants itself,
-    and logs each reply.
+    Then it gives its trivial verdict and waits.
 
-    **Fast path.** With the report written, the investigator judges the task:
-    trivial means a small, known scope (1-2 files), no design choice and one
-    task; docs or config only helps but is not needed, and any question asked
-    makes it not trivial. On a trivial verdict the skill asks the user once to
-    confirm. Yes: no more ants run; the main session edits on a branch in a
+    **Fast path.** Trivial means a small, known scope (1-2 files), no design
+    choice and one task; docs or config only helps but is not needed, and any
+    question asked makes it not trivial. On a trivial verdict the skill asks
+    the user once to confirm. Yes: the main session edits on a branch in a
     worktree, runs the test and check commands there, fast-forwards main only
-    when both pass, and logs one `fast path landed` entry through
-    `ishikari.py`. If the work turns out bigger or a
-    check keeps failing, it throws the edits away and runs the full plan with
-    `escalated` set: the planners read why, and a `fast path escalated` entry
-    is logged.
+    when both pass, logs one `fast path landed` entry through `ishikari.py`,
+    and stops the investigator. If the work turns out bigger or a check keeps
+    failing, it throws the edits away and tells the same investigator to go
+    on, with the reason; a `fast path escalated` entry is logged.
 
-03. **Architect Ant** reads only the investigation report and the repo;
-    where the report and its own idea differ, the report wins. First it proves
-    the task can be built, from the repo's code and docs, writing a throwaway
-    spike outside the repo only when that is not enough. If it cannot be built,
-    the plan stage stops with the reason and nothing is built. Otherwise it writes
-    `architecture.md` beside the report: the parts of the change, the files each
-    part owns, and every name, interface and data shape that crosses between
-    parts, so parallel workers fit together. It maps each acceptance check to
-    the part that proves it, then writes one plan per worker ant.
-    Like every workflow ant, it gets a logbook entry the moment it replies.
+    **Part 2: design and plans.** Told to go on, it first proves the task can
+    be built, from the repo's code and docs, writing a throwaway spike outside
+    the repo only when that is not enough. If it cannot be built as asked, or
+    the design needs a choice only the user can make, it asks again, within
+    the same 8 questions; only when no answer can fix it does the run stop
+    with the reason. Then it writes `architecture.md` beside the report: the
+    parts of the change, the files each part owns, and every name, interface
+    and data shape that crosses between parts, so parallel workers fit
+    together. It maps each acceptance check to the part that proves it, then
+    writes one plan per worker ant.
+    It writes nothing to the logbook itself: it runs outside any workflow, and
+    the main session never writes the logbook. `ishikari-plan` logs one
+    `investigated` entry for it, with the report path; its researchers are not
+    logged.
+
+03. **Plan check.** `ishikari-plan` runs no ant: it only checks the
+    investigator's plan list. Before anything is built it rejects bad or
+    unknown ids, loops in `after`, two tasks that edit one file without one
+    being after the other, and paths outside the repo. File paths are
+    normalised first, so `./a.py` and `a.py` count as one file. Problems go
+    back to the same investigator once; it fixes the plans and the check runs
+    again. Still wrong: the run stops with the reason. The investigator is
+    stopped only when its plans pass.
 
 04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
     split so no two edit the same file, and each task has its own test file.
     Only a task that must edit another task's file lists that task in `after`:
-    it starts as soon as that task is built, on top of its branch. Before
-    anything is built, the plan script rejects bad or unknown ids, loops in
-    `after`, and two tasks that edit one file without one being after the other.
-    File paths are normalised first, so `./a.py` and `a.py` count as one file.
+    it starts as soon as that task is built, on top of its branch.
 
 05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a time.
     It decides on its own, goes as far as it can, and commits all its work,
@@ -216,7 +222,8 @@ summary and top 3 findings; the user decides what to act on.
 - Never trust an ant's answer shape. The scripts check every reply: a missing
   or broken field is an error, never a silent pass, and an ant call that throws
   counts as a dead ant, never a lost stage. A built task needs a commit of its
-  own. The architect must say it read the report and wrote every plan file.
+  own. The main session checks that the report, the design and every plan file
+  the investigator names exist, before the plan check runs.
   A task merged in an earlier finish counts as in main by `git cherry` or the
   main session's `landed` list, never by an ancestor check: main holds copies. A combined test counts only
   when every task is reported merged and a commit is given. Main counts as moved
@@ -225,26 +232,28 @@ summary and top 3 findings; the user decides what to act on.
   commands; a scratch branch (its name starts with `_`) is never a task. Paths,
   the main branch and the test and check commands go into the ants' shell
   commands too: setup and every script let through only letters, digits and
-  `. _ / + -` in paths, and one-line commands with no backtick. In the fallback plan loop (no Agent tool), the investigator
-  asking a question it already asked stops the run.
+  `. _ / + -` in paths, and one-line commands with no backtick.
+  The main session never passes on a question the investigator already asked,
+  or a ninth one.
 - A logbook entry with an
   unknown field, or without run, who or event, is refused, and a newline in a
   value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
-- For now every ant runs on the latest Opus model at low effort, the live
-  investigator and its researchers included. Each script keeps a per-ant
+- Every ant runs on the latest Opus model at low effort, its researchers
+  included, but one: the investigator runs on Fable at max effort, since the
+  whole run stands on its report, design and plans. Each script keeps a per-ant
   EFFORT table and a MODEL setting, so one ant can be tuned later.
 
 ## Running Ishikari
 
 A running workflow cannot stop to ask the user, so Ishikari is four workflows.
-The main session asks the user only between the two plan runs, for the
-investigator ant's questions; after that it drives everything on its own.
+The main session asks the user only while the live investigator plans, for
+its questions; after that it drives everything on its own.
 
 | Workflow          | Stages                      | Ends with            |
 | ----------------- | --------------------------- | -------------------- |
-| `ishikari-plan`   | review, design              | plans to build       |
+| `ishikari-plan`   | plan check, no ant          | plans to build       |
 | `ishikari-build`  | build, check, fix, combined | tasks to merge       |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 | `ishikari-retro`  | retrospective               | ranked improvements  |
@@ -263,8 +272,8 @@ and stops to ask the user only in step 2.
    (one copy per run, so a later setup never swaps a running script), and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
    script paths, and the repo's saved `testCommand` and `checkCommand`.
-2. The live investigator asks its questions, then `ishikari-plan` writes the
-   design and plans (see
+2. The live investigator asks its questions and writes the report, the design
+   and the plans; `ishikari-plan` then checks the plans (see
    [Plan](../SKILL.md#2-plan)). The plans go straight to
    build. `ishikari.py config` saves the test and check commands.
 3. Run `ishikari-build` with `env` and the plans. Every task

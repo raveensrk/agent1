@@ -27,7 +27,6 @@ NS = "{http://www.w3.org/2000/svg}"
 KIND = re.compile(r"""['`]([a-z]+(?:-[a-z]+)*-(?:ant|clerk))(?=[:'`])""")
 KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "investigator-ant": "Investigator ant", "researcher-ant": "Researcher ants  ∥",
-    "architect-ant": "Architect ant",
     "worker-ant": "Worker ants  ∥",
     "detective-ant": "Detective ants  ∥", "integrator-ant": "Integrator ant",
     "merger-ant": "Merger ant", "docs-ant": "Docs ant", "janitor-ant": "Janitor ant",
@@ -291,7 +290,10 @@ def test_metro_map():
               "Retrospective ant": 1, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
-    for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand"):
+    for name in ("Task", "You", "investigation_report.md", "architecture.md", "Worker plans", "MAIN", "checkCommand"):
+        assert name in names, name
+    assert "Architect ant" not in names
+    for name in ("Researcher ants  ∥",):
         assert name in names, name
     root = ET.parse(SVG).getroot()
     every = [g for g in root.iter(NS + "g") if "ck" in (g.get("class") or "").split()]
@@ -310,7 +312,7 @@ def test_metro_map():
         assert spur in strings_all(texts), spur
     # The map is one open ring: the main stations sit on one circle, in order, with a gap at the top.
     it = {i["id"]: i for i in panel_items(SVG)}
-    ring = ["task", "investigator", "report", "architect", "plans", "workers", "detectives", "integrator", "merger",
+    ring = ["task", "investigator", "report", "design", "plans", "workers", "detectives", "integrator", "merger",
             "janitor", "jurors", "judge", "docs", "finisher", "main", "check", "retro", "finished"]
     cx, cy = w / 2, 690
     angles = []

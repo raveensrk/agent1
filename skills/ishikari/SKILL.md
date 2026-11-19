@@ -10,7 +10,7 @@ argument-hint: "<task> [repo path]"
 
 Drive four workflows for one task: plan, build, finish, then the retrospective. A running workflow cannot ask the user, so
 this skill runs them in turn. It asks the user only the investigator ant's
-questions in step 2, plus one fast path confirm for a trivial task (2c).
+questions in step 2, plus one fast path confirm for a trivial task (2b).
 Answering them approves the whole run, merge to main included. Never ask for approval of the plans. After that,
 never ask: decide by the rules in steps 3 and 4 and report at the end.
 
@@ -22,11 +22,11 @@ Design, rules and diagram:
 | File                             | Job                                      |
 | -------------------------------- | ---------------------------------------- |
 | `scripts/ishikari.py`            | setup, config; sole logbook writer       |
-| `scripts/ishikari-plan.js`       | investigate, design, plans              |
+| `scripts/ishikari-plan.js`       | check the investigator's plans           |
 | `scripts/ishikari-build.js`      | build, check, fix, combined test         |
 | `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
 | `scripts/ishikari-retro.js`      | retrospective of the run, read only      |
-| `assets/prompts/investigator.md` | the live investigator ant's brief        |
+| `assets/prompts/investigator.md` | the investigator's brief: ask, design, plan |
 | `tests/test_ishikari.py`         | tool: setup, logbook, guards             |
 | `tests/test_workflows.mjs`       | script logic, with stand-in ants         |
 
@@ -52,15 +52,18 @@ inside the working directory, so the Workflow tool may load them by
   with TaskStop the moment its task is done, failed or abandoned. Workflow ants
   end when their `agent()` call returns, so they need no stop.
 - Ask every question with the `/ask-simple` skill, and only in step 2. Never
-  answer for the user. Never edit the investigation report yourself.
+  answer for the user. Never edit the investigation report, the design or a
+  plan yourself: the investigator writes them.
+- Every ant runs on Opus at low effort, but one: the investigator, the one
+  ant the whole run stands on, runs on Fable at max effort.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
 - Never edit code, the logbook or branches yourself. Ants and
-  `ishikari.py` do. The one exception is the fast path (2c), and even there
+  `ishikari.py` do. The one exception is the fast path (2b), and even there
   the logbook goes through `ishikari.py`.
 - Never push. Main moves only by the finisher's fast-forward.
 - Any result with `stage: 'error'`: show `reason`, build nothing more, and go
-  to step 5. A stop is never silent: the retrospective still runs.
+  to the retrospective (section 5). A stop is never silent: the retrospective still runs.
 
 ## Limits
 
@@ -71,17 +74,16 @@ inside the working directory, so the Workflow tool may load them by
 | Fix rounds per fix loop              | 3     | build `MAX_ROUNDS`         |
 | Combined test rounds                 | 2     | build                      |
 | Questions per `/ask-simple` call     | 4     | investigator prompt        |
-| Questions in all (live investigator) | 8     | investigator prompt        |
-| Research bursts per question (2b)    | 2     | plan `MAX_RESEARCH`        |
-| Researchers per burst (2b)           | 5     | plan `MAX_RESEARCHERS`     |
-| Same question twice (2b)             | error | plan same-question         |
+| Questions in all                     | 8     | investigator prompt        |
+| Researchers at once                  | 5     | investigator prompt        |
+| Plan check, send-backs               | 1     | skill rule, step 2c        |
 | Build rounds for merge bugs, waiting | 2     | skill rule, step 4         |
 | Check-fix rounds                     | 1     | finish `checkFixDone`      |
 | Janitor runs at changed lines        | 100+  | finish `JANITOR_MIN_LINES` |
 | Judge pass score (out of 10)         | 7     | finish `PASS`              |
 | Judge fix rounds, per finish         | 1     | finish                     |
 | Jurors at once (3+ tasks)            | 5     | finish `MAX_JURORS`        |
-| Files per worker plan, about         | 3     | architect prompt           |
+| Files per worker plan, about         | 3     | investigator prompt        |
 
 A task enters a fix loop after its first check, and again after a stuck build,
 a changed base or a clash; each loop has its own 3 rounds.
@@ -112,67 +114,60 @@ a changed base or a clash; each loop has its own 3 rounds.
 
 ## 2. Plan
 
-### 2a. Live investigator
+One live investigator ant does all the planning: it asks, proves the task can
+be built, designs it and writes every worker plan. It stays alive until its
+plans pass the check, or a fast path lands. The Agent tool is needed: without
+it, say so and stop; there is no other way to plan.
 
-1. Start ONE investigator with the Agent tool (general-purpose, model `opus`,
-   effort `low` when the tool takes it). Its prompt is
+### 2a. Investigate
+
+1. Start ONE investigator with the Agent tool (general-purpose, model `fable`,
+   effort `max`). Its prompt is
    [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
-   inputs: `env.repo`, `env.main`, `env.state`, the task, the report path
-   `<env.state>/plans/<env.run>/investigation_report.md`, and `env.testCommand`
-   and `env.checkCommand` when saved. If the last line `<run>/(janitor ant)` of
+   inputs: `env.repo`, `env.main`, `env.state`, the task, the plans folder
+   `<env.state>/plans/<env.run>/`, and `env.testCommand` and `env.checkCommand`
+   when saved. If the last line `<run>/(janitor ant)` of
    `python3 <env.tool> log status <env.state>` says `cleanup dropped`, and
-   `<env.state>/plans/<that run>/cleanup*.md` exists, add one line to the task: `Also consider the cleanup plan at <file>.` The
-   investigator decides whether to ask about it; never ask yourself.
+   `<env.state>/plans/<that run>/cleanup*.md` exists, add one line to the task:
+   `Also consider the cleanup plan at <file>.` The investigator decides whether
+   to ask about it; never ask yourself.
 2. It replies with JSON. While `questions` is not empty, ask them all in one
    `/ask-simple` call (up to 4), headed `Questions <n>-<m> of about <m +
    remaining>`, `why` lines added when set. Send the answers back to the SAME
    agent with SendMessage, as JSON `[{"question", "answer"}]` (`''` if
-   skipped). Never start a new investigator for an answer.
+   skipped). Never start a new investigator for an answer. This holds in both
+   of its parts: it may ask again while it designs.
 3. Guard the talk; the investigator is an ant, so its replies are checked:
    - a reply that is not the JSON: ask once more for only the JSON;
-   - `questions` together with `reportWritten`: ignore the questions;
    - a question it already asked, or more than 8 questions in all: do not ask
-     it; tell it to take its recommended answer and write the report;
-   - no reply, a second non-JSON reply, or neither questions, report nor
-     blocker: stop it with TaskStop and carry on in 2b, passing the questions
-     and answers so far as `answered`;
+     it; tell it to take its recommended answer and go on;
+   - no reply, a second non-JSON reply, or a reply with none of questions, a
+     written flag or blocker: stop it with TaskStop, show what happened, and
+     go to the retrospective (section 5);
    - TaskStop fails: note it for the report and carry on.
-4. `blocker` set: stop the investigator with TaskStop, show the reason, and go
-   to step 5.
-5. `reportWritten`: stop the investigator with TaskStop first; its work is
-   over and the report is all later ants read. Check the report file exists;
-   if it does not, treat it as no reply (2a.3). Then:
-   - `trivial: true`: go to 2c;
-   - else run `env.workflows.plan` with `{env, task, investigated:
-     {testCommand, checkCommand}}` from its last reply and go on at 2d. It
-     skips Review, logs one `investigated` entry with the report path, then
-     runs the architect ant, which first proves the task can be built.
+4. `blocker` set, at any point: stop the investigator with TaskStop, show the
+   reason, and go to the retrospective (section 5).
+5. `reportWritten` (part 1 is done): check that
+   `<plans folder>/investigation_report.md` exists; if not, treat it as no
+   reply (2a.3). Save `testCommand` and `checkCommand` with
+   `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
+   Then:
+   - `trivial: true`: go to 2b;
+   - else send it `go on` and continue at 2c.
 
-### 2b. Fallback (no Agent tool)
+### 2b. Fast path (trivial task)
 
-1. Run `env.workflows.plan` with `{env, task}`.
-2. On `question`, ask it and run again with `answered` (append
-   `{question, answer}`) and `findings` from the last result.
-3. A question already in `answered` returns `stage: 'error'`.
-4. `trivial`: the report is written; go to 2c.
-5. `blocked`, `plans` or `error`: go on at 2d.
-
-### 2c. Fast path (trivial task)
-
-The investigator judged the task trivial (`trivialWhy`). No more ants run.
+The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 
 1. Ask with `/ask-simple`: `This looks trivial: <trivialWhy>. Take the fast
-   path?` Answers: `Yes, fast path (Recommended)`, `No, full plan`. No: run
-   `env.workflows.plan` with `{env, task, investigated: {testCommand,
-   checkCommand}}` and go on at 2d.
+   path?` Answers: `Yes, fast path (Recommended)`, `No, full plan`. No: send
+   the investigator `go on` and continue at 2c.
 2. Yes: you do the work, the one exception to "never edit code yourself".
    Read the report first; it is the spec.
    - `git -C <env.repo> worktree add -b ishikari/<env.run>/fast
      <env.state>/worktrees/<env.run>-fast <env.main>`; edit and commit there.
-   - Use the investigator's `testCommand` and `checkCommand` (else the saved
-     ones in `env`), and save them with `python3 <env.tool> config <env.state>
-     <key> <value>`. No test command at all: escalate (step 3); a fast path
-     never lands untested.
+   - No test command at all: escalate (step 3); a fast path never lands
+     untested.
    - In the worktree run the test command, then the check command when set.
    - Both pass: check that `git -C <env.repo> branch --show-current` is
      `env.main` and `git -C <env.repo> status --porcelain
@@ -186,20 +181,32 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
 3. Escalate when the work turns out bigger (more than 2 files, a design
    choice, more than one task) or a test or the check fails and a small fix
    does not clear it: remove the worktree, delete the branch (the edits go),
-   and run `env.workflows.plan` with `{env, task, investigated: {testCommand,
-   checkCommand}, escalated: '<why>'}`. It logs the escalation and tells the
-   planners why. Go on at 2d; the run carries on without asking.
-4. Report what landed (sha, files), and the tests and check. A landed fast
-   path ends the run: no retrospective.
+   and send the investigator `go on: a fast path was tried and given up:
+   <why>`. Continue at 2c, passing `escalated: '<why>'` to the plan check. The
+   run carries on without asking.
+4. Landed: stop the investigator with TaskStop, and report what landed (sha,
+   files), and the tests and check. A landed fast path ends the run: no
+   retrospective.
 
-### 2d. Plans
+### 2c. Design and plans
 
-- `blocked`: show the reason and go to step 5; nothing is built.
-- `plans`: do not ask. Show the `report` path (`investigation_report.md`), the
-  `design` path (`architecture.md`) and each plan's title, files and `after`
-  as a note, then:
-  - save `testCommand` and `checkCommand` with
-    `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
+1. The investigator now proves the task can be built, writes
+   `architecture.md` and one plan file per task. It may ask more questions
+   (2a.2 and 2a.3 hold). `blocker`: 2a.4.
+2. `plansWritten`: check that `architecture.md` and `<id>.md` for every plan
+   in its `plans` list exist in the plans folder; a missing file is a problem
+   to send back (step 4).
+3. Run `env.workflows.plan` with `{env, task, plans, testCommand,
+   checkCommand}` from its reply, plus `escalated` after a given-up fast path.
+   No ant plans there: the script only checks the list (ids, loops in
+   `after`, two tasks on one file, paths inside the repo) and logs the
+   `investigated` entry.
+4. `problems`: send the list back to the SAME investigator once; it fixes the
+   plans and replies again. Run the check again with `recheck: true`. Problems
+   a second time: stop the investigator, show them, and go to the retrospective (section 5).
+5. `plans`: stop the investigator with TaskStop; its work is over. Do not ask.
+   Show the `report` path (`investigation_report.md`), the `design` path
+   (`architecture.md`) and each plan's title, files and `after` as a note.
 - A run whose task is a dropped cleanup plan passes `cleanup: true` to finish,
   so cleanups never chain.
 
@@ -212,7 +219,7 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
   `blocked` and `error` task, and every task whose `after` holds a dropped
   one. Keep each dropped task, its bugs and fix history for the report. A
   dropped task's branch is kept, never deleted, so its work can be looked at.
-- `stage: 'error'` from build: show `reason` and go to step 5; nothing reached
+- `stage: 'error'` from build: show `reason` and go to the retrospective (section 5); nothing reached
   main.
 
 ## 4. Finish
@@ -232,9 +239,9 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
   `bugs: [checkFix]`: no branch, so a new task starts from the moved main.
   Then finish again with `checkFixDone: true` (finish also assumes it when
   `check-fix` is in `approved` or `drop`). `checkFixRefused`: the check
-  still fails; report `check.output` and go to step 5.
+  still fails; report `check.output` and go to the retrospective (section 5).
 - `mainMoved: false` with no bugs left to fix: report the reason and go to
-  step 5. Nothing is lost; finish can run again once it is fixed.
+  the retrospective (section 5). Nothing is lost; finish can run again once it is fixed.
 - `upkeepStopped` set: the scratch copy could not be put back after a rejected
   cleanup, judge fix or docs update, so the rest of upkeep was skipped. Main
   still moved only to the last checked commit. Report it.

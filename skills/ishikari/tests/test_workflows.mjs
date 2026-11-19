@@ -24,65 +24,64 @@ function run(name, args, ant, clerk = () => ({})) {
   return body(args, agent, parallel, () => {}, () => {}, async () => ({})).then(out => ({ out, calls, instant }))
 }
 
-const clear = { summary: '', critique: [], research: [], next: { question: '', answers: [] }, remaining: 0, reportWritten: true, blocker: '', testCommand: 't', checkCommand: '' }
-
-function planWith(plans, review = clear) {
-  return run('ishikari-plan.js', { env, task: 't' }, (p, o) =>
-    o.label.startsWith('investigator') ? review
-      : o.label.startsWith('researcher') ? { findings: 'f' }
-      : { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans })
+// The plan stage only checks the investigator's plan list: no ant plans there.
+const PLAN = { id: 'a', title: 'A', files: ['x'] }
+function planWith(plans, more = {}) {
+  return run('ishikari-plan.js', { env, task: 't', plans, testCommand: 'npm test', checkCommand: '', ...more }, () => { throw new Error('the plan stage runs no ant') })
 }
 
-test('plan: asks one question at a time', async () => {
-  const { out } = await planWith([], { ...clear, next: { question: 'Q?', answers: ['a'] }, remaining: 3 })
-  assert.equal(out.stage, 'question')
-  assert.equal(out.question.question, 'Q?')
-  assert.equal(out.remaining, 3)
-})
-
-test('plan: research runs before the question, at most 5 ants', async () => {
-  let n = 0
-  const { out, calls } = await run('ishikari-plan.js', { env, task: 't' }, (p, o) => {
-    if (o.label.startsWith('researcher')) return { findings: 'f' }
-    n++
-    return n === 1 ? { ...clear, research: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] } : { ...clear, next: { question: 'Q?', answers: ['a'] } }
-  })
-  assert.equal(calls.filter(c => c.startsWith('researcher')).length, 5)
-  assert.equal(out.findings.length, 5)
-  assert.equal(out.stage, 'question')
-})
-
-test('plan: a missing report is an error', async () => {
-  const { out } = await planWith([], { ...clear, reportWritten: false })
-  assert.equal(out.stage, 'error')
-})
-
-test('plan: good plans pass', async () => {
-  const { out } = await planWith([{ id: 'a', title: 'A', files: ['x'] }, { id: 'b', title: 'B', files: ['x', 'y'], after: ['a'] }])
+test('plan: a good plan list passes, with each plan file and the commands', async () => {
+  const { out, calls } = await planWith([PLAN, { id: 'b', title: 'B', files: ['x', 'y'], after: ['a'], workflow: 'saved' }])
   assert.equal(out.stage, 'plans')
+  assert.equal(calls.length, 0)  // no planning ant: the investigator planned
+  assert.equal(out.report, '/s/plans/r1/investigation_report.md')
   assert.equal(out.design, '/s/plans/r1/architecture.md')
+  assert.deepEqual(out.plans[1], { id: 'b', title: 'B', files: ['x', 'y'], after: ['a'], workflow: 'saved', file: '/s/plans/r1/b.md' })
+  assert.equal(out.testCommand, 'npm test')
 })
 
-test('plan: two parallel tasks on one file are refused', async () => {
-  const { out } = await planWith([{ id: 'a', title: 'A', files: ['x'] }, { id: 'b', title: 'B', files: ['x'] }])
-  assert.equal(out.stage, 'error')
-  assert.match(out.reason, /both edit x/)
+test('plan: plans that would clash or leave the repo come back as problems, never as an error or a pass', async () => {
+  const problems = async plans => { const { out } = await planWith(plans); assert.equal(out.stage, 'problems', JSON.stringify(plans)); return out.problems.join(' | ') }
+  assert.match(await problems([PLAN, { id: 'b', title: 'B', files: ['x'] }]), /both edit x but neither is after the other/)
+  assert.match(await problems([{ id: 'a', title: 'A', files: ['./x'] }, { id: 'b', title: 'B', files: ['x'] }]), /both edit x/)  // "./x" and "x" are one file
+  assert.match(await problems([{ ...PLAN, after: ['b'] }, { id: 'b', title: 'B', files: ['y'], after: ['a'] }]), /loop in after/)
+  assert.match(await problems([{ ...PLAN, after: ['zz'] }]), /unknown plan/)
+  assert.match(await problems([{ ...PLAN, after: ['a'] }]), /after names itself/)
+  assert.match(await problems([{ ...PLAN, after: 'b' }]), /after must be a list/)
+  assert.match(await problems([PLAN, PLAN]), /two plans have the id/)
+  assert.match(await problems([{ ...PLAN, id: 'Bad Id' }]), /bad id/)
+  assert.match(await problems([{ ...PLAN, workflow: 5 }]), /workflow must be a name/)
+  for (const files of [['/etc/passwd'], ['../x'], ['a/../../x'], ['./'], []]) assert.match(await problems([{ ...PLAN, files }]), /inside the repo|lists no files/)
+  assert.match(await problems([]), /there are no plans/)
+  assert.match(await problems([PLAN, 'junk']), /every plan must be an object/)
 })
 
-test('plan: loops and unknown ids in after are refused', async () => {
-  let { out } = await planWith([{ id: 'a', title: 'A', files: ['x'], after: ['b'] }, { id: 'b', title: 'B', files: ['y'], after: ['a'] }])
-  assert.match(out.reason, /loop in after/)
-  ;({ out } = await planWith([{ id: 'a', title: 'A', files: ['x'], after: ['zz'] }]))
-  assert.match(out.reason, /unknown plan/)
+test('plan: bad arguments are an error', async () => {
+  for (const more of [{ task: '   ' }, { task: { a: 1 } }, { plans: 'a' }, { plans: undefined }, { testCommand: 'make\ntest' }, { checkCommand: 'echo `id`' }]) {
+    const { out } = await run('ishikari-plan.js', { env, task: 't', plans: [PLAN], ...more }, () => ({}))
+    assert.equal(out.stage, 'error', JSON.stringify(more))
+  }
 })
 
-test('plan: an architect that proves the task cannot be built blocks the run, nothing planned', async () => {
-  const { out } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, () =>
-    ({ feasible: false, proof: 'spike', blocker: 'the API has no such call', designWritten: false, plans: [] }))
-  assert.equal(out.stage, 'blocked')
-  assert.match(out.reason, /the API has no such call/)
-  assert.ok(!('plans' in out))
+test('plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice', async () => {
+  const first = await planWith([PLAN], { escalated: 'touches 6 files' })
+  assert.deepEqual(first.instant.flatMap(p => logged(p)).map(e => `${e.who}: ${e.event}`),
+    ['investigator ant: investigated', 'main session: fast path escalated', 'plan script: 1 plan checked'])
+  assert.equal(first.instant.flatMap(p => logged(p))[0].detail, '/s/plans/r1/investigation_report.md')
+  const refused = await planWith([{ ...PLAN, id: 'A' }], { recheck: true })
+  assert.deepEqual(refused.instant.flatMap(p => logged(p)).map(e => `${e.who}: ${e.event}`), ['plan script: plans refused'])
+  const lost = await run('ishikari-plan.js', { env, task: 't', plans: [PLAN] }, () => ({}), () => { throw new Error('logbook down') })
+  assert.equal(lost.out.stage, 'plans')  // a dead clerk never blocks the stage
+  assert.equal(lost.out.logLost.length, 2)
 })
+
+
+
+
+
+
+
+
 
 test('build: a failed app check becomes its own task from main', async () => {
   const prompts = []
@@ -306,24 +305,8 @@ test('finish: a dead or nonsense judge flags the run but never blocks main', asy
 
 // ---- stress: malformed input and half answers never crash or pass silently ----
 
-test('stress: plan survives broken ant replies', async () => {
-  for (const reply of [{}, { feasible: 'yes', reportFound: true, designWritten: true, plansWritten: true, plans: [] }, { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: null }, { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', files: null, after: 'b' }] }]) {
-    const { out } = await run('ishikari-plan.js', { env, task: 't', answered: 'x', findings: 'y' }, (p, o) =>
-      o.label.startsWith('investigator') ? clear : reply)
-    assert.equal(out.stage, 'error', JSON.stringify(reply))
-  }
-})
 
-test('stress: plan sees "./x" and "x" as one file', async () => {
-  const { out } = await planWith([{ id: 'a', title: 'A', files: ['./x'] }, { id: 'b', title: 'B', files: ['x'] }])
-  assert.match(out.reason, /both edit x/)
-})
 
-test('stress: plan stops a repeated question', async () => {
-  const { out } = await run('ishikari-plan.js', { env, task: 't', answered: [{ question: 'Q?', answer: 'a' }] },
-    () => ({ ...clear, next: { question: ' q? ', answers: ['a'] } }))
-  assert.match(out.reason, /same question/)
-})
 
 test('stress: build refuses bad input and foreign branches', async () => {
   let { out } = await run('ishikari-build.js', { env, plans: 'a' }, () => ({}))
@@ -356,13 +339,6 @@ test('stress: finish never claims main moved when nothing merged', async () => {
   assert.equal(out.waiting.length, 1)
 })
 
-test('plan: a live investigation skips Review', async () => {
-  const { out, calls } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '' } }, (p, o) =>
-    ({ feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }))
-  assert.equal(out.stage, 'plans')
-  assert.equal(out.testCommand, 'npm test')
-  assert.ok(!calls.some(c => c.startsWith('investigator')))
-})
 
 // ---- finish: judge after cleanup, trial-merge reuse, verified merges, check-fix cap ----
 const SHA = 'aaaaaaa', TOG = 'bbbbbbb'
@@ -619,7 +595,7 @@ test('finish: many tasks, one juror per task, at most 5 at once, judge sees thei
 })
 
 // ---- logbook: one append per stage, through the tool ----
-const logged = p => JSON.parse(p.split("<<'ISHIKARI_ROWS_END'\n")[1].split('\nISHIKARI_ROWS_END')[0])
+function logged(p) { return JSON.parse(p.split("<<'ISHIKARI_ROWS_END'\n")[1].split('\nISHIKARI_ROWS_END')[0]) }
 
 test('build: the logbook clerk appends each task and each bug once', async () => {
   const prompts = {}
@@ -666,66 +642,9 @@ test('build: an ant entry names its task, and a dead ant is logged as died', asy
   assert.deepEqual(got.slice(0, 2), [{ run: 'r1', task: 'a', who: 'worker ant', event: 'died' }, { run: 'r1', task: 'a', who: 'worker ant', event: 'died' }])
 })
 
-// ---- plan: every planning ant writes the logbook ----
-const onePlan = { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-const live = { testCommand: 'npm test', checkCommand: '' }
 
-test('plan: every planning ant gets its own logbook entry at once', async () => {
-  let settled = 0
-  let n = 0
-  const slowClerk = () => new Promise(r => setTimeout(() => { settled++; r({}) }, 5))
-  const { out, instant } = await run('ishikari-plan.js', { env, task: 't' }, (p, o) => {
-    if (o.label.startsWith('investigator')) return ++n === 1 ? { ...clear, reportWritten: false, research: ['a', 'b'] } : clear
-    if (o.label.startsWith('researcher')) return { findings: 'f' }
-    return onePlan
-  }, slowClerk)
-  assert.equal(out.stage, 'plans')
-  const got = instant.flatMap(p => logged(p))
-  assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
-    'investigator ant: research needed', 'researcher ant: found', 'researcher ant: found',
-    'investigator ant: report written', 'architect ant: 1 plan written',
-  ])
-  assert.ok(got.every(e => e.run === 'r1' && !('task' in e) && typeof e.detail === 'string' && e.detail.length <= 400))
-  assert.ok(instant.every(p => p.includes('python3 /t/ishikari.py log append /s')))
-  assert.equal(settled, instant.length)
-  const { out: noTool } = await run('ishikari-plan.js', { env: { ...env, tool: '' }, task: 't' }, () => clear)
-  assert.equal(noTool.stage, 'error')
-  assert.match(noTool.reason, /env.tool/)
-})
 
-test('plan: a live investigation logs one investigated entry', async () => {
-  const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
-    onePlan)
-  const got = instant.flatMap(p => logged(p))
-  assert.deepEqual(got[0], { run: 'r1', who: 'investigator ant', event: 'investigated', detail: '/s/plans/r1/investigation_report.md' })
-  assert.equal(got.filter(e => e.who === 'investigator ant').length, 1)
-  assert.equal(got.filter(e => e.who === 'researcher ant').length, 0)
-  assert.deepEqual(got.map(e => e.who), ['investigator ant', 'architect ant'])
-  assert.equal(out.stage, 'plans')
-})
 
-test('plan: a dead planning ant is logged as died and never blocks the run', async () => {
-  let r = 0
-  const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
-    ++r === 1 ? null : onePlan,
-  () => { throw new Error('logbook down') })
-  assert.equal(out.stage, 'plans')
-  // The dead clerk is tried twice for each batch; what it never wrote comes back.
-  const arch1 = [...new Map(instant.flatMap(p => logged(p)).filter(e => e.who === 'architect ant').map(e => [JSON.stringify(e), e])).values()]
-  assert.equal(arch1.length, 2)
-  assert.equal(out.logLost.filter(e => e.who === 'architect ant').length, 2)
-  assert.deepEqual(arch1[0], { run: 'r1', who: 'architect ant', event: 'died' })
-  assert.equal(arch1[1].event, '1 plan written')
-
-  let settled = 0
-  const second = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
-    null,
-  () => new Promise(res => setTimeout(() => { settled++; res({}) }, 5)))
-  assert.equal(second.out.stage, 'error')
-  const arch = second.instant.flatMap(p => logged(p)).filter(e => e.who === 'architect ant')
-  assert.deepEqual(arch.map(e => `${e.who}: ${e.event}`), ['architect ant: died', 'architect ant: died'])
-  assert.equal(settled, second.instant.length)
-})
 
 // ---- speed: smaller plans, lighter plans, jury only for 3+ tasks ----
 test('finish: two tasks, the judge still works alone; three get a jury', async () => {
@@ -738,19 +657,9 @@ test('finish: two tasks, the judge still works alone; three get a jury', async (
   assert.equal((await go(['a', 'b', 'c'])).calls.filter(c => c.startsWith('juror')).length, 3)
 })
 
-test('plan: the architect keeps plans small and says what and where, not exact words', async () => {
-  const prompts = {}
-  await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '' } }, (p, o) => {
-    prompts[o.label] = p
-    return { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-  })
-  const a = prompts['architect-ant']
-  assert.ok(a.includes('at most about 3 files per task'))
-  assert.ok(a.includes('what and where, not exact wording'))
-})
 
 // ---- every ant: latest Opus, low effort ----
-test('every ant in all four scripts runs on opus at low effort', async () => {
+test('every workflow ant in all four scripts runs on opus at low effort', async () => {
   const seen = []
   const spy = (name, args, answer) => {
     const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
@@ -758,8 +667,7 @@ test('every ant in all four scripts runs on opus at low effort', async () => {
     const parallel = fns => Promise.all(fns.map(f => f()))
     return new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)(args, agent, parallel, () => {}, () => {}, async () => ({}))
   }
-  await spy('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) =>
-    ({ feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }))
+  await spy('ishikari-plan.js', { env, task: 't', plans: [PLAN] }, () => ({}))
   await spy('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('detective') ? { bugs: [] } : {})
   await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
@@ -830,32 +738,8 @@ test('build: a re-check with no plan still gives the worker the open bugs', asyn
 })
 
 // ---- fast path: a trivial task skips the plan, and an escalation reaches the planners ----
-test('plan: a trivial verdict returns stage trivial before any planner runs', async () => {
-  const { out, calls } = await planWith([], { ...clear, trivial: true, trivialWhy: 'one label in one file' })
-  assert.equal(out.stage, 'trivial')
-  assert.equal(out.why, 'one label in one file')
-  assert.equal(out.report, '/s/plans/r1/investigation_report.md')
-  assert.equal(out.testCommand, 't')
-  assert.ok(!calls.includes('architect-ant'))
-})
 
-test('plan: a task that needed questions is never trivial', async () => {
-  const { out } = await run('ishikari-plan.js', { env, task: 't', answered: [{ question: 'Q?', answer: 'a' }] }, (p, o) =>
-    o.label.startsWith('investigator') ? { ...clear, trivial: true }
-      : { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
-  assert.equal(out.stage, 'plans')
-})
 
-test('plan: an escalated fast path tells the planners why and logs it', async () => {
-  const prompts = {}
-  const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' }, escalated: 'touches 6 files' }, (p, o) => {
-    prompts[o.label] = p
-    return { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-  })
-  assert.equal(out.stage, 'plans')
-  assert.match(prompts['architect-ant'], /fast path was tried and given up: touches 6 files/)
-  assert.ok(instant.some(p => /fast path escalated/.test(p)))
-})
 
 // ---- retrospective: one read-only ant at the very end ----
 test('retro: one read-only ant writes only retrospective.md and returns ranked findings', async () => {
@@ -1043,9 +927,9 @@ test('build: a re-check that fixed nothing is not logged as passed', async () =>
 
 // ---- plan and env hardening ----
 test('every script refuses paths, branches and commands the ants\' shell cannot carry', async () => {
-  const good = { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+  const good = {}
   const cases = [{ repo: '/my app' }, { state: '/s;rm' }, { tool: '/t/$(id).py' }, { main: '-x' }, { main: 'a b' }, { testCommand: 'make\ntest' }, { checkCommand: 'echo `id`' }, { testCommand: 7 }]
-  const args = { 'ishikari-plan.js': { task: 't' }, 'ishikari-build.js': { plans: [{ id: 'a' }] }, 'ishikari-finish.js': { approved: [T('a')] }, 'ishikari-retro.js': {} }
+  const args = { 'ishikari-plan.js': { task: 't', plans: [PLAN] }, 'ishikari-build.js': { plans: [{ id: 'a' }] }, 'ishikari-finish.js': { approved: [T('a')] }, 'ishikari-retro.js': {} }
   for (const [name, more] of Object.entries(args)) for (const c of cases) {
     const { out, calls } = await run(name, { env: { ...env, ...c }, ...more }, () => good)
     assert.equal(out.stage, 'error', `${name} ${JSON.stringify(c)}`)
@@ -1053,25 +937,4 @@ test('every script refuses paths, branches and commands the ants\' shell cannot 
   }
 })
 
-test('plan: a blank task, a missing report, unwritten plans and bad plan files are errors', async () => {
-  const A = { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-  const go = (reply, task = 't') => run('ishikari-plan.js', { env, task, investigated: { testCommand: 't', checkCommand: '' } }, () => reply).then(r => r.out)
-  for (const task of ['   ', { a: 1 }, null]) assert.equal((await go(A, task)).stage, 'error')
-  assert.match((await go({ ...A, reportFound: false })).reason, /no investigation report/)
-  assert.match((await go({ ...A, plansWritten: false })).reason, /did not write every plan file/)
-  for (const files of [['/etc/passwd'], ['../x'], ['a/../../x'], ['./']]) assert.match((await go({ ...A, plans: [{ id: 'a', title: 'A', files }] })).reason, /inside the repo|lists no files/)
-  assert.match((await go({ ...A, plans: [{ id: 'a', title: 'A', files: ['x'], after: ['a'] }] })).reason, /after names itself/)
-  assert.match((await go({ ...A, plans: [{ id: 'a', title: 'A', files: ['x'], workflow: 5 }] })).reason, /workflow must be a name/)
-})
 
-test('plan: an ant call that throws is retried, and answers with no question are ignored', async () => {
-  let n = 0
-  const prompts = []
-  const { out } = await run('ishikari-plan.js', { env, task: 't', answered: [{ answer: 'x' }, { question: 'Q1?', answer: 'yes' }] }, (p, o) => {
-    prompts.push(p)
-    if (o.label.startsWith('investigator')) { if (++n === 1) throw new Error('boom'); return clear }
-    return { feasible: true, proof: 'p', reportFound: true, designWritten: true, plansWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-  })
-  assert.equal(out.stage, 'plans')
-  assert.ok(prompts[0].includes('Q1? -> yes') && !prompts[0].includes('undefined'))
-})
