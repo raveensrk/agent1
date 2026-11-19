@@ -95,7 +95,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :END:
 - The main stations sit on one circle, clockwise from Task at the top to the Run report, with a gap at the top: a run ends, it does not loop.
 - Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
-- A station's position code is its place in the list (s8), shown beside its name; spurs name their target by it.
+- A station's position code is its place in the list (s7), shown beside its name; spurs name their target by it.
 
 * DONE [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
 :PROPERTIES:
@@ -115,7 +115,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - It stays alive until its plans pass the check or a fast path lands. An escalated fast path tells the same investigator why.
 - ishikari-plan.js runs no planning ant: it checks the plan list (ids, loops in after, two tasks on one file, paths inside the repo) and returns plans or problems. Problems go back to the investigator once; a second failure stops the run.
 - The no-Agent-tool fallback is removed: without the Agent tool Ishikari stops at the start.
-- The map shows the tech spec as a file station where the Architect ant stood.
+- The map shows the two specs as one file station, Product spec + tech spec, where the report and the Architect ant stood.
 
 * DONE [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
 :PROPERTIES:

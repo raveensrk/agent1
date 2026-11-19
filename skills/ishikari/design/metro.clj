@@ -60,7 +60,7 @@
 (defn inward "p moved px towards the middle of the ring." [[x y] px]
   (let [len (Math/hypot (- x CX) (- y CY))] (along [x y] [CX CY] (/ px len))))
 
-(def A {"task" 12 "investigator" 32 "product-spec" 52 "tech-spec" 72 "plans" 92 "workers" 112 "detectives" 134
+(def A {"task" 12 "investigator" 32 "specs" 58 "plans" 88 "workers" 112 "detectives" 134
         "integrator" 156 "merger" 176 "janitor" 194 "jurors" 206 "judge" 218 "docs" 270 "finisher" 284
         "main" 298 "check" 314 "retro" 330 "finished" 348})
 (defn P [id] (pt (A id) R))
@@ -89,7 +89,7 @@
    ["jfixrun" "none"  (vec (concat [(P "judge") JF0 JF1] (arc REJOIN 298))) 9 ""]
    ["after"   GREEN  (arc 298 348) 9 ""]
    ["cfix"    RED    [(P "check") (pt 314 (- R 50))] 6 "10 6"] ; a failed check: a new task for the worker ants
-   ["fast"    GREEN  [(P "product-spec") (P "main")] 6 "10 6"]]) ; a trivial task: the main session lands it straight on main
+   ["fast"    GREEN  [(P "specs") (P "main")] 6 "10 6"]]) ; a trivial task: the main session lands it straight on main
 
 ;; id, x, y, name, sub lines, kind, label offset [dx dy anchor].
 ;; The id never changes and is what spurs, details and links use; the short
@@ -112,9 +112,8 @@
    (st "investigator" (on 32 [(pt 35.5 (+ R 38)) "start"]) "Investigator ant" ["one live agent on Fable at max effort: it asks you," "proves the task can be built, and writes the product" "spec, the tech spec and every plan; no other ant plans"] "x")
    (st "you" (at (pt 26 (+ R 105)) [26 -6 "start"]) "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you")
    (st "researchers" (at (pt 32 (- R 95)) [-26 5 "end"]) "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end")
-   (st "product-spec" (on 52) "product_spec.md" ["what the product does: behaviours B1, B2..." "and invariants I1, I2..., each checkable;" "then the trivial verdict"] "file")
-   (st "tech-spec" (on 72) "tech_spec.md" ["the architecture and the code's shape: parts, files," "names and interfaces; each id mapped to a part;" "not buildable: it asks you, or the run stops"] "file")
-   (st "plans" (on 92) "Worker plans" ["one per task, naming the spec ids it covers;" "the plan script checks them before anything is built;" "problems go back to the investigator once"] "files")
+   (st "specs" (on 58) "Product spec + tech spec" ["product_spec.md: behaviours B1... and invariants I1...," "then the trivial verdict; tech_spec.md: the architecture" "and the code's shape, each id mapped to a part"] "files")
+   (st "plans" (on 88) "Worker plans" ["one per task, naming the spec ids it covers;" "the plan script checks them before anything is built;" "problems go back to the investigator once"] "files")
    (st "workers" (on 112) "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x")
    (st "detectives" (on 134) "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x")
    (st "integrator" (on 156) "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x")
@@ -156,12 +155,9 @@
    "researchers" {:tip "Look up facts for the investigator."
                                :about "Up to 5 at once, on Opus at low effort. They search the web and the whole computer, read only, never secrets, and report back. The investigator starts them and waits for them. They are not logged."
                                :src "SKILL.md#limits"}
-   "product-spec" {:tip "What the product does: behaviours and invariants, nothing else."
-                   :about "Written by the investigator once nothing important is unclear. Two lists only. Behaviours: what the product does once the task is done, each with an id (B1, B2...) and written as given / when / then. Invariants: what must always hold, each with an id (I1, I2...). Every one is written so an ant can check it, and each answer you gave shows up as the behaviour it led to. No goal, background, decisions log or assumptions. A task that changes no behaviour has invariants only. The judge scores the finished run against it, id by id; a trivial task is built from it alone."
-                   :src "<state>/plans/<run>/product_spec.md"}
-   "tech-spec" {:tip "The architecture and the code's shape, so parallel workers fit together."
-                :about "Written by the investigator after the product spec, once it has proved the task can be built from the repo's code and docs (a throwaway spike outside the repo only if needed). It names the parts of the change, the files each part owns, and every name, interface and data shape that crosses between parts, and maps every behaviour and invariant id to the part that delivers it. If the task cannot be built as asked it asks you; only when no answer can fix it, the run stops. Detectives treat a name or interface that differs from it as a bug."
-                :src "<state>/plans/<run>/tech_spec.md"}
+   "specs" {:tip "The investigator's two specs: what the product does, and how the code is shaped."
+            :about "Two files, both written by the investigator. product_spec.md comes first, once nothing important is unclear: two lists and nothing else. Behaviours, what the product does once the task is done, each with an id (B1, B2...) and written as given / when / then; invariants, what must always hold, each with an id (I1, I2...). Every one is written so an ant can check it, and each answer you gave shows up as the behaviour it led to. A task that changes no behaviour has invariants only. Then comes the trivial verdict: a trivial task is built from the product spec alone. tech_spec.md comes next, once the investigator has proved the task can be built from the repo's code and docs (a throwaway spike outside the repo only if needed): the parts of the change, the files each part owns, every name, interface and data shape between parts, and each id mapped to the part that delivers it. If the task cannot be built as asked it asks you; only when no answer can fix it, the run stops. Detectives check tasks against the tech spec; the judge scores the run against the product spec, id by id."
+            :src "<state>/plans/<run>/product_spec.md, tech_spec.md"}
    "plans" {:tip "One complete plan per task."
                           :about "Written by the investigator. Workers cannot ask questions, so each plan is complete: title, files, the spec ids it covers, after. The plan script, which runs no ant, rejects bad or unknown ids, loops in after, two tasks on one file, paths outside the repo, a behaviour or invariant no plan covers, and a plan that covers none, before anything is built. Problems go back to the investigator once; still wrong, the run stops."
                           :src "<state>/plans/<run>/<task>.md"}
@@ -241,7 +237,7 @@
             ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] [(let [[x y] (inward FIXMID 70)] [(- x 26) (+ y 5)]) "end"] :bin]
             ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"] [(pt 194 (- R 172)) "middle"]]
             ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"] [(let [[x y] (pt 314 (- R 50))] [(+ x 14) (+ y 5)]) "start"]]
-            ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"] [(let [[x y] (along (P "product-spec") (P "main") 0.5)] [x (+ y 24)]) "middle"]]])
+            ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"] [(let [[x y] (along (P "specs") (P "main") 0.5)] [x (+ y 24)]) "middle"]]])
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
 
@@ -379,7 +375,7 @@
 
 (def about-lines
   "Line name -> [name tip about]. \"none\" lines are invisible train routes."
-  {"plan"    ["Plan line" "The first stretch of the ring: from your task to the worker plans." "The blue line carries one task from Task through the investigator, its product spec, its tech spec and its worker plans, and on to the worker ants, where building starts."]
+  {"plan"    ["Plan line" "The first stretch of the ring: from your task to the worker plans." "The blue line carries one task from Task through the investigator, its two specs and its worker plans, and on to the worker ants, where building starts."]
    "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
    "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
    "g1"      ["Build line" "The long stretch of the ring: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
