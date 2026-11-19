@@ -43,7 +43,7 @@ const bad = []
 // Paths, the branch and the commands go into shell commands inside the ants'
 // prompts: only safe characters are let through (ishikari.py setup checks too).
 for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
-if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(env.run || '')) bad.push('env.run must be a run id')
 if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
 for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 if (args.plans != null && !Array.isArray(args.plans)) bad.push('plans must be a list')
@@ -63,6 +63,8 @@ const BUILT = {
   required: ['status', 'notes'],
 }
 
+// required is set per call: a first check must count the commits, a re-check
+// must answer for every open bug.
 const DETECTION = {
   type: 'object',
   properties: {
@@ -218,12 +220,15 @@ Else, if the branch exists, run
 \`git -C ${env.repo} worktree add ${task.tree} ${task.branch}\`. Else run
 \`git -C ${env.repo} worktree add -b ${task.branch} ${task.tree} ${start}\`${more.length ? `, then merge ${more.join(' and ')} into it` : ''}.
 Never reset, rebase or recreate an existing branch: it holds earlier work.
-The task's plan is ${task.plan}: your thin slice of the two specs (files, the spec
+${task.fresh ? `This task has no plan: the job below is the whole of it, and nothing else is
+yours to build. The run's tech spec ${designOf(task)} and product spec
+${productOf(task)} say how the code is shaped and what it must do: keep to them.`
+    : `The task's plan is ${task.plan}: your thin slice of the two specs (files, the spec
 ids you cover, interfaces, tests). The detail is in the specs: read them. The
 tech spec is ${designOf(task)}: use its names and interfaces exactly. The
 behaviours and invariants are in the product spec ${productOf(task)}, by id.
 If the plan file does not exist, you are the only worker of this run: your task
-is the whole of the two specs.
+is the whole of the two specs.`}
 ${job}
 Also update the docs your change affects, inside this task.
 ${tests} inside your worktree before you finish. Commit all your work on
@@ -298,9 +303,11 @@ and return the number as ownCommits.`
 the fix for every bug you find. You never write code yourself.
 ${where}
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
-The plan is a thin slice of the two specs: the behaviours and invariants it covers
+${task.fresh ? `It has no plan: its whole job is the bugs below. The behaviours and invariants
+the code must keep are written out in ${productOf(task)}.`
+    : `The plan is a thin slice of the two specs: the behaviours and invariants it covers
 are written out in ${productOf(task)}. If the plan file does not exist, this is a
-one-worker run and the task is the whole of the two specs.
+one-worker run and the task is the whole of the two specs.`}
 Check it against its plan and the run's tech spec ${designOf(task)}: a name or interface
 that differs from the tech spec is a bug.
 ${own}
@@ -309,7 +316,8 @@ edit tracked files.
 ${ask}
 Put style points and small doubts in nits, not in bugs. Check that the docs
 match the change.`,
-    { label: `detective-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.detective, schema: DETECTION },
+    { label: `detective-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.detective,
+      schema: { ...DETECTION, required: open ? ['bugs', 'fixed'] : ['bugs', 'ownCommits'] } },
   ).then(okDetect)
 }
 
@@ -356,7 +364,7 @@ async function fixLoop(task, texts, firstFix) {
 function makeTask(id, branch, extra) {
   const task = {
     id, branch, tree: treeOf(branch), plan: planOf(branch),
-    after: [], bases: [], workflow: null, firstStep: '', guidance: '',
+    after: [], bases: [], workflow: null, firstStep: '', guidance: '', fresh: false,
     bugs: [], nits: [], baseProblems: [], notes: [], history: [],
     isBuilt: false, changed: false, result: null, noted: {},
     ...extra,
@@ -394,13 +402,16 @@ function end(task, status, why) {
 }
 
 // ---- tasks from the approved plans ----
-const byId = {}
+// Keyed by task id, which an ant chose: no prototype, so an id like
+// "constructor" is a plain key and never a hit on Object's own names.
+const byId = Object.create(null)
 const tasks = []
-const problems = {}
+const problems = Object.create(null)
 for (const p of plans) {
   const id = String(p.id || '')
   const task = makeTask(id, branchOf(id), {
-    plan: p.file === null ? '(no plan file)' : (p.file || planOf(branchOf(id))),
+    // The path is worked out here, never taken as given: only "no file" is.
+    plan: p.file === null ? '(no plan file)' : planOf(branchOf(id)),
     after: Array.isArray(p.after) ? p.after.map(String) : [],
     workflow: p.workflow || null,
   })
@@ -417,7 +428,7 @@ for (const t of tasks) {
   if (unknown.length && !problems[t.id]) problems[t.id] = `after names unknown plans: ${unknown.join(', ')}`
 }
 // A loop of "after" lists would wait forever: find every task in one.
-const seen = {}
+const seen = Object.create(null)
 function visit(id, path) {
   if (seen[id] === 'done' || !byId[id]) return
   if (seen[id] === 'open') {
@@ -449,7 +460,7 @@ for (const b of bugsIn) {
     else if (Object.values(bugTasks).some(t => t.id === id)) problems[id] = `two bug tasks have the id "${id}"`
     else if (b.after != null && !Array.isArray(b.after)) problems[id] = `bug task "${id}": after must be a list`
     bugTasks[branch] = makeTask(id, branch, {
-      ...(fresh ? { plan: '(none: the bug below is the whole job)' } : {}),
+      ...(fresh ? { plan: '(none: the bug below is the whole job)', fresh: true } : {}),
       after: Array.isArray(b.after) ? b.after.map(String) : [],
       // Earlier rounds, kept only in the shape the detective's memory reads.
       history: (Array.isArray(b.history) ? b.history : []).filter(h => h && typeof h === 'object' && Array.isArray(h.bugs))
@@ -468,12 +479,12 @@ for (const t of Object.values(bugTasks)) {
 }
 // A bug task built on another bug task of this round waits for it and builds on
 // its branch. A base that is not in this round has landed already or is gone.
-const bugById = Object.fromEntries(Object.values(bugTasks).map(t => [t.id, t]))
+const bugById = Object.assign(Object.create(null), Object.fromEntries(Object.values(bugTasks).map(t => [t.id, t])))
 for (const t of Object.values(bugTasks)) {
   t.deps = t.after.filter(d => d !== t.id && bugById[d])
   t.bases = t.deps.map(d => bugById[d].branch)
 }
-const bugSeen = {}
+const bugSeen = Object.create(null)
 const bugVisit = (id, path) => {
   if (bugSeen[id] === 'done') return
   if (bugSeen[id] === 'open') {
@@ -618,7 +629,7 @@ for (let round = 1; round <= 2; round++) {
   phase('Combined')
   const r = await twice(() => combine(passing, round))
   if (!r) { log('combined test skipped: the integrator ant died twice'); break }
-  const outcome = Object.fromEntries((Array.isArray(r.results) ? r.results : []).filter(x => x && x.id).map(x => [x.id, x]))
+  const outcome = Object.assign(Object.create(null), Object.fromEntries((Array.isArray(r.results) ? r.results : []).filter(x => x && x.id).map(x => [x.id, x])))
   const clashes = passing.filter(t => outcome[t.id] && ['conflict', 'tests failed'].includes(outcome[t.id].outcome))
   // A pass counts only when every task is reported merged and a commit is given:
   // a silent or half answer is not proof that they work together.
@@ -683,14 +694,16 @@ for (let round = 1; round <= 2; round++) {
 await logsDone()  // one clerk at a time: the per-reply clerk ends first
 if (entries.length) {
   phase('Logbook')
-  const clerk = await agent(
+  // A dead clerk is retried once, like the per-reply one.
+  const write = () => agent(
     `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(entries).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`,
     { label: 'logbook-clerk', phase: 'Logbook', model: MODEL, effort: EFFORT.clerk },
   ).catch(() => null)
-  if (clerk == null) { logLost.push(...entries); log('logbook append skipped: the logbook clerk died; the logbook misses this stage') }
+  const clerk = await twice(write)
+  if (clerk == null) { logLost.push(...entries); log('logbook append skipped: the logbook clerk died twice; the entries come back as logLost') }
 }
 
 await logsDone()

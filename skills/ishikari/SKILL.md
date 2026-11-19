@@ -59,7 +59,10 @@ inside the working directory, so the Workflow tool may load them by
   ant the whole run stands on, runs on Fable at max effort (fallback: latest
   Opus at max effort).
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
-  `args` as a JSON object, never a string.
+  `args` as a JSON object, never a string. A workflow that was killed or
+  paused, or that crashed part way: run it again with the same `scriptPath`
+  and `args` plus `resumeFromRunId`, so ants that already replied are not run
+  again. Never start it fresh while its ants may still be alive.
 - Never edit code, the logbook or branches yourself. Ants and
   `ishikari.py` do. The one exception is the fast path (2b), and even there
   the logbook goes through `ishikari.py`.
@@ -93,6 +96,8 @@ a changed base or a clash; each loop has its own 3 rounds.
 
 ## 1. Setup
 
+- No Workflow tool or no Agent tool in this session: say which is missing and
+  stop here, before setup. Nothing else can stand in for them.
 - Repo: the path in the arguments, else the current repo.
   Task: the rest of the arguments; if there is none, ask for it.
 - Run `python3 <skill>/scripts/ishikari.py setup <repo> [--main <branch>]`.
@@ -161,7 +166,11 @@ it, say so and stop; there is no other way to plan.
 5. `productSpecWritten` (part 1 is done): check that
    `<plans folder>/product_spec.md` exists; if not, treat it as no
    reply (2a.3). Keep its `ids` list. Save `testCommand` and `checkCommand` with
-   `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
+   `python3 <env.tool> config <env.state> <key> <value>`, the value quoted as
+   one argument, and add them to `env`. `config` refuses a value with a line
+   break or a backtick: send its message to the SAME investigator once and
+   take the command from its next reply; refused again, treat it as no reply
+   (2a.3).
    Then:
    - `trivial: true`: go to 2b;
    - else send it `go on` and continue at 2c.
@@ -232,8 +241,11 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
   the worktree's HEAD is the worker's sha and the tree is clean.
 - Do not ask. Approve every `awaiting review` task. Drop every `escalated`,
   `blocked` and `error` task, and every task whose `after` holds a dropped
-  one. Keep each dropped task, its bugs and fix history for the report. A
-  dropped task's branch is kept, never deleted, so its work can be looked at.
+  one; repeat until no such task is left. Keep each dropped task, its bugs
+  and fix history for the report. A dropped task's branch is kept, never
+  deleted, so its work can be looked at.
+- No task approved: still run finish once, with `approved: []` and the drops,
+  so they reach the logbook. Nothing merges and main stays.
 - `stage: 'error'` from build: show `reason` and go to the retrospective (section 5); nothing reached
   main.
 
@@ -247,9 +259,18 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
   earlier finishes of this run reported in `merged`: their branches are gone,
   and a task built on one must not be blocked for it.
 - `bugs` and `waiting`: run a new build round with both lists as `bugs`; each
-  item already holds `{task, branch, bug, after}`. Then finish again with that
-  build's results, without asking. At most 2 such rounds per run; after that
-  drop what is left.
+  item already holds `{task, branch, bug, after}`. Then finish again, without
+  asking: `approved` is that build's passing tasks plus every `notMoved` item
+  of the finish before (merged in its scratch copy, but main did not move, so
+  they still have to land). At most 2 such rounds per run; after that drop
+  what is left.
+- Never take the finisher ant's word for main. After every finish with a
+  `sha`, run `git -C <env.repo> merge-base --is-ancestor <sha> <env.main>`:
+  exit 0 means main holds the checked commit. `mainMoved: true` but it fails:
+  main did not move; treat the result as `mainMoved: false`, its `merged`
+  tasks as `notMoved`, and say so in the report. `mainMoved: false` but it
+  succeeds (the finisher died after the move): main did move; count the
+  `notMoved` tasks as landed and say so.
 - `checkFix` set (check failed, no check-fix yet): run one build round with
   `bugs: [checkFix]`: no branch, so a new task starts from the moved main.
   Then finish again with `checkFixDone: true` (finish also assumes it when

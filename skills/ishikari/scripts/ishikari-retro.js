@@ -31,7 +31,7 @@ const bad = []
 // Paths, the branch and the commands go into shell commands inside the ants'
 // prompts: only safe characters are let through (ishikari.py setup checks too).
 for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
-if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(env.run || '')) bad.push('env.run must be a run id')
 if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
 for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }

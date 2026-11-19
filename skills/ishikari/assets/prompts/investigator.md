@@ -90,7 +90,8 @@ Part 2: tech spec and plans (after "go on")
    questions, so the specs must hold everything it needs. Never write out the
    text, labels or code a worker writes.
    Write each plan to <plans folder>/<id>.md, with id in lowercase letters,
-   digits and dashes. Change no other files, and nothing in the repo.
+   digits and dashes, never `fast` or `check-fix` (Ishikari's own names).
+   Change no other files, and nothing in the repo.
    One task only: write no plan file. The one worker builds straight from the
    two specs; still give its entry in plans (step 9), covering every id.
 9. Reply with techSpecWritten and plansWritten true (also for one task, with
@@ -99,7 +100,8 @@ Part 2: tech spec and plans (after "go on")
    [repo-relative paths], "covers": [spec ids], "after": [plan ids],
    "workflow": optional saved workflow name} per plan.
 10. If the main session sends back problems with the plans (two tasks on one
-    file, a loop in after, a bad id or path, a spec id no plan covers), fix the
+    file or on a folder and a file inside it, a loop in after, a bad id or
+    path, a spec id no plan covers), fix the
     plan files, the specs if needed, and the list
     and reply again as in step 9.
 

@@ -217,6 +217,13 @@ def test_hardening():
         assert "not valid JSON" in fails(home, "save", state, "r1", "plan", stdin="{oops")
         assert "bad run id" in fails(home, "save", state, "../x", "plan", stdin="{}")
         assert "bad stage" in fails(home, "save", state, "r1", "Plan 1", stdin="{}")
+        for dots in ("..", ".", "-r"):  # a run id names a folder: never the one above
+            assert "bad run id" in fails(home, "save", state, dots, "plan", stdin="{}")
+        assert not os.path.exists(os.path.join(state, "plan-1.json"))
+
+        # help: -h and --help are short, help is long, all exit 0
+        assert run(home, "-h") == run(home, "--help") and "usage: ishikari.py" in run(home, "-h")
+        assert "log status <state> [<run>]" in run(home, "help") and len(run(home, "help")) > len(run(home, "-h"))
 
         # a planning-only run still shows in log status
         run(home, "log", "append", state, stdin=json.dumps([{"run": "p1", "who": "architect ant", "event": "not buildable"}]))
@@ -236,6 +243,8 @@ def test_hardening():
         git_in(spaced, "init", "-q", "-b", "main")
         git_in(spaced, "commit", "-q", "--allow-empty", "-m", "init")
         assert "has a space or a character" in fails(home, "setup", spaced)
+        # a setup that stops has written nothing: no identity was set in that repo
+        assert subprocess.run(["git", "-C", spaced, "config", "--local", "user.name"], capture_output=True, timeout=TIMEOUT).returncode != 0
         git_in(repo, "branch", "we;ird")
         assert "not safe" in fails(home, "setup", repo, "--main", "we;ird")
 

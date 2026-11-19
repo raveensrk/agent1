@@ -41,6 +41,9 @@ so no entry is lost and the file stays a valid recfile.
   ishikari.py log status <state> [<run>]
       Print each task's latest event, oldest first, for one run or all.
       Entries with no task (planning, upkeep) show as <run>/(<who>).
+
+  ishikari.py -h | --help      the commands, one line each
+  ishikari.py help             this text
 """
 
 import contextlib
@@ -67,7 +70,16 @@ LOG_HEAD = """# Ishikari logbook: one entry per event, append only.
 CONFIG_KEYS = ("testCommand", "checkCommand")
 SAFE_PATH = re.compile(r"/[A-Za-z0-9._/+-]+")
 SAFE_BRANCH = re.compile(r"[A-Za-z0-9._][A-Za-z0-9._/-]*")
-RUN_ID = re.compile(r"[A-Za-z0-9._-]+")
+RUN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")  # never "." or "..": it names a folder
+SHORT_HELP = """usage: ishikari.py <command>
+  setup <repo> [--main <branch>]     start a run; prints its env as JSON
+  config <state> <key> [<value>]     save testCommand or checkCommand
+  save <state> <run> <stage>         keep a workflow result (JSON on stdin)
+  log append <state>                 append entries (JSON list on stdin)
+  log note <state> <text>...         append your own note
+  log status <state> [<run>]         each task's latest event
+  help                               the long help
+"""
 STAGE = re.compile(r"[a-z][a-z-]{0,20}")
 KEEP_WORKFLOWS_DAYS = 7
 
@@ -171,15 +183,16 @@ def setup(repo, main=None):
     if not SAFE_BRANCH.fullmatch(main):
         die(f"main branch name {main!r} is not safe to put in a git command; use letters, digits and . _ / -")
     check_main(top, main)
-    ensure_git_identity(top)
     tag = hashlib.sha1(top.encode()).hexdigest()[:8]
     state = os.path.join(os.path.expanduser("~"), ".ishikari", f"{os.path.basename(top)}-{tag}")
     tool = os.path.abspath(__file__)
-    # These paths go unquoted into shell commands the ants run.
+    # These paths go unquoted into shell commands the ants run. Refused before
+    # anything is written, so a setup that stops leaves the repo as it was.
     for what, path in (("repo", top), ("state folder", state), ("tool", tool)):
         if not SAFE_PATH.fullmatch(path):
             die(f"the {what} path {path!r} has a space or a character the ants' shell commands "
                 "cannot carry; use only letters, digits and . _ / + - (move or rename it)")
+    ensure_git_identity(top)
     for sub in ("plans", "worktrees"):
         os.makedirs(os.path.join(state, sub), exist_ok=True)
     book = os.path.join(state, LOGBOOK)
@@ -229,7 +242,8 @@ def config_path(state):
 
 def read_config(state):
     try:
-        data = json.load(open(config_path(state)))
+        with open(config_path(state)) as f:
+            data = json.load(f)
     except (OSError, ValueError):
         return {}
     if not isinstance(data, dict):
@@ -244,12 +258,13 @@ def config(state, key, value):
         die(f"missing {state}; run setup first")
     if "\n" in value or "\r" in value or "`" in value:
         die(f"{key} must be one line with no backtick: it goes inside the ants' prompts")
-    data = read_config(state)
-    if value:
-        data[key] = value
-    else:
-        data.pop(key, None)
-    write_atomic(config_path(state), json.dumps(data, indent=2))
+    with locked(config_path(state)):  # two saves at once never lose a key
+        data = read_config(state)
+        if value:
+            data[key] = value
+        else:
+            data.pop(key, None)
+        write_atomic(config_path(state), json.dumps(data, indent=2))
     print(json.dumps(data))
 
 
@@ -344,6 +359,10 @@ def log_status(state, run=None):
 
 
 def run(argv):
+    if argv[:1] in (["-h"], ["--help"]):
+        return print(SHORT_HELP, end="")
+    if argv[:1] == ["help"]:
+        return print(__doc__, end="")
     if argv[:1] == ["setup"]:
         rest, main = argv[1:], None
         if "--main" in rest:

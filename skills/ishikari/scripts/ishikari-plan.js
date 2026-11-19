@@ -48,7 +48,7 @@ const bad = []
 // Paths, the branch and the commands go into shell commands inside the ants'
 // prompts: only safe characters are let through (ishikari.py setup checks too).
 for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
-if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(env.run || '')) bad.push('env.run must be a run id')
 if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
 for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 for (const k of ['testCommand', 'checkCommand']) if (args[k] != null && (typeof args[k] !== 'string' || /[\n\r`]/.test(args[k]))) bad.push(`${k} must be one line with no backtick`)
@@ -109,6 +109,7 @@ const plans = args.plans.filter(p => p && typeof p === 'object').map(p => ({
 
 // ---- check the plans before anyone builds them ----
 const problems = []
+const RESERVED = ['fast', 'check-fix']
 if (plans.length !== args.plans.length) problems.push('every plan must be an object with id, title and files')
 const ids = new Set()
 for (const p of plans) {
@@ -119,6 +120,8 @@ for (const p of plans) {
   if (p.afterBad) problems.push(`${p.id}: after must be a list`)
   if (p.workflow != null && typeof p.workflow !== 'string') problems.push(`${p.id}: workflow must be a name`)
   if (ids.has(p.id)) problems.push(`two plans have the id "${p.id}"`)
+  // Ishikari's own branch names: the fast path's branch and the check-fix task.
+  if (RESERVED.includes(p.id)) problems.push(`the id "${p.id}" is taken by Ishikari itself: pick another`)
   ids.add(p.id)
 }
 for (const p of plans) {
@@ -138,7 +141,9 @@ const visit = (id, path) => {
 }
 plans.forEach(p => visit(p.id, []))
 // Two tasks that edit the same file must run in order, one after the other;
-// in parallel, their merge would conflict.
+// in parallel, their merge would conflict. A folder and a file inside it are
+// the same ground, and so are two names that differ only by case: macOS keeps
+// those as one file.
 const before = id => {
   const acc = new Set()
   const walk = x => (byId.has(x) ? byId.get(x).after : []).forEach(d => { if (!acc.has(d)) { acc.add(d); walk(d) } })
@@ -146,11 +151,15 @@ const before = id => {
   return acc
 }
 if (!problems.length) {
-  const owner = new Map()
-  for (const p of plans) for (const f of p.files) (owner.get(f) || owner.set(f, []).get(f)).push(p.id)
-  for (const [f, who] of owner) {
-    for (let a = 0; a < who.length; a++) for (let b = a + 1; b < who.length; b++) {
-      if (!before(who[a]).has(who[b]) && !before(who[b]).has(who[a])) problems.push(`${who[a]} and ${who[b]} both edit ${f} but neither is after the other`)
+  const same = (f, g) => { const x = f.toLowerCase(), y = g.toLowerCase(); return x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`) }
+  for (let a = 0; a < plans.length; a++) for (let b = a + 1; b < plans.length; b++) {
+    const A = plans[a], B = plans[b]
+    if (before(A.id).has(B.id) || before(B.id).has(A.id)) continue
+    for (const f of A.files) {
+      const g = B.files.find(x => same(f, x))
+      if (g == null) continue
+      problems.push(f === g ? `${A.id} and ${B.id} both edit ${f} but neither is after the other`
+        : `${A.id} edits ${f} and ${B.id} edits ${g}, which overlap, but neither is after the other`)
     }
   }
 }

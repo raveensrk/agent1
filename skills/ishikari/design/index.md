@@ -89,6 +89,8 @@ its job. The build script runs that workflow in place of a worker ant.
     hold the detail and the worker reads them. A run with one worker has no
     plan file: the worker builds straight from the specs. Tasks are
     split so no two edit the same file, and each task has its own test file.
+    A folder and a file inside it count as the same file, and so do two names
+    that differ only by case. The ids `fast` and `check-fix` are Ishikari's own.
     Only a task that must edit another task's file lists that task in `after`:
     it starts as soon as that task is built, on top of its branch.
 
@@ -300,7 +302,10 @@ and stops to ask the user only in step 2.
    skips the trial merge: its detective already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
-   waiting tasks come back in the next build as `bugs`. The
+   waiting tasks come back in the next build as `bugs`. Tasks merged while
+   main did not move (`notMoved`) are approved again in the next finish. The
+   main session never takes the finisher's word: it asks git whether main
+   holds the checked commit. The
    janitor makes, tests and commits its cleanup inside finish, and it lands
    with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The judge's

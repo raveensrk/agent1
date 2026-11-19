@@ -984,3 +984,93 @@ test('finish: the judge and jurors score against the product spec, id by id', as
   assert.ok(prompts['judge-ant:1'].includes('they are not what you score'))
   assert.ok(prompts['worker-ant:judge-fix'].includes('product_spec.md') && prompts['worker-ant:judge-fix'].includes('tech_spec.md'))
 })
+
+// ---- second hardening pass: ids, overlaps, plan-less tasks, clerk retries ----
+
+test('plan: Ishikari\'s own ids are refused, and so are overlapping folders and names that differ only by case', async () => {
+  const problems = async plans => { const { out } = await planWith(plans); assert.equal(out.stage, 'problems', JSON.stringify(plans)); return out.problems.join(' | ') }
+  assert.match(await problems([{ ...PLAN, id: 'fast' }]), /"fast" is taken by Ishikari itself/)
+  assert.match(await problems([{ ...PLAN, id: 'check-fix' }]), /"check-fix" is taken by Ishikari itself/)
+  assert.match(await problems([{ ...PLAN, files: ['src/'] }, { ...PLAN, id: 'b', files: ['src/a.py'] }]), /a edits src and b edits src\/a\.py, which overlap/)
+  assert.match(await problems([{ ...PLAN, files: ['Readme.md'] }, { ...PLAN, id: 'b', files: ['README.md'] }]), /which overlap/)
+  // in order, an overlap is fine; and "srcs" is not inside "src"
+  const { out } = await planWith([{ ...PLAN, files: ['src'] }, { ...PLAN, id: 'b', files: ['src/a.py', 'srcs'], after: ['a'] }, { ...PLAN, id: 'c', files: ['srcx/a.py'] }])
+  assert.equal(out.stage, 'plans')
+})
+
+test('build: a task id that is one of Object\'s own names is a plain task', async () => {
+  const { out } = await buildWith({ plans: [{ id: 'constructor' }, { id: 'b', after: ['constructor'] }] }, o =>
+    o.label.startsWith('integrator') ? { sha: 'abc1234', results: [{ id: 'constructor', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }] } : undefined)
+  assert.deepEqual(out.tasks.map(t => [t.id, t.status]), [['constructor', 'awaiting review'], ['b', 'awaiting review']])
+  assert.deepEqual(out.together.tasks, ['constructor', 'b'])
+  const fin = await finishRun({ approved: [T('constructor')] }, o => o.label === 'merger-ant' ? { sha: 'abc1234', results: [] } : undefined)
+  assert.deepEqual(fin.out.waiting.map(w => w.bug), ['not merged: the merger did not report it'])
+})
+
+test('build: the plan path is worked out by the script, never taken as given', async () => {
+  const prompts = []
+  await buildWith({ plans: [{ id: 'a', file: '/etc/passwd; say hi' }, { id: 'b', file: null }] }, (o, p) => { prompts.push(p) })
+  assert.ok(prompts.every(p => !p.includes('/etc/passwd')))
+  assert.ok(prompts.some(p => p.includes('The task\'s plan is /s/plans/r1/a.md')))
+  assert.ok(prompts.some(p => p.includes('The task\'s plan is (no plan file)')))
+})
+
+test('build: a check-fix task is told its job is the bug, never the whole of the specs', async () => {
+  const prompts = {}
+  await run('ishikari-build.js', { env, bugs: [{ task: 'check-fix', bug: 'app does not start' }, { branch: 'ishikari/r1/a', bug: 'old bug' }] }, (p, o) => {
+    prompts[o.label] = p
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    if (o.label.startsWith('detective')) return { fixed: [{ id: `${o.label.split(':')[1]}#1`, fixed: true }], bugs: [] }
+    return {}
+  })
+  for (const k of ['worker-ant:check-fix:fix1', 'detective-ant:check-fix:recheck1']) {
+    assert.ok(!prompts[k].includes('whole of the two specs'), k)
+    assert.ok(prompts[k].includes('/s/plans/r1/product_spec.md'), k)
+  }
+  assert.match(prompts['worker-ant:check-fix:fix1'], /This task has no plan: the job below is the whole of it/)
+  assert.match(prompts['worker-ant:a:fix1'], /If the plan file does not exist, you are the only worker/)  // a branch from an earlier round keeps its plan
+})
+
+test('build: a first check must count the commits, a re-check must answer for each open bug', async () => {
+  const required = {}
+  await run('ishikari-build.js', { env, plans: [{ id: 'a' }] }, (p, o) => {
+    if (o.schema && o.label.startsWith('detective')) required[o.label] = o.schema.required
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    if (o.label === 'detective-ant:a:check') return { bugs: ['broken'], plan: 'p', ownCommits: 1 }
+    if (o.label.startsWith('detective')) return { fixed: [{ id: 'a#1', fixed: true }], bugs: [] }
+    return {}
+  })
+  assert.deepEqual(required, { 'detective-ant:a:check': ['bugs', 'ownCommits'], 'detective-ant:a:recheck1': ['bugs', 'fixed'] })
+})
+
+test('build: the stage\'s own logbook clerk is retried once, and a second death gives the entries back', async () => {
+  let n = 0
+  const flaky = await run('ishikari-build.js', { env, plans: [{ id: 'a' }] }, (p, o) => {
+    if (o.label === 'logbook-clerk') { n++; if (n === 1) throw new Error('down') ; return {} }
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    return { bugs: [] }
+  })
+  assert.equal(n, 2)
+  assert.equal(flaky.out.logLost, undefined)
+  const dead = await run('ishikari-build.js', { env, plans: [{ id: 'a' }] }, (p, o) => {
+    if (o.label === 'logbook-clerk') return null
+    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
+    return { bugs: [] }
+  })
+  assert.deepEqual(dead.out.logLost.map(e => e.event), ['awaiting review'])
+})
+
+test('finish: a failed check with no text output is still a bug the build stage takes', async () => {
+  const { out } = await finishRun({ approved: [T('a')], env: { ...env, checkCommand: 'make' } }, o =>
+    o.label === 'merger-ant' ? { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+      : o.label === 'finisher-ant' ? { moved: true, reason: '', check: { ran: true, ok: false, output: 137 } } : null)
+  assert.deepEqual(out.checkFix, { task: 'check-fix', bug: '137' })
+})
+
+test('every script refuses a run id that could name another folder', async () => {
+  const args = { 'ishikari-plan.js': { task: 't', ids: ['B1'], plans: [PLAN] }, 'ishikari-build.js': { plans: [{ id: 'a' }] }, 'ishikari-finish.js': { approved: [T('a')] }, 'ishikari-retro.js': {} }
+  for (const [name, more] of Object.entries(args)) for (const bad of ['..', '.', '-x', '.git']) {
+    const { out } = await run(name, { env: { ...env, run: bad }, ...more }, () => ({}))
+    assert.equal(out.stage, 'error', `${name} ${bad}`)
+  }
+})
