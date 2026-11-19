@@ -47,31 +47,11 @@ Dark theme
   - Did we miss anything?
   - Review and uncover any gaps
 ** Import @file
-* UI/UX, GUI, Web UI
-** Review the repo's UI
-- Review this whole repo
-- Are there any improvements that can be made?
-- Polish the UI
-- Refer: https://lawsofux.com/
-- Comfort over dense.
-- Help should be available inside app
-- Must have multi window and tabs support.
-- Must be cross-platform: MacOS and Linux
-** Polish the UI/UX
-I like what we have now. But It needs a bit more polish.
+
 ** Redesign
 I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
 ** [[../skills/redesign-gui/SKILL.md][Redesign full]]
 ** [[auto_install_git_hook.org][Auto-Install Git Hook]]
-* CLI
-** Review the CLI
-Are there any improvements that can be made?
-
-Refer:
-
-- https://clig.dev/
-- https://github.com/cli-guidelines/cli-guidelines
-- https://github.com/cli-guidelines/cli-guidelines/blob/main/content/_index.md
 
 * Review
 ** Review the gui app visually
@@ -101,15 +81,6 @@ Read the [[file:~/repos/agent1/requirements/index.org][Requirements]] throughly 
   - Simplicity and Ease of Use
   - Conclusion
 ** Critic this project fast and suggest me a quick improvement or fix.
-* Documentation
-** [[../skills/docs/SKILL.md][Create docs]]
-** Session Reconcile the existing docs
-Based on the current session do the following,
-
-- Remove stale docs and Reconcile docs and codebase.
-- If you learned anything new, update the docs.
-- Update training data if any.
-- Keep the documentation minimal and unique. No duplicate information.
 
 * Performance
 ** Make performance improvements to the project.
