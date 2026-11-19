@@ -105,12 +105,13 @@ const COMBINE = {
 // ---- paths: computed here, never taken from what an ant says ----
 const branchOf = id => `ishikari/${env.run}/${id}`
 const treeOf = branch => `${env.state}/worktrees/${branch.replace(/\//g, '__')}`
+const runOf = branch => String(branch).split('/')[1] || env.run
 const planOf = branch => {
   const m = branch.match(/^ishikari\/([^/]+)\/([^/]+)$/)
   return m ? `${env.state}/plans/${m[1]}/${m[2]}.md` : '(no plan file)'
 }
-// The specs sit beside the plan, in that run's plans folder.
-const specOf = (task, name) => task.plan.startsWith('/') ? task.plan.replace(/[^/]*$/, name) : `(no ${name})`
+// The specs sit in that run's plans folder, independent of the plan file.
+const specOf = (task, name) => `${env.state}/plans/${runOf(task.branch)}/${name}`
 const designOf = task => specOf(task, 'tech_spec.md')
 const productOf = task => specOf(task, 'product_spec.md')
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
@@ -174,19 +175,22 @@ let logWriter = null
 const logNow = entries => {
   logQueue.push(...entries)
   if (!logWriter) logWriter = (async () => {
-    while (logQueue.length) {
-      const batch = logQueue.splice(0)
-      // A dead clerk is retried once; entries still lost go into the result.
-      const write = () => agent(
-        `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+    try {
+      while (logQueue.length) {
+        const batch = logQueue.splice(0)
+        // A dead clerk is retried once; entries still lost go into the result.
+        const write = () => agent(
+          `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(batch)}
+${JSON.stringify(batch).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`,
-        { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-      ).catch(() => null)
-      if ((await write()) == null && (await write()) == null) logLost.push(...batch)
+          { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+        ).catch(() => null)
+        if ((await write()) == null && (await write()) == null) logLost.push(...batch)
+      }
+    } finally {
+      logWriter = null
     }
-    logWriter = null
   })()
 }
 async function ant(prompt, opts) {
@@ -208,7 +212,9 @@ function work(task, job, phase, step) {
 decide on your own and go as far as you can.
 ${where}
 Your worktree is ${task.tree} on branch ${task.branch}.
-If that worktree exists, use it. Else, if the branch exists, run
+Run \`git -C ${env.repo} worktree prune\` first. If that worktree exists and is valid, use it;
+if it exists but is broken, remove it with \`rm -rf ${task.tree}\`.
+Else, if the branch exists, run
 \`git -C ${env.repo} worktree add ${task.tree} ${task.branch}\`. Else run
 \`git -C ${env.repo} worktree add -b ${task.branch} ${task.tree} ${start}\`${more.length ? `, then merge ${more.join(' and ')} into it` : ''}.
 Never reset, rebase or recreate an existing branch: it holds earlier work.
@@ -394,6 +400,7 @@ const problems = {}
 for (const p of plans) {
   const id = String(p.id || '')
   const task = makeTask(id, branchOf(id), {
+    plan: p.file === null ? '(no plan file)' : (p.file || planOf(branchOf(id))),
     after: Array.isArray(p.after) ? p.after.map(String) : [],
     workflow: p.workflow || null,
   })
@@ -590,7 +597,7 @@ then run \`git -C ${env.repo} worktree add -b ${branch} ${tree} ${env.main}\`.
 Add each task's own commits on top, in a straight line with no merge commits,
 one task at a time, in this order:
 ${list.map(t => `- ${t.id}: ${t.branch}`).join('\n')}
-For each, run \`git cherry-pick --empty=drop $(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>)\`
+For each, run \`commits=$(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>); if [ -n "$commits" ]; then git cherry-pick --empty=drop $commits; fi\`
 inside the worktree. If it conflicts, run \`git cherry-pick --abort\`, reset the
 scratch branch to where it was before this task, report "conflict" with the files
 and the ids of the tasks it clashes with, and go on to the next one.
@@ -679,7 +686,7 @@ if (entries.length) {
   const clerk = await agent(
     `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries)}
+${JSON.stringify(entries).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`,
     { label: 'logbook-clerk', phase: 'Logbook', model: MODEL, effort: EFFORT.clerk },
   ).catch(() => null)

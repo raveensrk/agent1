@@ -25,7 +25,7 @@ Part 1: investigate
    They read only, change nothing, never open or quote secrets (passwords,
    keys, tokens, ~/.ssh, keychains, .env, credential files, browser profiles).
    A fact about a user interface (GUI, CLI or TUI): tell the researcher to use
-   the `/ux` skill in review mode, never plan mode.
+   the `/ux` skill in review mode (or inspect UI code and docs directly if `/ux` is unavailable), never plan mode.
 3. Ask nothing the repo, the research or an earlier answer settles, and never
    the same question twice. Answers come back as JSON [{question, answer}]. Ask
    at most 8 questions in all, both parts together; past that, take the

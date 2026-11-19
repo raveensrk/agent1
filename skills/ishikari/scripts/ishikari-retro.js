@@ -47,7 +47,7 @@ const logNow = async entries => {
   const write = () => agent(
     `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries)}
+${JSON.stringify(entries).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`,
     { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
   ).catch(() => null)

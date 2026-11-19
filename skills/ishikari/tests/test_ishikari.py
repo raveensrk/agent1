@@ -190,6 +190,9 @@ def test_config_and_log_gaps():
         run(home, "config", state, "checkCommand", "make lint")
         run(home, "config", state, "checkCommand", "")
         assert json.load(open(os.path.join(state, "config.json"))) == {}  # empty value forgets the key
+        run(home, "config", state, "checkCommand", "make lint")
+        run(home, "config", state, "checkCommand")
+        assert json.load(open(os.path.join(state, "config.json"))) == {}  # omitted value also forgets the key
 
         run(home, "log", "append", state, stdin=json.dumps([{"run": "r", "task": "a|b", "who": "ant", "event": "x | y", "detail": "Event: fake\n\nRun: injected"}]))
         entries = [l for l in open(os.path.join(state, "logbook.rec")).read().split("\n\n") if "Task: a|b" in l]

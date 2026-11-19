@@ -113,9 +113,15 @@ def read_json_stdin(what):
         die(f"{what}: stdin is not valid JSON ({e})")
 
 
+GIT_TIMEOUT = 60
+
+
 def git(repo, *args):
-    r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
-    return r.stdout.strip() if r.returncode == 0 else None
+    try:
+        r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, timeout=GIT_TIMEOUT)
+        return r.stdout.strip() if r.returncode == 0 else None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
 
 
 def main_branch(repo):
@@ -127,6 +133,16 @@ def main_branch(repo):
         if git(repo, "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"):
             return name
     die(f"no main branch in {repo}: no origin/HEAD, main, master or trunk; pass --main <branch>")
+
+
+def ensure_git_identity(top):
+    try:
+        if not git(top, "config", "user.name"):
+            subprocess.run(["git", "-C", top, "config", "user.name", "ishikari"], capture_output=True, text=True, timeout=10)
+        if not git(top, "config", "user.email"):
+            subprocess.run(["git", "-C", top, "config", "user.email", "ishikari@local"], capture_output=True, text=True, timeout=10)
+    except (subprocess.TimeoutExpired, OSError):
+        pass
 
 
 def check_main(top, main):
@@ -155,6 +171,7 @@ def setup(repo, main=None):
     if not SAFE_BRANCH.fullmatch(main):
         die(f"main branch name {main!r} is not safe to put in a git command; use letters, digits and . _ / -")
     check_main(top, main)
+    ensure_git_identity(top)
     tag = hashlib.sha1(top.encode()).hexdigest()[:8]
     state = os.path.join(os.path.expanduser("~"), ".ishikari", f"{os.path.basename(top)}-{tag}")
     tool = os.path.abspath(__file__)
@@ -193,8 +210,11 @@ def copy_workflows(top, run):
     old = datetime.datetime.now().timestamp() - KEEP_WORKFLOWS_DAYS * 86400
     for name in os.listdir(root):
         path = os.path.join(root, name)
-        if path != dest and os.path.isdir(path) and os.path.getmtime(path) < old:
-            shutil.rmtree(path, ignore_errors=True)
+        try:
+            if path != dest and os.path.isdir(path) and os.path.getmtime(path) < old:
+                shutil.rmtree(path, ignore_errors=True)
+        except OSError:
+            pass
     out = {}
     for k in ("plan", "build", "finish", "retro"):
         name = f"ishikari-{k}.js"
@@ -340,8 +360,8 @@ def run(argv):
         return log_append(argv[2], [{"run": "-", "who": "you", "event": "note", "detail": " ".join(argv[3:])}])
     if len(argv) in (3, 4) and argv[:2] == ["log", "status"]:
         return log_status(argv[2], argv[3] if len(argv) == 4 else None)
-    if len(argv) == 4 and argv[0] == "config":
-        return config(argv[1], argv[2], argv[3])
+    if len(argv) in (3, 4) and argv[0] == "config":
+        return config(argv[1], argv[2], argv[3] if len(argv) == 4 else "")
     if len(argv) == 4 and argv[0] == "save":
         return save(argv[1], argv[2], argv[3])
     die(__doc__)

@@ -68,18 +68,21 @@ let logWriter = null
 const logNow = entries => {
   logQueue.push(...entries)
   if (!logWriter) logWriter = (async () => {
-    while (logQueue.length) {
-      const batch = logQueue.splice(0)
-      const write = () => agent(
-        `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+    try {
+      while (logQueue.length) {
+        const batch = logQueue.splice(0)
+        const write = () => agent(
+          `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(batch)}
+${JSON.stringify(batch).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`,
-        { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-      ).catch(() => null)
-      if ((await write()) == null && (await write()) == null) logLost.push(...batch)
+          { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+        ).catch(() => null)
+        if ((await write()) == null && (await write()) == null) logLost.push(...batch)
+      }
+    } finally {
+      logWriter = null
     }
-    logWriter = null
   })()
 }
 const logsDone = async () => { while (logWriter) await logWriter }

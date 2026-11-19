@@ -122,19 +122,22 @@ let logWriter = null
 const logNow = entries => {
   logQueue.push(...entries)
   if (!logWriter) logWriter = (async () => {
-    while (logQueue.length) {
-      const batch = logQueue.splice(0)
-      // A dead clerk is retried once; entries still lost go into the result.
-      const write = () => agent(
-        `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+    try {
+      while (logQueue.length) {
+        const batch = logQueue.splice(0)
+        // A dead clerk is retried once; entries still lost go into the result.
+        const write = () => agent(
+          `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(batch)}
+${JSON.stringify(batch).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`,
-        { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-      ).catch(() => null)
-      if ((await write()) == null && (await write()) == null) logLost.push(...batch)
+          { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+        ).catch(() => null)
+        if ((await write()) == null && (await write()) == null) logLost.push(...batch)
+      }
+    } finally {
+      logWriter = null
     }
-    logWriter = null
   })()
 }
 async function ant(prompt, opts) {
@@ -243,7 +246,7 @@ ${env.main} when ${earlier.length ? `its id is one of ${earlier.join(', ')} (an 
 \`git -C ${env.repo} cherry ${env.main} <its branch>\` succeeds and prints no line starting with "+".
 If a needed task was not merged here and is not already in ${env.main}, skip the
 task and report it as "blocked".
-For each, run \`git cherry-pick --empty=drop $(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>)\`
+For each, run \`commits=$(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>); if [ -n "$commits" ]; then git cherry-pick --empty=drop $commits; fi\`
 inside the worktree. If it conflicts, run \`git cherry-pick --abort\`, reset the
 scratch branch to where it was before this task, and report "conflict" with the files.
 After all merges, ${tests} once inside ${scratchTree}. If they fail, find the first
@@ -562,7 +565,7 @@ const rowsIf = moved => [
 ]
 const write = rows => rows.length
   ? `python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(rows)}
+${JSON.stringify(rows).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'
 const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(docsKept ? [] : [docsBranch]), ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
@@ -596,9 +599,8 @@ ${where}
      moved to false and say why. Never reset, stash or discard anything.` : `Nothing was merged: leave ${env.main} alone (moved: false, reason: "nothing merged").`}
 2. Only if step 1 moved ${env.main}, or nothing was merged: remove these worktrees and
    branches if they exist, with \`git -C ${env.repo} worktree remove --force <worktree>\`
-   and \`git -C ${env.repo} branch -D <branch>\`. Each worktree is under
-   ${env.state}/worktrees, named after its branch with "/" turned into "__".
-${remove.map(b => `   - ${b}`).join('\n')}
+   and \`git -C ${env.repo} branch -D <branch>\`:
+${remove.map(b => `   - ${b} (worktree: ${treeOf(b)})`).join('\n')}
 3. If step 1 moved ${env.main}, or nothing was merged, run:
 ${write(rowsIf(true))}
    Otherwise run:

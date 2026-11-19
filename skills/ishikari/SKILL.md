@@ -51,11 +51,13 @@ inside the working directory, so the Workflow tool may load them by
 - Ants live only for their task. An ant started with the Agent tool is stopped
   with TaskStop the moment its task is done, failed or abandoned. Workflow ants
   end when their `agent()` call returns, so they need no stop.
-- Ask every question with the `/ask-simple` skill, and only in step 2. Never
+- Ask every question with the `/ask-simple` skill, and only in step 2 (if
+  `/ask-simple` is unavailable, ask directly in chat format). Never
   answer for the user. Never edit the product spec, the tech spec or a
   plan yourself: the investigator writes them.
 - Every ant runs on Opus at low effort, but one: the investigator, the one
-  ant the whole run stands on, runs on Fable at max effort.
+  ant the whole run stands on, runs on Fable at max effort (fallback: latest
+  Opus at max effort).
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
 - Never edit code, the logbook or branches yourself. Ants and
@@ -131,7 +133,7 @@ it, say so and stop; there is no other way to plan.
 ### 2a. Investigate
 
 1. Start ONE investigator with the Agent tool (general-purpose, model `fable`,
-   effort `max`). Its prompt is
+   effort `max`; fallback: latest Opus at `max` effort). Its prompt is
    [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
    inputs: `env.repo`, `env.main`, `env.state`, the task, the plans folder
    `<env.state>/plans/<env.run>/`, and `env.testCommand` and `env.checkCommand`
@@ -141,7 +143,7 @@ it, say so and stop; there is no other way to plan.
    `Also consider the cleanup plan at <file>.` The investigator decides whether
    to ask about it; never ask yourself.
 2. It replies with JSON. While `questions` is not empty, ask them all in one
-   `/ask-simple` call (up to 4), headed `Questions <n>-<m> of about <m +
+   `/ask-simple` call (up to 4; fallback: ask directly in chat format), headed `Questions <n>-<m> of about <m +
    remaining>`, `why` lines added when set. Send the answers back to the SAME
    agent with SendMessage, as JSON `[{"question", "answer"}]` (`''` if
    skipped). Never start a new investigator for an answer. This holds in both
@@ -182,14 +184,16 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
      `env.main` and `git -C <env.repo> status --porcelain
      --untracked-files=no` prints nothing; then
      `git -C <env.repo> merge --ff-only ishikari/<env.run>/fast`, remove the
-     worktree and delete the branch. Wrong branch, local changes or a refused
+     worktree (`git -C <env.repo> worktree remove --force <env.state>/worktrees/<env.run>-fast`)
+     and delete the branch (`git -C <env.repo> branch -D ishikari/<env.run>/fast`). Wrong branch, local changes or a refused
      fast-forward (main moved on): never force it; escalate (step 3).
    - Log it: pipe `[{"run": env.run, "who": "main session", "event": "fast
      path landed", "detail": "<sha>: <trivialWhy>"}]` into `python3 <env.tool>
      log append <env.state>`.
 3. Escalate when the work turns out bigger (more than 2 files, a design
    choice, more than one task) or a test or the check fails and a small fix
-   does not clear it: remove the worktree, delete the branch (the edits go),
+   does not clear it: remove the worktree (`git -C <env.repo> worktree remove --force <env.state>/worktrees/<env.run>-fast`),
+   delete the branch (`git -C <env.repo> branch -D ishikari/<env.run>/fast`, the edits go),
    and send the investigator `go on: a fast path was tried and given up:
    <why>`. Continue at 2c, passing `escalated: '<why>'` to the plan check. The
    run carries on without asking.
@@ -274,7 +278,8 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
     the score is its own call, not an average. Below 7: one fix round
     (worker, detective), then a second score. Still below 7: main moves
     anyway and `verdict.flagged` is true;
-  - last, the docs ant runs `/docs` in update mode on the final code, in its
+  - last, the docs ant runs `/docs` in update mode on the final code (or updates
+    the documentation directly if `/docs` is unavailable), in its
     own worktree; it lands only if the docs' own `build.sh check` (when
     present) and the tests pass and it changed docs only. No `docs/` or
     `doc/`: it changes nothing, since create mode needs the user. Dropped: its
