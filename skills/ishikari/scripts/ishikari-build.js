@@ -40,11 +40,12 @@ const plans = Array.isArray(args.plans) ? args.plans.filter(p => p && typeof p =
 const bugsIn = Array.isArray(args.bugs) ? args.bugs.filter(b => b && typeof b === 'object') : []
 
 const bad = []
-if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
-if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
-if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
-if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id like 20261117-0120')
-if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+// Paths, the branch and the commands go into shell commands inside the ants'
+// prompts: only safe characters are let through (ishikari.py setup checks too).
+for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
+if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
+if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
+for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 if (args.plans != null && !Array.isArray(args.plans)) bad.push('plans must be a list')
 if (args.bugs != null && !Array.isArray(args.bugs)) bad.push('bugs must be a list')
 if (!plans.length && !bugsIn.length) bad.push('nothing to build: plans and bugs are both empty')
@@ -166,19 +167,22 @@ const summarize = (kind, r) => {
 // One logbook clerk at a time: entries that arrive while it writes wait in
 // a queue, and the next clerk appends them all in one go as soon as it ends.
 const logQueue = []
+const logLost = []  // entries no clerk managed to append
 let logWriter = null
 const logNow = entries => {
   logQueue.push(...entries)
   if (!logWriter) logWriter = (async () => {
     while (logQueue.length) {
       const batch = logQueue.splice(0)
-      await agent(
+      // A dead clerk is retried once; entries still lost go into the result.
+      const write = () => agent(
         `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(batch)}
 ISHIKARI_ROWS_END`,
         { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
       ).catch(() => null)
+      if ((await write()) == null && (await write()) == null) logLost.push(...batch)
     }
     logWriter = null
   })()
@@ -670,8 +674,8 @@ ${JSON.stringify(entries)}
 ISHIKARI_ROWS_END`,
     { label: 'logbook-clerk', phase: 'Logbook', model: MODEL, effort: EFFORT.clerk },
   ).catch(() => null)
-  if (clerk == null) log('logbook append skipped: the logbook clerk died; the logbook misses this stage')
+  if (clerk == null) { logLost.push(...entries); log('logbook append skipped: the logbook clerk died; the logbook misses this stage') }
 }
 
 await logsDone()
-return { stage: 'build', tasks: all.map(t => t.result), together }
+return { stage: 'build', tasks: all.map(t => t.result), together, ...(logLost.length ? { logLost } : {}) }

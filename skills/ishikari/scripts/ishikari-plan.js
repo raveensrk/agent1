@@ -48,14 +48,16 @@ const EFFORT = { review: 'low', researcher: 'low', architect: 'low' }
 const MAX_RESEARCHERS = 5  // researcher ants at once
 const MAX_RESEARCH = 2     // research bursts per question
 
-const { env = {}, task } = args
+const { env = {} } = args
+const task = typeof args.task === 'string' ? args.task.trim() : ''
 const bad = []
-if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
-if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
+// Paths, the branch and the commands go into shell commands inside the ants'
+// prompts: only safe characters are let through (ishikari.py setup checks too).
+for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
 if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
-if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
-if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
-if (!task) bad.push('task is missing')
+if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
+for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
+if (!task) bad.push('task must be a non-empty text')
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
@@ -106,7 +108,9 @@ const PLANNED = {
     feasible: { type: 'boolean', description: 'false if the task cannot be built as the report asks; then write nothing and say why in blocker' },
     proof: { type: 'string', description: 'how it was shown buildable: repo code, docs or a throwaway spike' },
     blocker: { type: 'string', description: 'why it cannot be built; empty when feasible' },
+    reportFound: { type: 'boolean', description: 'true if the investigation report exists and you read it' },
     designWritten: { type: 'boolean', description: 'true once architecture.md is written' },
+    plansWritten: { type: 'boolean', description: 'true once every plan file is written' },
     plans: {
       type: 'array',
       items: {
@@ -122,7 +126,7 @@ const PLANNED = {
       },
     },
   },
-  required: ['feasible', 'proof', 'designWritten', 'plans'],
+  required: ['feasible', 'proof', 'reportFound', 'designWritten', 'plansWritten', 'plans'],
 }
 
 // A dead ant (null) is retried once.
@@ -150,36 +154,40 @@ const summarize = r => {
 // One logbook clerk at a time: entries that arrive while it writes wait in
 // a queue, and the next clerk appends them all in one go as soon as it ends.
 const logQueue = []
+const logLost = []  // entries no clerk managed to append
 let logWriter = null
 const logNow = entries => {
   logQueue.push(...entries)
   if (!logWriter) logWriter = (async () => {
     while (logQueue.length) {
       const batch = logQueue.splice(0)
-      await agent(
+      // A dead clerk is retried once; entries still lost go into the result.
+      const write = () => agent(
         `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(batch)}
 ISHIKARI_ROWS_END`,
         { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
       ).catch(() => null)
+      if ((await write()) == null && (await write()) == null) logLost.push(...batch)
     }
     logWriter = null
   })()
 }
 async function ant(prompt, opts) {
-  const r = await agent(prompt, { ...opts, model: MODEL })
+  // A call that throws is a dead ant: it is retried, never a crashed stage.
+  const r = await agent(prompt, { ...opts, model: MODEL }).catch(() => null)
   const kind = String(opts.label).split(':')[0]
   logNow([{ run: env.run, who: kind.replace('-ant', ' ant'), event: summarize(r),
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
 }
 const logsDone = async () => { while (logWriter) await logWriter }
-const done = async result => { await logsDone(); return result }
+const done = async result => { await logsDone(); return logLost.length ? { ...result, logLost } : result }
 
 // ---- review: one question per run, research when facts are missing ----
 const list = v => Array.isArray(v) ? v : []
-const answered = list(args.answered).filter(q => q && typeof q === 'object').map(q => ({ ...q, answer: String(q.answer || '').trim() }))
+const answered = list(args.answered).filter(q => q && typeof q === 'object' && typeof q.question === 'string' && q.question.trim()).map(q => ({ ...q, answer: String(q.answer || '').trim() }))
 const findings = list(args.findings).map(String)
 const asked = answered.length
   ? `Questions asked so far, with the user's answers:\n${answered.map(q => `- ${q.question} -> ${q.answer || '(skipped: use the recommended answer)'}`).join('\n')}\n`
@@ -275,7 +283,8 @@ const out = await twice(() => ant(
 ${where}
 Task: ${task}
 Read the investigation report ${reportFile} first. Where the report and your
-own idea differ, the report wins.
+own idea differ, the report wins. If that file does not exist, set reportFound
+to false, write nothing and stop.
 ${escalatedNote}0. Prove it can be built, before designing: show it with evidence from the
    repo's code and docs. Only if that is not enough, write a throwaway spike in a
    temporary folder outside the repo, and delete it after. Give the evidence in
@@ -301,6 +310,7 @@ ${escalatedNote}0. Prove it can be built, before designing: show it with evidenc
   { label: 'architect-ant', phase: 'Design', effort: EFFORT.architect, schema: PLANNED },
 ))
 if (!out || typeof out.feasible !== 'boolean') return done({ stage: 'error', reason: 'the architect ant died twice or gave no feasible verdict' })
+if (out.reportFound === false) return done({ stage: 'error', reason: `the architect ant found no investigation report at ${reportFile}` })
 if (!out.feasible) return done({ stage: 'blocked', reason: `the architect ant proved it cannot be built: ${String(out.blocker || out.proof || 'no reason given')}`, review })
 if (!Array.isArray(out.plans)) return done({ stage: 'error', reason: 'the architect ant returned no plan list' })
 // Normalise what the ant gave, so the checks below never trip on its shape:
@@ -310,7 +320,8 @@ out.plans = out.plans.filter(p => p && typeof p === 'object').map(p => ({
   ...p, id: String(p.id || ''), title: String(p.title || ''),
   files: [...new Set(list(p.files).map(norm))], after: list(p.after).map(String),
 }))
-if (!out.designWritten) return done({ stage: 'error', reason: `the architect ant did not write ${designFile}` })
+if (out.designWritten !== true) return done({ stage: 'error', reason: `the architect ant did not write ${designFile}` })
+if (out.plansWritten !== true) return done({ stage: 'error', reason: `the architect ant did not write every plan file in ${planDir}` })
 
 // ---- check the plans before anyone builds them ----
 const problems = []
@@ -318,11 +329,17 @@ const ids = new Set()
 for (const p of out.plans) {
   if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(p.id)) problems.push(`bad id "${p.id}"`)
   if (!p.files.length) problems.push(`${p.id}: lists no files`)
+  const badFiles = p.files.filter(f => !f || f.startsWith('/') || f.split('/').includes('..'))
+  if (badFiles.length) problems.push(`${p.id}: files must be paths inside the repo, not "${badFiles[0]}"`)
+  if (p.workflow != null && typeof p.workflow !== 'string') problems.push(`${p.id}: workflow must be a name`)
   if (ids.has(p.id)) problems.push(`two plans have the id "${p.id}"`)
   ids.add(p.id)
 }
 for (const p of out.plans) {
-  for (const d of p.after) if (!ids.has(d) || d === p.id) problems.push(`${p.id}: after names unknown plan "${d}"`)
+  for (const d of p.after) {
+    if (d === p.id) problems.push(`${p.id}: after names itself`)
+    else if (!ids.has(d)) problems.push(`${p.id}: after names unknown plan "${d}"`)
+  }
 }
 const byId = new Map(out.plans.map(p => [p.id, p]))
 const seen = new Map()

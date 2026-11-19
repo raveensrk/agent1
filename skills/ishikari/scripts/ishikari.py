@@ -9,17 +9,25 @@ so no entry is lost and the file stays a valid recfile.
       Make the state folder for <repo> and print the run's env as JSON:
       {repo, state, run, main, tool, workflows}, plus
       testCommand and checkCommand once they are saved. workflows holds the paths of the
-      plan, build and finish scripts, copied into <repo>/.git/ishikari/,
-      inside the working directory, where the Workflow tool may load them.
+      plan, build, finish and retro scripts, copied into
+      <repo>/.git/ishikari/workflows/<run>/, inside the working directory,
+      where the Workflow tool may load them; each run has its own copy.
       Everything else Ishikari keeps (logbook, plans, worktrees, config)
       lives in the state folder, outside the repo, so none of it is ever
       committed. The main branch is origin/HEAD, else main, master or
       trunk; pass --main when none exists. The repo must be checked out
-      on it with no uncommitted changes.
+      on it with no uncommitted changes. Paths go into shell commands the
+      ants run, so the repo, state and tool paths may hold only letters,
+      digits and . _ / + - ; anything else is refused.
 
   ishikari.py config <state> <key> <value>
       Save testCommand or checkCommand for this repo; setup prints them
-      in env from then on. An empty value forgets the key.
+      in env from then on. An empty value forgets the key. A value with a
+      line break or a backtick is refused.
+
+  ishikari.py save <state> <run> <stage>        a result as JSON on stdin
+      Keep one workflow result for the retrospective ant, as
+      <state>/plans/<run>/<stage>-<n>.json, numbered per stage from 1.
 
   ishikari.py log append <state>                entries as JSON on stdin
       Append entries to <state>/logbook.rec, a GNU recfile (read it with
@@ -32,6 +40,7 @@ so no entry is lost and the file stays a valid recfile.
 
   ishikari.py log status <state> [<run>]
       Print each task's latest event, oldest first, for one run or all.
+      Entries with no task (planning, upkeep) show as <run>/(<who>).
 """
 
 import contextlib
@@ -40,6 +49,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import secrets
 import subprocess
@@ -55,6 +65,11 @@ LOG_HEAD = """# Ishikari logbook: one entry per event, append only.
 %type: Time date
 """
 CONFIG_KEYS = ("testCommand", "checkCommand")
+SAFE_PATH = re.compile(r"/[A-Za-z0-9._/+-]+")
+SAFE_BRANCH = re.compile(r"[A-Za-z0-9._][A-Za-z0-9._/-]*")
+RUN_ID = re.compile(r"[A-Za-z0-9._-]+")
+STAGE = re.compile(r"[a-z][a-z-]{0,20}")
+KEEP_WORKFLOWS_DAYS = 7
 
 
 def die(msg):
@@ -137,32 +152,49 @@ def setup(repo, main=None):
     if common and os.path.basename(common) == ".git":
         top = os.path.realpath(os.path.dirname(common))  # a linked worktree: use the main checkout
     main = main or main_branch(top)
+    if not SAFE_BRANCH.fullmatch(main):
+        die(f"main branch name {main!r} is not safe to put in a git command; use letters, digits and . _ / -")
     check_main(top, main)
     tag = hashlib.sha1(top.encode()).hexdigest()[:8]
     state = os.path.join(os.path.expanduser("~"), ".ishikari", f"{os.path.basename(top)}-{tag}")
+    tool = os.path.abspath(__file__)
+    # These paths go unquoted into shell commands the ants run.
+    for what, path in (("repo", top), ("state folder", state), ("tool", tool)):
+        if not SAFE_PATH.fullmatch(path):
+            die(f"the {what} path {path!r} has a space or a character the ants' shell commands "
+                "cannot carry; use only letters, digits and . _ / + - (move or rename it)")
     for sub in ("plans", "worktrees"):
         os.makedirs(os.path.join(state, sub), exist_ok=True)
     book = os.path.join(state, LOGBOOK)
     with locked(book):
         if not os.path.exists(book):
             write_atomic(book, LOG_HEAD)
+    run = run_id()
     env = {
         "repo": top,
         "state": state,
-        "run": run_id(),
+        "run": run,
         "main": main,
-        "tool": os.path.abspath(__file__),
-        "workflows": copy_workflows(top),
+        "tool": tool,
+        "workflows": copy_workflows(top, run),
     }
     env.update(read_config(state))
     print(json.dumps(env, indent=2))
 
 
-def copy_workflows(top):
-    """Copy the scripts under .git: inside the working directory, never committed."""
+def copy_workflows(top, run):
+    """Copy the scripts under .git: inside the working directory, never committed.
+    Each run gets its own copy, so a later setup never swaps the scripts under a
+    running workflow. Copies older than KEEP_WORKFLOWS_DAYS are removed."""
     common = git(top, "rev-parse", "--path-format=absolute", "--git-common-dir") or die(f"no git dir in {top}")
-    dest = os.path.join(common, "ishikari", "workflows")
+    root = os.path.join(common, "ishikari", "workflows")
+    dest = os.path.join(root, run)
     os.makedirs(dest, exist_ok=True)
+    old = datetime.datetime.now().timestamp() - KEEP_WORKFLOWS_DAYS * 86400
+    for name in os.listdir(root):
+        path = os.path.join(root, name)
+        if path != dest and os.path.isdir(path) and os.path.getmtime(path) < old:
+            shutil.rmtree(path, ignore_errors=True)
     out = {}
     for k in ("plan", "build", "finish", "retro"):
         name = f"ishikari-{k}.js"
@@ -180,7 +212,9 @@ def read_config(state):
         data = json.load(open(config_path(state)))
     except (OSError, ValueError):
         return {}
-    return {k: v for k, v in data.items() if k in CONFIG_KEYS and v}
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items() if k in CONFIG_KEYS and isinstance(v, str) and v}
 
 
 def config(state, key, value):
@@ -188,6 +222,8 @@ def config(state, key, value):
         die(f"unknown key {key}; use one of {', '.join(CONFIG_KEYS)}")
     if not os.path.isdir(state):
         die(f"missing {state}; run setup first")
+    if "\n" in value or "\r" in value or "`" in value:
+        die(f"{key} must be one line with no backtick: it goes inside the ants' prompts")
     data = read_config(state)
     if value:
         data[key] = value
@@ -195,6 +231,24 @@ def config(state, key, value):
         data.pop(key, None)
     write_atomic(config_path(state), json.dumps(data, indent=2))
     print(json.dumps(data))
+
+
+def save(state, run, stage):
+    """Keep one workflow result for the retrospective ant."""
+    if not os.path.isdir(os.path.join(state, "plans")):
+        die(f"missing {state}/plans; run setup first")
+    if not RUN_ID.fullmatch(run):
+        die(f"bad run id {run!r}")
+    if not STAGE.fullmatch(stage):
+        die(f"bad stage {stage!r}; use a short lowercase name like plan, build, finish or investigate")
+    data = read_json_stdin("save")
+    folder = os.path.join(state, "plans", run)
+    os.makedirs(folder, exist_ok=True)
+    with locked(folder):
+        taken = [int(m.group(1)) for m in (re.fullmatch(re.escape(stage) + r"-(\d+)\.json", n) for n in os.listdir(folder)) if m]
+        path = os.path.join(folder, f"{stage}-{max(taken, default=0) + 1}.json")
+        write_atomic(path, json.dumps(data, indent=2) + "\n")
+    print(path)
 
 
 def rec_value(value):
@@ -257,11 +311,12 @@ def log_read(state):
 def log_status(state, run=None):
     latest = {}
     for e in log_read(state):
-        if e.get("Task") and (run is None or e.get("Run") == run):
-            latest[(e.get("Run"), e["Task"])] = e
+        if run is None or e.get("Run") == run:
+            # No task (planning, upkeep): the latest entry of each ant stands for it.
+            latest[(e.get("Run"), e.get("Task") or f"({e.get('Who', '?')})")] = e
     rows = [(f"{k[0]}/{k[1]}", e.get("Event", ""), e.get("Who", ""), e.get("Time", "")) for k, e in latest.items()]
     if not rows:
-        print("no tasks in the logbook" + (f" for run {run}" if run else ""))
+        print("nothing in the logbook" + (f" for run {run}" if run else ""))
         return
     widths = [max(len(r[i]) for r in rows) for i in range(4)]
     for r in rows:
@@ -287,6 +342,8 @@ def run(argv):
         return log_status(argv[2], argv[3] if len(argv) == 4 else None)
     if len(argv) == 4 and argv[0] == "config":
         return config(argv[1], argv[2], argv[3])
+    if len(argv) == 4 and argv[0] == "save":
+        return save(argv[1], argv[2], argv[3])
     die(__doc__)
 
 

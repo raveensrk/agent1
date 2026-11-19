@@ -196,6 +196,47 @@ def test_config_and_log_gaps():
         assert len(entries) == 1 and "+ -" not in entries[0] and "Run: injected" not in entries[0].replace("+ Run: injected", "")  # a newline never starts a new field
 
 
+def test_hardening():
+    with tempfile.TemporaryDirectory() as home:
+        repo = make_repo(home)
+        env = json.loads(run(home, "setup", repo))
+        state = env["state"]
+        # each run has its own copy of the scripts, so a later setup swaps nothing
+        second = json.loads(run(home, "setup", repo))
+        assert env["workflows"]["plan"] != second["workflows"]["plan"]
+        assert os.path.isfile(env["workflows"]["plan"]) and f"/{env['run']}/" in env["workflows"]["plan"]
+
+        # save: numbered per stage, folder made, bad input refused
+        first = run(home, "save", state, "r1", "build", stdin='{"stage": "build"}').strip()
+        assert first == os.path.join(state, "plans", "r1", "build-1.json") and json.load(open(first)) == {"stage": "build"}
+        assert run(home, "save", state, "r1", "build", stdin="[]").strip().endswith("build-2.json")
+        assert run(home, "save", state, "r1", "plan", stdin="{}").strip().endswith("plan-1.json")
+        assert "not valid JSON" in fails(home, "save", state, "r1", "plan", stdin="{oops")
+        assert "bad run id" in fails(home, "save", state, "../x", "plan", stdin="{}")
+        assert "bad stage" in fails(home, "save", state, "r1", "Plan 1", stdin="{}")
+
+        # a planning-only run still shows in log status
+        run(home, "log", "append", state, stdin=json.dumps([{"run": "p1", "who": "architect ant", "event": "not buildable"}]))
+        assert "p1/(architect ant)  not buildable" in run(home, "log", "status", state, "p1")
+        assert "nothing in the logbook for run zz" in run(home, "log", "status", state, "zz")
+
+        # config: no line break or backtick, and a broken file is not a crash
+        assert "one line" in fails(home, "config", state, "testCommand", "make test\nrm -rf x")
+        assert "one line" in fails(home, "config", state, "checkCommand", "echo `id`")
+        open(os.path.join(state, "config.json"), "w").write("[1, 2]")
+        assert "testCommand" not in json.loads(run(home, "setup", repo))
+        run(home, "config", state, "testCommand", "make test")
+
+        # paths the ants' shell commands cannot carry are refused, with the reason
+        spaced = os.path.join(home, "my app")
+        os.makedirs(spaced)
+        git_in(spaced, "init", "-q", "-b", "main")
+        git_in(spaced, "commit", "-q", "--allow-empty", "-m", "init")
+        assert "has a space or a character" in fails(home, "setup", spaced)
+        git_in(repo, "branch", "we;ird")
+        assert "not safe" in fails(home, "setup", repo, "--main", "we;ird")
+
+
 def metro_texts(path):
     """Every visible label of the map: [{s, x, y, size, weight, anchor}], and W, H."""
     root = ET.parse(path).getroot()
@@ -316,6 +357,7 @@ if __name__ == "__main__":
     test_parallel_writers()
     test_main_branch_and_run_id()
     test_config_and_log_gaps()
+    test_hardening()
     test_metro_map()
     test_docs_match_build()
     print("ok")

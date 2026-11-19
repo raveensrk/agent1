@@ -17,7 +17,9 @@ export const meta = {
 // findings are ranked, costliest first: { category, title, evidence, impact, change, where }.
 //
 // Read only: the ant changes no code, branch, logbook entry or repo file. Its one
-// write is retrospective.md in the run's plans folder, outside the repo.
+// write is retrospective.md in the run's plans folder, outside the repo. That is
+// checked, not only asked: the ant takes a digest of the repo's refs and
+// worktrees before and after, and a difference is a stage error.
 
 // For now every ant runs on the latest Opus at low effort.
 const MODEL = 'opus'
@@ -26,11 +28,12 @@ const CATEGORIES = ['bug', 'error', 'inefficiency', 'gap', 'missing', 'improveme
 
 const { env = {}, outcome = '' } = args
 const bad = []
-if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
-if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
-if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
+// Paths, the branch and the commands go into shell commands inside the ants'
+// prompts: only safe characters are let through (ishikari.py setup checks too).
+for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
 if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
-if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
+for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const planDir = `${env.state}/plans/${env.run}`
@@ -39,18 +42,26 @@ const skill = env.tool.replace(/\/scripts\/[^/]+$/, '')
 
 // One logbook entry for the ant, appended the moment it replies; a failed
 // append never blocks or fails the run.
-const logNow = entries => agent(
-  `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
+const logLost = []
+const logNow = async entries => {
+  const write = () => agent(
+    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(entries)}
 ISHIKARI_ROWS_END`,
-  { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-).catch(() => null)
+    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
+  ).catch(() => null)
+  if ((await write()) == null && (await write()) == null) logLost.push(...entries)
+}
+const out = r => logLost.length ? { ...r, logLost } : r
 
 const RETRO = {
   type: 'object',
   properties: {
     written: { type: 'boolean', description: `true once ${file} is written` },
+    lines: { type: 'integer', description: `line count of ${file} after you wrote it` },
+    before: { type: 'string', description: 'the digest taken before you read anything' },
+    after: { type: 'string', description: 'the same digest, taken after you wrote the report' },
     summary: { type: 'string', description: 'two or three lines: how the run went overall' },
     findings: {
       type: 'array',
@@ -69,7 +80,7 @@ const RETRO = {
       },
     },
   },
-  required: ['written', 'summary', 'findings'],
+  required: ['written', 'lines', 'before', 'after', 'summary', 'findings'],
 }
 
 phase('Retrospective')
@@ -79,14 +90,20 @@ report where it can improve. You judge the flow, not the repo's code: the judge
 and the janitor cover the code.
 Repo: ${env.repo} (main branch: ${env.main}). Run id: ${env.run}.
 Read only. Change no code, branch, worktree, logbook entry or repo file, and run
-no command that writes. Your one write is ${file}.
+no command that writes. Your one write is ${file}
+(make its folder if it is missing).
+First, before reading anything, take this digest and return its output as "before":
+\`{ git -C ${env.repo} for-each-ref; git -C ${env.repo} worktree list --porcelain; git -C ${env.repo} status --porcelain; } | shasum\`
+After writing the report, run it again and return that as "after".
+Some of the files below may be missing (a run that stopped early has few):
+that is normal, and worth a finding only if the flow should have made them.
 Read:
 - this run's logbook entries: \`python3 ${env.tool} log status ${env.state} ${env.run}\` and
   the entries with Run: ${env.run} in ${env.state}/logbook.rec;
 - ${planDir}: investigation_report.md, architecture.md, the worker plans, any
   cleanup.md, and every stage result <stage>-<n>.json;
-- the run's git history: \`git -C ${env.repo} log --oneline ${env.main}\`, the
-  branches \`git -C ${env.repo} branch --list 'ishikari/${env.run}/*'\` and their commits;
+- the run's git history: the branches \`git -C ${env.repo} branch --list 'ishikari/${env.run}/*'\`
+  and their commits, and the last 30 commits of ${env.main} (\`git -C ${env.repo} log --oneline -30 ${env.main}\`);
 - Ishikari's own source, to name what to change: ${skill}/SKILL.md, ${skill}/scripts/,
   ${skill}/assets/prompts/ and ${skill}/design/index.md.
 Look for: bugs and errors in the flow, wasted or repeated ant calls, retries and
@@ -96,17 +113,21 @@ missing steps. Every finding needs evidence from this run; never guess.
 Write ${file}: a two or three line summary, then the findings ranked costliest
 first, each with category (${CATEGORIES.join(', ')}), title, evidence, impact,
 suggested change and where (file and rule). Nothing to improve: say so.
-Return the same findings.`
-let r = await agent(prompt, { label: 'retrospective-ant', phase: 'Retrospective', model: MODEL, effort: EFFORT.retrospective, schema: RETRO })
-if (r == null) r = await agent(prompt, { label: 'retrospective-ant', phase: 'Retrospective', model: MODEL, effort: EFFORT.retrospective, schema: RETRO })
-const ok = r && r.written === true && Array.isArray(r.findings)
-await logNow([{ run: env.run, who: 'retrospective ant', event: r == null ? 'died' : ok ? `${r.findings.length} finding${r.findings.length === 1 ? '' : 's'}` : 'no report',
+Return the same findings, and the report's line count as lines.`
+const ask = () => agent(prompt, { label: 'retrospective-ant', phase: 'Retrospective', model: MODEL, effort: EFFORT.retrospective, schema: RETRO }).catch(() => null)
+let r = await ask()
+if (r == null) r = await ask()
+const digest = x => typeof x === 'string' && /^[0-9a-f]{40}/.test(x.trim()) ? x.trim().slice(0, 40) : ''
+const touched = r != null && (!digest(r.before) || digest(r.before) !== digest(r.after))
+const ok = r && r.written === true && Number.isInteger(r.lines) && r.lines > 0 && Array.isArray(r.findings) && !touched
+await logNow([{ run: env.run, who: 'retrospective ant', event: r == null ? 'died' : touched ? 'repo changed' : ok ? `${r.findings.length} finding${r.findings.length === 1 ? '' : 's'}` : 'no report',
   ...(r != null ? { detail: String(r.summary || '').slice(0, 400) } : {}) }])
-if (r == null) return { stage: 'error', reason: 'the retrospective ant died twice' }
-if (!ok) return { stage: 'error', reason: `the retrospective ant did not write ${file} or gave no findings list` }
+if (r == null) return out({ stage: 'error', reason: 'the retrospective ant died twice' })
+if (touched) return out({ stage: 'error', reason: `the retrospective ant was to change nothing, but the repo's refs, worktrees or status differ before and after it (or it gave no digest). Check ${env.repo}; ${file} is not trusted.` })
+if (!ok) return out({ stage: 'error', reason: `the retrospective ant did not write ${file} or gave no findings list` })
 const findings = r.findings.filter(f => f && typeof f === 'object').map(f => ({
   category: CATEGORIES.includes(f.category) ? f.category : 'improvement',
   title: String(f.title || ''), evidence: String(f.evidence || ''), impact: String(f.impact || ''),
   change: String(f.change || ''), where: String(f.where || ''),
 }))
-return { stage: 'retro', file, summary: String(r.summary || ''), findings }
+return out({ stage: 'retro', file, summary: String(r.summary || ''), findings })

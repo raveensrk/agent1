@@ -71,11 +71,12 @@ for (const t of [...approved, ...drop]) {
   if (idsSeen.has(t.id)) bad.push(`task "${t.id}" is listed twice`)
   idsSeen.add(t.id)
 }
-if (!/^\//.test(env.repo || '')) bad.push('env.repo must be an absolute path')
-if (!/^\//.test(env.state || '')) bad.push('env.state must be an absolute path')
-if (!/^\//.test(env.tool || '')) bad.push('env.tool must be an absolute path')
+// Paths, the branch and the commands go into shell commands inside the ants'
+// prompts: only safe characters are let through (ishikari.py setup checks too).
+for (const k of ['repo', 'state', 'tool']) if (!/^\/[A-Za-z0-9._\/+-]+$/.test(env[k] || '')) bad.push(`env.${k} must be an absolute path of letters, digits and . _ / + -`)
 if (!/^[A-Za-z0-9._-]+$/.test(env.run || '')) bad.push('env.run must be a run id')
-if (!/^[A-Za-z0-9._\/-]+$/.test(env.main || '')) bad.push('env.main must be a branch name')
+if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main must be a branch name')
+for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const treeOf = branch => `${env.state}/worktrees/${branch.replace(/\//g, '__')}`
@@ -116,25 +117,29 @@ const summarize = (kind, r) => {
 // One logbook clerk at a time: entries that arrive while it writes wait in
 // a queue, and the next clerk appends them all in one go as soon as it ends.
 const logQueue = []
+const logLost = []  // entries no clerk managed to append
 let logWriter = null
 const logNow = entries => {
   logQueue.push(...entries)
   if (!logWriter) logWriter = (async () => {
     while (logQueue.length) {
       const batch = logQueue.splice(0)
-      await agent(
+      // A dead clerk is retried once; entries still lost go into the result.
+      const write = () => agent(
         `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
 python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
 ${JSON.stringify(batch)}
 ISHIKARI_ROWS_END`,
         { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
       ).catch(() => null)
+      if ((await write()) == null && (await write()) == null) logLost.push(...batch)
     }
     logWriter = null
   })()
 }
 async function ant(prompt, opts) {
-  const r = await agent(prompt, { ...opts, model: MODEL })
+  // A call that throws is a dead ant: it never takes the whole stage down.
+  const r = await agent(prompt, { ...opts, model: MODEL }).catch(() => null)
   const [kind, a, b] = String(opts.label).split(':')
   if (kind === 'finisher-ant') return r  // it appends the stage's entries itself
   const task = kind === 'juror-ant' ? b : ['worker-ant', 'detective-ant'].includes(kind) && a ? a : undefined
@@ -255,7 +260,7 @@ Last, even after a fast path, check your own work with git, never from memory:
   deletions as "lines" (0 if it prints nothing).`,
     { label: 'merger-ant', phase: 'Merge', effort: EFFORT.merger, schema: COMBINE },
   ))
-  if (!r) { await logsDone(); return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` } }
+  if (!r) { await logsDone(); return { ...(logLost.length ? { logLost } : {}), stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` } }
   sha = isSha(r.sha) ? r.sha : null
   // An exact fast path (the commit is the task's own tip, or the tested trial
   // merge after its ancestor checks) needs no second look.
@@ -292,7 +297,7 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
     : `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
 // Tasks count as merged only with a commit to move main to.
-if (merged.length && !sha) { await logsDone(); return { stage: 'error', reason: `the merger ant reported merged tasks but gave no commit for ${scratch}; main was not touched. Check ${scratchTree}.` } }
+if (merged.length && !sha) { await logsDone(); return { ...(logLost.length ? { logLost } : {}), stage: 'error', reason: `the merger ant reported merged tasks but gave no commit for ${scratch}; main was not touched. Check ${scratchTree}.` } }
 
 // ---- upkeep on the merged result, before main moves ----
 // The janitor cleans up this run's mess itself, in its own worktree on top of
@@ -621,4 +626,5 @@ return {
   checkFixDone,
   checkFix: check.ran && !check.ok && !checkFixDone ? { task: 'check-fix', bug: check.output || 'the app check failed' } : null,
   checkFixRefused: Boolean(check.ran && !check.ok && checkFixDone),
+  ...(logLost.length ? { logLost } : {}),
 }
