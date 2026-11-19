@@ -42,7 +42,7 @@ The investigator judges each task once its report is written, and a trivial task
 - The skill asks the user once to confirm the fast path. No runs the full plan with investigated set.
 - On the fast path the main session edits on branch ishikari/<run>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It checks first that the main checkout is on main and clean, never lands untested, and logs one "fast path landed" entry through ishikari.py.
 - Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and the same investigator is told why and goes on to design and plan; ishikari-plan.js is passed escalated and logs a "fast path escalated" entry. The run then carries on without asking.
-- The metro map shows the fast path as a spur from the investigation report to MAIN.
+- The metro map shows the fast path as a chord from the product spec straight across to MAIN.
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
 
 * DONE [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
@@ -109,10 +109,30 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
 :END:
-- One live investigator ant asks, proves the task can be built, and writes investigation_report.md, architecture.md and one plan per worker ant. There is no architect ant, so no ant turns one file into another.
+- One live investigator ant asks, proves the task can be built, and writes product_spec.md, tech_spec.md (see ISH-7) and one plan per worker ant. There is no architect ant, so no ant turns one file into another.
 - It runs on Fable at max effort; its researcher ants and every other ant stay on Opus at low effort.
 - It works in two parts: the report and the trivial verdict, then, told to go on, the design and plans. While designing it may ask again, within 8 questions in all; the run stops as blocked only when no answer can fix it.
 - It stays alive until its plans pass the check or a fast path lands. An escalated fast path tells the same investigator why.
 - ishikari-plan.js runs no planning ant: it checks the plan list (ids, loops in after, two tasks on one file, paths inside the repo) and returns plans or problems. Problems go back to the investigator once; a second failure stops the run.
 - The no-Agent-tool fallback is removed: without the Agent tool Ishikari stops at the start.
-- The map shows architecture.md as a file station where the Architect ant stood.
+- The map shows the tech spec as a file station where the Architect ant stood.
+
+* DONE [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
+:PROPERTIES:
+:ID:          ISH-7
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_workflows.mjs plan: every behaviour and invariant needs a worker, and no plan may claim an unknown one"
+:VERIFY+:     "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids"
+:VERIFY+:     "tests/test_workflows.mjs finish: the judge and jurors score against the product spec, id by id"
+:VERIFY+:     "tests/test_ishikari.py test_metro_map"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+- product_spec.md replaces the investigation report. It holds two lists and nothing else: behaviours (B1, B2...), each as given / when / then, and invariants (I1, I2...), each written so an ant can check it. No goal, decisions log, facts or assumptions; the user's answers show up as the behaviours they led to.
+- tech_spec.md replaces architecture.md: the architecture and the code's shape, with every spec id mapped to the part that delivers it.
+- Both are for this task only, in the run's plans folder, never in the repo.
+- Each worker plan names the spec ids it covers. ishikari-plan.js refuses the plans when an id has no plan, a plan covers none, or a plan names an id the product spec does not have.
+- A task that changes no behaviour has invariants only.
+- The trivial verdict comes after the product spec; a trivial task is built from it alone.
+- Detectives check a task against its plan and the tech spec. The judge and jurors score the merged code against the product spec, id by id.

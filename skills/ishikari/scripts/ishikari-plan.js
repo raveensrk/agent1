@@ -1,22 +1,28 @@
 export const meta = {
   name: 'ishikari-plan',
   description: 'Ishikari stage 1: check the investigator ant\'s worker plans before anything is built',
-  whenToUse: 'After the live investigator ant has written the report, the design and the plans. Run again once if it had to fix the plans.',
+  whenToUse: 'After the live investigator ant has written the product spec, the tech spec and the plans. Run again once if it had to fix the plans.',
   phases: [
-    { title: 'Check', detail: 'the script checks the plan list: ids, order, shared files and paths; no ant plans here' },
+    { title: 'Check', detail: 'the script checks the plan list: ids, order, shared files, paths, and that every behaviour and invariant has a worker; no ant plans here' },
   ],
 }
 
 // The live investigator ant, run by the skill, asks the user, proves the task
-// can be built, and writes investigation_report.md, architecture.md and one
-// plan per worker ant. Nothing is planned here: this script only checks its
-// plan list, so two workers never clash and no path leaves the repo.
+// can be built, and writes two specs and one plan per worker ant:
+//   product_spec.md  the product's behaviours (B1, B2...) and invariants (I1, I2...)
+//   tech_spec.md     the architecture and the code's shape
+// Nothing is planned here: this script only checks its plan list, so two
+// workers never clash, no path leaves the repo, and no behaviour or invariant
+// is left without a worker.
 //
 // args: {
 //   env: { repo, state, run, main, tool },  from `ishikari.py setup`
 //   task: string,                           the task, in the user's words
-//   plans: [{ id, title, files, after?, workflow? }],
-//                                           the investigator's plan list
+//   ids: string[],                          every behaviour and invariant id in
+//                                           the product spec (B1, I1...)
+//   plans: [{ id, title, files, covers, after?, workflow? }],
+//                                           the investigator's plan list; covers
+//                                           names the spec ids the task delivers
 //   testCommand: string,                    from the investigator's last reply
 //   checkCommand?: string,
 //   escalated?: string,                     why a fast path was given up: logged
@@ -25,7 +31,7 @@ export const meta = {
 //                                           'investigated' entry is not logged twice
 // }
 // Returns one of:
-//   { stage: 'plans', report, design, plans, testCommand, checkCommand }
+//   { stage: 'plans', productSpec, techSpec, ids, plans, testCommand, checkCommand }
 //   { stage: 'problems', problems, plans }  the plans need fixing: send the
 //                                           problems back to the investigator once
 //   { stage: 'error', reason }              bad arguments
@@ -45,11 +51,12 @@ for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof e
 for (const k of ['testCommand', 'checkCommand']) if (args[k] != null && (typeof args[k] !== 'string' || /[\n\r`]/.test(args[k]))) bad.push(`${k} must be one line with no backtick`)
 if (!task) bad.push('task must be a non-empty text')
 if (!Array.isArray(args.plans)) bad.push('plans must be the investigator\'s plan list')
+if (!Array.isArray(args.ids)) bad.push('ids must be the product spec\'s behaviour and invariant ids')
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
 const planDir = `${env.state}/plans/${env.run}`
-const reportFile = `${planDir}/investigation_report.md`
-const designFile = `${planDir}/architecture.md`
+const productSpec = `${planDir}/product_spec.md`
+const techSpec = `${planDir}/tech_spec.md`
 
 // ---- logbook: one clerk at a time; a dead clerk is retried once ----
 const logQueue = []
@@ -79,7 +86,7 @@ phase('Check')
 // The live investigator runs outside any workflow, so it cannot log itself.
 const escalated = typeof args.escalated === 'string' && args.escalated.trim() ? args.escalated.trim() : ''
 if (args.recheck !== true) {
-  logNow([{ run: env.run, who: 'investigator ant', event: 'investigated', detail: reportFile }])
+  logNow([{ run: env.run, who: 'investigator ant', event: 'investigated', detail: productSpec }])
   if (escalated) logNow([{ run: env.run, who: 'main session', event: 'fast path escalated', detail: escalated }])
 }
 
@@ -90,6 +97,7 @@ const norm = f => String(f).replace(/^\.\/+/, '').replace(/\/\.\//g, '/').replac
 const plans = args.plans.filter(p => p && typeof p === 'object').map(p => ({
   ...p, id: String(p.id || ''), title: String(p.title || ''),
   files: [...new Set(list(p.files).map(norm))], after: list(p.after).map(String),
+  covers: [...new Set(list(p.covers).map(String))],
   afterBad: p.after != null && !Array.isArray(p.after),
 }))
 
@@ -141,6 +149,21 @@ if (!problems.length) {
   }
 }
 if (!plans.length) problems.push('there are no plans')
+// Every behaviour and invariant of the product spec needs a worker, and no
+// plan may claim an id the spec does not have.
+const SPEC_ID = /^[BI][0-9]{1,3}$/
+const specIds = [...new Set(args.ids.map(String))]
+const badIds = specIds.filter(x => !SPEC_ID.test(x))
+if (badIds.length) problems.push(`bad spec id "${badIds[0]}": behaviours are B1, B2... and invariants I1, I2...`)
+if (!specIds.length) problems.push('the product spec lists no behaviour or invariant ids')
+if (specIds.length !== args.ids.length) problems.push('the product spec lists an id twice')
+for (const p of plans) {
+  if (!p.covers.length) problems.push(`${p.id}: covers no behaviour or invariant`)
+  const unknown = p.covers.filter(x => !specIds.includes(x))
+  if (unknown.length) problems.push(`${p.id}: covers "${unknown[0]}", which is not in the product spec`)
+}
+const orphans = specIds.filter(x => SPEC_ID.test(x) && !plans.some(p => p.covers.includes(x)))
+if (orphans.length) problems.push(`no plan covers ${orphans.join(', ')}`)
 
 logNow([{ run: env.run, who: 'plan script', event: problems.length ? 'plans refused' : `${plans.length} plan${plans.length === 1 ? '' : 's'} checked`,
   ...(problems.length ? { detail: problems.join('\n').slice(0, 400) } : {}) }])
@@ -148,9 +171,10 @@ if (problems.length) return done({ stage: 'problems', problems, plans })
 
 return done({
   stage: 'plans',
-  report: reportFile,
-  design: designFile,
-  plans: plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
+  productSpec,
+  techSpec,
+  ids: specIds,
+  plans: plans.map(p => ({ id: p.id, title: p.title, files: p.files, covers: p.covers, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: typeof args.testCommand === 'string' ? args.testCommand : (env.testCommand || ''),
   checkCommand: typeof args.checkCommand === 'string' ? args.checkCommand : (env.checkCommand || ''),
 })

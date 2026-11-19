@@ -25,26 +25,27 @@ function run(name, args, ant, clerk = () => ({})) {
 }
 
 // The plan stage only checks the investigator's plan list: no ant plans there.
-const PLAN = { id: 'a', title: 'A', files: ['x'] }
+const PLAN = { id: 'a', title: 'A', files: ['x'], covers: ['B1'] }
 function planWith(plans, more = {}) {
-  return run('ishikari-plan.js', { env, task: 't', plans, testCommand: 'npm test', checkCommand: '', ...more }, () => { throw new Error('the plan stage runs no ant') })
+  return run('ishikari-plan.js', { env, task: 't', ids: ['B1'], plans, testCommand: 'npm test', checkCommand: '', ...more }, () => { throw new Error('the plan stage runs no ant') })
 }
 
 test('plan: a good plan list passes, with each plan file and the commands', async () => {
-  const { out, calls } = await planWith([PLAN, { id: 'b', title: 'B', files: ['x', 'y'], after: ['a'], workflow: 'saved' }])
+  const { out, calls } = await planWith([PLAN, { id: 'b', title: 'B', files: ['x', 'y'], covers: ['I1', 'B1'], after: ['a'], workflow: 'saved' }], { ids: ['B1', 'I1'] })
   assert.equal(out.stage, 'plans')
   assert.equal(calls.length, 0)  // no planning ant: the investigator planned
-  assert.equal(out.report, '/s/plans/r1/investigation_report.md')
-  assert.equal(out.design, '/s/plans/r1/architecture.md')
-  assert.deepEqual(out.plans[1], { id: 'b', title: 'B', files: ['x', 'y'], after: ['a'], workflow: 'saved', file: '/s/plans/r1/b.md' })
+  assert.equal(out.productSpec, '/s/plans/r1/product_spec.md')
+  assert.equal(out.techSpec, '/s/plans/r1/tech_spec.md')
+  assert.deepEqual(out.ids, ['B1', 'I1'])
+  assert.deepEqual(out.plans[1], { id: 'b', title: 'B', files: ['x', 'y'], covers: ['I1', 'B1'], after: ['a'], workflow: 'saved', file: '/s/plans/r1/b.md' })
   assert.equal(out.testCommand, 'npm test')
 })
 
 test('plan: plans that would clash or leave the repo come back as problems, never as an error or a pass', async () => {
   const problems = async plans => { const { out } = await planWith(plans); assert.equal(out.stage, 'problems', JSON.stringify(plans)); return out.problems.join(' | ') }
-  assert.match(await problems([PLAN, { id: 'b', title: 'B', files: ['x'] }]), /both edit x but neither is after the other/)
-  assert.match(await problems([{ id: 'a', title: 'A', files: ['./x'] }, { id: 'b', title: 'B', files: ['x'] }]), /both edit x/)  // "./x" and "x" are one file
-  assert.match(await problems([{ ...PLAN, after: ['b'] }, { id: 'b', title: 'B', files: ['y'], after: ['a'] }]), /loop in after/)
+  assert.match(await problems([PLAN, { ...PLAN, id: 'b' }]), /both edit x but neither is after the other/)
+  assert.match(await problems([{ ...PLAN, files: ['./x'] }, { ...PLAN, id: 'b' }]), /both edit x/)  // "./x" and "x" are one file
+  assert.match(await problems([{ ...PLAN, after: ['b'] }, { ...PLAN, id: 'b', files: ['y'], after: ['a'] }]), /loop in after/)
   assert.match(await problems([{ ...PLAN, after: ['zz'] }]), /unknown plan/)
   assert.match(await problems([{ ...PLAN, after: ['a'] }]), /after names itself/)
   assert.match(await problems([{ ...PLAN, after: 'b' }]), /after must be a list/)
@@ -56,9 +57,23 @@ test('plan: plans that would clash or leave the repo come back as problems, neve
   assert.match(await problems([PLAN, 'junk']), /every plan must be an object/)
 })
 
+test('plan: every behaviour and invariant needs a worker, and no plan may claim an unknown one', async () => {
+  const problems = async (plans, ids) => { const { out } = await planWith(plans, { ids }); assert.equal(out.stage, 'problems', JSON.stringify([plans, ids])); return out.problems.join(' | ') }
+  assert.match(await problems([PLAN], ['B1', 'B2', 'I1']), /no plan covers B2, I1/)
+  assert.match(await problems([{ ...PLAN, covers: ['B1', 'B9'] }], ['B1']), /covers "B9", which is not in the product spec/)
+  assert.match(await problems([{ ...PLAN, covers: [] }], ['B1']), /covers no behaviour or invariant/)
+  assert.match(await problems([{ id: 'a', title: 'A', files: ['x'] }], ['B1']), /covers no behaviour or invariant/)
+  assert.match(await problems([PLAN], []), /lists no behaviour or invariant ids/)
+  assert.match(await problems([PLAN], ['B1', 'behaviour 2']), /bad spec id/)
+  assert.match(await problems([PLAN], ['B1', 'B1']), /lists an id twice/)
+  const { out } = await planWith([{ ...PLAN, covers: ['I1'] }], { ids: ['I1'] })  // a refactor: invariants only
+  assert.equal(out.stage, 'plans')
+  assert.equal((await run('ishikari-plan.js', { env, task: 't', plans: [PLAN] }, () => ({}))).out.stage, 'error')  // no ids at all
+})
+
 test('plan: bad arguments are an error', async () => {
-  for (const more of [{ task: '   ' }, { task: { a: 1 } }, { plans: 'a' }, { plans: undefined }, { testCommand: 'make\ntest' }, { checkCommand: 'echo `id`' }]) {
-    const { out } = await run('ishikari-plan.js', { env, task: 't', plans: [PLAN], ...more }, () => ({}))
+  for (const more of [{ task: '   ' }, { task: { a: 1 } }, { plans: 'a' }, { plans: undefined }, { ids: 'B1' }, { testCommand: 'make\ntest' }, { checkCommand: 'echo `id`' }]) {
+    const { out } = await run('ishikari-plan.js', { env, task: 't', ids: ['B1'], plans: [PLAN], ...more }, () => ({}))
     assert.equal(out.stage, 'error', JSON.stringify(more))
   }
 })
@@ -67,10 +82,10 @@ test('plan: the investigator gets its one logbook entry, the escalation is logge
   const first = await planWith([PLAN], { escalated: 'touches 6 files' })
   assert.deepEqual(first.instant.flatMap(p => logged(p)).map(e => `${e.who}: ${e.event}`),
     ['investigator ant: investigated', 'main session: fast path escalated', 'plan script: 1 plan checked'])
-  assert.equal(first.instant.flatMap(p => logged(p))[0].detail, '/s/plans/r1/investigation_report.md')
+  assert.equal(first.instant.flatMap(p => logged(p))[0].detail, '/s/plans/r1/product_spec.md')
   const refused = await planWith([{ ...PLAN, id: 'A' }], { recheck: true })
   assert.deepEqual(refused.instant.flatMap(p => logged(p)).map(e => `${e.who}: ${e.event}`), ['plan script: plans refused'])
-  const lost = await run('ishikari-plan.js', { env, task: 't', plans: [PLAN] }, () => ({}), () => { throw new Error('logbook down') })
+  const lost = await run('ishikari-plan.js', { env, task: 't', ids: ['B1'], plans: [PLAN] }, () => ({}), () => { throw new Error('logbook down') })
   assert.equal(lost.out.stage, 'plans')  // a dead clerk never blocks the stage
   assert.equal(lost.out.logLost.length, 2)
 })
@@ -667,7 +682,7 @@ test('every workflow ant in all four scripts runs on opus at low effort', async 
     const parallel = fns => Promise.all(fns.map(f => f()))
     return new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)(args, agent, parallel, () => {}, () => {}, async () => ({}))
   }
-  await spy('ishikari-plan.js', { env, task: 't', plans: [PLAN] }, () => ({}))
+  await spy('ishikari-plan.js', { env, task: 't', ids: ['B1'], plans: [PLAN] }, () => ({}))
   await spy('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('detective') ? { bugs: [] } : {})
   await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
@@ -929,7 +944,7 @@ test('build: a re-check that fixed nothing is not logged as passed', async () =>
 test('every script refuses paths, branches and commands the ants\' shell cannot carry', async () => {
   const good = {}
   const cases = [{ repo: '/my app' }, { state: '/s;rm' }, { tool: '/t/$(id).py' }, { main: '-x' }, { main: 'a b' }, { testCommand: 'make\ntest' }, { checkCommand: 'echo `id`' }, { testCommand: 7 }]
-  const args = { 'ishikari-plan.js': { task: 't', plans: [PLAN] }, 'ishikari-build.js': { plans: [{ id: 'a' }] }, 'ishikari-finish.js': { approved: [T('a')] }, 'ishikari-retro.js': {} }
+  const args = { 'ishikari-plan.js': { task: 't', ids: ['B1'], plans: [PLAN] }, 'ishikari-build.js': { plans: [{ id: 'a' }] }, 'ishikari-finish.js': { approved: [T('a')] }, 'ishikari-retro.js': {} }
   for (const [name, more] of Object.entries(args)) for (const c of cases) {
     const { out, calls } = await run(name, { env: { ...env, ...c }, ...more }, () => good)
     assert.equal(out.stage, 'error', `${name} ${JSON.stringify(c)}`)
@@ -938,3 +953,30 @@ test('every script refuses paths, branches and commands the ants\' shell cannot 
 })
 
 
+
+// ---- the two specs: detectives use the tech spec, the judge scores the product spec ----
+test('build: workers and detectives get the tech spec, and workers the product spec for their ids', async () => {
+  const prompts = await buildPrompts({ plans: [{ id: 'a', title: 'A' }] }, () => ({}))
+  const w = prompts['worker-ant:a:build'], d = prompts['detective-ant:a:check']
+  assert.ok(w.includes('/s/plans/r1/tech_spec.md') && w.includes('/s/plans/r1/product_spec.md'))
+  assert.ok(d.includes('/s/plans/r1/tech_spec.md') && d.includes('differs from the tech spec is a bug'))
+  assert.ok(![w, d].some(p => /architecture\.md|investigation_report/.test(p)))
+})
+
+test('finish: the judge and jurors score against the product spec, id by id', async () => {
+  const prompts = {}
+  await run('ishikari-finish.js', { env, cleanup: true, approved: ['a', 'b', 'c'].map(T) }, (p, o) => {
+    prompts[o.label] = p
+    return o.label === 'merger-ant' ? { sha: 'abc1234', results: ['a', 'b', 'c'].map(id => ({ id, outcome: 'merged', detail: '' })) }
+      : o.label.startsWith('juror') ? { score: 9, gaps: [] }
+      : o.label.startsWith('judge') ? { score: 4, gaps: ['B2: missing'] }
+      : o.label === 'docs-ant' ? NO_DOCS : o.label.startsWith('worker') ? { status: 'stuck', notes: 'n' } : { moved: true, reason: '' }
+  })
+  for (const label of ['judge-ant:1', 'juror-ant:1:a']) {
+    assert.ok(prompts[label].includes('/s/plans/r1/product_spec.md'), label)
+    assert.ok(/each behaviour/.test(prompts[label]) && /invariant/.test(prompts[label]), label)
+    assert.ok(!/architecture\.md|investigation_report/.test(prompts[label]), label)
+  }
+  assert.ok(prompts['judge-ant:1'].includes('they are not what you score'))
+  assert.ok(prompts['worker-ant:judge-fix'].includes('product_spec.md') && prompts['worker-ant:judge-fix'].includes('tech_spec.md'))
+})

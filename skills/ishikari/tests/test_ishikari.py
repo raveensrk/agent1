@@ -34,7 +34,7 @@ KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "retrospective-ant": "Retrospective ant",
     "logbook-clerk": "Logbook",
 }
-NOTES = {  # architecture.md "Required note texts"
+NOTES = {  # note texts the map must keep in its panels
     "N1": "fewer than 2 passing tasks: no combined test",
     "N2": "a cleanup run has no janitor",
     "N3": "below 7 and gaps: one fix round",
@@ -290,9 +290,9 @@ def test_metro_map():
               "Retrospective ant": 1, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
-    for name in ("Task", "You", "investigation_report.md", "architecture.md", "Worker plans", "MAIN", "checkCommand"):
+    for name in ("Task", "You", "product_spec.md", "tech_spec.md", "Worker plans", "MAIN", "checkCommand"):
         assert name in names, name
-    assert "Architect ant" not in names
+    assert "Architect ant" not in names and "investigation_report.md" not in names
     for name in ("Researcher ants  ∥",):
         assert name in names, name
     root = ET.parse(SVG).getroot()
@@ -312,7 +312,7 @@ def test_metro_map():
         assert spur in strings_all(texts), spur
     # The map is one open ring: the main stations sit on one circle, in order, with a gap at the top.
     it = {i["id"]: i for i in panel_items(SVG)}
-    ring = ["task", "investigator", "report", "design", "plans", "workers", "detectives", "integrator", "merger",
+    ring = ["task", "investigator", "product-spec", "tech-spec", "plans", "workers", "detectives", "integrator", "merger",
             "janitor", "jurors", "judge", "docs", "finisher", "main", "check", "retro", "finished"]
     cx, cy = w / 2, 690
     angles = []

@@ -100,7 +100,7 @@ that is normal, and worth a finding only if the flow should have made them.
 Read:
 - this run's logbook entries: \`python3 ${env.tool} log status ${env.state} ${env.run}\` and
   the entries with Run: ${env.run} in ${env.state}/logbook.rec;
-- ${planDir}: investigation_report.md, architecture.md, the worker plans, any
+- ${planDir}: product_spec.md, tech_spec.md, the worker plans, any
   cleanup.md, and every stage result <stage>-<n>.json;
 - the run's git history: the branches \`git -C ${env.repo} branch --list 'ishikari/${env.run}/*'\`
   and their commits, and the last 30 commits of ${env.main} (\`git -C ${env.repo} log --oneline -30 ${env.main}\`);

@@ -1,6 +1,6 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the janitor cleans up on top, the judge scores it against the plans, the docs ant updates the docs, move main forward',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the janitor cleans up on top, the judge scores it against the product spec, the docs ant updates the docs, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
@@ -443,7 +443,7 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
     return false
   }
 
-  // The judge ant scores the whole run, cleanup included, against the plans.
+  // The judge ant scores the whole run, cleanup included, against the product spec.
   // Below PASS: one fix round (worker, detective), then a second score. Still
   // below PASS: main moves anyway and the report flags it.
   // MIN_JURY or more tasks: the judge delegates, one juror ant per task (at most
@@ -452,11 +452,13 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
   const juror = (t, round) => ant(
     `You are a juror ant of the Ishikari workflow, helping the judge ant.
 ${where}
-Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md. The run's
-plans: ${planDir} (investigation_report.md, architecture.md). Read the merged code in
+Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md, which names the
+behaviours (B1...) and invariants (I1...) it covers. They are written out in the
+product spec ${planDir}/product_spec.md. Read the merged code in
 ${scratchTree}, the code that will land on ${env.main}, and judge only this task:
-does it match its plan? Score it 0 to 10 and list each gap as a short, concrete fix
-a worker ant can build without questions. Never change anything.`,
+does the code behave as each behaviour it covers says, and does each invariant it
+covers hold? Score it 0 to 10 and list each gap as a short, concrete fix a worker
+ant can build without questions, naming the id. Never change anything.`,
     { label: `juror-ant:${round}:${t.id}`, phase: 'Upkeep', effort: EFFORT.juror, schema: SCORED },
   )
   const jury = async (round) => {
@@ -480,14 +482,17 @@ yourself: it is not an average. Keep every gap you agree with.` : ''
     const j = await ant(
       `You are the judge ant of the Ishikari workflow.
 ${where}
-Read the plans for this run in ${planDir}: investigation_report.md (the user's task
-and goal), architecture.md and every worker plan. Then read the merged code in
+Read the product spec ${planDir}/product_spec.md: the behaviours (B1...) and the
+invariants (I1...) this run must deliver. Then read the merged code in
 ${scratchTree}, the code that will land on ${env.main}: the tasks (${names}) with the
 janitor's cleanup on top if it landed.${juryText}
-Judge one thing: does the implementation match the plans? Score the whole run from
-0 to 10, where 10 means every planned behaviour is built as planned and nothing
-unplanned was added. List each gap in "gaps" as a short, concrete fix a worker ant
-can build without questions: what is missing or wrong, and in which file.
+Judge one thing, id by id: does the code behave as each behaviour says, and does
+each invariant hold? Score the whole run from 0 to 10, where 10 means every
+behaviour is delivered, every invariant holds and no behaviour was added that the
+spec does not have. The tech spec and the plans in that folder say how it was
+meant to be built; they are not what you score. List each gap in "gaps" as a
+short, concrete fix a worker ant can build without questions: the id, what is
+missing or wrong, and in which file.
 Never change anything.`,
       { label: `judge-ant:${round}`, phase: 'Upkeep', effort: EFFORT.judge,
         schema: SCORED },
@@ -504,11 +509,11 @@ Never change anything.`,
     const b = await ant(
       `You are a worker ant of the Ishikari workflow, closing the judge ant's gaps.
 ${where}
-The judge scored the run ${first.score}/10 against the plans in ${planDir}. Gaps:
+The judge scored the run ${first.score}/10 against the product spec ${planDir}/product_spec.md. Gaps:
 ${first.gaps.map(g => `- ${g}`).join('\n')}
 Work only in the worktree ${fixTree} on branch ${fixBranch}. If either exists, remove
 them first; then create it with \`git -C ${env.repo} worktree add -b ${fixBranch} ${fixTree} ${sha}\`.
-Close the gaps so the code matches the plans. Keep the tests passing (${tests} inside
+Close the gaps so the code delivers the spec, keeping to the tech spec ${planDir}/tech_spec.md. Keep the tests passing (${tests} inside
 ${fixTree}). Commit on ${fixBranch} in small commits, no merge commits. Never touch
 ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
       { label: 'worker-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },

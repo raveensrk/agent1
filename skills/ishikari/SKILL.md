@@ -26,7 +26,7 @@ Design, rules and diagram:
 | `scripts/ishikari-build.js`      | build, check, fix, combined test         |
 | `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
 | `scripts/ishikari-retro.js`      | retrospective of the run, read only      |
-| `assets/prompts/investigator.md` | the investigator's brief: ask, design, plan |
+| `assets/prompts/investigator.md` | the investigator's brief: ask, specs, plans |
 | `tests/test_ishikari.py`         | tool: setup, logbook, guards             |
 | `tests/test_workflows.mjs`       | script logic, with stand-in ants         |
 
@@ -52,7 +52,7 @@ inside the working directory, so the Workflow tool may load them by
   with TaskStop the moment its task is done, failed or abandoned. Workflow ants
   end when their `agent()` call returns, so they need no stop.
 - Ask every question with the `/ask-simple` skill, and only in step 2. Never
-  answer for the user. Never edit the investigation report, the design or a
+  answer for the user. Never edit the product spec, the tech spec or a
   plan yourself: the investigator writes them.
 - Every ant runs on Opus at low effort, but one: the investigator, the one
   ant the whole run stands on, runs on Fable at max effort.
@@ -77,6 +77,7 @@ inside the working directory, so the Workflow tool may load them by
 | Questions in all                     | 8     | investigator prompt        |
 | Researchers at once                  | 5     | investigator prompt        |
 | Plan check, send-backs               | 1     | skill rule, step 2c        |
+| Plans per spec id, at least          | 1     | plan coverage check        |
 | Build rounds for merge bugs, waiting | 2     | skill rule, step 4         |
 | Check-fix rounds                     | 1     | finish `checkFixDone`      |
 | Janitor runs at changed lines        | 100+  | finish `JANITOR_MIN_LINES` |
@@ -115,8 +116,14 @@ a changed base or a clash; each loop has its own 3 rounds.
 ## 2. Plan
 
 One live investigator ant does all the planning: it asks, proves the task can
-be built, designs it and writes every worker plan. It stays alive until its
-plans pass the check, or a fast path lands. The Agent tool is needed: without
+be built, and writes two specs and every worker plan:
+
+- `product_spec.md`: the product's behaviours (`B1`, `B2`...) and invariants
+  (`I1`, `I2`...), each written so an ant can check it. Nothing else.
+- `tech_spec.md`: the architecture and the code's shape.
+- `<id>.md`: one plan per worker ant, naming the spec ids it covers.
+
+It stays alive until its plans pass the check, or a fast path lands. The Agent tool is needed: without
 it, say so and stop; there is no other way to plan.
 
 ### 2a. Investigate
@@ -147,9 +154,9 @@ it, say so and stop; there is no other way to plan.
    - TaskStop fails: note it for the report and carry on.
 4. `blocker` set, at any point: stop the investigator with TaskStop, show the
    reason, and go to the retrospective (section 5).
-5. `reportWritten` (part 1 is done): check that
-   `<plans folder>/investigation_report.md` exists; if not, treat it as no
-   reply (2a.3). Save `testCommand` and `checkCommand` with
+5. `productSpecWritten` (part 1 is done): check that
+   `<plans folder>/product_spec.md` exists; if not, treat it as no
+   reply (2a.3). Keep its `ids` list. Save `testCommand` and `checkCommand` with
    `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
    Then:
    - `trivial: true`: go to 2b;
@@ -163,7 +170,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
    path?` Answers: `Yes, fast path (Recommended)`, `No, full plan`. No: send
    the investigator `go on` and continue at 2c.
 2. Yes: you do the work, the one exception to "never edit code yourself".
-   Read the report first; it is the spec.
+   Read the product spec first: build its behaviours, keep its invariants.
    - `git -C <env.repo> worktree add -b ishikari/<env.run>/fast
      <env.state>/worktrees/<env.run>-fast <env.main>`; edit and commit there.
    - No test command at all: escalate (step 3); a fast path never lands
@@ -188,25 +195,26 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
    files), and the tests and check. A landed fast path ends the run: no
    retrospective.
 
-### 2c. Design and plans
+### 2c. Tech spec and plans
 
 1. The investigator now proves the task can be built, writes
-   `architecture.md` and one plan file per task. It may ask more questions
+   `tech_spec.md` and one plan file per task. It may ask more questions
    (2a.2 and 2a.3 hold). `blocker`: 2a.4.
-2. `plansWritten`: check that `architecture.md` and `<id>.md` for every plan
+2. `plansWritten`: check that `tech_spec.md` and `<id>.md` for every plan
    in its `plans` list exist in the plans folder; a missing file is a problem
    to send back (step 4).
-3. Run `env.workflows.plan` with `{env, task, plans, testCommand,
+3. Run `env.workflows.plan` with `{env, task, ids, plans, testCommand,
    checkCommand}` from its reply, plus `escalated` after a given-up fast path.
-   No ant plans there: the script only checks the list (ids, loops in
-   `after`, two tasks on one file, paths inside the repo) and logs the
-   `investigated` entry.
+   No ant plans there: the script only checks the list (plan ids, loops in
+   `after`, two tasks on one file, paths inside the repo, and that every
+   behaviour and invariant id is covered by a plan and no plan covers an
+   unknown one) and logs the `investigated` entry.
 4. `problems`: send the list back to the SAME investigator once; it fixes the
    plans and replies again. Run the check again with `recheck: true`. Problems
    a second time: stop the investigator, show them, and go to the retrospective (section 5).
 5. `plans`: stop the investigator with TaskStop; its work is over. Do not ask.
-   Show the `report` path (`investigation_report.md`), the `design` path
-   (`architecture.md`) and each plan's title, files and `after` as a note.
+   Show the `productSpec` and `techSpec` paths and each plan's title, files,
+   `covers` and `after` as a note.
 - A run whose task is a dropped cleanup plan passes `cleanup: true` to finish,
   so cleanups never chain.
 
@@ -256,7 +264,9 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
     anything else is put back on the scratch copy, and main moves to the last
     checked commit, never to a branch name;
   - after the cleanup, the judge ant scores the whole run 0-10 against the
-    plans (report, architecture, worker plans). With 3+ tasks it first
+    product spec, id by id: does each behaviour hold, does each invariant
+    hold. Detectives check tasks against the plan and the tech spec; the
+    judge does not score those. With 3+ tasks it first
     sends one juror ant per task (5 at once) and decides from their reports;
     the score is its own call, not an average. Below 7: one fix round
     (worker, detective), then a second score. Still below 7: main moves
@@ -284,7 +294,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
   setup that stopped, and a fast path that landed.
 - Run `env.workflows.retro` with `{env, outcome}`: `outcome` says how the run
   ended in a few words. The retrospective ant reads this run's logbook, the
-  plans folder (report, architecture, plans, cleanup note, stage results), the
+  plans folder (product spec, tech spec, plans, cleanup note, stage results), the
   run's git history and Ishikari's own source, and writes
   `<env.state>/plans/<env.run>/retrospective.md`. It is read only: it changes
   no code, branch or repo file, and the script checks that: it compares the

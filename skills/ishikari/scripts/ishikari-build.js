@@ -109,8 +109,10 @@ const planOf = branch => {
   const m = branch.match(/^ishikari\/([^/]+)\/([^/]+)$/)
   return m ? `${env.state}/plans/${m[1]}/${m[2]}.md` : '(no plan file)'
 }
-// The design sits beside the plan, in that run's plans folder.
-const designOf = task => task.plan.startsWith('/') ? task.plan.replace(/[^/]*$/, 'architecture.md') : '(no design file)'
+// The specs sit beside the plan, in that run's plans folder.
+const specOf = (task, name) => task.plan.startsWith('/') ? task.plan.replace(/[^/]*$/, name) : `(no ${name})`
+const designOf = task => specOf(task, 'tech_spec.md')
+const productOf = task => specOf(task, 'product_spec.md')
 const where = `Repo: ${env.repo} (main branch: ${env.main}). Ishikari state folder: ${env.state}.
 Use absolute paths only, and run git as \`git -C <path> ...\`. Never work in the
 repo's main checkout, and never touch any other repo.`
@@ -210,8 +212,9 @@ If that worktree exists, use it. Else, if the branch exists, run
 \`git -C ${env.repo} worktree add ${task.tree} ${task.branch}\`. Else run
 \`git -C ${env.repo} worktree add -b ${task.branch} ${task.tree} ${start}\`${more.length ? `, then merge ${more.join(' and ')} into it` : ''}.
 Never reset, rebase or recreate an existing branch: it holds earlier work.
-The task's plan is ${task.plan}. The run's design is ${designOf(task)}: use its
-names and interfaces exactly.
+The task's plan is ${task.plan}. The run's tech spec is ${designOf(task)}: use its
+names and interfaces exactly. The behaviours and invariants your plan covers are
+in the product spec ${productOf(task)}, by id.
 ${job}
 Also update the docs your change affects, inside this task.
 ${tests} inside your worktree before you finish. Commit all your work on
@@ -286,8 +289,8 @@ and return the number as ownCommits.`
 the fix for every bug you find. You never write code yourself.
 ${where}
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
-Check it against its plan and the run's design ${designOf(task)}: a name or interface
-that differs from the design is a bug.
+Check it against its plan and the run's tech spec ${designOf(task)}: a name or interface
+that differs from the tech spec is a bug.
 ${own}
 ${task.notes.length ? `The worker's notes: ${task.notes.join(' / ')}\n` : ''}${task.guidance ? `The user's guidance: ${task.guidance}\n` : ''}${testsFor(task, built)} Do not copy the repo anywhere else, and do not
 edit tracked files.
@@ -513,7 +516,7 @@ async function runTask(task) {
   return end(task, task.bugs.some(b => b.open) ? 'escalated' : 'awaiting review', [])
 }
 
-// The full check of a task against its plan and the design, then its fix loop.
+// The full check of a task against its plan and the tech spec, then its fix loop.
 // Returns an error text if an ant died twice, else null.
 async function fullCheck(task, step, last) {
   const check = await twice(() => detect(task, null, step, last))
