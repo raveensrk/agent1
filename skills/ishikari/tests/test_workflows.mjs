@@ -206,6 +206,7 @@ function finishWith(jan) {
     prompts[o.label] = p
     if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label === 'janitor-ant') return jan
+    if (o.label === 'docs-ant') return { changed: false, title: '', testsPassed: true, landed: false }
     if (o.label.startsWith('judge-ant')) return { score: 9, gaps: [] }
     return { moved: true, reason: '' }
   }).then(r => ({ ...r, prompts, fin: prompts['finisher-ant'] }))
@@ -215,7 +216,7 @@ test('finish: the janitor cleans, tests, commits and lands its cleanup alone, ju
   const { out, calls, fin, prompts } = await finishWith({ changed: true, title: 'tidy', testsPassed: true, landed: true, sha: 'def0123' })
   assert.deepEqual(out.cleanup, { title: 'tidy', landed: true })
   assert.equal(out.sha, 'def0123')
-  assert.deepEqual(calls.slice(1, 3), ['janitor-ant', 'judge-ant:1'])
+  assert.deepEqual(calls.slice(1, 4), ['docs-ant', 'janitor-ant', 'judge-ant:1'])
   assert.ok(!calls.some(c => c.includes('cleanup')))  // no worker, inspector, detective or merger for it
   assert.ok(prompts['janitor-ant'].includes('merge --ff-only ishikari/r1/_cleanup'))
   assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
@@ -248,6 +249,7 @@ function judgeRun(scores, answer = () => null) {
     prompts[o.label] = p
     if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label.startsWith('judge-ant')) return scores[k++]
+    if (o.label === 'docs-ant') return answer(o) || { changed: false, title: '', testsPassed: true, landed: false }
     return answer(o) || (o.label.startsWith('worker') ? { status: 'built', notes: '' }
       : o.label.startsWith('detective') ? { bugs: [] }
       : o.label === 'merger-ant:judge-fix' ? { ok: true, sha: 'fff' } : { moved: true, reason: '' })
@@ -264,7 +266,7 @@ test('finish: a judge score of 7 or more needs no fix round', async () => {
 
 test('finish: a low judge score gets one fix round, then a second score', async () => {
   const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['x missing'] }, { score: 8, gaps: [] }])
-  assert.deepEqual(calls.slice(1, 6), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
+  assert.deepEqual(calls.slice(2, 7), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
   assert.ok(prompts['worker-ant:judge-fix'].includes('- x missing'))
   assert.deepEqual(out.verdict, { score: 8, gaps: [], fixed: true, flagged: false, first: 4 })
   assert.equal(out.sha, 'fff')
@@ -457,6 +459,22 @@ test('finish: one check-fix round, a second is refused', async () => {
 })
 
 // ---- judge round 1: judge after the ff, tip checks, git cherry strictness ----
+test('finish: the docs ant updates the docs before the janitor and lands them only when its checks pass', async () => {
+  const go = d => run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }] }, (p, o) =>
+    o.label === 'merger-ant' ? { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+      : o.label === 'docs-ant' ? d
+      : o.label === 'janitor-ant' ? { changed: false, title: '', testsPassed: true, landed: false }
+      : o.label.startsWith('judge-ant') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
+  const ok = await go({ changed: true, title: 'docs', testsPassed: true, landed: true, sha: 'd0c0123' })
+  assert.ok(ok.calls.indexOf('docs-ant') < ok.calls.indexOf('janitor-ant'))
+  assert.deepEqual(ok.out.docs, { title: 'docs', landed: true })
+  assert.equal(ok.out.sha, 'd0c0123')
+  const bad = await go({ changed: true, title: 'docs', testsPassed: false, landed: false })
+  assert.equal(bad.out.docs.landed, false)
+  assert.equal(bad.out.docs.branch, 'ishikari/r1/_docs')
+  assert.equal(bad.out.mainMoved, true)
+})
+
 test('finish: the judge reads after the janitor has landed its cleanup', async () => {
   const { calls, prompts } = await finishWith({ changed: true, title: 'tidy', testsPassed: true, landed: true, sha: 'def0123' })
   assert.ok(calls.indexOf('judge-ant:1') > calls.indexOf('janitor-ant'))
@@ -566,7 +584,7 @@ test('finish: every ant gets its own logbook entry at once, the finisher excepte
   const { out, instant } = await judgeRun([{ score: 4, gaps: ['g'] }, { score: 8, gaps: [] }])
   const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
-    'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
+    'merger ant: merged 1 of 1', 'docs ant: nothing changed', 'judge ant: score 4', 'worker ant: built',
     'detective ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8',
   ])
   assert.ok(got.every(e => e.run === 'r1'))

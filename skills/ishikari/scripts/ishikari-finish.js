@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the janitor cleans up on top, let the judge score it against the plans, move main forward',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the docs ant updates the docs, the janitor cleans up on top, let the judge score it against the plans, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'janitor cleans up, tests and commits itself; then the judge scores the run, one fix round below 7' },
+    { title: 'Upkeep', detail: 'docs ant updates the docs with /docs, then the janitor cleans up, tests and commits itself; then the judge scores the run, one fix round below 7' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -21,12 +21,14 @@ export const meta = {
 //                                            task is named check-fix): a failed check is not
 //                                            offered for a second round
 // }
-// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, cleanup, verdict, check,
+// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, docs, cleanup, verdict, check,
 //           checkFixDone, checkFix, checkFixRefused }
 // checkFix: the bug for one check-fix build round ({task: 'check-fix', bug}) when the
 // check failed and no round ran yet; null otherwise (checkFixRefused: true when the cap hit).
 //      or { stage: 'error', reason }.
-// bugs go into the next ishikari-build run. cleanup: {title, landed: true} when the
+// bugs go into the next ishikari-build run. docs: null when there was nothing to
+// update; {title, landed: true}, or {title, branch, landed: false, reason} with the
+// branch kept. cleanup: {title, landed: true} when the
 // janitor's cleanup was built, checked and landed with the tasks; {title, file,
 // branch, landed: false, reason} when it was dropped, offered to the next
 // ishikari-plan run as a suggested task. verdict: the judge ant's {score (0-10),
@@ -39,7 +41,7 @@ export const meta = {
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { merger: 'low', janitor: 'low', worker: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
+const EFFORT = { merger: 'low', docs: 'low', janitor: 'low', worker: 'low', detective: 'low', judge: 'low', juror: 'low', finisher: 'low' }
 
 const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
@@ -88,6 +90,7 @@ const summarize = (kind, r) => {
   if (typeof r.status === 'string') return r.status
   if (Number.isInteger(r.score)) return `score ${r.score}`
   if (Array.isArray(r.results)) return `merged ${r.results.filter(x => x && x.outcome === 'merged').length} of ${r.results.length}`
+  if (typeof r.changed === 'boolean') return !r.changed ? 'nothing changed' : r.landed ? 'landed' : 'dropped'
   if (typeof r.needed === 'boolean') return r.needed ? 'cleanup planned' : 'nothing to clean'
   if (typeof r.plan === 'string') return 'fix planned'
   if (typeof r.ok === 'boolean') return r.ok ? 'fast-forwarded' : 'fast-forward refused'
@@ -278,6 +281,7 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
 // Failed: the cleanup is dropped, its branch kept, its note offered next time.
 // Then the judge ant scores the result.
 let cleanup = null
+let docs = null
 let verdict = null
 const PASS = 7
 const MAX_JURORS = 5  // juror ants at once
@@ -291,9 +295,53 @@ const cleanBranch = `ishikari/${env.run}/_cleanup`
 const cleanTree = treeOf(cleanBranch)
 const cleanPlan = `${env.state}/plans/${env.run}/cleanup.md`
 let cleanKept = false
+const docsBranch = `ishikari/${env.run}/_docs`
+const docsTree = treeOf(docsBranch)
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
+  // The docs ant runs the /docs skill in update mode on the merged result,
+  // before the janitor, so the cleanup sees docs and code together. Its own
+  // worktree and branch; it lands only if the docs check and the tests pass.
+  // No docs folder: it does nothing (create mode needs the user). Dropped:
+  // branch kept, main moves without it.
+  const docsChain = async () => {
+    const d = await ant(
+      `You are the docs ant of the Ishikari workflow. You update the repo's docs
+for the tasks just merged (${names}) and commit them yourself.
+${where}
+If ${scratchTree} has no docs/ or doc/ folder, change nothing and set changed to false:
+never create docs here.
+Otherwise:
+1. Create your worktree: \`git -C ${env.repo} worktree add -b ${docsBranch} ${docsTree} ${scratch}\`
+   (if it exists, remove it and the branch first).
+2. In ${docsTree}, use the /docs skill in update mode, scoped to the commits from
+   ${env.main} to ${scratch}. Never ask the user: put open questions in the docs'
+   Open questions chapter, or leave them out if it has none. Change docs, diagram
+   sources and training data only; never code.
+3. If docs/build.sh exists, run \`docs/build.sh diagrams\` and \`docs/build.sh check\`;
+   then ${tests} inside ${docsTree}.
+4. Commit on ${docsBranch} in small commits, no merge commits.
+5. Only if every check passes: \`git -C ${scratchTree} merge --ff-only ${docsBranch}\`, and
+   return the new commit of ${scratch} as sha. Otherwise leave ${scratch} alone and
+   say why in reason.
+Never touch ${env.main} or the repo's main checkout.`,
+      { label: 'docs-ant', phase: 'Upkeep', effort: EFFORT.docs,
+        schema: { type: 'object', properties: {
+          changed: { type: 'boolean' }, title: { type: 'string' }, testsPassed: { type: 'boolean' },
+          landed: { type: 'boolean', description: `true only if ${scratch} was fast-forwarded to the docs update` },
+          sha: { type: 'string' }, reason: { type: 'string' },
+        }, required: ['changed', 'title', 'testsPassed', 'landed'] } },
+    )
+    if (!d || !d.changed) return
+    if (d.landed && d.testsPassed && typeof d.sha === 'string' && /^[0-9a-f]{7,64}$/.test(d.sha)) {
+      docs = { title: d.title, landed: true }
+      sha = d.sha
+    } else {
+      docs = { title: d.title, branch: docsBranch, landed: false,
+        reason: d.reason || (d.testsPassed ? 'the scratch branch was not fast-forwarded' : 'a check failed') }
+    }
+  }
   const janitorChain = async () => {
     const small = linesChanged != null && linesChanged < JANITOR_MIN_LINES
     if (small) log(`janitor skipped: ${linesChanged} lines changed, under ${JANITOR_MIN_LINES}`)
@@ -435,6 +483,7 @@ an empty list. Never fix anything.`,
       ? { score: second.score, gaps: second.gaps, fixed: true, flagged: second.score < PASS, first: first.score }
       : { ...verdict, fixed: true, reason: 'the judge ant died on its second look' }
   }
+  await docsChain()
   await janitorChain()
   await judgeRun()
 }
@@ -443,6 +492,7 @@ an empty list. Never fix anything.`,
 phase('Main')
 const entry = (t, event, who) => ({ run: runOf(t.branch), task: t.id, who, event })
 const upkeep = [
+  ...(docs ? [{ run: env.run, who: 'docs ant', event: docs.landed ? 'docs landed' : 'docs dropped', detail: docs.landed ? docs.title : `${docs.title}: ${docs.reason}` }] : []),
   ...(cleanup ? [{ run: env.run, who: 'janitor ant', event: cleanup.landed ? 'cleanup landed' : 'cleanup dropped', detail: cleanup.landed ? cleanup.title : `${cleanup.title}: ${cleanup.reason}` }] : []),
   ...(verdict ? [{ run: env.run, who: 'judge ant', event: verdict.flagged ? 'verdict flagged' : 'verdict', score: verdict.score == null ? '-' : verdict.score, detail: [...(verdict.fixed ? [`after one fix round (first score ${verdict.first == null ? '-' : verdict.first})`] : []), ...verdict.gaps, ...(verdict.reason ? [verdict.reason] : [])].join('\n') }] : []),
 ]
@@ -459,7 +509,7 @@ const write = rows => rows.length
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'
-const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
+const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(docs && !docs.landed ? [] : [docsBranch]), ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
 const FINISH = {
   type: 'object',
   properties: {
@@ -513,6 +563,7 @@ return {
   notMoved: mainMoved ? [] : merged.map(t => ({ id: t.id, branch: t.branch, after: t.after || [] })),
   bugs,
   waiting,
+  docs,
   cleanup,
   verdict,
   check,

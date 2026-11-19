@@ -207,6 +207,11 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
     tip are ancestors of it; else it merges from main;
   - the merger ant then checks its own merge with `git cherry`; a task the
     merger called merged but git finds missing comes back as a merge bug;
+  - before the janitor, the docs ant runs `/docs` in update mode on the
+    merged copy, in its own worktree; it lands only if `docs/build.sh check`
+    (when present) and the tests pass. No `docs/` or `doc/`: it changes
+    nothing, since create mode needs the user. Dropped: its branch
+    `ishikari/<run>/_docs` is kept, `docs.reason` says why, main still moves;
   - after the cleanup, the judge ant scores the whole run 0-10 against the
     plans (report, architecture, worker plans). With 3+ tasks it first
     sends one juror ant per task (5 at once) and decides from their reports;

@@ -90,6 +90,7 @@
    ["detectives" 760 R2 "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x" [0 -28 "middle"]]
    ["integrator" 1200 R2 "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x" [0 -28 "middle"]]
    ["merger" 1460 R2 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -28 "middle"]]
+   ["docs" 1590 R2 "Docs ant" ["updates the docs with /docs (update mode)," "lands only if the docs check and tests pass;" "no docs folder: nothing to do"] "x" L-DN]
    ["janitor" 1720 R2 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -28 "middle"]]
    ;; row 3: judge, then main moves
    ["jurors" 160 R3 "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x" L-DN]
@@ -107,6 +108,7 @@
 (def station-skills
   {"investigator"    ["/ask-simple"]
    "add-requirement" ["/add-requirement"]
+   "docs"            ["/docs"]
    "researchers"     ["/ux"]})
 
 ;; What a click on a station shows: a short line for the hover tooltip, the
@@ -152,6 +154,9 @@
    "merger" {:tip "Merges the approved tasks for real, then checks with git; failures go back to the workers."
                        :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main. A conflict, failed tests, or a task git finds missing goes back to the worker ant on its own branch: it merges the current main, fixes the bug, the detective re-checks, the integrator tests again, and finish retries the merge. Tasks that merged cleanly are not rebuilt. At most 2 extra build rounds; what is left drops and is reported."
                        :src "scripts/ishikari-finish.js (Merge phase)"}
+   "docs" {:tip "Updates the repo's docs for the merged tasks, before the janitor."
+           :about "Runs the /docs skill in update mode on the merged scratch copy, in its own worktree. It changes docs, diagram sources and training data only, never code, and never asks the user: open questions go in the docs' Open questions chapter. It runs docs/build.sh diagrams and check when present, then the tests, and fast-forwards the scratch copy only if all pass. No docs/ or doc/ folder: it does nothing, since create mode needs the user. Failed: its branch is kept and main moves without it."
+           :src "scripts/ishikari-finish.js (Upkeep phase)"}
    "janitor" {:tip "Cleans up mess the run left, by itself."
                         :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor. Tests failing: the cleanup is dropped, main moves with the tasks alone, its branch is kept, and its note goes to the next run's Task, where the investigator may ask about it."
                         :src "scripts/ishikari-finish.js (Upkeep phase)"}

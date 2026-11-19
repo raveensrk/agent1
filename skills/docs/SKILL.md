@@ -2,7 +2,7 @@
 name: docs
 metadata:
   scope: global
-description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings the docs in line with what changed and what was learned.
+description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, or by Ishikari's docs ant after a merge; never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings the docs in line with what changed and what was learned.
 argument-hint: "create|update [repo path]"
 ---
 
@@ -12,7 +12,8 @@ Use `docs/` or `doc/`, whichever exists. If neither exists, create `docs/`.
 
 ## Modes
 
-Run only when the user asks, after a task is done and its code is written.
+Run only when the user asks, after a task is done and its code is written, or when Ishikari's docs ant calls `update` after a merge.
+Called by an ant: never ask the user; put questions in Open questions.
 Never start on your own, before a task or in the middle of one.
 
 Two modes, picked by the first argument:

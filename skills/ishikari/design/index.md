@@ -127,7 +127,15 @@ its job. The build script runs that workflow in place of a worker ant.
 
 They run once per finish, on the merged result, before main moves.
 
-- **Janitor ant** finds mess left by the merged tasks, and only that: dead
+- **Docs ant** runs first. It uses the `/docs` skill in update mode on the
+  merged scratch copy, in its own worktree: it changes docs, diagram sources
+  and training data only, never code, and never asks the user (open
+  questions go in the docs' Open questions chapter). It runs `docs/build.sh
+  diagrams` and `check` when present, then the tests, commits, and
+  fast-forwards the scratch copy only if all pass. No `docs/` or `doc/`
+  folder: it does nothing, since creating docs needs the user. Failed: its
+  branch is kept, main moves without it, and nothing chains to the next run.
+- **Janitor ant** runs after the docs ant and finds mess left by the merged tasks, and only that: dead
   code, bloat, duplication. It does the cleanup itself, with no other ant: in
   its own worktree on top of the merged scratch copy it edits, runs the tests,
   commits, writes a short note of what it changed, and fast-forwards the scratch
@@ -161,7 +169,8 @@ They run once per finish, on the merged result, before main moves.
 - Only the main session asks the user questions, and only in the plan stage.
   Ants report problems in their results; after planning, the main session
   decides by the fixed rules in the skill and reports at the end.
-- Only worker ants and the janitor ant write code. Every other ant reads,
+- Only worker ants and the janitor ant write code; the docs ant writes only
+  docs. Every other ant reads,
   plans, reviews, merges or records to the logbook.
 - At most 5 worker ants run at the same time, fix workers included. Upkeep ants
   and the ants of a saved workflow do not count.
@@ -239,7 +248,8 @@ and stops to ask the user only in step 2.
    skips the trial merge: its detective already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
-   waiting tasks come back in the next build as `bugs`. The
+   waiting tasks come back in the next build as `bugs`. The docs ant
+   updates the docs first, and the
    janitor makes, tests and commits its cleanup inside finish, and it lands
    with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The judge's

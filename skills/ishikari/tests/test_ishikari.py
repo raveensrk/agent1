@@ -29,7 +29,7 @@ KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "add-requirement-ant": "Add requirement ant", "architect-ant": "Architect ant",
     "worker-ant": "Worker ants  ∥",
     "detective-ant": "Detective ants  ∥", "integrator-ant": "Integrator ant",
-    "merger-ant": "Merger ant", "janitor-ant": "Janitor ant",
+    "merger-ant": "Merger ant", "docs-ant": "Docs ant", "janitor-ant": "Janitor ant",
     "juror-ant": "Juror ants  ∥", "judge-ant": "Judge ant", "finisher-ant": "Finisher ant",
     "logbook-clerk": "Logbook",
 }
