@@ -7,6 +7,7 @@ No pytest: timeout 120 python3 skills/ishikari/tests/test_ishikari.py
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
 import re
@@ -305,8 +306,21 @@ def test_metro_map():
     clickable_texts = {id(t) for g in every for t in g.iter(NS + "text")}
     loose = [t.text for t in root.iter(NS + "text") if t.get("class") == "h" and id(t) not in clickable_texts]
     assert not loose, f"text with nothing to click: {loose}"
-    for spur in ("merge failed: to Worker ants r2s1", "cleanup failed: to Task r1s1 (next run)", "dropped", "check failed: to Worker ants r2s1 (new task)"):
+    for spur in ("merge failed: to Worker ants s8", "cleanup failed: to Task s1 (next run)", "dropped", "check failed: to Worker ants s8 (new task)", "fast path: to MAIN s21"):
         assert spur in strings_all(texts), spur
+    # The map is one open ring: the main stations sit on one circle, in order, with a gap at the top.
+    it = {i["id"]: i for i in panel_items(SVG)}
+    ring = ["task", "investigator", "report", "architect", "plans", "workers", "detectives", "integrator", "merger",
+            "janitor", "jurors", "judge", "docs", "finisher", "main", "check", "retro", "finished"]
+    cx, cy = w / 2, 690
+    angles = []
+    for sid in ring:
+        dx, dy = it[sid]["x"] - cx, it[sid]["y"] - cy
+        assert abs(math.hypot(dx, dy) - 520) < 1, sid
+        angles.append(math.degrees(math.atan2(dx, -dy)) % 360)
+    assert angles == sorted(angles), "ring stations are not in clockwise order"
+    assert angles[0] > 5 and angles[-1] < 355  # open at the top: a run ends, it does not loop
+    assert [it[s]["code"] for s in ("task", "workers", "main")] == ["s1", "s8", "s21"]
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
     strings = [t["s"] for t in texts]
@@ -317,7 +331,7 @@ def test_metro_map():
     items = {it["id"]: it for it in panel_items(SVG)}
     assert NOTES["N7"] in items["spur-mback"]["sub"]  # on the merger's failed-merge spur
     assert items["logbook"]["sub"][0] == NOTES["N11"]
-    key_x = 1440  # the key (bottom right) keeps its small explanatory text
+    key_x = 670  # the key (in the middle of the ring) keeps its small explanatory text
     drawn = [t["s"] for t in texts if t["size"] == 13 and t["weight"] < 700 and t["x"] < key_x]
     assert not drawn, f"descriptions drawn on the map: {drawn}"
     for s in strings:

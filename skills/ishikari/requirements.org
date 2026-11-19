@@ -22,8 +22,8 @@ The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows t
 - Every agent label in the four scripts has a station on the map. The judge-fix fast-forward (merger-ant:judge-fix), the judge-fix worker and detective ants and the juror ants each get their own station with the ant hexagon. The juror ants are a stacked ∥ station. The judge ant is a single station, not ∥.
 - The logbook clerk is named once, in the Logbook station's panel: "logbook clerk ant: appends each ant's entry". It is not drawn on every line.
 - The map draws names only; descriptions and short notes live in each item's tooltip and click panel. Short notes name each skipped step: fewer than 2 passing tasks skips the combined test; a cleanup run has no janitor; the judge fix runs only with a score below 7 and gaps; the check runs only when main moved and checkCommand is set; jurors run only with 3+ merged tasks; a plan may run a saved workflow in place of a worker ant.
-- Wrong notes are fixed. "max 2 extra build rounds" sits on the merge-failed spur, not the row-2 fix loop. The judge fix lands only through its fast-forward before the second score. Ant names use one style: "<Role> ant", with lowercase "ant".
-- No two text labels on the map overlap. The map keeps its 4 rows unless the stations do not fit.
+- Wrong notes are fixed. "max 2 extra build rounds" sits on the merge-failed spur, not the fix loop. The judge fix lands only through its fast-forward before the second score. Ant names use one style: "<Role> ant", with lowercase "ant".
+- No two text labels on the map overlap. The map is one open ring read clockwise from Task: stations on the ring, their names outside it, loops and spurs inside it.
 - Drifted docs match the build. Each SKILL.md Limits row has 3 cells, separator included. The index.md Diagram, Rules and Flow say the logbook behaviour as built, including that the live investigator gets only the investigated entry, in the same words as the map's Logbook note. The ishikari-build.js Logbook phase detail no longer says "one logbook append at the end".
 - test_metro_map runs metro.clj (with bb) to a temporary path and checks four things in the SVG: every agent label kind from the four scripts has a station; the named stations and notes are there; no old wrong note is left; no two text boxes overlap, measured from each text element's x, y, font size and length.
 Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 and ishikari-build.js:160-180; plan agent labels at ishikari-plan.js:155,191,227,262; the test stand-in already swallows 'logbook-clerk:now' (tests/test_workflows.mjs:19); metro.py is a 140-line stdlib Python script writing plain <text class="h" x y font-size> elements that xml.etree can parse; ishikari.py log append accepts run, who, event, task, detail, score (design/index.md Rules); investigation report /Users/raveen_kumar_personal/.ishikari/agent1-997906a8/plans/20261118-225807-5c22/investigation_report.md (D1-D4, F1-F10).
@@ -87,3 +87,16 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Plan: the architect says it read the report and wrote every plan; plan files must be paths inside the repo.
 - Tool and scripts: unsafe paths, branch names and commands are refused; stage results are saved with ishikari.py save; each run has its own copy of the scripts; a dead logbook clerk is retried and what it lost comes back as logLost.
 - The retrospective's read-only promise is checked with a before and after digest of the repo's refs, worktrees and status.
+
+* DONE [#C] The metro map is one open ring, read clockwise  :ishikari:docs:
+:PROPERTIES:
+:ID:          ISH-5
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_ishikari.py test_metro_map"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+- The main stations sit on one circle, clockwise from Task at the top to the Run report, with a gap at the top: a run ends, it does not loop.
+- Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
+- A station's position code is its place in the list (s8), shown beside its name; spurs name their target by it.
