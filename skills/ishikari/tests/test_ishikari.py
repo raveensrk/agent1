@@ -290,7 +290,7 @@ def test_metro_map():
               "Retrospective ant": 1, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
-    for name in ("Task", "You", "Product spec + tech spec", "Worker plans", "MAIN", "checkCommand"):
+    for name in ("Task", "You", "Specs + worker plans", "MAIN", "checkCommand"):
         assert name in names, name
     assert "Architect ant" not in names and "investigation_report.md" not in names
     for name in ("Researcher ants  ∥",):
@@ -308,11 +308,11 @@ def test_metro_map():
     clickable_texts = {id(t) for g in every for t in g.iter(NS + "text")}
     loose = [t.text for t in root.iter(NS + "text") if t.get("class") == "h" and id(t) not in clickable_texts]
     assert not loose, f"text with nothing to click: {loose}"
-    for spur in ("merge failed: to Worker ants s7", "cleanup failed: to Task s1 (next run)", "dropped", "check failed: to Worker ants s7 (new task)", "fast path: to MAIN s20"):
+    for spur in ("merge failed: to Worker ants s6", "cleanup failed: to Task s1 (next run)", "dropped", "check failed: to Worker ants s6 (new task)", "fast path: to MAIN s19"):
         assert spur in strings_all(texts), spur
     # The map is one open ring: the main stations sit on one circle, in order, with a gap at the top.
     it = {i["id"]: i for i in panel_items(SVG)}
-    ring = ["task", "investigator", "specs", "plans", "workers", "detectives", "integrator", "merger",
+    ring = ["task", "investigator", "specs", "workers", "detectives", "integrator", "merger",
             "janitor", "jurors", "judge", "docs", "finisher", "main", "check", "retro", "finished"]
     cx, cy = w / 2, 690
     angles = []
@@ -322,7 +322,7 @@ def test_metro_map():
         angles.append(math.degrees(math.atan2(dx, -dy)) % 360)
     assert angles == sorted(angles), "ring stations are not in clockwise order"
     assert angles[0] > 5 and angles[-1] < 355  # open at the top: a run ends, it does not loop
-    assert [it[s]["code"] for s in ("task", "workers", "main")] == ["s1", "s7", "s20"]
+    assert [it[s]["code"] for s in ("task", "workers", "main")] == ["s1", "s6", "s19"]
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
     strings = [t["s"] for t in texts]
