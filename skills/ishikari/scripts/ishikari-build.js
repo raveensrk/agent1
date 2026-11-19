@@ -212,9 +212,12 @@ If that worktree exists, use it. Else, if the branch exists, run
 \`git -C ${env.repo} worktree add ${task.tree} ${task.branch}\`. Else run
 \`git -C ${env.repo} worktree add -b ${task.branch} ${task.tree} ${start}\`${more.length ? `, then merge ${more.join(' and ')} into it` : ''}.
 Never reset, rebase or recreate an existing branch: it holds earlier work.
-The task's plan is ${task.plan}. The run's tech spec is ${designOf(task)}: use its
-names and interfaces exactly. The behaviours and invariants your plan covers are
-in the product spec ${productOf(task)}, by id.
+The task's plan is ${task.plan}: your thin slice of the two specs (files, the spec
+ids you cover, interfaces, tests). The detail is in the specs: read them. The
+tech spec is ${designOf(task)}: use its names and interfaces exactly. The
+behaviours and invariants are in the product spec ${productOf(task)}, by id.
+If the plan file does not exist, you are the only worker of this run: your task
+is the whole of the two specs.
 ${job}
 Also update the docs your change affects, inside this task.
 ${tests} inside your worktree before you finish. Commit all your work on
@@ -289,6 +292,9 @@ and return the number as ownCommits.`
 the fix for every bug you find. You never write code yourself.
 ${where}
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
+The plan is a thin slice of the two specs: the behaviours and invariants it covers
+are written out in ${productOf(task)}. If the plan file does not exist, this is a
+one-worker run and the task is the whole of the two specs.
 Check it against its plan and the run's tech spec ${designOf(task)}: a name or interface
 that differs from the tech spec is a bug.
 ${own}

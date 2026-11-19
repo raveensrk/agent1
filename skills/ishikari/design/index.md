@@ -83,7 +83,11 @@ its job. The build script runs that workflow in place of a worker ant.
     again. Still wrong: the run stops with the reason. The investigator is
     stopped only when its plans pass.
 
-04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
+04. **Plans.** A plan is one worker's thin slice of the two specs, never a
+    copy: its files, the spec ids it covers, the interfaces it uses by name,
+    its tests and the test command. Workers cannot ask questions, so the specs
+    hold the detail and the worker reads them. A run with one worker has no
+    plan file: the worker builds straight from the specs. Tasks are
     split so no two edit the same file, and each task has its own test file.
     Only a task that must edit another task's file lists that task in `after`:
     it starts as soon as that task is built, on top of its branch.

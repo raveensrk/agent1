@@ -136,3 +136,17 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - A task that changes no behaviour has invariants only.
 - The trivial verdict comes after the product spec; a trivial task is built from it alone.
 - Detectives check a task against its plan and the tech spec. The judge and jurors score the merged code against the product spec, id by id.
+
+* DONE [#B] Plans are thin slices of the specs; a one-worker run has no plan file  :ishikari:
+:PROPERTIES:
+:ID:          ISH-8
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
+:VERIFY+:     "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+- A plan holds only one worker's slice of the two specs: files, the spec ids it covers, the interfaces it uses by name, its tests and the test command. No prose from the specs is repeated; the worker reads the specs for the detail.
+- A run with one worker has no plan file: the plan check returns its plan with file null, and the worker and detective are told the task is the whole of the two specs.
+- The specs stay the shared source: one place for the interfaces between parallel workers and the full list of behaviours and invariants.

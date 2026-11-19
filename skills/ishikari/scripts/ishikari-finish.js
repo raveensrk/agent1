@@ -452,7 +452,7 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
   const juror = (t, round) => ant(
     `You are a juror ant of the Ishikari workflow, helping the judge ant.
 ${where}
-Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md, which names the
+Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md, a thin slice that names the
 behaviours (B1...) and invariants (I1...) it covers. They are written out in the
 product spec ${planDir}/product_spec.md. Read the merged code in
 ${scratchTree}, the code that will land on ${env.main}, and judge only this task:

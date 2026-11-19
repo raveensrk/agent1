@@ -121,7 +121,9 @@ be built, and writes two specs and every worker plan:
 - `product_spec.md`: the product's behaviours (`B1`, `B2`...) and invariants
   (`I1`, `I2`...), each written so an ant can check it. Nothing else.
 - `tech_spec.md`: the architecture and the code's shape.
-- `<id>.md`: one plan per worker ant, naming the spec ids it covers.
+- `<id>.md`: one thin plan per worker ant: its slice of the specs (files, the
+  spec ids it covers, interfaces, tests), with nothing copied from them. A
+  one-worker run has no plan file: the worker builds straight from the specs.
 
 It stays alive until its plans pass the check, or a fast path lands. The Agent tool is needed: without
 it, say so and stop; there is no other way to plan.
@@ -200,9 +202,10 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 1. The investigator now proves the task can be built, writes
    `tech_spec.md` and one plan file per task. It may ask more questions
    (2a.2 and 2a.3 hold). `blocker`: 2a.4.
-2. `plansWritten`: check that `tech_spec.md` and `<id>.md` for every plan
-   in its `plans` list exist in the plans folder; a missing file is a problem
-   to send back (step 4).
+2. `plansWritten`: check that `tech_spec.md` exists in the plans folder, and
+   `<id>.md` for every plan in its `plans` list when there are two or more
+   (one plan: no plan file is written). A missing file is a problem to send
+   back (step 4).
 3. Run `env.workflows.plan` with `{env, task, ids, plans, testCommand,
    checkCommand}` from its reply, plus `escalated` after a given-up fast path.
    No ant plans there: the script only checks the list (plan ids, loops in

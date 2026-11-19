@@ -32,6 +32,9 @@ export const meta = {
 // }
 // Returns one of:
 //   { stage: 'plans', productSpec, techSpec, ids, plans, testCommand, checkCommand }
+//                                           each plan has file: its thin slice of
+//                                           the specs, or null in a one-worker run,
+//                                           where the worker builds from the specs
 //   { stage: 'problems', problems, plans }  the plans need fixing: send the
 //                                           problems back to the investigator once
 //   { stage: 'error', reason }              bad arguments
@@ -174,7 +177,9 @@ return done({
   productSpec,
   techSpec,
   ids: specIds,
-  plans: plans.map(p => ({ id: p.id, title: p.title, files: p.files, covers: p.covers, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
+  plans: plans.map(p => ({ id: p.id, title: p.title, files: p.files, covers: p.covers, after: p.after || [], workflow: p.workflow || undefined,
+    // One worker: no plan file. It builds straight from the two specs.
+    file: plans.length === 1 ? null : `${planDir}/${p.id}.md` })),
   testCommand: typeof args.testCommand === 'string' ? args.testCommand : (env.testCommand || ''),
   checkCommand: typeof args.checkCommand === 'string' ? args.checkCommand : (env.checkCommand || ''),
 })

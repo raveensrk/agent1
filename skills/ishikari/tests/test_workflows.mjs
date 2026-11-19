@@ -39,6 +39,9 @@ test('plan: a good plan list passes, with each plan file and the commands', asyn
   assert.deepEqual(out.ids, ['B1', 'I1'])
   assert.deepEqual(out.plans[1], { id: 'b', title: 'B', files: ['x', 'y'], covers: ['I1', 'B1'], after: ['a'], workflow: 'saved', file: '/s/plans/r1/b.md' })
   assert.equal(out.testCommand, 'npm test')
+  const solo = await planWith([PLAN])  // one worker: no plan file, it builds from the specs
+  assert.equal(solo.out.stage, 'plans')
+  assert.equal(solo.out.plans[0].file, null)
 })
 
 test('plan: plans that would clash or leave the repo come back as problems, never as an error or a pass', async () => {
@@ -961,6 +964,7 @@ test('build: workers and detectives get the tech spec, and workers the product s
   assert.ok(w.includes('/s/plans/r1/tech_spec.md') && w.includes('/s/plans/r1/product_spec.md'))
   assert.ok(d.includes('/s/plans/r1/tech_spec.md') && d.includes('differs from the tech spec is a bug'))
   assert.ok(![w, d].some(p => /architecture\.md|investigation_report/.test(p)))
+  for (const p of [w, d]) assert.ok(/thin slice of the two specs/.test(p) && /plan file does not exist/.test(p) && /whole of the two specs/.test(p))
 })
 
 test('finish: the judge and jurors score against the product spec, id by id', async () => {

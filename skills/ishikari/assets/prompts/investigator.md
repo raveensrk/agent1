@@ -81,14 +81,20 @@ Part 2: tech spec and plans (after "go on")
    by files. Give each task its own test file. Merge tasks that would be too
    small to stand alone. Only when a task must edit a file another task
    creates, put that task's id in its "after".
-   Worker ants cannot ask questions, so each plan must be complete: files to
-   touch, the spec ids it covers (each B and I id belongs to at least one
-   plan, and every plan covers at least one), the interfaces from the tech spec
-   it uses or provides, the tests that prove each id, and the test command. Say what and where, not exact wording: never write out the text,
-   labels or code a worker writes. Keep each plan short.
+   A plan is one worker's thin slice of the two specs, never a copy of them.
+   It holds only: the files to touch; the spec ids it covers (each B and I id
+   belongs to at least one plan, and every plan covers at least one); the
+   interfaces from the tech spec it uses or provides, by name; the test file
+   and the tests that prove each id; and the test command. No prose from the
+   specs is repeated: the worker reads the specs for the detail, and cannot ask
+   questions, so the specs must hold everything it needs. Never write out the
+   text, labels or code a worker writes.
    Write each plan to <plans folder>/<id>.md, with id in lowercase letters,
    digits and dashes. Change no other files, and nothing in the repo.
-9. Reply with techSpecWritten and plansWritten true, proof, ids (again, as the
+   One task only: write no plan file. The one worker builds straight from the
+   two specs; still give its entry in plans (step 9), covering every id.
+9. Reply with techSpecWritten and plansWritten true (also for one task, with
+   no file written), proof, ids (again, as the
    product spec has them now), and plans: one {"id", "title", "files":
    [repo-relative paths], "covers": [spec ids], "after": [plan ids],
    "workflow": optional saved workflow name} per plan.
