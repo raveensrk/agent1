@@ -102,7 +102,7 @@ Read the [[file:~/repos/agent1/requirements/index.org][Requirements]] throughly 
   - Conclusion
 ** Critic this project fast and suggest me a quick improvement or fix.
 * Documentation
-** [[file:create_docs.org][Create docs]]
+** [[../skills/create-docs/SKILL.md][Create docs]]
 ** Session Reconcile the existing docs
 Based on the current session do the following,
 
