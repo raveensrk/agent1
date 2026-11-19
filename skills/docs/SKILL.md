@@ -2,8 +2,8 @@
 name: docs
 metadata:
   scope: global
-description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale, reconcile the docs, or runs /docs. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings an existing book in line with the code. Session mode reconciles the docs with what this session changed and learned.
-argument-hint: "create|update|session [repo path]"
+description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings the docs in line with what changed and what was learned.
+argument-hint: "create|update [repo path]"
 ---
 
 # Create or update docs: the book of this repository
@@ -12,13 +12,15 @@ Use `docs/` or `doc/`, whichever exists. If neither exists, create `docs/`.
 
 ## Modes
 
-Three modes, picked by the first argument:
+Run only when the user asks, after a task is done and its code is written.
+Never start on your own, before a task or in the middle of one.
+
+Two modes, picked by the first argument:
 
 - `create` - write the book from scratch, or rebuild a docs folder that is not yet a book. Runs Phases 1-7.
-- `update` - bring an existing book in line with the repo. Runs [Update mode](#update-mode).
-- `session` - reconcile the docs with this session's work. Runs [Session mode](#session-mode).
+- `update` - bring the docs in line with what changed and what was learned. Runs [Update mode](#update-mode).
 
-No mode given and the session changed code or found something new: `session`. Otherwise: `update` if `docs/README.md` has a table of contents and `docs/build.sh` exists, `create` otherwise.
+No mode given: `update` if `docs/` or `doc/` exists, `create` otherwise.
 Say which mode was picked in the first line.
 
 ## Goal
@@ -196,30 +198,19 @@ In a few lines: chapters and diagrams written, files moved or merged, check resu
 
 ## Update mode
 
-The book exists; keep it true.
-Every rule in Ground rules, Phase 4 and Phase 6 still holds, except the git branch is `docs-update`.
+Keep the docs true after a task. Works with any docs, book or not; a book also follows Ground rules, Phase 4 and Phase 6.
+No new branch: commit on the current branch, never push.
 
-1. Find what changed: commits since the last commit that touched `docs/` (`git log <that commit>..HEAD`), plus uncommitted changes the user points to. With no clear baseline, compare every chapter against the code.
-2. Map each change to the chapters, diagrams, ADRs and glossary entries that own it. Also check `AGENTS.md`, the root `README.md` and `docs/build.sh`.
-3. Read those chapters and the code they describe. List every stale, missing or wrong fact, with its chapter and source path.
-4. Ask one batch of questions, only for intent or rationale the code can't tell (a new decision needs its reason for the ADR). Unanswered ones go in Open questions.
-5. Fix each fact in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one; update `docs/README.md` and the previous / next chain to match. Never restate a fact to patch a gap: link to it.
-6. Remove what no longer exists. Answered open questions leave the Open questions chapter.
-7. Run `docs/build.sh diagrams` and `docs/build.sh check`. Rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
-8. Commit, never push, and report in a few lines: chapters and diagrams changed, added or removed, check results, rebuild-test gaps left, open questions, and the commits.
+1. Find what changed: this session's edits and commits, commits since the last commit that touched the docs, and uncommitted changes the user points to. With no clear baseline, compare every chapter against the code.
+2. List what was learned: facts, causes, decisions and gotchas the docs don't hold.
+3. Map each change and lesson to the chapter, diagram, ADR or glossary entry that owns it. Also check `AGENTS.md`, the root `README.md` and `docs/build.sh`.
+4. Remove stale docs: anything now untrue, obsolete or gone. Answered open questions leave the Open questions chapter.
+5. Reconcile docs and code: where they disagree, the code wins unless the session showed the code is the bug.
+6. Add what is missing, in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one, and keep `docs/README.md` and the previous / next chain in step.
+7. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the changes affect.
+8. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
+9. Ask at most one batch of questions, only for intent or rationale the code can't tell. Unanswered ones go in Open questions.
+10. With `docs/build.sh`, run `docs/build.sh diagrams` and `docs/build.sh check`. In a book, rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
+11. Commit and report in a few lines: what was removed, fixed and added, training data updated, check results, open questions and the commits.
 
-Nothing changed since the last docs commit and the chapters match the code: say so and stop.
-
-## Session mode
-
-Scope: what this session changed and learned, not the whole repo.
-Works with any docs, book or not. No new branch: commit on the current branch, never push.
-
-1. List what the session changed (files edited, commits made) and learned (facts, causes, decisions, gotchas the docs don't hold).
-2. Remove stale docs: anything the session made untrue or obsolete.
-3. Reconcile docs and code: where they disagree on the session's topics, the code wins unless the session showed the code is the bug.
-4. Add what was learned, in the one place that owns it. A docs book follows the rules in Phase 4.
-5. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the session's changes affect.
-6. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
-7. With `docs/build.sh`, run `docs/build.sh check`.
-8. Report in a few lines: what was removed, fixed, added, and any training data updated.
+Nothing changed and the docs match the code: say so and stop.
