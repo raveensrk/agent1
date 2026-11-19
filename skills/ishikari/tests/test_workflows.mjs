@@ -126,17 +126,17 @@ test('build: a task that keeps finding new bugs gives up after MAX_ROUNDS (3) ro
 })
 
 // Prompts by label for a build run; worker(label) gives each worker's extra reply fields.
-async function buildPrompts(args, worker, inspector = () => ({ bugs: [] })) {
+async function buildPrompts(args, worker, detective = () => ({ bugs: [] })) {
   const prompts = {}
   await run('ishikari-build.js', { env, ...args }, (p, o) => {
     prompts[o.label] = p
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n', ...worker(o.label) }
-    return inspector(o.label)
+    return detective(o.label)
   })
   return prompts
 }
 
-test('build: no valid worker sha means the inspector runs the tests itself', async () => {
+test('build: no valid worker sha means the detective runs the tests itself', async () => {
   for (const extra of [{}, { sha: 'zzz', testsPassed: true, testSummary: 's' }]) {
     const ins = (await buildPrompts({ plans: [{ id: 'a' }] }, () => extra))['detective-ant:a:check']
     assert.ok(ins.includes("Run the repo's tests inside that worktree."))
@@ -169,7 +169,7 @@ test('build: the test command is kept exactly', async () => {
   assert.ok(pr['detective-ant:a:check'].includes('run the tests with `make TEST=Foo`'))
 })
 
-test('build: the inspector gets the worker sha and reuses its test result', async () => {
+test('build: the detective gets the worker sha and reuses its test result', async () => {
   const prompts = {}
   await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
     prompts[o.label] = p
@@ -218,7 +218,7 @@ test('finish: the janitor cleans, tests, commits and lands its cleanup alone, ju
   assert.deepEqual(out.cleanup, { title: 'tidy', landed: true })
   assert.equal(out.sha, 'def0123')
   assert.deepEqual(calls.slice(1, 4), ['janitor-ant', 'judge-ant:1', 'docs-ant'])
-  assert.ok(!calls.some(c => c.includes('cleanup')))  // no worker, inspector, detective or merger for it
+  assert.ok(!calls.some(c => c.includes('cleanup')))  // no worker, detective or merger for it
   assert.ok(prompts['janitor-ant'].includes('merge --ff-only ishikari/r1/_cleanup'))
   assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
 })
@@ -563,7 +563,6 @@ test('finish: both trial-merge reuse paths check each reused branch tip', async 
 test('finish: a stale branch tip leads the merger to the full merge, and git is still asked', async () => {
   const { out, calls } = await finishRun({ approved: [T('a'), T('b')], together: { sha: TOG, tasks: ['a', 'b'] } }, o =>
     o.label === 'merger-ant' ? { sha: SHA, fastPath: false, results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'merged', detail: '' }], landed: ['a', 'b'], missing: [] } : null)
-  assert.ok(!calls.includes('verifier-ant'))
   assert.deepEqual(out.merged, ['a', 'b'])
 })
 
@@ -751,7 +750,7 @@ test('plan: the architect keeps plans small and says what and where, not exact w
 })
 
 // ---- every ant: latest Opus, low effort ----
-test('every ant in all three scripts runs on opus at low effort', async () => {
+test('every ant in all four scripts runs on opus at low effort', async () => {
   const seen = []
   const spy = (name, args, answer) => {
     const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
@@ -766,8 +765,11 @@ test('every ant in all three scripts runs on opus at low effort', async () => {
   await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
     o.label === 'merger-ant' ? { sha: 'abc1234', results: ['a', 'b', 'c'].map(id => ({ id, outcome: 'merged', detail: '' })) }
       : o.label === 'janitor-ant' ? { changed: false, title: '', testsPassed: true, landed: false }
+      : o.label === 'docs-ant' ? { changed: true, title: 'd', testsPassed: false, landed: false, files: [] }
       : o.label.startsWith('juror') || o.label.startsWith('judge') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
-  for (const s of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js']) assert.ok(seen.some(x => x[0] === s), s)
+  await spy('ishikari-retro.js', { env }, () => null)
+  for (const s of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js', 'ishikari-retro.js']) assert.ok(seen.some(x => x[0] === s), s)
+  for (const label of ['docs-ant', 'merger-ant:rewind', 'retrospective-ant', 'juror-ant:1:a', 'logbook-clerk:now']) assert.ok(seen.some(x => x[1] === label), label)
   const off = seen.filter(([, , model, effort]) => model !== 'opus' || effort !== 'low')
   assert.deepEqual(off, [])
 })
@@ -809,7 +811,6 @@ test('build: the detective checks and plans each fix itself, with the history, n
       : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] }
   })
   assert.equal(out.tasks[0].status, 'awaiting review')
-  assert.ok(!calls.some(c => c.startsWith('inspector')))
   assert.deepEqual(calls.filter(c => c.startsWith('detective')), ['detective-ant:a:check', 'detective-ant:a:recheck1', 'detective-ant:a:recheck2'])
   assert.ok(prompts['worker-ant:a:fix1'].includes('plan one'))
   assert.ok(prompts['worker-ant:a:fix2'].includes('plan two'))

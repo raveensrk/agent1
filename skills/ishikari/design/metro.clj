@@ -83,13 +83,12 @@
    ["report" 780 R1 "investigation_report.md" ["written when nothing is unclear;" "the investigator is stopped"] "file" L-DN]
    ["architect" 1240 R1 "Architect ant" ["proves it can be built, then writes" "architecture.md and one plan per task;" "not buildable: the run stops"] "st" L-UP]
    ["plans" 1700 R1 "Worker plans" ["one per task: title, files, after;" "checked before anything is built"] "files" L-DN]
-   ["logbook" 1370 40 "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build and finish." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log" RIGHT]
+   ["logbook" 1370 40 "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build, finish and the retrospective." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log" RIGHT]
    ;; row 2: build, check, fix, then merge and clean up
    ["workers" 200 R2 "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x" [0 -28 "middle"]]
    ["detectives" 760 R2 "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x" [0 -28 "middle"]]
    ["integrator" 1200 R2 "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x" [0 -28 "middle"]]
    ["merger" 1460 R2 "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x" [0 -28 "middle"]]
-   ["docs" 1590 R2 "Docs ant" ["updates the docs with /docs (update mode)," "lands only if the docs check and tests pass;" "no docs folder: nothing to do"] "x" L-DN]
    ["janitor" 1720 R2 "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x" [0 -28 "middle"]]
    ;; row 3: judge, then main moves
    ["jurors" 160 R3 "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x" L-DN]
@@ -98,7 +97,8 @@
    ["judge-fix-detective" 660 DIP3 "Detective ant" ["checks the fix, runs the tests"] "st" L-UP]
    ["judge-fix-merger" 820 DIP3 "Merger ant" ["fast-forwards the scratch copy to the fix;" "the fix lands only through this fast-forward"] "st" L-DN]
    ["judge-again" J2 DIP3 "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st" [14 34 "start"]]
-   ["finisher" 1180 R3 "Finisher ant" ["fast-forwards main, removes worktrees," "appends the stage rows, runs the check"] "x" L-UP]
+   ["docs" 1180 R3 "Docs ant" ["updates the docs with /docs (update mode), last," "on the final code; lands only docs files, and only" "if the docs check and tests pass; no docs folder: nothing to do"] "x" L-DN]
+   ["finisher" 1262 R3 "Finisher ant" ["fast-forwards main to the checked commit," "removes worktrees, appends the stage rows, runs the check"] "x" L-UP]
    ["main" 1340 R3 "MAIN" ["fast-forward only," "never pushed"] "main" L-DN]
    ["check" 1580 R3 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
    ["retro" 1710 R3 "Retrospective ant" ["reviews how this run went, read only;" "writes retrospective.md: ranked fixes" "to the Ishikari flow; never after a fast path"] "x" L-DN]
@@ -150,8 +150,8 @@
    "merger" {:tip "Merges the approved tasks for real, then checks with git; failures go back to the workers."
                        :about "Adds every passing task's commits in a straight line, in dependency order, in a scratch copy, and tests once. It reuses build's trial merge when nothing moved. Then it checks its own merge with git cherry and counts changed lines with git diff --shortstat. Never touches main. A conflict, failed tests, or a task git finds missing goes back to the worker ant on its own branch: it merges the current main, fixes the bug, the detective re-checks, the integrator tests again, and finish retries the merge. Tasks that merged cleanly are not rebuilt. At most 2 extra build rounds; what is left drops and is reported."
                        :src "scripts/ishikari-finish.js (Merge phase)"}
-   "docs" {:tip "Updates the repo's docs for the merged tasks, before the janitor."
-           :about "Runs the /docs skill in update mode on the merged scratch copy, in its own worktree. It changes docs, diagram sources and training data only, never code, and never asks the user: open questions go in the docs' Open questions chapter. It runs docs/build.sh diagrams and check when present, then the tests, and fast-forwards the scratch copy only if all pass. No docs/ or doc/ folder: it does nothing, since create mode needs the user. Failed: its branch is kept and main moves without it."
+   "docs" {:tip "Updates the repo's docs for the merged tasks, last, on the final code."
+           :about "Runs the /docs skill in update mode on the merged scratch copy, in its own worktree. It changes only files under docs/ or doc/ and Markdown or Org files elsewhere, never code, tests or data, and never asks the user: open questions go in the docs' Open questions chapter. It runs docs/build.sh diagrams and check when present, then the tests, and fast-forwards the scratch copy only if all pass. The script refuses the landing if a changed file is not a docs file, and a refused or failed update is put back on the scratch copy. No docs/ or doc/ folder: it does nothing, since create mode needs the user. Failed: its branch is kept and main moves without it."
            :src "scripts/ishikari-finish.js (Upkeep phase)"}
    "janitor" {:tip "Cleans up mess the run left, by itself."
                         :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor. Tests failing: the cleanup is dropped, main moves with the tasks alone, its branch is kept, and its note goes to the next run's Task, where the investigator may ask about it."
@@ -160,7 +160,7 @@
                           :about "One per merged task, up to 5 at once, only with 3 or more merged tasks. Each scores its task against that task's plan, and the judge weighs their reports."
                           :src "scripts/ishikari-finish.js"}
    "judge" {:tip "Scores the whole run 0-10 against the plans."
-                      :about "Reads the investigation report, architecture and every worker plan, and the merged code with the cleanup on top. One question: does the code match the plans? The score is its own call, not an average. 7 or more, or no gaps: main moves. Below 7 with gaps: one fix round."
+                      :about "Reads the investigation report, architecture and every worker plan, and the merged code with the cleanup on top. One question: does the code match the plans? The score is its own call, not an average. Below 7 with gaps: one fix round, then a second score. Main always moves; a score still below 7 is flagged in the report."
                       :src "scripts/ishikari-finish.js"}
    "judge-fix-worker" {:tip "Closes the judge's gaps."
                        :about "Builds the judge's gaps as one fix on top of the merged scratch copy."
@@ -175,7 +175,7 @@
                        :about "Scores the run a second time. Still below 7: main moves anyway and the verdict is flagged. The judge never blocks main."
                        :src "scripts/ishikari-finish.js"}
    "finisher" {:tip "Moves main, cleans up, runs the check."
-                          :about "Fast-forwards main, which git refuses if it would overwrite local edits. Removes the worktrees, appends the stage's logbook rows, and runs checkCommand when it is set."
+                          :about "Fast-forwards main to the last checked commit, never to a branch by name; git refuses if it would overwrite local edits. A retry sees main already moved and carries on. Removes the worktrees, appends the stage's logbook rows, and runs checkCommand when it is set."
                           :src "scripts/ishikari-finish.js (Main phase)"}
    "main" {:tip "Your main branch, moved forward."
                   :about "Moves only as a fast-forward, never a merge commit, and is never pushed. Push it yourself when you are happy."

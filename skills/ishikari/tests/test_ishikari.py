@@ -79,7 +79,7 @@ def test_setup_and_logbook():
 
         run(home, "log", "append", state, stdin=json.dumps([
             {"run": "r1", "task": "x", "who": "worker ant", "event": "awaiting review"},
-            {"run": "r1", "task": "x", "who": "inspector ant", "event": "bug open", "detail": "line one\nline two", "tries": 2}]))
+            {"run": "r1", "task": "x", "who": "detective ant", "event": "bug open", "detail": "line one\nline two", "tries": 2}]))
         run(home, "log", "append", state, stdin=json.dumps([{"run": "r1", "task": "x", "who": "merger ant", "event": "done"}]))
         run(home, "log", "note", state, "check", "the", "auth", "flow")
         text = open(book).read()
@@ -286,8 +286,8 @@ def test_metro_map():
         for kind in set(KIND.findall(src)):
             assert kind in KIND_STATION, f"{os.path.basename(script)}: no station for {kind}"
             assert KIND_STATION[kind] in names, f"{os.path.basename(script)}: {KIND_STATION[kind]} not on the map"
-    counts = {"Merger ant": 2, "Worker ant": 1, "Inspector ant": 0, "Detective ant": 1, "Judge ant": 2,
-              "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
+    counts = {"Merger ant": 2, "Worker ant": 1, "Detective ant": 1, "Judge ant": 2, "Docs ant": 1,
+              "Retrospective ant": 1, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
     for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand"):
@@ -321,10 +321,9 @@ def test_metro_map():
     drawn = [t["s"] for t in texts if t["size"] == 13 and t["weight"] < 700 and t["x"] < key_x]
     assert not drawn, f"descriptions drawn on the map: {drawn}"
     for s in strings:
-        for bad in ("req add, keeps", "Judge ant  ∥", "Verifier Ant"):
+        for bad in ("Judge ant  ∥",):
             assert bad not in s, s
         assert not ("fix plan back" in s and "max 2" in s), s
-        assert "fail: one fix round" not in s or "detective, worker, inspector" in s, s
         assert s == "ISHIKARI METRO" or not re.search(r"\bAnts?\b", s), s
     boxes = [(t["s"], text_box(t)) for t in texts]
     for i, (s, (x0, x1, y0, y1)) in enumerate(boxes):

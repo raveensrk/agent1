@@ -13,7 +13,7 @@ Use `docs/` or `doc/`, whichever exists. If neither exists, create `docs/`.
 ## Modes
 
 Run only when the user asks, after a task is done and its code is written, or when Ishikari's docs ant calls `update` after a merge.
-Called by an ant: never ask the user; put questions in Open questions.
+Called by an ant: never ask the user; put questions in Open questions, and skip the docs-only rebuild test.
 Never start on your own, before a task or in the middle of one.
 
 Two modes, picked by the first argument:

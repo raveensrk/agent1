@@ -118,22 +118,14 @@ its job. The build script runs that workflow in place of a worker ant.
 
 They run once per finish, on the merged result, before main moves.
 
-- **Docs ant** runs first. It uses the `/docs` skill in update mode on the
-  merged scratch copy, in its own worktree: it changes docs, diagram sources
-  and training data only, never code, and never asks the user (open
-  questions go in the docs' Open questions chapter). It runs `docs/build.sh
-  diagrams` and `check` when present, then the tests, commits, and
-  fast-forwards the scratch copy only if all pass. No `docs/` or `doc/`
-  folder: it does nothing, since creating docs needs the user. Failed: its
-  branch is kept, main moves without it, and nothing chains to the next run.
-- **Janitor ant** runs after the docs ant and finds mess left by the merged tasks, and only that: dead
+- **Janitor ant** runs first and finds mess left by the merged tasks, and only that: dead
   code, bloat, duplication. It does the cleanup itself, with no other ant: in
   its own worktree on top of the merged scratch copy it edits, runs the tests,
   commits, writes a short note of what it changed, and fast-forwards the scratch
   copy to its cleanup only if the tests pass. The cleanup then lands as its own
   commits after the tasks, in the same main move. Tests failing: it is dropped,
   main moves with the tasks alone, the cleanup branch is kept and the next plan
-  stage hands its note to the investigator ant, which may ask about it. One cleanup per run: a dropped cleanup's own run gets
+  stage hands its note to the investigator ant, which may ask about it. One cleanup per finish: a dropped cleanup's own run gets
   no janitor, so cleanups never chain. A small run gets no janitor either: under 100
   lines added or changed, by the merger's `git diff --shortstat`.
 - **Judge ant** gives the final verdict. It runs after the janitor's cleanup has
@@ -144,18 +136,36 @@ They run once per finish, on the merged result, before main moves.
   delegates first: one **Juror ant** per task, up to 5 at once, each scoring
   its task against that task's plan. The judge weighs their reports, checks
   how the tasks fit together and decides the score itself; it is not an
-  average. One or two tasks: the judge works alone. At 7 or more, main moves. Below
-  7 with gaps, one fix round: a worker ant closes the gaps on top of the
+  average. One or two tasks: the judge works alone. Below
+  7 with gaps, one fix round per finish: a worker ant closes the gaps on top of the
   merged scratch copy, a detective ant checks it and runs the tests, a merger
   ant fast-forwards the scratch copy to it (the only way the fix lands), and
   the judge scores again. Still below 7, or the fix failed (its branch is kept
   and the verdict says why): main moves anyway and the verdict is
   flagged in the report. The judge never blocks main, so a run never gets
-  stuck on a score.
+  stuck on a score: main always moves.
+- **Docs ant** runs last, on the final code. It uses the `/docs` skill in
+  update mode in its own worktree: it changes only files under `docs/` or
+  `doc/` and Markdown or Org files elsewhere, never code, tests or data, and
+  never asks the user (open questions go in the docs' Open questions
+  chapter). It runs the docs' own `build.sh diagrams` and `check` when
+  present, then the tests, commits, and fast-forwards the scratch copy only if
+  all pass. The script reads its list of changed files and refuses the landing
+  if one is not a docs file. No `docs/` or `doc/` folder: it does nothing,
+  since creating docs needs the user. Failed: its branch is kept, main moves
+  without it, and nothing chains to the next run.
+
+Upkeep work counts as landed only when the ant says so, its checks passed and
+it names the new commit. Anything else is put back: a merger ant resets the
+scratch copy to the last checked commit, since the ant may have moved it before
+failing or dying. If that reset fails, the rest of upkeep is skipped. Main
+moves to the last checked commit, never to a branch by name. A later finish of
+the same run uses its own upkeep branches (`_docs-2`, `_cleanup-2`,
+`_judgefix-2`), so a branch kept by an earlier finish is never removed.
 
 ## Retrospective ant
 
-The last ant of every full run, run once by the main session after
+The last ant of every run that got past setup, run once by the main session after
 everything else, however the run ended: main moved, stopped, blocked or error.
 A fast path that landed gets none. It judges the Ishikari flow, not the repo's
 code: wasted or repeated ant calls, retries and loops, dead ants, slow stages,
@@ -164,7 +174,8 @@ fit, bugs and errors in the flow. It reads this run's logbook entries, the plans
 folder (investigation report, architecture, worker plans, cleanup note and every
 stage result the main session saved as `<stage>-<n>.json`), the run's git
 history and Ishikari's own source. Every finding cites evidence from the run.
-It is read only: its one write is `retrospective.md` in the run's plans folder,
+It is read only, and the script checks it: a digest of the repo's refs,
+worktrees and status must be the same before and after. Its one write is `retrospective.md` in the run's plans folder,
 outside the repo, ranked costliest first, each finding with its category (bug,
 error, inefficiency, gap, missing, improvement), evidence, impact, suggested
 change and the Ishikari file and rule to change. The final report shows its
@@ -195,18 +206,26 @@ summary and top 3 findings; the user decides what to act on.
   [`ishikari.py`](../scripts/ishikari.py), writes the logbook.
   Each write holds a lock, so two runs never lose
   each other's entries; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
-- Every workflow ant's reply is logged the moment it comes, in plan, build and
-  finish, through a logbook clerk ant, one clerk at a time: replies that come
+- Every workflow ant's reply is logged the moment it comes, in plan, build,
+  finish and the retrospective, through a logbook clerk ant, one clerk at a time: replies that come
   while it writes wait in a queue and go in its next append; a failed append never blocks or fails
-  the run. The live investigator gets only the `investigated` entry
+  the run. A dead clerk is retried once; entries it still could not write come
+  back in the stage result as `logLost`, and the main session appends them. The live investigator gets only the `investigated` entry
   `ishikari-plan` logs for it. Build and finish also append a summary at the
   end of the stage.
 - Never trust an ant's answer shape. The scripts check every reply: a missing
-  or broken field is an error, never a silent pass. A combined test counts only
+  or broken field is an error, never a silent pass, and an ant call that throws
+  counts as a dead ant, never a lost stage. A built task needs a commit of its
+  own. The architect must say it read the report and wrote every plan file.
+  A task merged in an earlier finish counts as in main by `git cherry` or the
+  main session's `landed` list, never by an ancestor check: main holds copies. A combined test counts only
   when every task is reported merged and a commit is given. Main counts as moved
   only when something was merged and the finisher says so. Branch names from
   earlier rounds must look like `ishikari/<run>/<task>`, since they go into git
-  commands. In the fallback plan loop (no Agent tool), the investigator
+  commands; a scratch branch (its name starts with `_`) is never a task. Paths,
+  the main branch and the test and check commands go into the ants' shell
+  commands too: setup and every script let through only letters, digits and
+  `. _ / + -` in paths, and one-line commands with no backtick. In the fallback plan loop (no Agent tool), the investigator
   asking a question it already asked stops the run.
 - A logbook entry with an
   unknown field, or without run, who or event, is refused, and a newline in a
@@ -240,7 +259,8 @@ and stops to ask the user only in step 2.
 
 1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
    starts the logbook if there is none, copies the four scripts into
-   `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
+   `<repo>/.git/ishikari/workflows/<run>/` where the Workflow tool may load them
+   (one copy per run, so a later setup never swaps a running script), and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
    script paths, and the repo's saved `testCommand` and `checkCommand`.
 2. The live investigator asks its questions, then `ishikari-plan` writes the
@@ -255,14 +275,15 @@ and stops to ask the user only in step 2.
    skips the trial merge: its detective already tested it. After main moves, the finisher runs
    `checkCommand` to build and check the real app; a failed check comes back
    once as a `check-fix` task built from the moved main. Failed merges and
-   waiting tasks come back in the next build as `bugs`. The docs ant
-   updates the docs first, and the
+   waiting tasks come back in the next build as `bugs`. The
    janitor makes, tests and commits its cleanup inside finish, and it lands
    with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The judge's
    verdict (score, gaps, flagged) is in the result. The skill's
    [Limits](../SKILL.md#limits) table is the source of truth
    for every loop cap.
+   The docs ant updates the docs last, after the judge. The main session
+   saves every stage result with `ishikari.py save`.
 5. Run `ishikari-retro` with `env` and how the run ended. The retrospective
    ant writes `retrospective.md`; the final report adds its top findings.
 
@@ -273,7 +294,7 @@ from ant to ant directly. The Logbook sits apart: a shared ledger, one plain
 text recfile per repo, `~/.ishikari/<repo>-<hash>/logbook.rec`, outside the
 repo. It is append only: nothing in it is ever changed or removed. In the
 map's words: logbook clerk ant: appends each ant's entry the moment the ant
-replies, one clerk at a time, in plan, build and finish. The live investigator gets only an
+replies, one clerk at a time, in plan, build, finish and the retrospective. The live investigator gets only an
 investigated entry. Build and finish add a summary at the end. No ant reads it.
 Each entry says who, the task and what came of it (built, 2 bugs found, score
 6, died); the clerk appends it while the run goes on, and a failed append never

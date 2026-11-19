@@ -19,14 +19,13 @@ Process: [[file:../../requirements/requirements.org][Requirements requirements]]
 The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows the workflow exactly as ishikari-plan.js, ishikari-build.js and ishikari-finish.js run it, so a newcomer can read the whole run from it.
 - Plan-stage logging: ishikari-plan.js logs each researcher ant, fallback investigator ant and architect ant reply the moment it comes, with the same ant(), logNow, summarize and logsDone pattern as ishikari-finish.js. Each entry has run, who (label kind, -ant written as " ant") and event, plus detail when the ant replied. A dead ant is logged as died. A failed append never blocks or fails the run (.catch(() => null)), and every return awaits logsDone().
 - The live investigator runs outside any workflow and the main session never writes the logbook, so it does not log its own replies. When args.investigated is set, ishikari-plan.js logs one entry instead: who "investigator ant", event "investigated", detail the report path. Its researcher Agent-tool agents are not logged.
-- Every agent label in the three scripts has a station on the map. The verifier ant, the cleanup fast-forward (merger-ant:cleanup), the judge-fix fast-forward (merger-ant:judge-fix), the cleanup detective ant and the juror ants each get their own station with the ant hexagon. The juror ants are a stacked ∥ station. The judge ant is a single station, not ∥.
+- Every agent label in the four scripts has a station on the map. The judge-fix fast-forward (merger-ant:judge-fix), the judge-fix worker and detective ants and the juror ants each get their own station with the ant hexagon. The juror ants are a stacked ∥ station. The judge ant is a single station, not ∥.
 - The logbook clerk is named once, in the Logbook station's panel: "logbook clerk ant: appends each ant's entry". It is not drawn on every line.
-- The map draws names only; descriptions and short notes live in each item's tooltip and click panel. Short notes name each skipped step: fewer than 2 passing tasks skips the combined test; a cleanup run has no janitor; the judge fix runs only with a score below 7 and gaps; the check runs only when main moved and checkCommand is set; jurors run only with 2+ merged tasks; a plan may run a saved workflow in place of a worker ant.
-- Wrong notes are fixed. "max 2 extra build rounds" sits on the merge-failed spur, not the row-2 fix loop. The cleanup fail note reads detective, worker, inspector. The judge fix lands only through its fast-forward before the second score. Ant names use one style: "<Role> ant", with lowercase "ant".
+- The map draws names only; descriptions and short notes live in each item's tooltip and click panel. Short notes name each skipped step: fewer than 2 passing tasks skips the combined test; a cleanup run has no janitor; the judge fix runs only with a score below 7 and gaps; the check runs only when main moved and checkCommand is set; jurors run only with 3+ merged tasks; a plan may run a saved workflow in place of a worker ant.
+- Wrong notes are fixed. "max 2 extra build rounds" sits on the merge-failed spur, not the row-2 fix loop. The judge fix lands only through its fast-forward before the second score. Ant names use one style: "<Role> ant", with lowercase "ant".
 - No two text labels on the map overlap. The map keeps its 4 rows unless the stations do not fit.
 - Drifted docs match the build. Each SKILL.md Limits row has 3 cells, separator included. The index.md Diagram, Rules and Flow say the logbook behaviour as built, including that the live investigator gets only the investigated entry, in the same words as the map's Logbook note. The ishikari-build.js Logbook phase detail no longer says "one logbook append at the end".
-- Build and finish behave exactly as before. ishikari.py does not change.
-- test_metro_map runs metro.clj (with bb) to a temporary path and checks four things in the SVG: every agent label kind from the three scripts has a station; the named stations and notes are there; no old wrong note is left; no two text boxes overlap, measured from each text element's x, y, font size and length.
+- test_metro_map runs metro.clj (with bb) to a temporary path and checks four things in the SVG: every agent label kind from the four scripts has a station; the named stations and notes are there; no old wrong note is left; no two text boxes overlap, measured from each text element's x, y, font size and length.
 Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 and ishikari-build.js:160-180; plan agent labels at ishikari-plan.js:155,191,227,262; the test stand-in already swallows 'logbook-clerk:now' (tests/test_workflows.mjs:19); metro.py is a 140-line stdlib Python script writing plain <text class="h" x y font-size> elements that xml.etree can parse; ishikari.py log append accepts run, who, event, task, detail, score (design/index.md Rules); investigation report /Users/raveen_kumar_personal/.ishikari/agent1-997906a8/plans/20261118-225807-5c22/investigation_report.md (D1-D4, F1-F10).
 
 * DONE [#B] A trivial task takes a fast path with no planning or build ants  :ishikari:
@@ -43,10 +42,10 @@ Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 a
 :END:
 The investigator judges each task once its report is written, and a trivial task skips every later ant.
 - Trivial means all of: small, known scope (1-2 files, easy to find); one sensible way to do it, no design choice; one task that cannot be split. Docs or config only is a plus, not a must. A task that needed any question to the user is never trivial.
-- The live investigator replies with trivial and trivialWhy. In the fallback, ishikari-plan.js returns stage 'trivial' with why, report, testCommand and checkCommand before the requirement and architect ants run.
+- The live investigator replies with trivial and trivialWhy. In the fallback, ishikari-plan.js returns stage 'trivial' with why, report, testCommand and checkCommand before the architect ant runs.
 - The skill asks the user once to confirm the fast path. No runs the full plan with investigated set.
-- On the fast path the main session edits on branch ishikari/<run>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It adds and marks the requirement and logs one "fast path landed" entry, all through ishikari.py.
-- Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and ishikari-plan.js runs with investigated and escalated: the add requirement and architect ants read why, and a "fast path escalated" entry is logged. The run then carries on without asking.
+- On the fast path the main session edits on branch ishikari/<run>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It checks first that the main checkout is on main and clean, never lands untested, and logs one "fast path landed" entry through ishikari.py.
+- Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and ishikari-plan.js runs with investigated and escalated: the architect ant reads why, and a "fast path escalated" entry is logged. The run then carries on without asking.
 - The metro map shows the fast path as a spur from the investigation report to MAIN.
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
 
@@ -65,3 +64,26 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - It judges the Ishikari flow, not the repo's code, and reads the run's logbook entries, the plans folder (report, architecture, plans, cleanup note, stage results saved as <stage>-<n>.json), the run's git history and Ishikari's own source.
 - Read only: its one write is <state>/plans/<run>/retrospective.md. Findings are ranked costliest first, each with category (bug, error, inefficiency, gap, missing, improvement), evidence, impact, change and where.
 - The main session saves every workflow result to the plans folder, and the final report shows the summary and top 3 findings.
+
+* DONE [#A] Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent  :ishikari:
+:PROPERTIES:
+:ID:          ISH-4
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_workflows.mjs finish: main moves to the checked commit, never to a branch name, and a retry sees it already moved"
+:VERIFY+:     "tests/test_workflows.mjs finish: a docs update that is not accepted is put back, its branch kept, and main moves without it"
+:VERIFY+:     "tests/test_workflows.mjs finish: a later round uses its own upkeep branches and counts earlier landed tasks as in main"
+:VERIFY+:     "tests/test_workflows.mjs build: an ant call that throws is a dead ant, never a lost stage"
+:VERIFY+:     "tests/test_workflows.mjs build: clash fixes run one at a time, and tasks built on a fixed task take it in and are checked again"
+:VERIFY+:     "tests/test_workflows.mjs every script refuses paths, branches and commands the ants' shell cannot carry"
+:VERIFY+:     "tests/test_ishikari.py test_hardening"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+- Finish: main moves only to the last checked commit, never to a branch by name, and a finisher retry sees main already moved. Upkeep work (cleanup, judge fix, docs) lands only with its checks passed and its commit named; anything else is reset off the scratch copy, and a failed reset stops upkeep.
+- Finish: a base counts as in main by git cherry or the landed list, never by an ancestor check; trial-merge reuse uses git cherry; a later finish of one run uses its own upkeep branches.
+- The docs ant runs last, after the judge, and may land docs files only: the script reads its changed-file list.
+- Build: a thrown or misshapen ant reply is a dead ant; bug tasks honour after; clash fixes run in order and their dependents are taken in and checked again or blocked; scratch branches and colliding branches are refused; a stuck first build still gets the full check; a saved workflow is not trusted; built needs a commit.
+- Plan: the architect says it read the report and wrote every plan; plan files must be paths inside the repo.
+- Tool and scripts: unsafe paths, branch names and commands are refused; stage results are saved with ishikari.py save; each run has its own copy of the scripts; a dead logbook clerk is retried and what it lost comes back as logLost.
+- The retrospective's read-only promise is checked with a before and after digest of the repo's refs, worktrees and status.
