@@ -103,6 +103,11 @@
    ["check" 1580 R3 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
    ["req-done" 1780 R3 "req done" ["the main session marks the kept :ID:s" "once the check passed, or there is none"] "done" L-DN]])
 
+;; Skills each station's ant uses, drawn beside its name. List every one.
+(def station-skills
+  {"investigator"    ["/ask-simple"]
+   "add-requirement" ["/add-requirement"]})
+
 ;; What a click on a station shows: a short line for the hover tooltip, the
 ;; full story for the panel, and where it lives. Keyed by [name x]: some names
 ;; appear twice. Every station needs one; the build fails without it.
@@ -483,7 +488,10 @@
      (clickable {:id id :cls "st" :name (str/replace nm "  ∥" "") :code (code id) :tip tip :about about :src src :sub sub :x x :y y}
                 (apply str (icon x y nm kind))
                 (str/replace (txt (+ x dx) (+ y dy) [nm] :size 16 :anchor an :weight "700")
-                             "</text>" (str "<tspan dx=\"5\" font-size=\"11\" font-weight=\"400\" fill=\"" GREY "\">" (code id) "</tspan></text>"))
+                             "</text>" (str "<tspan dx=\"5\" font-size=\"11\" font-weight=\"400\" fill=\"" GREY "\">" (code id) "</tspan>"
+                                             (when-let [sk (station-skills id)]
+                                               (str "<tspan dx=\"6\" font-size=\"12\" font-weight=\"600\" fill=\"" INDIGO "\">" (esc (str/join " " sk)) "</tspan>"))
+                                             "</text>"))
                 ))
    (for [[n path c sec beg] trains
          :let [[lname] (about-lines (if (= path "build") "g1" (case path "fixloop" "fix" "jfixrun" "jfix" path)))]]

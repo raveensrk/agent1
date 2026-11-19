@@ -277,7 +277,8 @@ open the SVG itself in a browser and click for a panel with the full story
 (Esc closes it). Lines and notes take their text from `about-lines` and
 `about-notes` in `metro.clj`; the build fails on one without text.
 Each station has a fixed id (`merger`) and a position code worked out on
-each build (`r2s4`: row 2, station 4), shown small beside its name.
+each build (`r2s4`: row 2, station 4), shown small beside its name. A station whose ant uses skills lists every one
+after that, in indigo (`/ask-simple`); they live in `station-skills` in `metro.clj`.
 `ishikari-metro.svg#merger` or `#r2s4` opens that station's panel. Its text
 lives in `details` in `metro.clj`, keyed by id; spurs name their target by
 id too. The build fails on a missing detail, a duplicate id or a spur to an
