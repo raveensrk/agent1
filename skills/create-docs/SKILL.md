@@ -2,13 +2,23 @@
 name: create-docs
 metadata:
   scope: global
-description: Write docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, or runs /create-docs. Researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing.
-argument-hint: "[repo path]"
+description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale, or runs /create-docs. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings an existing book in line with the code.
+argument-hint: "create|update [repo path]"
 ---
 
-# Create docs: the book of this repository
+# Create or update docs: the book of this repository
 
 Use `docs/` or `doc/`, whichever exists. If neither exists, create `docs/`.
+
+## Modes
+
+Two modes, picked by the first argument:
+
+- `create` - write the book from scratch, or rebuild a docs folder that is not yet a book. Runs Phases 1-7.
+- `update` - bring an existing book in line with the repo. Runs [Update mode](#update-mode).
+
+No mode given: `update` if `docs/README.md` has a table of contents and `docs/build.sh` exists, `create` otherwise.
+Say which mode was picked in the first line.
 
 ## Goal
 
@@ -182,3 +192,19 @@ Fix each one in the chapter that owns it and rerun, up to three rounds.
 ## Phase 7: Report
 
 In a few lines: chapters and diagrams written, files moved or merged, check results, rebuild-test gaps left, open questions, and the branch with its commits.
+
+## Update mode
+
+The book exists; keep it true.
+Every rule in Ground rules, Phase 4 and Phase 6 still holds, except the git branch is `docs-update`.
+
+1. Find what changed: commits since the last commit that touched `docs/` (`git log <that commit>..HEAD`), plus uncommitted changes the user points to. With no clear baseline, compare every chapter against the code.
+2. Map each change to the chapters, diagrams, ADRs and glossary entries that own it. Also check `AGENTS.md`, the root `README.md` and `docs/build.sh`.
+3. Read those chapters and the code they describe. List every stale, missing or wrong fact, with its chapter and source path.
+4. Ask one batch of questions, only for intent or rationale the code can't tell (a new decision needs its reason for the ADR). Unanswered ones go in Open questions.
+5. Fix each fact in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one; update `docs/README.md` and the previous / next chain to match. Never restate a fact to patch a gap: link to it.
+6. Remove what no longer exists. Answered open questions leave the Open questions chapter.
+7. Run `docs/build.sh diagrams` and `docs/build.sh check`. Rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
+8. Commit, never push, and report in a few lines: chapters and diagrams changed, added or removed, check results, rebuild-test gaps left, open questions, and the commits.
+
+Nothing changed since the last docs commit and the chapters match the code: say so and stop.
