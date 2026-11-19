@@ -42,6 +42,7 @@ AI agents get a short section in `AGENTS.md` that points here.
 - All documentation goes in `docs/`. Create it if it's missing. If it exists, build on it: keep what's correct, fix what's stale, fold in the rest.
 - Git: work on a new branch `docs-book`, commit at the end of every phase that changes files, and never push. If the working tree has uncommitted changes, stop and ask first. Skip git steps if this isn't a git repo.
 - Questions: batch them, and give each one your recommended answer with a one-line reason. Outside the Phase 2 interview, ask at most one batch per phase. If the user doesn't answer, use your recommendation for wording choices only; never move, delete or install anything without a yes.
+- Requirement traces: requirements files (`requirements.org`, `requirements/*.org`, `REQUIREMENTS.md`, `requirements/*.md`), entries with `:ID:` or OPEN/TODO/DONE headings, user stories, PRDs, specs and acceptance-criteria lists. Never convert or delete them on your own: ask the user, per trace, whether to convert it into the docs (its facts go into the chapters that own them: goals into Overview, acceptance criteria into Quality, decisions into ADRs, open items into Open questions, then the source is removed), keep it as is and link to it, or leave it out. Recommend converting. Called by an ant: never ask; leave them and list them in the report.
 - Never guess intent or rationale. Anything still unanswered goes in the Open questions chapter, with where it matters.
 - No secrets, tokens, personal data or internal hostnames. Document config keys, not their values.
 
@@ -92,6 +93,7 @@ Settle the questions others depend on first, and push back on vague answers.
 In the first round, also ask:
 
 - which missing tools to install;
+- whether to convert each requirement trace into the docs (see Ground rules);
 - what to do with each root doc or note: merge it into a chapter, move it into `docs/` unchanged, or leave it. Content that moves is not kept in two places. These always stay in the root: `README.md` (to be trimmed to a short pitch plus a link to `docs/README.md`), `LICENSE`, `CHANGELOG*` and `AGENTS.md`.
 
 ## Phase 3: Outline (checkpoint)
@@ -210,7 +212,7 @@ No new branch: commit on the current branch, never push.
 6. Add what is missing, in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one, and keep `docs/README.md` and the previous / next chain in step.
 7. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the changes affect.
 8. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
-9. Ask at most one batch of questions, only for intent or rationale the code can't tell. Unanswered ones go in Open questions.
+9. Ask at most one batch of questions, only for intent or rationale the code can't tell, plus whether to convert each requirement trace not yet decided (see Ground rules). Unanswered ones go in Open questions.
 10. With `docs/build.sh`, run `docs/build.sh diagrams` and `docs/build.sh check`. In a book, rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
 11. Commit and report in a few lines: what was removed, fixed and added, training data updated, check results, open questions and the commits.
 
