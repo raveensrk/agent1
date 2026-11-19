@@ -81,8 +81,7 @@
    ["you" 440 90 "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you" [26 -6 "start"]]
    ["researchers" 440 290 "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end" [24 -4 "start"]]
    ["report" 780 R1 "investigation_report.md" ["written when nothing is unclear;" "the investigator is stopped"] "file" L-DN]
-   ["add-requirement" 1100 R1 "Add requirement ant" ["drafts the requirement entry;" "the main session pipes it into ishikari.py req add;" "no requirements file: no add requirement ant"] "st" L-DN]
-   ["architect" 1420 R1 "Architect ant" ["writes architecture.md" "and one plan per task"] "st" L-UP]
+   ["architect" 1240 R1 "Architect ant" ["proves it can be built, then writes" "architecture.md and one plan per task;" "not buildable: the run stops"] "st" L-UP]
    ["plans" 1700 R1 "Worker plans" ["one per task: title, files, after;" "checked before anything is built"] "files" L-DN]
    ["logbook" 1370 40 "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build and finish." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log" RIGHT]
    ;; row 2: build, check, fix, then merge and clean up
@@ -102,12 +101,11 @@
    ["finisher" 1180 R3 "Finisher ant" ["fast-forwards main, removes worktrees," "appends the stage rows, runs the check"] "x" L-UP]
    ["main" 1340 R3 "MAIN" ["fast-forward only," "never pushed"] "main" L-DN]
    ["check" 1580 R3 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
-   ["req-done" 1780 R3 "req done" ["the main session marks the kept :ID:s" "once the check passed, or there is none"] "done" L-DN]])
+   ["finished" 1780 R3 "Run report" ["the main session reports what landed," "the checks, the docs and the verdict"] "done" L-DN]])
 
 ;; Skills each station's ant uses, drawn beside its name. List every one.
 (def station-skills
   {"investigator"    ["/ask-simple"]
-   "add-requirement" ["/add-requirement"]
    "docs"            ["/docs"]
    "researchers"     ["/ux"]})
 
@@ -130,14 +128,11 @@
    "report" {:tip "Everything learned while planning, written once."
                                     :about "Goal, scope, every decision you made, facts with sources, constraints, risks, assumptions, acceptance checks and commands. Every claim cites an answer, a fact or the repo. Later ants read it instead of asking you. The main session never edits it."
                                     :src "<state>/plans/<run>/investigation_report.md"}
-   "add-requirement" {:tip "Drafts the requirement entry; skipped with no requirements file."
-                                 :about "Reads only the report and the repo; the report wins. Drafts the entry with /add-requirement and shows it can be built, with a throwaway spike only if needed. Never asks, designs or plans. The main session pipes the entry into ishikari.py req add. Runs only when setup finds requirements.org or requirements/*.org."
-                                 :src "scripts/ishikari-plan.js (Requirement phase)"}
-   "architect" {:tip "Writes architecture.md and one plan per task."
-                           :about "Designs the parts of the change, the files each owns, and every name, interface and data shape between them, so parallel workers fit. Maps each acceptance check to a part. Splits the work into tasks of about 3 files, no two editing one file, each with its own test file."
+   "architect" {:tip "Proves the task can be built, then writes architecture.md and one plan per task."
+                           :about "Reads only the investigation report and the repo; the report wins. First it proves the task can be built from the repo's code and docs, with a throwaway spike outside the repo only if needed; if it cannot be built, the plan stage stops with the reason and nothing is built. Then it Designs the parts of the change, the files each owns, and every name, interface and data shape between them, so parallel workers fit. Maps each acceptance check to a part. Splits the work into tasks of about 3 files, no two editing one file, each with its own test file."
                            :src "scripts/ishikari-plan.js (Design phase)"}
    "plans" {:tip "One complete plan per task."
-                          :about "Workers cannot ask questions, so each plan is complete: title, files, after. The plan script rejects bad or unknown ids, loops in after, two tasks on one file, and a bad requirement, before anything is built."
+                          :about "Workers cannot ask questions, so each plan is complete: title, files, after. The plan script rejects bad or unknown ids, loops in after, and two tasks on one file, before anything is built."
                           :src "<state>/plans/<run>/<task>.md"}
    "logbook" {:tip "Every ant's reply, one entry each."
                      :about "A recfile the logbook clerk appends to the moment an ant replies, one clerk at a time. Build and finish add a summary at the end. No ant reads it; read it with ishikari.py log status, recsel or an editor."
@@ -185,11 +180,11 @@
                   :about "Moves only as a fast-forward, never a merge commit, and is never pushed. Push it yourself when you are happy."
                   :src "SKILL.md#4-finish"}
    "check" {:tip "Builds and checks the app after main moves."
-                          :about "The finisher ant runs the repo's saved checkCommand, only when main moved and the command is set. A failure starts one check-fix round. The check-fix round is one build round from the moved main, as a new task named check-fix. If the check still fails after it, the run stops and reports the output, and requirements are not marked done."
+                          :about "The finisher ant runs the repo's saved checkCommand, only when main moved and the command is set. A failure starts one check-fix round. The check-fix round is one build round from the moved main, as a new task named check-fix. If the check still fails after it, the run stops and reports the output."
                           :src "ishikari.py config <state> checkCommand <cmd>"}
-   "req-done" {:tip "Marks this run's requirements DONE."
-                      :about "The main session runs ishikari.py req done with the :ID:s kept in planning, once the check passed or there is none. Skipped when the repo has no requirements file."
-                      :src "scripts/ishikari.py (req done)"}})
+   "finished" {:tip "The run ends with one report."
+               :about "The main session reports what landed on main, the tests and the app check, the docs ant's update, the cleanup and the judge's verdict."
+               :src "SKILL.md"}})
 
 (defn detail [id]
   (or (details id) (throw (ex-info (str "no detail for station " id) {}))))
@@ -351,7 +346,7 @@
 
 (def about-lines
   "Line name -> [name tip about]. \"none\" lines are invisible train routes."
-  {"plan"    ["Plan line" "Rows 1 to 2: from your task to the worker plans." "The blue line carries one task from Task through the investigator, the report, the requirement and the architect to the worker plans, then wraps down to row 2 where building starts."]
+  {"plan"    ["Plan line" "Rows 1 to 2: from your task to the worker plans." "The blue line carries one task from Task through the investigator, the report and the architect to the worker plans, then wraps down to row 2 where building starts."]
    "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
    "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
    "g1"      ["Build line" "Rows 2 to 3: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
@@ -361,9 +356,9 @@
    "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
    "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks, the merger fast-forwards the fix, and the judge scores again. Only one round."]
-   "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, and the main session marks the requirements done."]
-   "fast"    ["Fast path spur" "A trivial task skips the planning and build ants." "Once the report is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass, and adds and marks the requirement and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
-   "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops and requirements are not marked done."]})
+   "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, and the main session reports the run."]
+   "fast"    ["Fast path spur" "A trivial task skips the planning and build ants." "Once the report is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
+   "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops."]})
 
 (def about-notes
   "Note id -> [name about] for the notes still drawn on the map: only the row wraps."
@@ -445,9 +440,9 @@
                (txt 40 44 ["ISHIKARI METRO"] :size 28 :weight "800")
                (txt 330 44 ["Read it like a page: each row left to right, then wrap to the next row."] :fill SUB :size 15))]
    ;; row bands
-   (for [[k y label c about] [[1 R1 "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2: the investigator asks you its questions, then the plan stage writes the requirement, the design and one plan per task. The only row where you are asked anything."]
+   (for [[k y label c about] [[1 R1 "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2: the investigator asks you its questions, then the plan stage writes the design and one plan per task. The only row where you are asked anything."]
                               [2 R2 "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6: worker ants build the plans in parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
-                              [3 R3 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half: the judge scores the run against the plans, the finisher moves main forward and runs the check, and the requirements are marked done."]]]
+                              [3 R3 "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half: the judge scores the run against the plans, the finisher moves main forward and runs the check and the run is reported."]]]
      (clickable {:id (str "row-" k) :name (str "Row " k) :tip label :about about :src "skills/ishikari/SKILL.md" :x (- W 30) :y (if (= y R1) 120 (- y 50))}
                 (txt (- W 30) (if (= y R1) 120 (- y 50)) [label] :fill c :size 13 :anchor "end" :weight "800")))
    (for [[name c pts w dash] lines

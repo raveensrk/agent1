@@ -25,18 +25,16 @@ function run(name, args, ant, clerk = () => ({})) {
 }
 
 const clear = { summary: '', critique: [], research: [], next: { question: '', answers: [] }, remaining: 0, reportWritten: true, blocker: '', testCommand: 't', checkCommand: '' }
-const goodReq = { requirement: { needed: true, file: '/r/requirements.org', entry: '* OPEN X\n:PROPERTIES:\n:ID: X-1\n:END:', proof: 'repo' } }
 
-function planWith(plans, req = goodReq, review = clear) {
+function planWith(plans, review = clear) {
   return run('ishikari-plan.js', { env, task: 't' }, (p, o) =>
     o.label.startsWith('investigator') ? review
-      : o.label === 'add-requirement-ant' ? req
       : o.label.startsWith('researcher') ? { findings: 'f' }
-      : { designWritten: true, plans })
+      : { feasible: true, proof: 'p', designWritten: true, plans })
 }
 
 test('plan: asks one question at a time', async () => {
-  const { out } = await planWith([], goodReq, { ...clear, next: { question: 'Q?', answers: ['a'] }, remaining: 3 })
+  const { out } = await planWith([], { ...clear, next: { question: 'Q?', answers: ['a'] }, remaining: 3 })
   assert.equal(out.stage, 'question')
   assert.equal(out.question.question, 'Q?')
   assert.equal(out.remaining, 3)
@@ -55,7 +53,7 @@ test('plan: research runs before the question, at most 5 ants', async () => {
 })
 
 test('plan: a missing report is an error', async () => {
-  const { out } = await planWith([], goodReq, { ...clear, reportWritten: false })
+  const { out } = await planWith([], { ...clear, reportWritten: false })
   assert.equal(out.stage, 'error')
 })
 
@@ -78,11 +76,12 @@ test('plan: loops and unknown ids in after are refused', async () => {
   assert.match(out.reason, /unknown plan/)
 })
 
-test('plan: a requirement outside the repo or without :ID: is refused', async () => {
-  let { out } = await planWith([{ id: 'a', title: 'A', files: ['x'] }], { requirement: { ...goodReq.requirement, file: '/etc/x.org' } })
-  assert.match(out.reason, /inside \/r/)
-  ;({ out } = await planWith([{ id: 'a', title: 'A', files: ['x'] }], { requirement: { ...goodReq.requirement, entry: '* OPEN X' } }))
-  assert.match(out.reason, /no :ID:/)
+test('plan: an architect that proves the task cannot be built blocks the run, nothing planned', async () => {
+  const { out } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, () =>
+    ({ feasible: false, proof: 'spike', blocker: 'the API has no such call', designWritten: false, plans: [] }))
+  assert.equal(out.stage, 'blocked')
+  assert.match(out.reason, /the API has no such call/)
+  assert.ok(!('plans' in out))
 })
 
 test('build: a failed app check becomes its own task from main', async () => {
@@ -305,9 +304,9 @@ test('finish: a dead or nonsense judge flags the run but never blocks main', asy
 // ---- stress: malformed input and half answers never crash or pass silently ----
 
 test('stress: plan survives broken ant replies', async () => {
-  for (const reply of [{}, { requirement: null }, { designWritten: true, plans: null }, { designWritten: true, plans: [{ id: 'a', files: null, after: 'b' }] }]) {
+  for (const reply of [{}, { feasible: 'yes', designWritten: true, plans: [] }, { feasible: true, proof: 'p', designWritten: true, plans: null }, { feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', files: null, after: 'b' }] }]) {
     const { out } = await run('ishikari-plan.js', { env, task: 't', answered: 'x', findings: 'y' }, (p, o) =>
-      o.label.startsWith('investigator') ? clear : o.label === 'add-requirement-ant' ? (reply.requirement === null ? reply : goodReq) : reply)
+      o.label.startsWith('investigator') ? clear : reply)
     assert.equal(out.stage, 'error', JSON.stringify(reply))
   }
 })
@@ -354,30 +353,9 @@ test('stress: finish never claims main moved when nothing merged', async () => {
   assert.equal(out.waiting.length, 1)
 })
 
-test('plan: a repo with no requirements file skips the add requirement ant', async () => {
-  const prompts = {}
-  const { out, calls } = await run('ishikari-plan.js', { env: { ...env, requirements: [] }, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) => {
-    prompts[o.label] = p
-    return { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-  })
-  assert.equal(out.stage, 'plans')
-  assert.equal(out.requirement.needed, false)
-  assert.ok(!calls.includes('add-requirement-ant'))
-  assert.match(prompts['architect-ant'], /keeps no requirements file/)
-})
-
-test('plan: listed requirements files go to the add requirement ant', async () => {
-  const prompts = {}
-  await run('ishikari-plan.js', { env: { ...env, requirements: ['/r/requirements.org'] }, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) => {
-    prompts[o.label] = p
-    return o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
-  })
-  assert.match(prompts['add-requirement-ant'], /one of: \/r\/requirements\.org/)
-})
-
 test('plan: a live investigation skips Review', async () => {
   const { out, calls } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '' } }, (p, o) =>
-    o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
+    ({ feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }))
   assert.equal(out.stage, 'plans')
   assert.equal(out.testCommand, 'npm test')
   assert.ok(!calls.some(c => c.startsWith('investigator')))
@@ -599,7 +577,7 @@ test('build: an ant entry names its task, and a dead ant is logged as died', asy
 })
 
 // ---- plan: every planning ant writes the logbook ----
-const onePlan = { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+const onePlan = { feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
 const live = { testCommand: 'npm test', checkCommand: '' }
 
 test('plan: every planning ant gets its own logbook entry at once', async () => {
@@ -609,14 +587,13 @@ test('plan: every planning ant gets its own logbook entry at once', async () => 
   const { out, instant } = await run('ishikari-plan.js', { env, task: 't' }, (p, o) => {
     if (o.label.startsWith('investigator')) return ++n === 1 ? { ...clear, reportWritten: false, research: ['a', 'b'] } : clear
     if (o.label.startsWith('researcher')) return { findings: 'f' }
-    if (o.label === 'add-requirement-ant') return goodReq
     return onePlan
   }, slowClerk)
   assert.equal(out.stage, 'plans')
   const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
     'investigator ant: research needed', 'researcher ant: found', 'researcher ant: found',
-    'investigator ant: report written', 'add-requirement ant: requirement drafted', 'architect ant: 1 plan written',
+    'investigator ant: report written', 'architect ant: 1 plan written',
   ])
   assert.ok(got.every(e => e.run === 'r1' && !('task' in e) && typeof e.detail === 'string' && e.detail.length <= 400))
   assert.ok(instant.every(p => p.includes('python3 /t/ishikari.py log append /s')))
@@ -628,29 +605,29 @@ test('plan: every planning ant gets its own logbook entry at once', async () => 
 
 test('plan: a live investigation logs one investigated entry', async () => {
   const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
-    o.label === 'add-requirement-ant' ? goodReq : onePlan)
+    onePlan)
   const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got[0], { run: 'r1', who: 'investigator ant', event: 'investigated', detail: '/s/plans/r1/investigation_report.md' })
   assert.equal(got.filter(e => e.who === 'investigator ant').length, 1)
   assert.equal(got.filter(e => e.who === 'researcher ant').length, 0)
-  assert.deepEqual(got.map(e => e.who), ['investigator ant', 'add-requirement ant', 'architect ant'])
+  assert.deepEqual(got.map(e => e.who), ['investigator ant', 'architect ant'])
   assert.equal(out.stage, 'plans')
 })
 
 test('plan: a dead planning ant is logged as died and never blocks the run', async () => {
   let r = 0
   const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
-    o.label === 'add-requirement-ant' ? (++r === 1 ? null : goodReq) : onePlan,
+    ++r === 1 ? null : onePlan,
   () => { throw new Error('logbook down') })
   assert.equal(out.stage, 'plans')
-  const reqs = instant.flatMap(p => logged(p)).filter(e => e.who === 'add-requirement ant')
-  assert.equal(reqs.length, 2)
-  assert.deepEqual(reqs[0], { run: 'r1', who: 'add-requirement ant', event: 'died' })
-  assert.equal(reqs[1].event, 'requirement drafted')
+  const arch1 = instant.flatMap(p => logged(p)).filter(e => e.who === 'architect ant')
+  assert.equal(arch1.length, 2)
+  assert.deepEqual(arch1[0], { run: 'r1', who: 'architect ant', event: 'died' })
+  assert.equal(arch1[1].event, '1 plan written')
 
   let settled = 0
   const second = await run('ishikari-plan.js', { env, task: 't', investigated: live }, (p, o) =>
-    o.label === 'add-requirement-ant' ? goodReq : null,
+    null,
   () => new Promise(res => setTimeout(() => { settled++; res({}) }, 5)))
   assert.equal(second.out.stage, 'error')
   const arch = second.instant.flatMap(p => logged(p)).filter(e => e.who === 'architect ant')
@@ -673,7 +650,7 @@ test('plan: the architect keeps plans small and says what and where, not exact w
   const prompts = {}
   await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 'npm test', checkCommand: '' } }, (p, o) => {
     prompts[o.label] = p
-    return o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+    return { feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
   })
   const a = prompts['architect-ant']
   assert.ok(a.includes('at most about 3 files per task'))
@@ -690,7 +667,7 @@ test('every ant in all three scripts runs on opus at low effort', async () => {
     return new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)(args, agent, parallel, () => {}, () => {}, async () => ({}))
   }
   await spy('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' } }, (p, o) =>
-    o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
+    ({ feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }))
   await spy('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('detective') ? { bugs: [] } : {})
   await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
@@ -760,18 +737,18 @@ test('build: a re-check with no plan still gives the worker the open bugs', asyn
 
 // ---- fast path: a trivial task skips the plan, and an escalation reaches the planners ----
 test('plan: a trivial verdict returns stage trivial before any planner runs', async () => {
-  const { out, calls } = await planWith([], goodReq, { ...clear, trivial: true, trivialWhy: 'one label in one file' })
+  const { out, calls } = await planWith([], { ...clear, trivial: true, trivialWhy: 'one label in one file' })
   assert.equal(out.stage, 'trivial')
   assert.equal(out.why, 'one label in one file')
   assert.equal(out.report, '/s/plans/r1/investigation_report.md')
   assert.equal(out.testCommand, 't')
-  assert.ok(!calls.includes('add-requirement-ant') && !calls.includes('architect-ant'))
+  assert.ok(!calls.includes('architect-ant'))
 })
 
 test('plan: a task that needed questions is never trivial', async () => {
   const { out } = await run('ishikari-plan.js', { env, task: 't', answered: [{ question: 'Q?', answer: 'a' }] }, (p, o) =>
     o.label.startsWith('investigator') ? { ...clear, trivial: true }
-      : o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
+      : { feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] })
   assert.equal(out.stage, 'plans')
 })
 
@@ -779,10 +756,9 @@ test('plan: an escalated fast path tells the planners why and logs it', async ()
   const prompts = {}
   const { out, instant } = await run('ishikari-plan.js', { env, task: 't', investigated: { testCommand: 't', checkCommand: '' }, escalated: 'touches 6 files' }, (p, o) => {
     prompts[o.label] = p
-    return o.label === 'add-requirement-ant' ? goodReq : { designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
+    return { feasible: true, proof: 'p', designWritten: true, plans: [{ id: 'a', title: 'A', files: ['x'] }] }
   })
   assert.equal(out.stage, 'plans')
   assert.match(prompts['architect-ant'], /fast path was tried and given up: touches 6 files/)
-  assert.match(prompts['add-requirement-ant'], /fast path was tried and given up: touches 6 files/)
   assert.ok(instant.some(p => /fast path escalated/.test(p)))
 })

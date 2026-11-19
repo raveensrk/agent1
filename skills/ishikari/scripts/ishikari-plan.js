@@ -1,17 +1,15 @@
 export const meta = {
   name: 'ishikari-plan',
-  description: 'Ishikari stage 1: investigate the task, draft a requirement, design it and write worker plans',
+  description: 'Ishikari stage 1: investigate the task, prove it can be built, design it and write worker plans',
   whenToUse: 'Start of an Ishikari run, then once per answer: the investigator ant asks one question per run. When it has no more, the plans go straight to ishikari-build.',
   phases: [
     { title: 'Review', detail: 'investigator ant, helped by up to 5 researcher ants, asks the next question' },
-    { title: 'Requirement', detail: 'add requirement ant drafts the requirement from the investigation report' },
-    { title: 'Design', detail: 'architect ant writes architecture.md and one plan per worker ant' },
+    { title: 'Design', detail: 'architect ant proves the task can be built, writes architecture.md and one plan per worker ant' },
   ],
 }
 
 // args: {
-//   env: { repo, state, run, main, tool, requirements? },  from `ishikari.py setup`;
-//                                           requirements: [] skips the add requirement ant
+//   env: { repo, state, run, main, tool },  from `ishikari.py setup`
 //   task: string,                           the task, in the user's words
 //   answered?: [{ question, answer }],     every question asked so far, in order;
 //                                           answer '' if skipped
@@ -22,7 +20,7 @@ export const meta = {
 //                                           user and wrote the investigation
 //                                           report: Review is skipped
 //   escalated?: string,                     why a fast path was given up; the
-//                                           requirement and architect ants are told
+//                                           architect ant is told
 // }
 // The investigator ant asks one question per run, chosen after every earlier
 // answer. To answer, run again with the same env and task, answered with the new
@@ -37,17 +35,16 @@ export const meta = {
 //                                           (fallback only): the main session asks the
 //                                           user and takes the fast path, or runs again
 //                                           with investigated set for the full plan
-//   { stage: 'plans', report, design, review, requirement, plans, testCommand, checkCommand }
-// requirement.needed is false for a change with no new behaviour (a refactor):
-// then nothing is written to the requirements file.
+//   { stage: 'plans', report, design, review, plans, testCommand, checkCommand }
+//   { stage: 'blocked', reason, review }   also when the architect proves the
+//                                           task cannot be built: nothing is built
 //   { stage: 'error', reason }
-// Nothing is committed here. Without asking, the main session then commits
-// the requirement.
+// Nothing is committed here.
 
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { review: 'low', researcher: 'low', requirement: 'low', architect: 'low' }
+const EFFORT = { review: 'low', researcher: 'low', architect: 'low' }
 const MAX_RESEARCHERS = 5  // researcher ants at once
 const MAX_RESEARCH = 2     // research bursts per question
 
@@ -103,26 +100,12 @@ const FOUND = {
   required: ['findings'],
 }
 
-const REQUIRED = {
-  type: 'object',
-  properties: {
-    requirement: {
-      type: 'object',
-      properties: {
-        needed: { type: 'boolean', description: 'false if the change adds no behaviour, so no entry is written' },
-        file: { type: 'string', description: 'requirements org file the entry belongs in' },
-        entry: { type: 'string', description: 'the requirement text, ready to paste' },
-        proof: { type: 'string', description: 'how it was shown buildable: docs, repo code or spike' },
-      },
-      required: ['needed', 'file', 'entry', 'proof'],
-    },
-  },
-  required: ['requirement'],
-}
-
 const PLANNED = {
   type: 'object',
   properties: {
+    feasible: { type: 'boolean', description: 'false if the task cannot be built as the report asks; then write nothing and say why in blocker' },
+    proof: { type: 'string', description: 'how it was shown buildable: repo code, docs or a throwaway spike' },
+    blocker: { type: 'string', description: 'why it cannot be built; empty when feasible' },
     designWritten: { type: 'boolean', description: 'true once architecture.md is written' },
     plans: {
       type: 'array',
@@ -139,7 +122,7 @@ const PLANNED = {
       },
     },
   },
-  required: ['designWritten', 'plans'],
+  required: ['feasible', 'proof', 'designWritten', 'plans'],
 }
 
 // A dead ant (null) is retried once.
@@ -156,7 +139,7 @@ async function twice(fn) {
 const summarize = r => {
   if (r == null) return 'died'
   if (typeof r.findings === 'string') return 'found'
-  if (r.requirement && typeof r.requirement === 'object') return r.requirement.needed ? 'requirement drafted' : 'no requirement needed'
+  if (r.feasible === false) return 'not buildable'
   if (Array.isArray(r.plans)) return `${r.plans.length} plan${r.plans.length === 1 ? '' : 's'} written`
   if (r.blocker) return 'blocked'
   if (r.next && r.next.question) return 'question asked'
@@ -232,7 +215,7 @@ for (let round = 0; round <= MAX_RESEARCH; round++) {
 ${where}
 Task: ${task}
 Your goal: collect every fact and decision the task needs, so your
-investigation report is bulletproof: the add requirement ant plans from it
+investigation report is bulletproof: the architect ant plans from it
 alone, and no later ant ever needs to ask. Read the repo enough to judge it.
 Critique it: gaps, risks, unclear scope.
 ${asked}${known}Ask nothing the repo, the research or an earlier answer already settles.
@@ -285,39 +268,6 @@ const escalated = typeof args.escalated === 'string' && args.escalated.trim() ? 
 const escalatedNote = escalated ? `A fast path was tried and given up: ${escalated}\nPlan for that.\n` : ''
 if (escalated) logNow([{ run: env.run, who: 'main session', event: 'fast path escalated', detail: escalated }])
 
-// ---- requirement: the add requirement ant only adds ----
-// A repo with no requirements files (env.requirements is []) has no
-// requirements approach: no add requirement ant, nothing to write or mark done.
-const noReqs = Array.isArray(env.requirements) && !env.requirements.length
-if (noReqs) log('add requirement ant skipped: the repo has no requirements file')
-else phase('Requirement')
-const req = noReqs ? { requirement: { needed: false, file: '', entry: '', proof: 'the repo has no requirements file' } } : await twice(() => ant(
-  `You are the add requirement ant of the Ishikari workflow. Your one job: the
-requirement. Do not design or plan the work.
-${where}
-Task: ${task}
-Read the investigation report ${reportFile} first. Build only on it and the
-repo. Where the report and your own idea differ, the report wins.
-${escalatedNote}Follow the /add-requirement skill up to the draft. Show it can be built with
-evidence from the repo's code and docs. Only if that is not enough, write a
-throwaway spike in a temporary folder outside the repo, and delete it after.
-Check for duplicates and conflicts. Give file as an absolute path to an .org
-file inside ${env.repo}${Array.isArray(env.requirements) ? `, one of: ${env.requirements.join(', ')}` : ''}, and give the entry an :ID: property. Write no files:
-the main session writes the requirements file from your entry.`,
-  { label: 'add-requirement-ant', phase: 'Requirement', effort: EFFORT.requirement, schema: REQUIRED },
-))
-if (!req || !req.requirement || typeof req.requirement !== 'object') return done({ stage: 'error', reason: 'the add requirement ant died twice or returned no requirement' })
-// The main session appends the entry to this file and commits it: it must be
-// an org file inside this repo, and the entry must carry an :ID: for req done.
-if (req.requirement.needed) {
-  const rf = String(req.requirement.file || '')
-  const why = []
-  if (!rf.startsWith(env.repo + '/') || rf.includes('/../') || !rf.endsWith('.org')) why.push(`file "${rf}" is not an .org file inside ${env.repo}`)
-  if (!String(req.requirement.entry || '').trim()) why.push('the entry is empty')
-  else if (!/^:ID:\s+\S+/m.test(req.requirement.entry)) why.push('the entry has no :ID: line')
-  if (why.length) return done({ stage: 'error', reason: `the requirement needs fixing: ${why.join('; ')}`, review, requirement: req.requirement })
-}
-
 // ---- design and plans: the architect ant ----
 phase('Design')
 const out = await twice(() => ant(
@@ -326,7 +276,12 @@ ${where}
 Task: ${task}
 Read the investigation report ${reportFile} first. Where the report and your
 own idea differ, the report wins.
-${escalatedNote}${req.requirement.needed ? `The requirement, from the add requirement ant (${req.requirement.file}):\n${req.requirement.entry}\n` : noReqs ? 'This repo keeps no requirements file, so the change has no requirement.\n' : 'This change adds no behaviour, so it has no requirement.\n'}1. Design: write ${designFile}: the parts of the change, the files each part
+${escalatedNote}0. Prove it can be built, before designing: show it with evidence from the
+   repo's code and docs. Only if that is not enough, write a throwaway spike in a
+   temporary folder outside the repo, and delete it after. Give the evidence in
+   proof. If it cannot be built as the report asks, set feasible to false, say
+   why in blocker, write no files and return no plans.
+1. Design: write ${designFile}: the parts of the change, the files each part
    owns, and every name, interface and data shape that crosses between parts,
    exact, so worker ants building in parallel fit together. Map each of the
    report's acceptance checks to the part that proves it.
@@ -345,7 +300,9 @@ ${escalatedNote}${req.requirement.needed ? `The requirement, from the add requir
    Write each plan to ${planDir}/<id>.md. Change no other files.`,
   { label: 'architect-ant', phase: 'Design', effort: EFFORT.architect, schema: PLANNED },
 ))
-if (!out || !Array.isArray(out.plans)) return done({ stage: 'error', reason: 'the architect ant died twice or returned no plan list' })
+if (!out || typeof out.feasible !== 'boolean') return done({ stage: 'error', reason: 'the architect ant died twice or gave no feasible verdict' })
+if (!out.feasible) return done({ stage: 'blocked', reason: `the architect ant proved it cannot be built: ${String(out.blocker || out.proof || 'no reason given')}`, review })
+if (!Array.isArray(out.plans)) return done({ stage: 'error', reason: 'the architect ant returned no plan list' })
 // Normalise what the ant gave, so the checks below never trip on its shape:
 // files become clean repo-relative paths, so "./a.py" and "a.py" are one file.
 const norm = f => String(f).replace(/^\.\/+/, '').replace(/\/\.\//g, '/').replace(/\/+/g, '/').replace(/\/$/, '')
@@ -395,14 +352,13 @@ if (!problems.length) {
   }
 }
 if (!out.plans.length) problems.push('the planner returned no plans')
-if (problems.length) return done({ stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, requirement: req.requirement, plans: out.plans })
+if (problems.length) return done({ stage: 'error', reason: `the plans need fixing: ${problems.join('; ')}`, review, plans: out.plans })
 
 return done({
   stage: 'plans',
   report: reportFile,
   design: designFile,
   review,
-  requirement: req.requirement,
   plans: out.plans.map(p => ({ id: p.id, title: p.title, files: p.files, after: p.after || [], workflow: p.workflow || undefined, file: `${planDir}/${p.id}.md` })),
   testCommand: review.testCommand,
   checkCommand: review.checkCommand || '',

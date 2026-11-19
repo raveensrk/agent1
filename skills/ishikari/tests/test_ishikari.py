@@ -26,7 +26,7 @@ NS = "{http://www.w3.org/2000/svg}"
 KIND = re.compile(r"""['`]([a-z]+(?:-[a-z]+)*-(?:ant|clerk))(?=[:'`])""")
 KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "investigator-ant": "Investigator ant", "researcher-ant": "Researcher ants  ∥",
-    "add-requirement-ant": "Add requirement ant", "architect-ant": "Architect ant",
+    "architect-ant": "Architect ant",
     "worker-ant": "Worker ants  ∥",
     "detective-ant": "Detective ants  ∥", "integrator-ant": "Integrator ant",
     "merger-ant": "Merger ant", "docs-ant": "Docs ant", "janitor-ant": "Janitor ant",
@@ -42,10 +42,8 @@ NOTES = {  # architecture.md "Required note texts"
     "N6": "a plan may run a saved workflow in place of a worker ant",
     "N7": "max 2 extra build rounds",
     "N8": "runs the tests, commits, lands it only if",
-    "N9": "the main session pipes it into ishikari.py req add",
     "N10": "the fix lands only through this fast-forward",
     "N11": "logbook clerk ant: appends each ant's entry",
-    "N12": "no requirements file: no add requirement ant",
 }
 
 
@@ -74,15 +72,6 @@ def test_setup_and_logbook():
         assert env["state"].startswith(os.path.join(home, ".ishikari", "app-"))
         for k in ("plan", "build", "finish"):
             assert os.path.isfile(env["workflows"][k]), k
-        assert env["requirements"] == []
-        for f in ("requirements.org", "docs/requirements/cli.org", "notes.org", "requirements/x.txt"):
-            os.makedirs(os.path.dirname(os.path.join(repo, f)), exist_ok=True)
-            open(os.path.join(repo, f), "w").close()
-        subprocess.run(["git", "-C", repo, "add", "."], check=True, timeout=TIMEOUT)
-        subprocess.run(["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "r"], check=True, timeout=TIMEOUT)
-        top = os.path.realpath(repo)
-        assert json.loads(run(home, "setup", repo))["requirements"] == [
-            os.path.join(top, "docs/requirements/cli.org"), os.path.join(top, "requirements.org")]
         state = env["state"]
         book = os.path.join(state, "logbook.rec")
         assert "%rec: Entry" in open(book).read()
@@ -104,7 +93,7 @@ def test_setup_and_logbook():
             assert out.returncode == 0 and out.stdout.strip() == "merger ant", out.stderr
 
 
-def test_workflows_config_and_req():
+def test_workflows_and_config():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
         env = json.loads(run(home, "setup", repo))
@@ -118,20 +107,6 @@ def test_workflows_config_and_req():
         assert env["testCommand"] == "make test"
         run(home, "config", state, "testCommand", "")
         assert "testCommand" not in json.loads(run(home, "setup", repo))
-
-        org = os.path.join(repo, "requirements.org")
-        open(org, "w").write("#+TITLE: r\n")
-        entry = "* OPEN A\n:PROPERTIES:\n:ID:          A-1\n:LAST_EDITED: 2026-01-01\n:END:\nbody\n"
-        run(home, "req", "add", org, stdin=entry)
-        text = open(org).read()
-        assert text.startswith("#+TITLE: r\n\n* OPEN A")
-        run(home, "req", "done", org, "A-1")
-        text = open(org).read()
-        assert "* DONE A" in text and ":LAST_EDITED: 2026-01-01" not in text
-        assert ":APPROVED:" in text and ":IMPLEMENTED:" in text and text.count(":END:") == 1
-        r = subprocess.run([sys.executable, TOOL, "req", "done", org, "Z-9"], env={**os.environ, "HOME": home},
-                           capture_output=True, text=True, timeout=TIMEOUT)
-        assert r.returncode == 1 and "Z-9" in r.stderr
 
 
 def fails(home, *args, stdin=None):
@@ -153,18 +128,6 @@ def test_guards():
         assert "unknown field" in fails(home, "log", "append", state, stdin='[{"run": "r", "who": "w", "event": "e", "colour": "red"}]')
         assert "no who" in fails(home, "log", "append", state, stdin='[{"run": "r", "event": "e"}]')
         assert open(book).read() == before  # a refused write adds nothing
-
-        org = os.path.join(repo, "requirements.org")
-        run(home, "req", "add", org, stdin="* OPEN B\n:PROPERTIES:\n:ID: B-1\n:END:\n")
-        names = os.listdir(repo)
-        assert not [n for n in names if n.endswith((".lock", ".tmp"))], names  # nothing left in the repo
-        assert "missing" in fails(home, "req", "done", os.path.join(repo, "nope.org"), "B-1")
-
-        crlf = os.path.join(repo, "crlf.org")
-        open(crlf, "w", newline="").write("* OPEN C\r\n:PROPERTIES:\r\n:ID: C-1\r\n:END:\r\n")
-        run(home, "req", "done", crlf, "C-1")
-        raw = open(crlf, newline="").read()
-        assert "* DONE C\r\n" in raw and "\n" not in raw.replace("\r\n", "")  # stays CRLF
 
 
 def test_parallel_writers():
@@ -219,24 +182,10 @@ def test_main_branch_and_run_id():
         assert all(re.fullmatch(r"\d{8}-\d{6}-[0-9a-f]{4}", i) for i in ids), ids
 
 
-def test_req_and_log_gaps():
+def test_config_and_log_gaps():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
         state = json.loads(run(home, "setup", repo))["state"]
-        org = os.path.join(home, "r.org")
-        for i in ("A-1", "A-2", "A-3"):
-            run(home, "req", "add", org, stdin=f"* OPEN {i}\n:PROPERTIES:\n:ID: {i}\n:END:\n")
-        out = run(home, "req", "done", org, "A-1", "A-3")
-        text = open(org).read()
-        assert "* DONE A-1" in text and "* OPEN A-2" in text and "* DONE A-3" in text, text
-        assert "A-1" in out and "A-3" in out and text.count(":IMPLEMENTED:") == 2
-
-        crlf = os.path.join(home, "c.org")
-        open(crlf, "w", newline="").write("#+TITLE: c\r\n")
-        run(home, "req", "add", crlf, stdin="* OPEN D\r\n:PROPERTIES:\r\n:ID: D-1\r\n:END:\r\n")
-        raw = open(crlf, newline="").read()
-        assert "* OPEN D\r\n" in raw and "\n" not in raw.replace("\r\n", "")  # added entry follows CRLF
-
         run(home, "config", state, "checkCommand", "make lint")
         run(home, "config", state, "checkCommand", "")
         assert json.load(open(os.path.join(state, "config.json"))) == {}  # empty value forgets the key
@@ -299,7 +248,7 @@ def test_metro_map():
               "Verifier ant": 0, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
-    for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand", "req done"):
+    for name in ("Task", "You", "investigation_report.md", "Worker plans", "MAIN", "checkCommand"):
         assert name in names, name
     root = ET.parse(SVG).getroot()
     every = [g for g in root.iter(NS + "g") if "ck" in (g.get("class") or "").split()]
@@ -361,11 +310,11 @@ def test_docs_match_build():
 
 if __name__ == "__main__":
     test_setup_and_logbook()
-    test_workflows_config_and_req()
+    test_workflows_and_config()
     test_guards()
     test_parallel_writers()
     test_main_branch_and_run_id()
-    test_req_and_log_gaps()
+    test_config_and_log_gaps()
     test_metro_map()
     test_docs_match_build()
     print("ok")

@@ -11,7 +11,7 @@ argument-hint: "<task> [repo path]"
 Drive three workflows for one task. A running workflow cannot ask the user, so
 this skill runs them in turn. It asks the user only the investigator ant's
 questions in step 2, plus one fast path confirm for a trivial task (2c).
-Answering them approves the whole run, merge to main included. Never ask for approval of the requirement or the plans. After that,
+Answering them approves the whole run, merge to main included. Never ask for approval of the plans. After that,
 never ask: decide by the rules in steps 3 and 4 and report at the end.
 
 Design, rules and diagram:
@@ -22,7 +22,7 @@ Design, rules and diagram:
 | File                             | Job                                      |
 | -------------------------------- | ---------------------------------------- |
 | `scripts/ishikari.py`            | setup, config; sole logbook, reqs writer |
-| `scripts/ishikari-plan.js`       | investigate, requirement, design, plans  |
+| `scripts/ishikari-plan.js`       | investigate, design, plans              |
 | `scripts/ishikari-build.js`      | build, check, fix, combined test         |
 | `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
 | `assets/prompts/investigator.md` | the live investigator ant's brief        |
@@ -46,9 +46,9 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
   answer for the user. Never edit the investigation report yourself.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string.
-- Never edit code, the logbook, requirements or branches yourself. Ants and
+- Never edit code, the logbook or branches yourself. Ants and
   `ishikari.py` do. The one exception is the fast path (2c), and even there
-  the logbook and requirements go through `ishikari.py`.
+  the logbook goes through `ishikari.py`.
 - Never push. Main moves only by the finisher's fast-forward.
 - Any result with `stage: 'error'`: show `reason` and stop.
 
@@ -115,9 +115,8 @@ the working directory, so the Workflow tool may load them by `scriptPath`.
    over and the report is all later ants read. Then run `env.workflows.plan`
    with `{env, task, investigated: {testCommand, checkCommand}}` from its
    last reply. It skips Review, logs one `investigated` entry with the report
-   path, then runs the requirement and design ants. With `env.requirements`
-   empty (the repo keeps no `requirements.org` or `requirements/*.org`), it
-   skips the add requirement ant and returns `requirement.needed: false`.
+   path, then runs the architect ant. The architect first proves the task can
+   be built; if it cannot, plan returns `blocked` with the reason.
    If the reply has `trivial: true`, go to 2c before running the plan.
 
 ### 2b. Fallback (no Agent tool)
@@ -143,9 +142,6 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
    - In the worktree run `env.testCommand`, then `env.checkCommand` when set.
    - Both pass: `git -C <env.repo> merge --ff-only ishikari/<env.run>/fast`,
      then remove the worktree and delete the branch.
-   - With `env.requirements` set, draft the requirement entry the
-     /add-requirement way, pipe it into `python3 <env.tool> req add <file>`,
-     and after main moves run `req done` with its `:ID:`s; commit only that file.
    - Log it: pipe `[{"run": env.run, "who": "main session", "event": "fast
      path landed", "detail": "<sha>: <trivialWhy>"}]` into `python3 <env.tool>
      log append <env.state>`.
@@ -155,16 +151,14 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
    and run `env.workflows.plan` with `{env, task, investigated: {testCommand,
    checkCommand}, escalated: '<why>'}`. It logs the escalation and tells the
    planners why. Go on at 2d; the run carries on without asking.
-4. Report what landed (sha, files), the tests and check, and the requirement.
+4. Report what landed (sha, files), and the tests and check.
 
 ### 2d. Plans
 
+- `blocked`: show the reason and stop; nothing is built.
 - `plans`: do not ask. Show the `report` path (`investigation_report.md`), the
-  `design` path (`architecture.md`), the requirement and each plan's title,
-  files and `after` as a note, then:
-  - if `requirement.needed`, pipe `requirement.entry` into
-    `python3 <env.tool> req add <requirement.file>` and commit only that file.
-    Keep the entry's `:ID:` values: step 4 marks them done;
+  `design` path (`architecture.md`) and each plan's title, files and `after`
+  as a note, then:
   - save `testCommand` and `checkCommand` with
     `python3 <env.tool> config <env.state> <key> <value>` and add them to `env`.
 - A run whose task is a dropped cleanup plan passes `cleanup: true` to finish,
@@ -194,13 +188,9 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
   `bugs: [checkFix]`: no branch, so a new task starts from the moved main.
   Then finish again with `checkFixDone: true` (finish also assumes it when
   `check-fix` is in `approved` or `drop`). `checkFixRefused`: the check
-  still fails; stop and report `check.output`. Do not mark requirements done.
+  still fails; stop and report `check.output`.
 - `mainMoved: false` with no bugs left to fix: stop and report the reason.
   Nothing is lost; finish can run again once it is fixed.
-- Once main moved and `check` passed (or there is no `checkCommand`), run
-  `python3 <env.tool> req done <requirement file> <ids>` with the `:ID:`
-  values kept in step 2, and commit only that file. No ids kept (no
-  requirement, or `env.requirements` is empty): skip it.
 - How finish works, so its results read right:
   - it reuses build's trial merge (`together.sha`) when the approved set
     matches it or only adds tasks, and git shows main and each reused branch

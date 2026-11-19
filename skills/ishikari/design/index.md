@@ -7,8 +7,8 @@ Design documentation and design bible for Ishikari, a workflow where AI agents
 
 Take any task from the user and finish it with many ants working in parallel.
 The user is asked only once: the investigator ant's questions. Answering
-them approves the whole run, merge to main included. The add requirement ant
-only adds: it never asks. Build, check, fix, merge and upkeep run on their own,
+them approves the whole run, merge to main included. The investigation report
+is the spec: there is no separate requirement. Build, check, fix, merge and upkeep run on their own,
 and the run ends with one report.
 
 Ishikari is a higher-order workflow: a plan can name another saved workflow as
@@ -46,38 +46,29 @@ its job. The build script runs that workflow in place of a worker ant.
     makes it not trivial. On a trivial verdict the skill asks the user once to
     confirm. Yes: no more ants run; the main session edits on a branch in a
     worktree, runs the test and check commands there, fast-forwards main only
-    when both pass, adds and marks the requirement and logs one `fast path
-    landed` entry, all through `ishikari.py`. If the work turns out bigger or a
+    when both pass, and logs one `fast path landed` entry through
+    `ishikari.py`. If the work turns out bigger or a
     check keeps failing, it throws the edits away and runs the full plan with
     `escalated` set: the planners read why, and a `fast path escalated` entry
     is logged.
 
-03. **Add Requirement Ant** only adds the requirement. It reads only the
-    investigation report and the repo; where the report and its own idea
-    differ, the report wins. It drafts the requirement with the
-    `/add-requirement` skill and shows it can be built from the repo's code and
-    docs, writing a throwaway spike outside the repo only when that is not
-    enough. It never asks the user, and never designs or plans. The main session
-    pipes its entry into `ishikari.py req add` and commits it. It runs only
-    when the repo keeps a `requirements.org` or `requirements/*.org` file
-    (setup lists them as `env.requirements`); with none, the architect plans
-    from the report alone and nothing is added or marked done.
-
-03b. **Architect Ant** reads the report and the requirement and writes
+03. **Architect Ant** reads only the investigation report and the repo;
+    where the report and its own idea differ, the report wins. First it proves
+    the task can be built, from the repo's code and docs, writing a throwaway
+    spike outside the repo only when that is not enough. If it cannot be built,
+    the plan stage stops with the reason and nothing is built. Otherwise it writes
     `architecture.md` beside the report: the parts of the change, the files each
     part owns, and every name, interface and data shape that crosses between
     parts, so parallel workers fit together. It maps each acceptance check to
     the part that proves it, then writes one plan per worker ant.
-    Like every workflow ant, the add requirement ant and the architect ant
-    each get a logbook entry the moment they reply.
+    Like every workflow ant, it gets a logbook entry the moment it replies.
 
 04. **Plans.** Workers cannot ask questions, so each plan is complete. Tasks are
     split so no two edit the same file, and each task has its own test file.
     Only a task that must edit another task's file lists that task in `after`:
     it starts as soon as that task is built, on top of its branch. Before
     anything is built, the plan script rejects bad or unknown ids, loops in
-    `after`, two tasks that edit one file without one being after the other,
-    and a requirement that is not an `.org` file in the repo or has no `:ID:`.
+    `after`, and two tasks that edit one file without one being after the other.
     File paths are normalised first, so `./a.py` and `a.py` count as one file.
 
 05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a time.
@@ -184,10 +175,9 @@ They run once per finish, on the merged result, before main moves.
   None of it is ever committed, and the repo's main checkout is touched only by the
   final fast-forward.
 - Only Ishikari's tool,
-  [`ishikari.py`](../scripts/ishikari.py), writes the logbook
-  and the requirement entries. Each write holds a lock, so two runs never lose
-  each other's entries. Requirement writes replace the file in one step, so a
-  crash never leaves half a file; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
+  [`ishikari.py`](../scripts/ishikari.py), writes the logbook.
+  Each write holds a lock, so two runs never lose
+  each other's entries; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
 - Every workflow ant's reply is logged the moment it comes, in plan, build and
   finish, through a logbook clerk ant, one clerk at a time: replies that come
   while it writes wait in a queue and go in its next append; a failed append never blocks or fails
@@ -201,7 +191,7 @@ They run once per finish, on the merged result, before main moves.
   earlier rounds must look like `ishikari/<run>/<task>`, since they go into git
   commands. In the fallback plan loop (no Agent tool), the investigator
   asking a question it already asked stops the run.
-- Requirement writes keep the file's own line endings. A logbook entry with an
+- A logbook entry with an
   unknown field, or without run, who or event, is refused, and a newline in a
   value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
@@ -218,7 +208,7 @@ investigator ant's questions; after that it drives everything on its own.
 
 | Workflow          | Stages                      | Ends with            |
 | ----------------- | --------------------------- | -------------------- |
-| `ishikari-plan`   | review, requirement, design | plans to build       |
+| `ishikari-plan`   | review, design              | plans to build       |
 | `ishikari-build`  | build, check, fix, combined | tasks to merge       |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
 
@@ -233,13 +223,11 @@ and stops to ask the user only in step 2.
    starts the logbook if there is none, copies the three scripts into
    `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
-   script paths, the repo's requirements files, and the repo's saved `testCommand` and `checkCommand`.
+   script paths, and the repo's saved `testCommand` and `checkCommand`.
 2. The live investigator asks its questions, then `ishikari-plan` writes the
-   requirement, design and plans (see
+   design and plans (see
    [Plan](../SKILL.md#2-plan)). The plans go straight to
-   build. First `ishikari.py req add` writes the requirement (none for a
-   refactor or a repo with no requirements file), the main
-   session commits it. `ishikari.py config` saves the test and check commands.
+   build. `ishikari.py config` saves the test and check commands.
 3. Run `ishikari-build` with `env` and the plans. Every task
    `awaiting review` is approved without asking. Escalated, blocked and error
    tasks, and tasks built on them, are dropped and listed in the report.
@@ -253,8 +241,7 @@ and stops to ask the user only in step 2.
    janitor makes, tests and commits its cleanup inside finish, and it lands
    with the tasks; only a dropped cleanup's plan goes to the
    next plan stage, and that cleanup run gets no janitor. The judge's
-   verdict (score, gaps, flagged) is in the result. Once the check passes,
-   `ishikari.py req done` marks the run's requirements DONE. The skill's
+   verdict (score, gaps, flagged) is in the result. The skill's
    [Limits](../SKILL.md#limits) table is the source of truth
    for every loop cap.
 

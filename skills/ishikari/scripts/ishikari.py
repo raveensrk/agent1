@@ -7,10 +7,8 @@ so no entry is lost and the file stays a valid recfile.
 
   ishikari.py setup <repo> [--main <branch>]
       Make the state folder for <repo> and print the run's env as JSON:
-      {repo, state, run, main, tool, workflows, requirements}, plus
-      testCommand and checkCommand once they are saved. requirements lists
-      the repo's tracked requirements.org and requirements/*.org files,
-      absolute; empty means no add requirement ant and no req add/done. workflows holds the paths of the
+      {repo, state, run, main, tool, workflows}, plus
+      testCommand and checkCommand once they are saved. workflows holds the paths of the
       plan, build and finish scripts, copied into <repo>/.git/ishikari/,
       inside the working directory, where the Workflow tool may load them.
       Everything else Ishikari keeps (logbook, plans, worktrees, config)
@@ -22,13 +20,6 @@ so no entry is lost and the file stays a valid recfile.
   ishikari.py config <state> <key> <value>
       Save testCommand or checkCommand for this repo; setup prints them
       in env from then on. An empty value forgets the key.
-
-  ishikari.py req add <file>                    entry text on stdin
-      Append a requirement entry to an org file, after one blank line.
-
-  ishikari.py req done <file> <id>...
-      Mark the headings with these :ID:s DONE: :LAST_EDITED: and
-      :IMPLEMENTED: become today, and :APPROVED: is added if missing.
 
   ishikari.py log append <state>                entries as JSON on stdin
       Append entries to <state>/logbook.rec, a GNU recfile (read it with
@@ -49,7 +40,6 @@ import fcntl
 import hashlib
 import json
 import os
-import re
 import shutil
 import secrets
 import subprocess
@@ -73,18 +63,16 @@ def die(msg):
 
 
 def read_text(path):
-    """Read a file as text with "\n" lines, and say which line ending it used."""
+    """Read a file as text with "\n" lines."""
     with open(path, newline="") as f:
-        raw = f.read()
-    return raw.replace("\r\n", "\n"), ("\r\n" if "\r\n" in raw else "\n")
+        return f.read().replace("\r\n", "\n")
 
 
-def write_atomic(path, text, eol="\n"):
-    """Write via a temp file and rename, so a crash never leaves half a file.
-    The file keeps its line ending, so a CRLF file stays CRLF."""
+def write_atomic(path, text):
+    """Write via a temp file and rename, so a crash never leaves half a file."""
     tmp = f"{path}.{os.getpid()}.tmp"
-    with open(tmp, "w", newline="") as f:
-        f.write(text.replace("\n", eol))
+    with open(tmp, "w") as f:
+        f.write(text)
     os.replace(tmp, path)
 
 
@@ -165,19 +153,9 @@ def setup(repo, main=None):
         "main": main,
         "tool": os.path.abspath(__file__),
         "workflows": copy_workflows(top),
-        "requirements": requirement_files(top),
     }
     env.update(read_config(state))
     print(json.dumps(env, indent=2))
-
-
-def requirement_files(top):
-    """Tracked requirements.org and requirements/*.org files, at any depth."""
-    out = git(top, "ls-files", "-z", "--", "*.org") or ""
-    keep = [f for f in out.split("\0") if f and (
-        os.path.basename(f) == "requirements.org"
-        or os.path.basename(os.path.dirname(f)) == "requirements")]
-    return sorted(os.path.join(top, f) for f in keep)
 
 
 def copy_workflows(top):
@@ -217,58 +195,6 @@ def config(state, key, value):
         data.pop(key, None)
     write_atomic(config_path(state), json.dumps(data, indent=2))
     print(json.dumps(data))
-
-
-def req_add(path):
-    entry = sys.stdin.read().strip("\n")
-    if not entry:
-        die("req add needs the entry on stdin")
-    with locked(path):
-        text, eol = read_text(path) if os.path.exists(path) else ("", "\n")
-        entry = entry.replace("\r\n", "\n")
-        write_atomic(path, (text.rstrip("\n") + "\n\n" if text.strip() else "") + entry + "\n", eol)
-    print(f"{path}: entry added")
-
-
-def req_done(path, ids):
-    if not os.path.exists(path):
-        die(f"missing {path}")
-    with locked(path):
-        req_done_locked(path, ids)
-
-
-def req_done_locked(path, ids):
-    text, eol = read_text(path)
-    lines = text.split("\n")
-    today = datetime.date.today().isoformat()
-    heads = [k for k, l in enumerate(lines) if re.match(r"^\*+ ", l)]
-    found = []
-    # Walk from the end, so editing one block never moves an earlier one.
-    for a, b in reversed(list(zip(heads, heads[1:] + [len(lines)]))):
-        block = lines[a:b]
-        m = next((re.match(r"^:ID:\s+(\S+)", l) for l in block if l.startswith(":ID:")), None)
-        if not m or m.group(1) not in ids:
-            continue
-        found.append(m.group(1))
-        block[0] = re.sub(r"^(\*+) (OPEN|TODO) ", r"\1 DONE ", block[0])
-        has_approved = any(l.startswith(":APPROVED:") for l in block)
-        has_edited = any(l.startswith(":LAST_EDITED:") for l in block)
-        stamp = [f":LAST_EDITED: {today}"] + ([] if has_approved else [f":APPROVED:    {today}"]) + [f":IMPLEMENTED: {today}"]
-        out, placed = [], False
-        for l in block:
-            if l.startswith(":IMPLEMENTED:"):
-                continue
-            if not placed and (l.startswith(":LAST_EDITED:") or (l == ":END:" and not has_edited)):
-                out += stamp if l.startswith(":LAST_EDITED:") else stamp + [l]
-                placed = True
-                continue
-            out.append(l)
-        lines[a:b] = out
-    missing = [i for i in ids if i not in found]
-    if missing:
-        die(f"no heading with :ID: {', '.join(missing)} in {path}")
-    write_atomic(path, "\n".join(lines), eol)
-    print(f"{path}: done {', '.join(reversed(found))}")
 
 
 def rec_value(value):
@@ -313,7 +239,7 @@ def log_append(state, entries):
 def log_read(state):
     """Every entry as a dict, oldest first."""
     out, cur, last = [], {}, None
-    for line in read_text(log_path(state))[0].split("\n") + [""]:
+    for line in read_text(log_path(state)).split("\n") + [""]:
         if not line.strip():
             if cur:
                 out.append(cur)
@@ -361,10 +287,6 @@ def run(argv):
         return log_status(argv[2], argv[3] if len(argv) == 4 else None)
     if len(argv) == 4 and argv[0] == "config":
         return config(argv[1], argv[2], argv[3])
-    if len(argv) == 3 and argv[:2] == ["req", "add"]:
-        return req_add(argv[2])
-    if len(argv) >= 4 and argv[:2] == ["req", "done"]:
-        return req_done(argv[2], argv[3:])
     die(__doc__)
 
 

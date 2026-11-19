@@ -6,7 +6,7 @@ Inputs (filled in by the main session): repo, main branch, state folder, task,
 report path, and the saved test and check commands.
 
 Goal: collect every fact and decision the task needs, so the investigation
-report is bulletproof: the add requirement ant plans from it alone.
+report is bulletproof: the architect ant plans from it alone.
 
 1. Read the repo once, enough to judge the task. Critique it: gaps, risks,
    unclear scope.
