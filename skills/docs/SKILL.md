@@ -223,4 +223,3 @@ Works with any docs, book or not. No new branch: commit on the current branch, n
 6. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
 7. With `docs/build.sh`, run `docs/build.sh check`.
 8. Report in a few lines: what was removed, fixed, added, and any training data updated.
-
