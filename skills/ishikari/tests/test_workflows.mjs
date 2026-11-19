@@ -762,3 +762,35 @@ test('plan: an escalated fast path tells the planners why and logs it', async ()
   assert.match(prompts['architect-ant'], /fast path was tried and given up: touches 6 files/)
   assert.ok(instant.some(p => /fast path escalated/.test(p)))
 })
+
+// ---- retrospective: one read-only ant at the very end ----
+test('retro: one read-only ant writes only retrospective.md and returns ranked findings', async () => {
+  const prompts = {}
+  const f = { category: 'inefficiency', title: 't', evidence: 'e', impact: 'i', change: 'c', where: 'scripts/ishikari-build.js MAX_TRIES' }
+  const { out, calls, instant } = await run('ishikari-retro.js', { env: { ...env, tool: '/k/scripts/ishikari.py' }, outcome: 'main moved' }, (p, o) => {
+    prompts[o.label] = p
+    assert.equal(o.model, 'opus')
+    assert.equal(o.effort, 'low')
+    return { written: true, summary: 's', findings: [f, { ...f, category: 'nonsense' }] }
+  })
+  assert.deepEqual(calls, ['retrospective-ant'])
+  assert.equal(out.stage, 'retro')
+  assert.equal(out.file, '/s/plans/r1/retrospective.md')
+  assert.deepEqual(out.findings[0], f)
+  assert.equal(out.findings[1].category, 'improvement')
+  const p = prompts['retrospective-ant']
+  assert.ok(p.includes('Read only') && p.includes('Your one write is /s/plans/r1/retrospective.md'))
+  assert.ok(p.includes('main moved') && p.includes('/k/SKILL.md') && p.includes("Run: r1"))
+  assert.deepEqual(logged(instant[0])[0].event, '2 findings')
+})
+
+test('retro: a dead or shapeless retrospective ant is an error, never a silent pass', async () => {
+  const dead = await run('ishikari-retro.js', { env }, () => null)
+  assert.equal(dead.out.stage, 'error')
+  assert.equal(dead.calls.length, 2)  // retried once
+  const shapeless = await run('ishikari-retro.js', { env }, () => ({ written: false, summary: '', findings: [] }))
+  assert.equal(shapeless.out.stage, 'error')
+  const badEnv = await run('ishikari-retro.js', { env: { ...env, repo: 'r' } }, () => ({}))
+  assert.equal(badEnv.out.stage, 'error')
+  assert.equal(badEnv.calls.length, 0)
+})

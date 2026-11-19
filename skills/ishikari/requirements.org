@@ -49,3 +49,19 @@ The investigator judges each task once its report is written, and a trivial task
 - Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and ishikari-plan.js runs with investigated and escalated: the add requirement and architect ants read why, and a "fast path escalated" entry is logged. The run then carries on without asking.
 - The metro map shows the fast path as a spur from the investigation report to MAIN.
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
+
+* DONE [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
+:PROPERTIES:
+:ID:          ISH-3
+:CREATED:     2026-11-19
+:VERIFY:      "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings"
+:VERIFY+:     "tests/test_workflows.mjs retro: a dead or shapeless retrospective ant is an error, never a silent pass"
+:VERIFY+:     "tests/test_ishikari.py test_metro_map"
+:LAST_EDITED: 2026-11-19
+:APPROVED:    2026-11-19
+:IMPLEMENTED: 2026-11-19
+:END:
+- ishikari-retro.js runs one retrospective ant, once, as the very last step of every full run, however it ended; never after a fast path that landed.
+- It judges the Ishikari flow, not the repo's code, and reads the run's logbook entries, the plans folder (report, architecture, plans, cleanup note, stage results saved as <stage>-<n>.json), the run's git history and Ishikari's own source.
+- Read only: its one write is <state>/plans/<run>/retrospective.md. Findings are ranked costliest first, each with category (bug, error, inefficiency, gap, missing, improvement), evidence, impact, change and where.
+- The main session saves every workflow result to the plans folder, and the final report shows the summary and top 3 findings.

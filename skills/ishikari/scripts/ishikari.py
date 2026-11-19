@@ -164,7 +164,7 @@ def copy_workflows(top):
     dest = os.path.join(common, "ishikari", "workflows")
     os.makedirs(dest, exist_ok=True)
     out = {}
-    for k in ("plan", "build", "finish"):
+    for k in ("plan", "build", "finish", "retro"):
         name = f"ishikari-{k}.js"
         shutil.copy(os.path.join(HERE, name), os.path.join(dest, name))
         out[k] = os.path.join(dest, name)

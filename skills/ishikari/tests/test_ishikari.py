@@ -21,7 +21,7 @@ TIMEOUT = 30  # seconds for each call
 SKILL = os.path.dirname(HERE)
 METRO = os.path.join(SKILL, "design", "metro.clj")
 SVG = os.path.join(SKILL, "design", "ishikari-metro.svg")
-SCRIPTS = [os.path.join(SKILL, "scripts", f"ishikari-{n}.js") for n in ("plan", "build", "finish")]
+SCRIPTS = [os.path.join(SKILL, "scripts", f"ishikari-{n}.js") for n in ("plan", "build", "finish", "retro")]
 NS = "{http://www.w3.org/2000/svg}"
 KIND = re.compile(r"""['`]([a-z]+(?:-[a-z]+)*-(?:ant|clerk))(?=[:'`])""")
 KIND_STATION = {  # label kind in the scripts -> its station name on the map
@@ -31,6 +31,7 @@ KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "detective-ant": "Detective ants  ∥", "integrator-ant": "Integrator ant",
     "merger-ant": "Merger ant", "docs-ant": "Docs ant", "janitor-ant": "Janitor ant",
     "juror-ant": "Juror ants  ∥", "judge-ant": "Judge ant", "finisher-ant": "Finisher ant",
+    "retrospective-ant": "Retrospective ant",
     "logbook-clerk": "Logbook",
 }
 NOTES = {  # architecture.md "Required note texts"
@@ -70,7 +71,7 @@ def test_setup_and_logbook():
         env = json.loads(run(home, "setup", repo))
         assert env["main"] == "main"
         assert env["state"].startswith(os.path.join(home, ".ishikari", "app-"))
-        for k in ("plan", "build", "finish"):
+        for k in ("plan", "build", "finish", "retro"):
             assert os.path.isfile(env["workflows"][k]), k
         state = env["state"]
         book = os.path.join(state, "logbook.rec")
@@ -97,7 +98,7 @@ def test_workflows_and_config():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
         env = json.loads(run(home, "setup", repo))
-        for k in ("plan", "build", "finish"):
+        for k in ("plan", "build", "finish", "retro"):
             assert env["workflows"][k].startswith(os.path.join(os.path.realpath(repo), ".git", "ishikari")), k
         assert "testCommand" not in env
 

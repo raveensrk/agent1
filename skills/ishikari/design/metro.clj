@@ -66,7 +66,7 @@
    ["jfix"    GOLD   [[J1 R3] [440 DIP3] [1060 DIP3] [1120 R3]] 9 ""]
    ;; train 11's route: the judge's fix round rejoins and rides on to MAIN (drawn invisible)
    ["jfixrun" "none"  [[J1 R3] [440 DIP3] [1060 DIP3] [1120 R3] [1340 R3]] 9 ""]
-   ["after"   GREEN  [[1340 R3] [1780 R3]] 9 ""]
+   ["after"   GREEN  [[1340 R3] [1840 R3]] 9 ""]
    ["cfix"    RED    [[1580 R3] [1580 840]] 6 "10 6"] ; a failed check: a new task for the worker ants
    ["fast"    GREEN  [[780 R1] [780 120]] 6 "10 6"]]) ; a trivial task: the main session lands it straight on main
 
@@ -101,7 +101,8 @@
    ["finisher" 1180 R3 "Finisher ant" ["fast-forwards main, removes worktrees," "appends the stage rows, runs the check"] "x" L-UP]
    ["main" 1340 R3 "MAIN" ["fast-forward only," "never pushed"] "main" L-DN]
    ["check" 1580 R3 "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st" L-UP]
-   ["finished" 1780 R3 "Run report" ["the main session reports what landed," "the checks, the docs and the verdict"] "done" L-DN]])
+   ["retro" 1710 R3 "Retrospective ant" ["reviews how this run went, read only;" "writes retrospective.md: ranked fixes" "to the Ishikari flow; never after a fast path"] "x" L-DN]
+   ["finished" 1840 R3 "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done" L-UP]])
 
 ;; Skills each station's ant uses, drawn beside its name. List every one.
 (def station-skills
@@ -182,8 +183,11 @@
    "check" {:tip "Builds and checks the app after main moves."
                           :about "The finisher ant runs the repo's saved checkCommand, only when main moved and the command is set. A failure starts one check-fix round. The check-fix round is one build round from the moved main, as a new task named check-fix. If the check still fails after it, the run stops and reports the output."
                           :src "ishikari.py config <state> checkCommand <cmd>"}
+   "retro" {:tip "Reviews how this run went and suggests fixes to the Ishikari flow. Read only."
+            :about "Runs once, as the very last step of every full run, however it ended: main moved, stopped, blocked or error; never after a fast path. It reads this run's logbook, the plans folder (report, architecture, plans, cleanup note, every stage result), the run's git history and Ishikari's own source. It looks for bugs, errors, wasted or repeated ant calls, retries, dead ants, slow stages, misleading plans or prompts, weak checks and missing steps, each backed by evidence from the run. It writes retrospective.md in the run's plans folder, ranked costliest first, each finding naming the Ishikari file and rule to change. It changes nothing else; you decide what to act on."
+            :src "scripts/ishikari-retro.js"}
    "finished" {:tip "The run ends with one report."
-               :about "The main session reports what landed on main, the tests and the app check, the docs ant's update, the cleanup and the judge's verdict."
+               :about "The main session reports what landed on main, the tests and the app check, the docs ant's update, the cleanup, the judge's verdict and the retrospective's top findings."
                :src "SKILL.md"}})
 
 (defn detail [id]

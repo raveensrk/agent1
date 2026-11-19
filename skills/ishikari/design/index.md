@@ -153,6 +153,23 @@ They run once per finish, on the merged result, before main moves.
   flagged in the report. The judge never blocks main, so a run never gets
   stuck on a score.
 
+## Retrospective ant
+
+The last ant of every full run, run once by the main session after
+everything else, however the run ended: main moved, stopped, blocked or error.
+A fast path that landed gets none. It judges the Ishikari flow, not the repo's
+code: wasted or repeated ant calls, retries and loops, dead ants, slow stages,
+plans or prompts that misled an ant, weak or missing checks, rules that did not
+fit, bugs and errors in the flow. It reads this run's logbook entries, the plans
+folder (investigation report, architecture, worker plans, cleanup note and every
+stage result the main session saved as `<stage>-<n>.json`), the run's git
+history and Ishikari's own source. Every finding cites evidence from the run.
+It is read only: its one write is `retrospective.md` in the run's plans folder,
+outside the repo, ranked costliest first, each finding with its category (bug,
+error, inefficiency, gap, missing, improvement), evidence, impact, suggested
+change and the Ishikari file and rule to change. The final report shows its
+summary and top 3 findings; the user decides what to act on.
+
 ## Rules
 
 - Ants work in parallel wherever nothing forces an order. Fix rounds, tasks in
@@ -202,7 +219,7 @@ They run once per finish, on the merged result, before main moves.
 
 ## Running Ishikari
 
-A running workflow cannot stop to ask the user, so Ishikari is three workflows.
+A running workflow cannot stop to ask the user, so Ishikari is four workflows.
 The main session asks the user only between the two plan runs, for the
 investigator ant's questions; after that it drives everything on its own.
 
@@ -211,16 +228,18 @@ investigator ant's questions; after that it drives everything on its own.
 | `ishikari-plan`   | review, design              | plans to build       |
 | `ishikari-build`  | build, check, fix, combined | tasks to merge       |
 | `ishikari-finish` | merge, upkeep, main         | main moved, new bugs |
+| `ishikari-retro`  | retrospective               | ranked improvements  |
 
 The scripts: [`ishikari-plan.js`](../scripts/ishikari-plan.js),
-[`ishikari-build.js`](../scripts/ishikari-build.js) and
-[`ishikari-finish.js`](../scripts/ishikari-finish.js).
+[`ishikari-build.js`](../scripts/ishikari-build.js),
+[`ishikari-finish.js`](../scripts/ishikari-finish.js) and
+[`ishikari-retro.js`](../scripts/ishikari-retro.js).
 
-The [`/ishikari`](../SKILL.md) command runs all four steps below
+The [`/ishikari`](../SKILL.md) command runs all five steps below
 and stops to ask the user only in step 2.
 
 1. Run `python3 scripts/ishikari.py setup <repo>`. It makes the state folder,
-   starts the logbook if there is none, copies the three scripts into
+   starts the logbook if there is none, copies the four scripts into
    `<repo>/.git/ishikari/workflows/` where the Workflow tool may load them, and
    prints the run's `env`: repo, state folder, run id, main branch, tool path,
    script paths, and the repo's saved `testCommand` and `checkCommand`.
@@ -244,6 +263,8 @@ and stops to ask the user only in step 2.
    verdict (score, gaps, flagged) is in the result. The skill's
    [Limits](../SKILL.md#limits) table is the source of truth
    for every loop cap.
+5. Run `ishikari-retro` with `env` and how the run ended. The retrospective
+   ant writes `retrospective.md`; the final report adds its top findings.
 
 ## Diagram
 
@@ -265,7 +286,7 @@ never orders. Read it with `ishikari.py log status` (each
 task's latest event), `recsel` or any editor.
 
 An animated metro map: four rows read left to right, and short transfer spurs
-name where a cross-row link goes. Every agent label in the three scripts has a
+name where a cross-row link goes. Every agent label in the four scripts has a
 station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
 The map draws names only, to stay simple; every description and short

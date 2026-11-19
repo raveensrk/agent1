@@ -8,7 +8,7 @@ argument-hint: "<task> [repo path]"
 
 # Ishikari
 
-Drive three workflows for one task. A running workflow cannot ask the user, so
+Drive four workflows for one task: plan, build, finish, then the retrospective. A running workflow cannot ask the user, so
 this skill runs them in turn. It asks the user only the investigator ant's
 questions in step 2, plus one fast path confirm for a trivial task (2c).
 Answering them approves the whole run, merge to main included. Never ask for approval of the plans. After that,
@@ -21,12 +21,13 @@ Design, rules and diagram:
 
 | File                             | Job                                      |
 | -------------------------------- | ---------------------------------------- |
-| `scripts/ishikari.py`            | setup, config; sole logbook, reqs writer |
+| `scripts/ishikari.py`            | setup, config; sole logbook writer       |
 | `scripts/ishikari-plan.js`       | investigate, design, plans              |
 | `scripts/ishikari-build.js`      | build, check, fix, combined test         |
 | `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
+| `scripts/ishikari-retro.js`      | retrospective of the run, read only      |
 | `assets/prompts/investigator.md` | the live investigator ant's brief        |
-| `tests/test_ishikari.py`         | tool: setup, logbook, reqs, guards       |
+| `tests/test_ishikari.py`         | tool: setup, logbook, guards             |
 | `tests/test_workflows.mjs`       | script logic, with stand-in ants         |
 
 Tests: `timeout 120 python3 tests/test_ishikari.py` and
@@ -34,11 +35,14 @@ Tests: `timeout 120 python3 tests/test_ishikari.py` and
 
 All paths are relative to this skill's folder. Ishikari keeps its state in
 `~/.ishikari/<repo>-<hash>/`, outside the repo; nothing there is committed.
-Setup copies the three scripts into `<repo>/.git/ishikari/workflows/`, inside
+Setup copies the four scripts into `<repo>/.git/ishikari/workflows/`, inside
 the working directory, so the Workflow tool may load them by `scriptPath`.
 
 ## Rules
 
+- Save every workflow result, as it comes, to
+  `<env.state>/plans/<env.run>/<stage>-<n>.json` (`plan-1.json`, `build-2.json`,
+  `finish-1.json`): the retrospective ant reads them. Data only, never in the repo.
 - Ants live only for their task. An ant started with the Agent tool is stopped
   with TaskStop the moment its task is done, failed or abandoned. Workflow ants
   end when their `agent()` call returns, so they need no stop.
@@ -216,3 +220,17 @@ The investigator judged the task trivial (`trivialWhy`). No more ants run.
   investigator gets only an `investigated` entry), so a crashed run
   still leaves its trail. End with where the full record is: `python3 <env.tool> log status <env.state>
   <env.run>`.
+
+## 5. Retrospective
+
+- Once, as the very last step of every full run, however it ended: main moved,
+  stopped, blocked or error. Never after a fast path that landed.
+- Run `env.workflows.retro` with `{env, outcome}`: `outcome` says how the run
+  ended in a few words. The retrospective ant reads this run's logbook, the
+  plans folder (report, architecture, plans, cleanup note, stage results), the
+  run's git history and Ishikari's own source, and writes
+  `<env.state>/plans/<env.run>/retrospective.md`. It is read only: it changes
+  no code, branch or repo file. Never act on its findings yourself.
+- Add to the final report: its `summary`, the top 3 `findings` (category,
+  title, `where`) and the path to `retrospective.md`. `stage: 'error'`: say
+  the retrospective failed and why; the run's result stands.
