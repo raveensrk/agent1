@@ -2,8 +2,8 @@
 name: docs
 metadata:
   scope: global
-description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale, or runs /docs. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings an existing book in line with the code.
-argument-hint: "create|update [repo path]"
+description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale, reconcile the docs, or runs /docs. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings an existing book in line with the code. Session mode reconciles the docs with what this session changed and learned.
+argument-hint: "create|update|session [repo path]"
 ---
 
 # Create or update docs: the book of this repository
@@ -12,12 +12,13 @@ Use `docs/` or `doc/`, whichever exists. If neither exists, create `docs/`.
 
 ## Modes
 
-Two modes, picked by the first argument:
+Three modes, picked by the first argument:
 
 - `create` - write the book from scratch, or rebuild a docs folder that is not yet a book. Runs Phases 1-7.
 - `update` - bring an existing book in line with the repo. Runs [Update mode](#update-mode).
+- `session` - reconcile the docs with this session's work. Runs [Session mode](#session-mode).
 
-No mode given: `update` if `docs/README.md` has a table of contents and `docs/build.sh` exists, `create` otherwise.
+No mode given and the session changed code or found something new: `session`. Otherwise: `update` if `docs/README.md` has a table of contents and `docs/build.sh` exists, `create` otherwise.
 Say which mode was picked in the first line.
 
 ## Goal
@@ -208,3 +209,18 @@ Every rule in Ground rules, Phase 4 and Phase 6 still holds, except the git bran
 8. Commit, never push, and report in a few lines: chapters and diagrams changed, added or removed, check results, rebuild-test gaps left, open questions, and the commits.
 
 Nothing changed since the last docs commit and the chapters match the code: say so and stop.
+
+## Session mode
+
+Scope: what this session changed and learned, not the whole repo.
+Works with any docs, book or not. No new branch: commit on the current branch, never push.
+
+1. List what the session changed (files edited, commits made) and learned (facts, causes, decisions, gotchas the docs don't hold).
+2. Remove stale docs: anything the session made untrue or obsolete.
+3. Reconcile docs and code: where they disagree on the session's topics, the code wins unless the session showed the code is the bug.
+4. Add what was learned, in the one place that owns it. A docs book follows the rules in Phase 4.
+5. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the session's changes affect.
+6. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
+7. With `docs/build.sh`, run `docs/build.sh check`.
+8. Report in a few lines: what was removed, fixed, added, and any training data updated.
+
