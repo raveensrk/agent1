@@ -106,7 +106,8 @@
 ;; Skills each station's ant uses, drawn beside its name. List every one.
 (def station-skills
   {"investigator"    ["/ask-simple"]
-   "add-requirement" ["/add-requirement"]})
+   "add-requirement" ["/add-requirement"]
+   "researchers"     ["/ux"]})
 
 ;; What a click on a station shows: a short line for the hover tooltip, the
 ;; full story for the panel, and where it lives. Keyed by [name x]: some names

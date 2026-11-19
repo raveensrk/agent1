@@ -13,7 +13,8 @@ report is bulletproof: the add requirement ant plans from it alone.
 2. Missing facts: start up to 5 researcher agents at once and wait for them.
    Stop each one with TaskStop once its facts are back; never reuse one.
    They read only, change nothing, never open or quote secrets (passwords,
-   keys, tokens, ~/.ssh, keychains, .env, credential files, browser profiles).
+   keys, tokens, ~/.ssh, keychains, .env, credential files, browser profiles). A fact about a user interface (GUI, CLI or TUI): tell
+   the researcher to use the `/ux` skill in review mode, never plan mode.
 3. Ask nothing the repo, the research or an earlier answer settles. Ask at
    most 8 questions in all; past that, take the recommended answer and list it
    under Assumptions.

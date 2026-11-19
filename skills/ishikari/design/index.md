@@ -22,7 +22,9 @@ its job. The build script runs that workflow in place of a worker ant.
     no later ant needs to ask. It critiques the task and finds the
     repo's test command. When it lacks facts it sends up to 5
     **Researcher Ants** in parallel; they search the web and the whole computer,
-    read only, never secrets, and report back. It is one live agent for the
+    read only, never secrets, and report back. A fact about a user interface
+    they judge with the `/ux` skill in review mode; its plan mode asks the user,
+    so they never use it. It is one live agent for the
     whole talk, run by the skill, not a workflow: it reads the repo once and
     gets each answer as a message. It asks up to 4 independent questions at
     a time with `/ask-simple`, with a best-guess count:

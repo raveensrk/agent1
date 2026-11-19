@@ -211,7 +211,9 @@ Look up: ${topic}
 Search the web and anywhere on this computer: ${env.repo}, other repos, notes,
 docs and config. Read only; change nothing. Never open or quote secrets:
 passwords, keys, tokens, ~/.ssh, keychains, .env files, credential and login
-files, browser profiles. Return short facts with their paths and URLs.`,
+files, browser profiles. If the fact is about a user interface (GUI, CLI or
+TUI), use the /ux skill in review mode to judge it; never its plan mode, which
+asks the user. Return short facts with their paths and URLs.`,
     { label: `researcher-ant:${answered.length}:${round}:${k}`, phase: 'Review', effort: EFFORT.researcher, schema: FOUND },
   )
 }
