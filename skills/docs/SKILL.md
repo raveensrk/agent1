@@ -1,8 +1,8 @@
 ---
-name: create-docs
+name: docs
 metadata:
   scope: global
-description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale, or runs /create-docs. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings an existing book in line with the code.
+description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale, or runs /docs. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings an existing book in line with the code.
 argument-hint: "create|update [repo path]"
 ---
 
