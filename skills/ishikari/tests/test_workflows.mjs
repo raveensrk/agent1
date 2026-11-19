@@ -189,7 +189,7 @@ test('finish: dropped branches are kept, merged ones removed', async () => {
     env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }], drop: [{ id: 'b', branch: 'ishikari/r1/b' }], cleanup: true,
   }, (p, o) => {
     prompts.push(p)
-    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label.startsWith('judge-ant')) return { score: 9, gaps: [] }
     return { moved: true, reason: '' }
   })
@@ -199,13 +199,15 @@ test('finish: dropped branches are kept, merged ones removed', async () => {
   assert.ok(!fin.includes('   - ishikari/r1/b'))
 })
 
+const NO_DOCS = { changed: false, title: '', testsPassed: true, landed: false, files: [] }
 function finishWith(jan) {
   const prompts = {}
   return run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }] }, (p, o) => {
     prompts[o.label] = p
-    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label === 'janitor-ant') return jan
-    if (o.label === 'docs-ant') return { changed: false, title: '', testsPassed: true, landed: false }
+    if (o.label === 'docs-ant') return NO_DOCS
+    if (o.label === 'merger-ant:rewind') return { sha: 'abc1234' }
     if (o.label.startsWith('judge-ant')) return { score: 9, gaps: [] }
     return { moved: true, reason: '' }
   }).then(r => ({ ...r, prompts, fin: prompts['finisher-ant'] }))
@@ -215,7 +217,7 @@ test('finish: the janitor cleans, tests, commits and lands its cleanup alone, ju
   const { out, calls, fin, prompts } = await finishWith({ changed: true, title: 'tidy', testsPassed: true, landed: true, sha: 'def0123' })
   assert.deepEqual(out.cleanup, { title: 'tidy', landed: true })
   assert.equal(out.sha, 'def0123')
-  assert.deepEqual(calls.slice(1, 4), ['docs-ant', 'janitor-ant', 'judge-ant:1'])
+  assert.deepEqual(calls.slice(1, 4), ['janitor-ant', 'judge-ant:1', 'docs-ant'])
   assert.ok(!calls.some(c => c.includes('cleanup')))  // no worker, inspector, detective or merger for it
   assert.ok(prompts['janitor-ant'].includes('merge --ff-only ishikari/r1/_cleanup'))
   assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
@@ -233,7 +235,7 @@ test('finish: a janitor cleanup that fails its tests is dropped, branch kept, ma
 test('finish: a janitor that says landed but gives no commit is not trusted', async () => {
   const { out } = await finishWith({ changed: true, title: 'tidy', testsPassed: true, landed: true })
   assert.equal(out.cleanup.landed, false)
-  assert.equal(out.sha, 'abc')
+  assert.equal(out.sha, 'abc1234')
 })
 
 test('finish: nothing to clean leaves no cleanup', async () => {
@@ -246,12 +248,13 @@ function judgeRun(scores, answer = () => null) {
   let k = 0
   return run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }], cleanup: true }, (p, o) => {
     prompts[o.label] = p
-    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label.startsWith('judge-ant')) return scores[k++]
-    if (o.label === 'docs-ant') return answer(o) || { changed: false, title: '', testsPassed: true, landed: false }
+    if (o.label === 'docs-ant') return answer(o) || NO_DOCS
+    if (o.label === 'merger-ant:rewind') return answer(o) || { sha: 'abc1234' }
     return answer(o) || (o.label.startsWith('worker') ? { status: 'built', notes: '' }
       : o.label.startsWith('detective') ? { bugs: [] }
-      : o.label === 'merger-ant:judge-fix' ? { ok: true, sha: 'fff' } : { moved: true, reason: '' })
+      : o.label === 'merger-ant:judge-fix' ? { ok: true, sha: 'fff1234' } : { moved: true, reason: '' })
   }).then(r => ({ ...r, prompts }))
 }
 
@@ -265,10 +268,10 @@ test('finish: a judge score of 7 or more needs no fix round', async () => {
 
 test('finish: a low judge score gets one fix round, then a second score', async () => {
   const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['x missing'] }, { score: 8, gaps: [] }])
-  assert.deepEqual(calls.slice(2, 7), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
+  assert.deepEqual(calls.slice(1, 6), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
   assert.ok(prompts['worker-ant:judge-fix'].includes('- x missing'))
   assert.deepEqual(out.verdict, { score: 8, gaps: [], fixed: true, flagged: false, first: 4 })
-  assert.equal(out.sha, 'fff')
+  assert.equal(out.sha, 'fff1234')
   assert.ok(prompts['finisher-ant'].includes('   - ishikari/r1/_judgefix'))
 })
 
@@ -368,14 +371,14 @@ function finishRun(args, answer) {
   const prompts = {}
   return run('ishikari-finish.js', { env, cleanup: true, ...args }, (p, o) => {
     prompts[o.label] = p
-    return answer(o, p) || (o.label.startsWith('judge-ant') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
+    return answer(o, p) || (o.label.startsWith('judge-ant') ? { score: 9, gaps: [] } : o.label === 'docs-ant' ? NO_DOCS : o.label === 'merger-ant:rewind' ? { sha: SHA } : { moved: true, reason: '' })
   }).then(r => ({ ...r, prompts }))
 }
 
 test('finish: the judge starts only after the janitor ends', async () => {
   let janitorDone = false
   const { out } = await run('ishikari-finish.js', { env, approved: [T('a')] }, async (p, o) => {
-    if (o.label === 'merger-ant') return { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     if (o.label === 'janitor-ant') { await new Promise(r => setTimeout(r, 5)); janitorDone = true; return { changed: false, title: '', testsPassed: true, landed: false } }
     if (o.label.startsWith('judge-ant')) { assert.ok(janitorDone); return { score: 8, gaps: [] } }
     return { moved: true, reason: '' }
@@ -420,7 +423,7 @@ test('finish: a garbled git cherry check falls back to the merger report', async
 })
 
 test('finish: one check-fix round, a second is refused', async () => {
-  const failing = o => o.label === 'merger-ant' ? { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+  const failing = o => o.label === 'merger-ant' ? { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
     : o.label === 'finisher-ant' ? { moved: true, reason: '', check: { ran: true, ok: false, output: 'boom' } } : null
   let { out } = await finishRun({ approved: [T('a')], env: { ...env, checkCommand: 'make' } }, failing)
   assert.deepEqual(out.checkFix, { task: 'check-fix', bug: 'boom' })
@@ -430,27 +433,115 @@ test('finish: one check-fix round, a second is refused', async () => {
   assert.equal(out.checkFixRefused, true)
   assert.equal(out.checkFixDone, true)
   ;({ out } = await finishRun({ approved: [T('check-fix')], env: { ...env, checkCommand: 'make' } }, o =>
-    o.label === 'merger-ant' ? { sha: 'abc', results: [{ id: 'check-fix', outcome: 'merged', detail: '' }] } : failing(o)))
+    o.label === 'merger-ant' ? { sha: 'abc1234', results: [{ id: 'check-fix', outcome: 'merged', detail: '' }] } : failing(o)))
   assert.equal(out.checkFix, null)
   ;({ out } = await finishRun({ approved: [T('a')], checkFixDone: 'yes' }, failing))
   assert.equal(out.stage, 'error')
 })
 
 // ---- judge round 1: judge after the ff, tip checks, git cherry strictness ----
-test('finish: the docs ant updates the docs before the janitor and lands them only when its checks pass', async () => {
-  const go = d => run('ishikari-finish.js', { env, approved: [{ id: 'a', branch: 'ishikari/r1/a' }] }, (p, o) =>
-    o.label === 'merger-ant' ? { sha: 'abc', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
+// ---- finish: the docs ant runs last and nothing unchecked reaches main ----
+const DOCS_OK = { changed: true, title: 'docs', testsPassed: true, landed: true, files: ['docs/02-arch.md', 'README.md'], sha: 'd0c0123' }
+function docsRun(d, extra = {}, more = () => null) {
+  const prompts = {}
+  return run('ishikari-finish.js', { env, approved: [T('a')], ...extra }, (p, o) => {
+    prompts[o.label] = p
+    return more(o) || (o.label === 'merger-ant' ? { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }] }
       : o.label === 'docs-ant' ? d
       : o.label === 'janitor-ant' ? { changed: false, title: '', testsPassed: true, landed: false }
+      : o.label === 'merger-ant:rewind' ? { sha: 'abc1234' }
       : o.label.startsWith('judge-ant') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
-  const ok = await go({ changed: true, title: 'docs', testsPassed: true, landed: true, sha: 'd0c0123' })
-  assert.ok(ok.calls.indexOf('docs-ant') < ok.calls.indexOf('janitor-ant'))
+  }).then(r => ({ ...r, prompts }))
+}
+
+test('finish: the docs ant runs last, after the judge, and lands only when its checks pass', async () => {
+  const ok = await docsRun(DOCS_OK)
+  assert.ok(ok.calls.indexOf('docs-ant') > ok.calls.indexOf('judge-ant:1'))
+  assert.ok(ok.calls.indexOf('judge-ant:1') > ok.calls.indexOf('janitor-ant'))
   assert.deepEqual(ok.out.docs, { title: 'docs', landed: true })
   assert.equal(ok.out.sha, 'd0c0123')
-  const bad = await go({ changed: true, title: 'docs', testsPassed: false, landed: false })
-  assert.equal(bad.out.docs.landed, false)
-  assert.equal(bad.out.docs.branch, 'ishikari/r1/_docs')
-  assert.equal(bad.out.mainMoved, true)
+  assert.ok(!ok.calls.includes('merger-ant:rewind'))
+  assert.ok(ok.prompts['finisher-ant'].includes('   - ishikari/r1/_docs'))
+  const p = ok.prompts['docs-ant']
+  assert.ok(p.includes('Skip the docs-only') && p.includes('doc/build.sh') && p.includes('never code'))
+})
+
+test('finish: a docs update that is not accepted is put back, its branch kept, and main moves without it', async () => {
+  for (const d of [
+    { ...DOCS_OK, testsPassed: false },            // said landed, checks failed
+    { ...DOCS_OK, sha: undefined },                // said landed, no commit
+    { ...DOCS_OK, files: ['docs/a.md', 'src/app.py'] },  // touched code
+    { ...DOCS_OK, files: ['../x.md'] },
+    { ...DOCS_OK, files: [] },
+    null,                                          // died
+  ]) {
+    const { out, calls, prompts } = await docsRun(d)
+    assert.equal(out.docs.landed, false, JSON.stringify(d))
+    assert.equal(out.docs.branch, 'ishikari/r1/_docs')
+    assert.ok(calls.includes('merger-ant:rewind'), JSON.stringify(d))
+    assert.ok(prompts['merger-ant:rewind'].includes('reset --hard abc1234'))
+    assert.equal(out.sha, 'abc1234')
+    assert.equal(out.mainMoved, true)
+    assert.ok(!prompts['finisher-ant'].includes('   - ishikari/r1/_docs'))  // kept, not removed
+  }
+  const code = await docsRun({ ...DOCS_OK, files: ['src/app.py'] })
+  assert.match(code.out.docs.reason, /not docs: src\/app\.py/)
+})
+
+test('finish: main moves to the checked commit, never to a branch name, and a retry sees it already moved', async () => {
+  const { prompts } = await docsRun(DOCS_OK)
+  const f = prompts['finisher-ant']
+  assert.ok(f.includes('merge --ff-only d0c0123') && f.includes('branch -f main d0c0123'))
+  assert.ok(!f.includes('merge --ff-only ishikari/r1/_finish'))
+  assert.ok(f.indexOf('merge-base --is-ancestor d0c0123 main') < f.indexOf('merge --ff-only d0c0123'))
+  assert.ok(f.includes('count it as moved'))
+})
+
+test('finish: a rejected cleanup is put back before the judge reads, and a failed put-back stops upkeep', async () => {
+  const bad = { changed: true, title: 'tidy', testsPassed: false, landed: true, sha: 'bad1234' }
+  const a = await docsRun(NO_DOCS, {}, o => o.label === 'janitor-ant' ? bad : null)
+  assert.ok(a.calls.indexOf('merger-ant:rewind') < a.calls.indexOf('judge-ant:1'))
+  assert.equal(a.out.cleanup.landed, false)
+  assert.equal(a.out.sha, 'abc1234')
+  assert.ok(a.prompts['finisher-ant'].includes('merge --ff-only abc1234'))
+  const b = await docsRun(DOCS_OK, {}, o => o.label === 'janitor-ant' ? bad : o.label === 'merger-ant:rewind' ? { sha: 'bad1234' } : null)
+  assert.match(b.out.upkeepStopped, /could not be put back to abc1234/)
+  assert.ok(!b.calls.some(c => c.startsWith('judge-ant')) && !b.calls.includes('docs-ant'))
+  assert.equal(b.out.sha, 'abc1234')
+  assert.equal(b.out.mainMoved, true)
+})
+
+test('finish: a later round uses its own upkeep branches and counts earlier landed tasks as in main', async () => {
+  const { prompts } = await docsRun(DOCS_OK, { round: 2, landed: ['z', 'bad id'], approved: [{ ...T('a'), after: ['z'] }] })
+  assert.ok(prompts['docs-ant'].includes('ishikari/r1/_docs-2'))
+  assert.ok(prompts['janitor-ant'].includes('ishikari/r1/_cleanup-2') && prompts['janitor-ant'].includes('cleanup-2.md'))
+  const fin = prompts['finisher-ant']
+  assert.ok(!/ishikari\/r1\/_(docs|cleanup|judgefix)\n/.test(fin))  // round 1's branches are left alone
+  const m = prompts['merger-ant']
+  assert.ok(m.includes('its id is one of z (an earlier finish') && !m.includes('bad id'))
+  assert.ok(m.includes('cherry main <its branch>') && !m.includes('--is-ancestor <its branch>'))
+  for (const args of [{ round: 0 }, { round: 'x' }, { landed: 'a' }]) {
+    const { out } = await docsRun(DOCS_OK, args)
+    assert.equal(out.stage, 'error', JSON.stringify(args))
+  }
+})
+
+test('finish: scratch branches are refused as tasks, and merged tasks need a commit', async () => {
+  const a = await docsRun(DOCS_OK, { approved: [{ id: 'x', branch: 'ishikari/r1/_together' }] })
+  assert.equal(a.out.stage, 'error')
+  const b = await docsRun(DOCS_OK, {}, o => o.label === 'merger-ant' ? { sha: 'nope', results: [{ id: 'a', outcome: 'merged', detail: '' }] } : null)
+  assert.equal(b.out.stage, 'error')
+  assert.match(b.out.reason, /gave no commit/)
+  assert.ok(!b.calls.includes('finisher-ant'))
+})
+
+test('finish: the judge fix is rebuilt from the checked commit and a bad fast-forward is put back', async () => {
+  const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['g'] }], o => o.label === 'merger-ant:judge-fix' ? { ok: true, sha: '' } : null)
+  assert.ok(prompts['worker-ant:judge-fix'].includes('If either exists, remove'))
+  assert.ok(prompts['worker-ant:judge-fix'].includes('ishikari/r1/_judgefix /s/worktrees/ishikari__r1___judgefix abc1234'))
+  assert.ok(calls.includes('merger-ant:rewind'))
+  assert.equal(out.verdict.fixed, false)
+  assert.equal(out.sha, 'abc1234')
 })
 
 test('finish: the judge reads after the janitor has landed its cleanup', async () => {
@@ -464,7 +555,7 @@ test('finish: both trial-merge reuse paths check each reused branch tip', async 
     const { prompts } = await finishRun({ approved, together: { sha: TOG, tasks: ['a', 'b'] } },
       o => o.label === 'merger-ant' ? { sha: SHA, results: [] } : null)
     const m = prompts['merger-ant']
-    assert.ok(m.includes(`merge-base --is-ancestor <branch> ${TOG}`))
+    assert.ok(m.includes(`cherry ${TOG} <branch>`) && !m.includes(`--is-ancestor <branch>`))
     assert.ok(/If any (ancestor )?check or the worktree add fails, do the normal steps/.test(m))
   }
 })
@@ -509,7 +600,7 @@ test('finish: many tasks, one juror per task, at most 5 at once, judge sees thei
   const prompts = {}
   const { out, calls } = await run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, async (p, o) => {
     prompts[o.label] = p
-    if (o.label === 'merger-ant') return { sha: 'abc', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
     if (o.label.startsWith('juror')) {
       live++; peak = Math.max(peak, live)
       await new Promise(r => setTimeout(r, 2)); live--
@@ -562,8 +653,8 @@ test('finish: every ant gets its own logbook entry at once, the finisher excepte
   const { out, instant } = await judgeRun([{ score: 4, gaps: ['g'] }, { score: 8, gaps: [] }])
   const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
-    'merger ant: merged 1 of 1', 'docs ant: nothing changed', 'judge ant: score 4', 'worker ant: built',
-    'detective ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8',
+    'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
+    'detective ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8', 'docs ant: nothing changed',
   ])
   assert.ok(got.every(e => e.run === 'r1'))
   assert.equal(out.mainMoved, true)
@@ -638,7 +729,7 @@ test('plan: a dead planning ant is logged as died and never blocks the run', asy
 // ---- speed: smaller plans, lighter plans, jury only for 3+ tasks ----
 test('finish: two tasks, the judge still works alone; three get a jury', async () => {
   const go = ids => run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, (p, o) => {
-    if (o.label === 'merger-ant') return { sha: 'abc', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
     if (o.label.startsWith('juror') || o.label.startsWith('judge')) return { score: 9, gaps: [] }
     return { moved: true, reason: '' }
   })
@@ -671,7 +762,7 @@ test('every ant in all three scripts runs on opus at low effort', async () => {
   await spy('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
     o.label.startsWith('worker') ? { status: 'built', notes: '' } : o.label.startsWith('detective') ? { bugs: [] } : {})
   await spy('ishikari-finish.js', { env, approved: ['a', 'b', 'c'].map(T) }, (p, o) =>
-    o.label === 'merger-ant' ? { sha: 'abc', results: ['a', 'b', 'c'].map(id => ({ id, outcome: 'merged', detail: '' })) }
+    o.label === 'merger-ant' ? { sha: 'abc1234', results: ['a', 'b', 'c'].map(id => ({ id, outcome: 'merged', detail: '' })) }
       : o.label === 'janitor-ant' ? { changed: false, title: '', testsPassed: true, landed: false }
       : o.label.startsWith('juror') || o.label.startsWith('judge') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
   for (const s of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js']) assert.ok(seen.some(x => x[0] === s), s)

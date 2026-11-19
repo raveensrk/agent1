@@ -1,10 +1,10 @@
 export const meta = {
   name: 'ishikari-finish',
-  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the docs ant updates the docs, the janitor cleans up on top, let the judge score it against the plans, move main forward',
+  description: 'Ishikari stage 3: merge the approved tasks in a straight line in a scratch copy, the janitor cleans up on top, the judge scores it against the plans, the docs ant updates the docs, move main forward',
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'docs ant updates the docs with /docs, then the janitor cleans up, tests and commits itself; then the judge scores the run, one fix round below 7' },
+    { title: 'Upkeep', detail: 'janitor cleans up, tests and commits itself; the judge scores the run, one fix round below 7; then the docs ant updates the docs with /docs' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -15,13 +15,17 @@ export const meta = {
 //   together?: { branch, sha, tasks },       ishikari-build's trial merge, reused when it matches
 //   drop?: [{ id, branch }],                 tasks dropped by the rules: marked dropped;
 //                                            their branches are kept for a later look
+//   round?: number,                          this run's nth finish (default 1): later
+//                                            rounds use their own upkeep branches, so kept
+//                                            branches of an earlier round are never removed
+//   landed?: string[],                       task ids an earlier finish of this run put on main
 //   cleanup?: boolean,                       this run built a dropped cleanup plan: no janitor,
 //                                            so cleanups never chain
 //   checkFixDone?: boolean,                  a check-fix round already ran (also true when a
 //                                            task is named check-fix): a failed check is not
 //                                            offered for a second round
 // }
-// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, docs, cleanup, verdict, check,
+// Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, docs, cleanup, verdict, upkeepStopped, check,
 //           checkFixDone, checkFix, checkFixRefused }
 // checkFix: the bug for one check-fix build round ({task: 'check-fix', bug}) when the
 // check failed and no round ran yet; null otherwise (checkFixRefused: true when the cap hit).
@@ -47,12 +51,20 @@ const { env = {}, together = null, cleanup: isCleanup = false } = args
 const items = v => Array.isArray(v) ? v.filter(t => t && typeof t === 'object').map(t => ({ ...t, id: String(t.id || ''), branch: String(t.branch || ''), after: Array.isArray(t.after) ? t.after.map(String) : [] })) : []
 const approved = items(args.approved)
 const drop = items(args.drop)
+const round = Number.isInteger(args.round) && args.round > 1 ? args.round : 1  // this run's nth finish
+const sfx = round > 1 ? `-${round}` : ''
+// Tasks an earlier finish of this run already put on main: their branches are gone.
+const earlier = Array.isArray(args.landed) ? args.landed.map(String).filter(x => /^[a-z0-9][a-z0-9_-]{0,40}$/.test(x)) : []
+const isSha = x => typeof x === 'string' && /^[0-9a-f]{7,64}$/.test(x)
 const checkFixDone = args.checkFixDone === true || [...approved, ...drop].some(t => t.id === 'check-fix')
 const bad = []
 if (args.checkFixDone != null && typeof args.checkFixDone !== 'boolean') bad.push('checkFixDone must be true or false')
+if (args.round != null && !(Number.isInteger(args.round) && args.round >= 1)) bad.push('round must be a whole number from 1')
+if (args.landed != null && !Array.isArray(args.landed)) bad.push('landed must be a list of task ids')
 for (const k of ['approved', 'drop']) if (args[k] != null && !Array.isArray(args[k])) bad.push(`${k} must be a list`)
-// Branch names go into git commands: only Ishikari's own shape is allowed.
-const BRANCH = /^ishikari\/[A-Za-z0-9._-]+\/[a-z0-9_][a-z0-9_-]{0,40}$/
+// Branch names go into git commands: only Ishikari's own shape is allowed, and
+// never a scratch branch (their names start with "_").
+const BRANCH = /^ishikari\/[A-Za-z0-9._-]+\/[a-z0-9][a-z0-9_-]{0,40}$/
 const idsSeen = new Set()
 for (const t of [...approved, ...drop]) {
   if (!BRANCH.test(t.branch)) bad.push(`task "${t.id}": bad branch "${t.branch}"`)
@@ -84,15 +96,19 @@ async function twice(fn) {
 // queues one entry for it, and a single clerk appends the queue at once,
 // without holding up the run. The stage's
 // summary entries are still appended at the end.
+// One rule for "this upkeep work landed", used by the code and the logbook:
+// the ant says landed, its checks passed and it names the new commit. The docs
+// ant must also show it touched docs only.
+const DOC_FILE = f => typeof f === 'string' && !f.includes('..') && (/^docs?\//.test(f) || /\.(md|org)$/.test(f))
+const accepted = (kind, r) => Boolean(r && r.changed === true && r.landed === true && r.testsPassed === true && isSha(r.sha) &&
+  (kind !== 'docs-ant' || (Array.isArray(r.files) && r.files.length > 0 && r.files.every(DOC_FILE))))
 const summarize = (kind, r) => {
   if (r == null) return 'died'
   if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : 'passed'
   if (typeof r.status === 'string') return r.status
   if (Number.isInteger(r.score)) return `score ${r.score}`
   if (Array.isArray(r.results)) return `merged ${r.results.filter(x => x && x.outcome === 'merged').length} of ${r.results.length}`
-  if (typeof r.changed === 'boolean') return !r.changed ? 'nothing changed' : r.landed ? 'landed' : 'dropped'
-  if (typeof r.needed === 'boolean') return r.needed ? 'cleanup planned' : 'nothing to clean'
-  if (typeof r.plan === 'string') return 'fix planned'
+  if (typeof r.changed === 'boolean') return !r.changed ? 'nothing changed' : accepted(kind, r) ? 'landed' : 'dropped'
   if (typeof r.ok === 'boolean') return r.ok ? 'fast-forwarded' : 'fast-forward refused'
   if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
   return 'finished'
@@ -191,21 +207,21 @@ as "merged", return that commit as sha, set fastPath to true, and stop. Otherwis
     : sameSet
     ? `Fast path: build's trial merge ${together.sha} already holds exactly these tasks
 on top of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
-succeeds, and \`git -C ${env.repo} merge-base --is-ancestor <branch> ${together.sha}\` succeeds for
-every branch below (no task moved on since), create the worktree with
+succeeds, and \`git -C ${env.repo} cherry ${together.sha} <branch>\` succeeds and prints no line
+starting with "+" for every branch below (no task moved on since), create the worktree with
 \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
 report every task as "merged", return that commit as sha, set fastPath to true, and stop.
 If any check or the worktree add fails, do the normal steps below.\n`
     : onTop
     ? `Fast path: build's trial merge ${together.sha} already holds ${[...tog].join(', ')} on top
 of ${env.main}, tested. If \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${together.sha}\`
-succeeds, and \`git -C ${env.repo} merge-base --is-ancestor <branch> ${together.sha}\` succeeds for
-each of ${order.filter(t => tog.has(t.id)).map(t => t.branch).join(', ')} (no task moved on since), create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
+succeeds, and \`git -C ${env.repo} cherry ${together.sha} <branch>\` succeeds and prints no line
+starting with "+" for each of ${order.filter(t => tog.has(t.id)).map(t => t.branch).join(', ')} (no task moved on since), create the worktree with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchTree} ${together.sha}\`,
 report those tasks as "merged", then add only these tasks on top, in this order, as
 in the steps below: ${onTop.map(t => t.id).join(', ')}. ${tests[0].toUpperCase() + tests.slice(1)} once inside ${scratchTree}.
 If they pass, return the final commit as sha and stop. If anything conflicts or the
 tests fail, remove the worktree and branch and do the normal steps below from the start.
-If any ancestor check or the worktree add fails, do the normal steps below.\n`
+If any check or the worktree add fails, do the normal steps below.\n`
     : ''
   const r = await twice(() => ant(
     `You are the merger ant of the Ishikari workflow.
@@ -217,10 +233,11 @@ ${fast}Create it with \`git -C ${env.repo} worktree add -b ${scratch} ${scratchT
 Add each task's own commits on top, in a straight line with no merge commits,
 one task at a time, in this order:
 ${order.map(t => `- ${t.id}: ${t.branch}${(t.after || []).length ? ` (built on ${t.after.join(', ')})` : ''}`).join('\n')}
-A task built on other tasks needs them. If one of them was not merged here and is
-not already in ${env.main} (\`git -C ${env.repo} merge-base --is-ancestor <its branch> ${env.main}\`;
-its branch is named like the task's, with its own id), skip the task and report it
-as "blocked".
+A task built on other tasks needs them. A needed task counts as already in
+${env.main} when ${earlier.length ? `its id is one of ${earlier.join(', ')} (an earlier finish of this run landed it), or when ` : ''}its branch exists (named like the task's, with its own id) and
+\`git -C ${env.repo} cherry ${env.main} <its branch>\` succeeds and prints no line starting with "+".
+If a needed task was not merged here and is not already in ${env.main}, skip the
+task and report it as "blocked".
 For each, run \`git cherry-pick --empty=drop $(git -C ${env.repo} rev-list --reverse --no-merges --cherry-pick --right-only HEAD...<branch>)\`
 inside the worktree. If it conflicts, run \`git cherry-pick --abort\`, reset the
 scratch branch to where it was before this task, and report "conflict" with the files.
@@ -238,8 +255,8 @@ Last, even after a fast path, check your own work with git, never from memory:
   deletions as "lines" (0 if it prints nothing).`,
     { label: 'merger-ant', phase: 'Merge', effort: EFFORT.merger, schema: COMBINE },
   ))
-  if (!r) return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` }
-  sha = r.sha
+  if (!r) { await logsDone(); return { stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` } }
+  sha = isSha(r.sha) ? r.sha : null
   // An exact fast path (the commit is the task's own tip, or the tested trial
   // merge after its ancestor checks) needs no second look.
   trusted = Boolean(r.fastPath === true && (one || sameSet))
@@ -274,6 +291,9 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
   bug: unproven(t) ? 'merge failed (conflict): the merger said merged, but git cherry finds its commits missing from the result; they may have been changed while merging'
     : `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
+// Tasks count as merged only with a commit to move main to.
+if (merged.length && !sha) { await logsDone(); return { stage: 'error', reason: `the merger ant reported merged tasks but gave no commit for ${scratch}; main was not touched. Check ${scratchTree}.` } }
+
 // ---- upkeep on the merged result, before main moves ----
 // The janitor cleans up this run's mess itself, in its own worktree on top of
 // the scratch branch: it edits, runs the tests, commits, and fast-forwards the
@@ -288,24 +308,44 @@ const MAX_JURORS = 5  // juror ants at once
 const MIN_JURY = 3    // fewer merged tasks: the judge works alone
 const JANITOR_MIN_LINES = 100  // fewer lines added or changed: no janitor
 const planDir = `${env.state}/plans/${env.run}`
-const fixBranch = `ishikari/${env.run}/_judgefix`
+const fixBranch = `ishikari/${env.run}/_judgefix${sfx}`
 const fixTree = treeOf(fixBranch)
 let fixKept = false
-const cleanBranch = `ishikari/${env.run}/_cleanup`
+const cleanBranch = `ishikari/${env.run}/_cleanup${sfx}`
 const cleanTree = treeOf(cleanBranch)
-const cleanPlan = `${env.state}/plans/${env.run}/cleanup.md`
+const cleanPlan = `${env.state}/plans/${env.run}/cleanup${sfx}.md`
 let cleanKept = false
-const docsBranch = `ishikari/${env.run}/_docs`
+const docsBranch = `ishikari/${env.run}/_docs${sfx}`
+let docsKept = false
+let upkeepStopped = ''  // set when the scratch copy could not be put back: no more upkeep
 const docsTree = treeOf(docsBranch)
 if (merged.length) {
   phase('Upkeep')
   const names = merged.map(t => t.id).join(', ')
-  // The docs ant runs the /docs skill in update mode on the merged result,
-  // before the janitor, so the cleanup sees docs and code together. Its own
-  // worktree and branch; it lands only if the docs check and the tests pass.
-  // No docs folder: it does nothing (create mode needs the user). Dropped:
-  // branch kept, main moves without it.
+  // Upkeep work that is not accepted must not stay on the scratch copy: the
+  // ant may have fast-forwarded it before failing or dying. Put it back to the
+  // last checked commit. If that fails, upkeep stops; main still moves only to
+  // the checked commit, never to the scratch branch by name.
+  const rewind = async (what) => {
+    const good = sha
+    const r = await ant(
+      `Put the Ishikari scratch branch back: ${what} was not accepted.
+${where}
+Run \`git -C ${scratchTree} reset --hard ${good}\`, then \`git -C ${scratchTree} rev-parse HEAD\`
+and return its output as sha. Touch nothing else.`,
+      { label: 'merger-ant:rewind', phase: 'Upkeep', effort: 'low',
+        schema: { type: 'object', properties: { sha: { type: 'string' } }, required: ['sha'] } },
+    )
+    const ok = Boolean(r && isSha(r.sha) && (r.sha.startsWith(good) || good.startsWith(r.sha)))
+    if (!ok) { upkeepStopped = `the scratch copy could not be put back to ${good} after ${what}`; log(`upkeep stopped: ${upkeepStopped}`) }
+    return ok
+  }
+  // The docs ant runs last, on the final code: the /docs skill in update mode,
+  // in its own worktree and branch. It lands only if the docs check and the
+  // tests pass and it touched docs only. No docs folder: it does nothing
+  // (create mode needs the user). Dropped: branch kept, main moves without it.
   const docsChain = async () => {
+    if (upkeepStopped) return
     const d = await ant(
       `You are the docs ant of the Ishikari workflow. You update the repo's docs
 for the tasks just merged (${names}) and commit them yourself.
@@ -313,15 +353,18 @@ ${where}
 If ${scratchTree} has no docs/ or doc/ folder, change nothing and set changed to false:
 never create docs here.
 Otherwise:
-1. Create your worktree: \`git -C ${env.repo} worktree add -b ${docsBranch} ${docsTree} ${scratch}\`
-   (if it exists, remove it and the branch first).
+1. If the worktree ${docsTree} or the branch ${docsBranch} exists, remove them first. Then
+   \`git -C ${env.repo} worktree add -b ${docsBranch} ${docsTree} ${sha}\`.
 2. In ${docsTree}, use the /docs skill in update mode, scoped to the commits from
-   ${env.main} to ${scratch}. Never ask the user: put open questions in the docs'
-   Open questions chapter, or leave them out if it has none. Change docs, diagram
-   sources and training data only; never code.
-3. If docs/build.sh exists, run \`docs/build.sh diagrams\` and \`docs/build.sh check\`;
+   ${env.main} to ${sha}. Never ask the user: put open questions in the docs'
+   Open questions chapter, or leave them out if it has none. Skip the docs-only
+   rebuild test. Change only files under docs/ or doc/, and Markdown or Org files
+   elsewhere; never code, tests or data. If something else needs a change, say so
+   in reason and leave it.
+3. If docs/build.sh or doc/build.sh exists, run its \`diagrams\` and \`check\` commands;
    then ${tests} inside ${docsTree}.
-4. Commit on ${docsBranch} in small commits, no merge commits.
+4. Commit on ${docsBranch} in small commits, no merge commits. Return every changed
+   path in files: the output of \`git -C ${docsTree} diff --name-only ${sha} ${docsBranch}\`.
 5. Only if every check passes: \`git -C ${scratchTree} merge --ff-only ${docsBranch}\`, and
    return the new commit of ${scratch} as sha. Otherwise leave ${scratch} alone and
    say why in reason.
@@ -330,22 +373,25 @@ Never touch ${env.main} or the repo's main checkout.`,
         schema: { type: 'object', properties: {
           changed: { type: 'boolean' }, title: { type: 'string' }, testsPassed: { type: 'boolean' },
           landed: { type: 'boolean', description: `true only if ${scratch} was fast-forwarded to the docs update` },
+          files: { type: 'array', items: { type: 'string' }, description: 'every path the update changed' },
           sha: { type: 'string' }, reason: { type: 'string' },
-        }, required: ['changed', 'title', 'testsPassed', 'landed'] } },
+        }, required: ['changed', 'title', 'testsPassed', 'landed', 'files'] } },
     )
-    if (!d || !d.changed) return
-    if (d.landed && d.testsPassed && typeof d.sha === 'string' && /^[0-9a-f]{7,64}$/.test(d.sha)) {
-      docs = { title: d.title, landed: true }
-      sha = d.sha
-    } else {
-      docs = { title: d.title, branch: docsBranch, landed: false,
-        reason: d.reason || (d.testsPassed ? 'the scratch branch was not fast-forwarded' : 'a check failed') }
-    }
+    if (d && d.changed === false) return
+    if (accepted('docs-ant', d)) { docs = { title: String(d.title || ''), landed: true }; sha = d.sha; return }
+    docsKept = true
+    const outside = d && Array.isArray(d.files) ? d.files.filter(f => !DOC_FILE(f)) : []
+    docs = { title: d ? String(d.title || '') : '', branch: docsBranch, landed: false,
+      reason: !d ? 'the docs ant died'
+        : outside.length ? `it changed files that are not docs: ${outside.slice(0, 5).join(', ')}`
+        : d.reason || (d.testsPassed ? 'the scratch branch was not fast-forwarded, or no commit or file list was given' : 'a check failed') }
+    await rewind('the docs update')
   }
   const janitorChain = async () => {
     const small = linesChanged != null && linesChanged < JANITOR_MIN_LINES
     if (small) log(`janitor skipped: ${linesChanged} lines changed, under ${JANITOR_MIN_LINES}`)
-    const jan = isCleanup || small ? null : await ant(
+    if (isCleanup || small || upkeepStopped) return
+    const jan = await ant(
       `You are the janitor ant of the Ishikari workflow. You clean up and commit
 the cleanup yourself; no other ant checks it, so be careful and small.
 ${where}
@@ -354,8 +400,8 @@ left by the tasks just merged (${names}), and only that: leave the rest of the r
 alone, and change no behaviour.
 If nothing needs cleaning, change nothing and set changed to false.
 Otherwise:
-1. Create your worktree: \`git -C ${env.repo} worktree add -b ${cleanBranch} ${cleanTree} ${scratch}\`
-   (if it exists, remove it and the branch first).
+1. If the worktree ${cleanTree} or the branch ${cleanBranch} exists, remove them first. Then
+   \`git -C ${env.repo} worktree add -b ${cleanBranch} ${cleanTree} ${sha}\`.
 2. Make the cleanup there, then ${tests} inside ${cleanTree}.
 3. Commit on ${cleanBranch} in small commits, no merge commits. Write what you
    changed and why, in a few lines, to ${cleanPlan}.
@@ -370,15 +416,13 @@ Never touch ${env.main} or the repo's main checkout.`,
           sha: { type: 'string' }, reason: { type: 'string' },
         }, required: ['changed', 'title', 'testsPassed', 'landed'] } },
     )
-    if (!jan || !jan.changed) return
-    if (jan.landed && jan.testsPassed && typeof jan.sha === 'string' && /^[0-9a-f]{7,64}$/.test(jan.sha)) {
-      cleanup = { title: jan.title, landed: true }
-      sha = jan.sha
-    } else {
-      cleanup = { title: jan.title, file: cleanPlan, branch: cleanBranch, landed: false,
-        reason: jan.reason || (jan.testsPassed ? 'the scratch branch was not fast-forwarded' : 'the tests failed') }
-      cleanKept = true
-    }
+    if (jan && jan.changed === false) return
+    if (accepted('janitor-ant', jan)) { cleanup = { title: String(jan.title || ''), landed: true }; sha = jan.sha; return }
+    cleanKept = true
+    // A dead janitor left no note to offer: only its branch is kept.
+    if (jan) cleanup = { title: String(jan.title || ''), file: cleanPlan, branch: cleanBranch, landed: false,
+      reason: jan.reason || (jan.testsPassed ? 'the scratch branch was not fast-forwarded, or no commit was given' : 'the tests failed') }
+    await rewind('the cleanup')
   }
   const fastForwardTo = async (branch, label) => {
     const ff = await ant(
@@ -389,7 +433,8 @@ nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
       { label, phase: 'Upkeep', effort: 'low',
         schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
     )
-    if (ff && ff.ok) { sha = ff.sha || sha; return true }
+    if (ff && ff.ok === true && isSha(ff.sha)) { sha = ff.sha; return true }
+    await rewind('the judge fix')
     return false
   }
 
@@ -445,6 +490,7 @@ Never change anything.`,
     return j && Number.isInteger(j.score) ? { score: Math.max(0, Math.min(10, j.score)), gaps: Array.isArray(j.gaps) ? j.gaps.map(String) : [] } : null
   }
   const judgeRun = async () => {
+    if (upkeepStopped) return
     const first = await judgeOnce(1)
     if (!first) { verdict = { score: null, gaps: [], fixed: false, flagged: true, reason: 'the judge ant died' }; return }
     verdict = { score: first.score, gaps: first.gaps, fixed: false, flagged: first.score < PASS }
@@ -455,8 +501,8 @@ Never change anything.`,
 ${where}
 The judge scored the run ${first.score}/10 against the plans in ${planDir}. Gaps:
 ${first.gaps.map(g => `- ${g}`).join('\n')}
-Work only in the worktree ${fixTree} on branch ${fixBranch}. If it does not exist,
-create it with \`git -C ${env.repo} worktree add -b ${fixBranch} ${fixTree} ${scratch}\`.
+Work only in the worktree ${fixTree} on branch ${fixBranch}. If either exists, remove
+them first; then create it with \`git -C ${env.repo} worktree add -b ${fixBranch} ${fixTree} ${sha}\`.
 Close the gaps so the code matches the plans. Keep the tests passing (${tests} inside
 ${fixTree}). Commit on ${fixBranch} in small commits, no merge commits. Never touch
 ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you cannot.`,
@@ -475,7 +521,7 @@ an empty list. Never fix anything.`,
         { label: 'detective-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.detective,
           schema: { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] } },
       )
-      bugs = c ? c.bugs : ['the detective ant died']
+      bugs = c && Array.isArray(c.bugs) ? c.bugs.map(String) : ['the detective ant died or gave no bug list']
     } else if (b) bugs = ['worker stuck: ' + b.notes]
     if (bugs.length || !(await fastForwardTo(fixBranch, 'merger-ant:judge-fix'))) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
     const second = await judgeOnce(2)
@@ -483,9 +529,9 @@ an empty list. Never fix anything.`,
       ? { score: second.score, gaps: second.gaps, fixed: true, flagged: second.score < PASS, first: first.score }
       : { ...verdict, fixed: true, reason: 'the judge ant died on its second look' }
   }
-  await docsChain()
   await janitorChain()
   await judgeRun()
+  await docsChain()
 }
 
 // ---- move main forward, clean up, append to the logbook ----
@@ -509,7 +555,7 @@ const write = rows => rows.length
 ${JSON.stringify(rows)}
 ISHIKARI_ROWS_END`
   : '(nothing to write)'
-const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(docs && !docs.landed ? [] : [docsBranch]), ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
+const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(docsKept ? [] : [docsBranch]), ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
 const FINISH = {
   type: 'object',
   properties: {
@@ -527,11 +573,15 @@ const FINISH = {
 const fin = await twice(() => ant(
   `You are Ishikari's finisher ant. Do these steps in order.
 ${where}
-1. ${merged.length ? `Move ${env.main} forward to ${scratch}, only as a fast-forward:
+1. ${merged.length ? `Move ${env.main} forward to the checked commit ${sha}, only as a fast-forward.
+   Always use that commit, never a branch name:
+   - First run \`git -C ${env.repo} merge-base --is-ancestor ${sha} ${env.main}\`. If it succeeds,
+     ${env.main} already holds the commit (an earlier try moved it): count it as moved
+     and go on to step 2.
    - Find where ${env.main} is checked out: \`git -C ${env.repo} worktree list --porcelain\`.
-   - If it is checked out in some worktree, run \`git -C <that worktree> merge --ff-only ${scratch}\` there.
-   - If it is checked out nowhere, run \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${scratch}\`,
-     and only if that succeeds, \`git -C ${env.repo} branch -f ${env.main} ${scratch}\`.
+   - If it is checked out in some worktree, run \`git -C <that worktree> merge --ff-only ${sha}\` there.
+   - If it is checked out nowhere, run \`git -C ${env.repo} merge-base --is-ancestor ${env.main} ${sha}\`,
+     and only if that succeeds, \`git -C ${env.repo} branch -f ${env.main} ${sha}\`.
    - If git refuses (main moved on, or local edits are in the way), stop moving: set
      moved to false and say why. Never reset, stash or discard anything.` : `Nothing was merged: leave ${env.main} alone (moved: false, reason: "nothing merged").`}
 2. Only if step 1 moved ${env.main}, or nothing was merged: remove these worktrees and
@@ -566,6 +616,7 @@ return {
   docs,
   cleanup,
   verdict,
+  upkeepStopped,
   check,
   checkFixDone,
   checkFix: check.ran && !check.ok && !checkFixDone ? { task: 'check-fix', bug: check.output || 'the app check failed' } : null,
