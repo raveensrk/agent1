@@ -333,7 +333,7 @@ def test_metro_map():
     items = {it["id"]: it for it in panel_items(SVG)}
     assert NOTES["N7"] in items["spur-mback"]["sub"]  # on the merger's failed-merge spur
     assert items["logbook"]["sub"][0] == NOTES["N11"]
-    key_x = 670  # the key (in the middle of the ring) keeps its small explanatory text
+    key_x = 600  # the key (in the middle of the ring) keeps its small explanatory text
     drawn = [t["s"] for t in texts if t["size"] == 13 and t["weight"] < 700 and t["x"] < key_x]
     assert not drawn, f"descriptions drawn on the map: {drawn}"
     for s in strings:

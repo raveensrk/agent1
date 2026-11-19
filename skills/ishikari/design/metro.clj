@@ -60,35 +60,38 @@
 (defn inward "p moved px towards the middle of the ring." [[x y] px]
   (let [len (Math/hypot (- x CX) (- y CY))] (along [x y] [CX CY] (/ px len))))
 
-(def A {"task" 12 "investigator" 32 "specs" 72 "workers" 112 "detectives" 134
-        "integrator" 156 "merger" 176 "janitor" 194 "jurors" 206 "judge" 218 "docs" 270 "finisher" 284
-        "main" 298 "check" 314 "retro" 330 "finished" 348})
+;; Stations are spread evenly round the ring, one step apart. The gap between
+;; the judge and the docs ant is three steps wide: the judge's fix loop, with
+;; its four stations, runs inside it.
+(def A {"task" 12 "investigator" 32 "specs" 52 "workers" 72 "detectives" 92
+        "integrator" 111 "merger" 131 "janitor" 150 "jurors" 170 "judge" 190 "docs" 249 "finisher" 269
+        "main" 289 "check" 308 "retro" 328 "finished" 348})
 (defn P [id] (pt (A id) R))
-(def REJOIN 262)                                    ; where the judge-fix loop rejoins the ring
-(def JF0 (pt 223 400)) (def JF1 (pt 257 400))       ; the judge-fix loop's inner run
-(def FIX0 (pt 131 420)) (def FIX1 (pt 115 420))     ; the fix loop's inner run
+(def REJOIN (- (A "docs") 6))                       ; where the judge-fix loop rejoins the ring
+(def JF0 (pt (+ (A "judge") 5) 400)) (def JF1 (pt (- REJOIN 4) 400)) ; the judge-fix loop's inner run
+(def FIX0 (pt (- (A "detectives") 3) 420)) (def FIX1 (pt (+ (A "workers") 3) 420)) ; the fix loop's inner run
 (def FIXMID (along FIX0 FIX1 0.5))
-(def YOU (pt 26 (+ R 105))) (def RES (pt 32 (- R 95)))
+(def YOU (pt (- (A "investigator") 6) (+ R 105))) (def RES (pt (A "investigator") (- R 95)))
 
-(def trunk (arc 112 298))
+(def trunk (arc (A "workers") (A "main")))
 (def lines ; name, colour, points, width, dash
-  [["plan"    BLUE   (arc 12 112) 12 ""]
+  [["plan"    BLUE   (arc (A "task") (A "workers")) 12 ""]
    ["ask"     BLUE   [(P "investigator") YOU] 7 ""]
    ["res"     BLUE   [(P "investigator") RES] 7 ""]
    ;; "build" is the trains' route only (drawn invisible).
    ["build"   "none" trunk 12 ""]
    ["g1"      INDIGO trunk 12 ""]
    ["fix"     GOLD   [(P "detectives") FIX0 FIX1 (P "workers")] 8 ""]
-   ["fixloop" "none" (vec (concat (arc 112 134) [FIX0 FIX1 (P "workers")])) 8 ""]
-   ["clash"   GOLD   [(P "integrator") (pt 154 350) (pt 137 350) (P "detectives")] 6 "10 6"]
+   ["fixloop" "none" (vec (concat (arc (A "workers") (A "detectives")) [FIX0 FIX1 (P "workers")])) 8 ""]
+   ["clash"   GOLD   [(P "integrator") (pt (- (A "integrator") 2) 350) (pt (+ (A "detectives") 3) 350) (P "detectives")] 6 "10 6"]
    ["drop"    RED    [FIXMID (inward FIXMID 70)] 6 "10 6"]
-   ["mback"   RED    [(P "merger") (pt 176 (- R 90))] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
-   ["tnext"   RED    [(P "janitor") (pt 194 (- R 150))] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
+   ["mback"   RED    [(P "merger") (pt (A "merger") (- R 90))] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
+   ["tnext"   RED    [(P "janitor") (pt (A "janitor") (- R 150))] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jfix"    GOLD   [(P "judge") JF0 JF1 (pt REJOIN R)] 9 ""]
    ;; train 11's route: the judge's fix round rejoins and rides on to MAIN (drawn invisible)
-   ["jfixrun" "none"  (vec (concat [(P "judge") JF0 JF1] (arc REJOIN 298))) 9 ""]
-   ["after"   GREEN  (arc 298 348) 9 ""]
-   ["cfix"    RED    [(P "check") (pt 314 (- R 50))] 6 "10 6"] ; a failed check: a new task for the worker ants
+   ["jfixrun" "none"  (vec (concat [(P "judge") JF0 JF1] (arc REJOIN (A "main")))) 9 ""]
+   ["after"   GREEN  (arc (A "main") (A "finished")) 9 ""]
+   ["cfix"    RED    [(P "check") (pt (A "check") (- R 50))] 6 "10 6"] ; a failed check: a new task for the worker ants
    ["fast"    GREEN  [(P "specs") (P "main")] 6 "10 6"]]) ; a trivial task: the main session lands it straight on main
 
 ;; id, x, y, name, sub lines, kind, label offset [dx dy anchor].
@@ -108,28 +111,28 @@
 (defn st [id [x y lab] nm sub kind] [id x y nm sub kind lab])
 (def stations
   [
-(st "task" (on 12) "Task" ["you give it, or a" "dropped cleanup plan"] "task")
-   (st "investigator" (on 32 [(pt 35.5 (+ R 38)) "start"]) "Investigator ant" ["one live agent on Fable at max effort: it asks you," "proves the task can be built, and writes the product" "spec, the tech spec and every plan; no other ant plans"] "x")
-   (st "you" (at (pt 26 (+ R 105)) [26 -6 "start"]) "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you")
-   (st "researchers" (at (pt 32 (- R 95)) [-26 5 "end"]) "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end")
-   (st "specs" (on 72) "Specs + worker plans" ["product_spec.md: behaviours B1... and invariants I1...;" "tech_spec.md: the architecture and the code's shape;" "one plan per worker, checked before anything is built"] "files")
-   (st "workers" (on 112) "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x")
-   (st "detectives" (on 134) "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x")
-   (st "integrator" (on 156) "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x")
-   (st "merger" (on 176) "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x")
-   (st "janitor" (on 194) "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x")
-   (st "jurors" (on 206) "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x")
-   (st "judge" (on 218) "Judge ant" ["scores the run 0-10 against the product spec," "id by id; its own call, not an average"] "x")
+(st "task" (on (A "task")) "Task" ["you give it, or a" "dropped cleanup plan"] "task")
+   (st "investigator" (on (A "investigator") [(pt (+ (A "investigator") 3.5) (+ R 38)) "start"]) "Investigator ant" ["one live agent on Fable at max effort: it asks you," "proves the task can be built, and writes the product" "spec, the tech spec and every plan; no other ant plans"] "x")
+   (st "you" (at YOU [26 -6 "start"]) "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you")
+   (st "researchers" (at RES [-26 5 "end"]) "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end")
+   (st "specs" (on (A "specs")) "Specs + worker plans" ["product_spec.md: behaviours B1... and invariants I1...;" "tech_spec.md: the architecture and the code's shape;" "one plan per worker, checked before anything is built"] "files")
+   (st "workers" (on (A "workers")) "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x")
+   (st "detectives" (on (A "detectives")) "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x")
+   (st "integrator" (on (A "integrator")) "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x")
+   (st "merger" (on (A "merger")) "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x")
+   (st "janitor" (on (A "janitor")) "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x")
+   (st "jurors" (on (A "jurors")) "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x")
+   (st "judge" (on (A "judge")) "Judge ant" ["scores the run 0-10 against the product spec," "id by id; its own call, not an average"] "x")
    (st "judge-fix-worker" (at (along JF0 JF1 0.12) [26 5 "start"]) "Worker ant" ["closes the judge's gaps"] "st")
    (st "judge-fix-detective" (at (along JF0 JF1 0.37) [26 5 "start"]) "Detective ant" ["checks the fix, runs the tests"] "st")
    (st "judge-fix-merger" (at (along JF0 JF1 0.63) [26 5 "start"]) "Merger ant" ["fast-forwards the scratch copy to the fix;" "the fix lands only through this fast-forward"] "st")
    (st "judge-again" (at (along JF0 JF1 0.88) [26 5 "start"]) "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st")
-   (st "docs" (on 270) "Docs ant" ["updates the docs with /docs (update mode), last," "on the final code; lands only docs files, and only" "if the docs check and tests pass; no docs folder: nothing to do"] "x")
-   (st "finisher" (on 284) "Finisher ant" ["fast-forwards main to the checked commit," "removes worktrees, appends the stage rows, runs the check"] "x")
-   (st "main" (on 298) "MAIN" ["fast-forward only," "never pushed"] "main")
-   (st "check" (on 314) "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st")
-   (st "retro" (on 330) "Retrospective ant" ["reviews how this run went, read only;" "writes retrospective.md: ranked fixes" "to the Ishikari flow; never after a fast path"] "x")
-   (st "finished" (on 348) "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done")
+   (st "docs" (on (A "docs")) "Docs ant" ["updates the docs with /docs (update mode), last," "on the final code; lands only docs files, and only" "if the docs check and tests pass; no docs folder: nothing to do"] "x")
+   (st "finisher" (on (A "finisher")) "Finisher ant" ["fast-forwards main to the checked commit," "removes worktrees, appends the stage rows, runs the check"] "x")
+   (st "main" (on (A "main")) "MAIN" ["fast-forward only," "never pushed"] "main")
+   (st "check" (on (A "check")) "checkCommand" ["the finisher ant builds and checks the app," "only when main moved and checkCommand is set"] "st")
+   (st "retro" (on (A "retro")) "Retrospective ant" ["reviews how this run went, read only;" "writes retrospective.md: ranked fixes" "to the Ishikari flow; never after a fast path"] "x")
+   (st "finished" (on (A "finished")) "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done")
    (st "logbook" (at [(- W 330) 50] [26 -4 "start"]) "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build, finish and the retrospective." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log")])
 
 ;; Skills each station's ant uses, drawn beside its name. List every one.
@@ -229,11 +232,11 @@
 ;; line name (in lines), target station id (nil: the line ends here), extra
 ;; words, lead-in, lines below, where the label sits [point anchor], end cap
 ;; (:bin: a bin drawn at the end).
-(def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"] [(pt 176 (- R 112)) "middle"]]
+(def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"] [(pt (A "merger") (- R 112)) "middle"]]
             ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] [(let [[x y] (inward FIXMID 70)] [(- x 26) (+ y 5)]) "end"] :bin]
-            ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"] [(pt 194 (- R 172)) "middle"]]
-            ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"] [(let [[x y] (pt 314 (- R 50))] [(+ x 14) (+ y 5)]) "start"]]
-            ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"] [(let [[x y] (along (P "specs") (P "main") 0.72)] [x (+ y 24)]) "middle"]]])
+            ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"] [(pt (A "janitor") (- R 172)) "middle"]]
+            ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"] [(let [[x y] (pt (A "check") (- R 50))] [(+ x 14) (+ y 5)]) "start"]]
+            ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"] [(let [[x y] (along (P "specs") (P "main") 0.72)] [(+ x 40) (+ y 38)]) "middle"]]])
 
 (defn ant? [nm] (str/includes? (str/lower-case nm) " ant"))
 
@@ -324,7 +327,7 @@
              [5 "build" INDIGO 28 16.8] [6 "build" INDIGO 28 22.4] [7 "fixloop" GOLD 8 0] [8 "fixloop" GOLD 8 4]
              [10 "after" GREEN 5 0] [11 "jfixrun" GOLD 7 0]])
 
-(def KX (- CX 180)) (def KY (- CY 90)) ; the key's top left corner
+(def KX (- CX 250)) (def KY (- CY 90)) ; the key's top left corner
 
 (defn legend
   "The key box in the middle of the ring."
@@ -459,9 +462,9 @@
     (str "<rect width=\"" W "\" height=\"" H "\" fill=\"" BG "\"/>")
     (clickable {:id "title" :name "Ishikari metro map" :tip "How to read this map."
                 :about "Ishikari runs a task with many ants in parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
-                :src "skills/ishikari/design/index.md" :x (+ CX 70) :y (- CY 140)}
-               (txt (+ CX 70) (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
-               (txt (+ CX 70) (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
+                :src "skills/ishikari/design/index.md" :x CX :y (- CY 140)}
+               (txt CX (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
+               (txt CX (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
    ;; the three parts of the ring, named in the corners
    (for [[k x y an label c about] [[1 (- W 30) 150 "end" "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2, the blue stretch from Task to the worker plans: the investigator asks you its questions, then the plan stage writes the design and one plan per task. The only part where you are asked anything."]
                                    [2 (- W 30) (- H 40) "end" "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6, the indigo stretch down the right and along the bottom: worker ants build the plans in parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
