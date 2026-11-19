@@ -123,10 +123,9 @@
    (st "janitor" (on (A "janitor")) "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x")
    (st "jurors" (on (A "jurors")) "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x")
    (st "judge" (on (A "judge")) "Judge ant" ["scores the run 0-10 against the product spec," "id by id; its own call, not an average"] "x")
-   (st "judge-fix-worker" (at (along JF0 JF1 0.12) [26 5 "start"]) "Worker ant" ["closes the judge's gaps"] "st")
-   (st "judge-fix-detective" (at (along JF0 JF1 0.37) [26 5 "start"]) "Detective ant" ["checks the fix, runs the tests"] "st")
-   (st "judge-fix-merger" (at (along JF0 JF1 0.63) [26 5 "start"]) "Merger ant" ["fast-forwards the scratch copy to the fix;" "the fix lands only through this fast-forward"] "st")
-   (st "judge-again" (at (along JF0 JF1 0.88) [26 5 "start"]) "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st")
+   (st "judge-fix-worker" (at (along JF0 JF1 0.15) [26 5 "start"]) "Worker ant" ["closes the judge's gaps"] "st")
+   (st "judge-fix-detective" (at (along JF0 JF1 0.5) [26 5 "start"]) "Detective ant" ["checks the fix, runs the tests, then fast-forwards the" "scratch copy; the fix lands only through this fast-forward"] "st")
+   (st "judge-again" (at (along JF0 JF1 0.85) [26 5 "start"]) "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st")
    (st "docs" (on (A "docs")) "Docs ant" ["updates the docs with /docs (update mode), last," "on the final code; lands only docs files, and only" "if the docs check and tests pass; no docs folder: nothing to do"] "x")
    (st "finisher" (on (A "finisher")) "Finisher ant" ["fast-forwards main to the checked commit," "removes worktrees, appends the stage rows, runs the check"] "x")
    (st "main" (on (A "main")) "MAIN" ["fast-forward only," "never pushed"] "main")
@@ -190,12 +189,9 @@
    "judge-fix-worker" {:tip "Closes the judge's gaps."
                        :about "Builds the judge's gaps as one fix on top of the merged scratch copy."
                        :src "scripts/ishikari-finish.js"}
-   "judge-fix-detective" {:tip "Checks the judge fix."
-                          :about "Checks the fix and runs the tests. A failed fix keeps its branch and the verdict says why."
+   "judge-fix-detective" {:tip "Checks the judge fix and lands it."
+                          :about "Checks the fix and runs the tests. No bug and the tests pass: it fast-forwards the scratch copy to the fix itself. The fix lands only through this fast-forward. A failed fix keeps its branch and the verdict says why."
                           :src "scripts/ishikari-finish.js"}
-   "judge-fix-merger" {:tip "Lands the judge fix by fast-forward."
-                       :about "Fast-forwards the scratch copy to the fix. The fix lands only through this fast-forward."
-                       :src "scripts/ishikari-finish.js (merger-ant:judge-fix)"}
    "judge-again" {:tip "Scores again after the fix."
                        :about "Scores the run a second time. Still below 7: main moves anyway and the verdict is flagged. The judge never blocks main."
                        :src "scripts/ishikari-finish.js"}
@@ -383,7 +379,7 @@
    "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "A task drops when a bug is still open after 3 tries, when 3 fix rounds end with bugs open (both: escalated), when its worker is blocked or hits an error, or when its after names a task that dropped: tasks built on it drop too. The main session drops it without asking; it never reaches finish or main and nothing sends it back. Its branch is kept for a later look, and the final report lists it with why it dropped, its bugs and fix history."]
    "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
-   "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks, the merger fast-forwards the fix, and the judge scores again. Only one round."]
+   "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks and fast-forwards the fix, and the judge scores again. Only one round."]
    "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, and the main session reports the run."]
    "fast"    ["Fast path" "A trivial task skips the planning and build ants: straight across the ring to MAIN." "Once the product spec is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then builds from the product spec alone: it edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
    "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops."]})

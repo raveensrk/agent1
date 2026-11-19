@@ -298,7 +298,7 @@ def test_metro_map():
         for kind in set(KIND.findall(src)):
             assert kind in KIND_STATION, f"{os.path.basename(script)}: no station for {kind}"
             assert KIND_STATION[kind] in names, f"{os.path.basename(script)}: {KIND_STATION[kind]} not on the map"
-    counts = {"Merger ant": 2, "Worker ant": 1, "Detective ant": 1, "Judge ant": 2, "Docs ant": 1,
+    counts = {"Merger ant": 1, "Worker ant": 1, "Detective ant": 1, "Judge ant": 2, "Docs ant": 1,
               "Retrospective ant": 1, "Juror ants  ∥": 1, "Logbook": 1}
     for name, n in counts.items():
         assert names.count(name) == n, (name, names.count(name))
@@ -320,7 +320,7 @@ def test_metro_map():
     clickable_texts = {id(t) for g in every for t in g.iter(NS + "text")}
     loose = [t.text for t in root.iter(NS + "text") if t.get("class") == "h" and id(t) not in clickable_texts]
     assert not loose, f"text with nothing to click: {loose}"
-    for spur in ("merge failed: to Worker ants s6", "cleanup failed: to Task s1 (next run)", "dropped", "check failed: to Worker ants s6 (new task)", "fast path: to MAIN s19"):
+    for spur in ("merge failed: to Worker ants s6", "cleanup failed: to Task s1 (next run)", "dropped", "check failed: to Worker ants s6 (new task)", "fast path: to MAIN s18"):
         assert spur in strings_all(texts), spur
     # The map is one open ring: the main stations sit on one circle, in order, with a gap at the top.
     it = {i["id"]: i for i in panel_items(SVG)}
@@ -334,7 +334,7 @@ def test_metro_map():
         angles.append(math.degrees(math.atan2(dx, -dy)) % 360)
     assert angles == sorted(angles), "ring stations are not in clockwise order"
     assert angles[0] > 5 and angles[-1] < 355  # open at the top: a run ends, it does not loop
-    assert [it[s]["code"] for s in ("task", "workers", "main")] == ["s1", "s6", "s19"]
+    assert [it[s]["code"] for s in ("task", "workers", "main")] == ["s1", "s6", "s18"]
     polygons = len(list(ET.parse(SVG).getroot().iter(NS + "polygon")))
     assert polygons >= sum(" ant" in n for n in names)
     strings = [t["s"] for t in texts]

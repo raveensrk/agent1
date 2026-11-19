@@ -297,7 +297,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
     judge does not score those. With 3+ tasks it first
     sends one juror ant per task (5 at once) and decides from their reports;
     the score is its own call, not an average. Below 7: one fix round
-    (worker, detective), then a second score. Still below 7: main moves
+    (worker, then a detective that lands the fix), then a second score. Still below 7: main moves
     anyway and `verdict.flagged` is true;
   - last, the docs ant runs `/docs` in update mode on the final code (or updates
     the documentation directly if `/docs` is unavailable), in its

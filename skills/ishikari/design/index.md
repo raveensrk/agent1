@@ -162,9 +162,9 @@ They run once per finish, on the merged result, before main moves.
   how the tasks fit together and decides the score itself; it is not an
   average. One or two tasks: the judge works alone. Below
   7 with gaps, one fix round per finish: a worker ant closes the gaps on top of the
-  merged scratch copy, a detective ant checks it and runs the tests, a merger
-  ant fast-forwards the scratch copy to it (the only way the fix lands), and
-  the judge scores again. Still below 7, or the fix failed (its branch is kept
+  merged scratch copy, a detective ant checks it, runs the tests and, only if
+  both pass, fast-forwards the scratch copy to it itself (the only way the fix
+  lands), and the judge scores again. Still below 7, or the fix failed (its branch is kept
   and the verdict says why): main moves anyway and the verdict is
   flagged in the report. The judge never blocks main, so a run never gets
   stuck on a score: main always moves.
@@ -344,7 +344,7 @@ green stretch is after main moves. Loops and spurs bend inside the ring (the
 fix loop, the clash line, the judge's fix round, the fast path straight across
 to MAIN), and each spur names the station it goes to. Station names sit
 outside the ring; the title and the key sit in the middle. Every agent label in the four scripts has a
-station, helper ants included (the fast-forward merger, the jurors), and short notes name each skipped step. Built by
+station, helper ants included (the judge-fix worker and detective, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
 The map draws names only, to stay simple; every description and short
 rule lives in the item's tooltip and click panel. Everything on the map says

@@ -105,12 +105,11 @@ const accepted = (kind, r) => Boolean(r && r.changed === true && r.landed === tr
   (kind !== 'docs-ant' || (Array.isArray(r.files) && r.files.length > 0 && r.files.every(DOC_FILE))))
 const summarize = (kind, r) => {
   if (r == null) return 'died'
-  if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : 'passed'
+  if (Array.isArray(r.bugs)) return r.bugs.length ? `${r.bugs.length} bug${r.bugs.length > 1 ? 's' : ''} found` : r.landed === false ? 'passed, not landed' : 'passed'
   if (typeof r.status === 'string') return r.status
   if (Number.isInteger(r.score)) return `score ${r.score}`
   if (Array.isArray(r.results)) return `merged ${r.results.filter(x => x && x.outcome === 'merged').length} of ${r.results.length}`
   if (typeof r.changed === 'boolean') return !r.changed ? 'nothing changed' : accepted(kind, r) ? 'landed' : 'dropped'
-  if (typeof r.ok === 'boolean') return r.ok ? 'fast-forwarded' : 'fast-forward refused'
   if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
   return 'finished'
 }
@@ -432,23 +431,11 @@ Never touch ${env.main} or the repo's main checkout.`,
       reason: jan.reason || (jan.testsPassed ? 'the scratch branch was not fast-forwarded, or no commit was given' : 'the tests failed') }
     await rewind('the cleanup')
   }
-  const fastForwardTo = async (branch, label) => {
-    const ff = await ant(
-      `Fast-forward the Ishikari scratch branch to the checked branch ${branch}.
-${where}
-Run \`git -C ${scratchTree} merge --ff-only ${branch}\`. If git refuses, change
-nothing and set ok to false. Return the new commit of ${scratch} as sha.`,
-      { label, phase: 'Upkeep', effort: 'low',
-        schema: { type: 'object', properties: { ok: { type: 'boolean' }, sha: { type: 'string' } }, required: ['ok', 'sha'] } },
-    )
-    if (ff && ff.ok === true && isSha(ff.sha)) { sha = ff.sha; return true }
-    await rewind('the judge fix')
-    return false
-  }
-
   // The judge ant scores the whole run, cleanup included, against the product spec.
-  // Below PASS: one fix round (worker, detective), then a second score. Still
-  // below PASS: main moves anyway and the report flags it.
+  // Below PASS: one fix round (worker, detective), then a second score. The
+  // detective lands the fix itself, by fast-forward, only if it found no bug and
+  // the tests pass: no other ant takes part. Still below PASS: main moves anyway
+  // and the report flags it.
   // MIN_JURY or more tasks: the judge delegates, one juror ant per task (at most
   // MAX_JURORS at once), and decides the run's score from their reports.
   const SCORED = { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] }
@@ -522,6 +509,7 @@ ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you canno
       { label: 'worker-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.worker, schema: BUILT },
     )
     let bugs = ['the worker ant died']
+    let landed = false
     if (b && b.status === 'built') {
       const c = await ant(
         `You are a detective ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
@@ -530,13 +518,25 @@ Gaps:
 ${first.gaps.map(g => `- ${g}`).join('\n')}
 Code: ${fixTree}, branch ${fixBranch}, built on ${scratch}. Check that it closes the gaps
 and breaks nothing, then ${tests} inside ${fixTree}. Return each problem in "bugs", or
-an empty list. Never fix anything.`,
+an empty list. Never fix anything.
+Only if you found no problem and the tests pass: \`git -C ${scratchTree} merge --ff-only ${fixBranch}\`,
+set landed to true and return the new commit of ${scratch} as sha. If you found a
+problem, or git refuses, leave ${scratch} alone and set landed to false.`,
         { label: 'detective-ant:judge-fix', phase: 'Upkeep', effort: EFFORT.detective,
-          schema: { type: 'object', properties: { bugs: { type: 'array', items: { type: 'string' } } }, required: ['bugs'] } },
+          schema: { type: 'object', properties: {
+            bugs: { type: 'array', items: { type: 'string' } },
+            landed: { type: 'boolean', description: `true only if ${scratch} was fast-forwarded to the fix` },
+            sha: { type: 'string' },
+          }, required: ['bugs', 'landed'] } },
       )
       bugs = c && Array.isArray(c.bugs) ? c.bugs.map(String) : ['the detective ant died or gave no bug list']
+      // The fix lands only through the detective's fast-forward: no bug, landed, commit named.
+      if (!bugs.length && c.landed === true && isSha(c.sha)) landed = true
+      // A clean "bugs found, nothing landed" left the scratch copy alone; anything else may have moved it.
+      else if (!(c && bugs.length && c.landed === false)) await rewind('the judge fix')
+      if (landed) sha = c.sha
     } else if (b) bugs = ['worker stuck: ' + b.notes]
-    if (bugs.length || !(await fastForwardTo(fixBranch, 'merger-ant:judge-fix'))) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
+    if (!landed) { fixKept = true; verdict.reason = bugs.join('; ') || 'could not fast-forward the scratch branch'; return }
     const second = await judgeOnce(2)
     verdict = second
       ? { score: second.score, gaps: second.gaps, fixed: true, flagged: second.score < PASS, first: first.score }

@@ -270,8 +270,7 @@ function judgeRun(scores, answer = () => null) {
     if (o.label === 'docs-ant') return answer(o) || NO_DOCS
     if (o.label === 'merger-ant:rewind') return answer(o) || { sha: 'abc1234' }
     return answer(o) || (o.label.startsWith('worker') ? { status: 'built', notes: '' }
-      : o.label.startsWith('detective') ? { bugs: [] }
-      : o.label === 'merger-ant:judge-fix' ? { ok: true, sha: 'fff1234' } : { moved: true, reason: '' })
+      : o.label.startsWith('detective') ? { bugs: [], landed: true, sha: 'fff1234' } : { moved: true, reason: '' })
   }).then(r => ({ ...r, prompts }))
 }
 
@@ -285,7 +284,8 @@ test('finish: a judge score of 7 or more needs no fix round', async () => {
 
 test('finish: a low judge score gets one fix round, then a second score', async () => {
   const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['x missing'] }, { score: 8, gaps: [] }])
-  assert.deepEqual(calls.slice(1, 6), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'merger-ant:judge-fix', 'judge-ant:2'])
+  assert.deepEqual(calls.slice(1, 5), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'judge-ant:2'])
+  assert.ok(prompts['detective-ant:judge-fix'].includes('merge --ff-only ishikari/r1/_judgefix'))
   assert.ok(prompts['worker-ant:judge-fix'].includes('- x missing'))
   assert.deepEqual(out.verdict, { score: 8, gaps: [], fixed: true, flagged: false, first: 4 })
   assert.equal(out.sha, 'fff1234')
@@ -302,8 +302,8 @@ test('finish: still low after the fix round, main moves and the verdict is flagg
 
 test('finish: a judge fix that fails its check is not landed, branch kept, flagged', async () => {
   const { out, calls, prompts } = await judgeRun([{ score: 2, gaps: ['g'] }],
-    o => o.label === 'detective-ant:judge-fix' ? { bugs: ['broke y'] } : null)
-  assert.ok(!calls.includes('merger-ant:judge-fix'))
+    o => o.label === 'detective-ant:judge-fix' ? { bugs: ['broke y'], landed: false } : null)
+  assert.ok(!calls.includes('merger-ant:rewind'))
   assert.ok(!calls.includes('judge-ant:2'))
   assert.equal(out.verdict.flagged, true)
   assert.equal(out.verdict.reason, 'broke y')
@@ -530,7 +530,7 @@ test('finish: scratch branches are refused as tasks, and merged tasks need a com
 })
 
 test('finish: the judge fix is rebuilt from the checked commit and a bad fast-forward is put back', async () => {
-  const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['g'] }], o => o.label === 'merger-ant:judge-fix' ? { ok: true, sha: '' } : null)
+  const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['g'] }], o => o.label === 'detective-ant:judge-fix' ? { bugs: [], landed: true, sha: '' } : null)
   assert.ok(prompts['worker-ant:judge-fix'].includes('If either exists, remove'))
   assert.ok(prompts['worker-ant:judge-fix'].includes('ishikari/r1/_judgefix /s/worktrees/ishikari__r1___judgefix abc1234'))
   assert.ok(calls.includes('merger-ant:rewind'))
@@ -647,7 +647,7 @@ test('finish: every ant gets its own logbook entry at once, the finisher excepte
   const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
     'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
-    'detective ant: passed', 'merger ant: fast-forwarded', 'judge ant: score 8', 'docs ant: nothing changed',
+    'detective ant: passed', 'judge ant: score 8', 'docs ant: nothing changed',
   ])
   assert.ok(got.every(e => e.run === 'r1'))
   assert.equal(out.mainMoved, true)
