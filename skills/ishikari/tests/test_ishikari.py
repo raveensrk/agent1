@@ -429,6 +429,21 @@ def test_docs_match_build():
     assert "one logbook append at the end" not in build
 
 
+def test_investigator_skill():
+    skills = os.path.dirname(SKILL)
+    read = lambda *p: open(os.path.join(skills, *p), encoding="utf-8").read()
+    inv = read("investigator", "SKILL.md")
+    for heading in ("## Proof", "## Standalone mode", "## Ishikari mode"):
+        assert heading in inv, heading
+    assert "No plan comes before the proof passes." in inv
+    assert "Write no files. End in the session" in inv
+    assert '"productSpecWritten"' in inv and "/ask-simple" in inv
+    prompt = read("ishikari", "assets", "prompts", "investigator.md")
+    assert "`/investigator`" in prompt and "Ishikari mode" in prompt
+    assert "investigator/SKILL.md" in read("ishikari", "SKILL.md")
+    assert "../investigator/SKILL.md#proof" in read("add-requirement", "SKILL.md")
+
+
 def test_save_logs_and_recover():
     with tempfile.TemporaryDirectory() as home:
         repo = make_repo(home)
@@ -478,4 +493,5 @@ if __name__ == "__main__":
     test_hardening()
     test_metro_map()
     test_docs_match_build()
+    test_investigator_skill()
     print("ok")

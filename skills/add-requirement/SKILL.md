@@ -23,14 +23,8 @@ Format and process rules: [requirements.org](../../requirements/requirements.org
 
 ## 3. Prove it can be built
 
-Find concrete evidence for the exact versions in use. Any of:
-
-- Library docs - official API page showing the feature.
-- Code in the repo - something that already does it, or close.
-- Spike - a tiny snippet in the scratchpad, run once, then deleted. Never in the repo.
-- Working example - a known project or sample doing the same.
-
-Guessing is not evidence. "Probably supported" is not evidence.
+Follow the Proof section of the [investigator skill](../investigator/SKILL.md#proof):
+evidence for the exact versions in use, a spike only outside the repo, never a guess.
 
 ## 4. Prove it can be tested
 

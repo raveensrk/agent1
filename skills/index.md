@@ -7,6 +7,7 @@ by registering this repo with [install.py](../install.py).
 - [ask-simple](./ask-simple/SKILL.md) - Asks the user clear questions in simple language, as if they are new to the topic.
 - [determinize](./determinize/SKILL.md) - Turns a directory's agent rules into checks, guards and git hooks, then thins the instructions to decisions and routing.
 - [docs](./docs/SKILL.md) - Creates or updates `docs/`, run by hand after a task: a book-style design doc complete enough to rebuild the repo from.
+- [investigator](./investigator/SKILL.md) - Investigates a task, proves it can be built, then plans it: in the session by hand, or as specs and plans for Ishikari.
 - [ishikari](./ishikari/SKILL.md) - Runs the Ishikari ant workflow on a task: review, plan, parallel build, check, fix, test together and merge, stopping only to ask.
 - [maintain](./maintain/SKILL.md) - Maintains a project: dead code, bloat, redundancy, large blocks and helper scripts, planned first, applied one verified step at a time.
 - [next](./next/SKILL.md) - Asks "What next?" after a task, lists up to 5 next steps best first, and does the one the user picks.

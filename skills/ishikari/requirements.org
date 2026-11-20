@@ -181,7 +181,7 @@ Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows li
 - test_label_guard fails when an ant label kind in the four workflow scripts has no station rule.
 Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workflows/<wf>/agent-*.jsonl and label and phase in agent-*.meta.json (read 2026-11-20); workflow records carry workflowName and args.env.run (wf_a1f92fc9-0f4.json); researchers carry parentAgentId and spawnDepth 2; one message id appears twice with the same usage (msg_011ChCVnW8L3wgeorcjUJdsV); Claude Code 2.1.329 builds rate_limits.five_hour {used_percentage, resets_at} into the status line JSON (strings of the binary); the shell has CLAUDE_CODE_SESSION_ID; the user chose every rule above on 2026-11-20.
 
-* OPEN [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
+* DONE [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
 :PROPERTIES:
 :ID:          ISH-10
 :CREATED:     2026-11-20
@@ -190,6 +190,7 @@ Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workfl
 :VERIFY+:     "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
 :LAST_EDITED: 2026-11-20
 :APPROVED:    2026-11-20
+:IMPLEMENTED: 2026-11-20
 :END:
 The investigator's instructions move from assets/prompts/investigator.md into a skill, skills/investigator/SKILL.md. It is built first, before the janitor, judge, review and retro skills.
 - Ishikari mode: Ishikari's investigator ant loads the skill with its inputs (repo, main, state, task, plans folder, test and check commands). Outputs and JSON replies stay as they are: product_spec.md, tech_spec.md, docs_brief.md, one plan per worker, and the 2a guards still check every reply.
