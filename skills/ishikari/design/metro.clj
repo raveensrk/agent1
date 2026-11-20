@@ -71,6 +71,7 @@
 (def JF0 (pt (+ (A "judge") 5) 400)) (def JF1 (pt (- REJOIN 4) 400)) ; the judge-fix loop's inner run
 (def FIX0 (pt (- (A "detectives") 3) 420)) (def FIX1 (pt (+ (A "workers") 3) 420)) ; the fix loop's inner run
 (def FIXMID (along FIX0 FIX1 0.5))
+(def JURY 160) ; the jury decision, between the janitor and the jurors
 (def YOU (pt (- (A "investigator") 6) (+ R 105))) (def RES (pt (A "investigator") (- R 95)))
 
 (def trunk (arc (A "workers") (A "main")))
@@ -87,6 +88,7 @@
    ["drop"    RED    [FIXMID (inward FIXMID 70)] 6 "10 6"]
    ["mback"   RED    [(P "merger") (pt (A "merger") (- R 90))] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tnext"   RED    [(P "janitor") (pt (A "janitor") (- R 150))] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
+   ["jskip"   GREY   [(pt JURY R) (pt (+ JURY 4) 462) (pt (- (A "judge") 4) 462) (P "judge")] 6 "10 6"] ; 1 or 2 merged tasks: past the jurors
    ["jfix"    GOLD   [(P "judge") JF0 JF1 (pt REJOIN R)] 9 ""]
    ;; train 11's route: the judge's fix round rejoins and rides on to MAIN (drawn invisible)
    ["jfixrun" "none"  (vec (concat [(P "judge") JF0 JF1] (arc REJOIN (A "main")))) 9 ""]
@@ -133,6 +135,30 @@
    (st "retro" (on (A "retro")) "Retrospective ant" ["reviews how this run went, read only;" "writes retrospective.md: ranked fixes" "to the Ishikari flow; never after a fast path"] "x")
    (st "finished" (on (A "finished")) "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done")
    (st "logbook" (at [(- W 330) 50] [26 -4 "start"]) "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build, finish and the retrospective." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log")])
+
+;; Decision nodes: diamonds where the run picks how many ants a station uses,
+;; or whether it is skipped. Not stations: they have no ant and no stop code.
+;; id, point, label [dx dy anchor], the question, the answers drawn under it,
+;; tooltip, the full story of each path.
+(defn on-d "A decision on the ring at deg, labelled outside like a station." [deg]
+  (let [[x y lab] (on deg)] [[x y] lab]))
+(def decisions
+  [["d-facts" [(pt (A "investigator") (- R 47)) [-20 -1 "end"]]
+    "facts missing?" "no: none  ·  yes: 1 to 5 at once"
+    "Decides whether any researcher ant runs."
+    "The investigator decides while it reads the repo. Nothing missing: no researcher ant runs, and the path stays on the ring. Facts missing: it starts 1 to 5 researcher ants at once and waits for them. They are the only ants that always run in parallel, with or without --parallel, because they only read."]
+   ["d-plans" (on-d 59)
+    "how many plans?" "1: one worker  ·  2+: one per plan"
+    "Decides how many worker and detective ants there are."
+    "The investigator decides when it writes the plans. One plan: one worker ant builds the whole task straight from the two specs, with no plan file, and one detective ant checks it. Two or more plans: one worker ant and one detective ant per plan, each worker in its own worktree. A fix round reuses the task's own worker and detective. Whether they run together is the next decision."]
+   ["d-parallel" (on-d 66)
+    "--parallel <n>?" "no: one at a time  ·  yes: up to n at once"
+    "Decides whether worker, detective and juror ants run one at a time or together."
+    "You decide, in the skill's arguments. Without --parallel: a single worker or detective ant runs at any moment, each task's detective waiting in the same line, and later a single juror at a time. With --parallel <n>, n from 2 to 5: up to n workers run at once, each detective starts the moment its task is built, and up to n jurors run at once, reading only. The number of ants is the same either way; only the order changes."]
+   ["d-jury" (on-d JURY)
+    "3+ merged tasks?" "no: judge alone  ·  yes: one juror per task"
+    "Decides whether juror ants run."
+    "The finish script counts the merged tasks. One or two: no juror ant runs; the dashed grey line goes straight to the judge ant, which reads everything itself. Three or more: one juror ant per merged task scores its own task first, one at a time or up to n at once with --parallel, and the judge decides from their reports."]])
 
 ;; Skills each station's ant uses, drawn beside its name. List every one.
 (def station-skills
@@ -354,7 +380,10 @@
               "<path d=\"M" (- cx 2) "," (- cy 4) " L" (- cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 4)
               "\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.2\"/>")
       k5 (str "<circle cx=\"" ix "\" cy=\"" iy "\" r=\"5\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>")
-      (txt lx (+ ly (* 5 16)) ["stacked ∥: parallel"] :fill SUB :size 12)]
+      (txt lx (+ ly (* 5 16)) ["stacked ∥: parallel"] :fill SUB :size 12)
+      (let [x (+ lx 6) y (+ ly (* 6 16) -4)]
+        (str "<path d=\"M" x "," (- y 6) " L" (+ x 6) "," y " L" x "," (+ y 6) " L" (- x 6) "," y " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>"))
+      (txt (+ lx 16) (+ ly (* 6 16)) ["a decision"] :fill SUB :size 12)]
      ;; colour key: what each colour means
      (loop [x (+ kx 16) [[c t] & more] [[GREEN "done"] [RED "failed"] [GOLD "warning"] [BLUE "plan"] [INDIGO "build"]] out []]
        (if-not c
@@ -379,6 +408,7 @@
    "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "A task drops when a bug is still open after 3 tries, when 3 fix rounds end with bugs open (both: escalated), when its worker is blocked or hits an error, or when its after names a task that dropped: tasks built on it drop too. The main session drops it without asking; it never reaches finish or main and nothing sends it back. Its branch is kept for a later look, and the final report lists it with why it dropped, its bugs and fix history."]
    "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
+   "jskip"   ["Jury skip" "1 or 2 merged tasks: no juror ants." "With fewer than 3 merged tasks the judge works alone: the run goes from the jury decision straight to the judge ant, past the juror ants."]
    "jfix"    ["Judge fix loop" "Below 7 with gaps, or 7+ with bugs: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps, or passed it but listed bugs, gaps where the code behaves wrongly. A worker closes the gaps, or at 7 or more only the bugs, a detective checks and fast-forwards the fix, and the judge scores again. Only one round."]
    "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, the retrospective ant reviews the run, and the main session reports it."]
    "fast"    ["Fast path" "A trivial task skips the planning and build ants: straight across the ring to MAIN." "Once the product spec is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then builds from the product spec alone: it edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
@@ -457,7 +487,7 @@
     (str "<style>.h{paint-order:stroke;stroke:" BG ";stroke-width:5px;stroke-linejoin:round}.flow{animation:f 1.2s linear infinite}@keyframes f{to{stroke-dashoffset:-32}}</style>")
     (str "<rect width=\"" W "\" height=\"" H "\" fill=\"" BG "\"/>")
     (clickable {:id "title" :name "Ishikari metro map" :tip "How to read this map."
-                :about "Ishikari runs a task with many ants, one worker, detective or juror at a time unless you pass --parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
+                :about "Ishikari runs a task with many ants, one worker, detective or juror at a time unless you pass --parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), diamonds are decisions, pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
                 :src "skills/ishikari/design/index.md" :x CX :y (- CY 140)}
                (txt CX (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
                (txt CX (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
@@ -511,6 +541,12 @@
                                                (str "<tspan dx=\"6\" font-size=\"12\" font-weight=\"600\" fill=\"" INDIGO "\">" (esc (str/join " " sk)) "</tspan>"))
                                              "</text>"))
                 ))
+   (for [[id [[x y] [dx dy an]] q answers tip about] decisions]
+     (clickable {:id id :name (str "Decision: " q) :tip tip :about about :sub [answers] :x x :y y}
+                (str "<path d=\"M" x "," (- y 14) " L" (+ x 14) "," y " L" x "," (+ y 14) " L" (- x 14) "," y " Z\" fill=\"" BG "\" stroke=\"" TXT "\" stroke-width=\"4\" stroke-linejoin=\"round\"/>"
+                     "<text x=\"" x "\" y=\"" (+ y 5) "\" font-size=\"14\" font-weight=\"800\" fill=\"" TXT "\" text-anchor=\"middle\">?</text>")
+                (txt (+ x dx) (+ y dy) [q] :size 13 :anchor an :weight "700")
+                (txt (+ x dx) (+ y dy 15) [answers] :fill SUB :size 12 :anchor an :weight "600")))
    (for [[n path c sec beg] trains
          :let [[lname] (about-lines (if (= path "build") "g1" (case path "fixloop" "fix" "jfixrun" "jfix" path)))]]
      (clickable {:id (str "train-" n) :name (str "Car " n) :tip (str "A sample task riding the " (str/lower-case lname) ".")
@@ -527,7 +563,7 @@
                  :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x (first (P "investigator")) :y (second (P "investigator"))}
                 (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
    [(clickable {:id "key" :name "Key" :tip "What the cars, symbols and colours mean."
-                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, stacked shapes ants that always run in parallel, dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
+                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, stacked shapes ants that always run in parallel, dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
                 :x KX :y KY}
                (apply str (legend)))]))
 

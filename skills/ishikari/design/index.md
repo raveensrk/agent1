@@ -352,7 +352,14 @@ to MAIN), and each spur names the station it goes to. Station names sit
 outside the ring; the title and the key sit in the middle. Every agent label in the four scripts has a
 station, helper ants included (the judge-fix worker and detective, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
-The map draws names only, to stay simple; every description and short
+A rhombus is a decision node: it sits where the run picks how many ants a
+station uses, or skips it, with the question and its answers drawn beside it.
+There are four, in `decisions` in `metro.clj`: facts missing (no researcher,
+or 1 to 5 at once), how many plans (one worker, or one per plan),
+`--parallel <n>` (one at a time, or up to n at once) and 3 or more merged
+tasks (the judge alone, down the dashed grey line past the jurors, or one
+juror per task).
+Elsewhere the map draws names only, to stay simple; every description and short
 rule lives in the item's tooltip and click panel. Everything on the map says
 what it is: stations, lines, spurs, junctions,
 the three part labels in the corners, the moving cars and the key. Hover for a one-line tooltip;
