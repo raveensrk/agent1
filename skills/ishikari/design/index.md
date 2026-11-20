@@ -16,128 +16,129 @@ its job. The build script runs that workflow in place of a worker ant.
 
 ## Flow
 
-01. **Task in.** The user gives a task. It can be anything.
+1. **Task in.** The user gives a task. It can be anything.
 
-02. **Investigator Ant** does all the planning: it asks, proves the task can
-    be built, and writes two specs and every worker plan. The product spec,
-    `product_spec.md`, says what the product does: behaviours and invariants,
-    nothing else. The tech spec, `tech_spec.md`, says the architecture and the
-    code's shape. No other ant plans, so nothing is lost between ants. It is one live agent for the whole talk, run
-    by the skill, not a workflow, on Opus at low effort: it reads the repo
-    once and gets each answer as a message. Ishikari needs the Agent tool for
-    it; without it the run stops at the start. It works in two parts.
+2. **Investigator Ant** does all the planning: it asks, proves the task can
+   be built, and writes two specs and every worker plan. The product spec,
+   `product_spec.md`, says what the product does: behaviours and invariants,
+   nothing else. The tech spec, `tech_spec.md`, says the architecture and the
+   code's shape. No other ant plans, so nothing is lost between ants. It is one live agent for the whole talk, run
+   by the skill, not a workflow, on Opus at low effort: it reads the repo
+   once and gets each answer as a message. Ishikari needs the Agent tool for
+   it; without it the run stops at the start. It works in two parts.
 
-    **Part 1: investigate.** It critiques the task and finds the repo's test
-    command. When it lacks facts it sends up to 5 **Researcher Ants** in
-    parallel, on Opus at low effort; they search the web and the whole
-    computer, read only, never secrets, and report back. A fact about a user
-    interface they judge with the `/ux` skill in review mode; its plan mode
-    asks the user, so they never use it. It asks up to 4 independent questions
-    at a time with `/ask-simple`, with a best-guess count: "Questions 1-3 of
-    about 5", 8 in all. Once nothing important is unclear it writes
-    `product_spec.md` in the run's plans folder. It holds two lists and nothing
-    else. Behaviours: what the product does once the task is done, each with
-    an id (`B1`, `B2`...) and written as given / when / then. Invariants: what
-    must always hold, each with an id (`I1`, `I2`...). Both are written so an
-    ant can check them. Each answer the user gave shows up as the behaviour it
-    led to; there is no goal, background, decisions log or assumptions list.
-    A task that changes no behaviour (a refactor, docs) has invariants only.
-    Then it gives its trivial verdict and waits.
+   **Part 1: investigate.** It critiques the task and finds the repo's test
+   command. When it lacks facts it sends up to 5 **Researcher Ants** in
+   parallel, on Opus at low effort; they search the web and the whole
+   computer, read only, never secrets, and report back. A fact about a user
+   interface they judge with the `/ux` skill in review mode; its plan mode
+   asks the user, so they never use it. It asks up to 4 independent questions
+   at a time with `/ask-simple`, with a best-guess count: "Questions 1-3 of
+   about 5", 8 in all. Once nothing important is unclear it writes
+   `product_spec.md` in the run's plans folder. It holds two lists and nothing
+   else. Behaviours: what the product does once the task is done, each with
+   an id (`B1`, `B2`...) and written as given / when / then. Invariants: what
+   must always hold, each with an id (`I1`, `I2`...). Both are written so an
+   ant can check them. Each answer the user gave shows up as the behaviour it
+   led to; there is no goal, background, decisions log or assumptions list.
+   A task that changes no behaviour (a refactor, docs) has invariants only.
+   Then it gives its trivial verdict and waits.
 
-    **Fast path.** Trivial means a small, known scope (1-2 files), no design
-    choice and one task; docs or config only helps but is not needed, and any
-    question asked makes it not trivial. On a trivial verdict the skill asks
-    the user once to confirm. Yes: the main session builds from the product spec
-    alone: it edits on a branch in a
-    worktree, runs the test and check commands there, fast-forwards main only
-    when both pass, logs one `fast path landed` entry through `ishikari.py`,
-    and stops the investigator. If the work turns out bigger or a check keeps
-    failing, it throws the edits away and tells the same investigator to go
-    on, with the reason; a `fast path escalated` entry is logged.
+   **Fast path.** Trivial means a small, known scope (1-2 files), no design
+   choice and one task; docs or config only helps but is not needed, and any
+   question asked makes it not trivial. On a trivial verdict the skill asks
+   the user once to confirm. Yes: the main session builds from the product spec
+   alone: it edits on a branch in a
+   worktree, runs the test and check commands there, fast-forwards main only
+   when both pass, logs one `fast path landed` entry through `ishikari.py`,
+   and stops the investigator. If the work turns out bigger or a check keeps
+   failing, it throws the edits away and tells the same investigator to go
+   on, with the reason; a `fast path escalated` entry is logged.
 
-    **Part 2: tech spec and plans.** Told to go on, it first proves the task can
-    be built, from the repo's code and docs, writing a throwaway spike outside
-    the repo only when that is not enough. If it cannot be built as asked, or
-    the design needs a choice only the user can make, it asks again, within
-    the same 8 questions; only when no answer can fix it does the run stop
-    with the reason. An answer that changes what the product does goes into
-    the product spec. Then it writes `tech_spec.md` beside it: the parts of
-    the change, the files each part owns, and every name, interface and data
-    shape that crosses between parts, so parallel workers fit together. It
-    maps every behaviour and invariant id to the part that delivers it, then
-    writes one plan per worker ant; each plan names the ids it covers.
-    It writes nothing to the logbook itself: it runs outside any workflow, and
-    the main session writes the logbook only through `ishikari.py`. `ishikari-plan` logs one
-    `investigated` entry for it, with the product spec's path; its researchers
-    are not logged.
+   **Part 2: tech spec and plans.** Told to go on, it first proves the task can
+   be built, from the repo's code and docs, writing a throwaway spike outside
+   the repo only when that is not enough. If it cannot be built as asked, or
+   the design needs a choice only the user can make, it asks again, within
+   the same 8 questions; only when no answer can fix it does the run stop
+   with the reason. An answer that changes what the product does goes into
+   the product spec. Then it writes `tech_spec.md` beside it: the parts of
+   the change, the files each part owns, and every name, interface and data
+   shape that crosses between parts, so parallel workers fit together. It
+   maps every behaviour and invariant id to the part that delivers it, then
+   writes one plan per worker ant; each plan names the ids it covers.
+   It writes nothing to the logbook itself: it runs outside any workflow, and
+   the main session writes the logbook only through `ishikari.py`. `ishikari-plan` logs one
+   `investigated` entry for it, with the product spec's path; its researchers
+   are not logged.
 
-03. **Plan check.** `ishikari-plan` runs no ant: it only checks the
-    investigator's plan list. Before anything is built it rejects bad or
-    unknown ids, loops in `after`, two tasks that edit one file without one
-    being after the other, and paths outside the repo. It also checks
-    coverage: every behaviour and invariant id is covered by at least one
-    plan, every plan covers at least one, and no plan names an id the product
-    spec does not have. File paths are
-    normalised first, so `./a.py` and `a.py` count as one file. Problems go
-    back to the same investigator once; it fixes the plans and the check runs
-    again. Still wrong: the run stops with the reason. The investigator is
-    stopped only when its plans pass.
+3. **Plan check.** `ishikari-plan` runs no ant: it only checks the
+   investigator's plan list. Before anything is built it rejects bad or
+   unknown ids, loops in `after`, two tasks that edit one file without one
+   being after the other, and paths outside the repo. It also checks
+   coverage: every behaviour and invariant id is covered by at least one
+   plan, every plan covers at least one, and no plan names an id the product
+   spec does not have. File paths are
+   normalised first, so `./a.py` and `a.py` count as one file. Problems go
+   back to the same investigator once; it fixes the plans and the check runs
+   again. Still wrong: the run stops with the reason. The investigator is
+   stopped only when its plans pass.
 
-04. **Plans.** A plan is one worker's thin slice of the two specs, never a
-    copy: its files, the spec ids it covers, the interfaces it uses by name,
-    its tests and the test command. Workers cannot ask questions, so the specs
-    hold the detail and the worker reads them. A run with one worker has no
-    plan file: the worker builds straight from the specs. Tasks are
-    split so no two edit the same file, and each task has its own test file.
-    A folder and a file inside it count as the same file, and so do two names
-    that differ only by case. The ids `fast` and `check-fix` are Ishikari's own.
-    Only a task that must edit another task's file lists that task in `after`:
-    it starts as soon as that task is built, on top of its branch.
+4. **Plans.** A plan is one worker's thin slice of the two specs, never a
+   copy: its files, the spec ids it covers, the interfaces it uses by name,
+   its tests and the test command. Workers cannot ask questions, so the specs
+   hold the detail and the worker reads them. A run with one worker has no
+   plan file: the worker builds straight from the specs. Tasks are
+   split so no two edit the same file, and each task has its own test file.
+   A folder and a file inside it count as the same file, and so do two names
+   that differ only by case. The ids `fast` and `check-fix` are Ishikari's own.
+   Only a task that must edit another task's file lists that task in `after`:
+   it starts as soon as that task is built, on top of its branch.
 
-05. **Worker Ant** builds its plan in its own git worktree, one at a time by default: a
-    single worker or detective runs at any moment. `--parallel <n>` lets up to
-    n (at most 5) run at once.
-    It decides on its own, goes as far as it can, and commits all its work,
-    including the docs its change affects, so docs land with the code. A worker
-    that gets stuck reports why, and that becomes a bug.
+5. **Worker Ant** builds its plan in its own git worktree, one at a time by default: a
+   single worker or detective runs at any moment. `--parallel <n>` lets up to
+   n (at most 5) run at once.
+   It decides on its own, goes as far as it can, and commits all its work,
+   including the docs its change affects, so docs land with the code. A worker
+   that gets stuck reports why, and that becomes a bug.
 
-06. **Detective Ant**: one per built task, started the moment the task or a
-    fix for it is built. No ant watches for that: the build script starts every
-    ant, so it starts the detective as soon as the worker returns. It checks
-    the task and plans every fix; it never changes code.
-    - **Checks:** the task's own work against its plan, and against
-      `tech_spec.md`: a name or interface that differs from the tech spec is a
-      bug. It runs the tests in the task's worktree.
-    - **Pass:** no bugs. The task waits for the combined test. Style points go
-      to the final report as notes.
-    - **Fail:** it returns each bug, with how to see it, its cause and a fix
-      plan. A worker ant builds the plan, and the detective re-checks every
-      open bug by its id and plans the next fix for any still open. The build
-      script keeps the bugs and hands them on; the logbook only records them.
-    - **Memory:** each re-check sees every earlier round's cause, plan and
-      outcome, so it never repeats a failed idea.
-    - **Tasks built on others** are checked only once those are final. A
-      changed base is merged in first; a failed base blocks the task.
-    - **Give up:** a bug still open after its last try drops the task, and tasks
-      built on it drop too; the final report lists them.
-    - An ant that crashes is retried once and never counts as a bug.
+6. **Detective Ant**: one per built task, started the moment the task or a
+   fix for it is built. No ant watches for that: the build script starts every
+   ant, so it starts the detective as soon as the worker returns. It checks
+   the task and plans every fix; it never changes code.
 
-07. **Combined test, by the Integrator Ant.** Tasks are built and inspected
-    alone, so two can pass alone and still break when combined. When every
-    task is done, the integrator ant merges all passing tasks in a straight
-    line in a scratch copy, a throwaway copy that never touches main, and runs
-    the tests once. It is a dress rehearsal for the merger ant in Finish. A task
-    that clashes takes in the tasks it clashes with and goes back through the
-    fix loop, and the test runs once more. No one reviews by hand.
+   - **Checks:** the task's own work against its plan, and against
+     `tech_spec.md`: a name or interface that differs from the tech spec is a
+     bug. It runs the tests in the task's worktree.
+   - **Pass:** no bugs. The task waits for the combined test. Style points go
+     to the final report as notes.
+   - **Fail:** it returns each bug, with how to see it, its cause and a fix
+     plan. A worker ant builds the plan, and the detective re-checks every
+     open bug by its id and plans the next fix for any still open. The build
+     script keeps the bugs and hands them on; the logbook only records them.
+   - **Memory:** each re-check sees every earlier round's cause, plan and
+     outcome, so it never repeats a failed idea.
+   - **Tasks built on others** are checked only once those are final. A
+     changed base is merged in first; a failed base blocks the task.
+   - **Give up:** a bug still open after its last try drops the task, and tasks
+     built on it drop too; the final report lists them.
+   - An ant that crashes is retried once and never counts as a bug.
 
-08. **Merger Ant** runs straight after. It adds every passing task's
-    commits in a straight line, with no merge commits, in a scratch copy, in
-    dependency order, and tests once. It may reuse the combined test's merge
-    (see [Finish](../SKILL.md#4-finish)). It refuses a task
-    whose base was dropped. A failed merge, or a task left waiting, goes back
-    to a new build round on its own; what is left after the last round is
-    dropped and reported. Main moves forward only as a fast-forward, which git
-    refuses if it would overwrite local edits.
+7. **Combined test, by the Integrator Ant.** Tasks are built and inspected
+   alone, so two can pass alone and still break when combined. When every
+   task is done, the integrator ant merges all passing tasks in a straight
+   line in a scratch copy, a throwaway copy that never touches main, and runs
+   the tests once. It is a dress rehearsal for the merger ant in Finish. A task
+   that clashes takes in the tasks it clashes with and goes back through the
+   fix loop, and the test runs once more. No one reviews by hand.
+
+8. **Merger Ant** runs straight after. It adds every passing task's
+   commits in a straight line, with no merge commits, in a scratch copy, in
+   dependency order, and tests once. It may reuse the combined test's merge
+   (see [Finish](../SKILL.md#4-finish)). It refuses a task
+   whose base was dropped. A failed merge, or a task left waiting, goes back
+   to a new build round on its own; what is left after the last round is
+   dropped and reported. Main moves forward only as a fast-forward, which git
+   refuses if it would overwrite local edits.
 
 ## Upkeep ants
 
@@ -173,6 +174,13 @@ They run once per finish, on the merged result, before main moves.
   and the verdict says why): main moves anyway and the verdict is
   flagged in the report. The judge never blocks main, so a run never gets
   stuck on a score: main always moves.
+- **Ant skills.** The investigator, detective, janitor, judge and juror, and
+  retrospective ants each load their own skill (`investigator-ant`,
+  `detective-ant`, `janitor-ant`, `judge-ant`, `retrospective-ant`) in its
+  Ishikari mode, as the docs ant loads `/docs`. The prompt keeps the run's
+  paths, git steps and JSON reply; the skill holds how to do the job, and also
+  runs by hand outside Ishikari. A skill that does not load is read from its
+  file.
 - **Docs ant** runs last, on the final code. It uses the `/docs` skill in its
   own worktree: update mode when the repo has `docs/` or `doc/`, create mode
   when it has neither, writing `docs/` from scratch. The user's answers come
@@ -369,8 +377,7 @@ Each entry says who, the task and what came of it (built, 2 bugs found, score
 6, died). A workflow cannot touch files, so each stage returns its entries as
 `log`, and the main session's `ishikari.py save` of the result appends them:
 plain code, no ant. A failed append is a warning and never blocks or fails the
-run. A crashed workflow that is not resumed has no result: `ishikari.py log
-recover` rebuilds its entries from the Workflow tool's `journal.jsonl` (each
+run. A crashed workflow that is not resumed has no result: `ishikari.py log recover` rebuilds its entries from the Workflow tool's `journal.jsonl` (each
 ant's label and reply), once per journal. The live investigator runs outside any workflow, so
 `ishikari-plan` logs one `investigated` entry for it, with the product spec's path. The
 summaries hold each task's status, each bug with its tries, the cleanup, the

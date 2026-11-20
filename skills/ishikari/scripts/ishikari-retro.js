@@ -99,10 +99,7 @@ Read:
   and their commits, and the last 30 commits of ${env.main} (\`git -C ${env.repo} log --oneline -30 ${env.main}\`);
 - Ishikari's own source, to name what to change: ${skill}/SKILL.md, ${skill}/scripts/,
   ${skill}/assets/prompts/ and ${skill}/design/index.md.
-Look for: bugs and errors in the flow, wasted or repeated ant calls, retries and
-loops, ants that died, slow stages, plans or prompts that misled an ant, checks
-that were missing or too weak, rules that did not fit this task, and gaps or
-missing steps. Every finding needs evidence from this run; never guess.
+Look for what the skill lists, in this run's flow.
 Write ${file}: a two or three line summary, then the findings ranked costliest
 first, each with category (${CATEGORIES.join(', ')}), title, evidence, impact,
 suggested change and where (file and rule). Nothing to improve: say so.

@@ -38,6 +38,20 @@ Tests: `timeout 120 python3 tests/test_ishikari.py`,
 `timeout 120 node --test tests/test_workflows.mjs` and
 `timeout 120 python3 tests/test_anteater.py`.
 
+Ant skills: five ants load a skill of their own in its Ishikari mode, and read
+the skill file when the skill does not load. The ant's prompt keeps the run's
+paths, git steps and JSON reply; the skill holds how to do the job. Each skill
+also runs by hand, outside Ishikari.
+
+| Ant           | Skill                                              |
+| ------------- | -------------------------------------------------- |
+| investigator  | [investigator-ant](../investigator-ant/SKILL.md)   |
+| detective     | [detective-ant](../detective-ant/SKILL.md)         |
+| janitor       | [janitor-ant](../janitor-ant/SKILL.md)             |
+| judge, juror  | [judge-ant](../judge-ant/SKILL.md)                 |
+| retrospective | [retrospective-ant](../retrospective-ant/SKILL.md) |
+| docs          | [docs](../docs/SKILL.md)                           |
+
 All paths are relative to this skill's folder. Ishikari keeps its state in
 `~/.ishikari/<repo>-<hash>/`, outside the repo; nothing there is committed.
 Setup copies the four scripts into `<repo>/.git/ishikari/workflows/<run>/`,
@@ -94,9 +108,9 @@ inside the working directory, so the Workflow tool may load them by
 | Tries per bug, then escalated        | 3     | build `MAX_TRIES`          |
 | Fix rounds per fix loop              | 3     | build `MAX_ROUNDS`         |
 | Combined test rounds                 | 2     | build                      |
-| Questions per `/ask-simple` call     | 4     | investigator prompt        |
-| Questions in all                     | 8     | investigator prompt        |
-| Researchers at once                  | 5     | investigator prompt        |
+| Questions per `/ask-simple` call     | 4     | `investigator-ant` skill   |
+| Questions in all                     | 8     | `investigator-ant` skill   |
+| Researchers at once                  | 5     | `investigator-ant` skill   |
 | Plan check, send-backs               | 1     | skill rule, step 2c        |
 | Plans per spec id, at least          | 1     | plan coverage check        |
 | Build rounds for merge bugs, waiting | 2     | skill rule, step 4         |
@@ -106,7 +120,7 @@ inside the working directory, so the Workflow tool may load them by
 | Judge fix rounds, per finish         | 1     | finish                     |
 | Jurors at once (3+ tasks, default)   | 1     | finish `MAX_JURORS`        |
 | Jurors at once, with `--parallel`    | 5     | finish `MAX_JURORS`        |
-| Files per worker plan, about         | 3     | investigator prompt        |
+| Files per worker plan, about         | 3     | `investigator-ant` skill   |
 
 A task enters a fix loop after its first check, and again after a stuck build,
 a changed base or a clash; each loop has its own 3 rounds.

@@ -270,12 +270,10 @@ list its problems in baseProblems, never in bugs. This task's own commits are
   const ask = open
     ? `Re-check these open bugs. For each id, say in "fixed" whether it is fixed now:
 ${open.map(b => `- ${b.id}: ${b.text}`).join('\n')}
-Then list in bugs only NEW real bugs: ones the fix caused, or that break the plan.
-${past ? `Earlier fix rounds:\n${past}\n` : ''}If any bug is still open or new, debug it: find the cause and write a complete fix
-plan for a worker ant. Do not repeat a cause or plan that already failed: say why
-it failed and try a different approach.`
-    : `List real bugs: behaviour that breaks the plan, or a failing test. If there are
-any, also find their cause and write a complete fix plan for a worker ant.
+Then list in bugs only NEW real bugs, as the skill says.
+${past ? `Earlier fix rounds:\n${past}\n` : ''}If any bug is still open or new, give its cause and fix plan.
+Do not repeat a cause or plan that already failed.`
+    : `List real bugs, each with its cause and fix plan, as the skill says.
 Count the task's own commits with \`git -C ${env.repo} rev-list --count --no-merges ${task.branch} --not ${[env.main, ...task.bases].join(' ')}\`
 and return the number as ownCommits.`
   return detectiveSlot(() => ant(
@@ -295,9 +293,7 @@ that differs from the tech spec is a bug.
 ${own}
 ${task.notes.length ? `The worker's notes: ${task.notes.join(' / ')}\n` : ''}${task.guidance ? `The user's guidance: ${task.guidance}\n` : ''}${testsFor(task, built)} Do not copy the repo anywhere else, and do not
 edit tracked files.
-${ask}
-Put style points and small doubts in nits, not in bugs. Check that the docs
-match the change.`,
+${ask}`,
     { label: `detective-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.detective,
       schema: { ...DETECTION, required: open ? ['bugs', 'fixed'] : ['bugs', 'ownCommits'] } },
   )).then(okDetect)
