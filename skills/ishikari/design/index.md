@@ -353,7 +353,7 @@ planning, the indigo stretch is build, check, fix, merge and judge, and the
 green stretch is after main moves. Loops and spurs bend inside the ring (the
 fix loop, the clash line, the judge's fix round, the fast path straight across
 to MAIN), and each spur names the station it goes to. Station names sit
-outside the ring; the title and the key sit in the middle. Every agent label in the four scripts has a
+outside the ring, and the rails' stops inside it; the title and the key sit in the middle. Every agent label in the four scripts has a
 station, helper ants included (the judge-fix worker and detective, the jurors), and short notes name each skipped step. Built by
 [`metro.clj`](metro.clj), a Babashka script; run `bb metro.clj` after a flow change.
 A rhombus is a decision node: it sits where the run picks how many ants a
@@ -362,11 +362,14 @@ There are four, in `decisions` in `metro.clj`: facts missing (no researcher,
 or 1 to 5 at once), how many plans (one worker, or one per plan),
 `--parallel <n>` (one at a time, or up to n at once) and 3 or more merged
 tasks (the judge alone, or one juror per task).
-Two track shapes tell the paths apart. A triple rail is the many-ant path,
-one ant per task: from the plans decision to the integrator, and through the
-jurors. The thin line just inside the ring is the single-ant path: one worker
-ant and one detective ant for a one-plan run, and the judge alone past the
-jurors. Its two stops are `solo-stops` in `metro.clj`; the rails are `RAILS`.
+The ring itself is the single-ant path, the main line: one worker ant, one
+detective ant, the judge alone. Where a run uses several ants, a triple rail
+leaves the ring at a decision, runs just inside it and rejoins it: to the
+researcher ants, through the worker ants and detective ants of a run with two
+or more plans, and through the juror ants. The fix loop, the dropped spur and
+the clash line are drawn once, on the main line. The rails are `RAILS` in
+`metro.clj`; the many-plan lane's two stops come last in `stations`, so the
+ring's stop codes never move.
 Elsewhere the map draws names only, to stay simple; every description and short
 rule lives in the item's tooltip and click panel. Everything on the map says
 what it is: stations, lines, spurs, junctions,
