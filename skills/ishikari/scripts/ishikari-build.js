@@ -282,6 +282,8 @@ and return the number as ownCommits.`
     `You are the detective ant of the Ishikari workflow: you check the task and plan
 the fix for every bug you find. You never write code yourself.
 ${where}
+Load the /detective-ant skill and follow its Ishikari mode (if it is unavailable, read
+${String(env.tool || '').replace(/\/ishikari\/scripts\/[^/]+$/, '')}/detective-ant/SKILL.md).
 Check task "${task.id}": branch ${task.branch}, worktree ${task.tree}, plan ${task.plan}.
 ${task.fresh ? `It has no plan: its whole job is the bugs below. The behaviours and invariants
 the code must keep are written out in ${productOf(task)}.`

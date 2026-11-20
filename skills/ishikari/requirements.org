@@ -235,3 +235,20 @@ The scoring rules move from the judge and juror prompts in scripts/ishikari-fini
 - By hand: scores the current branch against a spec file or task text, splitting text without ids into numbered behaviours and invariants, and answers in the session. Read only.
 - Ishikari mode: never asks; the ants keep their paths, jury text, parallel rule and JSON schema, and load /judge-ant or read the skill file.
 Evidence: ISH-10 and ISH-11 load skills the same way from inside ants.
+
+* DONE [#B] The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants  :ishikari:
+:PROPERTIES:
+:ID:          ISH-13
+:CREATED:     2026-11-21
+:NEEDS:       ISH-4
+:VERIFY:      "tests/test_workflows.mjs finish: a low judge score gets one fix round, then a second score"
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:IMPLEMENTED: 2026-11-21
+:END:
+The detective's checking rules go into a skill, skills/detective-ant/SKILL.md, loaded by both detective ants (build check and the judge-fix check).
+- Checks a change against its ask (task, issue or plan) and a given design; runs the tests; checks the docs match.
+- Real bugs only, each with its cause and a fix plan a worker can build; style and doubts go in nits; a re-check says what is fixed, lists only new bugs and never repeats a failed plan. Never edits code.
+- By hand: checks the current branch against main and the given text, and answers Pass or Fail in the session.
+- Ishikari mode: never asks; the ants keep their prompts, git steps and JSON schema, and load /detective-ant or read the skill file.
+Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.

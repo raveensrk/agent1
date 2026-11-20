@@ -503,6 +503,8 @@ ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you canno
       const c = await ant(
         `You are a detective ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
 ${where}
+Load the /detective-ant skill and follow its Ishikari mode (if it is unavailable, read
+${String(env.tool || '').replace(/\/ishikari\/scripts\/[^/]+$/, '')}/detective-ant/SKILL.md).
 Gaps:
 ${todo.map(g => `- ${g}`).join('\n')}
 Code: ${fixTree}, branch ${fixBranch}, built on ${scratch}. Check that it closes the gaps

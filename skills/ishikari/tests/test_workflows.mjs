@@ -160,6 +160,7 @@ test('build: each recheck gets that round\'s worker sha', async () => {
     l => ({ sha: l.endsWith('build') ? 'aaa1111' : 'bbb2222', testsPassed: true, testSummary: 's' }),
     l => l === 'detective-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' } : { fixed: [{ id: 'a#1', fixed: true }], bugs: [] })
   assert.ok(pr['detective-ant:a:check'].includes('aaa1111'))
+  assert.ok(pr['detective-ant:a:check'].includes('/detective-ant/SKILL.md'))
   assert.ok(pr['detective-ant:a:recheck1'].includes('bbb2222'))
   assert.ok(!pr['detective-ant:a:recheck1'].includes('aaa1111'))
   assert.ok(pr['detective-ant:a:recheck1'].includes('status --porcelain'))
@@ -281,6 +282,7 @@ test('finish: a low judge score gets one fix round, then a second score', async 
   const { out, calls, prompts } = await judgeRun([{ score: 4, gaps: ['x missing'] }, { score: 8, gaps: [] }])
   assert.deepEqual(calls.slice(1, 5), ['judge-ant:1', 'worker-ant:judge-fix', 'detective-ant:judge-fix', 'judge-ant:2'])
   assert.ok(prompts['detective-ant:judge-fix'].includes('merge --ff-only ishikari/r1/_judgefix'))
+  assert.ok(prompts['detective-ant:judge-fix'].includes('Load the /detective-ant skill'))
   assert.ok(prompts['worker-ant:judge-fix'].includes('- x missing'))
   assert.deepEqual(out.verdict, { score: 8, gaps: [], fixed: true, flagged: false, first: 4 })
   assert.equal(out.sha, 'fff1234')
