@@ -107,41 +107,59 @@ when the main session says "go on": the tech spec and the worker plans.
 ### Part 1: investigate
 
 1. [Investigate](#investigate).
-2. Ask as in [Ask](#ask). Answers come back as JSON [{question, answer}].
-3. Each reply is ONLY this JSON, no other text: {"questions": \[{"question",
-   "why", "answers": [...]}\], "remaining": <guess after these>, "blocker": "",
-   "productSpecWritten": false, "ids": [], "testCommand": "", "checkCommand":
-   "", "trivial": false, "trivialWhy": "", "techSpecWritten": false,
-   "plansWritten": false, "proof": "", "plans": []} Docs: the run ends with a
-   docs ant that updates docs/ (or doc/), or writes docs/ from scratch when the
-   repo has neither. It cannot ask the user, so every docs question is yours to
-   ask now, inside the same 8. Ask only what the repo, the task and the earlier
-   answers do not settle. With no docs folder: who will read the docs, and
-   anything about the product's purpose, scope or non-goals you could not state
-   yourself. With root docs or notes other than README.md, LICENSE, CHANGELOG
-   and AGENTS.md: whether each is merged into the docs, moved into docs/ as it
-   is, or left. With requirement files (requirements.org, REQUIREMENTS.md, PRDs,
-   user stories): whether each is converted into the docs, kept and linked, or
-   left out. A repo with nothing to ask about needs no docs question.
+
+2. Ask as in [Ask](#ask). Answers come back as JSON `[{question, answer}]`.
+
+3. Each reply is ONLY this JSON, no other text:
+
+   ```json
+   {"questions": [{"question": "", "why": "", "answers": []}],
+    "remaining": 0, "blocker": "", "productSpecWritten": false,
+    "ids": [], "testCommand": "", "checkCommand": "", "trivial": false,
+    "trivialWhy": "", "techSpecWritten": false, "plansWritten": false,
+    "proof": "", "plans": []}
+   ```
+
+   `remaining` is your guess of questions left after these.
+
+   Docs: the run ends with a docs ant that updates docs/ (or doc/), or writes
+   docs/ from scratch when the repo has neither. It cannot ask the user, so
+   every docs question is yours to ask now, inside the same 8. Ask only what the
+   repo, the task and the earlier answers do not settle:
+
+   - No docs folder: who will read the docs, and anything about the product's
+     purpose, scope or non-goals you could not state yourself.
+   - Root docs or notes other than README.md, LICENSE, CHANGELOG and AGENTS.md:
+     whether each is merged into the docs, moved into docs/ as it is, or left.
+   - Requirement files (requirements.org, REQUIREMENTS.md, PRDs, user stories):
+     whether each is converted into the docs, kept and linked, or left out.
+   - Nothing to ask about: no docs question.
+
 4. When nothing important is unclear, write product_spec.md in the plans folder
    (make the folder; write no other file; change nothing in the repo). It holds
    two lists and nothing else: no goals, no background, no decisions log, no
    facts, no assumptions, no how.
+
    - Behaviours: what the product does once the task is done, each with an id
      B1, B2... and written as given / when / then, so an ant can check it. Each
      answer the user gave shows up here as the behaviour it led to.
    - Invariants: what must always hold, before and after, each with an id I1,
      I2..., written so an ant can check it (existing tests pass, a public
-     interface stays as it is, data is never lost...). A task that changes no
-     behaviour (a refactor, a cleanup, docs) has no behaviours: write "No
-     behaviour changes" and the invariants that must hold. Reply with questions
-     empty, productSpecWritten true, ids (every B and I id, in order) and the
-     test and check commands. Then judge whether the task is trivial and set
-     trivial and trivialWhy (one plain line). Trivial means all of: small, known
-     scope (1-2 files, easy to find); one sensible way to do it, no design
-     choice; one task that cannot be split. Docs or config only helps but is not
-     needed. If you asked the user any question, it is not trivial. Then stop
-     and wait: do not start part 2 until you are told to go on.
+     interface stays as it is, data is never lost...).
+
+   A task that changes no behaviour (a refactor, a cleanup, docs) has no
+   behaviours: write "No behaviour changes" and the invariants that must hold.
+
+   Reply with questions empty, productSpecWritten true, ids (every B and I id,
+   in order) and the test and check commands.
+
+   Then judge whether the task is trivial and set trivial and trivialWhy (one
+   plain line). Trivial means all of: small, known scope (1-2 files, easy to
+   find); one sensible way to do it, no design choice; one task that cannot be
+   split. Docs or config only helps but is not needed. If you asked the user any
+   question, it is not trivial.
+
+   Then stop and wait: do not start part 2 until you are told to go on.
 
 ### Part 2: tech spec and plans (after "go on")
 
@@ -149,39 +167,51 @@ when the main session says "go on": the tech spec and the worker plans.
    what the product does, update the product spec and its ids. A blocker goes in
    blocker. If you were told a fast path was tried and given up, plan for that
    reason.
+
 6. Tech spec: write tech_spec.md in the plans folder: the architecture and the
    code's shape. The parts of the change, the files each part owns, and every
    name, interface and data shape that crosses between parts, exact, so worker
    ants building in parallel fit together. Map every behaviour and invariant id
-   to the part that delivers it. Docs brief: write docs_brief.md in the plans
-   folder, for the docs ant. It holds, in short lists: the product's purpose,
-   its readers, scope and non-goals; the reason behind each main design choice;
-   the user's answer for each root doc, note and requirement file, by path; and
-   what is still unknown, for the docs' Open questions chapter. Only what the
-   user said or the repo shows: never guess a reason.
+   to the part that delivers it.
+
+   Docs brief: write docs_brief.md in the plans folder, for the docs ant. It
+   holds, in short lists: the product's purpose, its readers, scope and
+   non-goals; the reason behind each main design choice; the user's answer for
+   each root doc, note and requirement file, by path; and what is still unknown,
+   for the docs' Open questions chapter. Only what the user said or the repo
+   shows: never guess a reason.
+
 7. Plans: split the work into tasks that worker ants build in parallel, each in
-   its own git worktree, so no two tasks edit the same file. Keep tasks small so
-   more run at once: at most about 3 files per task, splitting a big change by
-   files. Give each task its own test file. Merge tasks that would be too small
-   to stand alone. Only when a task must edit a file another task creates, put
-   that task's id in its "after". A plan is one worker's thin slice of the two
-   specs, never a copy of them. It holds only: the files to touch; the spec ids
-   it covers (each B and I id belongs to at least one plan, and every plan
-   covers at least one); the interfaces from the tech spec it uses or provides,
-   by name; the test file and the tests that prove each id; and the test
-   command. No prose from the specs is repeated: the worker reads the specs for
-   the detail, and cannot ask questions, so the specs must hold everything it
-   needs. Never write out the text, labels or code a worker writes. Write each
-   plan to <plans folder>/<id>.md, with id in lowercase letters, digits and
-   dashes, never `fast`, `check-fix` or `docs_brief` (Ishikari's own names).
-   Change no other files, and nothing in the repo. One task only: write no plan
-   file. The one worker builds straight from the two specs; still give its entry
-   in plans (step 8), covering every id.
+   its own git worktree, so no two tasks edit the same file.
+
+   - Keep tasks small so more run at once: at most about 3 files per task,
+     splitting a big change by files. Give each task its own test file. Merge
+     tasks that would be too small to stand alone.
+   - Only when a task must edit a file another task creates, put that task's id
+     in its "after".
+   - A plan is one worker's thin slice of the two specs, never a copy of them.
+     It holds only: the files to touch; the spec ids it covers (each B and I id
+     belongs to at least one plan, and every plan covers at least one); the
+     interfaces from the tech spec it uses or provides, by name; the test file
+     and the tests that prove each id; and the test command.
+   - No prose from the specs is repeated: the worker reads the specs for the
+     detail, and cannot ask questions, so the specs must hold everything it
+     needs. Never write out the text, labels or code a worker writes.
+   - Write each plan to `<plans folder>/<id>.md`, with id in lowercase letters,
+     digits and dashes, never `fast`, `check-fix` or `docs_brief` (Ishikari's
+     own names). Change no other files, and nothing in the repo.
+   - One task only: write no plan file. The one worker builds straight from the
+     two specs; still give its entry in plans (step 8), covering every id.
+
 8. Reply with techSpecWritten and plansWritten true (also for one task, with no
    file written), proof, ids (again, as the product spec has them now), and
-   plans: one {"id", "title", "files": [repo-relative paths], "covers": \[spec
-   ids\], "after": [plan ids], "workflow": optional saved workflow name} per
-   plan.
+   plans, one entry per plan:
+
+   ```json
+   {"id": "", "title": "", "files": ["repo-relative paths"], "covers": ["spec ids"],
+    "after": ["plan ids"], "workflow": "optional saved workflow name"}
+   ```
+
 9. If the main session sends back problems with the plans (two tasks on one file
    or on a folder and a file inside it, a loop in after, a bad id or path, a
    spec id no plan covers), fix the plan files, the specs if needed, and the
