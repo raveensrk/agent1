@@ -361,8 +361,12 @@ station uses, or skips it, with the question and its answers drawn beside it.
 There are four, in `decisions` in `metro.clj`: facts missing (no researcher,
 or 1 to 5 at once), how many plans (one worker, or one per plan),
 `--parallel <n>` (one at a time, or up to n at once) and 3 or more merged
-tasks (the judge alone, down the dashed grey line past the jurors, or one
-juror per task).
+tasks (the judge alone, or one juror per task).
+Two track shapes tell the paths apart. A triple rail is the many-ant path,
+one ant per task: from the plans decision to the integrator, and through the
+jurors. The thin line just inside the ring is the single-ant path: one worker
+ant and one detective ant for a one-plan run, and the judge alone past the
+jurors. Its two stops are `solo-stops` in `metro.clj`; the rails are `RAILS`.
 Elsewhere the map draws names only, to stay simple; every description and short
 rule lives in the item's tooltip and click panel. Everything on the map says
 what it is: stations, lines, spurs, junctions,
