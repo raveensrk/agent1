@@ -71,6 +71,10 @@
 (def JF0 (pt (+ (A "judge") 5) 400)) (def JF1 (pt (- REJOIN 4) 400)) ; the judge-fix loop's inner run
 (def FIX0 (pt (- (A "detectives") 3) 420)) (def FIX1 (pt (+ (A "workers") 3) 420)) ; the fix loop's inner run
 (def FIXMID (along FIX0 FIX1 0.5))
+;; The many-plan rail's own fix loop: Detective ants back to Worker ants. It
+;; runs inside the main line's loop, so the two never cross.
+(def MW 69) (def MD 96) ; where Worker ants and Detective ants sit on the rail
+(def MFIX0 (pt 90 400)) (def MFIX1 (pt 72 400))
 (def JURY 160) ; the jury decision, between the janitor and the jurors
 (def PLANS 59) ; the plans decision, between the specs and the workers
 (def SOLO 476) ; the many-ant lanes' radius: inside the ring, clear of its station names
@@ -97,9 +101,10 @@
    ;; 2+ plans: one worker ant and one detective ant per plan, on the rail inside the ring
    ["many"    INDIGO MANY 6 ""]
    ["fix"     GOLD   [(P "detectives") FIX0 FIX1 (P "workers")] 8 ""]
+   ["mfix"    GOLD   (vec (concat [(pt MD SOLO)] (mapv #(pt % 400) (range 90 71 -2)) [(pt MW SOLO)])) 8 ""]
    ["fixloop" "none" (vec (concat (arc (A "workers") (A "detectives")) [FIX0 FIX1 (P "workers")])) 8 ""]
-   ["clash"   GOLD   [(P "integrator") (pt (- (A "integrator") 2) 300) (pt (+ (A "detectives") 3) 300) (P "detectives")] 6 "10 6"]
-   ["drop"    RED    [FIXMID (inward FIXMID 70)] 6 "10 6"]
+   ["clash"   GOLD   [(P "integrator") (pt (- (A "integrator") 2) 300) (pt 94 300) MFIX0] 6 "10 6"] ; tasks clash only with 2+ plans: back into the rail's fix loop
+   ["drop"    RED    [FIXMID (inward FIXMID 80)] 6 "10 6"] ; crosses the rail's loop: both loops drop here
    ["mback"   RED    [(P "merger") (pt (A "merger") (- R 90))] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tnext"   RED    [(P "janitor") (pt (A "janitor") (- R 150))] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jury"    INDIGO JLANE 6 ""] ; 3+ merged tasks: the juror ants, on the rail inside the ring
@@ -150,8 +155,8 @@
    (st "finished" (on (A "finished")) "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done")
    (st "logbook" (at [(- W 330) 50] [26 -4 "start"]) "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build, finish and the retrospective." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log")
    ;; the many-ant lane's stops: listed last, so the ring's stop codes never move
-   (st "workers-many" (at (pt 69 SOLO) [-26 5 "end"]) "Worker ants" ["2+ plans: one worker ant per plan, one at a time" "(--parallel: up to 5), one worktree each;" "code + tests + docs; stuck: next fix round"] "many")
-   (st "detectives-many" (at (pt 96 SOLO) [-26 5 "end"]) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "many")])
+   (st "workers-many" (at (pt MW SOLO) [-26 -2 "end"]) "Worker ants" ["2+ plans: one worker ant per plan, one at a time" "(--parallel: up to 5), one worktree each;" "code + tests + docs; stuck: next fix round"] "many")
+   (st "detectives-many" (at (pt MD SOLO) [-26 9 "end"]) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "many")])
 
 ;; Decision nodes: diamonds where the run picks how many ants a station uses,
 ;; or whether it is skipped. Not stations: they have no ant and no stop code.
@@ -212,7 +217,7 @@
                               :about "The main line: a run with one plan has one detective ant, started once the task is built. Two or more plans take the rail inside the ring, to the Detective ants. Checks the work against its plan and the tech spec, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; a worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code. A dropped task's branch is kept for a later look, tasks built on it drop too, and the final report lists them."
                               :src "scripts/ishikari-build.js"}
    "workers-many" {:tip "Build the plans, one worker ant per plan."
-                   :about "The rail: a run with two or more plans has one worker ant per plan, each in its own git worktree. By default one at a time: a single worker or detective runs at any moment. With --parallel <n> (2 to 5) up to n run at once. Each writes code, tests and the docs its change affects, decides on its own and commits all its work. A worker that gets stuck says why, and that becomes a bug for the next fix round. A plan may name a saved workflow to run instead. The fix loop, the dropped spur and the clash line are drawn on the main line; they work the same for every task here."
+                   :about "The rail: a run with two or more plans has one worker ant per plan, each in its own git worktree. By default one at a time: a single worker or detective runs at any moment. With --parallel <n> (2 to 5) up to n run at once. Each writes code, tests and the docs its change affects, decides on its own and commits all its work. A worker that gets stuck says why, and that becomes a bug for the next fix round. A plan may name a saved workflow to run instead. Each task has its own fix loop, the yellow line from the Detective ants back here."
                    :src "scripts/ishikari-build.js"}
    "detectives-many" {:tip "Check each built task and plan every fix, one detective ant per task."
                       :about "The rail: one detective ant per task, next in line once its task is built: by default it shares the one slot with the workers, and with --parallel it starts at once. Each checks its task against its plan and the tech spec, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; that task's worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code."
@@ -278,7 +283,7 @@
 ;; words, lead-in, lines below, where the label sits [point anchor], end cap
 ;; (:bin: a bin drawn at the end).
 (def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"] [(pt (A "merger") (- R 112)) "middle"]]
-            ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] [(let [[x y] (inward FIXMID 70)] [(- x 26) (+ y 5)]) "end"] :bin]
+            ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] [(let [[x y] (inward FIXMID 80)] [(- x 26) (+ y 5)]) "end"] :bin]
             ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"] [(pt (A "janitor") (- R 172)) "middle"]]
             ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"] [(let [[x y] (pt (A "check") (- R 50))] [(+ x 14) (+ y 5)]) "start"]]
             ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"] [(let [[x y] (along (P "specs") (P "main") 0.72)] [(+ x 40) (+ y 38)]) "middle"]]])
@@ -430,12 +435,13 @@
    "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. From the facts decision on it is a triple rail: several ants at once. The dot riding it is one burst of research."]
    "g1"      ["Build line" "The long stretch of the ring: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. It is the single-ant path: one worker ant, one detective ant, the judge alone. Where a run uses several ants a triple rail leaves it at a decision and rejoins it. The numbered cars on it are tasks."]
    "fix"     ["Fix loop" "A bug goes back to the worker and is re-checked." "Yellow means a warning: the detective found a bug and planned its fix. The worker builds the fix and the detective re-checks, up to 3 tries per bug and 3 fix rounds."]
-   "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through the fix loop. 2 rounds at most."]
+   "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "Only a run with two or more plans can clash, so this line joins the many-plan rail's fix loop. When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through that loop: its worker fixes it, its detective re-checks. 2 rounds at most."]
+   "mfix"    ["Fix loop, many plans" "A bug goes from the Detective ants back to the Worker ants." "Yellow means a warning. On the many-plan rail each task has its own loop: its detective ant finds a bug and plans the fix, that task's worker ant builds it, and the detective re-checks, up to 3 tries per bug and 3 fix rounds. One at a time by default, or several tasks at once with --parallel. A task that still has bugs leaves down the dropped spur."]
    "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "A task drops when a bug is still open after 3 tries, when 3 fix rounds end with bugs open (both: escalated), when its worker is blocked or hits an error, or when its after names a task that dropped: tasks built on it drop too. The main session drops it without asking; it never reaches finish or main and nothing sends it back. Its branch is kept for a later look, and the final report lists it with why it dropped, its bugs and fix history."]
    "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
    "jury"    ["Jury rail" "3+ merged tasks: one juror ant per task." "A triple rail means several ants. With 3 or more merged tasks the run leaves the main line at the jury decision: one juror ant per merged task scores its own task, one at a time or up to n at once with --parallel, and the rail rejoins at the judge ant. With 1 or 2 merged tasks the run stays on the main line and the judge works alone."]
-   "many"    ["Many-plan rail" "2+ plans: one worker ant and one detective ant per plan." "A triple rail means several ants. With two or more plans the run leaves the main line at the plans decision: one worker ant per plan builds it, one detective ant per task checks it, one at a time or up to n at once with --parallel, and the rail rejoins at the integrator, which tests the passing tasks together. The fix loop, the dropped spur and the clash line are drawn once, on the main line; they work the same for each task here. With one plan the run stays on the main line: one worker ant, one detective ant."]
+   "many"    ["Many-plan rail" "2+ plans: one worker ant and one detective ant per plan." "A triple rail means several ants. With two or more plans the run leaves the main line at the plans decision: one worker ant per plan builds it, one detective ant per task checks it, one at a time or up to n at once with --parallel, and the rail rejoins at the integrator, which tests the passing tasks together. The rail has its own fix loop, from the Detective ants back to the Worker ants, and the clash line joins it. With one plan the run stays on the main line: one worker ant, one detective ant."]
    "jfix"    ["Judge fix loop" "Below 7 with gaps, or 7+ with bugs: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps, or passed it but listed bugs, gaps where the code behaves wrongly. A worker closes the gaps, or at 7 or more only the bugs, a detective checks and fast-forwards the fix, and the judge scores again. Only one round."]
    "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, the retrospective ant reviews the run, and the main session reports it."]
    "fast"    ["Fast path" "A trivial task skips the planning and build ants: straight across the ring to MAIN." "Once the product spec is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then builds from the product spec alone: it edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
@@ -449,6 +455,7 @@
   "Line name -> the short rules once written beside it, now shown in its panel."
   {"g1"    ["a plan may run a saved workflow in place of a worker ant" "built: its detective is next in line (--parallel: starts at once)" "no gaps, or 7+ with no bugs: no fix round"]
    "fix"   ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"]
+   "mfix"  ["bugs: each task's detective sends its fix plan back to that task's worker;" "3 tries per bug, 3 fix rounds"]
    "clash" ["fail: tasks clash: the task takes them in, then the fix loop; 2 rounds"]
    "jfix"  ["below 7 and gaps: one fix round for every gap" "7+ and bugs: one fix round for the bugs only" "a failed fix keeps its branch; the verdict says why"]})
 
@@ -555,7 +562,7 @@
                  (str (when (= cap :bin) (apply str (icon x y "" "drop")))
                       (txt lx ly [head] :fill c :size 13 :anchor lan :weight "700")))))
    ;; a loop that rejoins a line between stations gets a junction dot too
-   (for [ln ["jfix"]
+   (for [ln ["jfix" "clash"]
          :let [[_ c pts] (some #(when (= (first %) ln) %) lines)
                [sx sy] (last pts)
                [lname _ labout] (about-lines ln)]
@@ -573,6 +580,10 @@
                                                (str "<tspan dx=\"6\" font-size=\"12\" font-weight=\"600\" fill=\"" INDIGO "\">" (esc (str/join " " sk)) "</tspan>"))
                                              "</text>"))
                 ))
+   [(let [[x y] (inward FIXMID 17)]
+      (clickable {:id "junction-drop-rail" :name "Junction" :tip "Where the many-plan fix loop meets the dropped spur."
+                  :about "Not a station: a task on the many-plan rail that cannot be fixed leaves its fix loop here too, down the same dropped spur as a task on the main line." :x x :y y}
+                 (str "<circle cx=\"" x "\" cy=\"" y "\" r=\"8\" fill=\"" TXT "\" stroke=\"" RED "\" stroke-width=\"3\"/>")))]
    (for [[id [[x y] [dx dy an]] q answers tip about] decisions]
      (clickable {:id id :name (str "Decision: " q) :tip tip :about about :sub [answers] :x x :y y}
                 (str "<path d=\"M" x "," (- y 14) " L" (+ x 14) "," y " L" x "," (+ y 14) " L" (- x 14) "," y " Z\" fill=\"" BG "\" stroke=\"" TXT "\" stroke-width=\"4\" stroke-linejoin=\"round\"/>"

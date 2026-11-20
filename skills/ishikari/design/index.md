@@ -366,8 +366,10 @@ The ring itself is the single-ant path, the main line: one worker ant, one
 detective ant, the judge alone. Where a run uses several ants, a triple rail
 leaves the ring at a decision, runs just inside it and rejoins it: to the
 researcher ants, through the worker ants and detective ants of a run with two
-or more plans, and through the juror ants. The fix loop, the dropped spur and
-the clash line are drawn once, on the main line. The rails are `RAILS` in
+or more plans, and through the juror ants. The many-plan rail has its own
+fix loop, from the detective ants back to the worker ants, nested inside the
+main line's loop; the clash line joins it, since only a run with two or more
+plans can clash, and both loops leave down the one dropped spur. The rails are `RAILS` in
 `metro.clj`; each stop on a rail is a stack of hexagons, several ants;
 the many-plan lane's two stops come last in `stations`, so the
 ring's stop codes never move.

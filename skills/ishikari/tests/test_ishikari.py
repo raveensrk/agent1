@@ -312,6 +312,13 @@ def check_ant_shapes(path):
     # every rail is drawn: three strokes each, one rail per many-ant stretch
     rails = [p for p in root.iter(NS + "path") if p.get("pointer-events") == "none"]
     assert len(rails) == 3 * 3, len(rails)  # researchers, the many-plan lane, the jury lane
+    # each pair of builder stops has its own fix loop: from the detective back to the worker
+    paths = {p.get("id"): p.get("d") for p in root.iter(NS + "path") if p.get("id")}
+    for line, start, end in (("L-fix", "detectives", "workers"), ("L-mfix", "detectives-many", "workers-many")):
+        assert line in paths, f"no fix loop {line}: {start} must loop back to {end}"
+        nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", paths[line])]
+        for (x, y), sid in ((nums[:2], start), (nums[-2:], end)):
+            assert abs(x - items[sid]["x"]) < 1 and abs(y - items[sid]["y"]) < 1, f"{line} does not touch {sid}"
     for sid in ("workers", "detectives", "judge"):  # the main line's own stops stay single, on the ring
         it = items[sid]
         assert abs(math.hypot(it["x"] - w / 2, it["y"] - 690) - 520) < 1, sid
