@@ -34,7 +34,7 @@ its job. The build script runs that workflow in place of a worker ant.
    interface they judge with the `/ux` skill in review mode; its plan mode
    asks the user, so they never use it. It asks up to 4 independent questions
    at a time with `/ask-simple`, with a best-guess count: "Questions 1-3 of
-   about 5", 8 in all. Once nothing important is unclear it writes
+   about 5", with no limit in all. Once nothing important is unclear it writes
    `product_spec.md` in the run's plans folder. It holds two lists and nothing
    else. Behaviours: what the product does once the task is done, each with
    an id (`B1`, `B2`...) and written as given / when / then. Invariants: what
@@ -58,8 +58,8 @@ its job. The build script runs that workflow in place of a worker ant.
    **Part 2: tech spec and plans.** Told to go on, it first proves the task can
    be built, from the repo's code and docs, writing a throwaway spike outside
    the repo only when that is not enough. If it cannot be built as asked, or
-   the design needs a choice only the user can make, it asks again, within
-   the same 8 questions; only when no answer can fix it does the run stop
+   the design needs a choice only the user can make, it asks again;
+   only when no answer can fix it does the run stop
    with the reason. An answer that changes what the product does goes into
    the product spec. Then it writes `tech_spec.md` beside it: the parts of
    the change, the files each part owns, and every name, interface and data

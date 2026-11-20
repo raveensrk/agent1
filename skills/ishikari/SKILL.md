@@ -111,7 +111,6 @@ inside the working directory, so the Workflow tool may load them by
 | Fix rounds per fix loop              | 3     | build `MAX_ROUNDS`         |
 | Combined test rounds                 | 2     | build                      |
 | Questions per `/ask-simple` call     | 4     | `investigator-ant` skill   |
-| Questions in all                     | 8     | `investigator-ant` skill   |
 | Researchers at once                  | 5     | `investigator-ant` skill   |
 | Plan check, send-backs               | 1     | skill rule, step 2c        |
 | Plans per spec id, at least          | 1     | plan coverage check        |
@@ -168,7 +167,7 @@ be built, and writes two specs and every worker plan:
 - `docs_brief.md`: what the docs ant needs and cannot ask: purpose, readers,
   scope, non-goals, the reasons behind the design, and the user's answer for
   each root note and requirement file. Every docs question is asked here, in
-  planning, inside the same 8.
+  planning.
 - `<id>.md`: one thin plan per worker ant: its slice of the specs (files, the
   spec ids it covers, interfaces, tests), with nothing copied from them. A
   one-worker run has no plan file: the worker builds straight from the specs.
@@ -196,8 +195,8 @@ it, say so and stop; there is no other way to plan.
    of its parts: it may ask again while it designs.
 3. Guard the talk; the investigator is an ant, so its replies are checked:
    - a reply that is not the JSON: ask once more for only the JSON;
-   - a question it already asked, or more than 8 questions in all: do not ask
-     it; tell it to take its recommended answer and go on;
+   - a question it already asked: do not ask it again; tell it to take its
+     recommended answer and go on;
    - no reply, a second non-JSON reply, or a reply with none of questions, a
      written flag or blocker: stop it with TaskStop, show what happened, and
      go to the retrospective (section 5);
