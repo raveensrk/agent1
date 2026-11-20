@@ -458,6 +458,9 @@ test('finish: the docs ant runs last, after the judge, and lands only when its c
   assert.ok(ok.prompts['finisher-ant'].includes('   - ishikari/r1/_docs'))
   const p = ok.prompts['docs-ant']
   assert.ok(p.includes('Skip the docs-only') && p.includes('doc/build.sh') && p.includes('never code'))
+  // no docs folder: the ant writes docs/ itself, from the brief, and never asks
+  assert.ok(p.includes('create mode') && p.includes('/s/plans/r1/docs_brief.md') && p.includes('Never ask the user'))
+  assert.ok(!p.includes('never create docs'))
 })
 
 test('finish: a docs update that is not accepted is put back, its branch kept, and main moves without it', async () => {

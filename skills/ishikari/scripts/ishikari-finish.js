@@ -349,25 +349,32 @@ and return its output as sha. Touch nothing else.`,
     if (!ok) { upkeepStopped = `the scratch copy could not be put back to ${good} after ${what}`; log(`upkeep stopped: ${upkeepStopped}`) }
     return ok
   }
-  // The docs ant runs last, on the final code: the /docs skill in update mode,
-  // in its own worktree and branch. It lands only if the docs check and the
-  // tests pass and it touched docs only. No docs folder: it does nothing
-  // (create mode needs the user). Dropped: branch kept, main moves without it.
+  // The docs ant runs last, on the final code, in its own worktree and branch:
+  // the /docs skill in update mode, or in create mode when the repo has no docs
+  // folder. It never asks: the investigator's docs brief, written while
+  // planning, holds the user's answers. It lands only if the docs check and the
+  // tests pass and it touched docs only. Dropped: branch kept, main moves without it.
   const docsChain = async () => {
     if (upkeepStopped) return
     const d = await ant(
-      `You are the docs ant of the Ishikari workflow. You update the repo's docs
-for the tasks just merged (${names}) and commit them yourself.
+      `You are the docs ant of the Ishikari workflow. You write or update the repo's
+docs for the tasks just merged (${names}) and commit them yourself.
 ${where}
-If ${scratchTree} has no docs/ or doc/ folder, change nothing and set changed to false:
-never create docs here.
-Otherwise:
+The docs brief ${planDir}/docs_brief.md holds what the user answered about the
+docs while the run was planned. Read it first, with the product spec
+${planDir}/product_spec.md and the tech spec ${planDir}/tech_spec.md. If the brief
+does not exist, work from the two specs and the code.
 1. If the worktree ${docsTree} or the branch ${docsBranch} exists, remove them first. Then
    \`git -C ${env.repo} worktree add -b ${docsBranch} ${docsTree} ${sha}\`.
-2. In ${docsTree}, use the /docs skill in update mode, scoped to the commits from
-   ${env.main} to ${sha}. Never ask the user: put open questions in the docs'
+2. In ${docsTree}: with a docs/ or doc/ folder, use the /docs skill in update mode,
+   scoped to the commits from ${env.main} to ${sha}. With neither folder, use the
+   /docs skill in create mode and write docs/ from scratch: the brief stands in
+   for the skill's interview and for its OK on the outline, so decide the
+   outline yourself and go on. Work on ${docsBranch}, never on a docs-book branch.
+   Never ask the user: put open questions in the docs'
    Open questions chapter, or leave them out if it has none. Skip the docs-only
-   rebuild test. Change only files under docs/ or doc/, and Markdown or Org files
+   rebuild test. Never install a tool: use what is installed and name each
+   skipped step in reason. Move or delete a root note only where the brief says so. Change only files under docs/ or doc/, and Markdown or Org files
    elsewhere; never code, tests or data. If something else needs a change, say so
    in reason and leave it.
 3. If docs/build.sh or doc/build.sh exists, run its \`diagrams\` and \`check\` commands;

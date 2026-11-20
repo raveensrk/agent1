@@ -173,15 +173,19 @@ They run once per finish, on the merged result, before main moves.
   and the verdict says why): main moves anyway and the verdict is
   flagged in the report. The judge never blocks main, so a run never gets
   stuck on a score: main always moves.
-- **Docs ant** runs last, on the final code. It uses the `/docs` skill in
-  update mode in its own worktree: it changes only files under `docs/` or
+- **Docs ant** runs last, on the final code. It uses the `/docs` skill in its
+  own worktree: update mode when the repo has `docs/` or `doc/`, create mode
+  when it has neither, writing `docs/` from scratch. The user's answers come
+  from `docs_brief.md`, which the investigator writes while planning: every
+  docs question is asked there, so the brief stands in for the skill's
+  interview and its OK on the outline. It changes only files under `docs/` or
   `doc/` and Markdown or Org files elsewhere, never code, tests or data, and
   never asks the user (open questions go in the docs' Open questions
   chapter). It runs the docs' own `build.sh diagrams` and `check` when
   present, then the tests, commits, and fast-forwards the scratch copy only if
   all pass. The script reads its list of changed files and refuses the landing
-  if one is not a docs file. No `docs/` or `doc/` folder: it does nothing,
-  since creating docs needs the user. Failed: its branch is kept, main moves
+  if one is not a docs file. It installs no tool, and moves or deletes a root
+  note only where the brief says so. Failed: its branch is kept, main moves
   without it, and nothing chains to the next run.
 
 Upkeep work counts as landed only when the ant says so, its checks passed and

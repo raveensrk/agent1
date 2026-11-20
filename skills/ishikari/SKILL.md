@@ -136,6 +136,10 @@ be built, and writes two specs and every worker plan:
 - `product_spec.md`: the product's behaviours (`B1`, `B2`...) and invariants
   (`I1`, `I2`...), each written so an ant can check it. Nothing else.
 - `tech_spec.md`: the architecture and the code's shape.
+- `docs_brief.md`: what the docs ant needs and cannot ask: purpose, readers,
+  scope, non-goals, the reasons behind the design, and the user's answer for
+  each root note and requirement file. Every docs question is asked here, in
+  planning, inside the same 8.
 - `<id>.md`: one thin plan per worker ant: its slice of the specs (files, the
   spec ids it covers, interfaces, tests), with nothing copied from them. A
   one-worker run has no plan file: the worker builds straight from the specs.
@@ -223,7 +227,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 1. The investigator now proves the task can be built, writes
    `tech_spec.md` and one plan file per task. It may ask more questions
    (2a.2 and 2a.3 hold). `blocker`: 2a.4.
-2. `plansWritten`: check that `tech_spec.md` exists in the plans folder, and
+2. `plansWritten`: check that `tech_spec.md` and `docs_brief.md` exist in the plans folder, and
    `<id>.md` for every plan in its `plans` list when there are two or more
    (one plan: no plan file is written). A missing file is a problem to send
    back (step 4).
@@ -313,7 +317,8 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
     the documentation directly if `/docs` is unavailable), in its
     own worktree; it lands only if the docs' own `build.sh check` (when
     present) and the tests pass and it changed docs only. No `docs/` or
-    `doc/`: it changes nothing, since create mode needs the user. Dropped: its
+    `doc/`: it runs `/docs` in create mode and writes `docs/` from scratch,
+    taking the user's answers from `docs_brief.md`; it never asks. Dropped: its
     branch `ishikari/<run>/_docs` is kept, `docs.reason` says why, main still
     moves.
 - Report once, at the end: what landed on main, each task's notes and nits,

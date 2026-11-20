@@ -39,6 +39,17 @@ Part 1: investigate
    Give up to 4 questions that do not depend on each other, most important
    first, in /ask-simple style: one short plain sentence, 2-4 answers,
    recommended first and marked (Recommended).
+   Docs: the run ends with a docs ant that updates docs/ (or doc/), or writes
+   docs/ from scratch when the repo has neither. It cannot ask the user, so
+   every docs question is yours to ask now, inside the same 8. Ask only what
+   the repo, the task and the earlier answers do not settle. With no docs
+   folder: who will read the docs, and anything about the product's purpose,
+   scope or non-goals you could not state yourself. With root docs or notes
+   other than README.md, LICENSE, CHANGELOG and AGENTS.md: whether each is
+   merged into the docs, moved into docs/ as it is, or left. With requirement
+   files (requirements.org, REQUIREMENTS.md, PRDs, user stories): whether each
+   is converted into the docs, kept and linked, or left out. A repo with
+   nothing to ask about needs no docs question.
 5. When nothing important is unclear, write product_spec.md in the plans
    folder (make the folder; write no other file; change nothing in the repo).
    It holds two lists and nothing else: no goals, no background, no decisions
@@ -75,6 +86,12 @@ Part 2: tech spec and plans (after "go on")
    name, interface and data shape that crosses between parts, exact, so worker
    ants building in parallel fit together. Map every behaviour and invariant
    id to the part that delivers it.
+   Docs brief: write docs_brief.md in the plans folder, for the docs ant. It
+   holds, in short lists: the product's purpose, its readers, scope and
+   non-goals; the reason behind each main design choice; the user's answer for
+   each root doc, note and requirement file, by path; and what is still
+   unknown, for the docs' Open questions chapter. Only what the user said or
+   the repo shows: never guess a reason.
 8. Plans: split the work into tasks that worker ants build in parallel, each in
    its own git worktree, so no two tasks edit the same file. Keep tasks small
    so more run at once: at most about 3 files per task, splitting a big change
@@ -90,7 +107,7 @@ Part 2: tech spec and plans (after "go on")
    questions, so the specs must hold everything it needs. Never write out the
    text, labels or code a worker writes.
    Write each plan to <plans folder>/<id>.md, with id in lowercase letters,
-   digits and dashes, never `fast` or `check-fix` (Ishikari's own names).
+   digits and dashes, never `fast`, `check-fix` or `docs_brief` (Ishikari's own names).
    Change no other files, and nothing in the repo.
    One task only: write no plan file. The one worker builds straight from the
    two specs; still give its entry in plans (step 9), covering every id.

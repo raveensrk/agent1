@@ -2,7 +2,7 @@
 name: docs
 metadata:
   scope: global
-description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, or by Ishikari's docs ant after a merge; never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing. Update mode brings the docs in line with what changed and what was learned.
+description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, or by Ishikari's docs ant after a merge; never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing; called by an ant it takes its answers from the ant's docs brief and asks nothing. Update mode brings the docs in line with what changed and what was learned.
 argument-hint: "create|update [repo path]"
 ---
 
@@ -14,6 +14,10 @@ Use `docs/` or `doc/`, whichever exists. If neither exists, create `docs/`.
 
 Run only when the user asks, after a task is done and its code is written, or when Ishikari's docs ant calls `update` after a merge.
 Called by an ant: never ask the user; put questions in Open questions, and skip the docs-only rebuild test.
+Create mode called by an ant: the ant's docs brief stands in for the Phase 2 interview and the Phase 3 OK.
+Take every answer from the brief, decide the outline yourself and go straight on to Phase 4.
+Work on the branch the ant was given, not `docs-book`.
+Install nothing, and move or delete a root file only where the brief says yes; name each skipped step in the report.
 Never start on your own, before a task or in the middle of one.
 
 Two modes, picked by the first argument:
