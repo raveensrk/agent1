@@ -8,8 +8,8 @@ argument-hint: "[spec file or task text]"
 
 # Judge
 
-Score what the code does against what the spec says it must do.
-Never change anything.
+Score what the code does against what the spec says it must do. Never change
+anything.
 
 ## Which mode
 
@@ -21,6 +21,9 @@ Never change anything.
   [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
   spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
   inputs.
+- **No user to ask** in normal mode (another agent called it): never wait. Take
+  the recommended answer, go on, and list each question with the answer taken at
+  the end.
 
 ## What is scored
 
@@ -55,7 +58,8 @@ invariants first, number them, and show that list with the score.
 ## Normal mode
 
 1. Spec: the file or task text given; none given, ask for it.
-2. Code: the current branch, against `main`.
+2. Code: the current branch, against the repo's main branch (`main` or `master`,
+   whichever exists; a branch the user names wins).
 3. Reply in the session: the score, a table of each id with holds or fails and
    why, then the gaps and the bugs.
 

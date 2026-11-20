@@ -20,13 +20,17 @@ Clean the mess a change left. Only that change, nothing else.
   [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
   spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
   inputs.
+- **No user to ask** in normal mode (another agent called it): never wait. Take
+  the recommended answer, go on, and list each question with the answer taken at
+  the end.
 
 ## Scope
 
-- The changed lines: `git diff <base>...HEAD`, base `main` unless given.
+- The changed lines: `git diff <base>...HEAD`. Base: the repo's main branch
+  (`main` or `master`, whichever exists), or the one the user names.
 - Ishikari: the range its ant names.
-- Code outside the changed lines stays as it is, even if it is messy.
-  Exception: a helper the change made dead or duplicate may go.
+- Code outside the changed lines stays as it is, even if it is messy. Exception:
+  a helper the change made dead or duplicate may go.
 
 ## What to clean
 
@@ -40,14 +44,16 @@ Clean the mess a change left. Only that change, nothing else.
 
 - Change no behaviour. Public interfaces, output and data stay the same.
 - Small and careful: no rewrites, no renames across files, no new features.
-- Run the project's tests after the cleanup. They fail: undo the cleanup.
+- Run the project's tests before and after the cleanup. Only a test that passed
+  before and fails after counts: then undo the cleanup.
 - Nothing worth cleaning: change nothing and say so.
 
 ## Normal mode
 
 1. Read the diff and the files around it.
-2. Show the cleanup: each item with its file, line and why. Wait for a yes.
-3. On yes: apply, run the tests, commit as `refactor: clean up <what>`.
+2. Show the cleanup: each item with its file, line and why. Wait for a yes. No
+   user to ask: apply it without a yes.
+3. Apply, run the tests, commit as `refactor: clean up <what>`.
 
 ## Ishikari mode
 

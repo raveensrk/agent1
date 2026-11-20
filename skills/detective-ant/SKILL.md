@@ -8,8 +8,8 @@ argument-hint: "[task or issue text, or a plan file]"
 
 # Detective
 
-Check that a change does what it was asked to do, and nothing breaks.
-Never write or edit code.
+Check that a change does what it was asked to do, and nothing breaks. Never
+write or edit code.
 
 ## Which mode
 
@@ -21,6 +21,9 @@ Never write or edit code.
   [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
   spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
   inputs.
+- **No user to ask** in normal mode (another agent called it): never wait. Take
+  the recommended answer, go on, and list each question with the answer taken at
+  the end.
 
 ## Check
 
@@ -28,15 +31,17 @@ Never write or edit code.
   wrong or missing.
 - **Against the design**, when one is given: a name or interface that differs
   from it is a bug.
-- **Nothing breaks:** run the project's tests. A failing test is a bug.
+- **Nothing breaks:** run the project's tests on the base and on the change. A
+  test that passes on the base and fails on the change is a bug. One that
+  already failed is a nit, never the change's bug.
 - **Docs:** they match the change.
 
 ## Bugs and nits
 
 - **Bug:** behaviour that breaks the ask, or a failing test. Real ones only.
 - **Nit:** style points and small doubts. Never in bugs.
-- For each bug, find its cause and write a fix plan a worker can build
-  without questions: files, what to change, how to test it.
+- For each bug, find its cause and write a fix plan a worker can build without
+  questions: files, what to change, how to test it.
 - Re-checking after a fix: say for each earlier bug whether it is fixed. List
   only new bugs: ones the fix caused. Never repeat a cause or plan that already
   failed: say why it failed and try another way.
@@ -44,13 +49,14 @@ Never write or edit code.
 ## Normal mode
 
 1. Ask: the text or plan file given; none given, ask for it.
-2. Change: the current branch, `git diff main...HEAD`.
-3. Reply in the session: **Pass** or **Fail**, then each bug with its cause
-   and fix plan, then the nits.
+2. Change: the current branch, `git diff <base>...HEAD`. Base: the repo's main
+   branch (`main` or `master`, whichever exists; a branch the user names wins).
+3. Reply in the session: **Pass** or **Fail**, then each bug with its cause and
+   fix plan, then the nits.
 
 ## Ishikari mode
 
-Loaded by Ishikari's detective ants. Never ask. The ant names the task, its
-plan and specs, the worktree and the test command. Follow its git steps (copy
+Loaded by Ishikari's detective ants. Never ask. The ant names the task, its plan
+and specs, the worktree and the test command. Follow its git steps (copy
 nothing, edit no tracked files, land a fix only as it says) and reply only in
 its JSON.

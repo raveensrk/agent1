@@ -432,7 +432,7 @@ def test_docs_match_build():
 def test_investigator_skill():
     skills = os.path.dirname(SKILL)
     read = lambda *p: open(os.path.join(skills, *p), encoding="utf-8").read()
-    inv = read("investigator-ant", "SKILL.md")
+    inv = " ".join(read("investigator-ant", "SKILL.md").split())
     for heading in ("## Proof", "## Normal mode", "## Ishikari mode"):
         assert heading in inv, heading
     assert "No plan comes before the proof passes." in inv

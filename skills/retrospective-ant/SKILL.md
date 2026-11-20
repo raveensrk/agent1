@@ -8,8 +8,8 @@ argument-hint: "[what to review, default this session]"
 
 # Retrospective
 
-Judge how the work was done, not the code it made.
-Read only: write nothing, except the one report file Ishikari names.
+Judge how the work was done, not the code it made. Read only: write nothing,
+except the one report file Ishikari names.
 
 ## Which mode
 
@@ -21,6 +21,9 @@ Read only: write nothing, except the one report file Ishikari names.
   [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
   spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
   inputs.
+- **No user to ask** in normal mode (another agent called it): never wait. Take
+  the recommended answer, go on, and list each question with the answer taken at
+  the end.
 
 ## Look for
 
@@ -37,16 +40,16 @@ Read only: write nothing, except the one report file Ishikari names.
 - Each one: category, title, evidence, impact (what it cost: calls, rounds,
   time, a wrong result), the change to make, and where (file and rule).
 - Ranked costliest first. Nothing to improve: say so.
-- Category is one of: bug, waste, failure, mislead, weak-check, misfit, gap,
-  improvement. Ishikari's ant uses its own list.
+- Category is one of: bug, error, inefficiency, gap, missing, improvement.
+  Ishikari uses the same list.
 
 ## Normal mode
 
 1. Source: this chat session. A path or range given: that instead.
 2. Read the session's work: the asks, the tool calls, what failed, what was
    redone, what the user corrected.
-3. Reply in the session: a two or three line summary, then the findings.
-   Where: the skill, rule or file that should change.
+3. Reply in the session: a two or three line summary, then the findings. Where:
+   the skill, rule or file that should change.
 
 ## Ishikari mode
 
