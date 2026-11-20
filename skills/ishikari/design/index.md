@@ -1,11 +1,11 @@
 # Index
 
 Design documentation and design bible for Ishikari, a workflow where AI agents
-("ants") work in parallel to complete a task.
+("ants") work together to complete a task.
 
 ## Goal
 
-Take any task from the user and finish it with many ants working in parallel.
+Take any task from the user and finish it with many ants, one at a time unless `--parallel` is passed.
 The user is asked only by one ant: the investigator, while it plans. Answering
 them approves the whole run, merge to main included. The investigator writes two
 specs, a product spec and a tech spec, and one plan per worker. Build, check, fix, merge and upkeep run on their own,

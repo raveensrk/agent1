@@ -116,14 +116,14 @@
    (st "you" (at YOU [26 -6 "start"]) "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you")
    (st "researchers" (at RES [-26 5 "end"]) "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end")
    (st "specs" (on (A "specs")) "Specs + worker plans" ["product_spec.md: behaviours B1... and invariants I1...;" "tech_spec.md: the architecture and the code's shape;" "one thin plan per worker (none for one worker), checked before anything is built"] "files")
-   (st "workers" (on (A "workers")) "Worker ants  ∥" ["max 5, one worktree each," "code + tests + docs;" "stuck: next fix round"] "x")
-   (st "detectives" (on (A "detectives")) "Detective ants  ∥" ["one per built task: checks it against plan +" "design, runs tests (reuses the worker's if clean);" "finds each bug's cause and plans its fix"] "x")
+   (st "workers" (on (A "workers")) "Worker ants" ["one per plan, one at a time (--parallel: up to 5)," "one worktree each; code + tests + docs;" "stuck: next fix round"] "x")
+   (st "detectives" (on (A "detectives")) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "x")
    (st "integrator" (on (A "integrator")) "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x")
    (st "merger" (on (A "merger")) "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x")
    (st "janitor" (on (A "janitor")) "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x")
-   (st "jurors" (on (A "jurors")) "Juror ants  ∥" ["one per merged task, 5 at once;" "only with 3+ merged tasks"] "x")
-   (st "judge" (on (A "judge")) "Judge ant" ["scores the run 0-10 against the product spec," "id by id; its own call, not an average"] "x")
-   (st "judge-fix-worker" (at (along JF0 JF1 0.15) [26 5 "start"]) "Worker ant" ["closes the judge's gaps"] "st")
+   (st "jurors" (on (A "jurors")) "Juror ants" ["one per merged task, one at a time" "(--parallel: up to 5); only with 3+ merged tasks"] "x")
+   (st "judge" (on (A "judge")) "Judge ant" ["scores the run 0-10 against the product spec," "id by id; its own call, not an average;" "lists gaps, and which of them are bugs"] "x")
+   (st "judge-fix-worker" (at (along JF0 JF1 0.15) [26 5 "start"]) "Worker ant" ["closes the gaps (below 7)" "or only the bugs (7+)"] "st")
    (st "judge-fix-detective" (at (along JF0 JF1 0.5) [26 5 "start"]) "Detective ant" ["checks the fix, runs the tests, then fast-forwards the" "scratch copy; the fix lands only through this fast-forward"] "st")
    (st "judge-again" (at (along JF0 JF1 0.85) [26 5 "start"]) "Judge ant" ["scores again; still below 7:" "main moves, verdict flagged"] "st")
    (st "docs" (on (A "docs")) "Docs ant" ["updates the docs with /docs (update mode), last," "on the final code; lands only docs files, and only" "if the docs check and tests pass; no docs folder: nothing to do"] "x")
@@ -152,9 +152,9 @@
                              :src "assets/prompts/investigator.md, SKILL.md#2a-investigate"}
    "you" {:tip "You answer the investigator's questions."
                 :about "The only time Ishikari asks you anything. Questions come through /ask-simple, up to 4 at a time, about 8 in all. Answering approves the whole run, merge to main included."
-                :src "SKILL.md#2a-live-investigator"}
+                :src "SKILL.md#2a-investigate"}
    "researchers" {:tip "Look up facts for the investigator."
-                               :about "Up to 5 at once, on Opus at low effort. They search the web and the whole computer, read only, never secrets, and report back. The investigator starts them and waits for them. They are not logged."
+                               :about "Up to 5 at once, with or without --parallel: they only read, so nothing can collide. On Opus at low effort. They search the web and the whole computer, read only, never secrets, and report back. The investigator starts them and waits for them. They are not logged."
                                :src "SKILL.md#limits"}
    "specs" {:tip "Everything the investigator writes: the product spec, the tech spec and one plan per worker."
             :about "All written by the investigator, in this order. product_spec.md, once nothing important is unclear: two lists and nothing else. Behaviours, what the product does once the task is done, each with an id (B1, B2...) and written as given / when / then; invariants, what must always hold, each with an id (I1, I2...). Every one is written so an ant can check it, and each answer you gave shows up as the behaviour it led to. A task that changes no behaviour has invariants only. Then the trivial verdict: a trivial task is built from the product spec alone. tech_spec.md, once the investigator has proved the task can be built (from the repo's code and docs, a throwaway spike outside the repo only if needed): the parts of the change, the files each part owns, every name, interface and data shape between parts, and each id mapped to the part that delivers it. If the task cannot be built as asked it asks you; only when no answer can fix it, the run stops. Last, one thin plan per worker ant: only that worker's slice of the specs, with its files, the spec ids it covers, the interfaces it uses, its tests and after; nothing is copied from the specs, which the worker reads for the detail. A run with one worker has no plan file: it builds straight from the specs. The plan script, which runs no ant, rejects bad or unknown ids, loops in after, two tasks on one file, paths outside the repo, a behaviour or invariant no plan covers, and a plan that covers none, before anything is built. Problems go back to the investigator once; still wrong, the run stops. Detectives check tasks against the plan and the tech spec; the judge scores the run against the product spec, id by id."
@@ -163,10 +163,10 @@
                      :about "A recfile the logbook clerk appends to the moment an ant replies, one clerk at a time. Build and finish add a summary at the end. No ant reads it; read it with ishikari.py log status, recsel or an editor."
                      :src "~/.ishikari/<repo>-<hash>/logbook.rec"}
    "workers" {:tip "Build the plans, one worktree each."
-                           :about "Up to 5 at a time, each in its own git worktree. Writes code, tests and the docs its change affects, decides on its own and commits all its work. A worker that gets stuck says why, and that becomes a bug for the next fix round. A plan may name a saved workflow to run instead."
+                           :about "One worker ant per plan, each in its own git worktree. By default one at a time: a single worker or detective runs at any moment. With --parallel <n> (2 to 5) up to n run at once. Writes code, tests and the docs its change affects, decides on its own and commits all its work. A worker that gets stuck says why, and that becomes a bug for the next fix round. A plan may name a saved workflow to run instead."
                            :src "scripts/ishikari-build.js"}
    "detectives" {:tip "Check each built task and plan every fix."
-                              :about "One per task, started as soon as it is built. Checks the work against its plan and the tech spec, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; a worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code. A dropped task's branch is kept for a later look, tasks built on it drop too, and the final report lists them."
+                              :about "One per task, next in line once its task is built: by default it shares the one slot with the workers, and with --parallel it starts at once. Checks the work against its plan and the tech spec, and runs the tests. Each bug comes back with how to see it, its cause and a fix plan; a worker builds the fix and the detective re-checks. 3 tries per bug, 3 fix rounds, then the task drops. Never changes code. A dropped task's branch is kept for a later look, tasks built on it drop too, and the final report lists them."
                               :src "scripts/ishikari-build.js"}
    "integrator" {:tip "Merges all passing tasks in a scratch copy and tests once."
                             :about "Two tasks can pass alone and break together. It merges every passing task in a straight line in a throwaway copy and runs the tests once. A clashing task takes in the tasks it clashes with and goes back through the fix loop; 2 rounds. Skipped with fewer than 2 passing tasks."
@@ -181,13 +181,13 @@
                         :about "Finds dead code, bloat and duplication from the merged tasks only. In its own worktree it edits, runs the tests and commits, and lands the cleanup only if they pass. Skipped under 100 changed lines, and a cleanup run gets no janitor. Tests failing: the cleanup is dropped, main moves with the tasks alone, its branch is kept, and its note goes to the next run's Task, where the investigator may ask about it."
                         :src "scripts/ishikari-finish.js (Upkeep phase)"}
    "jurors" {:tip "Score each merged task against its plan."
-                          :about "One per merged task, up to 5 at once, only with 3 or more merged tasks. Each scores its task against that task's plan, and the judge weighs their reports."
+                          :about "One per merged task, only with 3 or more merged tasks; with one or two the judge works alone. By default one at a time. With --parallel <n> up to n at once, and then they only read: they never build or run the tests in the shared scratch copy. Each scores its task against that task's plan, and the judge weighs their reports."
                           :src "scripts/ishikari-finish.js"}
    "judge" {:tip "Scores the whole run 0-10 against the product spec."
-                      :about "Reads the product spec and the merged code with the cleanup on top. One question, id by id: does the code behave as each behaviour says, and does each invariant hold? The tech spec and the plans are not what it scores. The score is its own call, not an average. Below 7 with gaps: one fix round, then a second score. Main always moves; a score still below 7 is flagged in the report."
+                      :about "Reads the product spec and the merged code with the cleanup on top. One question, id by id: does the code behave as each behaviour says, and does each invariant hold? The tech spec and the plans are not what it scores. The score is its own call, not an average. It lists every gap, and repeats as bugs the gaps where the code itself behaves wrongly; a missing or weak test is a gap, not a bug. Below 7 with gaps: one fix round for every gap, then a second score. 7 or more with bugs: the same round, for the bugs only. Main always moves; a score still below 7 is flagged in the report."
                       :src "scripts/ishikari-finish.js"}
-   "judge-fix-worker" {:tip "Closes the judge's gaps."
-                       :about "Builds the judge's gaps as one fix on top of the merged scratch copy."
+   "judge-fix-worker" {:tip "Closes the judge's gaps or bugs."
+                       :about "Builds one fix on top of the merged scratch copy: every gap when the score is below 7, only the bugs when it is 7 or more."
                        :src "scripts/ishikari-finish.js"}
    "judge-fix-detective" {:tip "Checks the judge fix and lands it."
                           :about "Checks the fix and runs the tests. No bug and the tests pass: it fast-forwards the scratch copy to the fix itself. The fix lands only through this fast-forward. A failed fix keeps its branch and the verdict says why."
@@ -329,8 +329,8 @@
   "The key box in the middle of the ring."
   []
   (let [kx KX ky KY
-        rows [[BLUE "1" "task on the plan line"] [INDIGO "2-6" "five worker tasks to MAIN"] [GOLD "7-8" "a bug through the fix loop"]
-              [GREEN "10" "after main moves"] [GOLD "11" "the judge's fix round, below 7"]]
+        rows [[BLUE "1" "task on the plan line"] [INDIGO "2-6" "worker tasks, one by one, to MAIN"] [GOLD "7-8" "a bug through the fix loop"]
+              [GREEN "10" "after main moves"] [GOLD "11" "the judge's fix round"]]
         ;; right column: each symbol drawn, not typed, so every browser shows the same
         lx (+ kx 360) ly (+ ky 30)
         key (fn [i label] [(txt (+ lx 16) (+ ly (* i 16)) [label] :fill SUB :size 12) (+ lx 6) (+ ly (* i 16) -4)])
@@ -373,14 +373,14 @@
   {"plan"    ["Plan line" "The first stretch of the ring: from your task to the specs and worker plans." "The blue line carries one task from Task through the investigator and what it writes, the two specs and the worker plans, on to the worker ants, where building starts."]
    "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
    "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
-   "g1"      ["Build line" "The long stretch of the ring: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks."]
+   "g1"      ["Build line" "The long stretch of the ring: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks, one after another; --parallel lets up to 5 be built at once."]
    "fix"     ["Fix loop" "A bug goes back to the worker and is re-checked." "Yellow means a warning: the detective found a bug and planned its fix. The worker builds the fix and the detective re-checks, up to 3 tries per bug and 3 fix rounds."]
    "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through the fix loop. 2 rounds at most."]
    "drop"    ["Dropped spur" "A task that could not be fixed leaves here." "A task drops when a bug is still open after 3 tries, when 3 fix rounds end with bugs open (both: escalated), when its worker is blocked or hits an error, or when its after names a task that dropped: tasks built on it drop too. The main session drops it without asking; it never reaches finish or main and nothing sends it back. Its branch is kept for a later look, and the final report lists it with why it dropped, its bugs and fix history."]
    "mback"   ["Merge failed spur" "A failed merge goes back to the worker ants." "A conflict, failed tests, or a task git cannot find goes back to the worker ant on its own branch: it merges main and fixes it, then the detective, integrator and merger run again. At most 2 extra build rounds."]
    "tnext"   ["Cleanup failed spur" "A failed cleanup becomes a suggested next task." "If the janitor's tests fail, main moves with the tasks alone, the cleanup branch is kept, and its note is offered as the Task of the next run."]
-   "jfix"    ["Judge fix loop" "Below 7 with gaps: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps. A worker closes them, a detective checks and fast-forwards the fix, and the judge scores again. Only one round."]
-   "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, and the main session reports the run."]
+   "jfix"    ["Judge fix loop" "Below 7 with gaps, or 7+ with bugs: one fix round." "Yellow means a warning: the judge scored the run below 7 and listed gaps, or passed it but listed bugs, gaps where the code behaves wrongly. A worker closes the gaps, or at 7 or more only the bugs, a detective checks and fast-forwards the fix, and the judge scores again. Only one round."]
+   "after"   ["After main moves" "Green: the run's work is on main." "After MAIN moves the finisher runs the check, the retrospective ant reviews the run, and the main session reports it."]
    "fast"    ["Fast path" "A trivial task skips the planning and build ants: straight across the ring to MAIN." "Once the product spec is written the investigator judges the task: trivial means a small, known scope (1-2 files), no design choice and one task; any question asked makes it not trivial. You confirm once. The main session then builds from the product spec alone: it edits on a branch in a worktree, runs the test and check commands, fast-forwards main only when both pass and logs it through ishikari.py. If it turns out bigger or a check keeps failing, the edits are thrown away and the full plan runs, told why."]
    "cfix"    ["Check failed spur" "A failed app check starts one new task." "If checkCommand fails after main moved, one build round runs as a new task named check-fix, from the moved main. Still failing: the run stops."]})
 
@@ -390,10 +390,10 @@
 
 (def line-notes
   "Line name -> the short rules once written beside it, now shown in its panel."
-  {"g1"    ["a plan may run a saved workflow in place of a worker ant" "built: the script starts its detective at once" "7+, or no gaps: no fix round"]
+  {"g1"    ["a plan may run a saved workflow in place of a worker ant" "built: its detective is next in line (--parallel: starts at once)" "no gaps, or 7+ with no bugs: no fix round"]
    "fix"   ["bugs: the detective's fix plan goes back to the worker;" "the worker builds it, the detective re-checks; 3 tries per bug"]
    "clash" ["fail: tasks clash: the task takes them in, then the fix loop; 2 rounds"]
-   "jfix"  ["below 7 and gaps: one fix round" "a failed fix keeps its branch; the verdict says why"]})
+   "jfix"  ["below 7 and gaps: one fix round for every gap" "7+ and bugs: one fix round for the bugs only" "a failed fix keeps its branch; the verdict says why"]})
 
 (def items (atom []))
 
@@ -457,13 +457,13 @@
     (str "<style>.h{paint-order:stroke;stroke:" BG ";stroke-width:5px;stroke-linejoin:round}.flow{animation:f 1.2s linear infinite}@keyframes f{to{stroke-dashoffset:-32}}</style>")
     (str "<rect width=\"" W "\" height=\"" H "\" fill=\"" BG "\"/>")
     (clickable {:id "title" :name "Ishikari metro map" :tip "How to read this map."
-                :about "Ishikari runs a task with many ants in parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
+                :about "Ishikari runs a task with many ants, one worker, detective or juror at a time unless you pass --parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
                 :src "skills/ishikari/design/index.md" :x CX :y (- CY 140)}
                (txt CX (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
                (txt CX (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
    ;; the three parts of the ring, named in the corners
-   (for [[k x y an label c about] [[1 (- W 30) 150 "end" "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2, the blue stretch from Task to the worker plans: the investigator asks you its questions, then the plan stage writes the design and one plan per task. The only part where you are asked anything."]
-                                   [2 (- W 30) (- H 40) "end" "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6, the indigo stretch down the right and along the bottom: worker ants build the plans in parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
+   (for [[k x y an label c about] [[1 (- W 30) 150 "end" "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2, the blue stretch from Task to the worker plans: the investigator asks you its questions, then writes the product spec, the tech spec and one plan per task; the plan stage only checks the plans. The only part where you are asked anything."]
+                                   [2 (- W 30) (- H 40) "end" "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6, the indigo stretch down the right and along the bottom: worker ants build the plans, one at a time or up to 5 at once with --parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
                                    [3 30 (- H 40) "start" "6 FINISH: JUDGE  ·  MAIN MOVES" INDIGO "Step 6, second half, up the left side: the judge scores the run against the product spec, the docs ant updates the docs, the finisher moves main forward and runs the check, the retrospective ant reviews the run, and the run is reported."]]]
      (clickable {:id (str "part-" k) :name (str "Part " k) :tip label :about about :src "skills/ishikari/SKILL.md" :x x :y y}
                 (txt x y [label] :fill c :size 13 :anchor an :weight "800")))
@@ -527,7 +527,7 @@
                  :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x (first (P "investigator")) :y (second (P "investigator"))}
                 (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
    [(clickable {:id "key" :name "Key" :tip "What the cars, symbols and colours mean."
-                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, stacked shapes parallel ants, dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
+                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, stacked shapes ants that always run in parallel, dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
                 :x KX :y KY}
                (apply str (legend)))]))
 
