@@ -44,7 +44,8 @@ comes before the proof passes.
 
 - Ask nothing the repo, the research or an earlier answer settles, and never the
   same question twice.
-- At most 8 questions in all; past that, take the recommended answer.
+- No limit on questions: keep asking until every detail the task needs is
+  gathered.
 - Every question in `/ask-simple` style: one short plain sentence, 2-4 answers,
   recommended first and marked (Recommended). Up to 4 at once that do not depend
   on each other, most important first.
@@ -124,7 +125,7 @@ when the main session says "go on": the tech spec and the worker plans.
 
    Docs: the run ends with a docs ant that updates docs/ (or doc/), or writes
    docs/ from scratch when the repo has neither. It cannot ask the user, so
-   every docs question is yours to ask now, inside the same 8. Ask only what the
+   every docs question is yours to ask now. Ask only what the
    repo, the task and the earlier answers do not settle:
 
    - No docs folder: who will read the docs, and anything about the product's
