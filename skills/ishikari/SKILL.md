@@ -19,20 +19,20 @@ Design, rules and diagram:
 
 ## Files
 
-| File                             | Job                                      |
-| -------------------------------- | ---------------------------------------- |
-| `scripts/ishikari.py`            | setup, config; sole logbook writer       |
-| `scripts/ishikari-plan.js`       | check the investigator's plans           |
-| `scripts/ishikari-build.js`      | build, check, fix, combined test         |
-| `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
-| `scripts/ishikari-retro.js`      | retrospective of the run, read only      |
-| `scripts/anteater.py`            | Ant Eater: token cost per ant, no AI     |
-| `assets/prices.json`             | API list prices Ant Eater costs with     |
-| `assets/anteater.html`           | Ant Eater's page                         |
+| File                             | Job                                         |
+| -------------------------------- | ------------------------------------------- |
+| `scripts/ishikari.py`            | setup, config; sole logbook writer          |
+| `scripts/ishikari-plan.js`       | check the investigator's plans              |
+| `scripts/ishikari-build.js`      | build, check, fix, combined test            |
+| `scripts/ishikari-finish.js`     | merge, upkeep, move main                    |
+| `scripts/ishikari-retro.js`      | retrospective of the run, read only         |
+| `scripts/anteater.py`            | Ant Eater: token cost per ant, no AI        |
+| `assets/prices.json`             | API list prices Ant Eater costs with        |
+| `assets/anteater.html`           | Ant Eater's page                            |
 | `assets/prompts/investigator.md` | the investigator's brief: ask, specs, plans |
-| `tests/test_ishikari.py`         | tool: setup, logbook, guards             |
-| `tests/test_workflows.mjs`       | script logic, with stand-in ants         |
-| `tests/test_anteater.py`         | Ant Eater: counts, labels, limit, page   |
+| `tests/test_ishikari.py`         | tool: setup, logbook, guards                |
+| `tests/test_workflows.mjs`       | script logic, with stand-in ants            |
+| `tests/test_anteater.py`         | Ant Eater: counts, labels, limit, page      |
 
 Tests: `timeout 120 python3 tests/test_ishikari.py`,
 `timeout 120 node --test tests/test_workflows.mjs` and
@@ -121,8 +121,7 @@ a changed base or a clash; each loop has its own 3 rounds.
   Without it `parallel` is 1, the default: the tasks are still split, one
   worker ant per plan, but a single worker, detective or juror runs at any
   moment. With it, up to n run at once. Researchers are read only and stay at
-  5 either way. Any other value: say `--parallel takes a whole number from 2
-  to 5` and stop, before setup.
+  5 either way. Any other value: say `--parallel takes a whole number from 2 to 5` and stop, before setup.
 - Run `python3 <skill>/scripts/ishikari.py setup <repo> [--main <branch>]`.
   Keep its JSON as `env` for every step. Its `workflows` field holds the four
   script paths (`plan`, `build`, `finish`, `retro`). It also holds `testCommand` and `checkCommand` once saved for
@@ -138,8 +137,7 @@ a changed base or a clash; each loop has its own 3 rounds.
   - `<top> is on <x>, not the main branch <m>; check out <m> first`,
     `<top> has uncommitted changes; commit or stash them first` or
     `not a git repo: <repo>`: show the message and stop;
-  - `the <what> path ... has a space or a character ...` or `main branch name
-    ... is not safe`: the path or name cannot go into the ants' shell
+  - `the <what> path ... has a space or a character ...` or `main branch name ... is not safe`: the path or name cannot go into the ants' shell
     commands. Show the message and stop; the user moves or renames it.
 - A setup that stops has no run: no retrospective.
 
@@ -176,8 +174,7 @@ it, say so and stop; there is no other way to plan.
    `Also consider the cleanup plan at <file>.` The investigator decides whether
    to ask about it; never ask yourself.
 2. It replies with JSON. While `questions` is not empty, ask them all in one
-   `/ask-simple` call (up to 4; fallback: ask directly in chat format), headed `Questions <n>-<m> of about <m +
-   remaining>`, `why` lines added when set. Send the answers back to the SAME
+   `/ask-simple` call (up to 4; fallback: ask directly in chat format), headed `Questions <n>-<m> of about <m + remaining>`, `why` lines added when set. Send the answers back to the SAME
    agent with SendMessage, as JSON `[{"question", "answer"}]` (`''` if
    skipped). Never start a new investigator for an answer. This holds in both
    of its parts: it may ask again while it designs.
@@ -207,32 +204,26 @@ it, say so and stop; there is no other way to plan.
 
 The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 
-1. Ask with `/ask-simple`: `This looks trivial: <trivialWhy>. Take the fast
-   path?` Answers: `Yes, fast path (Recommended)`, `No, full plan`. No: send
+1. Ask with `/ask-simple`: `This looks trivial: <trivialWhy>. Take the fast path?` Answers: `Yes, fast path (Recommended)`, `No, full plan`. No: send
    the investigator `go on` and continue at 2c.
 2. Yes: you do the work, the one exception to "never edit code yourself".
    Read the product spec first: build its behaviours, keep its invariants.
-   - `git -C <env.repo> worktree add -b ishikari/<env.run>/fast
-     <env.state>/worktrees/<env.run>-fast <env.main>`; edit and commit there.
+   - `git -C <env.repo> worktree add -b ishikari/<env.run>/fast <env.state>/worktrees/<env.run>-fast <env.main>`; edit and commit there.
    - No test command at all: escalate (step 3); a fast path never lands
      untested.
    - In the worktree run the test command, then the check command when set.
    - Both pass: check that `git -C <env.repo> branch --show-current` is
-     `env.main` and `git -C <env.repo> status --porcelain
-     --untracked-files=no` prints nothing; then
+     `env.main` and `git -C <env.repo> status --porcelain --untracked-files=no` prints nothing; then
      `git -C <env.repo> merge --ff-only ishikari/<env.run>/fast`, remove the
      worktree (`git -C <env.repo> worktree remove --force <env.state>/worktrees/<env.run>-fast`)
      and delete the branch (`git -C <env.repo> branch -D ishikari/<env.run>/fast`). Wrong branch, local changes or a refused
      fast-forward (main moved on): never force it; escalate (step 3).
-   - Log it: pipe `[{"run": env.run, "who": "main session", "event": "fast
-     path landed", "detail": "<sha>: <trivialWhy>"}]` into `python3 <env.tool>
-     log append <env.state>`.
+   - Log it: pipe `[{"run": env.run, "who": "main session", "event": "fast path landed", "detail": "<sha>: <trivialWhy>"}]` into `python3 <env.tool> log append <env.state>`.
 3. Escalate when the work turns out bigger (more than 2 files, a design
    choice, more than one task) or a test or the check fails and a small fix
    does not clear it: remove the worktree (`git -C <env.repo> worktree remove --force <env.state>/worktrees/<env.run>-fast`),
    delete the branch (`git -C <env.repo> branch -D ishikari/<env.run>/fast`, the edits go),
-   and send the investigator `go on: a fast path was tried and given up:
-   <why>`. Continue at 2c, passing `escalated: '<why>'` to the plan check. The
+   and send the investigator `go on: a fast path was tried and given up: <why>`. Continue at 2c, passing `escalated: '<why>'` to the plan check. The
    run carries on without asking.
 4. Landed: stop the investigator with TaskStop, and report what landed (sha,
    files), and the tests and check. A landed fast path ends the run: no
@@ -247,8 +238,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
    `<id>.md` for every plan in its `plans` list when there are two or more
    (one plan: no plan file is written). A missing file is a problem to send
    back (step 4).
-3. Run `env.workflows.plan` with `{env, task, ids, plans, testCommand,
-   checkCommand}` from its reply, plus `escalated` after a given-up fast path.
+3. Run `env.workflows.plan` with `{env, task, ids, plans, testCommand, checkCommand}` from its reply, plus `escalated` after a given-up fast path.
    No ant plans there: the script only checks the list (plan ids, loops in
    `after`, two tasks on one file, paths inside the repo, and that every
    behaviour and invariant id is covered by a plan and no plan covers an
@@ -259,6 +249,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 5. `plans`: stop the investigator with TaskStop; its work is over. Do not ask.
    Show the `productSpec` and `techSpec` paths and each plan's title, files,
    `covers` and `after` as a note.
+
 - A run whose task is a dropped cleanup plan passes `cleanup: true` to finish,
   so cleanups never chain.
 
@@ -279,8 +270,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 
 ## 4. Finish
 
-- Run `env.workflows.finish` with `{env, approved, together, drop, round,
-  landed, parallel}`, plus `cleanup: true` for a cleanup run. `approved` items are
+- Run `env.workflows.finish` with `{env, approved, together, drop, round, landed, parallel}`, plus `cleanup: true` for a cleanup run. `approved` items are
   `{id, branch, after}` from the build result. `round` is this run's finish
   number (1, then 2, ...): a later finish uses its own upkeep branches, so
   branches kept by an earlier one stay. `landed` holds every task id the
@@ -344,8 +334,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
   update: `landed`, or dropped with its `reason` and `branch`.
   Every workflow ant's result is in the logbook once its stage is saved (the
   live investigator gets only an `investigated` entry); a crashed stage's
-  trail comes from `log recover`. End with where the full record is: `python3 <env.tool> log status <env.state>
-  <env.run>`.
+  trail comes from `log recover`. End with where the full record is: `python3 <env.tool> log status <env.state> <env.run>`.
 
 ## 5. Retrospective
 

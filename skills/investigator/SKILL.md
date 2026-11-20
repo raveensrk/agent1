@@ -73,7 +73,7 @@ own evidence. Only when no answer could fix it, report it as a blocker.
    - **Plan**: the parts of the change, the files each touches, and how each
      is tested. Short.
    - **Risks**: what could still go wrong.
-   Proof failed: give findings and the blocker, no plan.
+     Proof failed: give findings and the blocker, no plan.
 
 ## Ishikari mode
 
@@ -97,11 +97,11 @@ when the main session says "go on": the tech spec and the worker plans.
 1. [Investigate](#investigate).
 2. Ask as in [Ask](#ask). Answers come back as JSON [{question, answer}].
 3. Each reply is ONLY this JSON, no other text:
-   {"questions": [{"question", "why", "answers": [...]}],
-    "remaining": <guess after these>, "blocker": "", "productSpecWritten": false,
-    "ids": [], "testCommand": "", "checkCommand": "", "trivial": false,
-    "trivialWhy": "", "techSpecWritten": false, "plansWritten": false,
-    "proof": "", "plans": []}
+   {"questions": \[{"question", "why", "answers": [...]}\],
+   "remaining": <guess after these>, "blocker": "", "productSpecWritten": false,
+   "ids": [], "testCommand": "", "checkCommand": "", "trivial": false,
+   "trivialWhy": "", "techSpecWritten": false, "plansWritten": false,
+   "proof": "", "plans": []}
    Docs: the run ends with a docs ant that updates docs/ (or doc/), or writes
    docs/ from scratch when the repo has neither. It cannot ask the user, so
    every docs question is yours to ask now, inside the same 8. Ask only what
@@ -123,16 +123,16 @@ when the main session says "go on": the tech spec and the worker plans.
    - Invariants: what must always hold, before and after, each with an id I1,
      I2..., written so an ant can check it (existing tests pass, a public
      interface stays as it is, data is never lost...).
-   A task that changes no behaviour (a refactor, a cleanup, docs) has no
-   behaviours: write "No behaviour changes" and the invariants that must hold.
-   Reply with questions empty, productSpecWritten true, ids (every B and I id,
-   in order) and the test and check commands.
-   Then judge whether the task is trivial and set trivial and trivialWhy (one
-   plain line). Trivial means all of: small, known scope (1-2 files, easy to
-   find); one sensible way to do it, no design choice; one task that cannot be
-   split. Docs or config only helps but is not needed. If you asked the user
-   any question, it is not trivial.
-   Then stop and wait: do not start part 2 until you are told to go on.
+     A task that changes no behaviour (a refactor, a cleanup, docs) has no
+     behaviours: write "No behaviour changes" and the invariants that must hold.
+     Reply with questions empty, productSpecWritten true, ids (every B and I id,
+     in order) and the test and check commands.
+     Then judge whether the task is trivial and set trivial and trivialWhy (one
+     plain line). Trivial means all of: small, known scope (1-2 files, easy to
+     find); one sensible way to do it, no design choice; one task that cannot be
+     split. Docs or config only helps but is not needed. If you asked the user
+     any question, it is not trivial.
+     Then stop and wait: do not start part 2 until you are told to go on.
 
 ### Part 2: tech spec and plans (after "go on")
 
@@ -172,8 +172,8 @@ when the main session says "go on": the tech spec and the worker plans.
    two specs; still give its entry in plans (step 8), covering every id.
 8. Reply with techSpecWritten and plansWritten true (also for one task, with
    no file written), proof, ids (again, as the product spec has them now), and
-   plans: one {"id", "title", "files": [repo-relative paths], "covers": [spec
-   ids], "after": [plan ids], "workflow": optional saved workflow name} per
+   plans: one {"id", "title", "files": [repo-relative paths], "covers": \[spec
+   ids\], "after": [plan ids], "workflow": optional saved workflow name} per
    plan.
 9. If the main session sends back problems with the plans (two tasks on one
    file or on a folder and a file inside it, a loop in after, a bad id or
