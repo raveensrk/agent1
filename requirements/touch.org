@@ -1,0 +1,119 @@
+#+TITLE: Touch and mobile
+#+STARTUP: fold
+
+What changes for a web app used by touch, on a phone or a tablet.
+Everything in [[file:gui.org][gui.org]] still applies; this file adds to it, and where the two differ for touch, this file wins.
+
+Not all of this is applicable to all apps. Pick what the app needs.
+
+* General
+** The app is a web app first
+- One code base serves phone, tablet and desktop; no separate mobile site
+- It runs in Safari on iOS and iPadOS and in Chrome on Android, the two latest major versions of each
+- Follow Apple's [[https://developer.apple.com/design/human-interface-guidelines/][Human Interface Guidelines]] for iOS, as gui.org follows Apple Design for macOS
+** Touch is told apart from the mouse by what the device can do, never by its name
+- CSS =@media (pointer: coarse)= and =(hover: none)= pick the touch rules; no user agent sniffing
+- A device with both, a tablet with a trackpad, gets both: each input answers in its own way
+- Pointer events (=pointerdown=, =pointerup=) handle mouse, pen and touch in one code path; no separate touch and mouse handlers
+
+* Layout
+** The page fits the screen
+- The viewport meta tag is =width=device-width, initial-scale=1, viewport-fit=cover=
+- No page scrolls sideways at any width from 320 px up; a wide table scrolls in its own area, as gui.org says
+- Pinch zoom is never turned off: no =maximum-scale= or =user-scalable=no=
+** Layout follows the width, in three steps
+- Phone: below 600 px, one column
+- Tablet: 600 px to 1023 px, a sidebar that folds away into a menu button
+- Desktop: 1024 px and up, the desktop layout from gui.org
+- A step is chosen by the width the app has, so a split screen or a rotated phone gets the right one
+** Content stays out of the notch and the home bar
+- Padding uses =env(safe-area-inset-*)= on every edge, in portrait and landscape
+- Nothing that can be tapped sits under the notch, the status bar or the home indicator
+** Height uses the dynamic viewport
+- Full height panels use =100dvh=, never =100vh=, so the browser's own bars never hide the bottom of the page
+** Rotation keeps the place
+- Turning the device keeps the scroll position, the selection and any text being typed
+
+* Touch targets
+** Every tap target is 44 by 44 px or more
+- The tappable area may be larger than what is drawn; padding counts
+- Targets sit 8 px apart or more, so a thumb never hits two
+** The main actions are in reach of the thumb
+- On a phone, the main action and the navigation sit in the bottom half of the screen
+- Destructive actions are never next to the main action
+** Hover is never needed
+- Anything shown on hover (a tooltip, a chevron, a row's buttons) is shown always or on tap when =(hover: none)=
+- A tooltip becomes a long press, or a small info button beside the item
+
+* Gestures
+** A tap answers at once
+- The press shows within 100 ms, on =pointerdown=; the action runs on =pointerup= inside the target
+- A finger that slides off the target before it lifts cancels the tap
+- =touch-action: manipulation= on the page, so a tap never waits for a double tap zoom
+** Every gesture has a button too
+- Swipe, long press and drag are shortcuts; each action they do is also reachable by a visible control
+** Gestures follow the platform
+- Swipe a row sideways: shows its actions, as in iOS Mail; a full swipe does the first one, unless it deletes
+- Long press: opens the context menu that gui.org gives a right click
+- Pull down at the top of a list: refreshes, where the list can be refreshed
+- Drag: a long press first lifts the thing, then it moves; a plain swipe still scrolls
+- No gesture takes the screen edges: the browser and the system own them for back and home
+** Scrolling stays smooth and native
+- Scroll is the browser's own, with its momentum; never redrawn in script
+- =overscroll-behavior: contain= on inner scroll areas, so a sheet or list never drags the page behind it
+- No =preventDefault= on =touchmove= except inside a drag that has started
+
+* Text input
+** The right keyboard comes up
+- Each field sets =type= and =inputmode= for what it holds: =email=, =tel=, =url=, =numeric=, =decimal=, =search=
+- =enterkeyhint= names what Return does: =next=, =done=, =search=, =send=
+** Text never makes the page zoom
+- Every text field's font is 16 px or more, so iOS Safari does not zoom in on focus
+** The keyboard never hides the field
+- The field being typed in scrolls into view above the keyboard
+- A bar fixed to the bottom moves up with the keyboard, using the =visualViewport= size
+** Autocomplete stays off
+- As gui.org's "Text boxes turn off macOS autocomplete" says, and that covers the phone keyboards too
+
+* Feedback
+** A press always shows
+- A tapped control darkens or sinks, as gui.org's buttons do, and never only on hover
+- =-webkit-tap-highlight-color: transparent=, so the browser's grey flash never doubles the app's own press
+** Loading never blocks the screen
+- A slow network shows a spinner beside the words, as gui.org says, and the rest of the page stays usable
+
+* Navigation
+** Back works the platform's way
+- The browser's back, the iOS edge swipe and the Android back button all go back one page, as gui.org's back does
+- Opening a sheet or a menu adds a history step, so back closes it first
+** Sheets come from the bottom on a phone
+- A dialog on a phone is a sheet that slides up and can be swiped down to close
+- On a tablet and on desktop it is the dialog gui.org gives
+
+* Performance
+** The page is usable fast on a mid-range phone
+- First load usable in 3 s or less over a slow 4G network, on a mid-range Android phone
+- Taps answer, and scrolling runs, at 60 fps, as gui.org asks
+- Images are sized for the screen they go to, with =srcset=, and load lazily below the fold
+
+* Offline
+** OPEN The app works offline
+- A service worker keeps the app shell, so it opens with no network
+- Changes made offline are kept and sent when the network comes back; nothing typed is lost
+- The app says when it is offline, in one line, without blocking work
+- Decide per app: not every app needs this
+
+* Testing
+** Every layout step is checked at its width
+- Playwright runs the window checks at 375 by 812 (phone), 820 by 1180 (tablet) and 1280 by 800 (desktop)
+- Playwright's iPhone and Pixel device profiles turn on touch, so =pointer: coarse= is true in the check
+** A check finds what breaks the rules
+- No sideways scroll on the page at 320 px wide
+- Every visible control's box is 44 by 44 px or more on the phone profile
+- Every text field's font is 16 px or more
+- Every field has the =inputmode= or =type= its content needs
+** Gestures are checked as touches
+- A check taps with =page.touchscreen.tap=, never a mouse click, on the touch profiles
+- A swipe or long press is sent as touch events, the way a finger would, as gui.org's "A window check sends its events the way a pointer does" says
+** A real device is checked by hand
+- Before a release, the app is opened on a real iPhone and a real Android phone, by hand, with a screenshot of each layout

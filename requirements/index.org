@@ -2,6 +2,7 @@
 
 - [[file:architecture.org][Architecture]]
 - [[file:gui.org][GUI]]
+- [[file:touch.org][Touch and mobile]]
 - [[file:windows.org][Windows]]
 - [[file:components.org][Components]]
 - [[file:testing.org][Testing]]

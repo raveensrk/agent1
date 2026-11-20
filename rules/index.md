@@ -39,6 +39,8 @@ Read when the task touches it:
   [cli_help.py](../harness/checks/cli_help.py) decides the hard half: a
   runnable, options or not, must handle `-h` and `--help` (short help) and a
   `help` command (long help).
+- [touch.org](../requirements/touch.org) - touch and mobile web UI: layout
+  steps, tap targets, gestures, phone keyboards. Adds to gui.org.
 - [docs.md](docs.md) - writing docs: help output first, what else each
   program shape needs.
 - [tui.md](tui.md) - writing a TUI: `?` help keybind, help page with vim
