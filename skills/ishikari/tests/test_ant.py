@@ -89,6 +89,13 @@ def test_tests_verdicts():
     assert code == 2 and "after --" in err
 
 
+def test_help():
+    for args in (["help"], ["-h"], ["--help"]):
+        code, out, _ = ant(*args)
+        assert code == 0 and "ant.py" in out, args
+    assert "Exit codes" in ant("help")[1]
+
+
 def test_session():
     home = tempfile.mkdtemp(prefix="ant-proj-")
     os.makedirs(os.path.join(home, "p"))

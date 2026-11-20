@@ -13,6 +13,9 @@ no model.
                                             tool calls, errors and repeats of
                                             a Claude Code session
 
+  ant.py help                               this long help
+  ant.py -h, --help                         short help
+
 Exit codes: 0 ok, 2 usage or git error.
 """
 import argparse
@@ -150,6 +153,9 @@ def session_stats(path):
 
 
 def main(argv):
+    if argv[:1] == ["help"]:
+        print(__doc__)
+        return 0
     p = argparse.ArgumentParser(prog="ant.py", description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
     for name in ("base", "scope", "tests"):
