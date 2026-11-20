@@ -761,6 +761,7 @@ test('retro: one read-only ant writes only retrospective.md and returns ranked f
   assert.deepEqual(out.findings[0], f)
   assert.equal(out.findings[1].category, 'improvement')
   const p = prompts['retrospective-ant']
+  assert.ok(p.includes('Load the /retrospective-ant skill') && p.includes('/k/../retrospective-ant/SKILL.md'))
   assert.ok(p.includes('Read only') && p.includes('Your one write is /s/plans/r1/retrospective.md'))
   assert.ok(p.includes('main moved') && p.includes('/k/SKILL.md') && p.includes("Run: r1"))
   assert.deepEqual(logs.map(e => e.event), ['2 findings'])

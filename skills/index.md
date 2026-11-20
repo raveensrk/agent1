@@ -18,6 +18,7 @@ by registering this repo with [install.py](../install.py).
 - [redesign-gui](./redesign-gui/SKILL.md) - Redesigns a desktop app's GUI in four gated phases: brief, SVG mockups, contract, then build and verify.
 - [relayout](./relayout/SKILL.md) - Checks a repo's layout and keeps a good
   one; otherwise plans moves and renames, applied on a branch after a yes.
+- [retrospective-ant](./retrospective-ant/SKILL.md) - Looks back on how work went, not the code, and reports ranked findings with evidence: this session by hand, or an Ishikari run.
 - [shop](./shop/SKILL.md) - Finds a product across Indian stores and lists the top 5 (more on request) by review-weighted rating, with pictures, prices and links.
 - [test-cua-driver-with-freeform](./test-cua-driver-with-freeform/SKILL.md) - Smoke-tests cua-driver by drawing a house on a new Freeform board and reports each capability as pass or fail.
 - [trim](./trim/SKILL.md) - Finds features too complex for the project's goal and reports each with its lines of code and a simpler way.

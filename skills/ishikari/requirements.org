@@ -252,3 +252,20 @@ The detective's checking rules go into a skill, skills/detective-ant/SKILL.md, l
 - By hand: checks the current branch against main and the given text, and answers Pass or Fail in the session.
 - Ishikari mode: never asks; the ants keep their prompts, git steps and JSON schema, and load /detective-ant or read the skill file.
 Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
+
+* DONE [#B] The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant  :ishikari:
+:PROPERTIES:
+:ID:          ISH-14
+:CREATED:     2026-11-21
+:NEEDS:       ISH-3
+:VERIFY:      "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings"
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:IMPLEMENTED: 2026-11-21
+:END:
+What to look for and how to rank it go into a skill, skills/retrospective-ant/SKILL.md, loaded by Ishikari's retrospective ant.
+- Judges how the work was done, never the code; read only.
+- Findings need evidence, each with category, title, evidence, impact, change and where, ranked costliest first.
+- By hand: reviews the current chat session (or a given path or range) and answers in the session.
+- Ishikari mode: never asks; the ant keeps its reading list, digest check, one report file, categories and JSON schema, and loads /retrospective-ant or reads the skill file.
+Evidence: ISH-10 to ISH-13 load skills the same way from inside ants.

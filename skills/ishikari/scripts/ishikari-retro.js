@@ -79,6 +79,8 @@ const prompt = `You are the retrospective ant of the Ishikari workflow. The run 
 (${String(outcome).trim() || 'outcome not given'}). Review how the Ishikari flow ran this time and
 report where it can improve. You judge the flow, not the repo's code: the judge
 and the janitor cover the code.
+Load the /retrospective-ant skill and follow its Ishikari mode (if it is
+unavailable, read ${skill}/../retrospective-ant/SKILL.md).
 Repo: ${env.repo} (main branch: ${env.main}). Run id: ${env.run}.
 Read only. Change no code, branch, worktree, logbook entry or repo file, and run
 no command that writes. Your one write is ${file}
