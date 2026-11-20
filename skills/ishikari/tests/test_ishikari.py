@@ -284,6 +284,39 @@ def text_box(t):
     return x0, x0 + w, t["y"] - 0.75 * t["size"], t["y"] + 0.25 * t["size"]
 
 
+RAIL_STOPS = ("researchers", "workers-many", "detectives-many", "jurors")  # several ants: on a rail
+
+
+def check_ant_shapes(path):
+    """One hexagon is one ant, a stack of three is several: only a rail's stops are stacks."""
+    root = ET.parse(path).getroot()
+    items = {i["id"]: i for i in panel_items(path)}
+    _, _, w, _ = (float(v) for v in root.get("viewBox").split())
+    seen = set()
+    for g in root.iter(NS + "g"):
+        if "st" not in (g.get("class") or "").split():
+            continue
+        sid = g.get("id")[3:]
+        hexagons = len(list(g.iter(NS + "polygon")))
+        if not hexagons:
+            continue  # not an ant: a file, the flag, the logbook
+        seen.add(sid)
+        it = items[sid]
+        on_ring = abs(math.hypot(it["x"] - w / 2, it["y"] - 690) - 520) < 1
+        if sid in RAIL_STOPS:
+            assert hexagons == 3, f"{sid} is on a many-ant rail: draw it as a stack of hexagons, not {hexagons}"
+            assert not on_ring, f"{sid} is a many-ant stop: it belongs on a rail, off the main line"
+        else:
+            assert hexagons == 1, f"{sid} is a single ant: draw one hexagon, not {hexagons}"
+    assert set(RAIL_STOPS) <= seen, sorted(set(RAIL_STOPS) - seen)
+    # every rail is drawn: three strokes each, one rail per many-ant stretch
+    rails = [p for p in root.iter(NS + "path") if p.get("pointer-events") == "none"]
+    assert len(rails) == 3 * 3, len(rails)  # researchers, the many-plan lane, the jury lane
+    for sid in ("workers", "detectives", "judge"):  # the main line's own stops stay single, on the ring
+        it = items[sid]
+        assert abs(math.hypot(it["x"] - w / 2, it["y"] - 690) - 520) < 1, sid
+
+
 def test_metro_map():
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "map.svg")
@@ -291,6 +324,7 @@ def test_metro_map():
         assert os.path.isfile(out)
         with open(out, "rb") as a, open(SVG, "rb") as b:
             assert a.read() == b.read(), "ishikari-metro.svg is stale: run bb design/metro.clj"
+    check_ant_shapes(SVG)
     texts, w, h = metro_texts(SVG)
     names = [t["s"] for t in texts if t["size"] == 16]
     for script in SCRIPTS:
