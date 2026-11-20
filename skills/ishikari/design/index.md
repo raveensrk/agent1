@@ -371,7 +371,10 @@ fix loop, from the detective ants back to the worker ants, on the inner side
 of the rail. The main line's loop is slim and stays between the ring and the
 rail, 100 px apart, so no loop crosses a rail or another loop; the clash line joins it, since only a run with two or more
 plans can clash, and both loops leave down the one dropped spur. The rails are `RAILS` in
-`metro.clj`; each stop on a rail is a stack of hexagons, several ants;
+`metro.clj`; each stop on a rail is a stack of hexagons, several ants.
+Cars follow the same rule: the main line carries one car, the fast path one,
+and each rail three small cars side by side, one per rail (three dots on the
+researcher rail);
 the many-plan lane's two stops come last in `stations`, so the
 ring's stop codes never move.
 Elsewhere the map draws names only, to stay simple; every description and short

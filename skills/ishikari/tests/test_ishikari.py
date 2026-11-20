@@ -319,6 +319,18 @@ def check_ant_shapes(path):
         nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", paths[line])]
         for (x, y), sid in ((nums[:2], start), (nums[-2:], end)):
             assert abs(x - items[sid]["x"]) < 1 and abs(y - items[sid]["y"]) < 1, f"{line} does not touch {sid}"
+    # cars: one on the main line and on the fast path, three side by side on each rail
+    src = open(path, encoding="utf-8").read()
+    cars = {}
+    for g in root.iter(NS + "g"):
+        if (g.get("id") or "").startswith("it-train-"):
+            route = re.search(r'href="#L-([a-z0-9-]+)"', ET.tostring(g, encoding="unicode")).group(1)
+            cars[route] = cars.get(route, 0) + 1
+    assert cars.get("build") == 1 and cars.get("fast") == 1, cars
+    for rail in ("many", "jury"):
+        assert [cars.get(f"{rail}-{k}") for k in (1, 2, 3)] == [1, 1, 1], f"{rail} rail needs one car per rail: {cars}"
+    assert cars.get("mfixloop") == 1 and cars.get("fixloop") == 2, cars
+    assert all(f'<mpath href="#L-res-{k}"' in src for k in (1, 2, 3)), "three researcher dots, one per rail"
     for sid in ("workers", "detectives", "judge"):  # the main line's own stops stay single, on the ring
         it = items[sid]
         assert abs(math.hypot(it["x"] - w / 2, it["y"] - 690) - 520) < 1, sid

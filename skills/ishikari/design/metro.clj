@@ -84,8 +84,14 @@
 ;; The ring is the single-ant path. Where a run may use several ants, a lane
 ;; leaves the ring at a decision and rejoins it: `many` (one worker and one
 ;; detective per plan) and `jury` (one juror per merged task).
-(def MANY (vec (concat [(pt PLANS R)] (mapv #(pt % MLANE) (range (+ PLANS 4) (- (A "integrator") 3) 2)) [(P "integrator")])))
-(def JLANE (vec (concat [(pt JURY R)] (mapv #(pt % SOLO) (range (+ JURY 4) (- (A "judge") 3) 2)) [(P "judge")])))
+(def RAIL 8) ; how far apart the three rails of a triple rail sit: a car rides each
+(defn lane "A lane that leaves the ring at deg a0, runs at radius r and rejoins the ring at a1." [a0 a1 r]
+  (vec (concat [(pt a0 R)] (mapv #(pt % r) (range (+ a0 4) (- a1 3) 2)) [(pt a1 R)])))
+(defn beside "The straight line a-b moved off px to its side." [[ax ay] [bx by] off]
+  (let [len (Math/hypot (- bx ax) (- by ay)) nx (/ (- ay by) len) ny (/ (- bx ax) len)]
+    [[(r1 (+ ax (* off nx))) (r1 (+ ay (* off ny)))] [(r1 (+ bx (* off nx))) (r1 (+ by (* off ny)))]]))
+(def MANY (lane PLANS (A "integrator") MLANE))
+(def JLANE (lane JURY (A "judge") SOLO))
 ;; Many-ant stretches, drawn as a triple rail. [points colour]
 (def YOU (pt (- (A "investigator") 6) (+ R 105))) (def RES (pt (A "investigator") (- R 150)))
 (def FACTS (pt (A "investigator") (- R 50))) ; the facts decision, half way down the research line
@@ -106,6 +112,12 @@
    ["fix"     GOLD   [(P "detectives") FIX0 FIX1 (P "workers")] 8 ""]
    ["mfix"    GOLD   (vec (concat [(pt MD MLANE)] (mapv #(pt % MLOOP) (range 92 74 -1)) [(pt MW MLANE)])) 8 ""]
    ["fixloop" "none" (vec (concat (arc (A "workers") (A "detectives")) [FIX0 FIX1 (P "workers")])) 8 ""]
+   ;; routes drawn invisible, for the cars on the rails: one car per rail, side by side
+   ["many-1" "none" (lane PLANS (A "integrator") (- MLANE RAIL)) 6 ""] ["many-2" "none" MANY 6 ""] ["many-3" "none" (lane PLANS (A "integrator") (+ MLANE RAIL)) 6 ""]
+   ["jury-1" "none" (lane JURY (A "judge") (- SOLO RAIL)) 6 ""] ["jury-2" "none" JLANE 6 ""] ["jury-3" "none" (lane JURY (A "judge") (+ SOLO RAIL)) 6 ""]
+   ["res-1" "none" (beside FACTS RES (- RAIL)) 6 ""] ["res-2" "none" [FACTS RES] 6 ""] ["res-3" "none" (beside FACTS RES RAIL) 6 ""]
+   ;; the rail's fix loop as a round trip: along the rail, then back through the loop
+   ["mfixloop" "none" (vec (concat (mapv #(pt % MLANE) (range MW (inc MD))) (mapv #(pt % MLOOP) (range 92 74 -1)) [(pt MW MLANE)])) 8 ""]
    ["clash"   GOLD   [(P "integrator") (pt (+ (A "integrator") 6) 250) (pt 95 250) MFIX0] 6 "10 6"] ; tasks clash only with 2+ plans: back into the rail's fix loop
    ["drop"    RED    [FIXMID (inward FIXMID 196)] 6 "10 6"] ; crosses the rail's loop: both loops drop here
    ["mback"   RED    [(P "merger") (pt (A "merger") (- R 90))] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
@@ -376,20 +388,31 @@
       [(str "<circle cx=\"" x "\" cy=\"" y "\" r=\"9\" fill=\"" TXT "\"/>")])))
 
 ;; numbered trains: number, route, colour, seconds per trip, start offset
-(def trains [[1 "plan" BLUE 20 0] [2 "build" INDIGO 28 0] [3 "build" INDIGO 28 5.6] [4 "build" INDIGO 28 11.2]
-             [5 "build" INDIGO 28 16.8] [6 "build" INDIGO 28 22.4] [7 "fixloop" GOLD 8 0] [8 "fixloop" GOLD 8 4]
+;; numbered cars: number, route, colour, seconds per trip, start offset, size (1 when not given).
+;; The main line carries one car: one task, one ant at a time. Each rail carries
+;; three small cars side by side, one per rail: several ants.
+(def trains [[1 "plan" BLUE 20 0] [9 "fast" GREEN 9 0]
+             [2 "build" INDIGO 28 0]
+             [3 "many-1" INDIGO 10 0 0.7] [4 "many-2" INDIGO 10 0.35 0.7] [5 "many-3" INDIGO 10 0.7 0.7]
+             [6 "mfixloop" GOLD 8 0 0.7] [7 "fixloop" GOLD 8 0] [8 "fixloop" GOLD 8 4]
+             [12 "jury-1" INDIGO 6 0 0.7] [13 "jury-2" INDIGO 6 0.35 0.7] [14 "jury-3" INDIGO 6 0.7 0.7]
              [10 "after" GREEN 5 0] [11 "jfixrun" GOLD 7 0]])
+(defn route-line "The drawn line a car's route belongs to, for its panel text." [path]
+  (cond (= path "build") "g1" (= path "fixloop") "fix" (= path "mfixloop") "mfix" (= path "jfixrun") "jfix"
+        (str/starts-with? path "many-") "many" (str/starts-with? path "jury-") "jury" :else path))
 
-(def KW 360) (def KH 226) ; the key: narrow, so it sits centred and clear of the build stretch
+(def KW 360) (def KH 286) ; the key: narrow, so it sits centred and clear of the build stretch
 (def KX (- CX (/ KW 2))) (def KY (- CY 90)) ; the key's top left corner
 
 (defn legend
   "The key box in the middle of the ring: the cars, then the symbols in two columns, then the colours."
   []
   (let [kx KX ky KY
-        rows [[BLUE "1" "task on the plan line"] [INDIGO "2-6" "tasks on the main line to MAIN"] [GOLD "7-8" "a bug through the fix loop"]
-              [GREEN "10" "after main moves"] [GOLD "11" "the judge's fix round"]]
-        sy (+ ky 136) ; first symbol row
+        rows [[BLUE "1" "task on the plan line"] [GREEN "9" "a trivial task on the fast path"]
+              [INDIGO "2" "one task on the main line"] [INDIGO "3-5" "tasks on the many-plan rail"]
+              [GOLD "6-8" "a bug through a fix loop"] [INDIGO "12-14" "jurors on the jury rail"]
+              [GOLD "11" "the judge's fix round"] [GREEN "10" "after main moves"]]
+        sy (+ ky 36 (* 20 (count rows))) ; first symbol row
         ;; each symbol drawn, not typed, so every browser shows the same: [column row label glyph]
         cell (fn [col row label glyph]
                (let [x (+ kx 22 (* col 172)) y (+ sy (* row 17))]
@@ -504,7 +527,7 @@
           "pn.addEventListener('click',function(e){e.stopPropagation();if(e.target.tagName==='i')hide();});\n"
           "document.addEventListener('click',hide);\n"
           "document.addEventListener('keydown',function(e){if(e.key==='Escape')hide();});\n"
-          "function fromHash(){var id=location.hash.replace(/^#((st|it)-)?/,'');for(var i=0;i<D.length;i++)if(D[i].id===id||D[i].code===id){show(i);return;}}\n"
+          "function fromHash(){var id=location.hash.replace(/^#((st|it)-)?/,'');if(!id)return;for(var i=0;i<D.length;i++)if(D[i].id===id||D[i].code===id){show(i);return;}}\n"
           "window.addEventListener('hashchange',fromHash);fromHash();\n"
           "})();\n"
           "]]></script>")]))
@@ -590,23 +613,25 @@
                      "<text x=\"" x "\" y=\"" (+ y 5) "\" font-size=\"14\" font-weight=\"800\" fill=\"" TXT "\" text-anchor=\"middle\">?</text>")
                 (txt (+ x dx) (+ y dy) [q] :size 13 :anchor an :weight "700")
                 (txt (+ x dx) (+ y dy 15) [answers] :fill SUB :size 12 :anchor an :weight "600")))
-   (for [[n path c sec beg] trains
-         :let [[lname] (about-lines (if (= path "build") "g1" (case path "fixloop" "fix" "jfixrun" "jfix" path)))]]
+   (for [[n path c sec beg size] trains
+         :let [[lname] (about-lines (route-line path))
+               sc (when size (str " transform=\"scale(" size ")\""))]]
      (clickable {:id (str "train-" n) :name (str "Car " n) :tip (str "A sample task riding the " (str/lower-case lname) ".")
                  :about (str "The numbered cars are sample tasks moving through the run, so you can follow one. Car " n " rides the " (str/lower-case lname) "; the key in the middle of the ring says what each number shows.") :x 0 :y 0}
                 ;; the car body turns with the track (rotate="auto"), its nose pointing the way it goes;
                 ;; the number rides the same path without turning, so it never reads upside down
                 (let [move (fn [rot] (str "<animateMotion dur=\"" sec "s\" begin=\"" (- beg) "s\" repeatCount=\"indefinite\"" rot "><mpath href=\"#L-" path "\"/></animateMotion>"))]
-                  (str "<g filter=\"url(#g)\"><path d=\"M-16,-11 H6 Q9,-11 11,-8 L18,0 L11,8 Q9,11 6,11 H-16 Q-19,11 -19,8 V-8 Q-19,-11 -16,-11 Z\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"
+                  (str "<g filter=\"url(#g)\"><path" sc " d=\"M-16,-11 H6 Q9,-11 11,-8 L18,0 L11,8 Q9,11 6,11 H-16 Q-19,11 -19,8 V-8 Q-19,-11 -16,-11 Z\" fill=\"" CAR "\" stroke=\"" c "\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"
                        (move " rotate=\"auto\"") "</g>"
-                       "<g><text y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
+                       "<g><text" sc " y=\"5\" font-size=\"14\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>"
                        (move "") "</g>"))))
-   (for [[path sec what] [["ask" 6 "a round of questions"] ["res" 5 "a burst of research"]]]
+   (for [[path sec what] [["ask" 6 "a round of questions"] ["res-1" 5 "one researcher of a burst of research"]
+                          ["res-2" 5 "one researcher of a burst of research"] ["res-3" 5 "one researcher of a burst of research"]]]
      (clickable {:id (str "dot-" path) :name "Moving dot" :tip (str "Shows " what ".")
                  :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x (first (P "investigator")) :y (second (P "investigator"))}
-                (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
+                (str "<circle r=\"" (if (= path "ask") 7 4.5) "\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
    [(clickable {:id "key" :name "Key" :tip "What the cars, symbols and colours mean."
-                :about "Top: what each numbered car shows. Middle: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, triple rail a lane where several ants run, leaving the single-ant main line at a decision and rejoining it, stacked hexagons a stop where several ants run (the mark ∥ after a name: always at once), dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
+                :about "Top: what each numbered car shows; the main line carries one car, each rail three small cars side by side, one per rail. Middle: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, triple rail a lane where several ants run, leaving the single-ant main line at a decision and rejoining it, stacked hexagons a stop where several ants run (the mark ∥ after a name: always at once), dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
                 :x KX :y KY}
                (apply str (legend)))]))
 
