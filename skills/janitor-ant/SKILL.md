@@ -2,13 +2,24 @@
 name: janitor-ant
 metadata:
   scope: global
-description: Clean up only the code a change added or touched - dead code, bloat, duplication and mess - with no change in behaviour, tests run after. Run by hand it cleans the current branch's changes against main, shows the cleanup and applies it after a yes. Run by Ishikari's janitor ant it never asks and follows the ant's git steps. Use when the user says clean up this change, tidy my diff, janitor, or runs /janitor-ant. For a whole-project sweep use /maintain instead.
+description: Clean up only the code a change added or touched - dead code, bloat, duplication and mess - with no change in behaviour, tests run after. In normal use it cleans the current branch's changes against main, shows the cleanup and applies it after a yes. Run by Ishikari's janitor ant it never asks and follows the ant's git steps. Use when the user says clean up this change, tidy my diff, janitor, or runs /janitor-ant. For a whole-project sweep use /maintain instead.
 argument-hint: "[base ref, default main]"
 ---
 
 # Janitor
 
 Clean the mess a change left. Only that change, nothing else.
+
+## Which mode
+
+- **Ishikari mode** only when your prompt says you are an ant of the Ishikari
+  workflow and tells you to follow this skill's Ishikari mode. Then follow
+  [Ishikari mode](#ishikari-mode) and the ant's prompt, and nothing else.
+- **Normal mode** every other time: the user runs the skill, it triggers in a
+  normal session, or another skill or agent calls it. Then follow
+  [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
+  spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
+  inputs.
 
 ## Scope
 
@@ -32,7 +43,7 @@ Clean the mess a change left. Only that change, nothing else.
 - Run the project's tests after the cleanup. They fail: undo the cleanup.
 - Nothing worth cleaning: change nothing and say so.
 
-## Run by hand
+## Normal mode
 
 1. Read the diff and the files around it.
 2. Show the cleanup: each item with its file, line and why. Wait for a yes.

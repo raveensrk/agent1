@@ -433,7 +433,7 @@ def test_investigator_skill():
     skills = os.path.dirname(SKILL)
     read = lambda *p: open(os.path.join(skills, *p), encoding="utf-8").read()
     inv = read("investigator-ant", "SKILL.md")
-    for heading in ("## Proof", "## Standalone mode", "## Ishikari mode"):
+    for heading in ("## Proof", "## Normal mode", "## Ishikari mode"):
         assert heading in inv, heading
     assert "No plan comes before the proof passes." in inv
     assert "Write no files. End in the session" in inv
@@ -442,6 +442,21 @@ def test_investigator_skill():
     assert "`/investigator-ant`" in prompt and "Ishikari mode" in prompt
     assert "investigator-ant/SKILL.md" in read("ishikari", "SKILL.md")
     assert "../investigator-ant/SKILL.md#proof" in read("add-requirement", "SKILL.md")
+
+
+def test_ant_skills_have_two_modes():
+    skills = os.path.dirname(SKILL)
+    for name in ("investigator-ant", "janitor-ant", "judge-ant", "detective-ant", "retrospective-ant"):
+        text = open(os.path.join(skills, name, "SKILL.md"), encoding="utf-8").read()
+        for heading in ("## Which mode", "## Normal mode", "## Ishikari mode"):
+            assert heading in text, (name, heading)
+        assert text.index("## Which mode") < text.index("## Normal mode") < text.index("## Ishikari mode"), name
+    for src in ("ishikari-build.js", "ishikari-finish.js", "ishikari-retro.js"):
+        js = open(os.path.join(SKILL, "scripts", src), encoding="utf-8").read()
+        for line in [l for l in js.split("\n") if "-ant skill and follow" in l]:
+            assert "its Ishikari mode" in line, (src, line)
+    prompt = open(os.path.join(SKILL, "assets", "prompts", "investigator.md"), encoding="utf-8").read()
+    assert "its Ishikari mode" in prompt
 
 
 def test_save_logs_and_recover():
@@ -494,4 +509,5 @@ if __name__ == "__main__":
     test_metro_map()
     test_docs_match_build()
     test_investigator_skill()
+    test_ant_skills_have_two_modes()
     print("ok")

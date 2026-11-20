@@ -2,7 +2,7 @@
 name: detective-ant
 metadata:
   scope: global
-description: Check a change against what it was asked to do - a task, an issue or a plan - and find real bugs, each with its cause and a fix plan a worker can build. Never edits code. Run by hand it checks the current branch against main and the task text and answers in the session with pass or fail. Run by Ishikari's detective ant it checks a task or a fix and replies in the ant's JSON. Use when the user says check this against the task, does this do what the issue asked, find bugs in my branch, or runs /detective-ant.
+description: Check a change against what it was asked to do - a task, an issue or a plan - and find real bugs, each with its cause and a fix plan a worker can build. Never edits code. In normal use it checks the current branch against main and the task text and answers in the session with pass or fail. Run by Ishikari's detective ant it checks a task or a fix and replies in the ant's JSON. Use when the user says check this against the task, does this do what the issue asked, find bugs in my branch, or runs /detective-ant.
 argument-hint: "[task or issue text, or a plan file]"
 ---
 
@@ -10,6 +10,17 @@ argument-hint: "[task or issue text, or a plan file]"
 
 Check that a change does what it was asked to do, and nothing breaks.
 Never write or edit code.
+
+## Which mode
+
+- **Ishikari mode** only when your prompt says you are an ant of the Ishikari
+  workflow and tells you to follow this skill's Ishikari mode. Then follow
+  [Ishikari mode](#ishikari-mode) and the ant's prompt, and nothing else.
+- **Normal mode** every other time: the user runs the skill, it triggers in a
+  normal session, or another skill or agent calls it. Then follow
+  [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
+  spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
+  inputs.
 
 ## Check
 
@@ -30,7 +41,7 @@ Never write or edit code.
   only new bugs: ones the fix caused. Never repeat a cause or plan that already
   failed: say why it failed and try another way.
 
-## Run by hand
+## Normal mode
 
 1. Ask: the text or plan file given; none given, ask for it.
 2. Change: the current branch, `git diff main...HEAD`.

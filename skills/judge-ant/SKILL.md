@@ -2,7 +2,7 @@
 name: judge-ant
 metadata:
   scope: global
-description: Score code 0-10 against a spec of behaviours and invariants, id by id, and list each gap as a concrete fix and each real bug apart. Read only - never changes anything. Run by hand it scores the current branch against a spec file or task text and answers in the session. Run by Ishikari's judge or juror ant it scores a whole run or one task and replies in the ant's JSON. Use when the user says judge this, score this branch, does this meet the spec, or runs /judge-ant.
+description: Score code 0-10 against a spec of behaviours and invariants, id by id, and list each gap as a concrete fix and each real bug apart. Read only - never changes anything. In normal use it scores the current branch against a spec file or task text and answers in the session. Run by Ishikari's judge or juror ant it scores a whole run or one task and replies in the ant's JSON. Use when the user says judge this, score this branch, does this meet the spec, or runs /judge-ant.
 argument-hint: "[spec file or task text]"
 ---
 
@@ -10,6 +10,17 @@ argument-hint: "[spec file or task text]"
 
 Score what the code does against what the spec says it must do.
 Never change anything.
+
+## Which mode
+
+- **Ishikari mode** only when your prompt says you are an ant of the Ishikari
+  workflow and tells you to follow this skill's Ishikari mode. Then follow
+  [Ishikari mode](#ishikari-mode) and the ant's prompt, and nothing else.
+- **Normal mode** every other time: the user runs the skill, it triggers in a
+  normal session, or another skill or agent calls it. Then follow
+  [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
+  spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
+  inputs.
 
 ## What is scored
 
@@ -41,7 +52,7 @@ invariants first, number them, and show that list with the score.
   one-task judges, weigh them, check how the tasks fit, then decide the whole
   score yourself. A task with no report: judge it yourself.
 
-## Run by hand
+## Normal mode
 
 1. Spec: the file or task text given; none given, ask for it.
 2. Code: the current branch, against `main`.

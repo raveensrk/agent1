@@ -2,7 +2,7 @@
 name: investigator-ant
 metadata:
   scope: global
-description: Investigate a task before building it - read the repo, research missing facts, ask the user simple questions, prove the task can be built with evidence or a throwaway spike, then plan it. Run by hand it writes no files and answers in the session with findings and a short plan. Run by Ishikari's investigator ant it writes the product spec, tech spec, docs brief and worker plans and replies in JSON. Use when the user says investigate this, can this be built, how would we build this, plan this task, or runs /investigator-ant. Also the proof step of /add-requirement.
+description: Investigate a task before building it - read the repo, research missing facts, ask the user simple questions, prove the task can be built with evidence or a throwaway spike, then plan it. In normal use it writes no files and answers in the session with findings and a short plan. Run by Ishikari's investigator ant it writes the product spec, tech spec, docs brief and worker plans and replies in JSON. Use when the user says investigate this, can this be built, how would we build this, plan this task, or runs /investigator-ant. Also the proof step of /add-requirement.
 argument-hint: "[the task]"
 ---
 
@@ -11,13 +11,24 @@ argument-hint: "[the task]"
 Find out what a task needs, prove it can be built, then plan it.
 Two modes:
 
-- **Standalone** (run by hand): write no files. Answer in the session.
+- **Normal** (run by the user or in a normal session): write no files. Answer in the session.
 - **Ishikari** (loaded by Ishikari's investigator ant, its inputs given):
   write the specs and plans and reply only in JSON, as in
   [Ishikari mode](#ishikari-mode).
 
 Both modes share [Investigate](#investigate), [Ask](#ask) and [Proof](#proof).
 No plan comes before the proof passes.
+
+## Which mode
+
+- **Ishikari mode** only when your prompt says you are an ant of the Ishikari
+  workflow and tells you to follow this skill's Ishikari mode. Then follow
+  [Ishikari mode](#ishikari-mode) and the ant's prompt, and nothing else.
+- **Normal mode** every other time: the user runs the skill, it triggers in a
+  normal session, or another skill or agent calls it. Then follow
+  [Normal mode](#normal-mode) and ignore everything Ishikari-only: no Ishikari
+  spec or plan files, no JSON reply, no Ishikari paths, never wait for an ant's
+  inputs.
 
 ## Investigate
 
@@ -30,7 +41,7 @@ No plan comes before the proof passes.
    .env, credential files, browser profiles). A fact about a user interface
    (GUI, CLI or TUI): tell the researcher to use the `/ux` skill in review mode
    (or inspect UI code and docs directly if `/ux` is unavailable), never plan
-   mode. Standalone: start one only when reading it yourself would cost more.
+   mode. Normal mode: start one only when reading it yourself would cost more.
 
 ## Ask
 
@@ -40,7 +51,7 @@ No plan comes before the proof passes.
 - Every question in `/ask-simple` style: one short plain sentence, 2-4
   answers, recommended first and marked (Recommended). Up to 4 at once that do
   not depend on each other, most important first.
-- Standalone: ask with the `/ask-simple` skill (fallback: the question tool).
+- Normal mode: ask with the `/ask-simple` skill (fallback: the question tool).
   No user to ask (a subagent run): take the recommended answer and list each
   question with the answer taken in the output. Ishikari: put them in the JSON reply; the main session asks.
 
@@ -63,7 +74,7 @@ Cannot be built as asked, or the design needs a choice only the user can make:
 ask (see [Ask](#ask)), with 2-4 alternatives, each with its trade-offs and its
 own evidence. Only when no answer could fix it, report it as a blocker.
 
-## Standalone mode
+## Normal mode
 
 1. [Investigate](#investigate), then [Ask](#ask) until nothing important is
    unclear.
