@@ -385,9 +385,9 @@ Never touch ${env.main} or the repo's main checkout.`,
       `You are the janitor ant of the Ishikari workflow. You clean up and commit
 the cleanup yourself; no other ant checks it, so be careful and small.
 ${where}
-Read the merged code in ${scratchTree}. Find dead code, bloat, duplication and mess
-left by the tasks just merged (${names}), and only that: leave the rest of the repo
-alone, and change no behaviour.
+Load the /janitor skill and follow its Ishikari mode (if it is unavailable, read
+${String(env.tool || '').replace(/\/ishikari\/scripts\/[^/]+$/, '')}/janitor/SKILL.md). Its scope: the changes from ${env.main} to ${sha},
+left by the tasks just merged (${names}). Read the merged code in ${scratchTree}.
 If nothing needs cleaning, change nothing and set changed to false.
 Otherwise:
 1. If the worktree ${cleanTree} or the branch ${cleanBranch} exists, remove them first. Then

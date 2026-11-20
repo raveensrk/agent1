@@ -200,3 +200,20 @@ The investigator's instructions move from assets/prompts/investigator.md into a 
 - Shared proof: /add-requirement step 3 uses the investigator skill's proof step instead of its own text.
 - test_investigator_skill checks that the skill has both modes and the proof rule, that Ishikari's investigator prompt loads it, and that add-requirement points to its proof step.
 Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari/SKILL.md, step "docs ant runs /docs"); the investigator prompt is one file, skills/ishikari/assets/prompts/investigator.md (130 lines); proof steps at skills/add-requirement/SKILL.md section 3.
+
+* DONE [#B] The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant  :ishikari:
+:PROPERTIES:
+:ID:          ISH-11
+:CREATED:     2026-11-20
+:NEEDS:       ISH-10
+:VERIFY:      "tests/test_workflows.mjs finish: the janitor cleans, tests, commits and lands its cleanup alone, judge after it"
+:LAST_EDITED: 2026-11-20
+:APPROVED:    2026-11-20
+:IMPLEMENTED: 2026-11-20
+:END:
+What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js into a skill, skills/janitor/SKILL.md.
+- Scope: only the lines a change added or touched; by hand `git diff <base>...HEAD` (base main), in Ishikari the range main to the merged commit.
+- Cleans dead code, duplication, bloat and mess; changes no behaviour; tests run after, and a failing cleanup is undone.
+- By hand: shows the cleanup, applies and commits after a yes.
+- Ishikari mode: never asks; the ant keeps its git steps, note file, reply schema and JANITOR_MIN_LINES skip. The ant loads /janitor, or reads the skill file when it is unavailable.
+Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-finish.js docsChain); ISH-10 did the same for the investigator.

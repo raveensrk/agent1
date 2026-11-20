@@ -1,0 +1,45 @@
+---
+name: janitor
+metadata:
+  scope: global
+description: Clean up only the code a change added or touched - dead code, bloat, duplication and mess - with no change in behaviour, tests run after. Run by hand it cleans the current branch's changes against main, shows the cleanup and applies it after a yes. Run by Ishikari's janitor ant it never asks and follows the ant's git steps. Use when the user says clean up this change, tidy my diff, janitor, or runs /janitor. For a whole-project sweep use /maintain instead.
+argument-hint: "[base ref, default main]"
+---
+
+# Janitor
+
+Clean the mess a change left. Only that change, nothing else.
+
+## Scope
+
+- The changed lines: `git diff <base>...HEAD`, base `main` unless given.
+- Ishikari: the range its ant names.
+- Code outside the changed lines stays as it is, even if it is messy.
+  Exception: a helper the change made dead or duplicate may go.
+
+## What to clean
+
+- Dead code: unused functions, variables, imports, branches, commented-out code.
+- Duplication: the same logic written twice in the change, or next to an
+  existing helper it could call.
+- Bloat: needless wrappers, layers, options or checks nothing needs.
+- Mess: debug prints, stray TODOs the change left, leftover files.
+
+## Rules
+
+- Change no behaviour. Public interfaces, output and data stay the same.
+- Small and careful: no rewrites, no renames across files, no new features.
+- Run the project's tests after the cleanup. They fail: undo the cleanup.
+- Nothing worth cleaning: change nothing and say so.
+
+## Run by hand
+
+1. Read the diff and the files around it.
+2. Show the cleanup: each item with its file, line and why. Wait for a yes.
+3. On yes: apply, run the tests, commit as `refactor: clean up <what>`.
+
+## Ishikari mode
+
+Loaded by Ishikari's janitor ant. Never ask. Follow the ant's own git steps
+(worktree, commit, landing) and its reply format. Write what you changed and
+why, in a few lines, to the note file it names.
