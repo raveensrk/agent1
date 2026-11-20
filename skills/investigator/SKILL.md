@@ -23,14 +23,14 @@ No plan comes before the proof passes.
 
 1. Read the repo once, enough to judge the task. Critique it: gaps, risks,
    unclear scope.
-2. Missing facts: start up to 5 researcher agents at once (model opus, effort
+2. Missing facts the repo cannot answer: start up to 5 researcher agents at once (model opus, effort
    low when the tool takes it) and wait for them. Stop each one with TaskStop
    once its facts are back; never reuse one. They read only, change nothing,
    never open or quote secrets (passwords, keys, tokens, ~/.ssh, keychains,
    .env, credential files, browser profiles). A fact about a user interface
    (GUI, CLI or TUI): tell the researcher to use the `/ux` skill in review mode
    (or inspect UI code and docs directly if `/ux` is unavailable), never plan
-   mode.
+   mode. Standalone: start one only when reading it yourself would cost more.
 
 ## Ask
 
@@ -41,7 +41,8 @@ No plan comes before the proof passes.
   answers, recommended first and marked (Recommended). Up to 4 at once that do
   not depend on each other, most important first.
 - Standalone: ask with the `/ask-simple` skill (fallback: the question tool).
-  Ishikari: put them in the JSON reply; the main session asks.
+  No user to ask (a subagent run): take the recommended answer and list each
+  question with the answer taken in the output. Ishikari: put them in the JSON reply; the main session asks.
 
 ## Proof
 
@@ -70,10 +71,13 @@ own evidence. Only when no answer could fix it, report it as a blocker.
 3. Write no files. End in the session with:
    - **Findings**: what the task really needs, and the gaps and risks found.
    - **Can it be built**: yes or no, with the evidence.
-   - **Plan**: the parts of the change, the files each touches, and how each
-     is tested. Short.
+   - **Plan**: the parts of the change, the files each touches, how each is
+     tested, the test command, and the docs or help text to update. Short.
    - **Risks**: what could still go wrong.
-     Proof failed: give findings and the blocker, no plan.
+   - **Questions**: only when answers were taken without the user, each
+     question with the answer taken.
+4. Proof failed: give findings, the blocker and the alternatives offered, with
+   their evidence. No plan.
 
 ## Ishikari mode
 
