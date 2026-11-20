@@ -10,6 +10,7 @@ by registering this repo with [install.py](../install.py).
 - [investigator-ant](./investigator-ant/SKILL.md) - Investigates a task, proves it can be built, then plans it: in the session by hand, or as specs and plans for Ishikari.
 - [ishikari](./ishikari/SKILL.md) - Runs the Ishikari ant workflow on a task: review, plan, parallel build, check, fix, test together and merge, stopping only to ask.
 - [janitor-ant](./janitor-ant/SKILL.md) - Cleans only the code a change added or touched, with no change in behaviour: by hand after a yes, or as Ishikari's janitor ant.
+- [judge-ant](./judge-ant/SKILL.md) - Scores code 0-10 against a spec's behaviours and invariants, id by id, with gaps and bugs: by hand, or as Ishikari's judge and juror ants.
 - [maintain](./maintain/SKILL.md) - Maintains a project: dead code, bloat, redundancy, large blocks and helper scripts, planned first, applied one verified step at a time.
 - [next](./next/SKILL.md) - Asks "What next?" after a task, lists up to 5 next steps best first, and does the one the user picks.
 - [port-app](./port-app/SKILL.md) - Plans a port of an app to a new language or toolkit by asking very simple questions, then writing the plan.

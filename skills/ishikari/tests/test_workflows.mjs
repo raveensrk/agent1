@@ -608,6 +608,7 @@ test('finish: many tasks, one juror per task, at most parallel at once, judge se
   assert.ok(j.includes('- a: 6/10; gaps: gap in a'))
   assert.ok(j.includes('- c: no report'))
   assert.ok(j.includes('not an average'))
+  assert.ok(j.includes('Load the /judge-ant skill') && prompts['juror-ant:1:b'].includes('/judge-ant/SKILL.md'))
   assert.equal(out.verdict.score, 8)
 })
 

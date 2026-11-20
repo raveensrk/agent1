@@ -428,6 +428,8 @@ Never touch ${env.main} or the repo's main checkout.`,
   const juror = (t, round) => ant(
     `You are a juror ant of the Ishikari workflow, helping the judge ant.
 ${where}
+Load the /judge-ant skill and follow its Ishikari mode (if it is unavailable, read
+${String(env.tool || '').replace(/\/ishikari\/scripts\/[^/]+$/, '')}/judge-ant/SKILL.md).
 Judge one task, ${t.id}. Its plan: ${env.state}/plans/${runOf(t.branch)}/${t.id}.md, a thin slice that names the
 behaviours (B1...) and invariants (I1...) it covers. They are written out in the
 product spec ${planDir}/product_spec.md. Read the merged code in
@@ -460,18 +462,15 @@ yourself: it is not an average. Keep every gap you agree with.` : ''
     const j = await ant(
       `You are the judge ant of the Ishikari workflow.
 ${where}
+Load the /judge-ant skill and follow its Ishikari mode (if it is unavailable, read
+${String(env.tool || '').replace(/\/ishikari\/scripts\/[^/]+$/, '')}/judge-ant/SKILL.md).
 Read the product spec ${planDir}/product_spec.md: the behaviours (B1...) and the
 invariants (I1...) this run must deliver. Then read the merged code in
 ${scratchTree}, the code that will land on ${env.main}: the tasks (${names}) with the
 janitor's cleanup on top if it landed.${juryText}
 Judge one thing, id by id: does the code behave as each behaviour says, and does
-each invariant hold? Score the whole run from 0 to 10, where 10 means every
-behaviour is delivered, every invariant holds and no behaviour was added that the
-spec does not have. The tech spec and the plans in that folder say how it was
-meant to be built; they are not what you score. List each gap in "gaps" as a
-short, concrete fix a worker ant can build without questions: the id, what is
-missing or wrong, and in which file. Repeat in "bugs" each gap where the code
-itself behaves wrongly; a missing or weak test is a gap, not a bug.
+each invariant hold? Score the whole run, as the skill says. The tech spec and the plans in that
+folder say how it was meant to be built; they are not what you score.
 Never change anything.`,
       { label: `judge-ant:${round}`, phase: 'Upkeep', effort: EFFORT.judge,
         schema: SCORED },

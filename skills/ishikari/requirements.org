@@ -217,3 +217,21 @@ What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js 
 - By hand: shows the cleanup, applies and commits after a yes.
 - Ishikari mode: never asks; the ant keeps its git steps, note file, reply schema and JANITOR_MIN_LINES skip. The ant loads /janitor-ant, or reads the skill file when it is unavailable.
 Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-finish.js docsChain); ISH-10 did the same for the investigator.
+
+* DONE [#B] The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants  :ishikari:
+:PROPERTIES:
+:ID:          ISH-12
+:CREATED:     2026-11-21
+:NEEDS:       ISH-7
+:VERIFY:      "tests/test_workflows.mjs finish: many tasks, one juror per task, at most parallel at once, judge sees their reports"
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:IMPLEMENTED: 2026-11-21
+:END:
+The scoring rules move from the judge and juror prompts in scripts/ishikari-finish.js into one skill, skills/judge-ant/SKILL.md.
+- Scores 0-10 against behaviours and invariants, id by id; extra behaviour counts against; how it was built is not scored; the score is a judgement, never an average.
+- Gaps are concrete fixes naming the id and file; bugs repeat the gaps where code behaves wrongly; a missing test is never a bug.
+- Scope: whole (judge) or one task (juror); the judge weighs juror reports and decides itself.
+- By hand: scores the current branch against a spec file or task text, splitting text without ids into numbered behaviours and invariants, and answers in the session. Read only.
+- Ishikari mode: never asks; the ants keep their paths, jury text, parallel rule and JSON schema, and load /judge-ant or read the skill file.
+Evidence: ISH-10 and ISH-11 load skills the same way from inside ants.
