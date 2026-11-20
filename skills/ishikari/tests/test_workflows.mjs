@@ -10,18 +10,14 @@ const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts')
 const env = { repo: '/r', state: '/s', run: 'r1', main: 'main', tool: '/t/ishikari.py' }
 
 // Run a workflow script body with a fake runtime. ant(prompt, opts) answers each agent call.
-function run(name, args, ant, clerk = () => ({})) {
+// No ant writes the logbook: the result's log holds the entries, and `logs` is that list.
+function run(name, args, ant) {
   const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
   const calls = []
-  const instant = []
-  // Instant logbook appends go to their own list, so call order reads as the run.
-  const agent = async (p, o) => {
-    if (o.label === 'logbook-clerk:now') { instant.push(p); return clerk(p) }
-    calls.push(o.label); return ant(p, o)
-  }
+  const agent = async (p, o) => { calls.push(o.label); return ant(p, o) }
   const parallel = fns => Promise.all(fns.map(f => f()))
   const body = new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)
-  return body(args, agent, parallel, () => {}, () => {}, async () => ({})).then(out => ({ out, calls, instant }))
+  return body(args, agent, parallel, () => {}, () => {}, async () => ({})).then(out => ({ out, calls, logs: out.log || [] }))
 }
 
 // The plan stage only checks the investigator's plan list: no ant plans there.
@@ -83,14 +79,12 @@ test('plan: bad arguments are an error', async () => {
 
 test('plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice', async () => {
   const first = await planWith([PLAN], { escalated: 'touches 6 files' })
-  assert.deepEqual(first.instant.flatMap(p => logged(p)).map(e => `${e.who}: ${e.event}`),
+  assert.deepEqual(first.logs.map(e => `${e.who}: ${e.event}`),
     ['investigator ant: investigated', 'main session: fast path escalated', 'plan script: 1 plan checked'])
-  assert.equal(first.instant.flatMap(p => logged(p))[0].detail, '/s/plans/r1/product_spec.md')
+  assert.equal(first.logs[0].detail, '/s/plans/r1/product_spec.md')
+  assert.equal(first.calls.length, 0)  // no clerk: no ant writes the logbook
   const refused = await planWith([{ ...PLAN, id: 'A' }], { recheck: true })
-  assert.deepEqual(refused.instant.flatMap(p => logged(p)).map(e => `${e.who}: ${e.event}`), ['plan script: plans refused'])
-  const lost = await run('ishikari-plan.js', { env, task: 't', ids: ['B1'], plans: [PLAN] }, () => ({}), () => { throw new Error('logbook down') })
-  assert.equal(lost.out.stage, 'plans')  // a dead clerk never blocks the stage
-  assert.equal(lost.out.logLost.length, 2)
+  assert.deepEqual(refused.logs.map(e => `${e.who}: ${e.event}`), ['plan script: plans refused'])
 })
 
 
@@ -616,39 +610,36 @@ test('finish: many tasks, one juror per task, at most parallel at once, judge se
   assert.equal(out.verdict.score, 8)
 })
 
-// ---- logbook: one append per stage, through the tool ----
-function logged(p) { return JSON.parse(p.split("<<'ISHIKARI_ROWS_END'\n")[1].split('\nISHIKARI_ROWS_END')[0]) }
-
-test('build: the logbook clerk appends each task and each bug once', async () => {
+// ---- logbook: every stage returns its entries as log; `ishikari.py save` appends them ----
+test('build: the stage summary logs each task and each bug once, after the replies', async () => {
   const prompts = {}
-  await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
+  const { calls, logs } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) => {
     prompts[o.label] = p
     if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
     if (o.label === 'detective-ant:a:check') return { bugs: ['broken'], cause: 'c', plan: 'p' }
     if (o.label.startsWith('detective')) return { fixed: [{ id: 'a#1', fixed: false }], bugs: [] }
     return {}
   })
-  const p = prompts['logbook-clerk']
-  assert.ok(p.includes('python3 /t/ishikari.py log append /s'))
-  assert.deepEqual(logged(p), [
+  assert.ok(!calls.some(c => c.startsWith('logbook')))
+  assert.deepEqual(logs.slice(calls.length), [
     { run: 'r1', task: 'a', who: 'detective ant', event: 'bug escalated', detail: 'a#1: broken', tries: 3 },
     { run: 'r1', task: 'a', who: 'detective ant', event: 'escalated' },
   ])
 })
 
 test('finish: the logbook gets the tasks, the cleanup, the verdict and the main move', async () => {
-  const { prompts } = await judgeRun([{ score: 5, gaps: ['g1'] }, { score: 6, gaps: ['g2'] }])
-  const moved = logged(prompts['finisher-ant'])
+  const { prompts, logs } = await judgeRun([{ score: 5, gaps: ['g1'] }, { score: 6, gaps: ['g2'] }])
+  const moved = logs.slice(-3)
   assert.deepEqual(moved.map(e => e.event), ['done', 'verdict flagged', 'main moved'])
   assert.equal(moved[1].score, 6)
   assert.equal(moved[1].detail, 'after one fix round (first score 5)\ng2')
-  assert.ok(prompts['finisher-ant'].includes('log append /s'))
+  assert.ok(!prompts['finisher-ant'].includes('log append'))  // the finisher writes no logbook
 })
 
-// ---- logbook: one entry the moment each ant finishes ----
-test('finish: every ant gets its own logbook entry at once, the finisher excepted', async () => {
-  const { out, instant } = await judgeRun([{ score: 4, gaps: ['g'] }, { score: 8, gaps: [] }])
-  const got = instant.flatMap(p => logged(p))
+// ---- logbook: one entry for each ant's reply ----
+test('finish: every ant gets its own logbook entry, the finisher excepted', async () => {
+  const { out, calls, logs } = await judgeRun([{ score: 4, gaps: ['g'] }, { score: 8, gaps: [] }])
+  const got = logs.slice(0, calls.filter(c => c !== 'finisher-ant').length)
   assert.deepEqual(got.map(e => `${e.who}: ${e.event}`), [
     'merger ant: merged 1 of 1', 'judge ant: score 4', 'worker ant: built',
     'detective ant: passed', 'judge ant: score 8', 'docs ant: nothing changed',
@@ -658,9 +649,8 @@ test('finish: every ant gets its own logbook entry at once, the finisher excepte
 })
 
 test('build: an ant entry names its task, and a dead ant is logged as died', async () => {
-  const { instant } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
+  const { logs: got } = await run('ishikari-build.js', { env, plans: [{ id: 'a', title: 'A' }] }, (p, o) =>
     o.label.startsWith('worker') ? null : {})
-  const got = instant.flatMap(p => logged(p))
   assert.deepEqual(got.slice(0, 2), [{ run: 'r1', task: 'a', who: 'worker ant', event: 'died' }, { run: 'r1', task: 'a', who: 'worker ant', event: 'died' }])
 })
 
@@ -681,7 +671,7 @@ test('finish: two tasks, the judge still works alone; three get a jury', async (
 
 
 // ---- every ant: latest Opus, low effort ----
-test('every workflow ant in all four scripts runs on opus at low effort', async () => {
+test('every workflow ant in the scripts runs on opus at low effort', async () => {
   const seen = []
   const spy = (name, args, answer) => {
     const src = readFileSync(join(SCRIPTS, name), 'utf8').replace('export const meta', 'const meta')
@@ -698,8 +688,9 @@ test('every workflow ant in all four scripts runs on opus at low effort', async 
       : o.label === 'docs-ant' ? { changed: true, title: 'd', testsPassed: false, landed: false, files: [] }
       : o.label.startsWith('juror') || o.label.startsWith('judge') ? { score: 9, gaps: [] } : { moved: true, reason: '' })
   await spy('ishikari-retro.js', { env }, () => null)
-  for (const s of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js', 'ishikari-retro.js']) assert.ok(seen.some(x => x[0] === s), s)
-  for (const label of ['docs-ant', 'merger-ant:rewind', 'retrospective-ant', 'juror-ant:1:a', 'logbook-clerk:now']) assert.ok(seen.some(x => x[1] === label), label)
+  assert.ok(!seen.some(x => x[0] === 'ishikari-plan.js'))  // the plan stage runs no ant at all
+  for (const s of ['ishikari-build.js', 'ishikari-finish.js', 'ishikari-retro.js']) assert.ok(seen.some(x => x[0] === s), s)
+  for (const label of ['docs-ant', 'merger-ant:rewind', 'retrospective-ant', 'juror-ant:1:a']) assert.ok(seen.some(x => x[1] === label), label)
   const off = seen.filter(([, , model, effort]) => model !== 'opus' || effort !== 'low')
   assert.deepEqual(off, [])
 })
@@ -714,19 +705,6 @@ test('finish: the janitor is skipped under 100 changed lines, runs at 100, runs 
   assert.ok((await go()).calls.includes('janitor-ant'))
   const { prompts } = await go(5)
   assert.ok(prompts['merger-ant'].includes('diff --shortstat main <sha>'))
-})
-
-test('logbook: one clerk at a time, later entries batched, none lost', async () => {
-  let live = 0, peak = 0
-  const slow = () => { live++; peak = Math.max(peak, live); return new Promise(r => setTimeout(() => { live--; r({}) }, 5)) }
-  const ids = ['a', 'b', 'c', 'd']
-  const { instant } = await run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, async (p, o) =>
-    o.label === 'merger-ant' ? { sha: SHA, results: ids.map(id => ({ id, outcome: 'merged', detail: '' })), landed: ids, missing: [] }
-      : o.label.startsWith('juror') || o.label.startsWith('judge') ? { score: 9, gaps: [] } : { moved: true, reason: '' }, slow)
-  assert.equal(peak, 1)
-  const entries = instant.flatMap(p => logged(p))
-  assert.equal(entries.filter(e => e.who === 'juror ant').length, 4)
-  assert.ok(instant.length < entries.length)  // the jurors' entries were batched
 })
 
 // ---- one detective: it checks, and plans every fix ----
@@ -767,7 +745,7 @@ test('build: a re-check with no plan still gives the worker the open bugs', asyn
 test('retro: one read-only ant writes only retrospective.md and returns ranked findings', async () => {
   const prompts = {}
   const f = { category: 'inefficiency', title: 't', evidence: 'e', impact: 'i', change: 'c', where: 'scripts/ishikari-build.js MAX_TRIES' }
-  const { out, calls, instant } = await run('ishikari-retro.js', { env: { ...env, tool: '/k/scripts/ishikari.py' }, outcome: 'main moved' }, (p, o) => {
+  const { out, calls, logs } = await run('ishikari-retro.js', { env: { ...env, tool: '/k/scripts/ishikari.py' }, outcome: 'main moved' }, (p, o) => {
     prompts[o.label] = p
     assert.equal(o.model, 'opus')
     assert.equal(o.effort, 'low')
@@ -781,7 +759,7 @@ test('retro: one read-only ant writes only retrospective.md and returns ranked f
   const p = prompts['retrospective-ant']
   assert.ok(p.includes('Read only') && p.includes('Your one write is /s/plans/r1/retrospective.md'))
   assert.ok(p.includes('main moved') && p.includes('/k/SKILL.md') && p.includes("Run: r1"))
-  assert.deepEqual(logged(instant[0])[0].event, '2 findings')
+  assert.deepEqual(logs.map(e => e.event), ['2 findings'])
 })
 
 test('retro: a dead or shapeless retrospective ant is an error, never a silent pass', async () => {
@@ -796,9 +774,9 @@ test('retro: a dead or shapeless retrospective ant is an error, never a silent p
   }
   const changed = await run('ishikari-retro.js', { env }, () => ({ ...R, after: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }))
   assert.match(changed.out.reason, /was to change nothing/)
-  const thrown = await run('ishikari-retro.js', { env }, () => { throw new Error('down') }, () => { throw new Error('clerk down') })
+  const thrown = await run('ishikari-retro.js', { env }, () => { throw new Error('down') })
   assert.equal(thrown.out.stage, 'error')
-  assert.equal(thrown.out.logLost.length, 1)
+  assert.deepEqual(thrown.logs.map(e => e.event), ['died'])  // an error result still carries its log
   const badEnv = await run('ishikari-retro.js', { env: { ...env, repo: 'r' } }, () => ({}))
   assert.equal(badEnv.out.stage, 'error')
   assert.equal(badEnv.calls.length, 0)
@@ -806,8 +784,8 @@ test('retro: a dead or shapeless retrospective ant is an error, never a silent p
 
 // ---- build hardening: no lost results, no stale bases, nothing trusted blindly ----
 const W = { status: 'built', notes: 'n' }
-const buildWith = (args, answer, clerk) => run('ishikari-build.js', { env, ...args }, (p, o) =>
-  answer(o, p) ?? (o.label.startsWith('worker') ? W : o.label.startsWith('detective') ? { bugs: [] } : {}), clerk)
+const buildWith = (args, answer) => run('ishikari-build.js', { env, ...args }, (p, o) =>
+  answer(o, p) ?? (o.label.startsWith('worker') ? W : o.label.startsWith('detective') ? { bugs: [] } : {}))
 
 test('build: an ant call that throws is a dead ant, never a lost stage', async () => {
   let n = 0
@@ -815,7 +793,7 @@ test('build: an ant call that throws is a dead ant, never a lost stage', async (
     if (o.label.startsWith('integrator')) throw new Error('runtime down')
     if (o.label === 'worker-ant:a:build' && ++n === 1) throw new Error('boom')
     return o.label.startsWith('worker') ? W : { bugs: [] }
-  }, () => { throw new Error('clerk down') })
+  })
   assert.equal(out.stage, 'build')
   assert.deepEqual(out.tasks.map(t => t.status), ['awaiting review', 'awaiting review'])
   assert.equal(out.together, null)
@@ -853,16 +831,15 @@ test('build: a first build that was stuck still gets the full check', async () =
 test('build: a saved workflow that fails or returns nothing is stuck, and is logged', async () => {
   const src = readFileSync(join(SCRIPTS, 'ishikari-build.js'), 'utf8').replace('export const meta', 'const meta')
   for (const result of [null, { stage: 'error', reason: 'x' }]) {
-    const calls = [], logs = []
+    const calls = []
     const agent = async (p, o) => {
-      if (o.label === 'logbook-clerk:now') { logs.push(p); return {} }
       calls.push(o.label)
       return o.label.startsWith('worker') ? W : o.label.endsWith('recheck1') ? { fixed: [{ id: 'a#1', fixed: true }], bugs: [] } : { bugs: [] }
     }
     const body = new Function('args', 'agent', 'parallel', 'phase', 'log', 'workflow', `return (async () => {${src}})()`)
     const out = await body({ env, plans: [{ id: 'a', workflow: 'saved' }] }, agent, fns => Promise.all(fns.map(f => f())), () => {}, () => {}, async () => result)
     assert.ok(calls.includes('worker-ant:a:fix1'), JSON.stringify(result))  // stuck: the fix loop took over
-    assert.ok(logs.some(p => p.includes('workflow stuck')))
+    assert.ok(out.log.some(e => e.event === 'workflow stuck'))
     assert.equal(out.tasks[0].status, 'awaiting review')
   }
 })
@@ -915,14 +892,13 @@ test('build: clash fixes run one at a time, and tasks built on a fixed task take
   assert.ok(run1.calls.includes('worker-ant:c:update2') && run1.calls.includes('detective-ant:c:check2'))
   assert.ok(run1.calls.indexOf('worker-ant:c:update2') > run1.calls.indexOf('detective-ant:b:recheck1'))
   assert.deepEqual(run1.out.together.tasks.sort(), ['a', 'b', 'c'])
-  const rows = run1.instant.concat().length  // per-reply entries exist; the stage summary logs each task once
-  assert.ok(rows > 0)
+  assert.ok(run1.logs.length > run1.calls.length)  // every reply, then the stage summary
 })
 
 test('build: a task built on a clash task that no longer passes is blocked, and ends are logged once', async () => {
   const prompts = {}
   let round = 0
-  const { out } = await run('ishikari-build.js', { env, plans: [{ id: 'a' }, { id: 'b' }, { id: 'c', after: ['b'] }] }, (p, o) => {
+  const { out, calls, logs } = await run('ishikari-build.js', { env, plans: [{ id: 'a' }, { id: 'b' }, { id: 'c', after: ['b'] }] }, (p, o) => {
     prompts[o.label] = p
     if (o.label.startsWith('integrator')) return ++round === 1
       ? { sha: 'abc1234', results: [{ id: 'a', outcome: 'merged', detail: '' }, { id: 'b', outcome: 'tests failed', detail: 'd', with: ['a'] }, { id: 'c', outcome: 'merged', detail: '' }] }
@@ -932,7 +908,7 @@ test('build: a task built on a clash task that no longer passes is blocked, and 
   })
   const by = Object.fromEntries(out.tasks.map(t => [t.id, t.status]))
   assert.deepEqual(by, { a: 'awaiting review', b: 'escalated', c: 'blocked' })
-  const rows = logged(prompts['logbook-clerk'])
+  const rows = logs.slice(calls.length)
   for (const id of ['a', 'b', 'c']) {
     const ev = rows.filter(r => r.task === id).map(r => r.event)
     assert.equal(new Set(ev).size, ev.length, `${id}: ${ev.join(', ')}`)  // nothing logged twice
@@ -940,10 +916,10 @@ test('build: a task built on a clash task that no longer passes is blocked, and 
 })
 
 test('build: a re-check that fixed nothing is not logged as passed', async () => {
-  const { instant } = await buildWith({ plans: [{ id: 'a' }] }, o =>
+  const { calls, logs } = await buildWith({ plans: [{ id: 'a' }] }, o =>
     o.label === 'detective-ant:a:check' ? { bugs: ['x'], cause: 'c', plan: 'p' }
       : o.label.startsWith('detective') ? { fixed: [{ id: 'a#1', fixed: false }], bugs: [] } : undefined)
-  const ev = instant.flatMap(p => logged(p)).filter(e => e.who === 'detective ant').map(e => e.event)
+  const ev = logs.slice(0, calls.length).filter(e => e.who === 'detective ant').map(e => e.event)
   assert.ok(ev.includes('1 still open') && !ev.slice(1).includes('passed'))
 })
 
@@ -989,7 +965,7 @@ test('finish: the judge and jurors score against the product spec, id by id', as
   assert.ok(prompts['worker-ant:judge-fix'].includes('product_spec.md') && prompts['worker-ant:judge-fix'].includes('tech_spec.md'))
 })
 
-// ---- second hardening pass: ids, overlaps, plan-less tasks, clerk retries ----
+// ---- second hardening pass: ids, overlaps, plan-less tasks, the stage log ----
 
 test('plan: Ishikari\'s own ids are refused, and so are overlapping folders and names that differ only by case', async () => {
   const problems = async plans => { const { out } = await planWith(plans); assert.equal(out.stage, 'problems', JSON.stringify(plans)); return out.problems.join(' | ') }
@@ -1047,21 +1023,13 @@ test('build: a first check must count the commits, a re-check must answer for ea
   assert.deepEqual(required, { 'detective-ant:a:check': ['bugs', 'ownCommits'], 'detective-ant:a:recheck1': ['bugs', 'fixed'] })
 })
 
-test('build: the stage\'s own logbook clerk is retried once, and a second death gives the entries back', async () => {
-  let n = 0
-  const flaky = await run('ishikari-build.js', { env, plans: [{ id: 'a' }] }, (p, o) => {
-    if (o.label === 'logbook-clerk') { n++; if (n === 1) throw new Error('down') ; return {} }
-    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
-    return { bugs: [] }
-  })
-  assert.equal(n, 2)
-  assert.equal(flaky.out.logLost, undefined)
-  const dead = await run('ishikari-build.js', { env, plans: [{ id: 'a' }] }, (p, o) => {
-    if (o.label === 'logbook-clerk') return null
-    if (o.label.startsWith('worker')) return { status: 'built', notes: 'n' }
-    return { bugs: [] }
-  })
-  assert.deepEqual(dead.out.logLost.map(e => e.event), ['awaiting review'])
+test('every stage returns its log, and no ant is a logbook clerk', async () => {
+  for (const src of ['ishikari-plan.js', 'ishikari-build.js', 'ishikari-finish.js', 'ishikari-retro.js']) {
+    const text = readFileSync(join(SCRIPTS, src), 'utf8')
+    assert.ok(!/clerk|log append|logLost/.test(text), src)
+  }
+  const { out } = await run('ishikari-build.js', { env, plans: [{ id: 'a' }] }, (p, o) => o.label.startsWith('worker') ? W : { bugs: [] })
+  assert.deepEqual(out.log.at(-1), { run: 'r1', task: 'a', who: 'detective ant', event: 'awaiting review' })
 })
 
 test('finish: a failed check with no text output is still a bug the build stage takes', async () => {

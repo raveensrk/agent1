@@ -33,13 +33,22 @@ so no entry is lost and the file stays a valid recfile.
       Each save stamps its time and session in run.json, then runs
       `anteater.py snapshot <state> <run>`, which writes the run's token
       counts to tokens.json. A failed snapshot is a warning on stderr; the
-      save still succeeds.
+      save still succeeds. A result with a "log" list (every workflow
+      stage returns one) has those entries appended to the logbook, so no
+      ant ever writes it; a refused append is a warning, never a failed save.
 
   ishikari.py log append <state>                entries as JSON on stdin
       Append entries to <state>/logbook.rec, a GNU recfile (read it with
       recsel, grep or any editor). Each entry is an object with run, who
       and event, and optionally task, detail, tries and score. Time is
       added. The logbook is append only: nothing is ever changed or removed.
+
+  ishikari.py log recover <state> <run> <journal.jsonl>
+      For a workflow that crashed and will not be resumed: read the
+      Workflow tool's journal and append one entry per ant from it (its
+      label and reply), marked recovered. A resumed workflow returns its
+      log as usual, so never recover one you resume. A journal already
+      recovered is refused, so no entry is logged twice.
 
   ishikari.py log note <state> <text>...
       Append your own note (Who: you). Ants never act on notes.
@@ -82,6 +91,7 @@ SHORT_HELP = """usage: ishikari.py <command>
   config <state> <key> [<value>]     save testCommand or checkCommand
   save <state> <run> <stage>         keep a workflow result (JSON on stdin)
   log append <state>                 append entries (JSON list on stdin)
+  log recover <state> <run> <journal> log a crashed workflow from its journal
   log note <state> <text>...         append your own note
   log status <state> [<run>]         each task's latest event
   help                               the long help
@@ -349,6 +359,7 @@ def save(state, run, stage):
         path = os.path.join(folder, f"{stage}-{max(taken, default=0) + 1}.json")
         write_atomic(path, json.dumps(data, indent=2) + "\n")
         mark_save(folder, run)
+    save_log(state, data)
     snapshot(state, run)
     print(path)
 
@@ -369,27 +380,118 @@ def log_path(state):
     return path
 
 
-def log_append(state, entries):
-    path = log_path(state)
+def log_records(entries):
+    """Check entries and turn them into recfile records; a bad one is refused."""
     if not isinstance(entries, list) or not entries:
-        die("log append: stdin must be a non-empty JSON list of entries")
+        raise ValueError("stdin must be a non-empty JSON list of entries")
     now = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
     records = []
     for e in entries:
         if not isinstance(e, dict):
-            die("log append: each entry must be a JSON object")
+            raise ValueError("each entry must be a JSON object")
         unknown = sorted(set(e) - set(LOG_FIELDS))
         if unknown:
-            die(f"log append: unknown field {unknown[0]}; use {', '.join(LOG_FIELDS)}")
+            raise ValueError(f"unknown field {unknown[0]}; use {', '.join(LOG_FIELDS)}")
         missing = [k for k in ("run", "who", "event") if not str(e.get(k, "")).strip()]
         if missing:
-            die(f"log append: an entry has no {missing[0]}")
+            raise ValueError(f"an entry has no {missing[0]}")
         rec = [f"Time: {now}"] + [f"{k.capitalize()}: {rec_value(e[k])}" for k in LOG_FIELDS if e.get(k) not in (None, "")]
         records.append("\n".join(rec))
+    return records
+
+
+def log_write(path, records):
     with locked(path):
         with open(path, "a") as f:
             f.write("".join(f"\n{r}\n" for r in records))
+
+
+def log_append(state, entries):
+    path = log_path(state)
+    try:
+        records = log_records(entries)
+    except ValueError as e:
+        die(f"log append: {e}")
+    log_write(path, records)
     print(f"logbook: {len(records)} entries added")
+
+
+def save_log(state, data):
+    """Append a saved result's log. Never fails the save: a problem is a warning."""
+    rows = data.get("log") if isinstance(data, dict) else None
+    if not rows:
+        return
+    try:
+        log_write(os.path.join(state, LOGBOOK), log_records(rows))
+        print(f"logbook: {len(rows)} entries added", file=sys.stderr)
+    except (ValueError, OSError) as e:
+        print(f"ishikari: logbook append failed: {e}", file=sys.stderr)
+
+
+def summarize(r):
+    """The event for an ant's reply, as the workflow scripts word it."""
+    if r is None:
+        return "died"
+    if not isinstance(r, dict):
+        return "finished"
+    fixed = r.get("fixed") if isinstance(r.get("fixed"), list) else []
+    still_open = sum(1 for f in fixed if isinstance(f, dict) and f.get("fixed") is False)
+    bugs = r.get("bugs")
+    if isinstance(bugs, list) and not bugs and still_open:
+        return f"{still_open} still open"
+    if isinstance(bugs, list):
+        return f"{len(bugs)} bug{'s' if len(bugs) > 1 else ''} found" if bugs else "passed"
+    if isinstance(r.get("status"), str):
+        return r["status"]
+    if isinstance(r.get("score"), int) and not isinstance(r.get("score"), bool):
+        return f"score {r['score']}"
+    if isinstance(r.get("results"), list):
+        merged = sum(1 for x in r["results"] if isinstance(x, dict) and x.get("outcome") == "merged")
+        return f"merged {merged} of {len(r['results'])}"
+    if isinstance(r.get("moved"), bool):
+        return "main moved" if r["moved"] else "main not moved"
+    return "finished"
+
+
+def journal_entries(run, journal):
+    """One entry per ant in a Workflow journal: who, task and what came of it."""
+    started, results = {}, {}
+    for line in read_text(journal).split("\n"):
+        try:
+            e = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(e, dict) or not e.get("key"):
+            continue
+        if e.get("type") == "started":
+            started.setdefault(e["key"], str(e.get("label") or "ant"))
+        elif e.get("type") == "result":
+            results[e["key"]] = e.get("result")
+    rows = []
+    for key, label in started.items():
+        kind, a, b = (label.split(":") + ["", ""])[:3]
+        task = b if kind == "juror-ant" else a if kind in ("worker-ant", "detective-ant") else ""
+        done = key in results
+        r = results.get(key)
+        rows.append({"run": run, **({"task": task} if task else {}), "who": kind.replace("-ant", " ant"),
+                     "event": summarize(r) if done else "no reply",
+                     "detail": "recovered from the workflow journal" + (f": {json.dumps(r)[:360]}" if done and r is not None else "")})
+    return rows
+
+
+def log_recover(state, run, journal):
+    path = log_path(state)
+    if not RUN_ID.fullmatch(run):
+        die(f"bad run id {run!r}")
+    journal = os.path.realpath(journal)
+    if not os.path.isfile(journal):
+        die(f"log recover: no journal at {journal}")
+    if any(e.get("Event") == "recovered" and e.get("Detail") == journal for e in log_read(state)):
+        die(f"log recover: {journal} is already in the logbook")
+    rows = journal_entries(run, journal)
+    rows.append({"run": run, "who": "main session", "event": "recovered", "detail": journal})
+    log_write(path, log_records(rows))
+    print(f"logbook: {len(rows)} entries added")
 
 
 def log_read(state):
@@ -442,6 +544,8 @@ def run(argv):
             return setup(rest[0], main)
     if len(argv) == 3 and argv[:2] == ["log", "append"]:
         return log_append(argv[2], read_json_stdin("log append"))
+    if len(argv) == 5 and argv[:2] == ["log", "recover"]:
+        return log_recover(argv[2], argv[3], argv[4])
     if len(argv) >= 4 and argv[:2] == ["log", "note"]:
         return log_append(argv[2], [{"run": "-", "who": "you", "event": "note", "detail": " ".join(argv[3:])}])
     if len(argv) in (3, 4) and argv[:2] == ["log", "status"]:

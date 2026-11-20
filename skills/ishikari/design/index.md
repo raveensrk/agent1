@@ -67,7 +67,7 @@ its job. The build script runs that workflow in place of a worker ant.
     maps every behaviour and invariant id to the part that delivers it, then
     writes one plan per worker ant; each plan names the ids it covers.
     It writes nothing to the logbook itself: it runs outside any workflow, and
-    the main session never writes the logbook. `ishikari-plan` logs one
+    the main session writes the logbook only through `ishikari.py`. `ishikari-plan` logs one
     `investigated` entry for it, with the product spec's path; its researchers
     are not logged.
 
@@ -268,12 +268,14 @@ Usage and the counting rules in full: `anteater.py help`.
   [`ishikari.py`](../scripts/ishikari.py), writes the logbook.
   Each write holds a lock, so two runs never lose
   each other's entries; the logbook is only ever appended to. Lock files live in `~/.ishikari/locks`, never in the repo.
-- Every workflow ant's reply is logged the moment it comes, in plan, build,
-  finish and the retrospective, through a logbook clerk ant, one clerk at a time: replies that come
-  while it writes wait in a queue and go in its next append; a failed append never blocks or fails
-  the run. A dead clerk is retried once; entries it still could not write come
-  back in the stage result as `logLost`, and the main session appends them. The live investigator gets only the `investigated` entry
-  `ishikari-plan` logs for it. Build and finish also append a summary at the
+- Every workflow ant's reply is logged, in plan, build, finish and the
+  retrospective, with no ant: each stage returns its entries as `log`, and
+  `ishikari.py save` appends them when the main session saves the result; a
+  failed append is a warning and never blocks or fails the run. A crashed
+  workflow that is not resumed is logged from its journal with
+  `ishikari.py log recover`, once per journal; a resumed one is never
+  recovered, since its result logs every ant. The live investigator gets only the `investigated` entry
+  `ishikari-plan` logs for it. Build and finish also add a summary at the
   end of the stage.
 - Never trust an ant's answer shape. The scripts check every reply: a missing
   or broken field is an error, never a silent pass, and an ant call that throws
@@ -360,16 +362,20 @@ Stages run left to right: plan, build, check, fix, finish. The scripts hand work
 from ant to ant directly. The Logbook sits apart: a shared ledger, one plain
 text recfile per repo, `~/.ishikari/<repo>-<hash>/logbook.rec`, outside the
 repo. It is append only: nothing in it is ever changed or removed. In the
-map's words: logbook clerk ant: appends each ant's entry the moment the ant
-replies, one clerk at a time, in plan, build, finish and the retrospective. The live investigator gets only an
+map's words: ishikari.py save: appends each stage's log one entry per ant
+reply, written by no ant, in plan, build, finish and the retrospective. The live investigator gets only an
 investigated entry. Build and finish add a summary at the end. No ant reads it.
 Each entry says who, the task and what came of it (built, 2 bugs found, score
-6, died); the clerk appends it while the run goes on, and a failed append never
-blocks or fails the run. The live investigator runs outside any workflow, so
+6, died). A workflow cannot touch files, so each stage returns its entries as
+`log`, and the main session's `ishikari.py save` of the result appends them:
+plain code, no ant. A failed append is a warning and never blocks or fails the
+run. A crashed workflow that is not resumed has no result: `ishikari.py log
+recover` rebuilds its entries from the Workflow tool's `journal.jsonl` (each
+ant's label and reply), once per journal. The live investigator runs outside any workflow, so
 `ishikari-plan` logs one `investigated` entry for it, with the product spec's path. The
 summaries hold each task's status, each bug with its tries, the cleanup, the
-judge's verdict and whether main moved. The cost: at most one small clerk
-call per ant call, fewer when replies arrive together. You add your own notes with `ishikari.py log note`; they are notes,
+judge's verdict and whether main moved. The cost: none in ants; entries land
+when the stage is saved, not the moment each ant replies. You add your own notes with `ishikari.py log note`; they are notes,
 never orders. Read it with `ishikari.py log status` (each
 task's latest event), `recsel` or any editor.
 

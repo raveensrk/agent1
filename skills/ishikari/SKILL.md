@@ -51,13 +51,20 @@ inside the working directory, so the Workflow tool may load them by
   `build`, `finish` or `retro`. It writes `<stage>-<n>.json` in the run's plans
   folder, numbered per stage. Save each live investigator reply the same way,
   as stage `investigate`. The retrospective ant reads them.
+- `save` is also how the logbook is written: every workflow result carries a
+  `log` list, one entry per ant reply plus the stage summary, and `save`
+  appends it. No ant writes the logbook. A line
+  `ishikari: logbook append failed: ...` on stderr: say so in the report and
+  carry on.
 - Token counts need no step from you: every `save` also writes the run's
   `tokens.json` through `scripts/anteater.py snapshot`. A line
   `ishikari: anteater snapshot failed: ...` on stderr: say so in the report
   and carry on. To watch a run's cost live the user runs
   `python3 <skill>/scripts/anteater.py`; see its `--help`.
-- A result with `logLost`: the logbook clerk failed twice. Pipe that list into
-  `python3 <env.tool> log append <env.state>` yourself, and say so in the report.
+- A workflow that crashed and will not be resumed returns no result, so no
+  `log`. Recover its trail from the Workflow tool's journal:
+  `python3 <env.tool> log recover <env.state> <env.run> <transcriptDir>/journal.jsonl`.
+  Never recover a workflow you resume: the resumed result logs every ant.
 - Ants live only for their task. An ant started with the Agent tool is stopped
   with TaskStop the moment its task is done, failed or abandoned. Workflow ants
   end when their `agent()` call returns, so they need no stop.
@@ -334,9 +341,9 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
   gaps; say FLAGGED when `flagged`), the cleanup: `landed`, or dropped with its
   `reason` and `branch`, its plan offered as the next task, and the docs
   update: `landed`, or dropped with its `reason` and `branch`.
-  Every workflow ant's result is in the logbook the moment it replies (the live
-  investigator gets only an `investigated` entry), so a crashed run
-  still leaves its trail. End with where the full record is: `python3 <env.tool> log status <env.state>
+  Every workflow ant's result is in the logbook once its stage is saved (the
+  live investigator gets only an `investigated` entry); a crashed stage's
+  trail comes from `log recover`. End with where the full record is: `python3 <env.tool> log status <env.state>
   <env.run>`.
 
 ## 5. Retrospective

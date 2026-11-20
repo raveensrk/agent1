@@ -32,7 +32,6 @@ KIND_STATION = {  # label kind in the scripts -> its station name on the map
     "merger-ant": "Merger ant", "docs-ant": "Docs ant", "janitor-ant": "Janitor ant",
     "juror-ant": "Juror ants", "judge-ant": "Judge ant", "finisher-ant": "Finisher ant",
     "retrospective-ant": "Retrospective ant",
-    "logbook-clerk": "Logbook",
 }
 NOTES = {  # note texts the map must keep in its panels
     "N1": "fewer than 2 passing tasks: no combined test",
@@ -44,7 +43,7 @@ NOTES = {  # note texts the map must keep in its panels
     "N7": "max 2 extra build rounds",
     "N8": "runs the tests, commits, lands it only if",
     "N10": "the fix lands only through this fast-forward",
-    "N11": "logbook clerk ant: appends each ant's entry",
+    "N11": "ishikari.py save: appends each stage's log",
 }
 
 
@@ -422,7 +421,7 @@ def test_docs_match_build():
         if line.startswith("|"):
             assert line.count("|") == 4, line
     note = next(it for it in panel_items(SVG) if it["id"] == "logbook")["sub"]
-    assert note[0] == "logbook clerk ant: appends each ant's entry"
+    assert note[0] == "ishikari.py save: appends each stage's log"
     sentence = " ".join(note[:4])
     index = " ".join(open(os.path.join(SKILL, "design", "index.md"), encoding="utf-8").read().replace("`", "").split())
     assert sentence in index, sentence
@@ -430,8 +429,47 @@ def test_docs_match_build():
     assert "one logbook append at the end" not in build
 
 
+def test_save_logs_and_recover():
+    with tempfile.TemporaryDirectory() as home:
+        repo = make_repo(home)
+        env = json.loads(run(home, "setup", repo))
+        state, rid = env["state"], env["run"]
+        book = os.path.join(state, "logbook.rec")
+        # a saved stage result's log goes into the logbook: no ant writes it
+        rows = [{"run": rid, "task": "a", "who": "worker ant", "event": "built"},
+                {"run": rid, "task": "a", "who": "detective ant", "event": "awaiting review"}]
+        r = subprocess.run([sys.executable, TOOL, "save", state, rid, "build"], input=json.dumps({"stage": "build", "log": rows}),
+                           capture_output=True, text=True, timeout=TIMEOUT, env={**os.environ, "HOME": home})
+        assert r.returncode == 0 and r.stdout.strip().endswith("build-1.json"), r.stderr
+        assert "Event: awaiting review" in open(book).read()
+        # a bad log is a warning, never a failed save, and nothing half written
+        before = open(book).read()
+        r = subprocess.run([sys.executable, TOOL, "save", state, rid, "build"], input=json.dumps({"log": [{"run": rid, "who": "x"}]}),
+                           capture_output=True, text=True, timeout=TIMEOUT, env={**os.environ, "HOME": home})
+        assert r.returncode == 0 and "logbook append failed" in r.stderr
+        assert open(book).read() == before
+        # a crashed workflow: its journal gives one entry per ant, once
+        journal = os.path.join(home, "journal.jsonl")
+        with open(journal, "w") as f:
+            for e in ({"type": "launched"},
+                      {"type": "started", "key": "k1", "label": "worker-ant:b:build"},
+                      {"type": "result", "key": "k1", "result": {"status": "built", "notes": "n"}},
+                      {"type": "started", "key": "k2", "label": "detective-ant:b:check"},
+                      {"type": "result", "key": "k2", "result": {"bugs": ["x", "y"]}},
+                      {"type": "started", "key": "k3", "label": "juror-ant:1:c"}):
+                f.write(json.dumps(e) + "\n")
+            f.write("not json\n")
+        assert "4 entries added" in run(home, "log", "recover", state, rid, journal)
+        status = run(home, "log", "status", state, rid)
+        assert re.search(r"/b +2 bugs found +detective ant", status), status
+        assert re.search(r"/c +no reply +juror ant", status), status
+        assert "already in the logbook" in fails(home, "log", "recover", state, rid, journal)
+        assert "no journal" in fails(home, "log", "recover", state, rid, os.path.join(home, "nope.jsonl"))
+
+
 if __name__ == "__main__":
     test_setup_and_logbook()
+    test_save_logs_and_recover()
     test_workflows_and_config()
     test_guards()
     test_parallel_writers()

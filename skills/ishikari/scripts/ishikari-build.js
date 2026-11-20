@@ -7,7 +7,6 @@ export const meta = {
     { title: 'Check', detail: 'one detective ant per built task: checks it, plans any fix' },
     { title: 'Fix', detail: 'worker builds the plan, detective re-checks and plans the next; 3 tries per bug' },
     { title: 'Combined', detail: 'integrator ant merges all passing tasks in a scratch copy and tests once' },
-    { title: 'Logbook', detail: 'each ant\'s entry the moment it replies; the stage summary at the end' },
   ],
 }
 
@@ -23,7 +22,8 @@ export const meta = {
 //          main first. No branch (a failed app check): a new task <task> starts
 //          from main, and the bug is its whole job.
 // }
-// Returns { stage: 'build', tasks, together } or { stage: 'error', reason }.
+// Returns { stage: 'build', tasks, together, log } or { stage: 'error', reason }.
+// log holds the stage's logbook entries; `ishikari.py save` appends them.
 // Task status: 'awaiting review', 'escalated', 'blocked' or 'error'.
 //
 // Nothing here touches the repo's main checkout: every ant works in a
@@ -35,7 +35,7 @@ const MAX_ROUNDS = 3  // fix rounds per task, so new bugs cannot loop forever
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
 // change its entry here.
 const MODEL = 'opus'
-const EFFORT = { worker: 'low', detective: 'low', integrator: 'low', merger: 'low', clerk: 'low' }
+const EFFORT = { worker: 'low', detective: 'low', integrator: 'low', merger: 'low' }
 
 const { env = {} } = args
 const plans = Array.isArray(args.plans) ? args.plans.filter(p => p && typeof p === 'object') : []
@@ -125,7 +125,9 @@ repo's main checkout, and never touch any other repo.`
 const testsLower = env.testCommand ? `run the tests with \`${env.testCommand}\`` : 'run the repo\'s tests'
 const tests = testsLower[0].toUpperCase() + testsLower.slice(1)
 
-// ---- logbook entries: kept here, appended once at the end by the tool ----
+// ---- logbook entries: kept here, returned as the result's log ----
+// A workflow cannot touch files, so no ant writes the logbook: the main
+// session's `ishikari.py save` of this result appends the log, with no ant.
 const entries = []
 const note = e => entries.push({ run: env.run, ...e })
 
@@ -151,11 +153,7 @@ async function twice(fn) {
   return first != null ? first : fn()
 }
 
-// ---- logbook, written the moment each ant finishes ----
-// Every ant call goes through ant(): when the ant replies, a logbook clerk
-// queues one entry for it, and a single clerk appends the queue at once,
-// without holding up the run. The stage's
-// summary entries are still appended at the end.
+// ---- every ant's reply becomes a log entry ----
 // Never trust an ant's answer shape: a reply that does not fit counts as a dead
 // ant, so it is retried once and then an error, never a silent pass.
 const strings = v => v == null || (Array.isArray(v) && v.every(x => typeof x === 'string'))
@@ -176,32 +174,8 @@ const summarize = (kind, r) => {
   if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
   return 'finished'
 }
-// One logbook clerk at a time: entries that arrive while it writes wait in
-// a queue, and the next clerk appends them all in one go as soon as it ends.
-const logQueue = []
-const logLost = []  // entries no clerk managed to append
-let logWriter = null
-const logNow = entries => {
-  logQueue.push(...entries)
-  if (!logWriter) logWriter = (async () => {
-    try {
-      while (logQueue.length) {
-        const batch = logQueue.splice(0)
-        // A dead clerk is retried once; entries still lost go into the result.
-        const write = () => agent(
-          `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
-python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(batch).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
-ISHIKARI_ROWS_END`,
-          { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-        ).catch(() => null)
-        if ((await write()) == null && (await write()) == null) logLost.push(...batch)
-      }
-    } finally {
-      logWriter = null
-    }
-  })()
-}
+const replies = []  // one entry per ant reply, ahead of the stage's summary
+const logNow = rows => replies.push(...rows)
 async function ant(prompt, opts) {
   // A call that throws is a dead ant: it never takes the whole stage down.
   const r = await agent(prompt, { ...opts, model: MODEL }).catch(() => null)
@@ -211,7 +185,6 @@ async function ant(prompt, opts) {
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
 }
-const logsDone = async () => { while (logWriter) await logWriter }
 
 function work(task, job, phase, step) {
   const start = task.bases[0] || env.main
@@ -697,21 +670,4 @@ for (let round = 1; round <= 2; round++) {
   }
 }
 
-// ---- one logbook append for the whole stage ----
-await logsDone()  // one clerk at a time: the per-reply clerk ends first
-if (entries.length) {
-  phase('Logbook')
-  // A dead clerk is retried once, like the per-reply one.
-  const write = () => agent(
-    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
-python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
-ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk', phase: 'Logbook', model: MODEL, effort: EFFORT.clerk },
-  ).catch(() => null)
-  const clerk = await twice(write)
-  if (clerk == null) { logLost.push(...entries); log('logbook append skipped: the logbook clerk died twice; the entries come back as logLost') }
-}
-
-await logsDone()
-return { stage: 'build', tasks: all.map(t => t.result), together, ...(logLost.length ? { logLost } : {}) }
+return { stage: 'build', tasks: all.map(t => t.result), together, log: [...replies, ...entries] }

@@ -40,20 +40,11 @@ const planDir = `${env.state}/plans/${env.run}`
 const file = `${planDir}/retrospective.md`
 const skill = env.tool.replace(/\/scripts\/[^/]+$/, '')
 
-// One logbook entry for the ant, appended the moment it replies; a failed
-// append never blocks or fails the run.
-const logLost = []
-const logNow = async entries => {
-  const write = () => agent(
-    `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
-python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(entries).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
-ISHIKARI_ROWS_END`,
-    { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-  ).catch(() => null)
-  if ((await write()) == null && (await write()) == null) logLost.push(...entries)
-}
-const out = r => logLost.length ? { ...r, logLost } : r
+// One logbook entry for the ant, returned as the result's log; the main
+// session's `ishikari.py save` appends it, with no ant.
+const entries = []
+const logNow = rows => entries.push(...rows)
+const out = r => ({ ...r, log: entries })
 
 const RETRO = {
   type: 'object',
@@ -120,7 +111,7 @@ if (r == null) r = await ask()
 const digest = x => typeof x === 'string' && /^[0-9a-f]{40}/.test(x.trim()) ? x.trim().slice(0, 40) : ''
 const touched = r != null && (!digest(r.before) || digest(r.before) !== digest(r.after))
 const ok = r && r.written === true && Number.isInteger(r.lines) && r.lines > 0 && Array.isArray(r.findings) && !touched
-await logNow([{ run: env.run, who: 'retrospective ant', event: r == null ? 'died' : touched ? 'repo changed' : ok ? `${r.findings.length} finding${r.findings.length === 1 ? '' : 's'}` : 'no report',
+logNow([{ run: env.run, who: 'retrospective ant', event: r == null ? 'died' : touched ? 'repo changed' : ok ? `${r.findings.length} finding${r.findings.length === 1 ? '' : 's'}` : 'no report',
   ...(r != null ? { detail: String(r.summary || '').slice(0, 400) } : {}) }])
 if (r == null) return out({ stage: 'error', reason: 'the retrospective ant died twice' })
 if (touched) return out({ stage: 'error', reason: `the retrospective ant was to change nothing, but the repo's refs, worktrees or status differ before and after it (or it gave no digest). Check ${env.repo}; ${file} is not trusted.` })

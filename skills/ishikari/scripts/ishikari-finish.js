@@ -27,7 +27,8 @@ export const meta = {
 //                                            offered for a second round
 // }
 // Returns { stage: 'finish', mainMoved, merged, notMoved, bugs, waiting, docs, cleanup, verdict, upkeepStopped, check,
-//           checkFixDone, checkFix, checkFixRefused }
+//           checkFixDone, checkFix, checkFixRefused, log }
+// log holds the stage's logbook entries; `ishikari.py save` appends them.
 // checkFix: the bug for one check-fix build round ({task: 'check-fix', bug}) when the
 // check failed and no round ran yet; null otherwise (checkFixRefused: true when the cap hit).
 //      or { stage: 'error', reason }.
@@ -94,11 +95,9 @@ async function twice(fn) {
   return first != null ? first : fn()
 }
 
-// ---- logbook, written the moment each ant finishes ----
-// Every ant call goes through ant(): when the ant replies, a logbook clerk
-// queues one entry for it, and a single clerk appends the queue at once,
-// without holding up the run. The stage's
-// summary entries are still appended at the end.
+// ---- logbook entries: kept here, returned as the result's log ----
+// A workflow cannot touch files, so no ant writes the logbook: the main
+// session's `ishikari.py save` of this result appends the log, with no ant.
 // One rule for "this upkeep work landed", used by the code and the logbook:
 // the ant says landed, its checks passed and it names the new commit. The docs
 // ant must also show it touched docs only.
@@ -115,43 +114,18 @@ const summarize = (kind, r) => {
   if (typeof r.moved === 'boolean') return r.moved ? 'main moved' : 'main not moved'
   return 'finished'
 }
-// One logbook clerk at a time: entries that arrive while it writes wait in
-// a queue, and the next clerk appends them all in one go as soon as it ends.
-const logQueue = []
-const logLost = []  // entries no clerk managed to append
-let logWriter = null
-const logNow = entries => {
-  logQueue.push(...entries)
-  if (!logWriter) logWriter = (async () => {
-    try {
-      while (logQueue.length) {
-        const batch = logQueue.splice(0)
-        // A dead clerk is retried once; entries still lost go into the result.
-        const write = () => agent(
-          `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
-python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(batch).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
-ISHIKARI_ROWS_END`,
-          { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-        ).catch(() => null)
-        if ((await write()) == null && (await write()) == null) logLost.push(...batch)
-      }
-    } finally {
-      logWriter = null
-    }
-  })()
-}
+const entries = []
+const logNow = rows => entries.push(...rows)
 async function ant(prompt, opts) {
   // A call that throws is a dead ant: it never takes the whole stage down.
   const r = await agent(prompt, { ...opts, model: MODEL }).catch(() => null)
   const [kind, a, b] = String(opts.label).split(':')
-  if (kind === 'finisher-ant') return r  // it appends the stage's entries itself
+  if (kind === 'finisher-ant') return r  // the stage's summary rows stand for it
   const task = kind === 'juror-ant' ? b : ['worker-ant', 'detective-ant'].includes(kind) && a ? a : undefined
   logNow([{ run: env.run, ...(task ? { task } : {}), who: kind.replace('-ant', ' ant'), event: summarize(kind, r),
     ...(r != null ? { detail: JSON.stringify(r).slice(0, 400) } : {}) }])
   return r
 }
-const logsDone = async () => { while (logWriter) await logWriter }
 
 const COMBINE = {
   type: 'object',
@@ -264,7 +238,7 @@ Last, even after a fast path, check your own work with git, never from memory:
   deletions as "lines" (0 if it prints nothing).`,
     { label: 'merger-ant', phase: 'Merge', effort: EFFORT.merger, schema: COMBINE },
   ))
-  if (!r) { await logsDone(); return { ...(logLost.length ? { logLost } : {}), stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` } }
+  if (!r) { return { log: entries, stage: 'error', reason: `the merger ant died twice; main was not touched. Check ${scratchTree}.` } }
   sha = isSha(r.sha) ? r.sha : null
   // An exact fast path (the commit is the task's own tip, or the tested trial
   // merge after its ancestor checks) needs no second look.
@@ -301,7 +275,7 @@ const bugs = failed.map(t => ({ task: t.id, branch: t.branch, after: t.after || 
     : `merge failed (${results[t.id].outcome}): ${results[t.id].detail}` }))
 
 // Tasks count as merged only with a commit to move main to.
-if (merged.length && !sha) { await logsDone(); return { ...(logLost.length ? { logLost } : {}), stage: 'error', reason: `the merger ant reported merged tasks but gave no commit for ${scratch}; main was not touched. Check ${scratchTree}.` } }
+if (merged.length && !sha) { return { log: entries, stage: 'error', reason: `the merger ant reported merged tasks but gave no commit for ${scratch}; main was not touched. Check ${scratchTree}.` } }
 
 // ---- upkeep on the merged result, before main moves ----
 // The janitor cleans up this run's mess itself, in its own worktree on top of
@@ -563,7 +537,7 @@ problem, or git refuses, leave ${scratch} alone and set landed to false.`,
   await docsChain()
 }
 
-// ---- move main forward, clean up, append to the logbook ----
+// ---- move main forward, clean up; the summary rows go in the log ----
 phase('Main')
 const entry = (t, event, who) => ({ run: runOf(t.branch), task: t.id, who, event })
 const upkeep = [
@@ -579,11 +553,6 @@ const rowsIf = moved => [
   ...upkeep,
   ...(merged.length ? [{ run: env.run, who: 'finisher ant', event: moved ? 'main moved' : 'main not moved', detail: moved ? sha || '' : 'see the run report' }] : []),
 ]
-const write = rows => rows.length
-  ? `python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(rows).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
-ISHIKARI_ROWS_END`
-  : '(nothing to write)'
 const remove = [...merged.map(t => t.branch), `ishikari/${env.run}/_together`, scratch, ...(docsKept ? [] : [docsBranch]), ...(cleanKept ? [] : [cleanBranch]), ...(fixKept ? [] : [fixBranch])]
 const FINISH = {
   type: 'object',
@@ -592,7 +561,7 @@ const FINISH = {
     reason: { type: 'string', description: 'if not moved, why' },
     check: {
       type: 'object',
-      description: 'step 4 only',
+      description: 'step 3 only',
       properties: { ran: { type: 'boolean' }, ok: { type: 'boolean' }, output: { type: 'string', description: 'last 20 lines' } },
       required: ['ran', 'ok', 'output'],
     },
@@ -617,11 +586,7 @@ ${where}
    branches if they exist, with \`git -C ${env.repo} worktree remove --force <worktree>\`
    and \`git -C ${env.repo} branch -D <branch>\`:
 ${remove.map(b => `   - ${b} (worktree: ${treeOf(b)})`).join('\n')}
-3. If step 1 moved ${env.main}, or nothing was merged, run:
-${write(rowsIf(true))}
-   Otherwise run:
-${write(rowsIf(false))}
-4. ${env.checkCommand && merged.length ? `Only if step 1 moved ${env.main}: build and check the real app. Run
+3. ${env.checkCommand && merged.length ? `Only if step 1 moved ${env.main}: build and check the real app. Run
    \`${env.checkCommand}\` from the checkout of ${env.main} (the worktree found in step 1,
    else ${env.repo}), with a 600 s timeout. Report ran, ok (exit 0) and the last 20
    lines of output in check. Never fix anything.` : 'No app check: report check as {ran: false, ok: false, output: ""}.'}`,
@@ -631,7 +596,8 @@ ${write(rowsIf(false))}
 const check = fin && fin.check ? fin.check : { ran: false, ok: false, output: '' }
 const mainMoved = Boolean(merged.length && fin && fin.moved === true)
 if (merged.length && !mainMoved) log(`main not moved: ${fin ? fin.reason : 'the finisher ant died twice'}`)
-await logsDone()
+// Moved, or nothing merged: the rows say so; else the tasks still wait.
+logNow(rowsIf(mainMoved || !merged.length))
 return {
   stage: 'finish',
   mainMoved,
@@ -649,5 +615,5 @@ return {
   checkFixDone,
   checkFix: check.ran && !check.ok && !checkFixDone ? { task: 'check-fix', bug: String(check.output || '').trim() || 'the app check failed' } : null,
   checkFixRefused: Boolean(check.ran && !check.ok && checkFixDone),
-  ...(logLost.length ? { logLost } : {}),
+  log: entries,
 }

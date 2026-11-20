@@ -38,9 +38,9 @@ export const meta = {
 //   { stage: 'problems', problems, plans }  the plans need fixing: send the
 //                                           problems back to the investigator once
 //   { stage: 'error', reason }              bad arguments
+// plans and problems also carry log: the logbook entries `ishikari.py save` appends.
 // Nothing is committed here.
 
-const MODEL = 'opus'  // the logbook clerk; no other ant runs in this stage
 
 const { env = {} } = args
 const task = typeof args.task === 'string' ? args.task.trim() : ''
@@ -61,32 +61,10 @@ const planDir = `${env.state}/plans/${env.run}`
 const productSpec = `${planDir}/product_spec.md`
 const techSpec = `${planDir}/tech_spec.md`
 
-// ---- logbook: one clerk at a time; a dead clerk is retried once ----
-const logQueue = []
-const logLost = []  // entries no clerk managed to append
-let logWriter = null
-const logNow = entries => {
-  logQueue.push(...entries)
-  if (!logWriter) logWriter = (async () => {
-    try {
-      while (logQueue.length) {
-        const batch = logQueue.splice(0)
-        const write = () => agent(
-          `You are Ishikari's logbook clerk. Run exactly this command and nothing else:
-python3 ${env.tool} log append ${env.state} <<'ISHIKARI_ROWS_END'
-${JSON.stringify(batch).replaceAll('ISHIKARI_ROWS_END', 'ISHIKARI_ROWS_SAFE')}
-ISHIKARI_ROWS_END`,
-          { label: 'logbook-clerk:now', phase: 'Logbook', model: MODEL, effort: 'low' },
-        ).catch(() => null)
-        if ((await write()) == null && (await write()) == null) logLost.push(...batch)
-      }
-    } finally {
-      logWriter = null
-    }
-  })()
-}
-const logsDone = async () => { while (logWriter) await logWriter }
-const done = async result => { await logsDone(); return logLost.length ? { ...result, logLost } : result }
+// ---- logbook entries: returned as the result's log; `ishikari.py save` appends them ----
+const entries = []
+const logNow = rows => entries.push(...rows)
+const done = result => ({ ...result, log: entries })
 
 phase('Check')
 // The live investigator runs outside any workflow, so it cannot log itself.
