@@ -151,7 +151,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - A run with one worker has no plan file: the plan check returns its plan with file null, and the worker and detective are told the task is the whole of the two specs.
 - The specs stay the shared source: one place for the interfaces between parallel workers and the full list of behaviours and invariants.
 
-* OPEN [#B] Ant Eater shows what each ant, station, stage and task of a run cost, with no AI  :ishikari:anteater:
+* DONE [#B] Ant Eater shows what each ant, station, stage and task of a run cost, with no AI  :ishikari:anteater:
 :PROPERTIES:
 :ID:          ISH-9
 :CREATED:     2026-11-20
@@ -162,6 +162,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :VERIFY+:     "tests/test_anteater.py test_server_and_help"
 :LAST_EDITED: 2026-11-20
 :APPROVED:    2026-11-20
+:IMPLEMENTED: 2026-11-20
 :END:
 Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows live what a run spent: per ant, station, stage and plan task. Its purpose is to find costly ants. It is fully deterministic: it calls no model, and no AI has to remember to start any part of it.
 - Source: Claude Code's own transcripts under ~/.claude/projects. A workflow ant is agent-*.jsonl with its label in agent-*.meta.json; its run and stage come from the workflow record <session>/workflows/<wf>.json (args.env.run, workflowName ishikari-<stage>). A message is counted once per message id; a message of model <synthetic> is not counted.
@@ -169,7 +170,7 @@ Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows li
 - Station is the label's kind (the part before the first colon), task the plan task in the label; tries are counted from same-station, same-task ants in start order.
 - Main session cut: its messages from the run's setup time to its last save. A message that falls in two runs of one session belongs to the run with the newest setup at or before it. A run that is still live also shows the tail after its last save.
 - Every run id is unique on the machine: setup claims it under a lock and refuses one that any state folder already holds.
-- Run link: setup writes <state>/plans/<run>/run.json with the setup time and CLAUDE_CODE_SESSION_ID; every save adds its session id and the save time. A run with no recorded session is found by scanning transcripts for its run id.
+- Run link: setup writes <state>/plans/<run>/run.json with the setup time and CLAUDE_CODE_SESSION_ID; every save adds its session id and the save time. A run with no recorded session is found by scanning transcripts for its env ("run": "<id>", as setup prints it and every workflow call passes it); a bare mention of the id is not a link.
 - Snapshot: ishikari.py save runs `anteater.py snapshot <state> <run>` in code after every save. It writes <state>/plans/<run>/tokens.json: token counts per ant and model, never dollars, no write time; the same transcripts give a byte-identical file. A failed snapshot prints a warning and the save still succeeds. A snapshot never replaces a saved file with one that has fewer ants.
 - Cost is US dollars at API list price, worked out at view time from assets/prices.json (input, output, 5-minute and 1-hour cache write, cache read per model). The page says it is not a subscription bill.
 - Percent of the 5-hour limit: the status line logs Claude Code's rate_limits.five_hour.used_percentage and the session cost to ~/.ishikari/anteater/limit.log; Ant Eater fits dollars per percent from that log (sum of cost rises over sum of percent rises, inside one limit window) and shows each ant's cost as a percent of the window. five_hour_usd in prices.json overrides it. Fewer than 5 logged points and no override: the percent shows `?`.

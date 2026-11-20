@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ant Eater</title>
+<style>
+  :root {
+    --bg: #101216; --panel: #181b21; --line: #2a2f38; --text: #e4e7ec; --dim: #98a1ae;
+    --bar: #5b9bd5; --bar-dim: #2f4f70; --live: #4ec98a; --flag: #f0a04b; --bad: #ef6b6b;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f7f9; --panel: #ffffff; --line: #d9dde3; --text: #1b1f26; --dim: #5d6775;
+    --bar: #2f6fb0; --bar-dim: #b9d0e8; --live: #1d8a53; --flag: #b3640a; --bad: #c03434;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
+  h1 { font-size: 18px; margin: 0 8px 0 0; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 0 0 8px; font-weight: 600; }
+  select, button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; font: inherit; }
+  button { cursor: pointer; }
+  button.on { border-color: var(--bar); color: var(--bar); }
+  .grow { flex: 1; }
+  .badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--line); color: var(--dim); }
+  .badge.live { color: var(--live); border-color: var(--live); }
+  .badge.flag { color: var(--flag); border-color: var(--flag); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+  .totals { display: flex; flex-wrap: wrap; gap: 28px; align-items: baseline; }
+  .big { font-size: 30px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .stat .k { color: var(--dim); font-size: 12px; }
+  .stat .v { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .note { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  .cols { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+  .cols section { margin-bottom: 0; }
+  .bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 6px 10px; align-items: center; }
+  .bars .name { white-space: nowrap; }
+  .bars .track { height: 12px; background: transparent; border-radius: 3px; min-width: 60px; }
+  .bars .fill { height: 12px; background: var(--bar); border-radius: 3px; min-width: 2px; }
+  .bars .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .bars .sub { color: var(--dim); font-size: 12px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { text-align: right; color: var(--dim); font-weight: 600; font-size: 12px; cursor: pointer; user-select: none; }
+  th:first-child, td:first-child { text-align: left; }
+  td { text-align: right; }
+  tr.group td:first-child { cursor: pointer; }
+  tr.group.l0 td { font-weight: 650; }
+  tr.ant td:first-child { cursor: pointer; }
+  tr.ant:hover td, tr.group:hover td { background: rgba(127,127,127,.08); }
+  tr.sel td { background: rgba(91,155,213,.16); }
+  .tw { display: inline-block; width: 14px; color: var(--dim); }
+  .dot { color: var(--live); }
+  .dim { color: var(--dim); }
+  .detail { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
+  .detail .k { color: var(--dim); }
+  .detail .v { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+  .warn { color: var(--flag); font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; margin: 2px 0; }
+  .err { color: var(--bad); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ant Eater</h1>
+    <select id="picker" aria-label="Run"></select>
+    <span id="badges"></span>
+    <span class="grow"></span>
+    <span id="status" class="dim"></span>
+    <button id="theme" type="button">Light</button>
+  </header>
+
+  <section>
+    <div class="totals" id="totals"></div>
+    <div class="note" id="note"></div>
+  </section>
+
+  <div class="cols">
+    <section><h2>Stages</h2><div class="bars" id="stages"></div></section>
+    <section><h2>Stations by cost</h2><div class="bars" id="stations"></div></section>
+  </div>
+  <div style="height:14px"></div>
+
+  <section>
+    <div class="tabs">
+      <button id="tab-stage" type="button" class="on">By stage</button>
+      <button id="tab-task" type="button">By task</button>
+      <span class="dim">click a header to sort, a row to open it</span>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+
+  <section id="detail-box" hidden><h2>Ant</h2><div class="detail" id="detail"></div></section>
+  <section id="warn-box" hidden><h2>Warnings</h2><div id="warnings"></div></section>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const COLS = [
+  ["name", "Name"], ["cost", "Cost"], ["percent", "5h limit"], ["in", "Input"], ["out", "Output"],
+  ["cw", "Cache write"], ["cr", "Cache read"], ["turns", "Turns"],
+];
+const STAGE_ORDER = ["main", "investigate", "plan", "build", "finish", "retro", "unknown"];
+let runs = [], chosen = null, data = null, tab = "stage", sortKey = "cost", sortDir = -1, picked = null;
+const open = new Set();
+
+const money = v => v == null ? "?" : "$" + (v >= 100 ? v.toFixed(0) : v >= 0.995 ? v.toFixed(2) : v.toFixed(3));
+const pct = v => v == null ? "?" : (v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : v.toFixed(2)) + "%";
+const num = v => v == null ? "" : Math.round(v).toLocaleString("en-US");
+const span = s => s == null ? "" : s >= 3600 ? (s / 3600).toFixed(1) + " h" : s >= 60 ? Math.round(s / 60) + " min" : s + " s";
+const when = s => s ? new Date(s).toLocaleString() : "";
+
+function antRow(a) {
+  return { kind: "ant", ant: a, name: antName(a), cost: a.cost, percent: a.percent, in: a.tokens[0], out: a.tokens[1],
+           cw: a.tokens[2] + a.tokens[3], cr: a.tokens[4], turns: a.turns, live: a.live, key: "a:" + a.id };
+}
+function antName(a) {
+  if (a.station === "main session") return "session " + a.session.slice(0, 8);
+  const bits = [];
+  if (a.task) bits.push(a.task);
+  bits.push("try " + a.try);
+  if (a.label && a.label.split(":")[0].replace(/-ant$/, "") !== a.station.replace(" ", "-")) bits.push("“" + a.label + "”");
+  else if (a.label && !a.task && a.label.includes(":")) bits.push(a.label.split(":").slice(1).join(":"));
+  return bits.join(" · ");
+}
+function group(name, key, kids) {
+  const g = { kind: "group", name, key, kids, cost: 0, percent: 0, in: 0, out: 0, cw: 0, cr: 0, turns: 0, live: false, unknown: false };
+  for (const k of kids) {
+    for (const f of ["in", "out", "cw", "cr", "turns"]) g[f] += k[f];
+    if (k.cost == null) g.unknown = true; else g.cost += k.cost;
+    if (k.unknown) g.unknown = true;
+    if (k.percent != null) g.percent += k.percent;
+    g.live = g.live || k.live;
+  }
+  if (data.percent == null) g.percent = null;
+  return g;
+}
+function by(list, f) {
+  const m = new Map();
+  for (const x of list) { const k = f(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
+  return m;
+}
+function tree() {
+  const ants = tab === "task" ? data.ants.filter(a => a.task) : data.ants;
+  const top = by(ants, a => tab === "task" ? a.task : a.stage);
+  const out = [];
+  for (const [name, list] of top) {
+    const kids = [];
+    for (const [station, sub] of by(list, a => a.station))
+      kids.push(group(station, "g:" + tab + ":" + name + ":" + station, sub.map(antRow)));
+    out.push(group(name, "g:" + tab + ":" + name, kids));
+  }
+  return out;
+}
+function sorted(list, level) {
+  const k = sortKey;
+  return list.slice().sort((x, y) => {
+    if (k === "name") {
+      if (level === 0 && tab === "stage") return sortDir * -(STAGE_ORDER.indexOf(x.name) - STAGE_ORDER.indexOf(y.name));
+      return sortDir * -String(x.name).localeCompare(String(y.name));
+    }
+    return sortDir * ((x[k] ?? -1) - (y[k] ?? -1)) || String(x.name).localeCompare(String(y.name));
+  });
+}
+
+function drawHead() {
+  const head = $("head"); head.replaceChildren();
+  for (const [k, title] of COLS) {
+    const th = el("th", null, title + (sortKey === k ? (sortDir < 0 ? " ↓" : " ↑") : ""));
+    th.onclick = () => { if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = -1; } draw(); };
+    head.append(th);
+  }
+}
+function cells(tr, r) {
+  tr.append(el("td", null, r.cost == null ? "?" : money(r.cost) + (r.unknown ? " + ?" : "")));
+  tr.append(el("td", null, r.percent == null ? "?" : pct(r.percent)));
+  for (const f of ["in", "out", "cw", "cr", "turns"]) tr.append(el("td", null, num(r[f])));
+}
+function drawRows() {
+  const body = $("rows"); body.replaceChildren();
+  const walk = (list, level) => {
+    for (const r of sorted(list, level)) {
+      const tr = el("tr", r.kind === "group" ? "group l" + level : "ant");
+      const td = el("td"); td.style.paddingLeft = (8 + level * 18) + "px";
+      if (r.kind === "group") {
+        td.append(el("span", "tw", open.has(r.key) ? "▾" : "▸"), el("span", null, r.name));
+        td.append(el("span", "dim", "  " + count(r) + (count(r) === 1 ? " ant" : " ants")));
+        tr.onclick = () => { open.has(r.key) ? open.delete(r.key) : open.add(r.key); drawRows(); };
+      } else {
+        td.append(el("span", "tw", ""), el("span", null, r.name));
+        if (r.ant.model) td.append(el("span", "dim", "  " + r.ant.model.replace(/^claude-/, "")));
+        if (picked === r.ant.id) tr.classList.add("sel");
+        tr.onclick = () => { picked = picked === r.ant.id ? null : r.ant.id; drawRows(); drawDetail(); };
+      }
+      if (r.live) td.append(el("span", "dot", "  ● live"));
+      tr.append(td); cells(tr, r); body.append(tr);
+      if (r.kind === "group" && open.has(r.key)) walk(r.kids, level + 1);
+    }
+  };
+  const t = tree();
+  if (!t.length) { const tr = el("tr"); const td = el("td", "dim", tab === "task" ? "no ant of this run names a plan task" : "no ants counted yet"); td.colSpan = COLS.length; tr.append(td); body.append(tr); }
+  walk(t, 0);
+}
+const count = g => g.kind === "ant" ? 1 : g.kids.reduce((n, k) => n + count(k), 0);
+
+function bars(box, list, extra) {
+  box.replaceChildren();
+  const max = Math.max(1e-9, ...list.map(g => g.cost));
+  for (const g of list) {
+    const name = el("div", "name", g.name);
+    const track = el("div", "track"), fill = el("div", "fill");
+    fill.style.width = Math.max(0.5, 100 * g.cost / max) + "%"; track.append(fill);
+    const n = el("div", "num", money(g.cost) + (g.incomplete ? " + ?" : ""));
+    if (extra) extra(g, name, n);
+    box.append(name, track, n);
+  }
+  if (!list.length) box.append(el("div", "dim", "nothing yet"));
+}
+function drawDetail() {
+  const a = data && data.ants.find(x => x.id === picked);
+  $("detail-box").hidden = !a;
+  if (!a) return;
+  const d = $("detail"); d.replaceChildren();
+  const row = (k, v) => d.append(el("div", "k", k), el("div", "v", v));
+  row("ant", a.station + (a.task ? " · " + a.task : "") + " · try " + a.try);
+  row("label", a.label || "(none)");
+  row("stage", a.stage);
+  row("model", a.model || "?"); row("effort", a.effort || "?");
+  row("started", when(a.start)); row("duration", span(a.seconds));
+  row("turns", num(a.turns)); row("peak context", num(a.peakContext) + " tokens");
+  row("cost", money(a.cost) + (a.percent != null ? "  =  " + pct(a.percent) + " of a 5-hour limit" : ""));
+  const names = ["input", "output", "cache write 5 min", "cache write 1 h", "cache read"];
+  names.forEach((nm, i) => row(nm, num(a.tokens[i]) + " tokens" + (a.split ? "   " + money(a.split[i]) + (a.cost ? "   " + (100 * a.split[i] / a.cost).toFixed(0) + "%" : "") : "")));
+  row("transcript", a.transcript || "");
+}
+function draw() {
+  if (!data) return;
+  const b = $("badges"); b.replaceChildren();
+  if (data.live) b.append(el("span", "badge live", "LIVE"), " ");
+  if (data.fastPath) b.append(el("span", "badge", "fast path"), " ");
+  if (data.source !== "transcripts") b.append(el("span", "badge", "saved"), " ");
+  const t = $("totals"); t.replaceChildren();
+  const stat = (k, v) => { const s = el("div", "stat"); s.append(el("div", "k", k), el("div", "v", v)); return s; };
+  const big = el("div", "stat"); big.append(el("div", "k", "run " + data.run + " · " + data.repo), el("div", "big", money(data.total) + (data.incomplete ? " + ?" : "")));
+  const tok = data.ants.reduce((s, a) => s.map((v, i) => v + a.tokens[i]), [0, 0, 0, 0, 0]);
+  t.append(big, stat("of a 5-hour limit", pct(data.percent)), stat("ants", num(data.ants.length)),
+           stat("output tokens", num(tok[1])), stat("cache read tokens", num(tok[4])), stat("set up", when(data.setupAt)));
+  $("note").textContent = data.pricesNote + ". 5-hour limit: " + data.limit.basis + "." + (data.incomplete ? " Total is incomplete: a model has no price." : "");
+  const order = data.stages.slice().sort((x, y) => STAGE_ORDER.indexOf(x.name) - STAGE_ORDER.indexOf(y.name));
+  bars($("stages"), order, (g, name, n) => { n.append(el("span", "sub", "  " + (data.total ? (100 * g.cost / data.total).toFixed(0) : 0) + "%")); });
+  bars($("stations"), data.stations, (g, name, n) => {
+    const each = g.ants ? g.cost / g.ants : 0;
+    name.append(el("span", "sub", "  ×" + g.ants));
+    n.append(el("span", "sub", "  " + money(each) + " each" + (g.usual != null ? ", usual " + money(g.usual) + " (" + g.usualRuns + " runs)" : "")));
+    if (g.flag) n.append(" ", el("span", "badge flag", (each / g.usual).toFixed(1) + "× usual"));
+  });
+  $("tab-stage").className = tab === "stage" ? "on" : ""; $("tab-task").className = tab === "task" ? "on" : "";
+  drawHead(); drawRows(); drawDetail();
+  const w = $("warnings"); w.replaceChildren();
+  for (const x of data.warnings) w.append(el("div", "warn", x));
+  $("warn-box").hidden = !data.warnings.length;
+}
+
+function drawPicker() {
+  const p = $("picker"), keep = chosen; p.replaceChildren();
+  const groups = new Map();
+  for (const r of runs) { if (!groups.has(r.repo)) groups.set(r.repo, []); groups.get(r.repo).push(r); }
+  for (const [repo, list] of groups) {
+    const og = document.createElement("optgroup"); og.label = repo;
+    for (const r of list) {
+      const o = el("option", null, r.run + (r.fastPath ? "  (fast path)" : ""));
+      o.value = r.state + "/" + r.run; og.append(o);
+    }
+    p.append(og);
+  }
+  if (keep) p.value = keep;
+}
+async function loadRuns() {
+  try {
+    runs = await (await fetch("/api/runs")).json();
+    if (!chosen || !runs.some(r => r.state + "/" + r.run === chosen)) {
+      const want = decodeURIComponent(location.hash.slice(1));
+      chosen = runs.some(r => r.state + "/" + r.run === want) ? want : (runs[0] ? runs[0].state + "/" + runs[0].run : null);
+    }
+    drawPicker();
+    if (!runs.length) { $("status").textContent = "no Ishikari runs under ~/.ishikari"; }
+  } catch (e) { $("status").textContent = "server not reachable"; $("status").className = "err"; }
+}
+let busy = false;
+async function loadRun() {
+  if (!chosen || busy) return;
+  busy = true;
+  const want = chosen;
+  try {
+    const [state, run] = want.split("/");
+    const res = await fetch("/api/run?state=" + encodeURIComponent(state) + "&run=" + encodeURIComponent(run));
+    const got = await res.json();
+    if (want !== chosen) return;
+    if (!res.ok) throw new Error(got.error || res.status);
+    data = got;
+    if (!open.size) for (const g of data.stages) open.add("g:stage:" + g.name);
+    $("status").textContent = "updated " + new Date().toLocaleTimeString(); $("status").className = "dim";
+    draw();
+  } catch (e) { $("status").textContent = "error: " + e.message; $("status").className = "err"; }
+  finally { busy = false; }
+}
+$("picker").onchange = e => { chosen = e.target.value; location.hash = encodeURIComponent(chosen); data = null; picked = null; open.clear(); loadRun(); };
+$("tab-stage").onclick = () => { tab = "stage"; draw(); };
+$("tab-task").onclick = () => { tab = "task"; draw(); };
+$("theme").onclick = () => {
+  const light = document.documentElement.dataset.theme === "light";
+  if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light";
+  $("theme").textContent = light ? "Light" : "Dark";
+};
+loadRuns().then(loadRun);
+setInterval(loadRun, 2000);
+setInterval(loadRuns, 10000);
+</script>
+</body>
+</html>

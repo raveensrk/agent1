@@ -26,12 +26,17 @@ Design, rules and diagram:
 | `scripts/ishikari-build.js`      | build, check, fix, combined test         |
 | `scripts/ishikari-finish.js`     | merge, upkeep, move main                 |
 | `scripts/ishikari-retro.js`      | retrospective of the run, read only      |
+| `scripts/anteater.py`            | Ant Eater: token cost per ant, no AI     |
+| `assets/prices.json`             | API list prices Ant Eater costs with     |
+| `assets/anteater.html`           | Ant Eater's page                         |
 | `assets/prompts/investigator.md` | the investigator's brief: ask, specs, plans |
 | `tests/test_ishikari.py`         | tool: setup, logbook, guards             |
 | `tests/test_workflows.mjs`       | script logic, with stand-in ants         |
+| `tests/test_anteater.py`         | Ant Eater: counts, labels, limit, page   |
 
-Tests: `timeout 120 python3 tests/test_ishikari.py` and
-`timeout 120 node --test tests/test_workflows.mjs`.
+Tests: `timeout 120 python3 tests/test_ishikari.py`,
+`timeout 120 node --test tests/test_workflows.mjs` and
+`timeout 120 python3 tests/test_anteater.py`.
 
 All paths are relative to this skill's folder. Ishikari keeps its state in
 `~/.ishikari/<repo>-<hash>/`, outside the repo; nothing there is committed.
@@ -46,6 +51,11 @@ inside the working directory, so the Workflow tool may load them by
   `build`, `finish` or `retro`. It writes `<stage>-<n>.json` in the run's plans
   folder, numbered per stage. Save each live investigator reply the same way,
   as stage `investigate`. The retrospective ant reads them.
+- Token counts need no step from you: every `save` also writes the run's
+  `tokens.json` through `scripts/anteater.py snapshot`. A line
+  `ishikari: anteater snapshot failed: ...` on stderr: say so in the report
+  and carry on. To watch a run's cost live the user runs
+  `python3 <skill>/scripts/anteater.py`; see its `--help`.
 - A result with `logLost`: the logbook clerk failed twice. Pipe that list into
   `python3 <env.tool> log append <env.state>` yourself, and say so in the report.
 - Ants live only for their task. An ant started with the Agent tool is stopped

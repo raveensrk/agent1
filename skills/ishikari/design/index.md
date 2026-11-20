@@ -214,6 +214,34 @@ error, inefficiency, gap, missing, improvement), evidence, impact, suggested
 change and the Ishikari file and rule to change. The final report shows its
 summary and top 3 findings; the user decides what to act on.
 
+## Ant Eater
+
+[`anteater.py`](../scripts/anteater.py) shows what a run cost: per stage,
+station, ant and plan task, on a local page, live while the run goes. Its job
+is to find costly ants. It is code only: it calls no model, and no ant or
+session has to remember it.
+
+- It reads Claude Code's own transcripts. A workflow ant's run and stage come
+  from the workflow's record, its station from the label's kind, its task from
+  the label. The investigator and its researchers are sorted by who started
+  them, never by their free-text names. The main session counts from the
+  run's setup to its last save.
+- `ishikari.py setup` writes `run.json` in the run's plans folder (setup time,
+  Claude session) and every `save` stamps it and runs
+  `anteater.py snapshot`, which writes `tokens.json`: token counts per ant and
+  model, never dollars. The same transcripts give a byte-identical file, so a
+  run stays readable after Claude Code cleans its transcripts away.
+- Cost is US dollars at API list price from
+  [`prices.json`](../assets/prices.json), worked out when the page is drawn.
+  The percent column is the share of one 5-hour limit window, fitted from the
+  status line's log, `~/.ishikari/anteater/limit.log`.
+- What it cannot read is counted and shown: an unknown label is station
+  `unknown`, an unknown model costs `?`, an unreadable line is listed.
+- `test_label_guard` in [`test_anteater.py`](../tests/test_anteater.py) fails
+  when a workflow script gains an ant label kind with no station rule.
+
+Usage and the counting rules in full: `anteater.py help`.
+
 ## Rules
 
 - Workers, detectives and jurors run one at a time unless the user passes
@@ -229,7 +257,7 @@ summary and top 3 findings; the user decides what to act on.
   and the ants of a saved workflow do not count.
 - A worker ant never resets an existing branch: a fix round reuses the task's
   worktree and branch, so earlier work is never lost.
-- Each run has its own id, and every branch is `ishikari/<run>/<task>`, so a new
+- Each run has its own id, unique on the machine, and every branch is `ishikari/<run>/<task>`, so a new
   task never builds on an old task's branch.
 - Ishikari keeps everything outside the repo, in its state folder
   `~/.ishikari/<repo>-<hash>/`: the logbook, the plans, the worktrees and the

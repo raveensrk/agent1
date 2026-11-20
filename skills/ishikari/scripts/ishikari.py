@@ -14,7 +14,9 @@ so no entry is lost and the file stays a valid recfile.
       where the Workflow tool may load them; each run has its own copy.
       Everything else Ishikari keeps (logbook, plans, worktrees, config)
       lives in the state folder, outside the repo, so none of it is ever
-      committed. The main branch is origin/HEAD, else main, master or
+      committed. The run id is unique on this machine. Setup writes
+      <state>/plans/<run>/run.json: the setup time and the Claude Code
+      session (CLAUDE_CODE_SESSION_ID), which Ant Eater reads. The main branch is origin/HEAD, else main, master or
       trunk; pass --main when none exists. The repo must be checked out
       on it with no uncommitted changes. Paths go into shell commands the
       ants run, so the repo, state and tool paths may hold only letters,
@@ -28,6 +30,10 @@ so no entry is lost and the file stays a valid recfile.
   ishikari.py save <state> <run> <stage>        a result as JSON on stdin
       Keep one workflow result for the retrospective ant, as
       <state>/plans/<run>/<stage>-<n>.json, numbered per stage from 1.
+      Each save stamps its time and session in run.json, then runs
+      `anteater.py snapshot <state> <run>`, which writes the run's token
+      counts to tokens.json. A failed snapshot is a warning on stderr; the
+      save still succeeds.
 
   ishikari.py log append <state>                entries as JSON on stdin
       Append entries to <state>/logbook.rec, a GNU recfile (read it with
@@ -82,6 +88,8 @@ SHORT_HELP = """usage: ishikari.py <command>
 """
 STAGE = re.compile(r"[a-z][a-z-]{0,20}")
 KEEP_WORKFLOWS_DAYS = 7
+RUN_FILE = "run.json"  # setup time, last save time and Claude sessions of a run, for Ant Eater
+SNAPSHOT_TIMEOUT = 120
 
 
 def die(msg):
@@ -171,6 +179,63 @@ def run_id():
     return datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2)
 
 
+def utc_now():
+    """Now as Claude Code stamps its transcripts: UTC, milliseconds, Z."""
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def session_id():
+    """The Claude Code session this command runs in, or None outside one."""
+    sid = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    return sid if re.fullmatch(r"[A-Za-z0-9-]{8,64}", sid) else None
+
+
+def claim_run(state):
+    """Pick a run id no state folder on this machine holds, and make its plans
+    folder with run.json, which Ant Eater reads to find the run's transcripts.
+    Under one lock, so two setups at once never take the same id."""
+    root = os.path.join(os.path.expanduser("~"), ".ishikari")
+    with locked(os.path.join(root, "runs")):
+        while True:
+            run = run_id()
+            taken = any(os.path.exists(os.path.join(root, name, "plans", run)) for name in os.listdir(root))
+            if not taken:
+                break
+        folder = os.path.join(state, "plans", run)
+        os.makedirs(folder)
+        sid = session_id()
+        write_atomic(os.path.join(folder, RUN_FILE), json.dumps(
+            {"run": run, "setupAt": utc_now(), "lastSaveAt": None, "sessions": [sid] if sid else []}, indent=2) + "\n")
+    return run
+
+
+def mark_save(folder, run):
+    """Stamp a save in run.json: the time, and the session that saved."""
+    path = os.path.join(folder, RUN_FILE)
+    try:
+        with open(path) as f:
+            info = json.load(f)
+        assert isinstance(info, dict) and isinstance(info.get("sessions"), list)
+    except (OSError, ValueError, AssertionError):
+        info = {"run": run, "setupAt": None, "lastSaveAt": None, "sessions": []}  # a run from before run.json
+    sid = session_id()
+    if sid and sid not in info["sessions"]:
+        info["sessions"].append(sid)
+    info["lastSaveAt"] = utc_now()
+    write_atomic(path, json.dumps(info, indent=2) + "\n")
+
+
+def snapshot(state, run):
+    """Have Ant Eater write the run's tokens.json. Never fails the save."""
+    try:
+        r = subprocess.run([sys.executable, os.path.join(HERE, "anteater.py"), "snapshot", state, run],
+                           capture_output=True, text=True, timeout=SNAPSHOT_TIMEOUT)
+        if r.returncode != 0:
+            print(f"ishikari: anteater snapshot failed: {r.stderr.strip()[-300:]}", file=sys.stderr)
+    except (subprocess.TimeoutExpired, OSError) as e:
+        print(f"ishikari: anteater snapshot failed: {e}", file=sys.stderr)
+
+
 def setup(repo, main=None):
     top = git(os.path.abspath(repo), "rev-parse", "--show-toplevel")
     if not top:
@@ -199,7 +264,7 @@ def setup(repo, main=None):
     with locked(book):
         if not os.path.exists(book):
             write_atomic(book, LOG_HEAD)
-    run = run_id()
+    run = claim_run(state)
     env = {
         "repo": top,
         "state": state,
@@ -283,6 +348,8 @@ def save(state, run, stage):
         taken = [int(m.group(1)) for m in (re.fullmatch(re.escape(stage) + r"-(\d+)\.json", n) for n in os.listdir(folder)) if m]
         path = os.path.join(folder, f"{stage}-{max(taken, default=0) + 1}.json")
         write_atomic(path, json.dumps(data, indent=2) + "\n")
+        mark_save(folder, run)
+    snapshot(state, run)
     print(path)
 
 
