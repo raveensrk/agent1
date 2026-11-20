@@ -1,8 +1,8 @@
 ---
-name: investigator
+name: investigator-ant
 metadata:
   scope: global
-description: Investigate a task before building it - read the repo, research missing facts, ask the user simple questions, prove the task can be built with evidence or a throwaway spike, then plan it. Run by hand it writes no files and answers in the session with findings and a short plan. Run by Ishikari's investigator ant it writes the product spec, tech spec, docs brief and worker plans and replies in JSON. Use when the user says investigate this, can this be built, how would we build this, plan this task, or runs /investigator. Also the proof step of /add-requirement.
+description: Investigate a task before building it - read the repo, research missing facts, ask the user simple questions, prove the task can be built with evidence or a throwaway spike, then plan it. Run by hand it writes no files and answers in the session with findings and a short plan. Run by Ishikari's investigator ant it writes the product spec, tech spec, docs brief and worker plans and replies in JSON. Use when the user says investigate this, can this be built, how would we build this, plan this task, or runs /investigator-ant. Also the proof step of /add-requirement.
 argument-hint: "[the task]"
 ---
 

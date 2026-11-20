@@ -1,8 +1,8 @@
 ---
-name: janitor
+name: janitor-ant
 metadata:
   scope: global
-description: Clean up only the code a change added or touched - dead code, bloat, duplication and mess - with no change in behaviour, tests run after. Run by hand it cleans the current branch's changes against main, shows the cleanup and applies it after a yes. Run by Ishikari's janitor ant it never asks and follows the ant's git steps. Use when the user says clean up this change, tidy my diff, janitor, or runs /janitor. For a whole-project sweep use /maintain instead.
+description: Clean up only the code a change added or touched - dead code, bloat, duplication and mess - with no change in behaviour, tests run after. Run by hand it cleans the current branch's changes against main, shows the cleanup and applies it after a yes. Run by Ishikari's janitor ant it never asks and follows the ant's git steps. Use when the user says clean up this change, tidy my diff, janitor, or runs /janitor-ant. For a whole-project sweep use /maintain instead.
 argument-hint: "[base ref, default main]"
 ---
 

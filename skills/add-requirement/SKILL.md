@@ -23,7 +23,7 @@ Format and process rules: [requirements.org](../../requirements/requirements.org
 
 ## 3. Prove it can be built
 
-Follow the Proof section of the [investigator skill](../investigator/SKILL.md#proof):
+Follow the Proof section of the [investigator skill](../investigator-ant/SKILL.md#proof):
 evidence for the exact versions in use, a spike only outside the repo, never a guess.
 
 ## 4. Prove it can be tested

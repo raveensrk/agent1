@@ -439,9 +439,9 @@ def test_investigator_skill():
     assert "Write no files. End in the session" in inv
     assert '"productSpecWritten"' in inv and "/ask-simple" in inv
     prompt = read("ishikari", "assets", "prompts", "investigator.md")
-    assert "`/investigator`" in prompt and "Ishikari mode" in prompt
-    assert "investigator/SKILL.md" in read("ishikari", "SKILL.md")
-    assert "../investigator/SKILL.md#proof" in read("add-requirement", "SKILL.md")
+    assert "`/investigator-ant`" in prompt and "Ishikari mode" in prompt
+    assert "investigator-ant/SKILL.md" in read("ishikari", "SKILL.md")
+    assert "../investigator-ant/SKILL.md#proof" in read("add-requirement", "SKILL.md")
 
 
 def test_save_logs_and_recover():

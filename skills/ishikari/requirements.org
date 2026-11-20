@@ -192,7 +192,7 @@ Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workfl
 :APPROVED:    2026-11-20
 :IMPLEMENTED: 2026-11-20
 :END:
-The investigator's instructions move from assets/prompts/investigator.md into a skill, skills/investigator/SKILL.md. It is built first, before the janitor, judge, review and retro skills.
+The investigator's instructions move from assets/prompts/investigator.md into a skill, skills/investigator-ant/SKILL.md. It is built first, before the janitor, judge, review and retro skills.
 - Ishikari mode: Ishikari's investigator ant loads the skill with its inputs (repo, main, state, task, plans folder, test and check commands). Outputs and JSON replies stay as they are: product_spec.md, tech_spec.md, docs_brief.md, one plan per worker, and the 2a guards still check every reply.
 - Standalone mode: run by hand, the skill writes no files. It ends in the current session with findings and a short plan: what to build, whether it can be built, how, and the risks.
 - Proof: both modes prove the task can be built with throwaway code in a scratch folder. The project stays untouched. No plan comes before the proof passes.
@@ -211,9 +211,9 @@ Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari
 :APPROVED:    2026-11-20
 :IMPLEMENTED: 2026-11-20
 :END:
-What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js into a skill, skills/janitor/SKILL.md.
+What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js into a skill, skills/janitor-ant/SKILL.md.
 - Scope: only the lines a change added or touched; by hand `git diff <base>...HEAD` (base main), in Ishikari the range main to the merged commit.
 - Cleans dead code, duplication, bloat and mess; changes no behaviour; tests run after, and a failing cleanup is undone.
 - By hand: shows the cleanup, applies and commits after a yes.
-- Ishikari mode: never asks; the ant keeps its git steps, note file, reply schema and JANITOR_MIN_LINES skip. The ant loads /janitor, or reads the skill file when it is unavailable.
+- Ishikari mode: never asks; the ant keeps its git steps, note file, reply schema and JANITOR_MIN_LINES skip. The ant loads /janitor-ant, or reads the skill file when it is unavailable.
 Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-finish.js docsChain); ISH-10 did the same for the investigator.

@@ -165,7 +165,7 @@ it, say so and stop; there is no other way to plan.
 1. Start ONE investigator with the Agent tool (general-purpose, model `opus`,
    effort `low`). Its prompt is
    [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
-   inputs: the skill file `<skill>/../investigator/SKILL.md` as an absolute
+   inputs: the skill file `<skill>/../investigator-ant/SKILL.md` as an absolute
    path, `env.repo`, `env.main`, `env.state`, the task, the plans folder
    `<env.state>/plans/<env.run>/`, and `env.testCommand` and `env.checkCommand`
    when saved. If the last line `<run>/(janitor ant)` of

@@ -231,7 +231,7 @@ test('finish: the janitor cleans, tests, commits and lands its cleanup alone, ju
   assert.deepEqual(calls.slice(1, 4), ['janitor-ant', 'judge-ant:1', 'docs-ant'])
   assert.ok(!calls.some(c => c.includes('cleanup')))  // no worker, detective or merger for it
   assert.ok(prompts['janitor-ant'].includes('merge --ff-only ishikari/r1/_cleanup'))
-  assert.ok(prompts['janitor-ant'].includes('Load the /janitor skill') && prompts['janitor-ant'].includes('/janitor/SKILL.md'))
+  assert.ok(prompts['janitor-ant'].includes('Load the /janitor-ant skill') && prompts['janitor-ant'].includes('/janitor-ant/SKILL.md'))
   assert.ok(fin.includes('   - ishikari/r1/_cleanup'))
 })
 
