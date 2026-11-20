@@ -380,22 +380,23 @@
              [5 "build" INDIGO 28 16.8] [6 "build" INDIGO 28 22.4] [7 "fixloop" GOLD 8 0] [8 "fixloop" GOLD 8 4]
              [10 "after" GREEN 5 0] [11 "jfixrun" GOLD 7 0]])
 
-(def KX (- CX 330)) (def KY (- CY 90)) ; the key's top left corner
+(def KW 360) (def KH 226) ; the key: narrow, so it sits centred and clear of the build stretch
+(def KX (- CX (/ KW 2))) (def KY (- CY 90)) ; the key's top left corner
 
 (defn legend
-  "The key box in the middle of the ring."
+  "The key box in the middle of the ring: the cars, then the symbols in two columns, then the colours."
   []
   (let [kx KX ky KY
         rows [[BLUE "1" "task on the plan line"] [INDIGO "2-6" "tasks on the main line to MAIN"] [GOLD "7-8" "a bug through the fix loop"]
               [GREEN "10" "after main moves"] [GOLD "11" "the judge's fix round"]]
-        ;; right column: each symbol drawn, not typed, so every browser shows the same
-        lx (+ kx 360) ly (+ ky 30)
-        key (fn [i label] [(txt (+ lx 16) (+ ly (* i 16)) [label] :fill SUB :size 12) (+ lx 6) (+ ly (* i 16) -4)])
-        [k2 ax ay] (key 2 "an ant (AI agent)")
-        [k4 cx cy] (key 3 "dropped")
-        [k5 ix iy] (key 4 "interchange")]
+        sy (+ ky 136) ; first symbol row
+        ;; each symbol drawn, not typed, so every browser shows the same: [column row label glyph]
+        cell (fn [col row label glyph]
+               (let [x (+ kx 22 (* col 172)) y (+ sy (* row 17))]
+                 (str (glyph x (- y 4)) (txt (+ x 12) y [label] :fill SUB :size 12))))
+        ln (fn [x y dash] (str "<line x1=\"" (- x 7) "\" y1=\"" y "\" x2=\"" (+ x 7) "\" y2=\"" y "\" stroke=\"" SUB "\" stroke-width=\"1.5\"" (when dash (str " stroke-dasharray=\"" dash "\"")) "/>"))]
     (concat
-     [(str "<rect x=\"" kx "\" y=\"" ky "\" width=\"500\" height=\"160\" rx=\"12\" fill=\"#0F172A\" stroke=\"#334155\"/>")]
+     [(str "<rect x=\"" kx "\" y=\"" ky "\" width=\"" KW "\" height=\"" KH "\" rx=\"12\" fill=\"#0F172A\" stroke=\"#334155\"/>")]
      (mapcat (fn [i [c n t]]
                (let [y (+ ky 24 (* i 20))]
                  [(str "<line x1=\"" (+ kx 16) "\" y1=\"" y "\" x2=\"" (+ kx 60) "\" y2=\"" y "\" stroke=\"" c "\" stroke-width=\"7\" stroke-linecap=\"round\"/>")
@@ -403,28 +404,24 @@
                        "<text x=\"" (+ kx 87) "\" y=\"" (+ y 4) "\" font-size=\"11\" font-weight=\"800\" fill=\"" BG "\" text-anchor=\"middle\">" n "</text>")
                   (txt (+ kx 114) (+ y 5) [t] :size 13)]))
              (range) rows)
-     [(txt lx ly ["dashed:" "a side branch"] :fill SUB :size 12 :lh 16)
-      k2 (hexm ax ay 6 "none" SUB 1.5)
-      k4 (str "<path d=\"M" (- cx 4) "," (- cy 2) " L" (+ cx 4) "," (- cy 2) " L" (+ cx 3) "," (+ cy 6) " L" (- cx 3) "," (+ cy 6)
-              " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>"
-              "<line x1=\"" (- cx 5.5) "\" y1=\"" (- cy 4) "\" x2=\"" (+ cx 5.5) "\" y2=\"" (- cy 4) "\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>"
-              "<path d=\"M" (- cx 2) "," (- cy 4) " L" (- cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 4)
-              "\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.2\"/>")
-      k5 (str "<circle cx=\"" ix "\" cy=\"" iy "\" r=\"5\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>")
-      (txt lx (+ ly (* 5 16)) ["stacked: several ants"] :fill SUB :size 12)
-      (let [x (+ lx 6) y (+ ly (* 6 16) -4)]
-        (str "<path d=\"M" x "," (- y 6) " L" (+ x 6) "," y " L" x "," (+ y 6) " L" (- x 6) "," y " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>"))
-      (txt (+ lx 16) (+ ly (* 6 16)) ["a decision"] :fill SUB :size 12)
-      (let [y (+ ly (* 7 16) -4)]
-        (apply str (for [k [-3 0 3]] (str "<line x1=\"" lx "\" y1=\"" (+ y k) "\" x2=\"" (+ lx 12) "\" y2=\"" (+ y k) "\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>"))))
-      (txt (+ lx 16) (+ ly (* 7 16)) ["rail: many ants"] :fill SUB :size 12)]
+     [(str "<line x1=\"" (+ kx 16) "\" y1=\"" (- sy 18) "\" x2=\"" (- (+ kx KW) 16) "\" y2=\"" (- sy 18) "\" stroke=\"#334155\"/>")
+      (cell 0 0 "an ant (AI agent)" (fn [x y] (hexm x y 6 "none" SUB 1.5)))
+      (cell 0 1 "stacked: many ants" (fn [x y] (str (hexm (+ x 3) (- y 3) 5 "none" SUB 1.2) (hexm x y 5 "#0F172A" SUB 1.5))))
+      (cell 0 2 "a decision" (fn [x y] (str "<path d=\"M" x "," (- y 6) " L" (+ x 6) "," y " L" x "," (+ y 6) " L" (- x 6) "," y " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>")))
+      (cell 0 3 "interchange" (fn [x y] (str "<circle cx=\"" x "\" cy=\"" y "\" r=\"5\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>")))
+      (cell 1 0 "rail: many ants" (fn [x y] (apply str (for [k [-3 0 3]] (ln x (+ y k) nil)))))
+      (cell 1 1 "dashed: a side branch" (fn [x y] (ln x y "4 3")))
+      (cell 1 2 "dropped" (fn [cx cy]
+                            (str "<path d=\"M" (- cx 4) "," (- cy 2) " L" (+ cx 4) "," (- cy 2) " L" (+ cx 3) "," (+ cy 6) " L" (- cx 3) "," (+ cy 6)
+                                 " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>"
+                                 "<line x1=\"" (- cx 5.5) "\" y1=\"" (- cy 4) "\" x2=\"" (+ cx 5.5) "\" y2=\"" (- cy 4) "\" stroke=\"" SUB "\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>")))]
      ;; colour key: what each colour means
      (loop [x (+ kx 16) [[c t] & more] [[GREEN "done"] [RED "failed"] [GOLD "warning"] [BLUE "plan"] [INDIGO "build"]] out []]
        (if-not c
          out
          (recur (+ x 22 (* (count t) 7)) more
-                (conj out (str "<circle cx=\"" (+ x 5) "\" cy=\"" (+ ky 136) "\" r=\"5\" fill=\"" c "\"/>")
-                      (txt (+ x 14) (+ ky 140) [t] :fill SUB :size 12))))))))
+                (conj out (str "<circle cx=\"" (+ x 5) "\" cy=\"" (+ ky (- KH 18)) "\" r=\"5\" fill=\"" c "\"/>")
+                      (txt (+ x 14) (+ ky (- KH 14)) [t] :fill SUB :size 12))))))))
 
 ;; ---- everything on the map is clickable ----
 ;; Each clickable thing registers {id name code tip about src x y} here while
@@ -526,8 +523,8 @@
     (clickable {:id "title" :name "Ishikari metro map" :tip "How to read this map."
                 :about "Ishikari runs a task with many ants, one worker, detective or juror at a time unless you pass --parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), diamonds are decisions, the ring is the single-ant path and a triple rail leaving it is a many-ant path, pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
                 :src "skills/ishikari/design/index.md" :x CX :y (- CY 140)}
-               (txt (- CX 80) (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
-               (txt (- CX 80) (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
+               (txt CX (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
+               (txt CX (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
    ;; the three parts of the ring, named in the corners
    (for [[k x y an label c about] [[1 (- W 30) 150 "end" "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2, the blue stretch from Task to the worker plans: the investigator asks you its questions, then writes the product spec, the tech spec and one plan per task; the plan stage only checks the plans. The only part where you are asked anything."]
                                    [2 (- W 30) (- H 40) "end" "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6, the indigo stretch down the right and along the bottom: worker ants build the plans, one at a time or up to 5 at once with --parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
@@ -609,7 +606,7 @@
                  :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x (first (P "investigator")) :y (second (P "investigator"))}
                 (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
    [(clickable {:id "key" :name "Key" :tip "What the cars, symbols and colours mean."
-                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, triple rail a lane where several ants run, leaving the single-ant main line at a decision and rejoining it, stacked hexagons a stop where several ants run (the mark ∥ after a name: always at once), dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
+                :about "Top: what each numbered car shows. Middle: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, triple rail a lane where several ants run, leaving the single-ant main line at a decision and rejoining it, stacked hexagons a stop where several ants run (the mark ∥ after a name: always at once), dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
                 :x KX :y KY}
                (apply str (legend)))]))
 
