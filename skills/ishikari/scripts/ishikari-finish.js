@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'After ishikari-build, with every passing task approved.',
   phases: [
     { title: 'Merge', detail: 'merger ant merges the approved tasks in a scratch copy and tests once' },
-    { title: 'Upkeep', detail: 'janitor cleans up, tests and commits itself; the judge scores the run, one fix round below 7; then the docs ant updates the docs with /docs' },
+    { title: 'Upkeep', detail: 'janitor cleans up, tests and commits itself; the judge scores the run, one fix round below 7 or for its bugs; then the docs ant updates the docs with /docs' },
     { title: 'Main', detail: 'main moves forward only if everything passed; worktrees cleaned up' },
   ],
 }
@@ -19,6 +19,7 @@ export const meta = {
 //                                            rounds use their own upkeep branches, so kept
 //                                            branches of an earlier round are never removed
 //   landed?: string[],                       task ids an earlier finish of this run put on main
+//   parallel?: number,                       juror ants at once, 1 to 5 (default 1)
 //   cleanup?: boolean,                       this run built a dropped cleanup plan: no janitor,
 //                                            so cleanups never chain
 //   checkFixDone?: boolean,                  a check-fix round already ran (also true when a
@@ -61,6 +62,7 @@ const bad = []
 if (args.checkFixDone != null && typeof args.checkFixDone !== 'boolean') bad.push('checkFixDone must be true or false')
 if (args.round != null && !(Number.isInteger(args.round) && args.round >= 1)) bad.push('round must be a whole number from 1')
 if (args.landed != null && !Array.isArray(args.landed)) bad.push('landed must be a list of task ids')
+if (args.parallel != null && !(Number.isInteger(args.parallel) && args.parallel >= 1 && args.parallel <= 5)) bad.push('parallel must be a whole number from 1 to 5')
 for (const k of ['approved', 'drop']) if (args[k] != null && !Array.isArray(args[k])) bad.push(`${k} must be a list`)
 // Branch names go into git commands: only Ishikari's own shape is allowed, and
 // never a scratch branch (their names start with "_").
@@ -311,7 +313,7 @@ let cleanup = null
 let docs = null
 let verdict = null
 const PASS = 7
-const MAX_JURORS = 5  // juror ants at once
+const MAX_JURORS = Number.isInteger(args.parallel) ? args.parallel : 1  // juror ants at once: one unless parallel is set
 const MIN_JURY = 3    // fewer merged tasks: the judge works alone
 const JANITOR_MIN_LINES = 100  // fewer lines added or changed: no janitor
 const planDir = `${env.state}/plans/${env.run}`
@@ -432,13 +434,16 @@ Never touch ${env.main} or the repo's main checkout.`,
     await rewind('the cleanup')
   }
   // The judge ant scores the whole run, cleanup included, against the product spec.
-  // Below PASS: one fix round (worker, detective), then a second score. The
+  // Below PASS: one fix round (worker, detective) for every gap, then a second
+  // score. At PASS or above: the same round, only for the gaps the judge calls
+  // bugs (wrong behaviour); a missing or weak test alone starts no round. The
   // detective lands the fix itself, by fast-forward, only if it found no bug and
   // the tests pass: no other ant takes part. Still below PASS: main moves anyway
   // and the report flags it.
   // MIN_JURY or more tasks: the judge delegates, one juror ant per task (at most
   // MAX_JURORS at once), and decides the run's score from their reports.
-  const SCORED = { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } } }, required: ['score', 'gaps'] }
+  const SCORED = { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 10 }, gaps: { type: 'array', items: { type: 'string' } },
+    bugs: { type: 'array', items: { type: 'string' }, description: 'the gaps, word for word, where the shipped code behaves wrongly; a missing or weak test is a gap, never a bug' } }, required: ['score', 'gaps'] }
   const juror = (t, round) => ant(
     `You are a juror ant of the Ishikari workflow, helping the judge ant.
 ${where}
@@ -448,7 +453,9 @@ product spec ${planDir}/product_spec.md. Read the merged code in
 ${scratchTree}, the code that will land on ${env.main}, and judge only this task:
 does the code behave as each behaviour it covers says, and does each invariant it
 covers hold? Score it 0 to 10 and list each gap as a short, concrete fix a worker
-ant can build without questions, naming the id. Never change anything.`,
+ant can build without questions, naming the id. Never change anything.${MAX_JURORS > 1 ? `
+Other jurors read this folder at the same moment: never build or run the tests
+in it. Judge by reading.` : ''}`,
     { label: `juror-ant:${round}:${t.id}`, phase: 'Upkeep', effort: EFFORT.juror, schema: SCORED },
   )
   const jury = async (round) => {
@@ -482,25 +489,27 @@ behaviour is delivered, every invariant holds and no behaviour was added that th
 spec does not have. The tech spec and the plans in that folder say how it was
 meant to be built; they are not what you score. List each gap in "gaps" as a
 short, concrete fix a worker ant can build without questions: the id, what is
-missing or wrong, and in which file.
+missing or wrong, and in which file. Repeat in "bugs" each gap where the code
+itself behaves wrongly; a missing or weak test is a gap, not a bug.
 Never change anything.`,
       { label: `judge-ant:${round}`, phase: 'Upkeep', effort: EFFORT.judge,
         schema: SCORED },
     )
-    return j && Number.isInteger(j.score) ? { score: Math.max(0, Math.min(10, j.score)), gaps: Array.isArray(j.gaps) ? j.gaps.map(String) : [] } : null
+    return j && Number.isInteger(j.score) ? { score: Math.max(0, Math.min(10, j.score)), gaps: Array.isArray(j.gaps) ? j.gaps.map(String) : [], bugs: Array.isArray(j.bugs) ? j.bugs.map(String) : [] } : null
   }
   const judgeRun = async () => {
     if (upkeepStopped) return
     const first = await judgeOnce(1)
     if (!first) { verdict = { score: null, gaps: [], fixed: false, flagged: true, reason: 'the judge ant died' }; return }
     verdict = { score: first.score, gaps: first.gaps, fixed: false, flagged: first.score < PASS }
-    if (first.score >= PASS || !first.gaps.length) return
+    const todo = first.score < PASS ? first.gaps : first.bugs
+    if (!todo.length) return
     const BUILT = { type: 'object', properties: { status: { type: 'string', enum: ['built', 'stuck'] }, notes: { type: 'string' } }, required: ['status', 'notes'] }
     const b = await ant(
       `You are a worker ant of the Ishikari workflow, closing the judge ant's gaps.
 ${where}
 The judge scored the run ${first.score}/10 against the product spec ${planDir}/product_spec.md. Gaps:
-${first.gaps.map(g => `- ${g}`).join('\n')}
+${todo.map(g => `- ${g}`).join('\n')}
 Work only in the worktree ${fixTree} on branch ${fixBranch}. If either exists, remove
 them first; then create it with \`git -C ${env.repo} worktree add -b ${fixBranch} ${fixTree} ${sha}\`.
 Close the gaps so the code delivers the spec, keeping to the tech spec ${planDir}/tech_spec.md. Keep the tests passing (${tests} inside
@@ -515,7 +524,7 @@ ${scratch}, ${env.main} or the repo's main checkout. Return "stuck" if you canno
         `You are a detective ant of the Ishikari workflow, checking the fix for the judge ant's gaps.
 ${where}
 Gaps:
-${first.gaps.map(g => `- ${g}`).join('\n')}
+${todo.map(g => `- ${g}`).join('\n')}
 Code: ${fixTree}, branch ${fixBranch}, built on ${scratch}. Check that it closes the gaps
 and breaks nothing, then ${tests} inside ${fixTree}. Return each problem in "bugs", or
 an empty list. Never fix anything.

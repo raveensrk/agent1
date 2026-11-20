@@ -94,7 +94,9 @@ its job. The build script runs that workflow in place of a worker ant.
     Only a task that must edit another task's file lists that task in `after`:
     it starts as soon as that task is built, on top of its branch.
 
-05. **Worker Ant** builds its plan in its own git worktree, at most 5 at a time.
+05. **Worker Ant** builds its plan in its own git worktree, one at a time by default: a
+    single worker or detective runs at any moment. `--parallel <n>` lets up to
+    n (at most 5) run at once.
     It decides on its own, goes as far as it can, and commits all its work,
     including the docs its change affects, so docs land with the code. A worker
     that gets stuck reports why, and that becomes a bug.
@@ -157,14 +159,17 @@ They run once per finish, on the merged result, before main moves.
   does the code behave as each behaviour says, and does each invariant hold?
   The tech spec and the plans are not what it scores: detectives check those.
   It lists each gap as a concrete fix, naming the id. With three or more tasks it
-  delegates first: one **Juror ant** per task, up to 5 at once, each scoring
+  delegates first: one **Juror ant** per task, one at a time (up to 5 at once
+  with `--parallel`), each scoring
   its task against that task's plan. The judge weighs their reports, checks
   how the tasks fit together and decides the score itself; it is not an
   average. One or two tasks: the judge works alone. Below
   7 with gaps, one fix round per finish: a worker ant closes the gaps on top of the
   merged scratch copy, a detective ant checks it, runs the tests and, only if
   both pass, fast-forwards the scratch copy to it itself (the only way the fix
-  lands), and the judge scores again. Still below 7, or the fix failed (its branch is kept
+  lands), and the judge scores again. At 7 or more the same round runs only
+  for the gaps the judge lists as bugs: wrong behaviour, never a missing test
+  alone. Still below 7, or the fix failed (its branch is kept
   and the verdict says why): main moves anyway and the verdict is
   flagged in the report. The judge never blocks main, so a run never gets
   stuck on a score: main always moves.
@@ -207,7 +212,8 @@ summary and top 3 findings; the user decides what to act on.
 
 ## Rules
 
-- Ants work in parallel wherever nothing forces an order. Fix rounds, tasks in
+- Workers, detectives and jurors run one at a time unless the user passes
+  `--parallel <n>`; then they work in parallel wherever nothing forces an order. Fix rounds, tasks in
   `after` and merges run in order.
 - Only the main session asks the user questions, and only in the plan stage.
   Ants report problems in their results; after planning, the main session

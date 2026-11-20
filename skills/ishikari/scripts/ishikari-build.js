@@ -3,7 +3,7 @@ export const meta = {
   description: 'Ishikari stage 2: worker ants build the plans, detective ants check them and plan fixes, then the integrator ant tests all passing tasks combined',
   whenToUse: 'After ishikari-plan returns plans. Ends with task results; the main session approves passing tasks without asking.',
   phases: [
-    { title: 'Build', detail: 'worker ants, at most 5 at once, one worktree each' },
+    { title: 'Build', detail: 'worker ants, one at a time unless parallel is set (at most 5), one worktree each' },
     { title: 'Check', detail: 'one detective ant per built task: checks it, plans any fix' },
     { title: 'Fix', detail: 'worker builds the plan, detective re-checks and plans the next; 3 tries per bug' },
     { title: 'Combined', detail: 'integrator ant merges all passing tasks in a scratch copy and tests once' },
@@ -15,6 +15,8 @@ export const meta = {
 //   env: { repo, state, run, main, tool, testCommand? },  from `ishikari.py setup`, plus
 //                                                          testCommand from ishikari-plan
 //   plans: [{ id, title, after?, workflow? }],             approved plans from ishikari-plan
+//   parallel?: number,                                     ants at once, 1 to 5 (default 1: one
+//                                                          worker or detective at a time)
 //   bugs?: [{ task, branch?, bug, kind?, after?, guidance?, history? }]
 //          open work from earlier rounds: failed merges, waiting tasks, a failed
 //          app check. kind 'merge' means the branch must take in the current
@@ -27,7 +29,7 @@ export const meta = {
 // Nothing here touches the repo's main checkout: every ant works in a
 // worktree under the state folder, and the logbook lives there too.
 
-const MAX_WORKERS = 5
+const MAX_PARALLEL = 5  // the most --parallel may ask for
 const MAX_TRIES = 3   // tries per bug before it is escalated
 const MAX_ROUNDS = 3  // fix rounds per task, so new bugs cannot loop forever
 // For now every ant runs on the latest Opus at low effort. To tune one ant,
@@ -48,6 +50,7 @@ if (!/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(env.main || '')) bad.push('env.main
 for (const k of ['testCommand', 'checkCommand']) if (env[k] != null && (typeof env[k] !== 'string' || /[\n\r`]/.test(env[k]))) bad.push(`env.${k} must be one line with no backtick`)
 if (args.plans != null && !Array.isArray(args.plans)) bad.push('plans must be a list')
 if (args.bugs != null && !Array.isArray(args.bugs)) bad.push('bugs must be a list')
+if (args.parallel != null && !(Number.isInteger(args.parallel) && args.parallel >= 1 && args.parallel <= MAX_PARALLEL)) bad.push(`parallel must be a whole number from 1 to ${MAX_PARALLEL}`)
 if (!plans.length && !bugsIn.length) bad.push('nothing to build: plans and bugs are both empty')
 if (bad.length) return { stage: 'error', reason: bad.join('; ') }
 
@@ -127,6 +130,9 @@ const entries = []
 const note = e => entries.push({ run: env.run, ...e })
 
 // ---- worker limit: a finishing worker hands its slot straight to the next ----
+// One at a time by default; args.parallel raises it. With one slot the
+// detectives queue for it too, so a single ant works at any moment.
+const MAX_WORKERS = Number.isInteger(args.parallel) ? args.parallel : 1
 let running = 0
 const waiting = []
 async function workerSlot(fn) {
@@ -137,6 +143,7 @@ async function workerSlot(fn) {
     if (next) next(); else running--
   }
 }
+const detectiveSlot = fn => MAX_WORKERS === 1 ? workerSlot(fn) : fn()
 
 // A dead ant (null) is retried once; a second death is an error, not a bug.
 async function twice(fn) {
@@ -298,7 +305,7 @@ it failed and try a different approach.`
 any, also find their cause and write a complete fix plan for a worker ant.
 Count the task's own commits with \`git -C ${env.repo} rev-list --count --no-merges ${task.branch} --not ${[env.main, ...task.bases].join(' ')}\`
 and return the number as ownCommits.`
-  return ant(
+  return detectiveSlot(() => ant(
     `You are the detective ant of the Ishikari workflow: you check the task and plan
 the fix for every bug you find. You never write code yourself.
 ${where}
@@ -318,7 +325,7 @@ Put style points and small doubts in nits, not in bugs. Check that the docs
 match the change.`,
     { label: `detective-ant:${task.id}:${step}`, phase: open ? 'Fix' : 'Check', effort: EFFORT.detective,
       schema: { ...DETECTION, required: open ? ['bugs', 'fixed'] : ['bugs', 'ownCommits'] } },
-  ).then(okDetect)
+  )).then(okDetect)
 }
 
 // Fix loop with each bug tracked by id: MAX_TRIES tries per bug, at most MAX_ROUNDS

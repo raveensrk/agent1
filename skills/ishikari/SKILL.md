@@ -3,7 +3,7 @@ name: ishikari
 metadata:
   scope: global
 description: Run the Ishikari workflow on a task - ants review it, plan it, build it in parallel worktrees, check and fix it, test it combined, and merge it in a straight line - asking the user only while planning, then running on its own. Use when the user runs /ishikari, or says run ishikari, use the ants, or build this with Ishikari. Needs Claude Code's Workflow tool and a git repo.
-argument-hint: "<task> [repo path]"
+argument-hint: "<task> [repo path] [--parallel <n>]"
 ---
 
 # Ishikari
@@ -74,7 +74,8 @@ inside the working directory, so the Workflow tool may load them by
 
 | Cap                                  | Value | Where                      |
 | ------------------------------------ | ----- | -------------------------- |
-| Workers at once                      | 5     | build `MAX_WORKERS`        |
+| Workers at once (default)            | 1     | build `MAX_WORKERS`        |
+| Workers at once, with `--parallel`   | 5     | build `MAX_PARALLEL`       |
 | Tries per bug, then escalated        | 3     | build `MAX_TRIES`          |
 | Fix rounds per fix loop              | 3     | build `MAX_ROUNDS`         |
 | Combined test rounds                 | 2     | build                      |
@@ -88,7 +89,8 @@ inside the working directory, so the Workflow tool may load them by
 | Janitor runs at changed lines        | 100+  | finish `JANITOR_MIN_LINES` |
 | Judge pass score (out of 10)         | 7     | finish `PASS`              |
 | Judge fix rounds, per finish         | 1     | finish                     |
-| Jurors at once (3+ tasks)            | 5     | finish `MAX_JURORS`        |
+| Jurors at once (3+ tasks, default)   | 1     | finish `MAX_JURORS`        |
+| Jurors at once, with `--parallel`    | 5     | finish `MAX_JURORS`        |
 | Files per worker plan, about         | 3     | investigator prompt        |
 
 A task enters a fix loop after its first check, and again after a stuck build,
@@ -100,6 +102,12 @@ a changed base or a clash; each loop has its own 3 rounds.
   stop here, before setup. Nothing else can stand in for them.
 - Repo: the path in the arguments, else the current repo.
   Task: the rest of the arguments; if there is none, ask for it.
+- `--parallel <n>` in the arguments, n from 2 to 5: keep it as `parallel`.
+  Without it `parallel` is 1, the default: the tasks are still split, one
+  worker ant per plan, but a single worker, detective or juror runs at any
+  moment. With it, up to n run at once. Researchers are read only and stay at
+  5 either way. Any other value: say `--parallel takes a whole number from 2
+  to 5` and stop, before setup.
 - Run `python3 <skill>/scripts/ishikari.py setup <repo> [--main <branch>]`.
   Keep its JSON as `env` for every step. Its `workflows` field holds the four
   script paths (`plan`, `build`, `finish`, `retro`). It also holds `testCommand` and `checkCommand` once saved for
@@ -236,8 +244,8 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 
 ## 3. Build
 
-- Run `env.workflows.build` with `{env, plans}`. Later rounds pass `bugs`
-  instead of new plans. A detective reuses its worker's test result only when
+- Run `env.workflows.build` with `{env, plans, parallel}`. Later rounds pass `bugs`
+  instead of new plans, and `parallel` again. A detective reuses its worker's test result only when
   the worktree's HEAD is the worker's sha and the tree is clean.
 - Do not ask. Approve every `awaiting review` task. Drop every `escalated`,
   `blocked` and `error` task, and every task whose `after` holds a dropped
@@ -252,7 +260,7 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
 ## 4. Finish
 
 - Run `env.workflows.finish` with `{env, approved, together, drop, round,
-  landed}`, plus `cleanup: true` for a cleanup run. `approved` items are
+  landed, parallel}`, plus `cleanup: true` for a cleanup run. `approved` items are
   `{id, branch, after}` from the build result. `round` is this run's finish
   number (1, then 2, ...): a later finish uses its own upkeep branches, so
   branches kept by an earlier one stay. `landed` holds every task id the
@@ -295,9 +303,11 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
     product spec, id by id: does each behaviour hold, does each invariant
     hold. Detectives check tasks against the plan and the tech spec; the
     judge does not score those. With 3+ tasks it first
-    sends one juror ant per task (5 at once) and decides from their reports;
+    sends one juror ant per task (one at a time, or `parallel` at once) and decides from their reports;
     the score is its own call, not an average. Below 7: one fix round
-    (worker, then a detective that lands the fix), then a second score. Still below 7: main moves
+    (worker, then a detective that lands the fix), then a second score. At 7 or
+    more the same round still runs, only for the gaps the judge lists as
+    `bugs` (wrong behaviour, never a missing test alone). Still below 7: main moves
     anyway and `verdict.flagged` is true;
   - last, the docs ant runs `/docs` in update mode on the final code (or updates
     the documentation directly if `/docs` is unavailable), in its

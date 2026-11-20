@@ -587,11 +587,11 @@ test('finish: one task, the judge works alone', async () => {
   assert.ok(!calls.some(c => c.startsWith('juror')))
 })
 
-test('finish: many tasks, one juror per task, at most 5 at once, judge sees their reports', async () => {
+test('finish: many tasks, one juror per task, at most parallel at once, judge sees their reports', async () => {
   const ids = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
   let live = 0, peak = 0
   const prompts = {}
-  const { out, calls } = await run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true }, async (p, o) => {
+  const { out, calls } = await run('ishikari-finish.js', { env, approved: ids.map(T), cleanup: true, parallel: 5 }, async (p, o) => {
     prompts[o.label] = p
     if (o.label === 'merger-ant') return { sha: 'abc1234', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
     if (o.label.startsWith('juror')) {
@@ -603,8 +603,9 @@ test('finish: many tasks, one juror per task, at most 5 at once, judge sees thei
     return { moved: true, reason: '' }
   })
   assert.equal(calls.filter(c => c.startsWith('juror-ant:1:')).length, 7)
-  assert.ok(peak <= 5)
+  assert.ok(peak > 1 && peak <= 5)
   assert.ok(prompts['juror-ant:1:b'].includes('/s/plans/r1/b.md'))
+  assert.ok(prompts['juror-ant:1:b'].includes('never build or run the tests'))
   const j = prompts['judge-ant:1']
   assert.ok(j.includes('- a: 6/10; gaps: gap in a'))
   assert.ok(j.includes('- c: no report'))
@@ -1073,4 +1074,51 @@ test('every script refuses a run id that could name another folder', async () =>
     const { out } = await run(name, { env: { ...env, run: bad }, ...more }, () => ({}))
     assert.equal(out.stage, 'error', `${name} ${bad}`)
   }
+})
+
+// ---- one at a time by default, parallel on request ----
+test('build: one worker or detective at a time by default, up to parallel when asked', async () => {
+  const plans = ['a', 'b', 'c', 'd'].map(id => ({ id }))
+  const peakOf = async more => {
+    let live = 0, peak = 0
+    const { out } = await run('ishikari-build.js', { env, plans, ...more }, async (p, o) => {
+      if (o.label.startsWith('integrator')) return { sha: 'abc1234', results: plans.map(x => ({ id: x.id, outcome: 'merged', detail: '' })) }
+      live++; peak = Math.max(peak, live)
+      await new Promise(r => setTimeout(r, 3)); live--
+      return o.label.startsWith('worker') ? W : { bugs: [], ownCommits: 1 }
+    })
+    assert.equal(out.stage, 'build')
+    return peak
+  }
+  assert.equal(await peakOf({}), 1)
+  const p3 = await peakOf({ parallel: 3 })
+  assert.ok(p3 > 1)
+})
+
+test('finish: jurors run one at a time by default and may run the tests', async () => {
+  const ids = ['a', 'b', 'c', 'd']
+  let live = 0, peak = 0
+  const { prompts } = await finishRun({ approved: ids.map(T) }, async o => {
+    if (o.label === 'merger-ant') return { sha: 'abc1234', results: ids.map(id => ({ id, outcome: 'merged', detail: '' })) }
+    if (o.label.startsWith('juror')) { live++; peak = Math.max(peak, live); await new Promise(r => setTimeout(r, 2)); live--; return { score: 9, gaps: [] } }
+  })
+  assert.equal(peak, 1)
+  assert.ok(!prompts['juror-ant:1:a'].includes('never build or run the tests'))
+})
+
+test('build and finish: parallel must be a whole number from 1 to 5', async () => {
+  for (const parallel of [0, 6, 1.5, '3']) {
+    assert.match((await run('ishikari-build.js', { env, plans: [{ id: 'a' }], parallel }, () => W)).out.reason, /parallel must be/)
+    assert.match((await run('ishikari-finish.js', { env, approved: [T('a')], parallel }, () => ({}))).out.reason, /parallel must be/)
+  }
+})
+
+test('finish: a passing score with bugs still gets one fix round, for the bugs only', async () => {
+  const { out, calls, prompts } = await judgeRun([{ score: 8, gaps: ['B2 wrong', 'B3 test missing'], bugs: ['B2 wrong'] }, { score: 9, gaps: ['B3 test missing'], bugs: [] }])
+  assert.ok(calls.includes('worker-ant:judge-fix') && calls.includes('detective-ant:judge-fix'))
+  assert.ok(prompts['worker-ant:judge-fix'].includes('- B2 wrong'))
+  assert.ok(!prompts['worker-ant:judge-fix'].includes('B3 test missing'))
+  assert.deepEqual(out.verdict, { score: 9, gaps: ['B3 test missing'], fixed: true, flagged: false, first: 8 })
+  const none = await judgeRun([{ score: 8, gaps: ['B3 test missing'], bugs: [] }])
+  assert.ok(!none.calls.includes('worker-ant:judge-fix'))
 })
