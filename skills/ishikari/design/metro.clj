@@ -75,9 +75,11 @@
 (def PLANS 59) ; the plans decision, between the specs and the workers
 (def SOLO 476) ; the single-ant line's radius: inside the ring, clear of its station names
 ;; Stretches of the ring where one ant per task runs: drawn as a triple rail.
-;; The thin line beside each is the single-ant path. [from-deg to-deg colour]
-(def RAILS [[PLANS (A "workers") BLUE] [(A "workers") (A "integrator") INDIGO] [JURY (A "judge") INDIGO]])
-(def YOU (pt (- (A "investigator") 6) (+ R 105))) (def RES (pt (A "investigator") (- R 95)))
+;; The thin line beside each is the single-ant path. [points colour]
+(def YOU (pt (- (A "investigator") 6) (+ R 105))) (def RES (pt (A "investigator") (- R 150)))
+(def FACTS (pt (A "investigator") (- R 50))) ; the facts decision, half way down the research line
+(def RAILS [[[FACTS RES] BLUE] ; researcher ants: 1 to 5 at once
+            [(arc PLANS (A "workers")) BLUE] [(arc (A "workers") (A "integrator")) INDIGO] [(arc JURY (A "judge")) INDIGO]])
 
 (def trunk (arc (A "workers") (A "main")))
 (def lines ; name, colour, points, width, dash
@@ -150,10 +152,10 @@
 (defn on-d "A decision on the ring at deg, labelled outside like a station." [deg]
   (let [[x y lab] (on deg)] [[x y] lab]))
 (def decisions
-  [["d-facts" [(pt (A "investigator") (- R 47)) [-20 -1 "end"]]
-    "facts missing?" "no: none  ·  yes: 1 to 5 at once"
+  [["d-facts" [FACTS [-20 -1 "end"]]
+    "facts missing?" "no: none  ·  yes: rail, 1 to 5 at once"
     "Decides whether any researcher ant runs."
-    "The investigator decides while it reads the repo. Nothing missing: no researcher ant runs, and the path stays on the ring. Facts missing: it starts 1 to 5 researcher ants at once and waits for them. They are the only ants that always run in parallel, with or without --parallel, because they only read."]
+    "The investigator decides while it reads the repo. Nothing missing: no researcher ant runs, and the path stays on the ring. Facts missing: the triple rail from the decision to the researcher ants. It starts 1 to 5 researcher ants at once and waits for them. They are the only ants that always run in parallel, with or without --parallel, because they only read."]
    ["d-plans" (on-d 59)
     "how many plans?" "1: thin line, one worker  ·  2+: rail, one per plan"
     "Decides how many worker and detective ants there are."
@@ -419,7 +421,7 @@
   "Line name -> [name tip about]. \"none\" lines are invisible train routes."
   {"plan"    ["Plan line" "The first stretch of the ring: from your task to the specs and worker plans." "The blue line carries one task from Task through the investigator and what it writes, the two specs and the worker plans, on to the worker ants, where building starts."]
    "ask"     ["Question line" "The investigator asks you, you answer." "The investigator's questions go up to you and your answers come back as messages to the same live agent. The dot riding it is one round of questions."]
-   "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. The dot riding it is one burst of research."]
+   "res"     ["Research line" "The investigator sends researcher ants." "Up to 5 researcher ants at once look things up and report back down this line while the investigator waits. From the facts decision on it is a triple rail: several ants at once. The dot riding it is one burst of research."]
    "g1"      ["Build line" "The long stretch of the ring: build, check, merge, judge, finish." "The indigo trunk carries every task from the worker ants through checking, the combined test, the merge, the cleanup and the judge to MAIN. The numbered cars on it are worker tasks, one after another; --parallel lets up to 5 be built at once."]
    "fix"     ["Fix loop" "A bug goes back to the worker and is re-checked." "Yellow means a warning: the detective found a bug and planned its fix. The worker builds the fix and the detective re-checks, up to 3 tries per bug and 3 fix rounds."]
    "clash"   ["Clash line" "Tasks that break together go back to the fix loop." "When the integrator's combined test shows two passing tasks clash, the task takes in the tasks it clashes with and goes back through the fix loop. 2 rounds at most."]
@@ -525,8 +527,8 @@
              [x y] (nth pts (quot (count pts) 2))]
          (clickable {:id (str "line-" name) :name nm :tip tip :about about :sub (line-notes name) :x x :y y}
                     path (str "<path class=\"hit\" d=\"" (d pts) "\" stroke-width=\"20\"/>")))))
-   (for [[a0 a1 c] RAILS
-         :let [p (d (arc a0 a1))]]
+   (for [[pts c] RAILS
+         :let [p (d pts)]]
      ;; wider than the trunk, so the many-ant path reads as the heavier one
      (apply str (for [[col w] [[c 20] [BG 13] [c 4.5]]]
                   (str "<path d=\"" p "\" fill=\"none\" stroke=\"" col "\" stroke-width=\"" w "\" pointer-events=\"none\"/>"))))
