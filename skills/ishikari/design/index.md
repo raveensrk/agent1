@@ -368,7 +368,8 @@ leaves the ring at a decision, runs just inside it and rejoins it: to the
 researcher ants, through the worker ants and detective ants of a run with two
 or more plans, and through the juror ants. The fix loop, the dropped spur and
 the clash line are drawn once, on the main line. The rails are `RAILS` in
-`metro.clj`; the many-plan lane's two stops come last in `stations`, so the
+`metro.clj`; each stop on a rail is a stack of hexagons, several ants;
+the many-plan lane's two stops come last in `stations`, so the
 ring's stop codes never move.
 Elsewhere the map draws names only, to stay simple; every description and short
 rule lives in the item's tooltip and click panel. Everything on the map says

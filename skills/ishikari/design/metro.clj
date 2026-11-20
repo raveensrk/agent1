@@ -137,7 +137,7 @@
    (st "integrator" (on (A "integrator")) "Integrator ant" ["merges passing tasks in a scratch" "copy, tests once: the combined test;" "fewer than 2 passing tasks: no combined test"] "x")
    (st "merger" (on (A "merger")) "Merger ant" ["merges in a straight line in a scratch copy," "or reuses build's trial merge; then checks" "its own merge with git cherry"] "x")
    (st "janitor" (on (A "janitor")) "Janitor ant" ["cleans up dead code and mess itself: edits," "runs the tests, commits, lands it only if" "they pass. Skipped under 100 changed lines;" "a cleanup run has no janitor"] "x")
-   (st "jurors" (at (pt 175 SOLO) [0 -28 "middle"]) "Juror ants" ["one per merged task, one at a time" "(--parallel: up to 5); only with 3+ merged tasks"] "x")
+   (st "jurors" (at (pt 175 SOLO) [0 -40 "middle"]) "Juror ants" ["one per merged task, one at a time" "(--parallel: up to 5); only with 3+ merged tasks"] "many")
    (st "judge" (on (A "judge")) "Judge ant" ["scores the run 0-10 against the product spec," "id by id; its own call, not an average;" "lists gaps, and which of them are bugs"] "x")
    (st "judge-fix-worker" (at (along JF0 JF1 0.15) [26 5 "start"]) "Worker ant" ["closes the gaps (below 7)" "or only the bugs (7+)"] "st")
    (st "judge-fix-detective" (at (along JF0 JF1 0.5) [26 5 "start"]) "Detective ant" ["checks the fix, runs the tests, then fast-forwards the" "scratch copy; the fix lands only through this fast-forward"] "st")
@@ -150,8 +150,8 @@
    (st "finished" (on (A "finished")) "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done")
    (st "logbook" (at [(- W 330) 50] [26 -4 "start"]) "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build, finish and the retrospective." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log")
    ;; the many-ant lane's stops: listed last, so the ring's stop codes never move
-   (st "workers-many" (at (pt 69 SOLO) [-26 5 "end"]) "Worker ants" ["2+ plans: one worker ant per plan, one at a time" "(--parallel: up to 5), one worktree each;" "code + tests + docs; stuck: next fix round"] "x")
-   (st "detectives-many" (at (pt 96 SOLO) [-26 5 "end"]) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "x")])
+   (st "workers-many" (at (pt 69 SOLO) [-26 5 "end"]) "Worker ants" ["2+ plans: one worker ant per plan, one at a time" "(--parallel: up to 5), one worktree each;" "code + tests + docs; stuck: next fix round"] "many")
+   (st "detectives-many" (at (pt 96 SOLO) [-26 5 "end"]) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "many")])
 
 ;; Decision nodes: diamonds where the run picks how many ants a station uses,
 ;; or whether it is skipped. Not stations: they have no ant and no stop code.
@@ -304,7 +304,7 @@
   (let [IC (get ICON kind TXT)]
     (cond
       (ant? (str/replace nm "  ∥" ""))
-      (concat (when (str/includes? nm "∥")
+      (concat (when (or (str/includes? nm "∥") (= kind "many")) ; several ants: a stack of hexagons
                 [(str (hexm (+ x 10) (- y 10) 16 BG TXT 3) (hexm (+ x 5) (- y 5) 16 BG TXT 3))])
               [(hexm x y 16 BG TXT 5)])
 
@@ -403,7 +403,7 @@
               "<path d=\"M" (- cx 2) "," (- cy 4) " L" (- cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 6) " L" (+ cx 2) "," (- cy 4)
               "\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.2\"/>")
       k5 (str "<circle cx=\"" ix "\" cy=\"" iy "\" r=\"5\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>")
-      (txt lx (+ ly (* 5 16)) ["stacked ∥: parallel"] :fill SUB :size 12)
+      (txt lx (+ ly (* 5 16)) ["stacked: several ants"] :fill SUB :size 12)
       (let [x (+ lx 6) y (+ ly (* 6 16) -4)]
         (str "<path d=\"M" x "," (- y 6) " L" (+ x 6) "," y " L" x "," (+ y 6) " L" (- x 6) "," y " Z\" fill=\"none\" stroke=\"" SUB "\" stroke-width=\"1.5\"/>"))
       (txt (+ lx 16) (+ ly (* 6 16)) ["a decision"] :fill SUB :size 12)
@@ -595,7 +595,7 @@
                  :about (str "The small dot going back and forth shows " what " travelling between the ants.") :x (first (P "investigator")) :y (second (P "investigator"))}
                 (str "<circle r=\"7\" fill=\"" CAR "\" filter=\"url(#g)\"><animateMotion dur=\"" sec "s\" repeatCount=\"indefinite\" keyPoints=\"0;1;0\" keyTimes=\"0;0.5;1\" calcMode=\"linear\"><mpath href=\"#L-" path "\"/></animateMotion></circle>")))
    [(clickable {:id "key" :name "Key" :tip "What the cars, symbols and colours mean."
-                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, triple rail a lane where several ants run, leaving the single-ant main line at a decision and rejoining it, stacked shapes ants that always run in parallel, dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
+                :about "Left: what each numbered car shows. Right: the symbols: hexagon an ant, bin dropped, circle an interchange, diamond a decision about how many ants run or whether a stop is skipped, triple rail a lane where several ants run, leaving the single-ant main line at a decision and rejoining it, stacked hexagons a stop where several ants run (the mark ∥ after a name: always at once), dashed a side branch. Bottom: green done, red failed, yellow warning, blue plan, indigo build."
                 :x KX :y KY}
                (apply str (legend)))]))
 
