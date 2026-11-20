@@ -69,19 +69,22 @@
 (defn P [id] (pt (A id) R))
 (def REJOIN (- (A "docs") 6))                       ; where the judge-fix loop rejoins the ring
 (def JF0 (pt (+ (A "judge") 5) 400)) (def JF1 (pt (- REJOIN 4) 400)) ; the judge-fix loop's inner run
-(def FIX0 (pt (- (A "detectives") 3) 420)) (def FIX1 (pt (+ (A "workers") 3) 420)) ; the fix loop's inner run
+(def FIX0 (pt (- (A "detectives") 3) 470)) (def FIX1 (pt (+ (A "workers") 3) 470)) ; the fix loop's inner run: slim, between the ring and the many-plan rail
 (def FIXMID (along FIX0 FIX1 0.5))
 ;; The many-plan rail's own fix loop: Detective ants back to Worker ants. It
-;; runs inside the main line's loop, so the two never cross.
-(def MW 69) (def MD 96) ; where Worker ants and Detective ants sit on the rail
-(def MFIX0 (pt 90 400)) (def MFIX1 (pt 72 400))
+;; runs inside the rail; the main line's loop is slim and stays between the
+;; ring and the rail. No loop crosses a rail or another loop.
+(def MLANE 420) ; the many-plan rail's radius: 100 px inside the ring, room for the main line's loop between them
+(def MLOOP 340) ; the rail's fix loop's inner run
+(def MW 72) (def MD 95) ; where Worker ants and Detective ants sit on the rail
+(def MFIX0 (pt 92 MLOOP))
 (def JURY 160) ; the jury decision, between the janitor and the jurors
 (def PLANS 59) ; the plans decision, between the specs and the workers
 (def SOLO 476) ; the many-ant lanes' radius: inside the ring, clear of its station names
 ;; The ring is the single-ant path. Where a run may use several ants, a lane
 ;; leaves the ring at a decision and rejoins it: `many` (one worker and one
 ;; detective per plan) and `jury` (one juror per merged task).
-(def MANY (vec (concat [(pt PLANS R)] (mapv #(pt % SOLO) (range (+ PLANS 4) (- (A "integrator") 3) 2)) [(P "integrator")])))
+(def MANY (vec (concat [(pt PLANS R)] (mapv #(pt % MLANE) (range (+ PLANS 4) (- (A "integrator") 3) 2)) [(P "integrator")])))
 (def JLANE (vec (concat [(pt JURY R)] (mapv #(pt % SOLO) (range (+ JURY 4) (- (A "judge") 3) 2)) [(P "judge")])))
 ;; Many-ant stretches, drawn as a triple rail. [points colour]
 (def YOU (pt (- (A "investigator") 6) (+ R 105))) (def RES (pt (A "investigator") (- R 150)))
@@ -101,10 +104,10 @@
    ;; 2+ plans: one worker ant and one detective ant per plan, on the rail inside the ring
    ["many"    INDIGO MANY 6 ""]
    ["fix"     GOLD   [(P "detectives") FIX0 FIX1 (P "workers")] 8 ""]
-   ["mfix"    GOLD   (vec (concat [(pt MD SOLO)] (mapv #(pt % 400) (range 90 71 -2)) [(pt MW SOLO)])) 8 ""]
+   ["mfix"    GOLD   (vec (concat [(pt MD MLANE)] (mapv #(pt % MLOOP) (range 92 74 -1)) [(pt MW MLANE)])) 8 ""]
    ["fixloop" "none" (vec (concat (arc (A "workers") (A "detectives")) [FIX0 FIX1 (P "workers")])) 8 ""]
-   ["clash"   GOLD   [(P "integrator") (pt (- (A "integrator") 2) 300) (pt 94 300) MFIX0] 6 "10 6"] ; tasks clash only with 2+ plans: back into the rail's fix loop
-   ["drop"    RED    [FIXMID (inward FIXMID 80)] 6 "10 6"] ; crosses the rail's loop: both loops drop here
+   ["clash"   GOLD   [(P "integrator") (pt (+ (A "integrator") 6) 250) (pt 95 250) MFIX0] 6 "10 6"] ; tasks clash only with 2+ plans: back into the rail's fix loop
+   ["drop"    RED    [FIXMID (inward FIXMID 196)] 6 "10 6"] ; crosses the rail's loop: both loops drop here
    ["mback"   RED    [(P "merger") (pt (A "merger") (- R 90))] 6 "10 6"] ; the merger's failed tasks: spur back to the worker ants
    ["tnext"   RED    [(P "janitor") (pt (A "janitor") (- R 150))] 6 "10 6"] ; the janitor's failed cleanup: its note becomes the next Task
    ["jury"    INDIGO JLANE 6 ""] ; 3+ merged tasks: the juror ants, on the rail inside the ring
@@ -155,8 +158,8 @@
    (st "finished" (on (A "finished")) "Run report" ["the main session reports what landed," "the checks, the docs, the verdict and the retrospective"] "done")
    (st "logbook" (at [(- W 330) 50] [26 -4 "start"]) "Logbook" ["logbook clerk ant: appends each ant's entry" "the moment the ant replies, one clerk at a time, in plan, build, finish and the retrospective." "The live investigator gets only an investigated entry." "Build and finish add a summary at the end. No ant reads it." "~/.ishikari/<repo>-<hash>/logbook.rec"] "log")
    ;; the many-ant lane's stops: listed last, so the ring's stop codes never move
-   (st "workers-many" (at (pt MW SOLO) [-26 -2 "end"]) "Worker ants" ["2+ plans: one worker ant per plan, one at a time" "(--parallel: up to 5), one worktree each;" "code + tests + docs; stuck: next fix round"] "many")
-   (st "detectives-many" (at (pt MD SOLO) [-26 9 "end"]) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "many")])
+   (st "workers-many" (at (pt MW MLANE) [-26 -2 "end"]) "Worker ants" ["2+ plans: one worker ant per plan, one at a time" "(--parallel: up to 5), one worktree each;" "code + tests + docs; stuck: next fix round"] "many")
+   (st "detectives-many" (at (pt MD MLANE) [-26 12 "end"]) "Detective ants" ["one per built task, one at a time by default: checks it" "against plan + tech spec, runs tests (reuses the worker's" "if clean); finds each bug's cause and plans its fix"] "many")])
 
 ;; Decision nodes: diamonds where the run picks how many ants a station uses,
 ;; or whether it is skipped. Not stations: they have no ant and no stop code.
@@ -173,7 +176,7 @@
     "how many plans?" "1: main line, one worker  ·  2+: rail, one per plan"
     "Decides how many worker and detective ants there are."
     "The investigator decides when it writes the plans. One plan: the main line, on the ring. One worker ant builds the whole task straight from the two specs, with no plan file, and one detective ant checks it; with a single task there is no combined test, so the integrator is passed. Two or more plans: the triple rail inside the ring, which rejoins at the integrator. One worker ant and one detective ant per plan, each worker in its own worktree. A fix round reuses the task's own worker and detective. Whether they run together is the next decision."]
-   ["d-parallel" [(pt 64.5 SOLO) [-22 -6 "end"]]
+   ["d-parallel" [(pt 64.5 MLANE) [-22 -6 "end"]]
     "--parallel <n>?" "no: one at a time  ·  yes: up to n at once"
     "Decides whether worker, detective and juror ants run one at a time or together."
     "You decide, in the skill's arguments. Without --parallel: a single worker or detective ant runs at any moment, each task's detective waiting in the same line, and later a single juror at a time. With --parallel <n>, n from 2 to 5: up to n workers run at once, each detective starts the moment its task is built, and up to n jurors run at once, reading only. The number of ants is the same either way; only the order changes."]
@@ -283,7 +286,7 @@
 ;; words, lead-in, lines below, where the label sits [point anchor], end cap
 ;; (:bin: a bin drawn at the end).
 (def spurs [["mback" "workers" "" "merge failed: " ["the worker merges main and fixes it;" "max 2 extra build rounds"] [(pt (A "merger") (- R 112)) "middle"]]
-            ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] [(let [[x y] (inward FIXMID 80)] [(- x 26) (+ y 5)]) "end"] :bin]
+            ["drop" nil "" "dropped" ["after 3 tries on a bug or 3 fix rounds," "a blocked or failed worker, or a task" "built on a dropped one; branch kept"] [(let [[x y] (inward FIXMID 196)] [(- x 26) (+ y 5)]) "end"] :bin]
             ["tnext" "task" " (next run)" "cleanup failed: " ["branch kept; its note is offered"] [(pt (A "janitor") (- R 172)) "middle"]]
             ["cfix" "workers" " (new task)" "check failed: " ["one build round from the moved main;" "still failing: the run stops"] [(let [[x y] (pt (A "check") (- R 50))] [(+ x 14) (+ y 5)]) "start"]]
             ["fast" "main" "" "fast path: " ["trivial task, you confirm; the main session" "edits, tests, checks and lands it"] [(let [[x y] (along (P "specs") (P "main") 0.72)] [(+ x 40) (+ y 38)]) "middle"]]])
@@ -377,7 +380,7 @@
              [5 "build" INDIGO 28 16.8] [6 "build" INDIGO 28 22.4] [7 "fixloop" GOLD 8 0] [8 "fixloop" GOLD 8 4]
              [10 "after" GREEN 5 0] [11 "jfixrun" GOLD 7 0]])
 
-(def KX (- CX 250)) (def KY (- CY 90)) ; the key's top left corner
+(def KX (- CX 330)) (def KY (- CY 90)) ; the key's top left corner
 
 (defn legend
   "The key box in the middle of the ring."
@@ -523,8 +526,8 @@
     (clickable {:id "title" :name "Ishikari metro map" :tip "How to read this map."
                 :about "Ishikari runs a task with many ants, one worker, detective or juror at a time unless you pass --parallel. The map is one open ring: read it clockwise from Task at the top, round to the Run report. The gap at the top says a run ends; the next one is yours to start. Loops and spurs bend inside the ring. Hexagons are ants (AI agents), diamonds are decisions, the ring is the single-ant path and a triple rail leaving it is a many-ant path, pages are files, dashed lines are side branches, and colour means something: green done, red failed, yellow warning. Click anything to learn what it is; Esc closes this panel."
                 :src "skills/ishikari/design/index.md" :x CX :y (- CY 140)}
-               (txt CX (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
-               (txt CX (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
+               (txt (- CX 80) (- CY 140) ["ISHIKARI METRO"] :size 28 :anchor "middle" :weight "800")
+               (txt (- CX 80) (- CY 112) ["Read it clockwise, from Task at the top."] :fill SUB :size 15 :anchor "middle"))]
    ;; the three parts of the ring, named in the corners
    (for [[k x y an label c about] [[1 (- W 30) 150 "end" "1 ASK  ·  2 PLAN" BLUE "Steps 1 and 2, the blue stretch from Task to the worker plans: the investigator asks you its questions, then writes the product spec, the tech spec and one plan per task; the plan stage only checks the plans. The only part where you are asked anything."]
                                    [2 (- W 30) (- H 40) "end" "3 BUILD  ·  4 CHECK  ·  5 FIX  ·  6 MERGE" INDIGO "Steps 3 to 5 and the first half of step 6, the indigo stretch down the right and along the bottom: worker ants build the plans, one at a time or up to 5 at once with --parallel, detective ants check each one and plan fixes, the integrator tests all passing tasks together, then the merger lands them in a scratch copy and the janitor cleans up. Main has not moved yet."]
@@ -580,7 +583,7 @@
                                                (str "<tspan dx=\"6\" font-size=\"12\" font-weight=\"600\" fill=\"" INDIGO "\">" (esc (str/join " " sk)) "</tspan>"))
                                              "</text>"))
                 ))
-   [(let [[x y] (inward FIXMID 17)]
+   [(let [[x y] (inward FIXMID 126.5)]
       (clickable {:id "junction-drop-rail" :name "Junction" :tip "Where the many-plan fix loop meets the dropped spur."
                   :about "Not a station: a task on the many-plan rail that cannot be fixed leaves its fix loop here too, down the same dropped spur as a task on the main line." :x x :y y}
                  (str "<circle cx=\"" x "\" cy=\"" y "\" r=\"8\" fill=\"" TXT "\" stroke=\"" RED "\" stroke-width=\"3\"/>")))]
