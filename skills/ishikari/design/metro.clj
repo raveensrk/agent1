@@ -148,7 +148,7 @@
 (def stations
   [
 (st "task" (on (A "task")) "Task" ["you give it, or a" "dropped cleanup plan"] "task")
-   (st "investigator" (on (A "investigator") [(pt (+ (A "investigator") 3.5) (+ R 38)) "start"]) "Investigator ant" ["one live agent on Fable at max effort: it asks you," "proves the task can be built, and writes the product" "spec, the tech spec and every plan; no other ant plans"] "x")
+   (st "investigator" (on (A "investigator") [(pt (+ (A "investigator") 3.5) (+ R 38)) "start"]) "Investigator ant" ["one live agent on Opus at low effort: it asks you," "proves the task can be built, and writes the product" "spec, the tech spec and every plan; no other ant plans"] "x")
    (st "you" (at YOU [26 -6 "start"]) "You" ["up to 4 questions a round (/ask-simple)," "8 in all; answering approves the whole run"] "you")
    (st "researchers" (at RES [-26 5 "end"]) "Researcher ants  ∥" ["up to 5 at once, web + computer," "read only; the investigator waits"] "end")
    (st "specs" (on (A "specs")) "Specs + worker plans" ["product_spec.md: behaviours B1... and invariants I1...;" "tech_spec.md: the architecture and the code's shape;" "one thin plan per worker (none for one worker), checked before anything is built"] "files")
@@ -211,7 +211,7 @@
                  :about "Your task in your own words, or the note of a cleanup the last run dropped. Setup makes the run's state folder and env first; the main checkout must be on the main branch with no uncommitted changes."
                  :src "SKILL.md#1-setup"}
    "investigator" {:tip "Asks you questions, then writes the two specs and every plan."
-                             :about "One live agent run by the skill, not a workflow, on Fable at max effort; every other ant runs on Opus at low effort. It reads the repo once and gets each answer as a message. Part 1: it critiques the task, finds the test command, asks up to 4 independent questions at a time, 8 in all, writes the product spec and judges whether the task is trivial. Part 2, when told to go on: it proves the task can be built, writes the tech spec and one plan per worker ant, and may ask you again when the design needs a choice. No other ant plans, so nothing is lost between ants. It stays alive until its plans pass the check or a fast path lands. Ishikari needs the Agent tool for it."
+                             :about "One live agent run by the skill, not a workflow, on Opus at low effort, like every other ant. It reads the repo once and gets each answer as a message. Part 1: it critiques the task, finds the test command, asks up to 4 independent questions at a time, 8 in all, writes the product spec and judges whether the task is trivial. Part 2, when told to go on: it proves the task can be built, writes the tech spec and one plan per worker ant, and may ask you again when the design needs a choice. No other ant plans, so nothing is lost between ants. It stays alive until its plans pass the check or a fast path lands. Ishikari needs the Agent tool for it."
                              :src "assets/prompts/investigator.md, SKILL.md#2a-investigate"}
    "you" {:tip "You answer the investigator's questions."
                 :about "The only time Ishikari asks you anything. Questions come through /ask-simple, up to 4 at a time, about 8 in all. Answering approves the whole run, merge to main included."

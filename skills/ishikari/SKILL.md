@@ -55,9 +55,7 @@ inside the working directory, so the Workflow tool may load them by
   `/ask-simple` is unavailable, ask directly in chat format). Never
   answer for the user. Never edit the product spec, the tech spec or a
   plan yourself: the investigator writes them.
-- Every ant runs on Opus at low effort, but one: the investigator, the one
-  ant the whole run stands on, runs on Fable at max effort (fallback: latest
-  Opus at max effort).
+- Every ant runs on Opus at low effort, the investigator included.
 - Run each workflow with the Workflow tool: `scriptPath` from `env.workflows`,
   `args` as a JSON object, never a string. A workflow that was killed or
   paused, or that crashed part way: run it again with the same `scriptPath`
@@ -149,8 +147,8 @@ it, say so and stop; there is no other way to plan.
 
 ### 2a. Investigate
 
-1. Start ONE investigator with the Agent tool (general-purpose, model `fable`,
-   effort `max`; fallback: latest Opus at `max` effort). Its prompt is
+1. Start ONE investigator with the Agent tool (general-purpose, model `opus`,
+   effort `low`). Its prompt is
    [assets/prompts/investigator.md](assets/prompts/investigator.md) plus the
    inputs: `env.repo`, `env.main`, `env.state`, the task, the plans folder
    `<env.state>/plans/<env.run>/`, and `env.testCommand` and `env.checkCommand`

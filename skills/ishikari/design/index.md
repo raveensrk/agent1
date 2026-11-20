@@ -23,7 +23,7 @@ its job. The build script runs that workflow in place of a worker ant.
     `product_spec.md`, says what the product does: behaviours and invariants,
     nothing else. The tech spec, `tech_spec.md`, says the architecture and the
     code's shape. No other ant plans, so nothing is lost between ants. It is one live agent for the whole talk, run
-    by the skill, not a workflow, on Fable at max effort: it reads the repo
+    by the skill, not a workflow, on Opus at low effort: it reads the repo
     once and gets each answer as a message. Ishikari needs the Agent tool for
     it; without it the run stops at the start. It works in two parts.
 
@@ -268,10 +268,9 @@ summary and top 3 findings; the user decides what to act on.
   value never starts a new field.
 - A dropped task's branch is kept, never deleted, so its work can be looked at
   later. Only merged tasks' branches and scratch branches are removed.
-- Every ant runs on the latest Opus model at low effort, its researchers
-  included, but one: the investigator runs on Fable at max effort, since the
-  whole run stands on its two specs and its plans. Each script keeps a per-ant
-  EFFORT table and a MODEL setting, so one ant can be tuned later.
+- Every ant runs on the latest Opus model at low effort, the investigator and
+  its researchers included. Each script keeps a per-ant EFFORT table and a
+  MODEL setting, so one ant can be tuned later.
 
 ## Running Ishikari
 
