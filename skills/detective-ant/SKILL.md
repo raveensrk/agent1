@@ -25,15 +25,25 @@ write or edit code.
   the recommended answer, go on, and list each question with the answer taken at
   the end.
 
+## Tools
+
+Fixed steps are done by `python3 <this skill's folder>/../ishikari/scripts/ant.py`, never by hand. It calls no model and prints
+JSON. Run it from the repo.
+
+- `ant.py scope [--base B]`: the base and every changed file with its line
+  ranges.
+- `ant.py tests [--base B] -- <test command>`: runs the tests on the base and
+  on HEAD; `verdict` is `pass`, `new-failure`, `already-failing` or `fixed`.
+
 ## Check
 
 - **Against the ask:** the task, issue or plan. Each thing it asks for: done,
   wrong or missing.
 - **Against the design**, when one is given: a name or interface that differs
   from it is a bug.
-- **Nothing breaks:** run the project's tests on the base and on the change. A
-  test that passes on the base and fails on the change is a bug. One that
-  already failed is a nit, never the change's bug.
+- **Nothing breaks:** run `ant.py tests`. `new-failure` is a bug.
+  `already-failing`: compare the two tails; only a test that fails after and
+  not before is a bug, the rest is a nit.
 - **Docs:** they match the change.
 
 ## Bugs and nits
@@ -49,10 +59,11 @@ write or edit code.
 ## Normal mode
 
 1. Ask: the text or plan file given; none given, ask for it.
-2. Change: the current branch, `git diff <base>...HEAD`. Base: the repo's main
-   branch (`main` or `master`, whichever exists; a branch the user names wins).
+2. Change: run `ant.py scope` (a branch the user names wins), then
+   `ant.py tests`.
 3. Reply in the session: **Pass** or **Fail**, then each bug with its cause and
-   fix plan, then the nits.
+   fix plan, then the nits. Fail when bugs is not empty, Pass otherwise; nits
+   never make it fail.
 
 ## Ishikari mode
 

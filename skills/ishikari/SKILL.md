@@ -19,24 +19,26 @@ Design, rules and diagram:
 
 ## Files
 
-| File                             | Job                                         |
-| -------------------------------- | ------------------------------------------- |
-| `scripts/ishikari.py`            | setup, config; sole logbook writer          |
-| `scripts/ishikari-plan.js`       | check the investigator's plans              |
-| `scripts/ishikari-build.js`      | build, check, fix, combined test            |
-| `scripts/ishikari-finish.js`     | merge, upkeep, move main                    |
-| `scripts/ishikari-retro.js`      | retrospective of the run, read only         |
-| `scripts/anteater.py`            | Ant Eater: token cost per ant, no AI        |
-| `assets/prices.json`             | API list prices Ant Eater costs with        |
-| `assets/anteater.html`           | Ant Eater's page                            |
-| `assets/prompts/investigator.md` | the investigator's brief: ask, specs, plans |
-| `tests/test_ishikari.py`         | tool: setup, logbook, guards                |
-| `tests/test_workflows.mjs`       | script logic, with stand-in ants            |
-| `tests/test_anteater.py`         | Ant Eater: counts, labels, limit, page      |
+| File                             | Job                                                  |
+| -------------------------------- | ---------------------------------------------------- |
+| `scripts/ishikari.py`            | setup, config; sole logbook writer                   |
+| `scripts/ishikari-plan.js`       | check the investigator's plans                       |
+| `scripts/ishikari-build.js`      | build, check, fix, combined test                     |
+| `scripts/ishikari-finish.js`     | merge, upkeep, move main                             |
+| `scripts/ishikari-retro.js`      | retrospective of the run, read only                  |
+| `scripts/ant.py`                 | ant skills' fixed steps: base, scope, tests, session |
+| `scripts/anteater.py`            | Ant Eater: token cost per ant, no AI                 |
+| `assets/prices.json`             | API list prices Ant Eater costs with                 |
+| `assets/anteater.html`           | Ant Eater's page                                     |
+| `assets/prompts/investigator.md` | the investigator's brief: ask, specs, plans          |
+| `tests/test_ishikari.py`         | tool: setup, logbook, guards                         |
+| `tests/test_workflows.mjs`       | script logic, with stand-in ants                     |
+| `tests/test_anteater.py`         | Ant Eater: counts, labels, limit, page               |
 
 Tests: `timeout 120 python3 tests/test_ishikari.py`,
 `timeout 120 node --test tests/test_workflows.mjs` and
-`timeout 120 python3 tests/test_anteater.py`.
+`timeout 120 python3 tests/test_anteater.py` and
+`timeout 120 python3 tests/test_ant.py`.
 
 Ant skills: five ants load a skill of their own in its Ishikari mode, and read
 the skill file when the skill does not load. The ant's prompt keeps the run's

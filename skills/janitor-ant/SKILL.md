@@ -24,10 +24,20 @@ Clean the mess a change left. Only that change, nothing else.
   the recommended answer, go on, and list each question with the answer taken at
   the end.
 
+## Tools
+
+Fixed steps are done by `python3 <this skill's folder>/../ishikari/scripts/ant.py`, never by hand. It calls no model and prints
+JSON. Run it from the repo.
+
+- `ant.py scope [--base B]`: the base and every changed file with its line
+  ranges.
+- `ant.py tests [--base B] -- <test command>`: runs the tests on the base and
+  on HEAD; `verdict` is `pass`, `new-failure`, `already-failing` or `fixed`.
+
 ## Scope
 
-- The changed lines: `git diff <base>...HEAD`. Base: the repo's main branch
-  (`main` or `master`, whichever exists), or the one the user names.
+- The changed lines: the ranges `ant.py scope` gives. Base: its choice
+  (origin's default, then `main`, then `master`), or the one the user names.
 - Ishikari: the range its ant names.
 - Code outside the changed lines stays as it is, even if it is messy. Exception:
   a helper the change made dead or duplicate may go.
@@ -44,13 +54,13 @@ Clean the mess a change left. Only that change, nothing else.
 
 - Change no behaviour. Public interfaces, output and data stay the same.
 - Small and careful: no rewrites, no renames across files, no new features.
-- Run the project's tests before and after the cleanup. Only a test that passed
-  before and fails after counts: then undo the cleanup.
+- After the cleanup, run `ant.py tests`. `new-failure`: undo the cleanup.
+  `already-failing`: compare the two tails; undo only if a new test fails.
 - Nothing worth cleaning: change nothing and say so.
 
 ## Normal mode
 
-1. Read the diff and the files around it.
+1. Run `ant.py scope`. Read those ranges and the code around them.
 2. Show the cleanup: each item with its file, line and why. Wait for a yes. No
    user to ask: apply it without a yes.
 3. Apply, run the tests, commit as `refactor: clean up <what>`.

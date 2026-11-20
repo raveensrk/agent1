@@ -25,6 +25,13 @@ anything.
   the recommended answer, go on, and list each question with the answer taken at
   the end.
 
+## Tools
+
+Fixed steps are done by `python3 <this skill's folder>/../ishikari/scripts/ant.py`, never by hand. It calls no model and prints
+JSON. Run it from the repo.
+
+- `ant.py scope [--base B]`: the base and the changed files to judge.
+
 ## What is scored
 
 - **Behaviours** (`B1`, `B2`...): does the code behave as each one says?
@@ -58,8 +65,8 @@ invariants first, number them, and show that list with the score.
 ## Normal mode
 
 1. Spec: the file or task text given; none given, ask for it.
-2. Code: the current branch, against the repo's main branch (`main` or `master`,
-   whichever exists; a branch the user names wins).
+2. Code: the files `ant.py scope` lists, against its base (a branch the user
+   names wins).
 3. Reply in the session: the score, a table of each id with holds or fails and
    why, then the gaps and the bugs.
 

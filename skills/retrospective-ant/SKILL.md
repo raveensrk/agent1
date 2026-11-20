@@ -25,6 +25,14 @@ except the one report file Ishikari names.
   the recommended answer, go on, and list each question with the answer taken at
   the end.
 
+## Tools
+
+Fixed steps are done by `python3 <this skill's folder>/../ishikari/scripts/ant.py`, never by hand. It calls no model and prints
+JSON. Run it from the repo.
+
+- `ant.py session`: this session's tool calls by tool, every failed or refused
+  call, and every call repeated with the same input.
+
 ## Look for
 
 - Bugs and errors in the way of working: wrong steps, wrong order.
@@ -46,8 +54,9 @@ except the one report file Ishikari names.
 ## Normal mode
 
 1. Source: this chat session. A path or range given: that instead.
-2. Read the session's work: the asks, the tool calls, what failed, what was
-   redone, what the user corrected.
+2. Run `ant.py session` first: its errors and repeats are evidence. Then read
+   the session's asks and what the user corrected. No transcript found: work
+   from the conversation alone and say so.
 3. Reply in the session: a two or three line summary, then the findings. Where:
    the skill, rule or file that should change.
 

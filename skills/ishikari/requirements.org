@@ -269,3 +269,24 @@ What to look for and how to rank it go into a skill, skills/retrospective-ant/SK
 - By hand: reviews the current chat session (or a given path or range) and answers in the session.
 - Ishikari mode: never asks; the ant keeps its reading list, digest check, one report file, categories and JSON schema, and loads /retrospective-ant or reads the skill file.
 Evidence: ISH-10 to ISH-13 load skills the same way from inside ants.
+
+* DONE [#B] The ant skills' fixed steps run as code, not by an agent  :ishikari:
+:PROPERTIES:
+:ID:          ISH-15
+:CREATED:     2026-11-21
+:NEEDS:       ISH-14
+:VERIFY:      "tests/test_ant.py test_tests_verdicts"
+:VERIFY+:     "tests/test_ant.py test_scope"
+:VERIFY+:     "tests/test_ant.py test_session"
+:VERIFY+:     "tests/test_ant.py test_skills_share_mode_rules_and_point_to_ant"
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:IMPLEMENTED: 2026-11-21
+:END:
+scripts/ant.py does the ant skills' fixed steps in normal mode, with no model, printing JSON.
+- base: the named branch, else origin's default, main, then master; none: exit 2.
+- scope: changed files and new-side line ranges from the merge base to HEAD, deleted files and the line count.
+- tests: runs the test command in a throwaway worktree at the merge base and in the repo; verdict pass, new-failure, already-failing or fixed; the worktree is always removed.
+- session: from a Claude Code transcript, tool calls by tool, failed and refused calls, and calls repeated with the same input.
+- janitor-ant, judge-ant, detective-ant and retrospective-ant call it; detective-ant fails exactly when bugs is not empty.
+- The Which mode section is the same in all five ant skills; a test fails when one drifts.
