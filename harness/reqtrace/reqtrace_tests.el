@@ -593,6 +593,7 @@
 ;;;; 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 
 (ert-deftest reqtrace-lint-id-uuid7 ()
+  :tags '(timeout-30)
   (rt-should-clean (rt-lint (rt-req "01a1fe0c-9c5c-7057-8edc-bc68ccfa0490") (rt-req "RQ-1")))
   (rt-should-find (rt-lint (rt-req "01a1fe0c-9c5c-4057-8edc-bc68ccfa0490")) "neither a UUID v7")
   (rt-should-find (rt-lint (rt-req "01A1FE0C-9C5C-7057-8EDC-BC68CCFA0490")) "neither a UUID v7"))
