@@ -392,3 +392,29 @@ The tool takes the workflow's name, Lemmax, and moves beside the rules it checks
 - Test names and =:VERIFY:= addresses keep =reqtrace-= as written, so DONE requirements do not reopen; new tests are named =lemmax-=
 - Done only after the uncommitted RT-17 work in the old file is committed, so nothing is lost
 - Asked by the owner on 2026-11-21
+
+** OPEN Code markers link code and lemmas both ways                 :trace:
+:PROPERTIES:
+:ID:          01a20014-e361-7827-b2a8-d3b2ded3e0b1
+:NEEDS:       RT-4 RT-8
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-marker-found ert/lemmax-marker-unknown-id
+:VERIFY+:     ert/lemmax-marker-dropped ert/lemmax-done-needs-marker
+:VERIFY+:     ert/lemmax-marker-tests-apart ert/lemmax-marker-full-id
+:END:
+Code names the lemma it builds with a marker in a comment; lemmax reads every marker, so each lemma knows where it is built and each piece of code knows why.
+- A marker is =lemma:= then one or more ids, as the first words of a comment line: =;; lemma: M-16=, =# lemma: Q-12 Q-13=, =// lemma: 01a1ff25-116d-73f1-a45e-dd77e482a983=; text that only mentions a marker mid-line is not one
+- An id is written in full; a UUID is never shortened in a marker
+- lemmax searches every git-tracked file except the =.org= requirement files, with =git grep=
+- A file is a test when its path has =test/=, =tests/=, =e2e/=, =_test.=, =-test.=, =.spec.= or =_tests.=; =#+LEMMAX_TEST_PATHS:= replaces that list
+- =lemmax trace ID= lists =code: file:line= and =test: file:line= for each marker naming it
+- =lemmax list= gains a column: how many code markers each lemma has
+- =lemmax lint= refuses, in opted-in projects:
+  - a marker whose id no lemma has
+  - a marker naming a DROPPED lemma
+  - a DONE lemma with no marker outside tests, when it was implemented on or after 2026-11-22; older DONE lemmas are listed by =lemmax list --unmarked=, not refused
+- The lemma keeps no list of files: the markers are the one source
+- Asked by the owner on 2026-11-22
+Evidence: =git grep -n -I -E= prints file:line:text for every tracked match; lemmax already runs git for commits and history.
