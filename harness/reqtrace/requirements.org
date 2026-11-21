@@ -288,3 +288,21 @@ Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0
 - Before drafting, the skill runs =reqtrace list --json= to find duplicates and a parent
 - It takes the new id from =reqtrace next-id=
 - Without reqtrace installed, it reads the files as it does today
+
+** DONE --project names the repo to read                              :cli:
+:PROPERTIES:
+:ID:          RT-16
+:NEEDS:       RT-2
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:IMPLEMENTED: 2026-11-21
+:VERIFY:      ert/reqtrace-project-list-many ert/reqtrace-project-one-command
+:VERIFY+:     ert/reqtrace-project-errors
+:END:
+Every command takes =--project DIR= (=-p DIR=): it runs on the git repo that holds =DIR=, from any folder.
+- =list= takes it more than once: one table each, then the totals; =--all= adds every repo under =~/repos=.
+- Every other command takes one; two is a failure.
+- A folder that does not exist, or is not inside a git repo, is a failure that names it.
+- Asked by the owner on 2026-11-21.
+Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --all= already loops over repos.

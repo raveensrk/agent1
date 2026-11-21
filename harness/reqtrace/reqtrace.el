@@ -546,12 +546,15 @@ heading, body and properties, without its state and the 5 dates."
 
 (defun reqtrace-list (args)
   (let* ((opts (reqtrace--list-opts args))
-         (per (if (plist-get opts :all)
-                  (cl-loop for d in (reqtrace--repos)
+         (many (or (plist-get opts :all) reqtrace--projects))
+         (per (if many
+                  (cl-loop for d in (delete-dups (append reqtrace--projects
+                                                         (and (plist-get opts :all) (reqtrace--repos))))
                            for rows = (let ((default-directory d)) (reqtrace--rows (plist-get opts :no-tests)))
                            when rows collect (cons (file-name-nondirectory (directory-file-name d)) rows))
                 (list (cons nil (reqtrace--rows (plist-get opts :no-tests)))))))
     (setq per (mapcar (lambda (p) (cons (car p) (reqtrace--filter (cdr p) opts))) per))
+    (when many (setq per (cl-remove-if-not #'cdr per)))
     (if (plist-get opts :json)
         (princ (concat (json-encode (vconcat (cl-loop for (repo . rows) in per
                                                        append (mapcar (lambda (r) (reqtrace--json-row r repo)) rows))))
@@ -563,7 +566,7 @@ heading, body and properties, without its state and the 5 dates."
       (let ((all (cl-mapcan (lambda (p) (copy-sequence (cdr p))) per)))
         (reqtrace--out "Total: %d requirement%s%s: %d open, %d done, %d dropped"
                        (length all) (if (= 1 (length all)) "" "s")
-                       (if (plist-get opts :all) (format " in %d repos" (cl-count-if #'cdr per)) "")
+                       (if many (let ((n (length per))) (format " in %d repo%s" n (if (= n 1) "" "s"))) "")
                        (cl-count-if (lambda (r) (equal (plist-get r :state) "OPEN")) all)
                        (cl-count-if (lambda (r) (equal (plist-get r :state) "DONE")) all)
                        (cl-count-if (lambda (r) (equal (plist-get r :state) "DROPPED")) all))))
@@ -591,8 +594,9 @@ heading, body and properties, without its state and the 5 dates."
      "usage: reqtrace COMMAND [ARGS]
 Lint, trace and list a repo's org requirements.
 Commands: lint, commit-msg, trace, list, next-id, help
-Run it from inside a git repo. It reads, and never writes a file.
-example: reqtrace list --ready"
+Run it inside a git repo, or name one with --project DIR (-p DIR).
+It reads, and never writes a file.
+example: reqtrace list --ready -p ~/repos/arcadia_docs"
      "Commands:
   lint [--staged] [--no-tests] [FILE...]  refuse what requirements.org forbids
   commit-msg MSGFILE                      refuse a code commit that names no id
@@ -601,13 +605,15 @@ example: reqtrace list --ready"
   next-id LETTER                          the next free id, as M-15
   help                                    this text
 Each command takes -h, --help and help.
+Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
+instead of the one here. list takes it more than once: one table each.
 lint, commit-msg and trace read files whose header has #+REQTRACE_TESTS:.
 list and next-id read every requirements file: requirements.org, files under
 a requirements/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: reqtrace: <file>:<line>: <id>: <why>; <fix>
 Exit 0 when clean, 1 on any finding or failure.")
     (lint
-     "usage: reqtrace lint [--staged] [--no-tests] [FILE...]
+     "usage: reqtrace lint [--project DIR] [--staged] [--no-tests] [FILE...]
 Refuse what requirements.org forbids, in files with #+REQTRACE_TESTS:.
 example: reqtrace lint --staged --no-tests"
      "--staged    read the staged copies and refuse changes against HEAD:
@@ -617,14 +623,14 @@ example: reqtrace lint --staged --no-tests"
 FILE...     report findings for these files only
 REQTRACE_TEST_SECONDS sets the test command's time (60 s); REQTRACE_TODAY sets today.")
     (commit-msg
-     "usage: reqtrace commit-msg MSGFILE
+     "usage: reqtrace commit-msg [--project DIR] MSGFILE
 Refuse a commit that changes code under #+REQTRACE_CODE: and names no requirement id.
 example: reqtrace commit-msg .git/COMMIT_EDITMSG"
      "The ids come from the staged requirements files, so one commit may add a
 requirement and name it. Comment lines (#) do not count. An id matches as a
 whole word: RF-3 is not RF-30.")
     (trace
-     "usage: reqtrace trace [ID]
+     "usage: reqtrace trace [--project DIR] [ID]
 Print each requirement's parents, children, tests and commits.
 example: reqtrace trace RT-3"
      "With no ID: one block per requirement, then the orphan tests, which no
@@ -632,7 +638,7 @@ example: reqtrace trace RT-3"
 text changed in git after their :IMPLEMENTED: or :REVIEWED: day.
 With an ID: that one block, and the files each of its commits touched.")
     (list
-     "usage: reqtrace list [--state open|done|dropped] [--section L] [--unchecked] [--ready] [--all] [--json] [--no-tests]
+     "usage: reqtrace list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--ready] [--all] [--json] [--no-tests]
 Print every requirement in a table, grouped by state and approval.
 example: reqtrace list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line.
@@ -641,11 +647,12 @@ Groups: waiting for approval, approved and open, done, dropped.
 --section L   only ids that start with L-
 --unchecked   DONE ones whose :VERIFY: is empty or names a test that is missing
 --ready       approved and still OPEN
+--project DIR the git repo that holds DIR; give it again for more, one table each
 --all         every git repo under ~/repos (REQTRACE_REPOS sets the folder)
 --json        the rows as a JSON array
 --no-tests    skip the test command; the check column says named")
     (next-id
-     "usage: reqtrace next-id LETTER
+     "usage: reqtrace next-id [--project DIR] LETTER
 Print the next free id for a section: one more than the highest in use.
 example: reqtrace next-id M"
      "A gap is never filled, so an id is never reused. A letter with no id yet prints L-1.")))
@@ -658,10 +665,35 @@ example: reqtrace next-id M"
 
 ;;;; Main
 
+(defvar reqtrace--projects nil "Git roots named by --project, in order.")
+
+(defun reqtrace--take-projects (args)
+  "ARGS without --project DIR and -p DIR; each DIR's git root goes to `reqtrace--projects'."
+  (let (out)
+    (while args
+      (let ((a (pop args)))
+        (if (not (member a '("--project" "-p")))
+            (push a out)
+          (let* ((dir (pop args))
+                 (path (and dir (expand-file-name dir))))
+            (unless (and path (file-directory-p path))
+              (reqtrace--err "reqtrace: %s: no such folder" (or dir "--project needs a folder"))
+              (kill-emacs 1))
+            (let ((root (let ((default-directory (file-name-as-directory path))) (reqtrace--root))))
+              (unless root
+                (reqtrace--err "reqtrace: %s: not inside a git repo" dir)
+                (kill-emacs 1))
+              (setq reqtrace--projects (append reqtrace--projects (list root))))))))
+    (nreverse out)))
+
 (defun reqtrace-main (args)
   (setq case-fold-search nil)
   (when (equal (car args) "--") (setq args (cdr args)))
-  (let* ((cmd (car args)) (rest (cdr args)))
+  (let* ((cmd (car args))
+         (rest (if (member cmd '(nil "-h" "--help" "help")) (cdr args) (reqtrace--take-projects (cdr args)))))
+    (when (and (cdr reqtrace--projects) (not (equal cmd "list")))
+      (reqtrace--err "reqtrace: %s takes one --project; list takes several" cmd)
+      (kill-emacs 1))
     (cond
      ((or (null cmd) (member cmd '("-h" "--help"))) (reqtrace--help-for 'main nil))
      ((equal cmd "help") (reqtrace--help-for 'main t))
@@ -671,11 +703,15 @@ example: reqtrace next-id M"
      ((member (car rest) '("-h" "--help")) (reqtrace--help-for (intern cmd) nil))
      ((equal (car rest) "help") (reqtrace--help-for (intern cmd) t))
      (t
-      (let ((root (reqtrace--root)))
+      (let ((root (if (and reqtrace--projects (not (equal cmd "list")))
+                      (car reqtrace--projects)
+                    (reqtrace--root))))
+        (when (and (equal cmd "list") reqtrace--projects (not root))
+          (setq root default-directory))
         (unless (or root (equal cmd "list"))
           (reqtrace--err "reqtrace: not inside a git repo") (kill-emacs 1))
         (let ((default-directory (or root default-directory)))
-          (if (and (null root) (not (member "--all" rest)))
+          (if (and (null root) (not (member "--all" rest)) (null reqtrace--projects))
               (progn (reqtrace--err "reqtrace: not inside a git repo; use --all") (kill-emacs 1))
             (pcase cmd
               ("lint" (reqtrace-lint rest))

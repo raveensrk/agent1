@@ -544,3 +544,26 @@
     (should (string-match-p "reqtrace next-id" text))))
 
 ;;; reqtrace_tests.el ends here
+
+;;;; RT-16
+
+(ert-deftest reqtrace-project-list-many ()
+  (let ((a (rt-repo (rt-files (rt-req "RQ-1"))))
+        (b (rt-repo (rt-files (rt-req "AB-1") (rt-req "AB-2"))))
+        (elsewhere (rt-tmp)))
+    (let ((out (nth 1 (rt-run elsewhere "list" "--no-tests" "-p" a "--project" (expand-file-name "src" b)))))
+      (should (string-match-p (concat "^== " (regexp-quote (file-name-nondirectory a))) out))
+      (should (string-match-p (concat "^== " (regexp-quote (file-name-nondirectory b))) out))
+      (should (string-match-p "^Total: 3 requirements in 2 repos" out)))))
+(ert-deftest reqtrace-project-one-command ()
+  (let ((a (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-4"))))
+        (elsewhere (rt-tmp)))
+    (should (equal "RQ-5\n" (nth 1 (rt-run elsewhere "next-id" "RQ" "--project" a))))
+    (should (string-match-p "^RQ-1 OPEN" (nth 1 (rt-run elsewhere "trace" "-p" a))))
+    (rt-should-clean (rt-run elsewhere "lint" "--no-tests" "-p" a))))
+(ert-deftest reqtrace-project-errors ()
+  (let ((a (rt-repo (rt-files (rt-req "RQ-1")))) (plain (rt-tmp)))
+    (rt-should-find (rt-run plain "list" "-p" (expand-file-name "missing" plain)) "no such folder")
+    (rt-should-find (rt-run a "list" "-p" plain) "not inside a git repo")
+    (rt-should-find (rt-run a "lint" "-p" a "-p" a) "lint takes one --project")
+    (rt-should-find (rt-run a "next-id" "RQ" "-p") "--project needs a folder")))

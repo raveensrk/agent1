@@ -8,6 +8,7 @@ reqtrace list --ready           # every requirement, grouped; only approved and 
 reqtrace list --all --json      # every repo under ~/repos, for an AI
 reqtrace next-id M              # the next free id, as M-15
 reqtrace trace RT-3             # one requirement's links, tests and commits
+reqtrace list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from any folder
 reqtrace lint --staged          # what the pre-commit hook runs
 ```
 
