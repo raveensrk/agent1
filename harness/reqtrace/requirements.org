@@ -321,3 +321,20 @@ Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --a
 - Why: on 2026-11-21 Arcadia held two M-11 headings; =trace= showed the first and hid the second.
 - Asked by the owner on 2026-11-21.
 Evidence: =trace= finds its block with =cl-find=, which stops at the first match; =list= already reads every requirements file.
+
+** DONE trace finds an id in another project                        :trace:
+:PROPERTIES:
+:ID:          RT-19
+:NEEDS:       RT-8
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:IMPLEMENTED: 2026-11-21
+:VERIFY:      ert/reqtrace-trace-finds-other-project ert/reqtrace-trace-unknown-anywhere
+:END:
+=reqtrace trace ID= for an id this project does not hold looks in every git repo under =~/repos=.
+- Each repo that holds it prints =project: <path>=, then its block; it runs from any folder, inside a git repo or not.
+- An id no project holds is a failure that says so.
+- =--project= turns the search off: only that repo is read.
+- Asked by the owner on 2026-11-21.
+Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+REQTRACE_TESTS:= skips repos that do not opt in, without a parse.

@@ -339,7 +339,8 @@
       (should-not (string-match-p "RQ-2 OPEN" out))
       (should (string-match-p "^    src/x\\.clj" out)))))
 (ert-deftest reqtrace-trace-unknown-id ()
-  (rt-should-find (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "trace" "ZZ-1") "unknown id ZZ-1"))
+  (rt-env (list (concat "REQTRACE_REPOS=" (rt-tmp)))
+    (rt-should-find (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "trace" "ZZ-1") "unknown id ZZ-1")))
 
 ;;;; RT-9
 
@@ -567,3 +568,24 @@
     (rt-should-find (rt-run a "list" "-p" plain) "not inside a git repo")
     (rt-should-find (rt-run a "lint" "-p" a "-p" a) "lint takes one --project")
     (rt-should-find (rt-run a "next-id" "RQ" "-p") "--project needs a folder")))
+
+;;;; RT-19
+
+(ert-deftest reqtrace-trace-finds-other-project ()
+  (let* ((base (rt-tmp))
+         (a (expand-file-name "alpha" base))
+         (plain (rt-tmp)))
+    (make-directory a)
+    (rt-git a "init" "-q" "-b" "main")
+    (rt-write a (rt-files (rt-req "RQ-1")))
+    (rt-commit a "start")
+    (rt-env (list (concat "REQTRACE_REPOS=" base))
+      (let ((r (rt-run plain "trace" "RQ-1")))
+        (should (= 0 (nth 0 r)))
+        (should (string-match-p "^project: .*alpha\nRQ-1 OPEN Title of RQ-1" (nth 1 r))))
+      (let ((other (rt-repo (rt-files (rt-req "AB-1")))))
+        (should (string-match-p "^project: .*alpha" (nth 1 (rt-run other "trace" "RQ-1"))))))))
+(ert-deftest reqtrace-trace-unknown-anywhere ()
+  (let ((base (rt-tmp)))
+    (rt-env (list (concat "REQTRACE_REPOS=" base))
+      (rt-should-find (rt-run (rt-tmp) "trace" "ZZ-9") "unknown id ZZ-9, here or in any project under"))))

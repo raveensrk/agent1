@@ -412,12 +412,45 @@ heading, body and properties, without its state and the 5 dates."
       (when (equal (car s) id)
         (reqtrace--out "  suspect: parent %s changed %s" (nth 1 s) (nth 2 s))))))
 
+(defun reqtrace--opted-here-p ()
+  "Whether this repo has an opted-in file; a git grep, so no parse."
+  (zerop (car (reqtrace--git "grep" "--cached" "-q" "-E" "^#\\+REQTRACE_TESTS:" "--" "*.org"))))
+
+(defun reqtrace--projects-with (id)
+  "Git roots under ~/repos, other than this one, whose opted-in files hold ID (RT-19)."
+  (let ((here (and (reqtrace--root) (file-truename default-directory))))
+    (cl-loop for d in (reqtrace--repos)
+             unless (equal (file-truename d) here)
+             when (let ((default-directory d))
+                    (and (reqtrace--opted-here-p)
+                         (cl-some (lambda (r) (equal id (plist-get r :id)))
+                                  (reqtrace--all-reqs (reqtrace--opted (reqtrace--worktree-files))))))
+             collect d)))
+
 (defun reqtrace-trace (args)
-  (let* ((infos (reqtrace--opted (reqtrace--worktree-files)))
-         (want (car args)))
+  (let* ((want (car args))
+         (infos (and (reqtrace--root) (reqtrace--opted (reqtrace--worktree-files)))))
+    (when (and want (null reqtrace--projects)
+               (not (cl-some (lambda (r) (equal want (plist-get r :id))) (reqtrace--all-reqs infos))))
+      (let ((hits (reqtrace--projects-with want)))
+        (unless hits
+          (reqtrace--err "reqtrace: unknown id %s, here or in any project under %s; reqtrace list --all shows the ids"
+                         want (abbreviate-file-name (expand-file-name (or (getenv "REQTRACE_REPOS") "~/repos"))))
+          (kill-emacs 1))
+        (dolist (d hits)
+          (reqtrace--out "project: %s" (abbreviate-file-name (directory-file-name d)))
+          (let ((default-directory d))
+            (reqtrace--trace-in (reqtrace--opted (reqtrace--worktree-files)) want)))
+        (kill-emacs 0)))
     (when (null infos)
-      (reqtrace--err "reqtrace: no requirements file here has #+REQTRACE_TESTS:")
+      (reqtrace--err "reqtrace: no requirements file here has #+REQTRACE_TESTS:; name a project with -p DIR")
       (kill-emacs 0))
+    (reqtrace--trace-in infos want)
+    (kill-emacs 0)))
+
+(defun reqtrace--trace-in (infos want)
+  "Print the trace of INFOS, or of the one requirement WANT, for the repo here."
+  (progn
     (let* ((reqs (reqtrace--all-reqs infos))
            (commits (reqtrace--commits))
            (changed (reqtrace--last-changes infos))
@@ -444,8 +477,7 @@ heading, body and properties, without its state and the 5 dates."
           (dolist (o (delete-dups orphans)) (reqtrace--out "  %s" o)))
         (reqtrace--out "Suspect: %s" (if suspects "" "none"))
         (dolist (s suspects)
-          (reqtrace--out "  %s: parent %s changed %s" (nth 0 s) (nth 1 s) (nth 2 s)))))
-    (kill-emacs 0)))
+          (reqtrace--out "  %s: parent %s changed %s" (nth 0 s) (nth 1 s) (nth 2 s)))))))
 
 ;;;; list (RT-13)
 
@@ -636,7 +668,9 @@ example: reqtrace trace RT-3"
      "With no ID: one block per requirement, then the orphan tests, which no
 :VERIFY: names, then the suspect children: DONE requirements whose parent's
 text changed in git after their :IMPLEMENTED: or :REVIEWED: day.
-With an ID: that one block, and the files each of its commits touched.")
+With an ID: that one block, and the files each of its commits touched.
+An ID not in this project is looked for in every project under ~/repos,
+and shown under a project: line.")
     (list
      "usage: reqtrace list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--ready] [--all] [--json] [--no-tests]
 Print every requirement in a table, grouped by state and approval.
@@ -708,10 +742,11 @@ example: reqtrace next-id M"
                     (reqtrace--root))))
         (when (and (equal cmd "list") reqtrace--projects (not root))
           (setq root default-directory))
-        (unless (or root (equal cmd "list"))
+        (unless (or root (equal cmd "list") (and (equal cmd "trace") rest))
           (reqtrace--err "reqtrace: not inside a git repo") (kill-emacs 1))
         (let ((default-directory (or root default-directory)))
-          (if (and (null root) (not (member "--all" rest)) (null reqtrace--projects))
+          (if (and (null root) (not (member "--all" rest)) (null reqtrace--projects)
+                   (not (and (equal cmd "trace") rest)))
               (progn (reqtrace--err "reqtrace: not inside a git repo; use --all") (kill-emacs 1))
             (pcase cmd
               ("lint" (reqtrace-lint rest))
