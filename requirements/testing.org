@@ -29,3 +29,19 @@ Every test has a timeout, so no test hangs a run.
 - Over it, a test is stopped and reported as =timeout=; the tests after it still run.
 - Each suite has a default; a test that needs longer says so where it is defined, in seconds.
 - It holds however the test is run, and =--list= prints it; a test with none is a fault.
+
+* OPEN Deploy first, test alongside
+:PROPERTIES:
+:ID:          deploy-test-alongside
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:END:
+An app may deploy before its full tests finish, when the rules below hold. It trades a short window of risk for speed.
+- A quick check runs before each deploy, under 1 minute: the app builds, starts and serves its main screens
+- The full tests then run in parallel, in a subagent, against a copy of that exact commit, never the moving working copy
+- The report names the commit, the failed test and its first error line; it is queued for the main agent, who reads it at its next natural stop
+- A failure stops the line: no deploy goes out until that commit's failure is fixed, and the last commit that passed is put back on the server
+- The previous build is kept beside the new one, so putting it back takes one command and under 30 s
+- A change that writes or migrates data never takes this path: it waits for its tests, then deploys
+- Tests run on the development machine, never on the server
