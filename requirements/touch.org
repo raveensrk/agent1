@@ -7,7 +7,7 @@ Everything in [[file:gui.org][gui.org]] still applies; this file adds to it, and
 Not all of this is applicable to all apps. Pick what the app needs.
 
 * General
-** The app is a web app first
+** For the PWA (Progressive Web App)
 - One code base serves phone, tablet and desktop; no separate mobile site
 - It runs in Safari on iOS and iPadOS and in Chrome on Android, the two latest major versions of each
 - Follow Apple's [[https://developer.apple.com/design/human-interface-guidelines/][Human Interface Guidelines]] for iOS, as gui.org follows Apple Design for macOS

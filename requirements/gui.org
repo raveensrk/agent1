@@ -98,6 +98,30 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 *** Button
 - See [[file:components.org::*Buttons][Buttons]]
 *** etc...
+** OPEN The motion catalogue
+:PROPERTIES:
+:ID:          motion-catalogue
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:VERIFY:      a window check reads each motion's duration and easing from the app's motion tokens
+:END:
+Each motion has one job. A motion is used where it fits that job, and nowhere else.
+- Enter: new items rise 14 px and fade in, 80 ms apart, 520 ms each
+- Press: sinks in 120 ms, springs back in 420 ms with a small overshoot
+- Tab: the highlight pill slides to the picked tab, with a small overshoot
+- Value: a score ring or bar fills from empty to its value, 900 ms
+- Loading: a shimmer where content will come; never a blank screen
+- Sheet: slides up from the bottom; dragged down, it follows the finger
+- Done: a tick draws itself, then "Saved" fades after 1 s
+- Swipe: a row slides to show its actions
+- Open: a tapped photo grows into the page it opens
+- Notice: a toast drops in from the top and leaves on its own after 3 s
+- New: a soft glow pulses on a dot beside something new
+- Every motion runs at 60 fps, and only moves position, size or opacity
+- Under Reduce Motion each one becomes a plain fade, or nothing
+- Reference: https://claude.ai/artifact/6frbVe74iMYWVotmbrCfZL, the Motion catalogue board
+Evidence: the mockups use plain CSS keyframes and transitions, which Safari and Chrome both run.
 ** The progress bar and spinners must be smooth
 ** Reduce Motion is respected
 - With the system's Reduce Motion setting on, things fade and never slide
