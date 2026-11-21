@@ -9,6 +9,7 @@ An org file that does not opt in gets no finding.
 
     lemmax_lint.py FILE...      (or paths on stdin)
 """
+# lemma: RT-10
 import os
 import re
 import subprocess

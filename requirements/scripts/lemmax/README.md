@@ -23,3 +23,13 @@ lemmax lint --staged          # what the pre-commit hook runs
   opted-in file never starts Emacs.
 - `harness/checks/lemmax_lint.py` runs `lint --no-tests` on each opted-in
   `.org` file an agent edits.
+
+## Code markers
+
+A comment line whose first words are `lemma:` and ids links code to its lemmas.
+`lemmax trace ID` lists each `code:` and `test:` location, `lemmax list` counts
+them, and `lemmax lint` refuses a marker naming no lemma or a dropped one, and a
+lemma done from 2026-11-22 on with no code marker. `lemmax list --unmarked`
+shows older done lemmas without one. Test paths default to `test/`, `tests/`,
+`e2e/`, `_test.`, `-test.`, `.spec.` and `_tests.`; `#+LEMMAX_TEST_PATHS:`
+replaces them.

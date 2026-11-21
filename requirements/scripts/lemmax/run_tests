@@ -11,6 +11,7 @@
 # Exit 0 when every test passed, 1 otherwise.
 # example: requirements/scripts/lemmax/run_tests --only ert/lemmax-list-table
 set -uo pipefail
+# lemma: RT-12
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 tests="${LEMMAX_TESTS_FILE:-$here/lemmax_tests.el}"
 default="${LEMMAX_TEST_TIMEOUT:-10}"

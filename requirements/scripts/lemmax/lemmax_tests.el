@@ -641,3 +641,53 @@
     (should-not (string> (substring (nth 1 a) 0 13) (substring (nth 1 b) 0 13)))
     (should (= 1 (nth 0 (rt-run d "new-id" "extra"))))
     (should (string-match-p "^usage: lemmax new-id" (nth 1 (rt-run d "new-id" "--help"))))))
+
+;;;; 01a20014-e361-7827-b2a8-d3b2ded3e0b1
+
+(defun rt-marked (code &rest reqs)
+  "A repo whose src/x.clj is CODE, with REQS."
+  (rt-repo (append (apply #'rt-files reqs) (list (cons "src/x.clj" code)))))
+
+(ert-deftest lemmax-marker-found ()
+  :tags '(timeout-30)
+  (let ((d (rt-marked "(ns x)\n;; lemma: RQ-1 RQ-2, and more words\n(defn f [])\n"
+                      (rt-req "RQ-1") (rt-req "RQ-2"))))
+    (should (string-match-p "  code: src/x\\.clj:2" (nth 1 (rt-run d "trace" "RQ-1"))))
+    (should (string-match-p "  code: src/x\\.clj:2" (nth 1 (rt-run d "trace" "RQ-2"))))
+    (should (string-match-p "RQ-1 .*code:1" (nth 1 (rt-run d "list" "--no-tests"))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))))
+
+(ert-deftest lemmax-marker-unknown-id ()
+  (rt-should-find (rt-run (rt-marked "# lemma: ZZ-9\n" (rt-req "RQ-1")) "lint" "--no-tests")
+                  "src/x\\.clj:1: ZZ-9: the marker names an id no lemma has"))
+
+(ert-deftest lemmax-marker-dropped ()
+  (rt-should-find (rt-run (rt-marked "// lemma: RQ-1\n" (rt-req "RQ-1" :state "DROPPED")) "lint" "--no-tests")
+                  "RQ-1: the marker names a DROPPED lemma"))
+
+(ert-deftest lemmax-done-needs-marker ()
+  :tags '(timeout-30)
+  (rt-should-find (rt-run (rt-repo (rt-files (rt-done "RQ-1" :implemented "2026-11-22"))) "lint" "--no-tests")
+                  "RQ-1: DONE with no code marker")
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1")))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "RQ-1" (nth 1 (rt-run d "list" "--no-tests" "--unmarked"))))))
+
+(ert-deftest lemmax-marker-tests-apart ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (append (rt-files (rt-done "RQ-1" :implemented "2026-11-22"))
+                            (list (cons "test/x_test.clj" ";; lemma: RQ-1\n"))))))
+    (should (string-match-p "  test: test/x_test\\.clj:1" (nth 1 (rt-run d "trace" "RQ-1"))))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: DONE with no code marker"))
+  (let ((d (rt-repo (list (cons "requirements.org"
+                                (concat rt-head "#+LEMMAX_TEST_PATHS: checks/\n\n" (rt-req "RQ-1")))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))
+                          (cons "checks/x.sh" "# lemma: RQ-1\n")))))
+    (should (string-match-p "  test: checks/x\\.sh:1" (nth 1 (rt-run d "trace" "RQ-1"))))))
+
+(ert-deftest lemmax-marker-full-id ()
+  (let ((d (rt-marked "# lemma: 01a1ff25-116d\n# a line that says lemma: RQ-1 mid-way is no marker\n"
+                      (rt-req "01a1ff25-116d-73f1-a45e-dd77e482a983"))))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "src/x\\.clj:1: 01a1ff25-116d: the marker names an id no lemma has")
+      (should-not (string-match-p "src/x\\.clj:2" (nth 2 r))))))

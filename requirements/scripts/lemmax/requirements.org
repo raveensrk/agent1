@@ -393,7 +393,7 @@ The tool takes the workflow's name, Lemmax, and moves beside the rules it checks
 - Done only after the uncommitted RT-17 work in the old file is committed, so nothing is lost
 - Asked by the owner on 2026-11-21
 
-** OPEN Code markers link code and lemmas both ways                 :trace:
+** DONE Code markers link code and lemmas both ways                 :trace:
 :PROPERTIES:
 :ID:          01a20014-e361-7827-b2a8-d3b2ded3e0b1
 :NEEDS:       RT-4 RT-8
@@ -403,6 +403,7 @@ The tool takes the workflow's name, Lemmax, and moves beside the rules it checks
 :VERIFY:      ert/lemmax-marker-found ert/lemmax-marker-unknown-id
 :VERIFY+:     ert/lemmax-marker-dropped ert/lemmax-done-needs-marker
 :VERIFY+:     ert/lemmax-marker-tests-apart ert/lemmax-marker-full-id
+:IMPLEMENTED: 2026-11-22
 :END:
 Code names the lemma it builds with a marker in a comment; lemmax reads every marker, so each lemma knows where it is built and each piece of code knows why.
 - A marker is =lemma:= then one or more ids, as the first words of a comment line: =;; lemma: M-16=, =# lemma: Q-12 Q-13=, =// lemma: 01a1ff25-116d-73f1-a45e-dd77e482a983=; text that only mentions a marker mid-line is not one

@@ -4,6 +4,7 @@
 ;; Requirements: requirements/scripts/lemmax/requirements.org (RT-1 to RT-15).
 ;; It reads files and git, and never writes a file.
 
+;; lemma: RT-1
 (require 'org)
 (require 'org-element)
 (require 'subr-x)
@@ -64,6 +65,7 @@ heading, body and properties, without its state and the 5 dates."
                         (cl-remove-if (lambda (l) (string-match-p date-re l)) (cdr lines)))
                   "\n"))))
 
+;; lemma: RT-17
 (defun lemmax--entry-body (raw)
   "The body of an entry from RAW: its lines after the heading, without the
 property drawer, trimmed (RT-17)."
@@ -100,7 +102,7 @@ property drawer, trimmed (RT-17)."
           (org-element-use-cache nil)
           (org-inhibit-startup t))
       (delay-mode-hooks (org-mode))
-      (let* ((kw (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "TODO"
+      (let* ((kw (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "TODO"
                                          ;; The names before lemmax, read so older commits still match.
                                          "REQTRACE_TESTS" "REQTRACE_CODE")))
              (todo (cadr (assoc "TODO" kw)))
@@ -141,6 +143,7 @@ property drawer, trimmed (RT-17)."
                 :opted opted
                 :tests (cadr tests-kw)
                 :code (let ((c (cadr code-kw))) (and c (split-string c)))
+                :test-paths (let ((c (cadr (assoc "LEMMAX_TEST_PATHS" kw)))) (and c (split-string c)))
                 :listed (or opted
                             (equal (file-name-nondirectory file) "requirements.org")
                             (member "requirements" (split-string (or (file-name-directory file) "") "/" t))
@@ -336,10 +339,78 @@ property drawer, trimmed (RT-17)."
       (if (null infos)
           (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS:")
         (lemmax--lint-file-rules infos only)
+        (lemmax--lint-markers infos only staged)
         (unless no-tests (lemmax--lint-verify infos only))
         (when staged
           (lemmax--lint-staged infos (lemmax--opted (lemmax--rev-files "HEAD"))))))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
+
+;;;; Code markers
+
+;; lemma: 01a20014-e361-7827-b2a8-d3b2ded3e0b1
+(defconst lemmax--marker-re
+  "\\`[ \t]*\\(?:;+\\|#+\\|//+\\|--+\\|/\\*+\\|\\*+\\|<!--\\|%+\\)[ \t]*lemma:[ \t]+\\(.*\\)\\'"
+  "A marker: a comment line whose first words are lemma: and ids.")
+
+(defconst lemmax--default-test-paths
+  '("test/" "tests/" "e2e/" "_test." "-test." ".spec." "_tests."))
+
+(defun lemmax--test-paths (infos)
+  "The test path patterns: the first #+LEMMAX_TEST_PATHS: in INFOS, else the defaults."
+  (or (cl-some (lambda (i) (plist-get i :test-paths)) infos) lemmax--default-test-paths))
+
+(defun lemmax--test-path-p (file patterns)
+  (cl-some (lambda (p) (string-match-p (regexp-quote p) file)) patterns))
+
+(defun lemmax--marker-ids (rest)
+  "The ids at the start of REST: words that hold a hyphen, until the first that does not."
+  (let (ids)
+    (catch 'done
+      (dolist (w (split-string rest "[ \t,]+" t))
+        (if (and (string-match-p "\\`[A-Za-z0-9][A-Za-z0-9-]*\\'" w) (string-match-p "-" w))
+            (push w ids)
+          (throw 'done nil))))
+    (nreverse ids)))
+
+(defun lemmax--markers (patterns &optional cached)
+  "Every marker in the tracked files but .org: a list of (ID FILE LINE TEST-P).
+With CACHED, read the staged copies."
+  (let ((out (apply #'lemmax--git-out
+                    (append '("grep" "-n" "-I" "-E") (and cached '("--cached"))
+                            '("lemma:[[:space:]]+[A-Za-z0-9]" "--" "." ":(exclude)*.org"))))
+        res)
+    (dolist (l (lemmax--lines out))
+      (when (string-match "\\`\\([^:]+\\):\\([0-9]+\\):\\(.*\\)\\'" l)
+        (let ((file (match-string 1 l)) (line (string-to-number (match-string 2 l)))
+              (text (match-string 3 l)))
+          (when (string-match lemmax--marker-re text)
+            (dolist (id (lemmax--marker-ids (match-string 1 text)))
+              (push (list id file line (and (lemmax--test-path-p file patterns) t)) res))))))
+    (nreverse res)))
+
+(defun lemmax--lint-markers (infos only cached)
+  "Markers that name no lemma or a DROPPED one; DONE lemmas from 2026-11-22 with no code marker."
+  (let* ((known (make-hash-table :test #'equal))
+         (markers (lemmax--markers (lemmax--test-paths infos) cached))
+         (reqs (lemmax--all-reqs infos)))
+    (dolist (r (lemmax--all-reqs (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files)))))
+      (when (plist-get r :id) (puthash (plist-get r :id) r known)))
+    (dolist (m markers)
+      (let ((r (gethash (nth 0 m) known)))
+        (cond ((null r)
+               (lemmax--finding (nth 1 m) (nth 2 m) (nth 0 m) "the marker names an id no lemma has"
+                                "fix the id, or remove the marker"))
+              ((equal (plist-get r :state) "DROPPED")
+               (lemmax--finding (nth 1 m) (nth 2 m) (nth 0 m) "the marker names a DROPPED lemma"
+                                "remove the marker, or the code it marks")))))
+    (dolist (r reqs)
+      (when (and (equal (plist-get r :state) "DONE")
+                 (or (null only) (member (plist-get r :file) only))
+                 (plist-get r :implemented) (not (string< (plist-get r :implemented) "2026-11-22"))
+                 (not (cl-some (lambda (m) (and (equal (nth 0 m) (plist-get r :id)) (not (nth 3 m)))) markers)))
+        (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
+                         "DONE with no code marker"
+                         (format "put a comment line \"lemma: %s\" where it is built" (plist-get r :id)))))))
 
 ;;;; commit-msg (RT-7)
 
@@ -407,6 +478,8 @@ property drawer, trimmed (RT-17)."
                 (push (list (plist-get r :id) p day) out)))))))
     (nreverse out)))
 
+(defvar lemmax--marks nil "The markers of the repo being traced.")
+
 (defun lemmax--block (r reqs addresses commits suspects one)
   (let* ((id (plist-get r :id))
          (children (cl-loop for c in reqs when (member id (plist-get c :needs)) collect (plist-get c :id))))
@@ -421,6 +494,13 @@ property drawer, trimmed (RT-17)."
                                ((member a (cdr addresses)) "found")
                                (t "missing"))))
       (lemmax--out "  verify: none"))
+    (let ((here (cl-remove-if-not (lambda (m) (equal (nth 0 m) id)) lemmax--marks)))
+      (if (null here)
+          (lemmax--out "  code: none")
+        (dolist (m (cl-remove-if (lambda (m) (nth 3 m)) here))
+          (lemmax--out "  code: %s:%d" (nth 1 m) (nth 2 m)))
+        (dolist (m (cl-remove-if-not (lambda (m) (nth 3 m)) here))
+          (lemmax--out "  test: %s:%d" (nth 1 m) (nth 2 m)))))
     (let ((mine (and id (cl-remove-if-not (lambda (c) (lemmax--names-id-p (nth 4 c) id)) commits))))
       (if (null mine)
           (lemmax--out "  commits: none")
@@ -477,6 +557,7 @@ property drawer, trimmed (RT-17)."
   "Print the trace of INFOS, or of the one requirement WANT, for the repo here."
   (progn
     (let* ((reqs (lemmax--all-reqs infos))
+           (lemmax--marks (lemmax--markers (lemmax--test-paths infos)))
            (commits (lemmax--commits))
            (changed (lemmax--last-changes infos))
            (suspects (lemmax--suspects reqs changed))
@@ -519,13 +600,17 @@ property drawer, trimmed (RT-17)."
 
 (defun lemmax--rows (no-tests)
   "Rows for every listed requirement of the repo here."
-  (let ((infos (lemmax--listed (lemmax--worktree-files))))
+  (let* ((infos (lemmax--listed (lemmax--worktree-files)))
+         (marks (lemmax--markers (lemmax--test-paths infos))))
     (cl-loop for info in infos
              for addr = (and (plist-get info :opted) (not no-tests)
                              (lemmax--test-addresses (plist-get info :tests)))
              append (cl-loop for r in (plist-get info :reqs)
                              collect (let ((v (plist-get r :verify)))
                                        (append r (list :group (lemmax--group r)
+                                                       :markers (cl-loop for m in marks
+                                                                         when (equal (nth 0 m) (plist-get r :id))
+                                                                         collect m)
                                                        :check (cond ((null v) "none")
                                                                     ((not (car addr)) "named")
                                                                     ((cl-every (lambda (a) (member a (cdr addr))) v) "found")
@@ -540,6 +625,9 @@ property drawer, trimmed (RT-17)."
               (and (plist-get r :id) (string-prefix-p (concat (plist-get opts :section) "-") (plist-get r :id))))
           (or (not (plist-get opts :unchecked))
               (and (equal (plist-get r :state) "DONE") (member (plist-get r :check) '("none" "missing"))))
+          (or (not (plist-get opts :unmarked))
+              (and (equal (plist-get r :state) "DONE")
+                   (not (cl-some (lambda (m) (not (nth 3 m))) (plist-get r :markers)))))
           (or (not (plist-get opts :ready))
               (and (equal (plist-get r :state) "OPEN") (plist-get r :approved)))))
    rows))
@@ -552,11 +640,12 @@ property drawer, trimmed (RT-17)."
       (when in
         (lemmax--out "%s (%d)" (cdr g) (length in))
         (dolist (r in)
-          (lemmax--out "  %-22s %-7s %-8s %-7s %-60s %s:%d"
+          (lemmax--out "  %-22s %-7s %-8s %-7s %-60s %s:%d  code:%d"
                          (or (plist-get r :id) "(no id)") (or (plist-get r :state) "-")
                          (if (plist-get r :approved) "approved" "-")
                          (plist-get r :check) (lemmax--trunc (plist-get r :title) 60)
-                         (plist-get r :file) (plist-get r :line))))))
+                         (plist-get r :file) (plist-get r :line)
+                         (cl-count-if-not (lambda (m) (nth 3 m)) (plist-get r :markers)))))))
   (let ((noid (cl-count-if (lambda (r) (null (plist-get r :id))) rows)))
     (when (> noid 0) (lemmax--out "No id: %d" noid))))
 
@@ -572,7 +661,10 @@ property drawer, trimmed (RT-17)."
             (cons 'needs (vconcat (plist-get r :needs)))
             (cons 'title (plist-get r :title))
             (cons 'file (plist-get r :file))
-            (cons 'line (plist-get r :line)))))
+            (cons 'line (plist-get r :line))
+            (cons 'markers (vconcat (mapcar (lambda (m) (list (cons 'file (nth 1 m)) (cons 'line (nth 2 m))
+                                                               (cons 'test (if (nth 3 m) t :false))))
+                                            (plist-get r :markers)))))))
 
 (defun lemmax--list-opts (args)
   (let (opts)
@@ -588,6 +680,7 @@ property drawer, trimmed (RT-17)."
                            (lemmax--err "lemmax: --section takes capital letters, as M") (kill-emacs 1))
                          (setq opts (plist-put opts :section v))))
           ("--unchecked" (setq opts (plist-put opts :unchecked t)))
+          ("--unmarked" (setq opts (plist-put opts :unmarked t)))
           ("--ready" (setq opts (plist-put opts :ready t)))
           ("--all" (setq opts (plist-put opts :all t)))
           ("--json" (setq opts (plist-put opts :json t)))
@@ -631,6 +724,7 @@ property drawer, trimmed (RT-17)."
 
 ;;;; new-id (01a1fe0c-9c5c-7057-8edc-bc68ccfa0490)
 
+;; lemma: 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 (defun lemmax--random-bytes (n)
   "N bytes from /dev/urandom, as a list of integers."
   (with-temp-buffer
@@ -728,14 +822,16 @@ With an ID: that one block, and the files each of its commits touched.
 An ID not in this project is looked for in every project under ~/repos,
 and shown under a project: line.")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--ready] [--all] [--json] [--no-tests]
+     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--all] [--json] [--no-tests]
 Print every requirement in a table, grouped by state and approval.
 example: lemmax list --section M --ready"
-     "Columns: id, state, approved, check (found, missing, named, none), title, file:line.
+     "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
+code:N, how many code markers name it.
 Groups: waiting for approval, approved and open, done, dropped.
 --state S     only that state
 --section L   only ids that start with L-
 --unchecked   DONE ones whose :VERIFY: is empty or names a test that is missing
+--unmarked    DONE ones with no code marker: no comment line starting lemma: ID outside tests
 --ready       approved and still OPEN
 --project DIR the git repo that holds DIR; give it again for more, one table each
 --all         every git repo under ~/repos (LEMMAX_REPOS sets the folder)
@@ -783,6 +879,7 @@ example: lemmax next-id M"
               (setq lemmax--projects (append lemmax--projects (list root))))))))
     (nreverse out)))
 
+;; lemma: RT-2
 (defun lemmax-main (args)
   (setq case-fold-search nil)
   (when (equal (car args) "--") (setq args (cdr args)))
