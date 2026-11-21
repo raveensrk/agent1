@@ -1,0 +1,546 @@
+;;; reqtrace_tests.el --- reqtrace's own tests (RT-12)  -*- lexical-binding: t; -*-
+
+;; Each test builds an invented repo under ~/tmp and runs the real launcher.
+;; Commits in test repos skip every hook. Run: harness/reqtrace/run_tests
+
+(require 'ert)
+(require 'cl-lib)
+(require 'subr-x)
+(require 'json)
+
+(defconst rt-dir (file-name-directory (or load-file-name buffer-file-name)))
+(defconst rt-bin (expand-file-name "reqtrace" rt-dir))
+(defconst rt-agent1 (file-name-as-directory (expand-file-name "../.." rt-dir)))
+
+;;;; Helpers
+
+(defun rt-tmp ()
+  (make-directory (expand-file-name "~/tmp") t)
+  (make-temp-file (expand-file-name "~/tmp/reqtrace-test-") t))
+
+(defun rt-sh (dir prog &rest args)
+  "Run PROG ARGS in DIR: (EXIT STDOUT STDERR)."
+  (let ((default-directory (file-name-as-directory dir))
+        (errf (make-temp-file "rt-err")))
+    (with-temp-buffer
+      (let ((code (apply #'call-process prog nil (list t errf) nil args)))
+        (list code (buffer-string)
+              (prog1 (with-temp-buffer (insert-file-contents errf) (buffer-string))
+                (delete-file errf)))))))
+
+(defun rt-git (dir &rest args)
+  (apply #'rt-sh dir "git" "-c" "core.hooksPath=/dev/null" "-c" "user.name=Test"
+         "-c" "user.email=test@example.invalid" "-c" "commit.gpgsign=false" args))
+
+(defun rt-write (dir files)
+  (dolist (f files)
+    (let ((p (expand-file-name (car f) dir)))
+      (make-directory (file-name-directory p) t)
+      (with-temp-file p (insert (cdr f)))
+      (when (string-suffix-p ".sh" (car f)) (set-file-modes p #o755)))))
+
+(defun rt-commit (dir msg &optional day)
+  (let ((process-environment
+         (append (and day (list (concat "GIT_COMMITTER_DATE=" day "T12:00:00")
+                                (concat "GIT_AUTHOR_DATE=" day "T12:00:00")))
+                 process-environment)))
+    (rt-git dir "add" "-A")
+    (rt-git dir "commit" "-q" "--allow-empty" "-m" msg)))
+
+(defun rt-repo (files &optional day)
+  (let ((d (rt-tmp)))
+    (rt-git d "init" "-q" "-b" "main")
+    (rt-write d files)
+    (rt-commit d "start" day)
+    d))
+
+(defun rt-run (dir &rest args) (apply #'rt-sh dir rt-bin args))
+
+(defmacro rt-env (vars &rest body)
+  (declare (indent 1))
+  `(let ((process-environment (append ,vars process-environment))) ,@body))
+
+(cl-defun rt-req (id &key (state "OPEN") title (level 1) needs verify verify+
+                     (approved "2026-01-05") (created "2026-01-05") (last "2026-01-05")
+                     implemented reviewed body noid)
+  (concat (make-string level ?*) " " (if state (concat state " ") "") (or title (concat "Title of " id)) "\n"
+          ":PROPERTIES:\n"
+          (if noid "" (format ":ID:          %s\n" id))
+          (if needs (format ":NEEDS:       %s\n" needs) "")
+          (if created (format ":CREATED:     %s\n" created) "")
+          (if last (format ":LAST_EDITED: %s\n" last) "")
+          (if approved (format ":APPROVED:    %s\n" approved) "")
+          (if implemented (format ":IMPLEMENTED: %s\n" implemented) "")
+          (if reviewed (format ":REVIEWED:    %s\n" reviewed) "")
+          (if verify (format ":VERIFY:      %s\n" verify) "")
+          (if verify+ (format ":VERIFY+:     %s\n" verify+) "")
+          ":END:\n" (or body "Body text.\n")))
+
+(defconst rt-head "#+title: Invented requirements\n#+TODO: OPEN | DONE DROPPED\n#+REQTRACE_TESTS: ./tests.sh\n#+REQTRACE_CODE: src/\n\n")
+
+(defun rt-tests-sh (&rest addrs)
+  (concat "#!/bin/sh\nprintf '%s\\n'" (mapconcat (lambda (a) (concat " '" a "'")) addrs "") "\n"))
+
+(defun rt-files (&rest reqs)
+  (list (cons "requirements.org" (apply #'concat rt-head reqs))
+        (cons "tests.sh" (rt-tests-sh "unit/a" "unit/b"))
+        (cons "src/x.clj" "(ns x)\n")))
+
+(defun rt-done (id &rest kv)
+  (apply #'rt-req id (append kv (list :state "DONE" :implemented "2026-01-06" :verify "unit/a"))))
+
+(defun rt-set (dir file content) (rt-write dir (list (cons file content))))
+
+(defmacro rt-should-find (r re)
+  `(progn (should (= 1 (nth 0 ,r))) (should (string-match-p ,re (nth 2 ,r)))))
+
+(defmacro rt-should-clean (r)
+  `(progn (should (equal "" (nth 2 ,r))) (should (= 0 (nth 0 ,r)))))
+
+;;;; RT-1
+
+(ert-deftest reqtrace-end-to-end ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1") (rt-done "RQ-2" :needs "RQ-1")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-commit d "build it (RQ-2)")
+    (rt-should-clean (rt-run d "lint"))
+    (let ((tr (nth 1 (rt-run d "trace"))))
+      (should (string-match-p "^RQ-1 OPEN" tr))
+      (should (string-match-p "^RQ-2 DONE" tr))
+      (should (string-match-p "build it (RQ-2)" tr)))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1") (rt-req "RQ-1")))
+    (rt-should-find (rt-run d "lint") "used twice")))
+
+;;;; RT-2
+
+(ert-deftest reqtrace-cli-short-help ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (dolist (args '(("-h") ("--help") ("list" "-h") ("lint" "--help") ("trace" "-h") ("next-id" "-h") ("commit-msg" "-h")))
+      (let ((r (apply #'rt-run d args)))
+        (should (= 0 (nth 0 r)))
+        (should (string-match-p "^usage: reqtrace" (nth 1 r)))
+        (should (string-match-p "example: reqtrace" (nth 1 r)))))
+    (should-not (string-match-p "^  lint \\[" (nth 1 (rt-run d "--help"))))))
+
+(ert-deftest reqtrace-cli-long-help ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (should (string-match-p "^Commands:" (nth 1 (rt-run d "help"))))
+    (should (string-match-p "--staged" (nth 1 (rt-run d "lint" "help"))))
+    (should (string-match-p "--unchecked" (nth 1 (rt-run d "list" "help"))))))
+
+(ert-deftest reqtrace-cli-bare-call ()
+  (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))))))
+    (should (= 0 (nth 0 r)))
+    (should (string-match-p "^usage: reqtrace COMMAND" (nth 1 r)))))
+
+(ert-deftest reqtrace-cli-dashdash-help ()
+  (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "--help")))
+    (should-not (string-match-p "GNU Emacs" (nth 1 r)))
+    (should (string-match-p "^usage: reqtrace" (nth 1 r)))))
+
+(ert-deftest reqtrace-cli-finding-line ()
+  (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1" :noid t))) "lint" "--no-tests")))
+    (should (string-match-p "^reqtrace: requirements\\.org:6: -: no :ID:; add :ID:" (nth 2 r)))))
+
+(ert-deftest reqtrace-cli-exit-codes ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (should (= 0 (nth 0 (rt-run d "lint" "--no-tests"))))
+    (should (= 1 (nth 0 (rt-run d "nonsense"))))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :approved nil)))
+    (should (= 1 (nth 0 (rt-run d "lint" "--no-tests"))))))
+
+(ert-deftest reqtrace-cli-writes-nothing ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-1")))))
+    (rt-run d "lint") (rt-run d "trace") (rt-run d "list") (rt-run d "next-id" "RQ")
+    (should (equal "" (nth 1 (rt-git d "status" "--porcelain" "--ignored"))))))
+
+;;;; RT-3
+
+(ert-deftest reqtrace-files-opted-in ()
+  (rt-should-find (rt-run (rt-repo (rt-files (rt-req "RQ-1" :approved nil))) "lint" "--no-tests")
+                  "no :APPROVED:"))
+
+(ert-deftest reqtrace-files-without-keyword ()
+  (let* ((d (rt-repo (list (cons "requirements.org" (concat "#+TODO: OPEN | DONE\n" (rt-req "RQ-1" :approved nil))))))
+         (r (rt-run d "lint")))
+    (should (= 0 (nth 0 r)))
+    (should (string-match-p "no requirements file here has" (nth 2 r)))))
+
+(ert-deftest reqtrace-files-keyword-in-text ()
+  (let* ((d (rt-repo (list (cons "requirements.org"
+                                 (concat "Say =#+REQTRACE_TESTS: ./tests.sh= to opt in.\n\n"
+                                         (rt-req "RQ-1" :approved nil))))))
+         (r (rt-run d "lint")))
+    (should (= 0 (nth 0 r)))
+    (should-not (string-match-p "APPROVED" (nth 2 r)))))
+
+(ert-deftest reqtrace-files-none-opted-in ()
+  (let ((d (rt-repo (list (cons "notes.org" "* A note\n")))))
+    (dolist (cmd '("lint" "trace"))
+      (let ((r (rt-run d cmd)))
+        (should (= 0 (nth 0 r)))
+        (should (string-match-p "no requirements file here" (nth 2 r)))))))
+
+;;;; RT-4
+
+(defun rt-lint (&rest reqs) (rt-run (rt-repo (apply #'rt-files reqs)) "lint" "--no-tests"))
+
+(ert-deftest reqtrace-lint-clean-file ()
+  (rt-should-clean (rt-lint (rt-req "RQ-1") (rt-done "RQ-2" :needs "RQ-1") (rt-req "RQ-3" :state "DROPPED"))))
+(ert-deftest reqtrace-lint-id-in-heading ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :title "RQ-1 A title")) "starts with an id"))
+(ert-deftest reqtrace-lint-id-missing ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :noid t)) "no :ID:"))
+(ert-deftest reqtrace-lint-id-shape ()
+  (rt-should-find (rt-lint (rt-req "touch-map")) "not shaped"))
+(ert-deftest reqtrace-lint-id-twice ()
+  (rt-should-find (rt-lint (rt-req "RQ-1") (rt-req "RQ-1")) "used twice, first at requirements.org:6"))
+(ert-deftest reqtrace-lint-needs-unknown ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-9")) "names RQ-9, which no requirement has"))
+(ert-deftest reqtrace-lint-needs-cycle ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-2") (rt-req "RQ-2" :needs "RQ-1")) "cycle"))
+(ert-deftest reqtrace-lint-unapproved ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :approved nil)) "OPEN with no :APPROVED:"))
+(ert-deftest reqtrace-lint-dates-missing ()
+  (let ((r (rt-lint (rt-req "RQ-1" :created nil :last nil))))
+    (rt-should-find r "no :CREATED:")
+    (should (string-match-p "no :LAST_EDITED:" (nth 2 r)))))
+(ert-deftest reqtrace-lint-implemented-state ()
+  :tags (quote (timeout-30))
+  (rt-should-find (rt-lint (rt-req "RQ-1" :state "DONE" :verify "unit/a")) "DONE with no :IMPLEMENTED:")
+  (rt-should-find (rt-lint (rt-req "RQ-1" :implemented "2026-01-06")) "OPEN with :IMPLEMENTED:")
+  (rt-should-find (rt-lint (rt-req "RQ-1" :state "DROPPED" :implemented "2026-01-06")) "DROPPED with :IMPLEMENTED:"))
+(ert-deftest reqtrace-lint-date-not-a-day ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :created "2026-02-30")) "not a real day: 2026-02-30"))
+(ert-deftest reqtrace-lint-done-verify-empty ()
+  (rt-should-find (rt-lint (rt-req "RQ-1" :state "DONE" :implemented "2026-01-06")) "DONE with no :VERIFY:"))
+
+;;;; RT-5
+
+(ert-deftest reqtrace-verify-done-missing ()
+  (rt-should-find (rt-run (rt-repo (rt-files (rt-done "RQ-1" :verify "unit/zzz"))) "lint")
+                  "names unit/zzz, which the test command does not list"))
+(ert-deftest reqtrace-verify-open-waits ()
+  (rt-should-clean (rt-run (rt-repo (rt-files (rt-req "RQ-1" :verify "unit/zzz"))) "lint")))
+(ert-deftest reqtrace-verify-plus-lines ()
+  (rt-should-clean (rt-run (rt-repo (rt-files (rt-done "RQ-1" :verify "unit/a" :verify+ "unit/b"))) "lint"))
+  (rt-should-find (rt-run (rt-repo (rt-files (rt-done "RQ-1" :verify "unit/a" :verify+ "unit/zzz"))) "lint")
+                  "unit/zzz"))
+(ert-deftest reqtrace-verify-quoted ()
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1" :verify "unit/a \"process/ids are used once\"")))))
+    (rt-set d "tests.sh" (rt-tests-sh "unit/a" "process/ids are used once"))
+    (rt-should-clean (rt-run d "lint"))))
+(ert-deftest reqtrace-verify-command-fails ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-set d "tests.sh" "#!/bin/sh\nexit 3\n")
+    (rt-should-find (rt-run d "lint") "test command failed with exit 3: \\./tests\\.sh")))
+(ert-deftest reqtrace-verify-command-timeout ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-set d "tests.sh" "#!/bin/sh\nsleep 5\n")
+    (rt-env '("REQTRACE_TEST_SECONDS=1")
+      (rt-should-find (rt-run d "lint") "ran over 1 s"))))
+(ert-deftest reqtrace-verify-no-tests ()
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1" :verify "unit/zzz")))))
+    (rt-set d "tests.sh" "#!/bin/sh\nexit 3\n")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))))
+
+;;;; RT-6
+
+(defun rt-staged (before after)
+  "Commit BEFORE, stage AFTER, run lint --staged on 2026-02-01."
+  (let ((d (rt-repo (apply #'rt-files before))))
+    (rt-set d "requirements.org" (apply #'concat rt-head after))
+    (rt-git d "add" "-A")
+    (rt-env '("REQTRACE_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))))
+
+(ert-deftest reqtrace-staged-done-text ()
+  (rt-should-find (rt-staged (list (rt-done "RQ-1"))
+                             (list (rt-done "RQ-1" :body "New text.\n" :last "2026-02-01")))
+                  "DONE requirement's text changed; make it OPEN"))
+(ert-deftest reqtrace-staged-reopened-passes ()
+  (rt-should-clean (rt-staged (list (rt-done "RQ-1"))
+                              (list (rt-req "RQ-1" :verify "unit/a" :body "New text.\n" :last "2026-02-01")))))
+(ert-deftest reqtrace-staged-last-edited ()
+  (rt-should-find (rt-staged (list (rt-req "RQ-1")) (list (rt-req "RQ-1" :body "New text.\n")))
+                  "LAST_EDITED: is not today; set :LAST_EDITED: 2026-02-01"))
+(ert-deftest reqtrace-staged-new-dates ()
+  (rt-should-find (rt-staged (list (rt-req "RQ-1")) (list (rt-req "RQ-1") (rt-req "RQ-2")))
+                  "RQ-2: a new requirement whose :CREATED:")
+  (rt-should-clean (rt-staged (list (rt-req "RQ-1"))
+                              (list (rt-req "RQ-1") (rt-req "RQ-2" :created "2026-02-01" :last "2026-02-01")))))
+(ert-deftest reqtrace-staged-turned-done ()
+  (rt-should-find (rt-staged (list (rt-req "RQ-1" :verify "unit/a")) (list (rt-done "RQ-1")))
+                  "turned DONE and :IMPLEMENTED: is not today")
+  (rt-should-clean (rt-staged (list (rt-req "RQ-1" :verify "unit/a")) (list (rt-done "RQ-1" :implemented "2026-02-01")))))
+(ert-deftest reqtrace-staged-dates-only ()
+  (rt-should-clean (rt-staged (list (rt-done "RQ-1")) (list (rt-done "RQ-1" :last "2026-01-20" :approved "2026-01-04")))))
+
+;;;; RT-7
+
+(defun rt-commit-msg (d msg)
+  (let ((f (expand-file-name "MSG" (rt-tmp))))
+    (with-temp-file f (insert msg))
+    (rt-run d "commit-msg" f)))
+
+(defun rt-code-change (&rest reqs)
+  (let ((d (rt-repo (apply #'rt-files reqs))))
+    (rt-set d "src/x.clj" "(ns x) ;; changed\n")
+    (rt-git d "add" "-A")
+    d))
+
+(ert-deftest reqtrace-commit-code-needs-id ()
+  (let ((d (rt-code-change (rt-req "RQ-1"))))
+    (rt-should-find (rt-commit-msg d "change it\n") "names no requirement id; name one in the message, as (RF-3)")
+    (rt-should-clean (rt-commit-msg d "change it (RQ-1)\n"))))
+(ert-deftest reqtrace-commit-docs-pass ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-set d "README.md" "Docs.\n")
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-commit-msg d "docs\n"))))
+(ert-deftest reqtrace-commit-unknown-id ()
+  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-1")) "change (ZZ-9)\n") "names no requirement id"))
+(ert-deftest reqtrace-commit-id-in-comment ()
+  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-1")) "change\n# RQ-1\n") "names no requirement id"))
+(ert-deftest reqtrace-commit-new-id-staged ()
+  (let ((d (rt-code-change (rt-req "RQ-1"))))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1") (rt-req "RQ-2")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-commit-msg d "add and build (RQ-2)\n"))))
+(ert-deftest reqtrace-commit-whole-word ()
+  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-3")) "change (RQ-30)\n") "names no requirement id"))
+
+;;;; RT-8
+
+(ert-deftest reqtrace-trace-block ()
+  (let ((out (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "trace"))))
+    (should (string-match-p "^RQ-1 OPEN Title of RQ-1\n  file: requirements\\.org:6\n  parents: none\n  children: none" out))))
+(ert-deftest reqtrace-trace-links ()
+  (let ((out (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-2" :needs "RQ-1"))) "trace"))))
+    (should (string-match-p "^RQ-1 OPEN[^\n]*\n[^\n]*\n  parents: none\n  children: RQ-2" out))
+    (should (string-match-p "^RQ-2 OPEN[^\n]*\n[^\n]*\n  parents: RQ-1" out))))
+(ert-deftest reqtrace-trace-verify-status ()
+  (let ((out (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1" :verify "unit/a unit/zzz"))) "trace"))))
+    (should (string-match-p "verify: unit/a found" out))
+    (should (string-match-p "verify: unit/zzz missing" out))))
+(ert-deftest reqtrace-trace-commits ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-commit d "build it (RQ-1)" "2026-01-07")
+    (should (string-match-p "commit: [0-9a-f]+ 2026-01-07 build it (RQ-1)" (nth 1 (rt-run d "trace"))))))
+(ert-deftest reqtrace-trace-orphans ()
+  (let ((out (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1" :verify "unit/a"))) "trace"))))
+    (should (string-match-p "Orphan tests: \n  unit/b" out))))
+(ert-deftest reqtrace-trace-one-id ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-2")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-commit d "build it (RQ-1)")
+    (let ((out (nth 1 (rt-run d "trace" "RQ-1"))))
+      (should (string-match-p "^RQ-1 OPEN" out))
+      (should-not (string-match-p "RQ-2 OPEN" out))
+      (should (string-match-p "^    src/x\\.clj" out)))))
+(ert-deftest reqtrace-trace-unknown-id ()
+  (rt-should-find (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "trace" "ZZ-1") "unknown id ZZ-1"))
+
+;;;; RT-9
+
+(defun rt-suspect-repo (child-state child-extra parent-after)
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")
+                              (apply (if (equal child-state "DONE") #'rt-done #'rt-req)
+                                     "RQ-2" :needs "RQ-1" :implemented (and (equal child-state "DONE") "2026-01-05")
+                                     child-extra))
+                    "2026-01-01")))
+    (rt-set d "requirements.org"
+            (concat rt-head parent-after
+                    (apply (if (equal child-state "DONE") #'rt-done #'rt-req)
+                           "RQ-2" :needs "RQ-1" :implemented (and (equal child-state "DONE") "2026-01-05")
+                           child-extra)))
+    (rt-commit d "change the parent" "2026-01-09")
+    (nth 1 (rt-run d "trace"))))
+
+(ert-deftest reqtrace-suspect-parent-changed ()
+  (let ((out (rt-suspect-repo "DONE" nil (rt-req "RQ-1" :body "Changed.\n" :last "2026-01-09"))))
+    (should (string-match-p "suspect: parent RQ-1 changed 2026-01-09" out))
+    (should (string-match-p "Suspect: \n  RQ-2: parent RQ-1 changed 2026-01-09" out))))
+(ert-deftest reqtrace-suspect-reviewed-clears ()
+  (should (string-match-p "Suspect: none"
+                          (rt-suspect-repo "DONE" '(:reviewed "2026-01-10")
+                                           (rt-req "RQ-1" :body "Changed.\n" :last "2026-01-09")))))
+(ert-deftest reqtrace-suspect-dates-only ()
+  (should (string-match-p "Suspect: none" (rt-suspect-repo "DONE" nil (rt-req "RQ-1" :last "2026-01-09")))))
+(ert-deftest reqtrace-suspect-open-child ()
+  (should (string-match-p "Suspect: none"
+                          (rt-suspect-repo "OPEN" nil (rt-req "RQ-1" :body "Changed.\n" :last "2026-01-09")))))
+(ert-deftest reqtrace-suspect-walk-time ()
+  :tags '(timeout-180)
+  (let* ((ids (number-sequence 1 150))
+         (file (lambda (n) (concat rt-head (mapconcat (lambda (i) (rt-req (format "RQ-%d" i)
+                                                                          :body (format "Text %d.\n" (if (= i (1+ (% n 150))) n 0))))
+                                                      ids ""))))
+         (d (rt-repo (rt-files) "2026-01-01")))
+    (dotimes (n 155)
+      (rt-set d "requirements.org" (funcall file n))
+      (rt-commit d (format "rev %d" n) "2026-01-02"))
+    (let* ((start (float-time)) (r (rt-run d "trace")) (took (- (float-time) start)))
+      (should (= 0 (nth 0 r)))
+      (should (< took 10)))))
+
+;;;; RT-10
+
+(defun rt-check (d stdin)
+  (let ((default-directory (file-name-as-directory d)))
+    (with-temp-buffer
+      (insert stdin)
+      (call-process-region (point-min) (point-max) "python3" t t nil
+                           (expand-file-name "harness/checks/reqtrace_lint.py" rt-agent1))
+      (buffer-string))))
+
+(ert-deftest reqtrace-harness-check-finding ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :approved nil)))))
+    (should (string-match-p "^requirements\\.org:6: RQ-1: OPEN with no :APPROVED:" (rt-check d "requirements.org\n")))))
+(ert-deftest reqtrace-harness-check-plain-org ()
+  (let ((d (rt-repo (list (cons "notes.org" (rt-req "RQ-1" :approved nil))))))
+    (should (equal "" (rt-check d "notes.org\n")))))
+
+;;;; RT-11
+
+(defun rt-hooked (files)
+  (let ((d (rt-repo files)))
+    (rt-sh d "git" "config" "core.hooksPath" (expand-file-name "harness/githooks" rt-agent1))
+    d))
+
+(defun rt-hook-commit (d msg)
+  (rt-sh d "git" "-c" "user.name=Test" "-c" "user.email=test@example.invalid" "commit" "-q" "-m" msg))
+
+(ert-deftest reqtrace-global-commit-msg ()
+  :tags '(timeout-30)
+  (let ((d (rt-hooked (rt-files (rt-req "RQ-1")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-sh d "git" "add" "-A")
+    (should (= 1 (nth 0 (rt-hook-commit d "change it"))))
+    (should (= 0 (nth 0 (rt-hook-commit d "change it (RQ-1)"))))))
+(ert-deftest reqtrace-global-pre-commit ()
+  :tags '(timeout-30)
+  (let ((d (rt-hooked (rt-files (rt-req "RQ-1")))))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :body "Changed.\n")))
+    (rt-sh d "git" "add" "-A")
+    (let ((r (rt-env '("REQTRACE_TODAY=2026-02-01") (rt-hook-commit d "edit (RQ-1)"))))
+      (should (= 1 (nth 0 r)))
+      (should (string-match-p "LAST_EDITED: is not today" (nth 2 r))))))
+(ert-deftest reqtrace-global-plain-repo-fast ()
+  :tags '(timeout-30)
+  (let* ((d (rt-hooked (list (cons "notes.org" "* A note\n") (cons "src/x.clj" "(ns x)\n"))))
+         (marker (expand-file-name "started" (rt-tmp)))
+         (stub (expand-file-name "stub.sh" (rt-tmp))))
+    (with-temp-file stub (insert (format "#!/bin/sh\ntouch %s\n" marker)))
+    (set-file-modes stub #o755)
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-sh d "git" "add" "-A")
+    (rt-env (list (concat "REQTRACE=" stub))
+      (should (= 0 (nth 0 (rt-hook-commit d "change it")))))
+    (should-not (file-exists-p marker))))
+
+;;;; RT-12
+
+(defun rt-runner (tests-text &rest args)
+  (let ((f (expand-file-name "tests.el" (rt-tmp))))
+    (with-temp-file f (insert tests-text))
+    (rt-env (list (concat "REQTRACE_TESTS_FILE=" f) "REQTRACE_TEST_TIMEOUT=2")
+      (apply #'rt-sh rt-dir (expand-file-name "run_tests" rt-dir) args))))
+
+(defconst rt-small-tests
+  "(require 'ert)
+(ert-deftest x-pass () (should t))
+(ert-deftest x-fail () (should nil))
+(ert-deftest x-sleep () (sleep-for 6) (should t))\n")
+
+(ert-deftest reqtrace-runner-addresses ()
+  (let ((out (nth 1 (rt-sh rt-dir (expand-file-name "run_tests" rt-dir) "--addresses"))))
+    (should (string-match-p "^ert/reqtrace-runner-addresses$" out))
+    (should (string-match-p "^ert/reqtrace-list-table$" out))))
+(ert-deftest reqtrace-runner-only ()
+  (let ((r (rt-runner rt-small-tests "--only" "ert/x-pass")))
+    (should (= 0 (nth 0 r)))
+    (should (equal "PASS ert/x-pass\n" (nth 1 r))))
+  (should (= 1 (nth 0 (rt-runner rt-small-tests "--only" "ert/x-fail")))))
+(ert-deftest reqtrace-runner-timeout ()
+  :tags '(timeout-30)
+  (let ((r (rt-runner rt-small-tests)))
+    (should (= 1 (nth 0 r)))
+    (should (string-match-p "^TIMEOUT ert/x-sleep" (nth 1 r)))
+    (should (string-match-p "^PASS ert/x-pass" (nth 1 r)))
+    (should (string-match-p "^FAIL ert/x-fail" (nth 1 r)))))
+
+;;;; RT-13
+
+(defun rt-list (d &rest args) (nth 1 (apply #'rt-run d "list" args)))
+
+(ert-deftest reqtrace-list-table ()
+  (let* ((d (rt-repo (append (rt-files (rt-done "RQ-1") (rt-req "RQ-2" :verify "unit/zzz"))
+                             (list (cons "requirements/gui.org" (rt-req "gui-look"))))))
+         (out (rt-list d)))
+    (should (string-match-p "RQ-1 +DONE +approved found +Title of RQ-1 +requirements\\.org:6" out))
+    (should (string-match-p "RQ-2 +OPEN +approved missing" out))
+    (should (string-match-p "gui-look +OPEN +approved none +Title of gui-look +requirements/gui\\.org:1" out))
+    (should (string-match-p "^Total: 3 requirements: 2 open, 1 done, 0 dropped" out))))
+(ert-deftest reqtrace-list-groups ()
+  (let ((out (rt-list (rt-repo (rt-files (rt-req "RQ-1" :state "DROPPED") (rt-done "RQ-2")
+                                         (rt-req "RQ-3") (rt-req "RQ-4" :approved nil))))))
+    (should (string-match-p "Waiting for approval (1)\n  RQ-4.*\nApproved and open (1)\n  RQ-3.*\nDone (1)\n  RQ-2.*\nDropped (1)\n  RQ-1" out))))
+(ert-deftest reqtrace-list-filters ()
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1") (rt-done "RQ-2" :verify "unit/zzz") (rt-req "RQ-3")
+                              (rt-req "RQ-4" :approved nil) (rt-req "AB-1")))))
+    (let ((out (rt-list d "--state" "done")))
+      (should (string-match-p "RQ-1" out)) (should-not (string-match-p "RQ-3" out)))
+    (let ((out (rt-list d "--section" "AB")))
+      (should (string-match-p "AB-1" out)) (should-not (string-match-p "RQ-" out)))
+    (let ((out (rt-list d "--ready")))
+      (should (string-match-p "RQ-3" out)) (should-not (string-match-p "RQ-4\\|RQ-1" out)))
+    (let ((out (rt-list d "--unchecked")))
+      (should (string-match-p "RQ-2" out)) (should-not (string-match-p "RQ-1 " out)))))
+(ert-deftest reqtrace-list-no-id ()
+  (let ((out (rt-list (rt-repo (rt-files (rt-req "RQ-1") (rt-req "x" :noid t))))))
+    (should (string-match-p "(no id) +OPEN" out))
+    (should (string-match-p "^No id: 1" out))))
+(ert-deftest reqtrace-list-all-repos ()
+  (let ((base (rt-tmp)))
+    (dolist (name '("alpha" "beta"))
+      (let ((d (expand-file-name name base)))
+        (make-directory d)
+        (rt-git d "init" "-q" "-b" "main")
+        (rt-write d (rt-files (rt-req "RQ-1")))
+        (rt-commit d "start")))
+    (make-directory (expand-file-name "plain" base))
+    (let ((out (rt-env (list (concat "REQTRACE_REPOS=" base)) (rt-list base "--all" "--no-tests"))))
+      (should (string-match-p "^== alpha" out))
+      (should (string-match-p "^== beta" out))
+      (should (string-match-p "^Total: 2 requirements in 2 repos" out)))))
+(ert-deftest reqtrace-list-json ()
+  (let* ((out (rt-list (rt-repo (rt-files (rt-done "RQ-1"))) "--json"))
+         (rows (json-parse-string out :object-type 'alist)))
+    (should (= 1 (length rows)))
+    (should (equal "RQ-1" (alist-get 'id (aref rows 0))))
+    (should (equal "found" (alist-get 'check (aref rows 0))))))
+
+;;;; RT-14
+
+(ert-deftest reqtrace-next-id ()
+  (should (equal "RQ-4\n" (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-3"))) "next-id" "RQ")))))
+(ert-deftest reqtrace-next-id-gaps ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-5")))))
+    (should (equal "RQ-6\n" (nth 1 (rt-run d "next-id" "RQ"))))
+    (should (equal "ZZ-1\n" (nth 1 (rt-run d "next-id" "ZZ"))))))
+(ert-deftest reqtrace-next-id-unknown ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (should (= 1 (nth 0 (rt-run d "next-id" "rq"))))
+    (should (= 1 (nth 0 (rt-run d "next-id"))))))
+
+;;;; RT-15
+
+(ert-deftest reqtrace-skill-uses-reqtrace ()
+  (let ((text (with-temp-buffer
+                (insert-file-contents (expand-file-name "skills/add-requirement/SKILL.md" rt-agent1))
+                (buffer-string))))
+    (should (string-match-p "reqtrace list --json" text))
+    (should (string-match-p "reqtrace next-id" text))))
+
+;;; reqtrace_tests.el ends here

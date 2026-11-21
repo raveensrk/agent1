@@ -7,7 +7,7 @@
 #
 # usage: harness/self_check [-h|--help]
 # Runs harness/tests/test_lint.py and test_install_lib.py under pytest, every
-# harness/tests/*.ts suite (180 s cap each), then lint.py --repos over every git
+# harness/tests/*.ts suite (180 s cap each), reqtrace/run_tests, then lint.py --repos over every git
 # repo under ~/repos. Reads those repos; writes nothing but pytest's cache.
 # example: bash harness/self_check
 set -uo pipefail
@@ -19,4 +19,5 @@ python3 -m pytest "$here/tests/test_lint.py" "$here/tests/test_install_lib.py" -
 for suite in "$here"/tests/*.ts; do
 	timeout 180 node --experimental-strip-types "$suite" 2>&1 | tail -1
 done
+timeout 300 "$here/reqtrace/run_tests" 2>&1 | tail -1
 python3 "$here/lint.py" --repos 2>&1 | tail -1

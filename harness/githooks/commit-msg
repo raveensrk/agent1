@@ -4,6 +4,8 @@
 rules/git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
 off (2026-10-08), but pi and other harnesses can still write one, so git
 itself refuses it. A human co-author passes. Comment lines (#) are ignored.
+In a repo whose requirements file opts in (#+REQTRACE_TESTS:), it then runs
+reqtrace commit-msg: a code commit names a requirement id (RT-11).
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks
@@ -57,6 +59,15 @@ def main(argv):
         print("fix: delete that line, then commit again:", file=sys.stderr)
         print("  git commit -F <message without the line>", file=sys.stderr)
         return 1
+    # RT-11: in a repo whose requirements opt in, a code commit names an id.
+    # The grep keeps every other repo fast: Emacs never starts there.
+    opted = subprocess.run(["git", "grep", "--cached", "-q", "-E", r"^#\+REQTRACE_TESTS:", "--", "*.org"],
+                           capture_output=True).returncode == 0
+    if opted:
+        reqtrace = os.environ.get("REQTRACE") or os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "reqtrace", "reqtrace")
+        if subprocess.run([reqtrace, "commit-msg", argv[0]]).returncode != 0:
+            return 1
     # Chain to the repo's own commit-msg hook, which the global path hides.
     git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
     local = os.path.join(git_dir, "hooks", "commit-msg") if git_dir else ""

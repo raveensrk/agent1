@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# reqtrace - lint, trace and list a repo's org requirements (RT-1).
+# usage: reqtrace COMMAND [ARGS]
+# -h and --help print the short help, "help" the long one; reqtrace.el answers them.
+# The work is in reqtrace.el, run by Emacs in batch; this file only starts it.
+# example: reqtrace list --ready
+src="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+exec emacs -Q --script "$src/reqtrace.el" -- "$@"

@@ -6,13 +6,14 @@
 
 Process: [[file:../../requirements/requirements.org][Requirements requirements]].
 
-* OPEN [#A] reqtrace lints and traces org requirements           :reqtrace:
+* DONE [#A] reqtrace lints and traces org requirements           :reqtrace:
 :PROPERTIES:
 :ID:          RT-1
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-15
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-end-to-end
+:IMPLEMENTED: 2026-11-21
 :END:
 One command in agent1 for every repo whose requirements file opts in.
 - =reqtrace lint= refuses what [[file:../../requirements/requirements.org][requirements.org]] forbids; =reqtrace trace= shows what each requirement links to.
@@ -21,7 +22,7 @@ One command in agent1 for every repo whose requirements file opts in.
 - The end-to-end test builds an invented repo with requirements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
 Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an invented file's TODO keywords, priority, tags, =:ID:=, =:NEEDS:= and =:VERIFY:= with org-element ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]).
 
-** OPEN The command line                                               :cli:
+** DONE The command line                                               :cli:
 :PROPERTIES:
 :ID:          RT-2
 :NEEDS:       RT-1
@@ -32,6 +33,7 @@ Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an in
 :VERIFY+:     ert/reqtrace-cli-bare-call ert/reqtrace-cli-dashdash-help
 :VERIFY+:     ert/reqtrace-cli-finding-line ert/reqtrace-cli-exit-codes
 :VERIFY+:     ert/reqtrace-cli-writes-nothing
+:IMPLEMENTED: 2026-11-21
 :END:
 - =reqtrace lint [--staged] [--no-tests] [FILE...]=, =reqtrace commit-msg MSGFILE=, =reqtrace trace [ID]=.
 - =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../../requirements/cli.org][cli.org]]); a bare call prints the main help.
@@ -41,7 +43,7 @@ Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an in
 - =harness/reqtrace/reqtrace= is a Bash launcher: =exec emacs -Q --script reqtrace.el -- "$@"=. Every =.el= file starts with a lexical-binding cookie.
 Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-- --help --version -h= through to the script; agent1's =interpreter_resolves.py= read =#!/usr/bin/env -S emacs= as the interpreter =S=, so the launcher is Bash; Emacs 31 warned on a file with no lexical-binding cookie ([[https://www.gnu.org/software/emacs/manual/html_node/emacs/Initial-Options.html][Initial Options]]).
 
-** OPEN Which files it reads
+** DONE Which files it reads
 :PROPERTIES:
 :ID:          RT-3
 :NEEDS:       RT-1
@@ -50,13 +52,14 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-files-opted-in ert/reqtrace-files-without-keyword
 :VERIFY+:     ert/reqtrace-files-keyword-in-text ert/reqtrace-files-none-opted-in
+:IMPLEMENTED: 2026-11-21
 :END:
 - reqtrace reads the repo's git-tracked =.org= files whose header has a =#+REQTRACE_TESTS:= line.
 - The keyword written inside text, not on its own line, does not opt a file in.
 - With no opted-in file, every command says so on stderr and exits 0.
 Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]); =git ls-files '*.org'= lists the tracked files.
 
-** OPEN lint: the file rules                                          :lint:
+** DONE lint: the file rules                                          :lint:
 :PROPERTIES:
 :ID:          RT-4
 :NEEDS:       RT-1
@@ -69,6 +72,7 @@ Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https:/
 :VERIFY+:     ert/reqtrace-lint-needs-cycle ert/reqtrace-lint-unapproved
 :VERIFY+:     ert/reqtrace-lint-dates-missing ert/reqtrace-lint-implemented-state
 :VERIFY+:     ert/reqtrace-lint-date-not-a-day ert/reqtrace-lint-done-verify-empty
+:IMPLEMENTED: 2026-11-21
 :END:
 In an opted-in file, =reqtrace lint= refuses:
 - a heading with a state whose text starts with an id;
@@ -81,7 +85,7 @@ In an opted-in file, =reqtrace lint= refuses:
 - a DONE requirement with no =:VERIFY:=.
 Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process-test= decide these today with regexes; the spike read the same fields with org-element.
 
-** OPEN lint: VERIFY names tests that exist                           :lint:
+** DONE lint: VERIFY names tests that exist                           :lint:
 :PROPERTIES:
 :ID:          RT-5
 :NEEDS:       RT-4
@@ -92,6 +96,7 @@ Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process
 :VERIFY+:     ert/reqtrace-verify-plus-lines ert/reqtrace-verify-quoted
 :VERIFY+:     ert/reqtrace-verify-command-fails ert/reqtrace-verify-command-timeout
 :VERIFY+:     ert/reqtrace-verify-no-tests
+:IMPLEMENTED: 2026-11-21
 :END:
 - lint runs the =#+REQTRACE_TESTS:= command from the repo root and reads one address per line.
 - A DONE requirement whose =:VERIFY:= names an address the command does not print is refused; an OPEN one may name tests not written yet.
@@ -100,7 +105,7 @@ Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process
 - =--no-tests= skips the command and this rule.
 Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, while org-element's =:VERIFY= held the first line only; =split-string-and-unquote= split =unit/store_test "process/ids are used once"= into 2 ([[https://orgmode.org/manual/Property-Syntax.html][Property Syntax]], [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Shell-Arguments.html][Shell Arguments]]).
 
-** OPEN lint --staged: the change rules                               :lint:
+** DONE lint --staged: the change rules                               :lint:
 :PROPERTIES:
 :ID:          RT-6
 :NEEDS:       RT-4
@@ -110,6 +115,7 @@ Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, whi
 :VERIFY:      ert/reqtrace-staged-done-text ert/reqtrace-staged-reopened-passes
 :VERIFY+:     ert/reqtrace-staged-last-edited ert/reqtrace-staged-new-dates
 :VERIFY+:     ert/reqtrace-staged-turned-done ert/reqtrace-staged-dates-only
+:IMPLEMENTED: 2026-11-21
 :END:
 =reqtrace lint --staged= applies RT-4's rules to each opted-in file's staged copy, reads it against HEAD's, and refuses:
 - a requirement DONE before and after whose text changed: make it OPEN until the change is built;
@@ -120,7 +126,7 @@ Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, whi
 - ~REQTRACE_TODAY=YYYY-MM-DD~ sets today, for tests.
 Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python today, reading =git show HEAD:= against =git show :=.
 
-** OPEN commit-msg: code commits name an id                          :hooks:
+** DONE commit-msg: code commits name an id                          :hooks:
 :PROPERTIES:
 :ID:          RT-7
 :NEEDS:       RT-1
@@ -130,6 +136,7 @@ Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python
 :VERIFY:      ert/reqtrace-commit-code-needs-id ert/reqtrace-commit-docs-pass
 :VERIFY+:     ert/reqtrace-commit-unknown-id ert/reqtrace-commit-id-in-comment
 :VERIFY+:     ert/reqtrace-commit-new-id-staged ert/reqtrace-commit-whole-word
+:IMPLEMENTED: 2026-11-21
 :END:
 - =reqtrace commit-msg MSGFILE= refuses a commit that stages a path under =#+REQTRACE_CODE:= when its message names no id of the staged opted-in files.
 - Comment lines (=#=) do not count.
@@ -138,7 +145,7 @@ Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python
 - The fix it prints: name an id in the message, as =(RF-3)=.
 Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, with =core/ apps/ script/= as its code.
 
-** OPEN trace: the links of every requirement                        :trace:
+** DONE trace: the links of every requirement                        :trace:
 :PROPERTIES:
 :ID:          RT-8
 :NEEDS:       RT-1
@@ -149,6 +156,7 @@ Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, w
 :VERIFY+:     ert/reqtrace-trace-verify-status ert/reqtrace-trace-commits
 :VERIFY+:     ert/reqtrace-trace-orphans ert/reqtrace-trace-one-id
 :VERIFY+:     ert/reqtrace-trace-unknown-id
+:IMPLEMENTED: 2026-11-21
 :END:
 =reqtrace trace= prints one block per requirement, in file order:
 - id, state, title, file and line;
@@ -159,7 +167,7 @@ Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, w
 - =reqtrace trace RT-3= prints that one block, and the files each commit touched; an unknown id is a failure.
 Evidence: =git log --format= and =--name-only= give hash, date, subject and files; task-router-2's commits already name ids, as =(RF-2, RF-5)=.
 
-** OPEN trace: suspect children                                      :trace:
+** DONE trace: suspect children                                      :trace:
 :PROPERTIES:
 :ID:          RT-9
 :NEEDS:       RT-8
@@ -169,6 +177,7 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 :VERIFY:      ert/reqtrace-suspect-parent-changed ert/reqtrace-suspect-reviewed-clears
 :VERIFY+:     ert/reqtrace-suspect-dates-only ert/reqtrace-suspect-open-child
 :VERIFY+:     ert/reqtrace-suspect-walk-time
+:IMPLEMENTED: 2026-11-21
 :END:
 - A DONE child is suspect when a parent's text changed in git after the child's =:IMPLEMENTED:= or =:REVIEWED:= date, whichever is later.
 - A change to dates alone changes no text, so it makes nothing suspect.
@@ -176,7 +185,7 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 - The walk parses headlines only: =trace= over 155 revisions of a 150-requirement invented file ends in under 10 s.
 Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a child implemented on 2026-01-05; a headline-level parse of all 155 revisions of arcadia_docs' requirements.org took 4.70 s, against 0.72 s for each full parse.
 
-** OPEN The harness check                                            :hooks:
+** DONE The harness check                                            :hooks:
 :PROPERTIES:
 :ID:          RT-10
 :NEEDS:       RT-4
@@ -184,6 +193,7 @@ Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a c
 :LAST_EDITED: 2026-11-15
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-harness-check-finding ert/reqtrace-harness-check-plain-org
+:IMPLEMENTED: 2026-11-21
 :END:
 - =harness/checks/reqtrace_lint.py= applies to =*.org=. For each candidate file with =#+REQTRACE_TESTS:= it runs =reqtrace lint --no-tests FILE= and prints each finding as =path:line: message=.
 - An agent sees the finding while it edits a requirements file.
@@ -207,7 +217,7 @@ Evidence: [[file:../README.md][harness/README.md]] gives the check contract: pat
 - A repo with its own =core.hooksPath=, as all 5 app repos have, calls reqtrace from its own hooks: one line each.
 Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githooks=, and its =commit-msg= already chains to a repo's own hook; =git config --local core.hooksPath= is =.githooks= in all 5 app repos.
 
-** OPEN reqtrace's own tests                                         :tests:
+** DONE reqtrace's own tests                                         :tests:
 :PROPERTIES:
 :ID:          RT-12
 :NEEDS:       RT-1
@@ -216,6 +226,7 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-runner-addresses ert/reqtrace-runner-only
 :VERIFY+:     ert/reqtrace-runner-timeout
+:IMPLEMENTED: 2026-11-21
 :END:
 - ERT tests live in =harness/reqtrace/reqtrace_tests.el=, on invented data, in throwaway git repos under =~/tmp=; never a real repo.
 - =harness/reqtrace/run_tests= runs them all; =--addresses= prints each as =ert/<name>=; =--only ADDRESS= runs one.
@@ -224,7 +235,7 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - =harness/self_check= runs it.
 Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
 
-** OPEN list: every requirement in a table                           :list:
+** DONE list: every requirement in a table                           :list:
 :PROPERTIES:
 :ID:          RT-13
 :NEEDS:       RT-1
@@ -233,6 +244,7 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 :APPROVED:    2026-11-21
 :VERIFY:      ert/reqtrace-list-table ert/reqtrace-list-groups ert/reqtrace-list-filters
 :VERIFY+:     ert/reqtrace-list-no-id ert/reqtrace-list-all-repos ert/reqtrace-list-json
+:IMPLEMENTED: 2026-11-21
 :END:
 =reqtrace list [--state open|done|dropped] [--section M] [--unchecked] [--ready] [--all] [--json]=
 - One line per requirement: id, state, approved or not, VERIFY found or missing, title, file:line
@@ -247,7 +259,7 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 - It reads, and never writes a file
 Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-1's spike); =git ls-files '*.org'= lists a repo's files.
 
-** OPEN next-id: the next free id for a section                      :list:
+** DONE next-id: the next free id for a section                      :list:
 :PROPERTIES:
 :ID:          RT-14
 :NEEDS:       RT-13
@@ -255,6 +267,7 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :VERIFY:      ert/reqtrace-next-id ert/reqtrace-next-id-gaps ert/reqtrace-next-id-unknown
+:IMPLEMENTED: 2026-11-21
 :END:
 =reqtrace next-id M= prints one id: one more than the highest =M-= in use anywhere in the repo, as =M-15=
 - A gap is never filled: ids are never reused
@@ -262,14 +275,15 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 - Why: on 2026-11-21 a new requirement got M-11, which was already taken
 Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0.
 
-** OPEN /add-requirement uses reqtrace                                :skill:
+** DONE /add-requirement uses reqtrace                                :skill:
 :PROPERTIES:
 :ID:          RT-15
 :NEEDS:       RT-13 RT-14
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
-:VERIFY:      the skill's text names =reqtrace list --json= and =reqtrace next-id=
+:VERIFY:      ert/reqtrace-skill-uses-reqtrace
+:IMPLEMENTED: 2026-11-21
 :END:
 - Before drafting, the skill runs =reqtrace list --json= to find duplicates and a parent
 - It takes the new id from =reqtrace next-id=

@@ -17,7 +17,7 @@ Not all of this is applicable to all apps. Pick what the app needs.
 - Pointer events (=pointerdown=, =pointerup=) handle mouse, pen and touch in one code path; no separate touch and mouse handlers
 
 
-* What gui.org rules become on the web
+* OPEN What gui.org rules become on the web
 :PROPERTIES:
 :ID:          touch-gui-map
 :CREATED:     2026-11-21
