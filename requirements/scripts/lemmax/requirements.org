@@ -4,39 +4,37 @@
 #+LEMMAX_TESTS: requirements/scripts/lemmax/run_tests --addresses
 #+LEMMAX_CODE: requirements/scripts/lemmax/ harness/checks/lemmax_lint.py
 
-Process: [[file:../../requirements/requirements.org][Requirements requirements]].
+Process: [[file:../../requirements.org][Requirements requirements]].
 
-* DONE [#A] reqtrace lints and traces org requirements           :reqtrace:
+* OPEN [#A] reqtrace lints and traces org requirements           :reqtrace:
 :PROPERTIES:
 :ID:          RT-1
 :CREATED:     2026-11-15
-:LAST_EDITED: 2026-11-15
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-end-to-end
-:IMPLEMENTED: 2026-11-21
 :END:
 One command in agent1 for every repo whose requirements file opts in.
-- =reqtrace lint= refuses what [[file:../../requirements/requirements.org][requirements.org]] forbids; =reqtrace trace= shows what each requirement links to.
+- =reqtrace lint= refuses what [[file:../../requirements.org][requirements.org]] forbids; =reqtrace trace= shows what each requirement links to.
 - Written in Emacs Lisp on org-element.
 - Why: 2 repos hold 8 check files, 867 lines, in Python and Babashka; 3 repos check nothing; =:VERIFY:= is written 4 ways.
 - The end-to-end test builds an invented repo with requirements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
 Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an invented file's TODO keywords, priority, tags, =:ID:=, =:NEEDS:= and =:VERIFY:= with org-element ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]).
 
-** DONE The command line                                               :cli:
+** OPEN The command line                                               :cli:
 :PROPERTIES:
 :ID:          RT-2
 :NEEDS:       RT-1
 :CREATED:     2026-11-15
-:LAST_EDITED: 2026-11-15
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-cli-short-help ert/reqtrace-cli-long-help
 :VERIFY+:     ert/reqtrace-cli-bare-call ert/reqtrace-cli-dashdash-help
 :VERIFY+:     ert/reqtrace-cli-finding-line ert/reqtrace-cli-exit-codes
 :VERIFY+:     ert/reqtrace-cli-writes-nothing
-:IMPLEMENTED: 2026-11-21
 :END:
 - =reqtrace lint [--staged] [--no-tests] [FILE...]=, =reqtrace commit-msg MSGFILE=, =reqtrace trace [ID]=.
-- =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../../requirements/cli.org][cli.org]]); a bare call prints the main help.
+- =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../../cli.org][cli.org]]); a bare call prints the main help.
 - It runs from the repo root, reads, and never writes a file.
 - A finding is one line on stderr: =reqtrace: <file>:<line>: <id>: <why>; <fix>=.
 - Exit 0 when clean, 1 on any finding or failure.
@@ -185,21 +183,20 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 - The walk parses headlines only: =trace= over 155 revisions of a 150-requirement invented file ends in under 10 s.
 Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a child implemented on 2026-01-05; a headline-level parse of all 155 revisions of arcadia_docs' requirements.org took 4.70 s, against 0.72 s for each full parse.
 
-** DONE The harness check                                            :hooks:
+** OPEN The harness check                                            :hooks:
 :PROPERTIES:
 :ID:          RT-10
 :NEEDS:       RT-4
 :CREATED:     2026-11-15
-:LAST_EDITED: 2026-11-15
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-harness-check-finding ert/reqtrace-harness-check-plain-org
-:IMPLEMENTED: 2026-11-21
 :END:
 - =harness/checks/reqtrace_lint.py= applies to =*.org=. For each candidate file with =#+REQTRACE_TESTS:= it runs =reqtrace lint --no-tests FILE= and prints each finding as =path:line: message=.
 - An agent sees the finding while it edits a requirements file.
 - =--no-tests=, because the test command may take 60 s, too slow for every edit.
 - An org file that does not opt in gets no finding.
-Evidence: [[file:../README.md][harness/README.md]] gives the check contract: paths on stdin, =path:line: message= on stdout, exit 0.
+Evidence: [[file:../../../harness/README.md][harness/README.md]] gives the check contract: paths on stdin, =path:line: message= on stdout, exit 0.
 
 ** OPEN agent1's global hooks call reqtrace                          :hooks:
 :PROPERTIES:
@@ -217,23 +214,22 @@ Evidence: [[file:../README.md][harness/README.md]] gives the check contract: pat
 - A repo with its own =core.hooksPath=, as all 5 app repos have, calls reqtrace from its own hooks: one line each.
 Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githooks=, and its =commit-msg= already chains to a repo's own hook; =git config --local core.hooksPath= is =.githooks= in all 5 app repos.
 
-** DONE reqtrace's own tests                                         :tests:
+** OPEN reqtrace's own tests                                         :tests:
 :PROPERTIES:
 :ID:          RT-12
 :NEEDS:       RT-1
 :CREATED:     2026-11-15
-:LAST_EDITED: 2026-11-15
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-runner-addresses ert/reqtrace-runner-only
 :VERIFY+:     ert/reqtrace-runner-timeout
-:IMPLEMENTED: 2026-11-21
 :END:
 - ERT tests live in =harness/reqtrace/reqtrace_tests.el=, on invented data, in throwaway git repos under =~/tmp=; never a real repo.
 - =harness/reqtrace/run_tests= runs them all; =--addresses= prints each as =ert/<name>=; =--only ADDRESS= runs one.
 - Every test has 10 s unless it says it needs longer; a test over its time is stopped, reported as =timeout=, and the rest still run.
 - Commits in test repos skip every hook, so no global hook runs.
 - =harness/self_check= runs it.
-Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
+Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../../testing.org][testing.org]] sets the timeout and invented-data rules.
 
 ** DONE list: every requirement in a table                           :list:
 :PROPERTIES:
@@ -354,17 +350,16 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 - Asked by the owner on 2026-11-21.
 Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+REQTRACE_TESTS:= skips repos that do not opt in, without a parse.
 
-** DONE reqtrace knows UUID v7 ids                                    :ids:
+** OPEN reqtrace knows UUID v7 ids                                    :ids:
 :PROPERTIES:
 :ID:          01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :NEEDS:       RT-4 RT-14 RT-15
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/reqtrace-lint-id-uuid7 ert/reqtrace-new-id
-:IMPLEMENTED: 2026-11-22
 :END:
-New requirement ids are UUID v7, as [[file:../../requirements/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
+New requirement ids are UUID v7, as [[file:../../requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id
 - =reqtrace new-id= prints a fresh UUID v7, and nothing else
 - =next-id= (RT-14) stays only for projects whose old ids still count up
