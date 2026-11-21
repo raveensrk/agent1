@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_tests - reqtrace's ERT tests, each in its own Emacs, 8 at a time (RT-12).
+# run_tests - lemmax's ERT tests, each in its own Emacs, 8 at a time (RT-12).
 #
 # usage: run_tests [--addresses | --only ADDRESS] [-h|--help|help]
 #   (none)          run every test; print PASS, FAIL or TIMEOUT per test, then the totals
@@ -7,13 +7,13 @@
 #   --only ADDRESS  run that one test
 # Each test has 10 s, or what its timeout-N tag says; a test over its time is
 # stopped and reported as TIMEOUT, and the rest still run.
-# REQTRACE_TESTS_FILE picks another tests file; REQTRACE_TEST_TIMEOUT the default time.
+# LEMMAX_TESTS_FILE picks another tests file; LEMMAX_TEST_TIMEOUT the default time.
 # Exit 0 when every test passed, 1 otherwise.
-# example: harness/reqtrace/run_tests --only ert/reqtrace-list-table
+# example: requirements/scripts/lemmax/run_tests --only ert/lemmax-list-table
 set -uo pipefail
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-tests="${REQTRACE_TESTS_FILE:-$here/reqtrace_tests.el}"
-default="${REQTRACE_TEST_TIMEOUT:-10}"
+tests="${LEMMAX_TESTS_FILE:-$here/lemmax_tests.el}"
+default="${LEMMAX_TEST_TIMEOUT:-10}"
 
 case "${1:-}" in
 -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;;
@@ -21,7 +21,7 @@ esac
 
 # "name seconds" per test.
 roster() {
-	emacs -Q --batch -l "$here/ert_roster.el" -l "$tests" --eval "(reqtrace-tests-roster $default)" 2>/dev/null
+	emacs -Q --batch -l "$here/ert_roster.el" -l "$tests" --eval "(lemmax-tests-roster $default)" 2>/dev/null
 }
 
 run_one() { # name seconds
@@ -53,5 +53,5 @@ esac
 out="$(roster | xargs -P 8 -n 2 "$0" --one)"
 printf '%s\n' "$out"
 pass=$(grep -c '^PASS' <<<"$out"); total=$(grep -cE '^(PASS|FAIL|TIMEOUT)' <<<"$out")
-echo "reqtrace tests: $pass of $total passed"
+echo "lemmax tests: $pass of $total passed"
 [ "$pass" -eq "$total" ]

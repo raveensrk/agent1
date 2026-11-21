@@ -1,7 +1,7 @@
-;;; reqtrace_tests.el --- reqtrace's own tests (RT-12)  -*- lexical-binding: t; -*-
+;;; lemmax_tests.el --- lemmax's own tests (RT-12)  -*- lexical-binding: t; -*-
 
 ;; Each test builds an invented repo under ~/tmp and runs the real launcher.
-;; Commits in test repos skip every hook. Run: harness/reqtrace/run_tests
+;; Commits in test repos skip every hook. Run: requirements/scripts/lemmax/run_tests
 
 (require 'ert)
 (require 'cl-lib)
@@ -9,14 +9,14 @@
 (require 'json)
 
 (defconst rt-dir (file-name-directory (or load-file-name buffer-file-name)))
-(defconst rt-bin (expand-file-name "reqtrace" rt-dir))
-(defconst rt-agent1 (file-name-as-directory (expand-file-name "../.." rt-dir)))
+(defconst rt-bin (expand-file-name "lemmax" rt-dir))
+(defconst rt-agent1 (file-name-as-directory (expand-file-name "../../.." rt-dir)))
 
 ;;;; Helpers
 
 (defun rt-tmp ()
   (make-directory (expand-file-name "~/tmp") t)
-  (make-temp-file (expand-file-name "~/tmp/reqtrace-test-") t))
+  (make-temp-file (expand-file-name "~/tmp/lemmax-test-") t))
 
 (defun rt-sh (dir prog &rest args)
   "Run PROG ARGS in DIR: (EXIT STDOUT STDERR)."
@@ -76,7 +76,7 @@
           (if verify+ (format ":VERIFY+:     %s\n" verify+) "")
           ":END:\n" (or body "Body text.\n")))
 
-(defconst rt-head "#+title: Invented requirements\n#+TODO: OPEN | DONE DROPPED\n#+REQTRACE_TESTS: ./tests.sh\n#+REQTRACE_CODE: src/\n\n")
+(defconst rt-head "#+title: Invented requirements\n#+TODO: OPEN | DONE DROPPED\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n\n")
 
 (defun rt-tests-sh (&rest addrs)
   (concat "#!/bin/sh\nprintf '%s\\n'" (mapconcat (lambda (a) (concat " '" a "'")) addrs "") "\n"))
@@ -118,8 +118,8 @@
     (dolist (args '(("-h") ("--help") ("list" "-h") ("lint" "--help") ("trace" "-h") ("next-id" "-h") ("commit-msg" "-h")))
       (let ((r (apply #'rt-run d args)))
         (should (= 0 (nth 0 r)))
-        (should (string-match-p "^usage: reqtrace" (nth 1 r)))
-        (should (string-match-p "example: reqtrace" (nth 1 r)))))
+        (should (string-match-p "^usage: lemmax" (nth 1 r)))
+        (should (string-match-p "example: lemmax" (nth 1 r)))))
     (should-not (string-match-p "^  lint \\[" (nth 1 (rt-run d "--help"))))))
 
 (ert-deftest reqtrace-cli-long-help ()
@@ -131,16 +131,16 @@
 (ert-deftest reqtrace-cli-bare-call ()
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))))))
     (should (= 0 (nth 0 r)))
-    (should (string-match-p "^usage: reqtrace COMMAND" (nth 1 r)))))
+    (should (string-match-p "^usage: lemmax COMMAND" (nth 1 r)))))
 
 (ert-deftest reqtrace-cli-dashdash-help ()
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "--help")))
     (should-not (string-match-p "GNU Emacs" (nth 1 r)))
-    (should (string-match-p "^usage: reqtrace" (nth 1 r)))))
+    (should (string-match-p "^usage: lemmax" (nth 1 r)))))
 
 (ert-deftest reqtrace-cli-finding-line ()
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1" :noid t))) "lint" "--no-tests")))
-    (should (string-match-p "^reqtrace: requirements\\.org:6: -: no :ID:; add :ID:" (nth 2 r)))))
+    (should (string-match-p "^lemmax: requirements\\.org:6: -: no :ID:; add :ID:" (nth 2 r)))))
 
 (ert-deftest reqtrace-cli-exit-codes ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
@@ -168,7 +168,7 @@
 
 (ert-deftest reqtrace-files-keyword-in-text ()
   (let* ((d (rt-repo (list (cons "requirements.org"
-                                 (concat "Say =#+REQTRACE_TESTS: ./tests.sh= to opt in.\n\n"
+                                 (concat "Say =#+LEMMAX_TESTS: ./tests.sh= to opt in.\n\n"
                                          (rt-req "RQ-1" :approved nil))))))
          (r (rt-run d "lint")))
     (should (= 0 (nth 0 r)))
@@ -237,7 +237,7 @@
 (ert-deftest reqtrace-verify-command-timeout ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
     (rt-set d "tests.sh" "#!/bin/sh\nsleep 5\n")
-    (rt-env '("REQTRACE_TEST_SECONDS=1")
+    (rt-env '("LEMMAX_TEST_SECONDS=1")
       (rt-should-find (rt-run d "lint") "ran over 1 s"))))
 (ert-deftest reqtrace-verify-no-tests ()
   (let ((d (rt-repo (rt-files (rt-done "RQ-1" :verify "unit/zzz")))))
@@ -251,7 +251,7 @@
   (let ((d (rt-repo (apply #'rt-files before))))
     (rt-set d "requirements.org" (apply #'concat rt-head after))
     (rt-git d "add" "-A")
-    (rt-env '("REQTRACE_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))))
+    (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))))
 
 (ert-deftest reqtrace-staged-done-text ()
   (rt-should-find (rt-staged (list (rt-done "RQ-1"))
@@ -339,7 +339,7 @@
       (should-not (string-match-p "RQ-2 OPEN" out))
       (should (string-match-p "^    src/x\\.clj" out)))))
 (ert-deftest reqtrace-trace-unknown-id ()
-  (rt-env (list (concat "REQTRACE_REPOS=" (rt-tmp)))
+  (rt-env (list (concat "LEMMAX_REPOS=" (rt-tmp)))
     (rt-should-find (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "trace" "ZZ-1") "unknown id ZZ-1")))
 
 ;;;; RT-9
@@ -392,7 +392,7 @@
     (with-temp-buffer
       (insert stdin)
       (call-process-region (point-min) (point-max) "python3" t t nil
-                           (expand-file-name "harness/checks/reqtrace_lint.py" rt-agent1))
+                           (expand-file-name "harness/checks/lemmax_lint.py" rt-agent1))
       (buffer-string))))
 
 (ert-deftest reqtrace-harness-check-finding ()
@@ -424,7 +424,7 @@
   (let ((d (rt-hooked (rt-files (rt-req "RQ-1")))))
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :body "Changed.\n")))
     (rt-sh d "git" "add" "-A")
-    (let ((r (rt-env '("REQTRACE_TODAY=2026-02-01") (rt-hook-commit d "edit (RQ-1)"))))
+    (let ((r (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-hook-commit d "edit (RQ-1)"))))
       (should (= 1 (nth 0 r)))
       (should (string-match-p "LAST_EDITED: is not today" (nth 2 r))))))
 (ert-deftest reqtrace-global-plain-repo-fast ()
@@ -436,7 +436,7 @@
     (set-file-modes stub #o755)
     (rt-set d "src/x.clj" "(ns x) ;; 2\n")
     (rt-sh d "git" "add" "-A")
-    (rt-env (list (concat "REQTRACE=" stub))
+    (rt-env (list (concat "LEMMAX=" stub))
       (should (= 0 (nth 0 (rt-hook-commit d "change it")))))
     (should-not (file-exists-p marker))))
 
@@ -445,7 +445,7 @@
 (defun rt-runner (tests-text &rest args)
   (let ((f (expand-file-name "tests.el" (rt-tmp))))
     (with-temp-file f (insert tests-text))
-    (rt-env (list (concat "REQTRACE_TESTS_FILE=" f) "REQTRACE_TEST_TIMEOUT=2")
+    (rt-env (list (concat "LEMMAX_TESTS_FILE=" f) "LEMMAX_TEST_TIMEOUT=2")
       (apply #'rt-sh rt-dir (expand-file-name "run_tests" rt-dir) args))))
 
 (defconst rt-small-tests
@@ -511,7 +511,7 @@
         (rt-write d (rt-files (rt-req "RQ-1")))
         (rt-commit d "start")))
     (make-directory (expand-file-name "plain" base))
-    (let ((out (rt-env (list (concat "REQTRACE_REPOS=" base)) (rt-list base "--all" "--no-tests"))))
+    (let ((out (rt-env (list (concat "LEMMAX_REPOS=" base)) (rt-list base "--all" "--no-tests"))))
       (should (string-match-p "^== alpha" out))
       (should (string-match-p "^== beta" out))
       (should (string-match-p "^Total: 2 requirements in 2 repos" out)))))
@@ -541,10 +541,10 @@
   (let ((text (with-temp-buffer
                 (insert-file-contents (expand-file-name "skills/add-requirement/SKILL.md" rt-agent1))
                 (buffer-string))))
-    (should (string-match-p "reqtrace list --json" text))
-    (should (string-match-p "reqtrace next-id" text))))
+    (should (string-match-p "lemmax list --json" text))
+    (should (string-match-p "lemmax next-id" text))))
 
-;;; reqtrace_tests.el ends here
+;;; lemmax_tests.el ends here
 
 ;;;; RT-16
 
@@ -579,7 +579,7 @@
     (rt-git a "init" "-q" "-b" "main")
     (rt-write a (rt-files (rt-req "RQ-1")))
     (rt-commit a "start")
-    (rt-env (list (concat "REQTRACE_REPOS=" base))
+    (rt-env (list (concat "LEMMAX_REPOS=" base))
       (let ((r (rt-run plain "trace" "RQ-1")))
         (should (= 0 (nth 0 r)))
         (should (string-match-p "^project: .*alpha\nRQ-1 OPEN Title of RQ-1" (nth 1 r))))
@@ -587,7 +587,7 @@
         (should (string-match-p "^project: .*alpha" (nth 1 (rt-run other "trace" "RQ-1"))))))))
 (ert-deftest reqtrace-trace-unknown-anywhere ()
   (let ((base (rt-tmp)))
-    (rt-env (list (concat "REQTRACE_REPOS=" base))
+    (rt-env (list (concat "LEMMAX_REPOS=" base))
       (rt-should-find (rt-run (rt-tmp) "trace" "ZZ-9") "unknown id ZZ-9, here or in any project under"))))
 
 ;;;; 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
@@ -606,3 +606,26 @@
       (should (string-match-p "  text:\n    First line\\.\n    - a point" out))
       (should-not (string-match-p ":PROPERTIES:\\|:ID:" out)))
     (should-not (string-match-p "text:" (nth 1 (rt-run d "trace"))))))
+
+;;;; 01a1ff25-116d-73f1-a45e-dd77e482a983
+
+(ert-deftest lemmax-name-and-place ()
+  (should (string-match-p "requirements/scripts/lemmax/\\'" rt-dir))
+  (let ((r (rt-sh rt-dir rt-bin "--help")))
+    (should (= 0 (nth 0 r)))
+    (should (string-match-p "^usage: lemmax COMMAND" (nth 1 r))))
+  (should-not (file-exists-p (expand-file-name "harness/reqtrace" rt-agent1)))
+  (dolist (f '("harness/githooks/pre-commit" "harness/githooks/commit-msg" "harness/self_check"
+               "harness/checks/lemmax_lint.py" "skills/add-requirement/SKILL.md"))
+    (let ((text (with-temp-buffer (insert-file-contents (expand-file-name f rt-agent1)) (buffer-string))))
+      (should (string-match-p "lemmax" text))
+      (should-not (string-match-p "reqtrace" text)))))
+
+(ert-deftest lemmax-reads-old-keyword-in-history ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (list (cons "requirements.org"
+                                (concat "#+TODO: OPEN | DONE DROPPED\n#+REQTRACE_TESTS: ./tests.sh\n\n" (rt-done "RQ-1")))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))))))
+    (rt-set d "requirements.org" (concat "#+TODO: OPEN | DONE DROPPED\n#+LEMMAX_TESTS: ./tests.sh\n\n" (rt-done "RQ-1")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))

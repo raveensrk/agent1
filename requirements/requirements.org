@@ -18,7 +18,7 @@ Properties are optional for a small design. For larger design the following fiel
 ** =:VERIFY:= - Names the checks that run
 ** =:REVIEWED:= - date the owner last read a DONE child against its changed parent
 * The one format
-A repo opts in by putting =#+REQTRACE_TESTS:= in its requirements file; =reqtrace lint= then refuses anything this section does not allow.
+A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lemmax lint= then refuses anything this section does not allow.
 - A requirement is a heading with a state, =** OPEN [#A] Title  :tag:=; the heading text carries no id.
 - =:ID:= holds the id: a UUID v7 for a requirement made from 2026-11-21 on, as [[*A new requirement id is a UUID v7, unique everywhere][A new requirement id is a UUID v7]] says; an older one keeps its shape =[A-Z]+-[0-9]+=, as =RF-3=. Either is unique across every opted-in file of the repo.
 - =:NEEDS:= names one or more parent ids, separated by spaces; nesting is layout only.
@@ -26,13 +26,13 @@ A repo opts in by putting =#+REQTRACE_TESTS:= in its requirements file; =reqtrac
 - Dates are =:CREATED:=, =:LAST_EDITED:=, =:APPROVED:=, =:IMPLEMENTED:= and =:REVIEWED:=, as =2026-11-15=.
 - A requirement's text is its heading, body and properties, all but the dates.
 ** The requirements file names the repo's tests and code
-- =#+REQTRACE_TESTS: <command>= prints every test address, one per line, in the words =regress --only= takes.
-- =#+REQTRACE_CODE: <paths>= names the paths whose commits must name an id, as =core/ apps/ script/=.
-- A repo without =#+REQTRACE_TESTS:= keeps its own checks until it migrates.
+- =#+LEMMAX_TESTS: <command>= prints every test address, one per line, in the words =regress --only= takes.
+- =#+LEMMAX_CODE: <paths>= names the paths whose commits must name an id, as =core/ apps/ script/=.
+- A repo without =#+LEMMAX_TESTS:= keeps its own checks until it migrates.
 ** A suspect child is read again
 A DONE child is suspect when a parent's text changed after the child's =:IMPLEMENTED:= or =:REVIEWED:= date, whichever is later.
 - The owner reads the child against the changed parent, then sets =:REVIEWED:= to that day, or makes the child OPEN when it no longer holds.
-- =reqtrace trace= lists every suspect child.
+- =lemmax trace= lists every suspect child.
 * Verification requirement item
 This will be child of a design requirement item explaining how it is verified
 * Design requirement item

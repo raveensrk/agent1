@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # pre-commit - refuse staged requirement changes that break requirements.org (RT-11).
 #
-# In a repo whose requirements file opts in (#+REQTRACE_TESTS:), runs
-# reqtrace lint --staged --no-tests. Every other repo passes at once: a
+# In a repo whose requirements file opts in (#+LEMMAX_TESTS:), runs
+# lemmax lint --staged --no-tests. Every other repo passes at once: a
 # git grep decides, and Emacs never starts. Then it runs the repo's own
 # .git/hooks/pre-commit, which the global core.hooksPath hides.
-# REQTRACE names another reqtrace, for tests.
+# LEMMAX names another lemmax, for tests.
 #
 # usage: pre-commit [-h|--help|help]   (git passes no arguments)
 # Bypass once, deliberately: git commit --no-verify
 set -uo pipefail
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-if git grep --cached -q -E '^#\+REQTRACE_TESTS:' -- '*.org' 2>/dev/null; then
-	"${REQTRACE:-$here/../reqtrace/reqtrace}" lint --staged --no-tests || exit 1
+if git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' 2>/dev/null; then
+	"${LEMMAX:-$here/../../requirements/scripts/lemmax/lemmax}" lint --staged --no-tests || exit 1
 fi
 own="$(git rev-parse --git-dir)/hooks/pre-commit"
 if [ -x "$own" ] && [ "$(readlink -f "$own")" != "$(readlink -f "$0")" ]; then

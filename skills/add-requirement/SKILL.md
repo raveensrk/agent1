@@ -39,9 +39,9 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 ## 6. Check existing requirements
 
-- Run `reqtrace list --json` in the repo that holds the file: every requirement, its id, state and `:NEEDS:`.
+- Run `lemmax list --json` in the repo that holds the file: every requirement, its id, state and `:NEEDS:`.
 
-- Without reqtrace on PATH, read the files instead.
+- Without lemmax on PATH, read the files instead.
 
 - Duplicate: say so, offer to edit that one instead.
 
@@ -53,7 +53,7 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 Draft as an org heading, OPEN, with:
 
-- `:ID:` - new, never reused: take it from `reqtrace next-id <LETTER>`, or the highest in use plus one.
+- `:ID:` - new, never reused: take it from `lemmax next-id <LETTER>`, or the highest in use plus one.
 - `:CREATED:`, `:LAST_EDITED:` - today, `YYYY-MM-DD`.
 - `:NEEDS:` if a parent fits.
 - `:VERIFY:` - the named check.

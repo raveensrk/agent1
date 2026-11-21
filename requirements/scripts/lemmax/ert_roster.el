@@ -2,7 +2,7 @@
 (require 'ert)
 (require 'cl-lib)
 
-(defun reqtrace-tests-roster (default)
+(defun lemmax-tests-roster (default)
   "Print \"NAME SECONDS\" per loaded test; a timeout-N tag sets SECONDS, else DEFAULT."
   (dolist (test (ert-select-tests t t))
     (let ((secs (or (cl-loop for tag in (ert-test-tags test)

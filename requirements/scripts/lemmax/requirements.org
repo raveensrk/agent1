@@ -1,8 +1,8 @@
-#+title: reqtrace requirements
+#+title: lemmax requirements
 #+STARTUP: overview
 #+TODO: OPEN(o) | DONE(d) DROPPED(x)
-#+REQTRACE_TESTS: harness/reqtrace/run_tests --addresses
-#+REQTRACE_CODE: harness/reqtrace/ harness/checks/reqtrace_lint.py
+#+LEMMAX_TESTS: requirements/scripts/lemmax/run_tests --addresses
+#+LEMMAX_CODE: requirements/scripts/lemmax/ harness/checks/lemmax_lint.py
 
 Process: [[file:../../requirements/requirements.org][Requirements requirements]].
 
@@ -371,14 +371,15 @@ New requirement ids are UUID v7, as [[file:../../requirements/requirements.org::
 - Asked by the owner on 2026-11-21
 Evidence: Python 3.15.2's =uuid.uuid7()= printed =01a1fe0c-9c5c-7057-8edc-bc68ccfa0490=; Emacs has =random= and =current-time= for the same layout.
 
-** OPEN reqtrace becomes lemmax, in requirements/scripts               :cli:
+** DONE reqtrace becomes lemmax, in requirements/scripts               :cli:
 :PROPERTIES:
 :ID:          01a1ff25-116d-73f1-a45e-dd77e482a983
 :NEEDS:       RT-1
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
-:VERIFY:      ert/lemmax-name-and-place
+:VERIFY:      ert/lemmax-name-and-place ert/lemmax-reads-old-keyword-in-history
+:IMPLEMENTED: 2026-11-22
 :END:
 The tool takes the workflow's name, Lemmax, and moves beside the rules it checks.
 - The program is =lemmax=; its commands stay as they are: lint, commit-msg, trace, list, next-id
