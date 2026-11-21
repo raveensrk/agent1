@@ -59,6 +59,9 @@ heading, body and properties, without its state and the 5 dates."
          (head (replace-regexp-in-string
                 (concat "\\`\\(\\*+\\) +" (regexp-opt lemmax-states) "\\_>")
                 "\\1" (car lines)))
+         ;; lemma: 01a2002a-bf93-7475-94c3-d083c65a87d6
+         (head (replace-regexp-in-string
+                "\\`\\(\\*+\\(?: +\\[#.\\]\\)?\\) +[A-Z]+-[0-9]+ " "\\1 " head))
          (date-re (concat "\\`[ \t]*:" (regexp-opt lemmax-dates) ":")))
     (string-trim-right
      (string-join (cons (string-trim-right head)

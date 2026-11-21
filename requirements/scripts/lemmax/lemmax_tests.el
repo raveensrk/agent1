@@ -691,3 +691,19 @@
     (let ((r (rt-run d "lint" "--no-tests")))
       (rt-should-find r "src/x\\.clj:1: 01a1ff25-116d: the marker names an id no lemma has")
       (should-not (string-match-p "src/x\\.clj:2" (nth 2 r))))))
+
+;;;; 01a2002a-bf93-7475-94c3-d083c65a87d6
+
+(ert-deftest lemmax-heading-id-not-text ()
+  :tags '(timeout-30)
+  (rt-should-clean (rt-staged (list (rt-done "RQ-1" :title "RQ-1 The look"))
+                              (list (rt-done "RQ-1" :title "The look"))))
+  (rt-should-find (rt-staged (list (rt-done "RQ-1" :title "RQ-1 The look"))
+                             (list (rt-done "RQ-1" :title "The new look")))
+                  "DONE requirement's text changed")
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :title "RQ-1 The parent") (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-05"))
+                    "2026-01-01")))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :title "The parent")
+                                         (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-05")))
+    (rt-commit d "ids leave the headings" "2026-01-09")
+    (should (string-match-p "Suspect: none" (nth 1 (rt-run d "trace"))))))
