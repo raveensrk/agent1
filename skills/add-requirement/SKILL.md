@@ -53,7 +53,7 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 Draft as an org heading, OPEN, with:
 
-- `:ID:` - new, never reused: take it from `lemmax next-id <LETTER>`, or the highest in use plus one.
+- `:ID:` - new, never reused: a UUID v7 from `lemmax new-id`; a project whose old ids still count up may use `lemmax next-id <LETTER>`.
 - `:CREATED:`, `:LAST_EDITED:` - today, `YYYY-MM-DD`.
 - `:NEEDS:` if a parent fits.
 - `:VERIFY:` - the named check.

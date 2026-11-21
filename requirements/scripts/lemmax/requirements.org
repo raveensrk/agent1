@@ -354,7 +354,7 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 - Asked by the owner on 2026-11-21.
 Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+REQTRACE_TESTS:= skips repos that do not opt in, without a parse.
 
-** OPEN reqtrace knows UUID v7 ids                                    :ids:
+** DONE reqtrace knows UUID v7 ids                                    :ids:
 :PROPERTIES:
 :ID:          01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :NEEDS:       RT-4 RT-14 RT-15
@@ -362,6 +362,7 @@ Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+REQTRACE_TES
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :VERIFY:      ert/reqtrace-lint-id-uuid7 ert/reqtrace-new-id
+:IMPLEMENTED: 2026-11-22
 :END:
 New requirement ids are UUID v7, as [[file:../../requirements/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id

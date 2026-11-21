@@ -629,6 +629,36 @@ property drawer, trimmed (RT-17)."
                        (cl-count-if (lambda (r) (equal (plist-get r :state) "DROPPED")) all))))
     (kill-emacs 0)))
 
+;;;; new-id (01a1fe0c-9c5c-7057-8edc-bc68ccfa0490)
+
+(defun lemmax--random-bytes (n)
+  "N bytes from /dev/urandom, as a list of integers."
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
+    (call-process "head" nil t nil "-c" (number-to-string n) "/dev/urandom")
+    (append (buffer-string) nil)))
+
+(defun lemmax-uuid7 ()
+  "A new UUID v7 (RFC 9562): 48 bits of Unix time in ms, version 7,
+74 random bits, variant 10, in lower case with hyphens."
+  (let* ((ms (floor (* 1000 (float-time))))
+         (ts (format "%012x" ms))
+         (b (lemmax--random-bytes 10))
+         (rand-a (logand (logior (ash (nth 0 b) 8) (nth 1 b)) #xfff))
+         (variant (logior 8 (logand (nth 2 b) 3)))
+         (rest (concat (format "%x" (logand (ash (nth 2 b) -4) #xf))
+                       (mapconcat (lambda (x) (format "%02x" x)) (nthcdr 3 b) ""))))
+    (format "%s-%s-7%03x-%x%s-%s"
+            (substring ts 0 8) (substring ts 8 12) rand-a variant
+            (substring rest 0 3) (substring rest 3 15))))
+
+(defun lemmax-new-id (args)
+  (when args
+    (lemmax--err "lemmax: new-id takes no arguments; see lemmax new-id --help")
+    (kill-emacs 1))
+  (lemmax--out "%s" (lemmax-uuid7))
+  (kill-emacs 0))
+
 ;;;; next-id (RT-14)
 
 (defun lemmax-next-id (args)
@@ -650,7 +680,7 @@ property drawer, trimmed (RT-17)."
   '((main
      "usage: lemmax COMMAND [ARGS]
 Lint, trace and list a repo's org requirements.
-Commands: lint, commit-msg, trace, list, next-id, help
+Commands: lint, commit-msg, trace, list, new-id, next-id, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and never writes a file.
 example: lemmax list --ready -p ~/repos/arcadia_docs"
@@ -659,7 +689,8 @@ example: lemmax list --ready -p ~/repos/arcadia_docs"
   commit-msg MSGFILE                      refuse a code commit that names no id
   trace [ID]                              each requirement's links, tests and commits
   list [filters] [--all] [--json]         every requirement in a table
-  next-id LETTER                          the next free id, as M-15
+  new-id                                  a new requirement id, a UUID v7
+  next-id LETTER                          the next counted id, as M-15, for old projects
   help                                    this text
 Each command takes -h, --help and help.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
@@ -710,6 +741,13 @@ Groups: waiting for approval, approved and open, done, dropped.
 --all         every git repo under ~/repos (LEMMAX_REPOS sets the folder)
 --json        the rows as a JSON array
 --no-tests    skip the test command; the check column says named")
+    (new-id
+     "usage: lemmax new-id
+Print a new requirement id: a UUID v7, lower case, as agent1's id rule asks.
+example: lemmax new-id"
+     "The first 12 hex digits are the time in milliseconds, so ids sort by age;
+the rest is random from /dev/urandom. It needs no check against other ids.
+next-id stays for projects whose old ids still count up.")
     (next-id
      "usage: lemmax next-id [--project DIR] LETTER
 Print the next free id for a section: one more than the highest in use.
@@ -778,6 +816,7 @@ example: lemmax next-id M"
               ("commit-msg" (lemmax-commit-msg rest))
               ("trace" (lemmax-trace rest))
               ("list" (lemmax-list rest))
+              ("new-id" (lemmax-new-id rest))
               ("next-id" (lemmax-next-id rest))
               (_ (lemmax--help-for 'main nil))))))))))
 
