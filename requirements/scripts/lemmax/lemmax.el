@@ -63,10 +63,13 @@ heading, body and properties, without its state and the 5 dates."
          (head (replace-regexp-in-string
                 "\\`\\(\\*+\\(?: +\\[#.\\]\\)?\\) +[A-Z]+-[0-9]+ " "\\1 " head))
          (date-re (concat "\\`[ \t]*:" (regexp-opt lemmax-dates) ":")))
-    (string-trim-right
-     (string-join (cons (string-trim-right head)
-                        (cl-remove-if (lambda (l) (string-match-p date-re l)) (cdr lines)))
-                  "\n"))))
+    (replace-regexp-in-string
+     ;; A link to a heading that starts with an id holds the same text without it.
+     "\\(\\[\\[\\(?:[^]\n]*::\\)?\\*\\)[A-Z]+-[0-9]+ " "\\1"
+     (string-trim-right
+      (string-join (cons (string-trim-right head)
+                         (cl-remove-if (lambda (l) (string-match-p date-re l)) (cdr lines)))
+                   "\n")))))
 
 ;; lemma: RT-17
 (defun lemmax--entry-body (raw)

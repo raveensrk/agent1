@@ -420,7 +420,7 @@ Code names the lemma it builds with a marker in a comment; lemmax reads every ma
 - Asked by the owner on 2026-11-22
 Evidence: =git grep -n -I -E= prints file:line:text for every tracked match; lemmax already runs git for commits and history.
 
-** DONE An id at the start of a heading is not text                 :lint:
+** OPEN An id at the start of a heading is not text                 :lint:
 :PROPERTIES:
 :ID:          01a2002a-bf93-7475-94c3-d083c65a87d6
 :NEEDS:       RT-6 RT-9
@@ -428,11 +428,11 @@ Evidence: =git grep -n -I -E= prints file:line:text for every tracked match; lem
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-heading-id-not-text
-:IMPLEMENTED: 2026-11-22
 :END:
 A project moving its ids out of its headings, as Arcadia does, changes no requirement's text.
 - When lemmax compares a requirement's text, as =lint --staged= and the suspect walk do, an id shaped =[A-Z]+-[0-9]+= at the start of the heading, after the state and priority, is left out
 - So =** DONE [#A] M-14 The look= and =** DONE [#A] The look= hold the same text: a DONE requirement stays DONE, and no child turns suspect
+- The same holds for a link to such a heading: =[[*M-14 The look][M-14]]= and =[[*The look][M-14]]=, with or without a file before =::=, hold the same text
 - RT-4 still refuses an id in the heading of an opted-in file
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--entry-text= already drops the state and the dates the same way.

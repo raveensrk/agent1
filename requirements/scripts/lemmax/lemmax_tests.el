@@ -701,6 +701,8 @@
   (rt-should-find (rt-staged (list (rt-done "RQ-1" :title "RQ-1 The look"))
                              (list (rt-done "RQ-1" :title "The new look")))
                   "DONE requirement's text changed")
+  (rt-should-clean (rt-staged (list (rt-done "RQ-1" :body "See [[*RQ-2 The base][RQ-2]] and [[file:x.org::*RQ-2 The base][it]].\n"))
+                              (list (rt-done "RQ-1" :body "See [[*The base][RQ-2]] and [[file:x.org::*The base][it]].\n"))))
   (let ((d (rt-repo (rt-files (rt-req "RQ-1" :title "RQ-1 The parent") (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-05"))
                     "2026-01-01")))
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :title "The parent")
