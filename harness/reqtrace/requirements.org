@@ -306,3 +306,18 @@ Every command takes =--project DIR= (=-p DIR=): it runs on the git repo that hol
 - A folder that does not exist, or is not inside a git repo, is a failure that names it.
 - Asked by the owner on 2026-11-21.
 Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --all= already loops over repos.
+
+** OPEN A duplicate id is shown, never hidden                       :trace:
+:PROPERTIES:
+:ID:          RT-18
+:NEEDS:       RT-8 RT-13
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:VERIFY:      ert/reqtrace-trace-duplicate-id ert/reqtrace-list-duplicates
+:END:
+- =reqtrace trace ID= prints a block for every requirement with that id, in file order, then =reqtrace: ID is used N times= on stderr, and exits 1.
+- =reqtrace list --duplicates= lists only the requirements whose id another one also has, in any requirements file, opted in or not.
+- Why: on 2026-11-21 Arcadia held two M-11 headings; =trace= showed the first and hid the second.
+- Asked by the owner on 2026-11-21.
+Evidence: =trace= finds its block with =cl-find=, which stops at the first match; =list= already reads every requirements file.
