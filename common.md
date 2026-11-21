@@ -5,6 +5,9 @@ Agent1 is for everyone. Public rules, written for any agent and any harness.
 At session start, read [rules/index.md](rules/index.md) and follow it. It is the
 index of all the rules.
 
+Requirements follow Lemmax, agent1's requirement workflow:
+[requirements/requirements.org](requirements/requirements.org).
+
 ## Confirmation
 
 If i ask a question, "Have you read the startup files?", you must answer "HAI!".

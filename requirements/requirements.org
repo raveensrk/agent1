@@ -48,6 +48,20 @@ Tags: As needed
 * Process
 Every change to what the app does is a requirement first; the code follows it, and the docs follow the code.
 =Idea -> requirement -> approved -> built -> verified -> docs -> DONE=; an issue found while building goes back to approval.
+** The workflow is called Lemmax
+agent1's requirement workflow has a name: Lemmax, from "lemma". In mathematics a lemma is a small proven step used to build bigger results.
+=Idea -> requirement -> approved -> built -> verified -> docs -> DONE=, every step traced by id.
+| Mathematics | Lemmax                                                      |
+|-------------+-------------------------------------------------------------|
+| Axiom       | an agent1 rule: where every project starts                  |
+| Lemma       | one requirement: small, one job, verified before it is used |
+| Theorem     | a feature: proven from its requirements through =:NEEDS:=   |
+| Corollary   | a project's requirement that =:FOLLOWS:= an agent1 rule     |
+| Proof       | the checks its =:VERIFY:= names                             |
+| Q.E.D.      | DONE                                                        |
+- A project that follows these rules "follows Lemmax".
+- The mathematics explains the idea; files and commands keep the plain words: requirement, =:NEEDS:=, =:FOLLOWS:=, =:VERIFY:=.
+- Named on 2026-11-21. A web search that day found no "Lemmax"; Lemax, one m, is a travel-booking software company.
 ** Every change starts as a requirement
 An idea that changes what the app does, shows or stores becomes an OPEN requirement at once; there is no other inbox.
 - Chores that change no behaviour live in a notes file.
