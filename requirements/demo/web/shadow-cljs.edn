@@ -1,0 +1,7 @@
+;; Touch demo: npx shadow-cljs watch app, then open http://localhost:8030
+{:deps true
+ :dev-http {8030 {:root "public" :host "0.0.0.0"}}
+ :builds {:app {:target :browser
+                :output-dir "public/js"
+                :asset-path "/js"
+                :modules {:main {:init-fn touchdemo.core/init}}}}}

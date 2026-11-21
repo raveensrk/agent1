@@ -58,6 +58,29 @@ Not all of this is applicable to all apps. Pick what the app needs.
 - Pull down at the top of a list: refreshes, where the list can be refreshed
 - Drag: a long press first lifts the thing, then it moves; a plain swipe still scrolls
 - No gesture takes the screen edges: the browser and the system own them for back and home
+** OPEN Each component kind has one gesture map
+:PROPERTIES:
+:ID:          touch-gesture-map
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:VERIFY:      demo/web/e2e "gesture map"
+:END:
+What tap, hold and swipe do is set by the component's kind, the same in every app.
+Hold means 500 ms without moving more than 10 px.
+- Button: tap runs it; hold runs its second action, with a fill that shows it coming, as components.org says; sliding off before lifting fires nothing
+- Icon button: tap runs it; hold names it
+- List row: tap opens it; swipe left shows its actions, a full swipe archives and never deletes; swipe right pins; hold lifts it, then a drag moves it
+- List top: pull down refreshes, and a Refresh button does the same
+- Chip: tap toggles it; hold, or right click, opens its menu
+- Text field: the browser's own tap and hold, untouched
+- Slider: tap the track jumps there; drag moves the thumb and never scrolls the page
+- Sheet: drag the handle down, tap outside or press back to close it
+- Page: swipe sideways goes to the next tab, only where nothing under the finger takes the swipe
+- Never: double tap, or pinch on anything but the whole page
+- An app maps each of its own elements to one of these kinds, in its own requirements
+- Reference: [[file:demo/web/src/touchdemo/core.cljs][demo/web]]; run =npx shadow-cljs watch app= there, open http://localhost:8030
+Evidence: demo/web (ClojureScript + Replicant, pointer events), checked on Playwright's Pixel 7 profile with touch events: tap, hold and swipe-left logged right, no page errors.
 ** Scrolling stays smooth and native
 - Scroll is the browser's own, with its momentum; never redrawn in script
 - =overscroll-behavior: contain= on inner scroll areas, so a sheet or list never drags the page behind it

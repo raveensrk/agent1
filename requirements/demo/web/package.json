@@ -1,0 +1,6 @@
+{
+  "name": "touch-demo",
+  "private": true,
+  "description": "Reference for touch.org's per-component gestures. Build tool only.",
+  "devDependencies": { "shadow-cljs": "2.28.20" }
+}
