@@ -45,3 +45,25 @@ An app may deploy before its full tests finish, when the rules below hold. It tr
 - The previous build is kept beside the new one, so putting it back takes one command and under 30 s
 - A change that writes or migrates data never takes this path: it waits for its tests, then deploys
 - Tests run on the development machine, never on the server
+
+* OPEN Every test run logs its wall clock time
+:PROPERTIES:
+:ID:          test-times-log
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:END:
+Each test, and each whole run, writes how long it took by the wall clock. The log finds slow tests, shows slowdowns, and predicts how long a run will take.
+- One file per project: =tmp/test-times.tsv=, never committed (=tmp/= is in =.gitignore=)
+- TSV: tab-separated, one result a line; the first line names the columns:
+  =at commit suite test result seconds passed failed timeout=
+- =at= is ISO 8601 with its zone; =result= is pass, fail, timeout or run; =seconds= has 2 decimals
+- One line per test, its last three columns empty; one line per run, with =run= as its test and result, and its counts filled in
+- Readers find columns by the header's names, never by position, so a column can be added later without breaking them
+- A field never holds a tab or a newline: the writer turns either into one space
+- Lines are only ever added; the file is kept forever
+- Before a run starts, it prints an estimate from past lines: the sum of each test's last 5 times, as "about 2 min 10 s"; a test with no past line counts its timeout
+- After a run, a test that took more than 2 times its usual (the median of its last 5) gets a warning line naming it and both times; nothing fails
+- A failed or timed-out test is logged like a passing one, so estimates stay honest
+- The log is written by the one command that runs the tests (testing.org's "One command runs every test"), so every suite gets it without code of its own
+Evidence: =tmp/= is already ignored in Arcadia; =date +%s.%N= or the test runner's own timer gives wall clock seconds; a TSV appends with one =printf= per line, and =awk -F'\t'= reads it.
