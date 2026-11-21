@@ -192,7 +192,7 @@
 (ert-deftest reqtrace-lint-id-missing ()
   (rt-should-find (rt-lint (rt-req "RQ-1" :noid t)) "no :ID:"))
 (ert-deftest reqtrace-lint-id-shape ()
-  (rt-should-find (rt-lint (rt-req "touch-map")) "not shaped"))
+  (rt-should-find (rt-lint (rt-req "touch-map")) "neither a UUID v7 nor shaped"))
 (ert-deftest reqtrace-lint-id-twice ()
   (rt-should-find (rt-lint (rt-req "RQ-1") (rt-req "RQ-1")) "used twice, first at requirements.org:6"))
 (ert-deftest reqtrace-lint-needs-unknown ()
@@ -589,3 +589,10 @@
   (let ((base (rt-tmp)))
     (rt-env (list (concat "REQTRACE_REPOS=" base))
       (rt-should-find (rt-run (rt-tmp) "trace" "ZZ-9") "unknown id ZZ-9, here or in any project under"))))
+
+;;;; 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
+
+(ert-deftest reqtrace-lint-id-uuid7 ()
+  (rt-should-clean (rt-lint (rt-req "01a1fe0c-9c5c-7057-8edc-bc68ccfa0490") (rt-req "RQ-1")))
+  (rt-should-find (rt-lint (rt-req "01a1fe0c-9c5c-4057-8edc-bc68ccfa0490")) "neither a UUID v7")
+  (rt-should-find (rt-lint (rt-req "01A1FE0C-9C5C-7057-8EDC-BC68CCFA0490")) "neither a UUID v7"))

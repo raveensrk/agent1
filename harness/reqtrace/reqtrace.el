@@ -193,6 +193,10 @@ heading, body and properties, without its state and the 5 dates."
 
 ;;;; lint (RT-4, RT-5, RT-6)
 
+(defun reqtrace--uuid7-p (id)
+  "Whether ID is a lower-case UUID v7, as agent1's id rule asks for new requirements."
+  (string-match-p "\\`[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7[0-9a-f]\\{3\\}-[89ab][0-9a-f]\\{3\\}-[0-9a-f]\\{12\\}\\'" id))
+
 (defun reqtrace--lint-file-rules (infos only)
   "RT-4 over the opted-in INFOS; findings only for files in ONLY, when given."
   (let ((seen (make-hash-table :test #'equal))
@@ -206,8 +210,9 @@ heading, body and properties, without its state and the 5 dates."
             (reqtrace--finding f l id "the heading text starts with an id"
                                "keep the id in :ID: only"))
           (cond ((null id) (reqtrace--finding f l nil "no :ID:" "add :ID: as RF-3"))
-                ((not (string-match-p "\\`[A-Z]+-[0-9]+\\'" id))
-                 (reqtrace--finding f l id "the id is not shaped [A-Z]+-[0-9]+" "rename it, as RF-3")))
+                ((not (or (string-match-p "\\`[A-Z]+-[0-9]+\\'" id) (reqtrace--uuid7-p id)))
+                 (reqtrace--finding f l id "the id is neither a UUID v7 nor shaped [A-Z]+-[0-9]+"
+                                    "make a new one with python3 -c 'import uuid; print(uuid.uuid7())'")))
           (when (and (member state '("OPEN" "DONE")) (null (plist-get r :approved)))
             (reqtrace--finding f l id (format "%s with no :APPROVED:" state)
                                "get the owner's approval, then add :APPROVED: with its day"))
