@@ -436,3 +436,20 @@ A project moving its ids out of its headings, as Arcadia does, changes no requir
 - RT-4 still refuses an id in the heading of an opted-in file
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--entry-text= already drops the state and the dates the same way.
+
+** DONE Opting in, and markers in another repo                        :lint:
+:PROPERTIES:
+:ID:          01a2002d-fb3b-71e3-ac96-5e1dbba8226c
+:NEEDS:       RT-6 01a20014-e361-7827-b2a8-d3b2ded3e0b1
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-opt-in-compares-head ert/lemmax-markers-in-other-repo
+:IMPLEMENTED: 2026-11-22
+:END:
+Two things a project meets when it starts to follow lemmax, as Arcadia does.
+- =lint --staged= compares a file with its HEAD copy even when the HEAD copy has no =#+LEMMAX_TESTS:= yet, so the commit that opts in sees no requirement as new
+- =#+LEMMAX_MARKERS_IN: DIR...= names more git repos, by path from this repo's root, whose markers count too, as =../arcadia= for a book whose code lives beside it; their locations show as =DIR/file:line=
+- Asked by the owner on 2026-11-22
+Evidence: Arcadia's requirements live in arcadia_docs and its code in arcadia; the first opt-in lint saw every requirement as new.
+

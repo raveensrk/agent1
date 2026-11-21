@@ -105,7 +105,7 @@ property drawer, trimmed (RT-17)."
           (org-element-use-cache nil)
           (org-inhibit-startup t))
       (delay-mode-hooks (org-mode))
-      (let* ((kw (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "TODO"
+      (let* ((kw (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "LEMMAX_MARKERS_IN" "TODO"
                                          ;; The names before lemmax, read so older commits still match.
                                          "REQTRACE_TESTS" "REQTRACE_CODE")))
              (todo (cadr (assoc "TODO" kw)))
@@ -147,6 +147,7 @@ property drawer, trimmed (RT-17)."
                 :tests (cadr tests-kw)
                 :code (let ((c (cadr code-kw))) (and c (split-string c)))
                 :test-paths (let ((c (cadr (assoc "LEMMAX_TEST_PATHS" kw)))) (and c (split-string c)))
+                :markers-in (let ((c (cadr (assoc "LEMMAX_MARKERS_IN" kw)))) (and c (split-string c)))
                 :listed (or opted
                             (equal (file-name-nondirectory file) "requirements.org")
                             (member "requirements" (split-string (or (file-name-directory file) "") "/" t))
@@ -345,7 +346,10 @@ property drawer, trimmed (RT-17)."
         (lemmax--lint-markers infos only staged)
         (unless no-tests (lemmax--lint-verify infos only))
         (when staged
-          (lemmax--lint-staged infos (lemmax--opted (lemmax--rev-files "HEAD"))))))
+          ;; lemma: 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
+          (let ((names (mapcar (lambda (i) (plist-get i :file)) infos)))
+            (lemmax--lint-staged infos (cl-remove-if-not (lambda (i) (member (plist-get i :file) names))
+                                                         (lemmax--rev-files "HEAD")))))))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
 
 ;;;; Code markers
@@ -391,10 +395,22 @@ With CACHED, read the staged copies."
               (push (list id file line (and (lemmax--test-path-p file patterns) t)) res))))))
     (nreverse res)))
 
+(defun lemmax--all-markers (infos &optional cached)
+  "The markers of this repo and of every repo #+LEMMAX_MARKERS_IN: names."
+  (let ((patterns (lemmax--test-paths infos)))
+    (append (lemmax--markers patterns cached)
+            (cl-loop for dir in (delete-dups (cl-mapcan (lambda (i) (copy-sequence (plist-get i :markers-in))) infos))
+                     for full = (expand-file-name dir default-directory)
+                     when (file-directory-p full)
+                     append (let ((default-directory (file-name-as-directory full)))
+                              (mapcar (lambda (m) (list (nth 0 m) (concat (directory-file-name dir) "/" (nth 1 m))
+                                                        (nth 2 m) (nth 3 m)))
+                                      (lemmax--markers patterns)))))))
+
 (defun lemmax--lint-markers (infos only cached)
   "Markers that name no lemma or a DROPPED one; DONE lemmas from 2026-11-22 with no code marker."
   (let* ((known (make-hash-table :test #'equal))
-         (markers (lemmax--markers (lemmax--test-paths infos) cached))
+         (markers (lemmax--all-markers infos cached))
          (reqs (lemmax--all-reqs infos)))
     (dolist (r (lemmax--all-reqs (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files)))))
       (when (plist-get r :id) (puthash (plist-get r :id) r known)))
@@ -560,7 +576,7 @@ With CACHED, read the staged copies."
   "Print the trace of INFOS, or of the one requirement WANT, for the repo here."
   (progn
     (let* ((reqs (lemmax--all-reqs infos))
-           (lemmax--marks (lemmax--markers (lemmax--test-paths infos)))
+           (lemmax--marks (lemmax--all-markers infos))
            (commits (lemmax--commits))
            (changed (lemmax--last-changes infos))
            (suspects (lemmax--suspects reqs changed))
@@ -604,7 +620,7 @@ With CACHED, read the staged copies."
 (defun lemmax--rows (no-tests)
   "Rows for every listed requirement of the repo here."
   (let* ((infos (lemmax--listed (lemmax--worktree-files)))
-         (marks (lemmax--markers (lemmax--test-paths infos))))
+         (marks (lemmax--all-markers infos)))
     (cl-loop for info in infos
              for addr = (and (plist-get info :opted) (not no-tests)
                              (lemmax--test-addresses (plist-get info :tests)))

@@ -707,3 +707,26 @@
                                          (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-05")))
     (rt-commit d "ids leave the headings" "2026-01-09")
     (should (string-match-p "Suspect: none" (nth 1 (rt-run d "trace"))))))
+
+;;;; 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
+
+(ert-deftest lemmax-opt-in-compares-head ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (list (cons "requirements.org" (concat "#+TODO: OPEN | DONE DROPPED\n\n" (rt-done "RQ-1")))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))))))
+    (rt-set d "requirements.org" (concat rt-head (rt-done "RQ-1")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+
+(ert-deftest lemmax-markers-in-other-repo ()
+  :tags '(timeout-30)
+  (let* ((base (rt-tmp))
+         (book (expand-file-name "book" base)) (code (expand-file-name "code" base)))
+    (dolist (d (list book code)) (make-directory d) (rt-git d "init" "-q" "-b" "main"))
+    (rt-write book (list (cons "requirements.org" (concat rt-head "#+LEMMAX_MARKERS_IN: ../code\n\n"
+                                                          (rt-done "RQ-1" :implemented "2026-11-22")))
+                         (cons "tests.sh" (rt-tests-sh "unit/a"))))
+    (rt-write code (list (cons "src/x.clj" ";; lemma: RQ-1\n")))
+    (rt-commit book "start") (rt-commit code "start")
+    (should (string-match-p "  code: \\.\\./code/src/x\\.clj:1" (nth 1 (rt-run book "trace" "RQ-1"))))
+    (rt-should-clean (rt-run book "lint" "--no-tests"))))
