@@ -16,6 +16,32 @@ Not all of this is applicable to all apps. Pick what the app needs.
 - A device with both, a tablet with a trackpad, gets both: each input answers in its own way
 - Pointer events (=pointerdown=, =pointerup=) handle mouse, pen and touch in one code path; no separate touch and mouse handlers
 
+
+* What gui.org rules become on the web
+:PROPERTIES:
+:ID:          touch-gui-map
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:END:
+Every gui.org and components.org rule holds on the web, except as below.
+** Changed for the web
+- Liquid Glass: CSS =backdrop-filter=, at most two glass layers on screen, so a mid-range phone keeps 60 fps
+- Button sizes: 44 by 44 px or more
+- Time and date pickers: the phone's own, through =<input type=date>= and =<input type=time>=
+- Scroll areas: the browser's own scroll
+- Windows, panes, tabs: one screen, bottom tabs, sheets from the bottom
+- Narrow window: the tablet layout step
+- Tooltip: a hold, or a small info button
+- Right-click menu: a hold, as the gesture map says
+- Restart the app: reload the page
+- About: a line in Settings with the version and commit
+- Keyboard shortcuts and ⌘K: only when a keyboard is attached; on a phone, a search box
+- Save and restore session: the page address, plus browser storage
+- Slow work off the UI thread: a Web Worker
+** Left out on the web
+- The JavaFX toolkit, the file menu, the macOS menu bar
+- Mouse pointer shapes, hover, several windows, macOS scroll settings
 * Layout
 ** The page fits the screen
 - The viewport meta tag is =width=device-width, initial-scale=1, viewport-fit=cover=
