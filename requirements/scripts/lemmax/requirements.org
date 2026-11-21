@@ -59,12 +59,12 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 - With no opted-in file, every command says so on stderr and exits 0.
 Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]); =git ls-files '*.org'= lists the tracked files.
 
-** DONE lint: the file rules                                          :lint:
+** OPEN lint: the file rules                                          :lint:
 :PROPERTIES:
 :ID:          RT-4
 :NEEDS:       RT-1
 :CREATED:     2026-11-15
-:LAST_EDITED: 2026-11-15
+:LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/reqtrace-lint-clean-file ert/reqtrace-lint-id-in-heading
 :VERIFY+:     ert/reqtrace-lint-id-missing ert/reqtrace-lint-id-shape
@@ -72,18 +72,18 @@ Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https:/
 :VERIFY+:     ert/reqtrace-lint-needs-cycle ert/reqtrace-lint-unapproved
 :VERIFY+:     ert/reqtrace-lint-dates-missing ert/reqtrace-lint-implemented-state
 :VERIFY+:     ert/reqtrace-lint-date-not-a-day ert/reqtrace-lint-done-verify-empty
-:IMPLEMENTED: 2026-11-21
 :END:
 In an opted-in file, =reqtrace lint= refuses:
 - a heading with a state whose text starts with an id;
 - a requirement with no =:ID:=, or one not shaped =[A-Z]+-[0-9]+=;
 - an id two requirements share, across the repo's opted-in files;
 - a =:NEEDS:= id no requirement has, and a =:NEEDS:= cycle;
-- an OPEN or DONE requirement with no =:APPROVED:=;
+- a DONE requirement with no =:APPROVED:=; an OPEN one with none is waiting for approval, as =list= groups it;
 - a missing =:CREATED:= or =:LAST_EDITED:=, a DONE one with no =:IMPLEMENTED:=, and an OPEN or DROPPED one with one;
 - a date that is not a real day, as =2026-02-30=;
 - a DONE requirement with no =:VERIFY:=.
 Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process-test= decide these today with regexes; the spike read the same fields with org-element.
+- Changed on 2026-11-22: an OPEN requirement may wait for approval; only a DONE one must have it. Asked by the owner on 2026-11-22.
 
 ** DONE lint: VERIFY names tests that exist                           :lint:
 :PROPERTIES:

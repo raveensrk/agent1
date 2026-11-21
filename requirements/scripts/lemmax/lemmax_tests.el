@@ -146,7 +146,7 @@
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
     (should (= 0 (nth 0 (rt-run d "lint" "--no-tests"))))
     (should (= 1 (nth 0 (rt-run d "nonsense"))))
-    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :approved nil)))
+    (rt-set d "requirements.org" (concat rt-head (rt-done "RQ-1" :approved nil)))
     (should (= 1 (nth 0 (rt-run d "lint" "--no-tests"))))))
 
 (ert-deftest reqtrace-cli-writes-nothing ()
@@ -157,7 +157,7 @@
 ;;;; RT-3
 
 (ert-deftest reqtrace-files-opted-in ()
-  (rt-should-find (rt-run (rt-repo (rt-files (rt-req "RQ-1" :approved nil))) "lint" "--no-tests")
+  (rt-should-find (rt-run (rt-repo (rt-files (rt-done "RQ-1" :approved nil))) "lint" "--no-tests")
                   "no :APPROVED:"))
 
 (ert-deftest reqtrace-files-without-keyword ()
@@ -200,7 +200,8 @@
 (ert-deftest reqtrace-lint-needs-cycle ()
   (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-2") (rt-req "RQ-2" :needs "RQ-1")) "cycle"))
 (ert-deftest reqtrace-lint-unapproved ()
-  (rt-should-find (rt-lint (rt-req "RQ-1" :approved nil)) "OPEN with no :APPROVED:"))
+  (rt-should-find (rt-lint (rt-done "RQ-1" :approved nil)) "DONE with no :APPROVED:")
+  (rt-should-clean (rt-lint (rt-req "RQ-1" :approved nil))))
 (ert-deftest reqtrace-lint-dates-missing ()
   (let ((r (rt-lint (rt-req "RQ-1" :created nil :last nil))))
     (rt-should-find r "no :CREATED:")
@@ -396,8 +397,8 @@
       (buffer-string))))
 
 (ert-deftest reqtrace-harness-check-finding ()
-  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :approved nil)))))
-    (should (string-match-p "^requirements\\.org:6: RQ-1: OPEN with no :APPROVED:" (rt-check d "requirements.org\n")))))
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1" :approved nil)))))
+    (should (string-match-p "^requirements\\.org:6: RQ-1: DONE with no :APPROVED:" (rt-check d "requirements.org\n")))))
 (ert-deftest reqtrace-harness-check-plain-org ()
   (let ((d (rt-repo (list (cons "notes.org" (rt-req "RQ-1" :approved nil))))))
     (should (equal "" (rt-check d "notes.org\n")))))

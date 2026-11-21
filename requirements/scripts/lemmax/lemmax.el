@@ -239,7 +239,8 @@ property drawer, trimmed (RT-17)."
                 ((not (or (string-match-p "\\`[A-Z]+-[0-9]+\\'" id) (lemmax--uuid7-p id)))
                  (lemmax--finding f l id "the id is neither a UUID v7 nor shaped [A-Z]+-[0-9]+"
                                     "make a new one with python3 -c 'import uuid; print(uuid.uuid7())'")))
-          (when (and (member state '("OPEN" "DONE")) (null (plist-get r :approved)))
+          ;; lemma: RT-4
+          (when (and (equal state "DONE") (null (plist-get r :approved)))
             (lemmax--finding f l id (format "%s with no :APPROVED:" state)
                                "get the owner's approval, then add :APPROVED: with its day"))
           (unless (plist-get r :created) (lemmax--finding f l id "no :CREATED:" "add :CREATED: YYYY-MM-DD"))
