@@ -20,7 +20,7 @@ Properties are optional for a small design. For larger design the following fiel
 * The one format
 A repo opts in by putting =#+REQTRACE_TESTS:= in its requirements file; =reqtrace lint= then refuses anything this section does not allow.
 - A requirement is a heading with a state, =** OPEN [#A] Title  :tag:=; the heading text carries no id.
-- =:ID:= holds the id, shaped =[A-Z]+-[0-9]+= as =RF-3=, unique across every opted-in file of the repo.
+- =:ID:= holds the id: a UUID v7 for a requirement made from 2026-11-21 on, as [[*A new requirement id is a UUID v7, unique everywhere][A new requirement id is a UUID v7]] says; an older one keeps its shape =[A-Z]+-[0-9]+=, as =RF-3=. Either is unique across every opted-in file of the repo.
 - =:NEEDS:= names one or more parent ids, separated by spaces; nesting is layout only.
 - =:VERIFY:= holds test addresses, quoted like shell words: =unit/store_test "process/ids are used once"=; a long list goes on =:VERIFY+:= lines.
 - Dates are =:CREATED:=, =:LAST_EDITED:=, =:APPROVED:=, =:IMPLEMENTED:= and =:REVIEWED:=, as =2026-11-15=.
@@ -97,6 +97,16 @@ A project never builds an agent1 requirement straight from agent1. It first writ
 - When the agent1 requirement changes, every project requirement that follows it is suspect until read again, as a changed parent makes its children suspect
 - A project that does not adopt an agent1 requirement writes nothing; agent1 rules are opt-in per project
 - Why: so each project can show which agent1 rules it follows, how, and since when
+
+** A new requirement id is a UUID v7, unique everywhere
+Every requirement id is unique across every project, so a link or a commit can never name the wrong one.
+- A new requirement's =:ID:= is a UUID v7 (RFC 9562), lower case with hyphens, as =01a1fe0b-58fc-7462-bad3-1df76777aa8e=: the first 12 hex digits the time it was made in milliseconds, the rest random
+- It is made by a tool (=python3 -c 'import uuid; print(uuid.uuid7())'=, Python 3.14 and later), never typed or picked by hand; it needs no check against other ids
+- Ids that exist today keep their shape forever: =M-12=, =RT-3=, =touch-gesture-map=; an id is never renamed or reused
+- A heading names its requirement in words; the id is for links, =:NEEDS:=, =:FOLLOWS:= and commits
+- In a commit message, an id may be cut to its last 12 hex digits when that is unique among every id in =~/repos=
+- Why: on 2026-11-21 two sessions each gave a new requirement the id RT-17, and Arcadia held two M-11s; ids counted up per project clash when sessions write at once
+Evidence: Python 3.15.2 on this Mac printed =01a1fe0b-58fc-7462-bad3-1df76777aa8e= from =uuid.uuid7()=.
 
 * Task tracking :optional:
 Follow these states
