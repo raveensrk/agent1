@@ -223,3 +223,54 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - Commits in test repos skip every hook, so no global hook runs.
 - =harness/self_check= runs it.
 Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
+
+** OPEN list: every requirement in a table                           :list:
+:PROPERTIES:
+:ID:          RT-13
+:NEEDS:       RT-1
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:VERIFY:      ert/reqtrace-list-table ert/reqtrace-list-groups ert/reqtrace-list-filters
+:VERIFY+:     ert/reqtrace-list-no-id ert/reqtrace-list-all-repos ert/reqtrace-list-json
+:END:
+=reqtrace list [--state open|done|dropped] [--section M] [--unchecked] [--ready] [--all] [--json]=
+- One line per requirement: id, state, approved or not, VERIFY found or missing, title, file:line
+- Groups, in order: waiting for approval, approved and open, done, dropped; each with its count
+- A heading that is a requirement but has no =:ID:= is listed as =(no id)= and counted at the end
+- It reads every =.org= requirements file in the repo, marked with =#+REQTRACE_TESTS:= or not; lint's rules still read only marked files
+- =--unchecked=: DONE requirements with no =:VERIFY:=, or one the test command does not list
+- =--ready=: approved and still OPEN
+- =--section M=: ids that start with =M-=
+- =--all=: every repo under =~/repos= that holds a requirements file, one table each, then the totals
+- =--json=: the same rows as a JSON array, for the AI
+- It reads, and never writes a file
+Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-1's spike); =git ls-files '*.org'= lists a repo's files.
+
+** OPEN next-id: the next free id for a section                      :list:
+:PROPERTIES:
+:ID:          RT-14
+:NEEDS:       RT-13
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:VERIFY:      ert/reqtrace-next-id ert/reqtrace-next-id-gaps ert/reqtrace-next-id-unknown
+:END:
+=reqtrace next-id M= prints one id: one more than the highest =M-= in use anywhere in the repo, as =M-15=
+- A gap is never filled: ids are never reused
+- A letter with no id yet prints =M-1=
+- Why: on 2026-11-21 a new requirement got M-11, which was already taken
+Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0.
+
+** OPEN /add-requirement uses reqtrace                                :skill:
+:PROPERTIES:
+:ID:          RT-15
+:NEEDS:       RT-13 RT-14
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:VERIFY:      the skill's text names =reqtrace list --json= and =reqtrace next-id=
+:END:
+- Before drafting, the skill runs =reqtrace list --json= to find duplicates and a parent
+- It takes the new id from =reqtrace next-id=
+- Without reqtrace installed, it reads the files as it does today
