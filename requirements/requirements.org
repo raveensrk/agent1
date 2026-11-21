@@ -88,6 +88,16 @@ Three dates, as =2026-11-09=: =:CREATED:= the day it was added, =:LAST_EDITED:= 
 - Only a DONE requirement has =:IMPLEMENTED:=; a check refuses any other, and a missing date.
 - A commit that leaves a date wrong is refused, naming the requirement and the date; nothing fills them in on its own.
 - A change to a date is a change like any other.
+** A project maps an agent1 requirement before it builds it
+A project never builds an agent1 requirement straight from agent1. It first writes its own requirement that names the agent1 one, and builds that.
+- The project's requirement carries =:FOLLOWS:= with the agent1 file and id, as =agent1/requirements/testing.org::build-test-alongside=, and a link to it in its body
+- Its body says the project's part only: which files, commands and checks; the general rule is linked, never copied
+- Its =:VERIFY:= names the project's own checks
+- Commits name the project's id, never the agent1 id
+- When the agent1 requirement changes, every project requirement that follows it is suspect until read again, as a changed parent makes its children suspect
+- A project that does not adopt an agent1 requirement writes nothing; agent1 rules are opt-in per project
+- Why: so each project can show which agent1 rules it follows, how, and since when
+
 * Task tracking :optional:
 Follow these states
 #+begin_example

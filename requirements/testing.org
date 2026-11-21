@@ -46,6 +46,23 @@ An app may deploy before its full tests finish, when the rules below hold. It tr
 - A change that writes or migrates data never takes this path: it waits for its tests, then deploys
 - Tests run on the development machine, never on the server
 
+* OPEN One session builds, test agents run alongside
+:PROPERTIES:
+:ID:          build-test-alongside
+:CREATED:     2026-11-21
+:LAST_EDITED: 2026-11-21
+:APPROVED:    2026-11-21
+:END:
+The main session only builds; test runs happen in separate agents at the same time, so building never waits for tests. It works with [[*Deploy first, test alongside][Deploy first, test alongside]] and [[*Every test run logs its wall clock time][Every test run logs its wall clock time]].
+- Read only: a test agent tests a git worktree of one commit, never the working tree being edited, and changes no file of the project
+- Newest first: while a run is going, new commits queue; the next run takes only the newest, except a commit that touches data-writing code, which always gets its own run
+- Fast lane, slow lane: every run takes the fast suites; a slow suite (over 2 min, by the test times log) runs only when its own files change, and once a night
+- A failure is run again once, on the same commit: pass then is a flake, logged and listed, and the line goes on; fail twice stops the line
+- A test that flakes 3 times in 7 days is quarantined: it moves out of the line's run, is listed, and a requirement to fix it is written
+- Reports wait for the main session's next prompt, never interrupt an edit; each names the commit, the test, its first error line and the log
+- While the line is stopped, the main session may keep building, but nothing deploys; the first job of its next turn is the fix
+- At most 2 test agents at once, so the machine stays usable
+
 * OPEN Every test run logs its wall clock time
 :PROPERTIES:
 :ID:          test-times-log
