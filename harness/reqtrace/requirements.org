@@ -307,6 +307,21 @@ Every command takes =--project DIR= (=-p DIR=): it runs on the git repo that hol
 - Asked by the owner on 2026-11-21.
 Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --all= already loops over repos.
 
+** DONE trace ID prints the requirement's text                      :trace:
+:PROPERTIES:
+:ID:          RT-17
+:NEEDS:       RT-8
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
+:VERIFY:      ert/reqtrace-trace-one-id-text
+:END:
+=reqtrace trace ID= ends its block with the requirement's text: its body, under =text:=, without the property drawer.
+- =trace= with no ID prints no text, so the blocks stay short.
+- Asked by the owner on 2026-11-21.
+Evidence: the body is the entry's lines after the heading, read from the same region =:text= already reads.
+
 ** OPEN A duplicate id is shown, never hidden                       :trace:
 :PROPERTIES:
 :ID:          RT-18

@@ -597,3 +597,12 @@
   (rt-should-clean (rt-lint (rt-req "01a1fe0c-9c5c-7057-8edc-bc68ccfa0490") (rt-req "RQ-1")))
   (rt-should-find (rt-lint (rt-req "01a1fe0c-9c5c-4057-8edc-bc68ccfa0490")) "neither a UUID v7")
   (rt-should-find (rt-lint (rt-req "01A1FE0C-9C5C-7057-8EDC-BC68CCFA0490")) "neither a UUID v7"))
+
+;;;; RT-17
+
+(ert-deftest reqtrace-trace-one-id-text ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :body "First line.\n- a point\n") (rt-req "RQ-2")))))
+    (let ((out (nth 1 (rt-run d "trace" "RQ-1"))))
+      (should (string-match-p "  text:\n    First line\\.\n    - a point" out))
+      (should-not (string-match-p ":PROPERTIES:\\|:ID:" out)))
+    (should-not (string-match-p "text:" (nth 1 (rt-run d "trace"))))))

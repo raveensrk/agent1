@@ -64,6 +64,16 @@ heading, body and properties, without its state and the 5 dates."
                         (cl-remove-if (lambda (l) (string-match-p date-re l)) (cdr lines)))
                   "\n"))))
 
+(defun reqtrace--entry-body (raw)
+  "The body of an entry from RAW: its lines after the heading, without the
+property drawer, trimmed (RT-17)."
+  (let ((lines (cdr (split-string raw "\n"))) (in nil) out)
+    (dolist (l lines)
+      (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
+            ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
+            ((not in) (push l out))))
+    (string-trim (string-join (nreverse out) "\n"))))
+
 (defun reqtrace--split-headings (content)
   "Each heading of CONTENT with its body, up to the next heading."
   (let ((pos 0) starts)
@@ -117,6 +127,8 @@ heading, body and properties, without its state and the 5 dates."
                              :verify (let ((v (funcall get "VERIFY")))
                                        (and v (split-string-and-unquote v)))
                              :text (reqtrace--entry-text
+                                    (buffer-substring-no-properties beg end))
+                             :body (reqtrace--entry-body
                                     (buffer-substring-no-properties beg end)))
                        reqs))))))
         (let ((opted (and (assoc "REQTRACE_TESTS" kw) t)))
@@ -415,7 +427,11 @@ heading, body and properties, without its state and the 5 dates."
               (reqtrace--out "    %s" f))))))
     (dolist (s suspects)
       (when (equal (car s) id)
-        (reqtrace--out "  suspect: parent %s changed %s" (nth 1 s) (nth 2 s))))))
+        (reqtrace--out "  suspect: parent %s changed %s" (nth 1 s) (nth 2 s))))
+    (when (and one (not (string-empty-p (or (plist-get r :body) ""))))
+      (reqtrace--out "  text:")
+      (dolist (l (split-string (plist-get r :body) "\n"))
+        (reqtrace--out "    %s" l)))))
 
 (defun reqtrace--opted-here-p ()
   "Whether this repo has an opted-in file; a git grep, so no parse."
