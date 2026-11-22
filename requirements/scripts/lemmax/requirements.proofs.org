@@ -683,7 +683,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: Link properties take id: links
+* PASSED Proof: Link properties take id: links
 :PROPERTIES:
 :ID:          01a203b0-36f6-757f-b862-2c5d266d8ade
 :PROVES:      01a203a6-a702-71c0-8239-e0d41380d2dd

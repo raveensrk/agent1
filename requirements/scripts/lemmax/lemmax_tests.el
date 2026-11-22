@@ -2014,3 +2014,20 @@ run of its finding's why text."
     (let ((out (nth 1 (rt-run d "trace" "--tag" "cli"))))
       (should (string-match-p "^RQ-1 " out)) (should-not (string-match-p "^RQ-2 " out)))
     (should (string-match-p "^RQ-2 " (nth 1 (rt-run d "trace" "--tag" "ui"))))))
+
+;;;; 01a203a6-a702-71c0-8239-e0d41380d2dd: link properties take id: links
+
+(ert-deftest lemmax-id-link-props ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THEOREM" :uses "[[id:RQ-1][the first]]" :implemented "2026-01-06"))
+                                   (list (rt-proof "PR-1" "[[id:RQ-1][the first]] [[id:RQ-2]]"))))))
+    (rt-should-clean (rt-run d "lint"))
+    (should (string-match-p "uses: RQ-1" (nth 1 (rt-run d "trace" "RQ-2"))))
+    (should (string-match-p "proves: RQ-1 RQ-2" (nth 1 (rt-run d "trace" "PR-1"))))
+    (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "[[id:RQ-1]] [[id:RQ-9][gone]] RQ-2")))
+    (rt-should-find (rt-run d "lint" "--no-tests") ":PROVES: names RQ-9, which no conjecture has")
+    ;; migrate --links writes links.
+    (let ((d2 (rt-repo (rt-old-files))))
+      (let ((out (nth 1 (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d2 "migrate" "--links" "requirements.org")))))
+        (should (string-match-p "^\\+:USES: +\\[\\[id:RQ-2\\]\\[Title of RQ-2\\]\\]" out))
+        (should (string-match-p "^\\+:PROVES: +\\[\\[id:RQ-1\\]\\[Title of RQ-1\\]\\]" out))))))

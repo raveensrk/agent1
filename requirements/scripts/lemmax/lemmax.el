@@ -185,6 +185,18 @@ once a run, however many revisions hold it."
         (funcall pairs content)
       (cl-mapcan (lambda (e) (copy-sequence (funcall pairs e))) (lemmax--split-headings content)))))
 
+;; lemma: 01a203a6-a702-71c0-8239-e0d41380d2dd
+(defun lemmax--id-list (v)
+  "The ids of V, a link property's value: [[id:X]] and [[id:X][label]] links,
+then the bare words left."
+  (when v
+    (let ((ids nil) (pos 0))
+      (while (string-match "\\[\\[id:\\([^]\n]+\\)\\]\\(?:\\[[^]\n]*\\]\\)?\\]" v pos)
+        (push (string-trim (match-string 1 v)) ids)
+        (setq pos (match-end 0)))
+      (append (nreverse ids)
+              (split-string (replace-regexp-in-string "\\[\\[id:[^]\n]+\\]\\(?:\\[[^]\n]*\\]\\)?\\]" " " v))))))
+
 (defun lemmax--record (get id state title file line end raw &optional tags-own tags)
   "A lemma's plist; GET reads one of its properties, RAW is its text;
 TAGS-OWN its own tags, TAGS those with the inherited and file tags."
@@ -196,11 +208,11 @@ TAGS-OWN its own tags, TAGS those with the inherited and file tags."
         :implemented (funcall get "IMPLEMENTED")
         :reviewed (funcall get "REVIEWED")
         ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
-        :needs (append (let ((v (funcall get "NEEDS"))) (and v (split-string v)))
-                       (let ((v (funcall get "USES"))) (and v (split-string v))))
-        :proves (let ((v (funcall get "PROVES"))) (and v (split-string v)))
-        :for (let ((v (funcall get "FOR"))) (and v (split-string v)))
-        :about (let ((v (funcall get "ABOUT"))) (and v (split-string v)))
+        :needs (append (lemmax--id-list (funcall get "NEEDS")) (lemmax--id-list (funcall get "USES")))
+        :proves (lemmax--id-list (funcall get "PROVES"))
+        :for (lemmax--id-list (funcall get "FOR"))
+        :about (lemmax--id-list (funcall get "ABOUT"))
+        :follows (lemmax--id-list (funcall get "FOLLOWS"))
         :own-verify (and (funcall get "VERIFY") t)
         ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
         :aliases (let ((v (funcall get "ALIASES"))) (and v (split-string v)))
@@ -1663,6 +1675,12 @@ opts in, then the hook that was there before, kept as NAME.local."
 
 ;; lemma: 01a20369-391b-768e-8c98-180facc0ff77
 (defconst lemmax--migrate-states '(("OPEN" . "CONJECTURE") ("DROPPED" . "REFUTED")))
+;; lemma: 01a203a6-a702-71c0-8239-e0d41380d2dd
+(defvar lemmax--migrate-titles nil "With migrate --links, a hash id -> title; else nil.")
+(defun lemmax--migrate-ref (id)
+  "ID as migrate writes it: a [[id:ID][title]] link with --links, else bare."
+  (let ((title (and lemmax--migrate-titles (gethash id lemmax--migrate-titles))))
+    (if lemmax--migrate-titles (format "[[id:%s][%s]]" id (or title id)) id)))
 
 (defun lemmax--migrate-chunk (chunk today file-lemma title uses-of)
   "CHUNK, one heading's text (or a file lemma's, with FILE-LEMMA and TITLE), in
@@ -1682,7 +1700,7 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
             ((and in (string-match "\\`[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*\\'" l))
              (setq id (match-string 1 l)) (push l out)
              (let ((u (gethash id uses-of)))
-               (when u (setq needs t) (push (format ":USES:        %s" (string-join u " ")) out))))
+               (when u (setq needs t) (push (format ":USES:        %s" (mapconcat #'lemmax--migrate-ref u " ")) out))))
             ((and in file-lemma (string-match "\\`\\([ \t]*:STATE:[ \t]*\\)\\([A-Z]+\\)\\(.*\\)\\'" l))
              (setq old-state (match-string 2 l))
              (push (concat (match-string 1 l) "@STATE@" (match-string 3 l)) out))
@@ -1705,7 +1723,7 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
                          (concat "* " (if (equal old-state "DONE") "PASSED" "OPEN") " Proof: " name "\n"
                                  ":PROPERTIES:\n"
                                  (format ":ID:          %s\n" (lemmax-uuid7))
-                                 (format ":PROVES:      %s\n" id)
+                                 (format ":PROVES:      %s\n" (lemmax--migrate-ref id))
                                  (format ":TEST:        %s\n" (string-join verify " "))
                                  (format ":CREATED:     %s\n" today)
                                  (format ":LAST_EDITED: %s\n" today)
@@ -1745,6 +1763,16 @@ order; a parent no chunk holds is named on stderr."
          (proofs nil)
          (heads (lemmax--split-headings (substring content first)))
          (uses-of (lemmax--migrate-uses (if file-lemma (cons pre heads) heads)))
+         (_ (when lemmax--migrate-titles
+              (dolist (c heads)
+                (when (string-match "^[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*$" c)
+                  (let ((id (match-string 1 c)))
+                    (puthash id (string-trim
+                                 (replace-regexp-in-string
+                                  "[ \t]+:[[:alnum:]_@#%:]+:[ \t]*\\'" ""
+                                  (replace-regexp-in-string "\\`\\*+ +\\(?:[A-Z]+ +\\)?\\(\\[#.\\] +\\)?" ""
+                                                            (car (split-string c "\n")))))
+                             lemmax--migrate-titles))))))
          (pre-new (let ((r (if file-lemma (lemmax--migrate-chunk pre today t (or title file) uses-of) (cons pre nil))))
                     (when (cdr r) (push (cdr r) proofs))
                     (car r)))
@@ -1780,7 +1808,8 @@ order; a parent no chunk holds is named on stderr."
 (defun lemmax-migrate (args)
   "Print, or with --write make, FILE in the math names, with FILE.proofs.org."
   (let* ((write (member "--write" args))
-         (bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (equal a "--write")))) args))
+         (_ (when (member "--links" args) (setq lemmax--migrate-titles (make-hash-table :test #'equal))))
+         (bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (member a '("--write" "--links"))))) args))
          (files (cl-remove-if (lambda (a) (string-prefix-p "--" a)) args)))
     (when bad (lemmax--err "lemmax: unknown option %s; see lemmax migrate --help" bad) (kill-emacs 1))
     (unless (= 1 (length files))
@@ -1926,7 +1955,7 @@ run after lemmax's. Run again, it changes nothing. It is the one command
 that writes, and it writes only those two files. If core.hooksPath is set,
 git runs those hooks instead, and lemmax says so.")
     (migrate
-     "usage: lemmax migrate [--project DIR] [--write] FILE
+     "usage: lemmax migrate [--project DIR] [--write] [--links] FILE
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
 example: lemmax migrate requirements.org"
      "Without --write it prints a unified diff and writes nothing.
@@ -1937,7 +1966,8 @@ the #+TODO: line names the new states.
 Each :VERIFY: moves to a new proof with a UUID v7, :PROVES: the conjecture and
 :TEST: the addresses: PASSED when it was DONE, else OPEN, dated today. The
 proofs file takes FILE's #+LEMMAX_TESTS: and #+LEMMAX_CODE: lines. A lemma's
-text, the statement, does not change, so nothing turns suspect.")
+text, the statement, does not change, so nothing turns suspect.
+--links writes :USES: and :PROVES: as [[id:ID][title]] links, not bare ids.")
     (next-id
      "usage: lemmax next-id [--project DIR] LETTER
 Print the next free id for a section: one more than the highest in use.

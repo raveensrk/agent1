@@ -84,6 +84,13 @@ Three kinds need no proof:
 
 `list` groups each kind apart; lint checks their links.
 
+## id: links in link properties
+
+<!-- lemma: 01a203a6-a702-71c0-8239-e0d41380d2dd -->
+
+`:USES:`, `:PROVES:`, `:FOR:`, `:ABOUT:` and `:FOLLOWS:` take bare ids and
+`[[id:X][label]]` links, mixed. `lemmax migrate --links` writes links.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->
