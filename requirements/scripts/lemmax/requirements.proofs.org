@@ -1,0 +1,624 @@
+#+title: Proofs of lemmax requirements
+#+TODO: OPEN(o) | PASSED(p)
+#+LEMMAX_TESTS: requirements/scripts/lemmax/run_tests --addresses
+#+LEMMAX_CODE: requirements/scripts/lemmax/ harness/checks/lemmax_lint.py
+
+* PASSED Proof: lemmax lints and traces org requirements
+:PROPERTIES:
+:ID:          01a20389-b15c-755e-930b-a202685d095f
+:PROVES:      RT-1
+:TEST:        ert/lemmax-end-to-end
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: The command line
+:PROPERTIES:
+:ID:          01a20389-b15e-769a-9eab-a708e7f4405c
+:PROVES:      RT-2
+:TEST:        ert/lemmax-cli-short-help ert/lemmax-cli-long-help ert/lemmax-cli-bare-call ert/lemmax-cli-dashdash-help ert/lemmax-cli-finding-line ert/lemmax-cli-exit-codes ert/lemmax-cli-writes-nothing
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Which files it reads
+:PROPERTIES:
+:ID:          01a20389-b160-76c0-ab73-6b4155318795
+:PROVES:      RT-3
+:TEST:        ert/lemmax-files-opted-in ert/lemmax-files-without-keyword ert/lemmax-files-keyword-in-text ert/lemmax-files-none-opted-in
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lint: the file rules
+:PROPERTIES:
+:ID:          01a20389-b161-7de9-96ef-e774be15aaac
+:PROVES:      RT-4
+:TEST:        ert/lemmax-lint-clean-file ert/lemmax-lint-id-in-heading ert/lemmax-lint-id-missing ert/lemmax-lint-id-shape ert/lemmax-lint-id-twice ert/lemmax-lint-needs-unknown ert/lemmax-lint-needs-cycle ert/lemmax-lint-unapproved ert/lemmax-lint-dates-missing ert/lemmax-lint-implemented-state ert/lemmax-lint-date-not-a-day ert/lemmax-lint-done-verify-empty
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lint: VERIFY names tests that exist
+:PROPERTIES:
+:ID:          01a20389-b163-70e3-858d-3ea453035fbc
+:PROVES:      RT-5
+:TEST:        ert/lemmax-verify-done-missing ert/lemmax-verify-open-waits ert/lemmax-verify-plus-lines ert/lemmax-verify-quoted ert/lemmax-verify-command-fails ert/lemmax-verify-command-timeout ert/lemmax-verify-no-tests
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lint --staged: the change rules
+:PROPERTIES:
+:ID:          01a20389-b164-7fe3-93cb-370c21b31571
+:PROVES:      RT-6
+:TEST:        ert/lemmax-staged-done-text ert/lemmax-staged-reopened-passes ert/lemmax-staged-last-edited ert/lemmax-staged-new-dates ert/lemmax-staged-turned-done ert/lemmax-staged-dates-only
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: commit-msg: code commits name an id
+:PROPERTIES:
+:ID:          01a20389-b166-70f0-b63e-e1c4503164e9
+:PROVES:      RT-7
+:TEST:        ert/lemmax-commit-code-needs-id ert/lemmax-commit-docs-pass ert/lemmax-commit-unknown-id ert/lemmax-commit-id-in-comment ert/lemmax-commit-new-id-staged ert/lemmax-commit-whole-word
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace: the links of every requirement
+:PROPERTIES:
+:ID:          01a20389-b167-7d4b-930c-254e24d01dea
+:PROVES:      RT-8
+:TEST:        ert/lemmax-trace-block ert/lemmax-trace-links ert/lemmax-trace-verify-status ert/lemmax-trace-commits ert/lemmax-trace-orphans ert/lemmax-trace-one-id ert/lemmax-trace-unknown-id
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace: suspect children
+:PROPERTIES:
+:ID:          01a20389-b169-7886-9a8b-7c5bd5c2f51c
+:PROVES:      RT-9
+:TEST:        ert/lemmax-suspect-parent-changed ert/lemmax-suspect-reviewed-clears ert/lemmax-suspect-dates-only ert/lemmax-suspect-open-child ert/lemmax-suspect-walk-time
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: The harness check
+:PROPERTIES:
+:ID:          01a20389-b16a-73fa-824f-91e970fd174b
+:PROVES:      RT-10
+:TEST:        ert/lemmax-harness-check-finding ert/lemmax-harness-check-plain-org
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: agent1's global hooks call lemmax
+:PROPERTIES:
+:ID:          01a20389-b16c-7b4c-a184-c2aaca7166c7
+:PROVES:      RT-11
+:TEST:        ert/lemmax-global-commit-msg ert/lemmax-global-pre-commit ert/lemmax-global-plain-repo-fast
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lemmax's own tests
+:PROPERTIES:
+:ID:          01a20389-b16d-7bff-868d-0b8bffcc8aa7
+:PROVES:      RT-12
+:TEST:        ert/lemmax-runner-addresses ert/lemmax-runner-only ert/lemmax-runner-timeout
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: list: every requirement in a table
+:PROPERTIES:
+:ID:          01a20389-b16f-7d76-a881-d1c7382bb94d
+:PROVES:      RT-13
+:TEST:        ert/lemmax-list-table ert/lemmax-list-groups ert/lemmax-list-filters ert/lemmax-list-no-id ert/lemmax-list-all-repos ert/lemmax-list-json
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: next-id: the next free id for a section
+:PROPERTIES:
+:ID:          01a20389-b170-7de1-955b-6ea8fe5eac96
+:PROVES:      RT-14
+:TEST:        ert/lemmax-next-id ert/lemmax-next-id-gaps ert/lemmax-next-id-unknown
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: /add-requirement uses lemmax
+:PROPERTIES:
+:ID:          01a20389-b172-70b8-bb70-61409f798ba5
+:PROVES:      RT-15
+:TEST:        ert/lemmax-skill-uses-lemmax
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: --project names the repo to read
+:PROPERTIES:
+:ID:          01a20389-b173-71e9-98f4-c0105f166deb
+:PROVES:      RT-16
+:TEST:        ert/lemmax-project-list-many ert/lemmax-project-one-command ert/lemmax-project-errors
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace ID prints the requirement's text
+:PROPERTIES:
+:ID:          01a20389-b175-7eb4-a6c5-7283f64e2ca7
+:PROVES:      RT-17
+:TEST:        ert/lemmax-trace-one-id-text
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: A duplicate id is shown, never hidden
+:PROPERTIES:
+:ID:          01a20389-b176-7d62-bf49-a012f4b876d6
+:PROVES:      RT-18
+:TEST:        ert/lemmax-trace-duplicate-id ert/lemmax-list-duplicates
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace finds an id in another project
+:PROPERTIES:
+:ID:          01a20389-b178-7ed0-9a42-71dca888d4a6
+:PROVES:      RT-19
+:TEST:        ert/lemmax-trace-finds-other-project ert/lemmax-trace-unknown-anywhere
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lemmax knows UUID v7 ids
+:PROPERTIES:
+:ID:          01a20389-b179-7307-93c8-2cb7bfe44506
+:PROVES:      01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
+:TEST:        ert/lemmax-lint-id-uuid7 ert/lemmax-new-id
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: reqtrace becomes lemmax, in requirements/scripts
+:PROPERTIES:
+:ID:          01a20389-b17b-73e2-9a3c-97946cac90ca
+:PROVES:      01a1ff25-116d-73f1-a45e-dd77e482a983
+:TEST:        ert/lemmax-name-and-place ert/lemmax-reads-old-keyword-in-history
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Code markers link code and lemmas both ways
+:PROPERTIES:
+:ID:          01a20389-b17c-7fc5-adcb-e34a845e83fd
+:PROVES:      01a20014-e361-7827-b2a8-d3b2ded3e0b1
+:TEST:        ert/lemmax-marker-found ert/lemmax-marker-unknown-id ert/lemmax-marker-dropped ert/lemmax-done-needs-marker ert/lemmax-marker-tests-apart ert/lemmax-marker-full-id
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: An id at the start of a heading is not text
+:PROPERTIES:
+:ID:          01a20389-b17d-7422-8511-d92afb3f56c2
+:PROVES:      01a2002a-bf93-7475-94c3-d083c65a87d6
+:TEST:        ert/lemmax-heading-id-not-text
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Opting in, and markers in another repo
+:PROPERTIES:
+:ID:          01a20389-b17f-718c-a7fc-0885fb16ddf0
+:PROVES:      01a2002d-fb3b-71e3-ac96-5e1dbba8226c
+:TEST:        ert/lemmax-opt-in-compares-head ert/lemmax-markers-in-other-repo
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Settings live in lemmax/config.eld
+:PROPERTIES:
+:ID:          01a20389-b180-729c-885a-b5dbab6b9f5f
+:PROVES:      01a202b0-1d09-75f3-99dc-677a4b2ec0be
+:TEST:        ert/lemmax-config-folder-settings ert/lemmax-config-header-wins ert/lemmax-config-longest-folder ert/lemmax-config-staged ert/lemmax-config-never-evaluated ert/lemmax-config-findings
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Lemmas link by id: links, and lint checks them
+:PROPERTIES:
+:ID:          01a20389-b182-71c0-9633-397ee234d41e
+:PROVES:      01a202bc-49e2-7dba-94f5-0c0952fc91f0
+:TEST:        ert/lemmax-id-link-unknown ert/lemmax-id-link-dropped ert/lemmax-id-link-ok
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: A file with :ID: at its top is one lemma
+:PROPERTIES:
+:ID:          01a20389-b183-7902-909f-3c93cff833af
+:PROVES:      01a202bc-4a88-7993-a717-e8022392b801
+:TEST:        ert/lemmax-file-lemma-read ert/lemmax-file-lemma-lint ert/lemmax-file-lemma-staged
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace shows what links to a lemma
+:PROPERTIES:
+:ID:          01a20389-b185-74f8-8ac7-507f37f8e62f
+:PROVES:      01a202bc-4b52-74e6-9d78-591320edcb4f
+:TEST:        ert/lemmax-trace-backlinks
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: :ALIASES: keeps old ids working
+:PROPERTIES:
+:ID:          01a20389-b186-70f3-9049-d3f27e816f73
+:PROVES:      01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
+:TEST:        ert/lemmax-alias-resolves ert/lemmax-alias-twice
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: :REFS: names where a lemma came from
+:PROPERTIES:
+:ID:          01a20389-b188-7890-b493-2833f4b54592
+:PROVES:      01a202bc-4cc4-753e-8d51-12d8327dfd9c
+:TEST:        ert/lemmax-refs-shown
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: list --unlinked shows ids named without a link
+:PROPERTIES:
+:ID:          01a20389-b189-7b0e-a09e-ea9601253955
+:PROVES:      01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5
+:TEST:        ert/lemmax-unlinked-mentions
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace --dot prints the lemma graph
+:PROPERTIES:
+:ID:          01a20389-b18b-7678-ba6c-35daa3ef0c1e
+:PROVES:      01a202bc-4e0c-745b-9f61-980ada0f93e5
+:TEST:        ert/lemmax-trace-dot
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: A lemma moved to another file keeps its history
+:PROPERTIES:
+:ID:          01a20389-b18c-7ee2-b0c7-7d5abcfe8c75
+:PROVES:      01a202f3-8216-7a1e-a34c-80c99d7bbf02
+:TEST:        ert/lemmax-move-lemma-file ert/lemmax-move-lemma-between-files
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Paths with colons are read whole
+:PROPERTIES:
+:ID:          01a20389-b18d-7652-8a6e-b76a47dd2268
+:PROVES:      01a202f3-82c0-7905-9aa6-cafdcd9235e8
+:TEST:        ert/lemmax-colon-path-marker ert/lemmax-colon-path-link
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: list and trace run no test command unless asked
+:PROPERTIES:
+:ID:          01a20389-b18f-713c-b032-198167b40797
+:PROVES:      01a202f3-834a-7fcc-9a94-a50f2d1ab85c
+:TEST:        ert/lemmax-list-runs-no-tests ert/lemmax-run-tests-flag
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: One parser for every reader
+:PROPERTIES:
+:ID:          01a20389-b190-70c2-af32-bba56dad8834
+:PROVES:      01a202f3-83dc-76e8-b198-68db19d1e4cd
+:TEST:        ert/lemmax-one-parser-same-ids
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: A file lemma's drawer is the file's first element
+:PROPERTIES:
+:ID:          01a20389-b192-7db6-b1d2-925e3b67317f
+:PROVES:      01a202f3-8475-7f4f-b0e2-5cd8c782e520
+:TEST:        ert/lemmax-file-drawer-first
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Today is one clock
+:PROPERTIES:
+:ID:          01a20389-b193-7222-9232-405ee4bb17b7
+:PROVES:      01a202f3-850b-7e3f-93f9-655397189d53
+:TEST:        ert/lemmax-today-utc
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Missing or old Emacs is said plainly
+:PROPERTIES:
+:ID:          01a20389-b195-7433-b18a-069e5f341164
+:PROVES:      01a202f3-85a4-76cd-bf13-05f6e723c5b2
+:TEST:        ert/lemmax-launcher-no-emacs ert/lemmax-launcher-old-emacs
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Tests run on Emacs 29 and the newest Emacs
+:PROPERTIES:
+:ID:          01a20389-b196-7d94-a7d6-4c32f42bcc56
+:PROVES:      01a202f3-863b-7c04-9728-0c9dd9346002
+:TEST:        ert/lemmax-ci-matrix
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: CI lints and tests on every push
+:PROPERTIES:
+:ID:          01a20389-b198-7c3b-9c0e-15299b72ea70
+:PROVES:      01a202f3-86d9-7db2-a0dc-accec28dfe29
+:TEST:        ert/lemmax-ci-workflow
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: --json says its version
+:PROPERTIES:
+:ID:          01a20389-b199-7f05-b05f-dd9ff360e80b
+:PROVES:      01a202f3-878b-75cb-98e0-9d7929ef88c1
+:TEST:        ert/lemmax-json-version ert/lemmax-json-shape
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Golden, generated and mutation tests
+:PROPERTIES:
+:ID:          01a20389-b19a-7a81-a272-b11198467701
+:PROVES:      01a202f3-8822-7602-98a4-67acc268e3b0
+:TEST:        ert/lemmax-golden-trace ert/lemmax-golden-list ert/lemmax-generated-roundtrip ert/lemmax-mutation-lint-rules
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: The history walk stays fast
+:PROPERTIES:
+:ID:          01a20389-b19c-7b76-9dcb-d607c65808a1
+:PROVES:      01a202f3-88bb-704d-9ea9-74714f841514
+:TEST:        ert/lemmax-history-cache ert/lemmax-suspect-walk-time
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Odd input reads as plain input
+:PROPERTIES:
+:ID:          01a20389-b19d-73e5-9625-13ac10d490d5
+:PROVES:      01a202f3-8964-7333-8165-dba3d86556b5
+:TEST:        ert/lemmax-odd-input ert/lemmax-odd-input-id-space
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lint reads only files that can hold lemmas, once
+:PROPERTIES:
+:ID:          01a20389-b19f-749b-b3f7-cc32e6237c3f
+:PROVES:      01a20336-c4d6-73d3-a429-0a755d277123
+:TEST:        ert/lemmax-reads-candidates-only ert/lemmax-parse-once ert/lemmax-big-notes-repo-time
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: FILE arguments are paths from where lemmax runs
+:PROPERTIES:
+:ID:          01a20389-b1a0-7629-81d4-7c90353c6154
+:PROVES:      01a20336-c583-720a-b661-c9b5a5dec1a4
+:TEST:        ert/lemmax-file-arg-from-cwd ert/lemmax-file-arg-unknown
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: agent1's own rules are config, with neutral defaults
+:PROPERTIES:
+:ID:          01a20389-b1a1-74fa-ab38-2b27075ef692
+:PROVES:      01a20336-c611-73c8-bb70-4a8e70e675d1
+:TEST:        ert/lemmax-config-markers-required-from ert/lemmax-config-repos ert/lemmax-messages-neutral
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lemmax install-hooks puts lemmax in a repo's hooks
+:PROPERTIES:
+:ID:          01a20389-b1a3-771d-8a69-368c6d24cf5a
+:PROVES:      01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
+:TEST:        ert/lemmax-install-hooks ert/lemmax-install-hooks-chains ert/lemmax-install-hooks-again
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Tests clean up after themselves
+:PROPERTIES:
+:ID:          01a20389-b1a4-7bc3-9527-a1e1f99a55cf
+:PROVES:      01a20336-c75e-78ac-bf5e-7a72262f73e6
+:TEST:        ert/lemmax-tests-clean-up
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lemmax says its version; MIT licence; a changelog
+:PROPERTIES:
+:ID:          01a20389-b1a6-7355-a926-2dbef4793099
+:PROVES:      01a20336-c80d-733a-a251-ad26a0ebf7d3
+:TEST:        ert/lemmax-version ert/lemmax-licence-and-changelog
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: CI passes on every Emacs of its matrix
+:PROPERTIES:
+:ID:          01a20389-b1a7-72f9-9d12-f6c5b4ae9b93
+:PROVES:      01a20336-c8a5-702e-86c3-655c93d44c9e
+:TEST:        ert/lemmax-ci-matrix
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Markers come only from sibling repos
+:PROPERTIES:
+:ID:          01a20389-b1a9-7ab2-bfbd-3b69c9e731d0
+:PROVES:      01a20336-c953-745d-aef4-90ee2141e08d
+:TEST:        ert/lemmax-markers-in-siblings-only
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Fork pull requests are safe in the shipped workflow
+:PROPERTIES:
+:ID:          01a20389-b1aa-7b8b-8e84-29ac3d9e6c81
+:PROVES:      01a20336-c9e9-7664-ba5c-e5e12d249d48
+:TEST:        ert/lemmax-ci-safe-trigger
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Output is stable, and lint speaks JSON
+:PROPERTIES:
+:ID:          01a20389-b1ab-7d8f-9605-282315593088
+:PROVES:      01a20336-ca8d-75bf-bedc-33da69c29468
+:TEST:        ert/lemmax-lint-json ert/lemmax-exit-codes
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Where lemmax runs is said
+:PROPERTIES:
+:ID:          01a20389-b1ad-7999-9a67-801f57f129ac
+:PROVES:      01a20336-cb25-779d-9e80-e04a22bd235d
+:TEST:        ert/lemmax-readme-platforms
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Config checks every path it names
+:PROPERTIES:
+:ID:          01a20389-b1ae-7d13-abc5-b989a0936856
+:PROVES:      01a20336-cbc7-70a7-9473-18325683fba6
+:TEST:        ert/lemmax-config-empty-tests ert/lemmax-config-unknown-paths
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: The name is lemmax everywhere
+:PROPERTIES:
+:ID:          01a20389-b1b0-744e-a185-49ce3b28109e
+:PROVES:      01a20336-cc5d-70ae-878b-b241ecc9ef61
+:TEST:        ert/lemmax-no-old-name
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Conjectures, proofs, lemmas and theorems
+:PROPERTIES:
+:ID:          01a20389-b1b1-7297-86b6-fbfdb3720f6b
+:PROVES:      01a20369-38d2-7202-8b53-6e296aaac489
+:TEST:        ert/lemmax-math-states ert/lemmax-math-proofs-file
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: Lint proves a lemma from its proofs
+:PROPERTIES:
+:ID:          01a20389-b1b3-705b-8b5a-df7dd950eb8d
+:PROVES:      01a20369-38f7-7229-8232-1b8cbb98e6bc
+:TEST:        ert/lemmax-math-lint
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: lemmax migrate moves a file to the math names
+:PROPERTIES:
+:ID:          01a20389-b1b4-78d1-b741-0a10c1ca9675
+:PROVES:      01a20369-391b-768e-8c98-180facc0ff77
+:TEST:        ert/lemmax-migrate-dry-run ert/lemmax-migrate-write
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* PASSED Proof: trace and list show proofs
+:PROPERTIES:
+:ID:          01a20389-b1b6-7ff8-9b3d-2390a8d09809
+:PROVES:      01a20369-393d-77bf-a35a-a1c03780a751
+:TEST:        ert/lemmax-math-trace-list
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
