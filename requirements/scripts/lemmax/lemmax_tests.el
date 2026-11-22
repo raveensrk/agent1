@@ -332,7 +332,9 @@
     (should (string-match-p "commit: [0-9a-f]+ 2026-01-07 build it (RQ-1)" (nth 1 (rt-run d "trace"))))))
 (ert-deftest reqtrace-trace-orphans ()
   (let ((out (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1" :verify "unit/a"))) "trace" "--run-tests"))))
-    (should (string-match-p "Orphan tests: \n  unit/b" out))))
+    (should (string-match-p "Orphan tests: \n  unit/b\nSuspect" out))
+    ;; Emacs's default sentinel once wrote "Process ... finished" into the addresses.
+    (should-not (string-match-p "Process lemmax-tests" out))))
 (ert-deftest reqtrace-trace-one-id ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-2")))))
     (rt-set d "src/x.clj" "(ns x) ;; 2\n")

@@ -418,6 +418,9 @@ for HEAD; read by one git process, once a run."
               (errbuf (generate-new-buffer " *lemmax-tests-err*"))
               (proc (make-process :name "lemmax-tests" :buffer buf :stderr errbuf
                                   :command (list "sh" "-c" cmd)
+                                  ;; No sentinel: the default one writes "Process ... finished"
+                                  ;; into the output, read as a test address.
+                                  :sentinel #'ignore
                                   :connection-type 'pipe :noquery t))
               (start (float-time)))
          (while (and (process-live-p proc) (< (- (float-time) start) limit))
