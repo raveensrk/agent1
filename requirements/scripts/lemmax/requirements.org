@@ -929,13 +929,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** OPEN Config checks every path it names                                    :lint:
+** DONE Config checks every path it names                                    :lint:
 :PROPERTIES:
 :ID:          01a20336-cbc7-70a7-9473-18325683fba6
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-config-empty-tests ert/lemmax-config-unknown-paths
+:IMPLEMENTED: 2026-11-22
 :END:
 - lint reports an empty :tests, and a :code or :test-paths entry that matches no tracked file
 - Asked by the owner on 2026-11-22

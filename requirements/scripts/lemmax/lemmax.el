@@ -285,9 +285,14 @@ It is read with `read' and `read-eval' off, so nothing in it ever runs."
                                  (setq ok nil)
                                  (push (format "%s: unknown key %S" (car e) k) problems))
                                 ((eq k :tests)
-                                 (unless (stringp v)
-                                   (setq ok nil)
-                                   (push (format "%s: :tests is not a string" (car e)) problems)))
+                                 (cond ((not (stringp v))
+                                        (setq ok nil)
+                                        (push (format "%s: :tests is not a string" (car e)) problems))
+                                       ;; lemma: 01a20336-cbc7-70a7-9473-18325683fba6
+                                       ((string-empty-p (string-trim v))
+                                        (setq ok nil)
+                                        (push (format "%s: :tests is empty; name the command that lists test addresses" (car e))
+                                              problems))))
                                 ((not (and (listp v) (cl-every #'stringp v)))
                                  (setq ok nil)
                                  (push (format "%s: %S is not a list of strings" (car e) k) problems))))
@@ -345,7 +350,18 @@ a FOLDER that holds no tracked file."
                       (cl-some (lambda (p) (string-prefix-p (car f) p)) tracked))
             (lemmax--finding lemmax-config-file 1 nil
                              (format "the folder %s holds no tracked file" (car f))
-                             "fix the folder, or remove its entry")))))))
+                             "fix the folder, or remove its entry"))
+          (dolist (c (plist-get (cdr f) :code))
+            (unless (cl-some (lambda (p) (or (equal p c) (string-prefix-p (file-name-as-directory (directory-file-name c)) p)))
+                             tracked)
+              (lemmax--finding lemmax-config-file 1 nil
+                               (format "%s: :code names %s, which holds no tracked file" (car f) c)
+                               "fix the path, or remove it")))
+          (dolist (tp (plist-get (cdr f) :test-paths))
+            (unless (cl-some (lambda (p) (string-search tp p)) tracked)
+              (lemmax--finding lemmax-config-file 1 nil
+                               (format "%s: :test-paths names %s, which no tracked file matches" (car f) tp)
+                               "fix the pattern, or remove it"))))))))
 
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
 (defconst lemmax--candidate-re

@@ -1553,3 +1553,17 @@ run of its finding's why text."
   (let ((readme (with-temp-buffer (insert-file-contents (expand-file-name "README.md" rt-dir)) (buffer-string))))
     (dolist (w '("macOS and Linux" "WSL or Git Bash" "Emacs 29 or newer" "git and Bash" "Perl"))
       (should (string-search w readme)))))
+
+;;;; 01a20336-cbc7-70a7-9473-18325683fba6: config checks every path it names
+
+(ert-deftest lemmax-config-empty-tests ()
+  (let ((d (rt-repo (append (rt-files (rt-req "RQ-1")) (list (rt-config '("" :tests "  ")))))))
+    (rt-should-find (rt-run d "lint" "--no-tests") ":tests is empty; name the command")))
+
+(ert-deftest lemmax-config-unknown-paths ()
+  (let ((d (rt-repo (append (rt-files (rt-req "RQ-1"))
+                            (list (rt-config '("" :tests "./tests.sh" :code ("src/" "gone/" "tests.sh") :test-paths ("_spec." "src/"))))))))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r ":code names gone/, which holds no tracked file")
+      (should (string-match-p ":test-paths names _spec\\., which no tracked file matches" (nth 2 r)))
+      (should-not (string-match-p "names src/\\|names tests\\.sh" (nth 2 r))))))
