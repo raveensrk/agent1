@@ -323,7 +323,7 @@ Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --a
 - Asked by the owner on 2026-11-21.
 Evidence: the body is the entry's lines after the heading, read from the same region =:text= already reads.
 
-** OPEN A duplicate id is shown, never hidden                       :trace:
+** DONE A duplicate id is shown, never hidden                       :trace:
 :PROPERTIES:
 :ID:          RT-18
 :NEEDS:       RT-8 RT-13
@@ -331,6 +331,7 @@ Evidence: the body is the entry's lines after the heading, read from the same re
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :VERIFY:      ert/reqtrace-trace-duplicate-id ert/reqtrace-list-duplicates
+:IMPLEMENTED: 2026-11-22
 :END:
 - =reqtrace trace ID= prints a block for every requirement with that id, in file order, then =reqtrace: ID is used N times= on stderr, and exits 1.
 - =reqtrace list --duplicates= lists only the requirements whose id another one also has, in any requirements file, opted in or not.

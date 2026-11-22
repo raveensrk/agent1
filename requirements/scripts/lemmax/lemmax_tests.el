@@ -1494,3 +1494,26 @@ run of its finding's why text."
     (should (string-prefix-p "MIT License\n" lic))
     (should (string-match "^## \\([0-9.]+\\) " log))
     (should (equal lemmax-version (match-string 1 log)))))
+
+;;;; RT-18: a duplicate id is shown, never hidden
+
+(ert-deftest reqtrace-trace-duplicate-id ()
+  :tags '(timeout-30)
+  (let* ((d (rt-repo (append (rt-files (rt-req "RQ-1" :title "First") (rt-req "RQ-2"))
+                             (list (rt-config '("reqs/" :tests "./tests.sh"))
+                                   (cons "reqs/again.org" (rt-file-lemma "RQ-1" :title "Second"))))))
+         (r (rt-run d "trace" "RQ-1")))
+    (should (= 1 (nth 0 r)))
+    ;; File order: reqs/again.org sorts before requirements.org.
+    (should (string-match-p "\\`RQ-1 OPEN Second\n\\(?:.*\n\\)*RQ-1 OPEN First" (nth 1 r)))
+    (should-not (string-match-p "#\\+title" (nth 1 r)))
+    (should (string-match-p "lemmax: RQ-1 is used 2 times" (nth 2 r)))
+    (should (= 0 (nth 0 (rt-run d "trace" "RQ-2"))))))
+
+(ert-deftest reqtrace-list-duplicates ()
+  :tags '(timeout-30)
+  (let* ((d (rt-repo (append (rt-files (rt-req "RQ-1") (rt-req "RQ-2"))
+                             (list (cons "requirements/other.org" (rt-req "RQ-1"))))))
+         (out (rt-list d "--duplicates")))
+    (should (= 2 (cl-count-if (lambda (l) (string-match-p "^  RQ-1 " l)) (split-string out "\n"))))
+    (should-not (string-match-p "RQ-2" out))))

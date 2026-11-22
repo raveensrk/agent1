@@ -115,6 +115,8 @@ property drawer, trimmed (RT-17)."
     (dolist (l lines)
       (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
+            ;; A file lemma's #+title: is its title, not its body.
+            ((string-match-p "\\`#\\+[Tt][Ii][Tt][Ll][Ee]:" l))
             ((not in) (push l out))))
     (string-trim (string-join (nreverse out) "\n"))))
 
@@ -1044,11 +1046,15 @@ One git process reads every revision of a file; a blob seen before is skipped."
                                                      :key (lambda (i) (plist-get i :file)) :test #'equal)
                                             :tests))))))
       (if want
-          (let ((r (cl-find want reqs :key (lambda (x) (plist-get x :id)) :test #'equal)))
-            (unless r
+          ;; lemma: RT-18
+          (let ((all (cl-remove-if-not (lambda (x) (equal want (plist-get x :id))) reqs)))
+            (unless all
               (lemmax--err "lemmax: unknown id %s; lemmax list shows the ids" want)
               (kill-emacs 1))
-            (lemmax--block r reqs (funcall addr-of r) commits suspects t))
+            (dolist (r all) (lemmax--block r reqs (funcall addr-of r) commits suspects t))
+            (when (cdr all)
+              (lemmax--err "lemmax: %s is used %d times" want (length all))
+              (kill-emacs 1)))
         (dolist (r reqs)
           (lemmax--block r reqs (funcall addr-of r) commits suspects nil)
           (lemmax--out ""))
@@ -1099,6 +1105,11 @@ One git process reads every revision of a file; a blob seen before is skipped."
                                                                     (t "missing")))))))))
 
 (defun lemmax--filter (rows opts)
+  (when (plist-get opts :duplicates)
+    (setq rows (cl-remove-if-not
+                (lambda (r) (and (plist-get r :id)
+                                 (< 1 (cl-count (plist-get r :id) rows :key (lambda (x) (plist-get x :id)) :test #'equal))))
+                rows)))
   (cl-remove-if-not
    (lambda (r)
      (and (or (null (plist-get opts :state))
@@ -1172,6 +1183,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
           ("--unmarked" (setq opts (plist-put opts :unmarked t)))
           ("--ready" (setq opts (plist-put opts :ready t)))
           ("--unlinked" (setq opts (plist-put opts :unlinked t)))
+          ("--duplicates" (setq opts (plist-put opts :duplicates t)))
           ("--all" (setq opts (plist-put opts :all t)))
           ("--json" (setq opts (plist-put opts :json t)))
           ("--no-tests" (setq opts (plist-put opts :no-tests t)))
@@ -1360,7 +1372,7 @@ tests; without it nothing of the repo's runs, and verify says unchecked.
 --dot: the lemma graph in Graphviz's dot language, nodes filled by state,
 :NEEDS: edges solid and id: link edges dashed: lemmax trace --dot | dot -Tsvg")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--unlinked] [--all] [--json] [--run-tests]
+     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--duplicates] [--unlinked] [--all] [--json] [--run-tests]
 Print every requirement in a table, grouped by state and approval.
 example: lemmax list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
@@ -1371,6 +1383,7 @@ Groups: waiting for approval, approved and open, done, dropped.
 --unchecked   DONE ones whose :VERIFY: is empty or names a test that is missing
 --unmarked    DONE ones with no code marker: no comment line starting lemma: ID outside tests
 --ready       approved and still OPEN
+--duplicates  only lemmas whose id another lemma also has, in any file
 --unlinked    instead of the table, each FILE:LINE: ID where an .org file's text
               names a lemma id with no [[id:]] link; never a lint finding
 --project DIR the git repo that holds DIR; give it again for more, one table each
