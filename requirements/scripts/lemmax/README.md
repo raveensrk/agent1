@@ -2,6 +2,9 @@
 
 Lint, trace and list a repo's org requirements.
 lemmax was reqtrace until 2026-11-21; `#+REQTRACE_*` keywords still read.
+
+<!-- lemma: 01a20336-cc5d-70ae-878b-b241ecc9ef61 -->
+
 Requirements: [requirements.org](requirements.org).
 
 <!-- lemma: 01a20336-cb25-779d-9e80-e04a22bd235d -->

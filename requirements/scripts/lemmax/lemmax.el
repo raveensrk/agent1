@@ -380,6 +380,7 @@ a FOLDER that holds no tracked file."
 (defvar lemmax--files-cache (make-hash-table :test #'equal)
   "(REPO . REV), REV nil for the work tree -> its parsed infos, once a run.")
 
+;; lemma: RT-3
 (defun lemmax--candidates (rev)
   "The .org files at REV that may hold lemmas: requirements files by name or
 folder, files under a config folder, and files git grep finds a state, a
@@ -589,6 +590,7 @@ for HEAD; read by one git process, once a run."
                                    ":NEEDS: makes a cycle back to this id"
                                    "remove one :NEEDS: link of the cycle")))))))))
 
+;; lemma: RT-5
 (defun lemmax--lint-verify (infos only)
   "RT-5: a DONE requirement's :VERIFY: names tests the command prints."
   (dolist (info infos)
@@ -605,6 +607,7 @@ for HEAD; read by one git process, once a run."
                                      (format ":VERIFY: names %s, which the test command does not list" a)
                                      "write the test, or fix the address"))))))))))
 
+;; lemma: RT-6
 (defun lemmax--lint-staged (staged head)
   "RT-6: the change rules, STAGED infos against HEAD infos."
   (let ((before (make-hash-table :test #'equal)) (today (lemmax--today)))
@@ -841,6 +844,7 @@ With CACHED, read the staged copies."
   (string-match-p (concat "\\(?:\\`\\|[^A-Za-z0-9_-]\\)" (regexp-quote id) "\\(?:\\'\\|[^A-Za-z0-9_-]\\)")
                   text))
 
+;; lemma: RT-7
 (defun lemmax-commit-msg (args)
   (unless (= (length args) 1)
     (lemmax--err "lemmax: commit-msg takes one MSGFILE; see lemmax commit-msg --help")
@@ -917,6 +921,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
                         (puthash (car pair) (cdr pair) prev))))))
     changed))
 
+;; lemma: RT-9
 (defun lemmax--suspects (reqs changed)
   "List of (CHILD PARENT DAY) for DONE children whose parent changed after them."
   (let (out)
@@ -953,6 +958,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
            when (and (equal (car k) id) (not (and src (equal (plist-get src :id) id))))
            collect (list (and src (plist-get src :id)) (nth 1 k) (nth 2 k))))
 
+;; lemma: RT-8
 (defun lemmax--block (r reqs addresses commits suspects one)
   (let* ((id (plist-get r :id))
          (children (cl-loop for c in reqs when (member id (plist-get c :needs)) collect (plist-get c :id))))
@@ -1001,6 +1007,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
   (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" "^#\\+LEMMAX_TESTS:" "--" "*.org")))
       (zerop (car (lemmax--git "cat-file" "-e" (concat ":" lemmax-config-file))))))
 
+;; lemma: RT-19
 (defun lemmax--projects-with (id)
   "Git roots under ~/repos, other than this one, whose opted-in files hold ID (RT-19)."
   (let ((here (and (lemmax--root) (file-truename default-directory))))
@@ -1273,6 +1280,7 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
                     (setq pos (match-end 1))))))))))
     (nreverse res)))
 
+;; lemma: RT-13
 (defun lemmax-list (args)
   (let* ((opts (lemmax--list-opts args))
          (_ (when (plist-get opts :unlinked)
@@ -1340,6 +1348,7 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
 
 ;;;; next-id (RT-14)
 
+;; lemma: RT-14
 (defun lemmax-next-id (args)
   (let ((letter (car args)))
     (unless (and letter (= (length args) 1) (string-match-p "\\`[A-Z]+\\'" letter))
@@ -1522,6 +1531,7 @@ example: lemmax next-id M"
 (defvar lemmax--projects nil "Git roots named by --project, in order.")
 (defvar lemmax--cwd nil "The folder lemmax was run in, before it moves to the repo root.")
 
+;; lemma: RT-16
 (defun lemmax--take-projects (args)
   "ARGS without --project DIR and -p DIR; each DIR's git root goes to `lemmax--projects'."
   (let (out)

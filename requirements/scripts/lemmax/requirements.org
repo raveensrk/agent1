@@ -6,13 +6,14 @@
 
 Process: [[file:../../requirements.org][Requirements requirements]].
 
-* OPEN [#A] lemmax lints and traces org requirements           :lemmax:
+* DONE [#A] lemmax lints and traces org requirements           :lemmax:
 :PROPERTIES:
 :ID:          RT-1
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/lemmax-end-to-end
+:IMPLEMENTED: 2026-11-22
 :END:
 One command in agent1 for every repo whose requirements file opts in.
 - =lemmax lint= refuses what [[file:../../requirements.org][requirements.org]] forbids; =lemmax trace= shows what each requirement links to.
@@ -21,7 +22,7 @@ One command in agent1 for every repo whose requirements file opts in.
 - The end-to-end test builds an invented repo with requirements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
 Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an invented file's TODO keywords, priority, tags, =:ID:=, =:NEEDS:= and =:VERIFY:= with org-element ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]).
 
-** OPEN The command line                                               :cli:
+** DONE The command line                                               :cli:
 :PROPERTIES:
 :ID:          RT-2
 :NEEDS:       RT-1
@@ -32,6 +33,7 @@ Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an in
 :VERIFY+:     ert/lemmax-cli-bare-call ert/lemmax-cli-dashdash-help
 :VERIFY+:     ert/lemmax-cli-finding-line ert/lemmax-cli-exit-codes
 :VERIFY+:     ert/lemmax-cli-writes-nothing
+:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax lint [--staged] [--no-tests] [FILE...]=, =lemmax commit-msg MSGFILE=, =lemmax trace [ID]=.
 - =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../../cli.org][cli.org]]); a bare call prints the main help.
@@ -41,7 +43,7 @@ Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an in
 - =requirements/scripts/lemmax/lemmax= is a Bash launcher: =exec emacs -Q --script lemmax.el -- "$@"=. Every =.el= file starts with a lexical-binding cookie.
 Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-- --help --version -h= through to the script; agent1's =interpreter_resolves.py= read =#!/usr/bin/env -S emacs= as the interpreter =S=, so the launcher is Bash; Emacs 31 warned on a file with no lexical-binding cookie ([[https://www.gnu.org/software/emacs/manual/html_node/emacs/Initial-Options.html][Initial Options]]).
 
-** OPEN Which files it reads
+** DONE Which files it reads
 :PROPERTIES:
 :ID:          RT-3
 :NEEDS:       RT-1
@@ -50,13 +52,14 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 :APPROVED:    2026-11-15
 :VERIFY:      ert/lemmax-files-opted-in ert/lemmax-files-without-keyword
 :VERIFY+:     ert/lemmax-files-keyword-in-text ert/lemmax-files-none-opted-in
+:IMPLEMENTED: 2026-11-22
 :END:
 - lemmax reads the repo's git-tracked =.org= files whose header has a =#+LEMMAX_TESTS:= line.
 - The keyword written inside text, not on its own line, does not opt a file in.
 - With no opted-in file, every command says so on stderr and exits 0.
 Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]); =git ls-files '*.org'= lists the tracked files.
 
-** OPEN lint: the file rules                                          :lint:
+** DONE lint: the file rules                                          :lint:
 :PROPERTIES:
 :ID:          RT-4
 :NEEDS:       RT-1
@@ -69,6 +72,7 @@ Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https:/
 :VERIFY+:     ert/lemmax-lint-needs-cycle ert/lemmax-lint-unapproved
 :VERIFY+:     ert/lemmax-lint-dates-missing ert/lemmax-lint-implemented-state
 :VERIFY+:     ert/lemmax-lint-date-not-a-day ert/lemmax-lint-done-verify-empty
+:IMPLEMENTED: 2026-11-22
 :END:
 In an opted-in file, =lemmax lint= refuses:
 - a heading with a state whose text starts with an id;
@@ -82,7 +86,7 @@ In an opted-in file, =lemmax lint= refuses:
 Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process-test= decide these today with regexes; the spike read the same fields with org-element.
 - Changed on 2026-11-22: an OPEN requirement may wait for approval; only a DONE one must have it. Asked by the owner on 2026-11-22.
 
-** OPEN lint: VERIFY names tests that exist                           :lint:
+** DONE lint: VERIFY names tests that exist                           :lint:
 :PROPERTIES:
 :ID:          RT-5
 :NEEDS:       RT-4
@@ -93,6 +97,7 @@ Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process
 :VERIFY+:     ert/lemmax-verify-plus-lines ert/lemmax-verify-quoted
 :VERIFY+:     ert/lemmax-verify-command-fails ert/lemmax-verify-command-timeout
 :VERIFY+:     ert/lemmax-verify-no-tests
+:IMPLEMENTED: 2026-11-22
 :END:
 - lint runs the =#+LEMMAX_TESTS:= command from the repo root and reads one address per line.
 - A DONE requirement whose =:VERIFY:= names an address the command does not print is refused; an OPEN one may name tests not written yet.
@@ -101,7 +106,7 @@ Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process
 - =--no-tests= skips the command and this rule.
 Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, while org-element's =:VERIFY= held the first line only; =split-string-and-unquote= split =unit/store_test "process/ids are used once"= into 2 ([[https://orgmode.org/manual/Property-Syntax.html][Property Syntax]], [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Shell-Arguments.html][Shell Arguments]]).
 
-** OPEN lint --staged: the change rules                               :lint:
+** DONE lint --staged: the change rules                               :lint:
 :PROPERTIES:
 :ID:          RT-6
 :NEEDS:       RT-4
@@ -111,6 +116,7 @@ Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, whi
 :VERIFY:      ert/lemmax-staged-done-text ert/lemmax-staged-reopened-passes
 :VERIFY+:     ert/lemmax-staged-last-edited ert/lemmax-staged-new-dates
 :VERIFY+:     ert/lemmax-staged-turned-done ert/lemmax-staged-dates-only
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax lint --staged= applies RT-4's rules to each opted-in file's staged copy, reads it against HEAD's, and refuses:
 - a requirement DONE before and after whose text changed: make it OPEN until the change is built;
@@ -121,7 +127,7 @@ Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, whi
 - ~LEMMAX_TODAY=YYYY-MM-DD~ sets today, for tests.
 Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python today, reading =git show HEAD:= against =git show :=.
 
-** OPEN commit-msg: code commits name an id                          :hooks:
+** DONE commit-msg: code commits name an id                          :hooks:
 :PROPERTIES:
 :ID:          RT-7
 :NEEDS:       RT-1
@@ -131,6 +137,7 @@ Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python
 :VERIFY:      ert/lemmax-commit-code-needs-id ert/lemmax-commit-docs-pass
 :VERIFY+:     ert/lemmax-commit-unknown-id ert/lemmax-commit-id-in-comment
 :VERIFY+:     ert/lemmax-commit-new-id-staged ert/lemmax-commit-whole-word
+:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax commit-msg MSGFILE= refuses a commit that stages a path under =#+LEMMAX_CODE:= when its message names no id of the staged opted-in files.
 - Comment lines (=#=) do not count.
@@ -139,7 +146,7 @@ Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python
 - The fix it prints: name an id in the message, as =(RF-3)=.
 Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, with =core/ apps/ script/= as its code.
 
-** OPEN trace: the links of every requirement                        :trace:
+** DONE trace: the links of every requirement                        :trace:
 :PROPERTIES:
 :ID:          RT-8
 :NEEDS:       RT-1
@@ -150,6 +157,7 @@ Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, w
 :VERIFY+:     ert/lemmax-trace-verify-status ert/lemmax-trace-commits
 :VERIFY+:     ert/lemmax-trace-orphans ert/lemmax-trace-one-id
 :VERIFY+:     ert/lemmax-trace-unknown-id
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax trace= prints one block per requirement, in file order:
 - id, state, title, file and line;
@@ -160,7 +168,7 @@ Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, w
 - =lemmax trace RT-3= prints that one block, and the files each commit touched; an unknown id is a failure.
 Evidence: =git log --format= and =--name-only= give hash, date, subject and files; task-router-2's commits already name ids, as =(RF-2, RF-5)=.
 
-** OPEN trace: suspect children                                      :trace:
+** DONE trace: suspect children                                      :trace:
 :PROPERTIES:
 :ID:          RT-9
 :NEEDS:       RT-8
@@ -170,6 +178,7 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 :VERIFY:      ert/lemmax-suspect-parent-changed ert/lemmax-suspect-reviewed-clears
 :VERIFY+:     ert/lemmax-suspect-dates-only ert/lemmax-suspect-open-child
 :VERIFY+:     ert/lemmax-suspect-walk-time
+:IMPLEMENTED: 2026-11-22
 :END:
 - A DONE child is suspect when a parent's text changed in git after the child's =:IMPLEMENTED:= or =:REVIEWED:= date, whichever is later.
 - A change to dates alone changes no text, so it makes nothing suspect.
@@ -177,7 +186,7 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 - The walk parses headlines only: =trace= over 155 revisions of a 150-requirement invented file ends in under 10 s.
 Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a child implemented on 2026-01-05; a headline-level parse of all 155 revisions of arcadia_docs' requirements.org took 4.70 s, against 0.72 s for each full parse.
 
-** OPEN The harness check                                            :hooks:
+** DONE The harness check                                            :hooks:
 :PROPERTIES:
 :ID:          RT-10
 :NEEDS:       RT-4
@@ -185,6 +194,7 @@ Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a c
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
 :VERIFY:      ert/lemmax-harness-check-finding ert/lemmax-harness-check-plain-org
+:IMPLEMENTED: 2026-11-22
 :END:
 - =harness/checks/lemmax_lint.py= applies to =*.org=. For each candidate file with =#+LEMMAX_TESTS:= it runs =lemmax lint --no-tests FILE= and prints each finding as =path:line: message=.
 - An agent sees the finding while it edits a requirements file.
@@ -208,7 +218,7 @@ Evidence: [[file:../../../harness/README.md][harness/README.md]] gives the check
 - A repo with its own =core.hooksPath=, as all 5 app repos have, calls lemmax from its own hooks: one line each.
 Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githooks=, and its =commit-msg= already chains to a repo's own hook; =git config --local core.hooksPath= is =.githooks= in all 5 app repos.
 
-** OPEN lemmax's own tests                                         :tests:
+** DONE lemmax's own tests                                         :tests:
 :PROPERTIES:
 :ID:          RT-12
 :NEEDS:       RT-1
@@ -217,6 +227,7 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 :APPROVED:    2026-11-15
 :VERIFY:      ert/lemmax-runner-addresses ert/lemmax-runner-only
 :VERIFY+:     ert/lemmax-runner-timeout
+:IMPLEMENTED: 2026-11-22
 :END:
 - ERT tests live in =requirements/scripts/lemmax/lemmax_tests.el=, on invented data, in throwaway git repos under =~/tmp=; never a real repo.
 - =requirements/scripts/lemmax/run_tests= runs them all; =--addresses= prints each as =ert/<name>=; =--only ADDRESS= runs one.
@@ -225,7 +236,7 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - =harness/self_check= runs it.
 Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../../testing.org][testing.org]] sets the timeout and invented-data rules.
 
-** OPEN list: every requirement in a table                           :list:
+** DONE list: every requirement in a table                           :list:
 :PROPERTIES:
 :ID:          RT-13
 :NEEDS:       RT-1
@@ -234,6 +245,7 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-list-table ert/lemmax-list-groups ert/lemmax-list-filters
 :VERIFY+:     ert/lemmax-list-no-id ert/lemmax-list-all-repos ert/lemmax-list-json
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax list [--state open|done|dropped] [--section M] [--unchecked] [--ready] [--all] [--json]=
 - One line per requirement: id, state, approved or not, VERIFY found or missing, title, file:line
@@ -248,7 +260,7 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 - It reads, and never writes a file
 Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-1's spike); =git ls-files '*.org'= lists a repo's files.
 
-** OPEN next-id: the next free id for a section                      :list:
+** DONE next-id: the next free id for a section                      :list:
 :PROPERTIES:
 :ID:          RT-14
 :NEEDS:       RT-13
@@ -256,6 +268,7 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-next-id ert/lemmax-next-id-gaps ert/lemmax-next-id-unknown
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax next-id M= prints one id: one more than the highest =M-= in use anywhere in the repo, as =M-15=
 - A gap is never filled: ids are never reused
@@ -263,7 +276,7 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 - Why: on 2026-11-21 a new requirement got M-11, which was already taken
 Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0.
 
-** OPEN /add-requirement uses lemmax                                :skill:
+** DONE /add-requirement uses lemmax                                :skill:
 :PROPERTIES:
 :ID:          RT-15
 :NEEDS:       RT-13 RT-14
@@ -271,12 +284,13 @@ Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-skill-uses-lemmax
+:IMPLEMENTED: 2026-11-22
 :END:
 - Before drafting, the skill runs =lemmax list --json= to find duplicates and a parent
 - It takes the new id from =lemmax next-id=
 - Without lemmax installed, it reads the files as it does today
 
-** OPEN --project names the repo to read                              :cli:
+** DONE --project names the repo to read                              :cli:
 :PROPERTIES:
 :ID:          RT-16
 :NEEDS:       RT-2
@@ -285,6 +299,7 @@ Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-project-list-many ert/lemmax-project-one-command
 :VERIFY+:     ert/lemmax-project-errors
+:IMPLEMENTED: 2026-11-22
 :END:
 Every command takes =--project DIR= (=-p DIR=): it runs on the git repo that holds =DIR=, from any folder.
 - =list= takes it more than once: one table each, then the totals; =--all= adds every repo under =~/repos=.
@@ -293,7 +308,7 @@ Every command takes =--project DIR= (=-p DIR=): it runs on the git repo that hol
 - Asked by the owner on 2026-11-21.
 Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --all= already loops over repos.
 
-** OPEN trace ID prints the requirement's text                      :trace:
+** DONE trace ID prints the requirement's text                      :trace:
 :PROPERTIES:
 :ID:          RT-17
 :NEEDS:       RT-8
@@ -301,13 +316,14 @@ Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --a
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-trace-one-id-text
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax trace ID= ends its block with the requirement's text: its body, under =text:=, without the property drawer.
 - =trace= with no ID prints no text, so the blocks stay short.
 - Asked by the owner on 2026-11-21.
 Evidence: the body is the entry's lines after the heading, read from the same region =:text= already reads.
 
-** OPEN A duplicate id is shown, never hidden                       :trace:
+** DONE A duplicate id is shown, never hidden                       :trace:
 :PROPERTIES:
 :ID:          RT-18
 :NEEDS:       RT-8 RT-13
@@ -315,6 +331,7 @@ Evidence: the body is the entry's lines after the heading, read from the same re
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-trace-duplicate-id ert/lemmax-list-duplicates
+:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax trace ID= prints a block for every requirement with that id, in file order, then =lemmax: ID is used N times= on stderr, and exits 1.
 - =lemmax list --duplicates= lists only the requirements whose id another one also has, in any requirements file, opted in or not.
@@ -322,7 +339,7 @@ Evidence: the body is the entry's lines after the heading, read from the same re
 - Asked by the owner on 2026-11-21.
 Evidence: =trace= finds its block with =cl-find=, which stops at the first match; =list= already reads every requirements file.
 
-** OPEN trace finds an id in another project                        :trace:
+** DONE trace finds an id in another project                        :trace:
 :PROPERTIES:
 :ID:          RT-19
 :NEEDS:       RT-8
@@ -330,6 +347,7 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-trace-finds-other-project ert/lemmax-trace-unknown-anywhere
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax trace ID= for an id this project does not hold looks in every git repo under =~/repos=.
 - Each repo that holds it prints =project: <path>=, then its block; it runs from any folder, inside a git repo or not.
@@ -338,7 +356,7 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 - Asked by the owner on 2026-11-21.
 Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS:= skips repos that do not opt in, without a parse.
 
-** OPEN lemmax knows UUID v7 ids                                    :ids:
+** DONE lemmax knows UUID v7 ids                                    :ids:
 :PROPERTIES:
 :ID:          01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :NEEDS:       RT-4 RT-14 RT-15
@@ -346,6 +364,7 @@ Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-lint-id-uuid7 ert/lemmax-new-id
+:IMPLEMENTED: 2026-11-22
 :END:
 New requirement ids are UUID v7, as [[file:../../requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id
@@ -355,7 +374,7 @@ New requirement ids are UUID v7, as [[file:../../requirements.org::*A new requir
 - Asked by the owner on 2026-11-21
 Evidence: Python 3.15.2's =uuid.uuid7()= printed =01a1fe0c-9c5c-7057-8edc-bc68ccfa0490=; Emacs has =random= and =current-time= for the same layout.
 
-** OPEN reqtrace becomes lemmax, in requirements/scripts               :cli:
+** DONE reqtrace becomes lemmax, in requirements/scripts               :cli:
 :PROPERTIES:
 :ID:          01a1ff25-116d-73f1-a45e-dd77e482a983
 :NEEDS:       RT-1
@@ -363,6 +382,7 @@ Evidence: Python 3.15.2's =uuid.uuid7()= printed =01a1fe0c-9c5c-7057-8edc-bc68cc
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
 :VERIFY:      ert/lemmax-name-and-place ert/lemmax-reads-old-keyword-in-history
+:IMPLEMENTED: 2026-11-22
 :END:
 The tool takes the workflow's name, Lemmax, and moves beside the rules it checks.
 - The program is =lemmax=; its commands stay as they are: lint, commit-msg, trace, list, next-id
@@ -724,13 +744,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN The history walk stays fast                                       :trace:
+** DONE The history walk stays fast                                       :trace:
 :PROPERTIES:
 :ID:          01a202f3-88bb-704d-9ea9-74714f841514
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-history-cache ert/lemmax-suspect-walk-time
+:IMPLEMENTED: 2026-11-22
 :END:
 - The last-change walk reads each file revision once per run, skips revisions whose blob it has seen, and keeps suspects under 2 s for 500 commits
 - Asked by the owner on 2026-11-22
@@ -923,13 +944,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** OPEN The name is lemmax everywhere                                        :tests:
+** DONE The name is lemmax everywhere                                        :tests:
 :PROPERTIES:
 :ID:          01a20336-cc5d-70ae-878b-b241ecc9ef61
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-no-old-name
+:IMPLEMENTED: 2026-11-22
 :END:
 - Tests named lemmax-* become lemmax-*, :VERIFY: lines follow; RT-1 to RT-19 titles and text say lemmax
 - The renamed DONE lemmas go OPEN in one commit and DONE again in the next, as lint asks
