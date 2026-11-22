@@ -477,3 +477,103 @@ A repo's lemmax settings are in one file, so lemmas may be headings in one file 
 - The pre-commit and commit-msg hooks and =harness/checks/lemmax_lint.py= treat a repo with the config as opted in
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lemmas across files; the opt-in is per file in =lemmax--worktree-files= and =lemmax--rev-files=; Emacs 29.3 runs the tests here.
+
+** OPEN Lemmas link by [[id:...]], and lint checks the links      :lint:
+:PROPERTIES:
+:ID:          01a202bc-49e2-7dba-94f5-0c0952fc91f0
+:NEEDS:       RT-4
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-id-link-unknown ert/lemmax-id-link-dropped ert/lemmax-id-link-ok
+:END:
+- A link =[[id:ID]]= or =[[id:ID][text]]= in an opted-in file names a lemma by its =:ID:=
+- lint reports a link to an id no lemma has, or to a DROPPED one
+- The text a link shows is not part of a lemma's text, so renaming a linked lemma does not change its neighbours
+- Asked by the owner on 2026-11-22
+Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 uses one yet; idea from org-id.
+
+** OPEN A file with :ID: at its top is one lemma                  :lint:
+:PROPERTIES:
+:ID:          01a202bc-4a88-7993-a717-e8022392b801
+:NEEDS:       01a202b0-1d09-75f3-99dc-677a4b2ec0be
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-file-lemma-read ert/lemmax-file-lemma-lint ert/lemmax-file-lemma-staged
+:END:
+- A property drawer before the first heading, with =:ID:=, makes the whole file one lemma, as an org-roam file node
+- Its title is =#+title:=, its state is =:STATE: OPEN|DONE|DROPPED=, its body is the text before the first heading
+- Headings in it are part of its body, never lemmas of their own
+- Every rule for a heading lemma holds for it: dates, =:VERIFY:=, markers, staged changes
+- Asked by the owner on 2026-11-22
+Evidence: org-element reads a file-level property drawer as the first child of the document; idea from org-roam file nodes.
+
+** OPEN trace shows what links to a lemma                        :trace:
+:PROPERTIES:
+:ID:          01a202bc-4b52-74e6-9d78-591320edcb4f
+:NEEDS:       01a202bc-49e2-7dba-94f5-0c0952fc91f0 RT-8
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-trace-backlinks
+:END:
+- =trace ID= prints =linked from:= with each lemma, and each other tracked .org file and line, whose =[[id:ID]]= link names it
+- =list --json= gives the same as =linked_from=
+- Asked by the owner on 2026-11-22
+Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam backlinks.
+
+** OPEN :ALIASES: keeps old ids working                            :ids:
+:PROPERTIES:
+:ID:          01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
+:NEEDS:       RT-4
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-alias-resolves ert/lemmax-alias-twice
+:END:
+- =:ALIASES: ID...= on a lemma: markers, =:NEEDS:=, =id:= links, commit messages and =trace ID= that name an alias count as the lemma
+- lint reports an alias two lemmas share, or one that is also a lemma's =:ID:=
+- Asked by the owner on 2026-11-22
+Evidence: lemmax resolves ids through one table per run; idea from org-roam's =ROAM_ALIASES=.
+
+** OPEN :REFS: names where a lemma came from                       :ids:
+:PROPERTIES:
+:ID:          01a202bc-4cc4-753e-8d51-12d8327dfd9c
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-refs-shown
+:END:
+- =:REFS: URL...= names issues, PRs or specs; trace prints =refs:= and =list --json= gives =refs=
+- lint reports a ref that is not an http(s) URL
+- Asked by the owner on 2026-11-22
+Evidence: idea from org-roam's =ROAM_REFS=.
+
+** OPEN list --unlinked shows ids named without a link            :list:
+:PROPERTIES:
+:ID:          01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5
+:NEEDS:       01a202bc-49e2-7dba-94f5-0c0952fc91f0
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-unlinked-mentions
+:END:
+- =lemmax list --unlinked= prints each place in a tracked .org file whose plain text names a lemma id outside =[[id:]]=, =:NEEDS:=, =:ID:= and =:ALIASES:=, as =FILE:LINE: ID=
+- Only on request; lint never reports it
+- Asked by the owner on 2026-11-22
+Evidence: idea from org-roam's unlinked references.
+
+** OPEN trace --dot prints the lemma graph                       :trace:
+:PROPERTIES:
+:ID:          01a202bc-4e0c-745b-9f61-980ada0f93e5
+:NEEDS:       01a202bc-49e2-7dba-94f5-0c0952fc91f0 RT-8
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-trace-dot
+:END:
+- =trace --dot= prints a Graphviz digraph: a node per lemma, labelled with its title, filled by state; solid edges for =:NEEDS:=, dashed for =id:= links
+- It writes nothing; pipe it into =dot -Tsvg=
+- Asked by the owner on 2026-11-22
+Evidence: Graphviz's dot language is plain text; idea from org-roam-ui.
