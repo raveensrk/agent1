@@ -84,6 +84,16 @@ Three kinds need no proof:
 
 `list` groups each kind apart; lint checks their links.
 
+## Tags
+
+<!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->
+
+Every heading takes org tags. A file declares them in `#+TAGS:`, and lint
+refuses any other. Group tags nest them: `#+TAGS: [ cli : list trace ]`.
+A heading's tags include its ancestors' and `#+FILETAGS:`. Tags are not a
+heading's text. `lemmax list --tag cli` and `lemmax trace --tag cli` show
+headings tagged `cli` or a tag under it; `--tag` again means AND.
+
 ## Code markers
 
 A comment line whose first words are `lemma:` and ids links code to its lemmas.

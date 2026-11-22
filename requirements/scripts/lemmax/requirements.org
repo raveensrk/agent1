@@ -1,6 +1,7 @@
 #+title: lemmax requirements
 #+STARTUP: overview
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
+#+TAGS: lemmax [ cli : list trace ] lint ids hooks tests skill
 #+LEMMAX_TESTS: requirements/scripts/lemmax/run_tests --addresses
 #+LEMMAX_CODE: requirements/scripts/lemmax/ harness/checks/lemmax_lint.py
 
@@ -992,12 +993,13 @@ Evidence: states are read through =lemmax-states=.
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax-commit-msg= takes its ids from =lemmax--all-reqs=, which holds every record of the opted-in files.
 
-** CONJECTURE Tags are declared, nested and inherited                               :lint:
+** LEMMA Tags are declared, nested and inherited                               :lint:
 :PROPERTIES:
 :ID:          01a2039c-9e67-74bb-9ac4-63eac14f1e7c
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 Every heading kind takes org tags: conjecture, lemma, theorem, proof, task, note and axiom.
 - A file declares its tags in =#+TAGS:=; lint refuses a heading or =#+FILETAGS:= tag the file does not declare
@@ -1007,12 +1009,13 @@ Every heading kind takes org tags: conjecture, lemma, theorem, proof, task, note
 - Asked by the owner on 2026-11-22
 Evidence: Org's =org-tag-alist-to-groups= and =org-get-tags= read groups and inherited tags in batch Emacs.
 
-** CONJECTURE list and trace filter by tag                                          :cli:
+** LEMMA list and trace filter by tag                                          :cli:
 :PROPERTIES:
 :ID:          01a2039c-9e67-74bb-9ac4-63eb06d24a3f
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax list --tag T= and =lemmax trace --tag T= show only headings whose tags hold T or a tag under T in a group
 - --tag given more than once means all of them: AND

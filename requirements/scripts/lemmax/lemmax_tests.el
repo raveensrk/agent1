@@ -1948,3 +1948,69 @@ run of its finding's why text."
     (rt-should-clean (rt-run d "commit-msg" "msg"))
     (rt-set d "msg" "refactor: tidy\n")
     (rt-should-find (rt-run d "commit-msg" "msg") "names no requirement id")))
+
+;;;; 01a2039c-9e67-74bb-9ac4-63eac14f1e7c: tags declared, nested, inherited
+
+(defun rt-tag-files (tags-line body)
+  (rt-files-with-head (concat "#+title: T\n#+TODO: OPEN | DONE DROPPED\n" tags-line
+                              "#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n\n")
+                      body))
+
+(defun rt-files-with-head (head body)
+  (list (cons "requirements.org" (concat head body))
+        (cons "tests.sh" (rt-tests-sh "unit/a" "unit/b"))
+        (cons "src/x.clj" "(ns x)\n")))
+
+(defun rt-tagged (id tags &optional level)
+  (replace-regexp-in-string "\\`\\(\\*+ OPEN Title of [^\n]*\\)" (concat "\\1 " tags)
+                            (rt-req id :level (or level 1))))
+
+(ert-deftest lemmax-tags-declared ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-tag-files "#+TAGS: ui other\n" (rt-tagged "RQ-1" ":ui:")))))
+    (rt-should-clean (rt-run d "lint"))
+    (rt-set d "requirements.org" (concat "#+TAGS: ui\n#+LEMMAX_TESTS: ./tests.sh\n" (rt-tagged "RQ-1" ":nope:")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "the tag nope is not declared")
+    (rt-set d "requirements.org" (concat "#+TAGS: ui\n#+FILETAGS: :zz:\n#+LEMMAX_TESTS: ./tests.sh\n" (rt-req "RQ-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "the file tag zz is not declared")
+    ;; A tag edit is not a text change.
+    (rt-set d "requirements.org" (concat "#+TAGS: ui other\n#+LEMMAX_TESTS: ./tests.sh\n" (rt-done "RQ-1")))
+    (rt-commit d "done")
+    (rt-set d "requirements.org" (concat "#+TAGS: ui other\n#+LEMMAX_TESTS: ./tests.sh\n"
+                                         (replace-regexp-in-string "\\`\\(\\* DONE Title of RQ-1\\)" "\\1 :ui:" (rt-done "RQ-1"))))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged" "--no-tests")))))
+
+(ert-deftest lemmax-tags-groups ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-tag-files "#+TAGS: [ ui : button menu ] [ button : big ]\n"
+                                  (concat (rt-tagged "RQ-1" ":big:") (rt-tagged "RQ-2" ":menu:"))))))
+    (rt-should-clean (rt-run d "lint"))
+    ;; A group matches its children at depth 2.
+    (let ((out (nth 1 (rt-run d "list" "--tag" "ui"))))
+      (should (string-match-p "RQ-1" out)) (should (string-match-p "RQ-2" out)))
+    (let ((out (nth 1 (rt-run d "list" "--tag" "button"))))
+      (should (string-match-p "RQ-1" out)) (should-not (string-match-p "RQ-2" out)))
+    (rt-set d "requirements.org" (concat "#+TAGS: [ a : b ] [ b : a ]\n#+LEMMAX_TESTS: ./tests.sh\n" (rt-req "RQ-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "the tag group [ab] holds itself, a cycle")))
+
+(ert-deftest lemmax-tags-inherit ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-tag-files "#+TAGS: ui other\n#+FILETAGS: :other:\n"
+                                  (concat (rt-tagged "RQ-1" ":ui:") (rt-req "RQ-2" :level 2) (rt-req "RQ-3"))))))
+    (rt-should-clean (rt-run d "lint"))
+    (let ((out (nth 1 (rt-run d "list" "--tag" "ui"))))
+      (should (string-match-p "RQ-1" out)) (should (string-match-p "RQ-2" out)) (should-not (string-match-p "RQ-3" out)))
+    (should (string-match-p "RQ-3" (nth 1 (rt-run d "list" "--tag" "other"))))))
+
+;;;; 01a2039c-9e67-74bb-9ac4-63eb06d24a3f: --tag filters
+
+(ert-deftest lemmax-tags-filter ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-tag-files "#+TAGS: ui cli\n"
+                                  (concat (rt-tagged "RQ-1" ":ui:cli:") (rt-tagged "RQ-2" ":ui:"))))))
+    (let ((out (nth 1 (rt-run d "list" "--tag" "ui" "--tag" "cli"))))
+      (should (string-match-p "RQ-1" out)) (should-not (string-match-p "RQ-2 " out)))
+    (let ((out (nth 1 (rt-run d "trace" "--tag" "cli"))))
+      (should (string-match-p "^RQ-1 " out)) (should-not (string-match-p "^RQ-2 " out)))
+    (should (string-match-p "^RQ-2 " (nth 1 (rt-run d "trace" "--tag" "ui"))))))

@@ -28,6 +28,7 @@ A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lemmax li
 - =:ID:= holds the id: a UUID v7 for a requirement made from 2026-11-21 on, as [[*A new requirement id is a UUID v7, unique everywhere][A new requirement id is a UUID v7]] says; an older one keeps its shape =[A-Z]+-[0-9]+=, as =RF-3=. Either is unique across every opted-in file of the repo.
 - =:USES:= names the ids of the lemmas a theorem uses, separated by spaces; nesting is layout only. Old files call it =:NEEDS:=.
 - =:TEST:= holds test addresses, quoted like shell words: =unit/store_test "process/ids are used once"=; a long list goes on =:TEST+:= lines. Old files hold them on the conjecture as =:VERIFY:= and =:VERIFY+:=.
+- Every heading may carry org tags. A file declares them in =#+TAGS:=, nests them with group tags (=[ ui : button menu ]=), and lint refuses an undeclared tag or a cycle. A heading's tags include its ancestors' and =#+FILETAGS:=; tags are not its text.
 - Dates are =:CREATED:=, =:LAST_EDITED:=, =:APPROVED:=, =:IMPLEMENTED:= and =:REVIEWED:=, as =2026-11-15=.
 - A requirement's text is its statement: heading, body and properties, all but the dates and =:VERIFY:=. A proof that changes leaves the statement as it was.
 ** The requirements file names the repo's tests and code

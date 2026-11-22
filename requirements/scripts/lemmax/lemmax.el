@@ -113,6 +113,9 @@ space after each key, and the trimmed body without #+title:."
                 (concat "\\`\\*+ +\\(?:" (regexp-opt lemmax-states) "\\_>\\)? *") "" (car lines)))
          ;; lemma: 01a2002a-bf93-7475-94c3-d083c65a87d6
          (head (replace-regexp-in-string "\\`\\(\\[#.\\] +\\)?[A-Z]+-[0-9]+ " "\\1" head))
+         ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
+         ;; Tags are not the text.
+         (head (replace-regexp-in-string "[ \t]+:[[:alnum:]_@#%:]+:[ \t]*\\'" "" head))
          ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
          ;; A proof is not the statement, nor are links: :VERIFY:, :NEEDS: and :USES: are not the text.
          (skip-re (concat "\\`[ \t]*:" (regexp-opt (append '("STATE" "VERIFY" "VERIFY+" "NEEDS" "USES") lemmax-dates)) ":"))
@@ -182,9 +185,11 @@ once a run, however many revisions hold it."
         (funcall pairs content)
       (cl-mapcan (lambda (e) (copy-sequence (funcall pairs e))) (lemmax--split-headings content)))))
 
-(defun lemmax--record (get id state title file line end raw)
-  "A lemma's plist; GET reads one of its properties, RAW is its text."
+(defun lemmax--record (get id state title file line end raw &optional tags-own tags)
+  "A lemma's plist; GET reads one of its properties, RAW is its text;
+TAGS-OWN its own tags, TAGS those with the inherited and file tags."
   (list :id id :state state :title title :file file :line line :end end
+        :tags-own tags-own :tags tags
         :created (funcall get "CREATED")
         :last-edited (funcall get "LAST_EDITED")
         :approved (funcall get "APPROVED")
@@ -239,7 +244,8 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                   (title (string-trim (or (cadr (assoc "TITLE" (org-collect-keywords '("TITLE")))) ""))))
               (push (lemmax--record get one (let ((st (funcall get "STATE"))) (and (member st lemmax-states) st))
                                     title file 1 (count-lines (point-min) (point-max))
-                                    (concat "* " title "\n" content))
+                                    (concat "* " title "\n" content)
+                                    nil (mapcar #'substring-no-properties org-file-tags))
                     reqs))
         (org-map-entries
          (lambda ()
@@ -254,13 +260,23 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                  (push (lemmax--record get (and id (string-trim id)) (and (member state lemmax-states) state)
                                        (org-get-heading t t t t) file (line-number-at-pos beg)
                                        (save-excursion (goto-char end) (if (bolp) (max (line-number-at-pos beg) (1- (line-number-at-pos end))) (line-number-at-pos end)))
-                                       (buffer-substring-no-properties beg end))
+                                       (buffer-substring-no-properties beg end)
+                                       ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
+                                       (mapcar #'substring-no-properties (org-get-tags nil t))
+                                       (let ((org-use-tag-inheritance t))
+                                         (delete-dups (mapcar #'substring-no-properties (org-get-tags)))))
                        reqs)))))))
         (let* ((tests-kw (or (assoc "LEMMAX_TESTS" kw) (assoc "REQTRACE_TESTS" kw)))
                (code-kw (or (assoc "LEMMAX_CODE" kw) (assoc "REQTRACE_CODE" kw)))
                (opted (and tests-kw t)))
           (list :file file
                 :misplaced misplaced
+                ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
+                :declared (cl-loop for e in org-current-tag-alist
+                                   when (stringp (car-safe e)) collect (substring-no-properties (car e)))
+                :file-tags (mapcar #'substring-no-properties org-file-tags)
+                :tag-groups (mapcar (lambda (g) (mapcar #'substring-no-properties g))
+                                    (org-tag-alist-to-groups org-current-tag-alist))
                 :keywords kw
                 :opted opted
                 :tests (cadr tests-kw)
@@ -801,6 +817,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
       (if (null infos)
           (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
+        (lemmax--lint-tags infos only)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-links infos only staged)
         (lemmax--lint-markers-in infos only)
@@ -821,6 +838,52 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                         (cons 'findings (vconcat (reverse lemmax--json-findings)))))
                      "\n")))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
+
+;;;; Tags (01a2039c-9e67-74bb-9ac4-63eac14f1e7c)
+
+;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
+(defun lemmax--lint-tags (infos only)
+  "A tag a file does not declare in #+TAGS:, and a cycle in its tag groups."
+  (dolist (i infos)
+    (let ((f (plist-get i :file)) (declared (plist-get i :declared)))
+      (when (or (null only) (member f only))
+        (dolist (tg (plist-get i :file-tags))
+          (unless (member tg declared)
+            (lemmax--finding f 1 nil (format "the file tag %s is not declared" tg) "add it to #+TAGS:")))
+        (dolist (r (plist-get i :reqs))
+          (dolist (tg (plist-get r :tags-own))
+            (unless (member tg declared)
+              (lemmax--finding f (plist-get r :line) (plist-get r :id)
+                               (format "the tag %s is not declared" tg) "add it to #+TAGS:, or fix the tag"))))
+        (let ((groups (plist-get i :tag-groups)) (reported nil))
+          (dolist (g groups)
+            (let ((seen nil) (stack (copy-sequence (cdr g))) found)
+              (while (and stack (not found))
+                (let ((x (pop stack)))
+                  (if (equal x (car g)) (setq found t)
+                    (unless (member x seen)
+                      (push x seen)
+                      (dolist (h groups) (when (equal (car h) x) (setq stack (append (cdr h) stack))))))))
+              (when (and found (not (member (car g) reported)))
+                (push (car g) reported)
+                (lemmax--finding f 1 nil (format "the tag group %s holds itself, a cycle" (car g))
+                                 "remove one link of the cycle from #+TAGS:")))))))))
+
+;; lemma: 01a2039c-9e67-74bb-9ac4-63eb06d24a3f
+(defun lemmax--tag-under (tag infos)
+  "TAG and every tag under it, at any depth, in the groups of INFOS."
+  (let ((groups (cl-mapcan (lambda (i) (copy-sequence (plist-get i :tag-groups))) infos))
+        (out nil) (stack (list tag)))
+    (while stack
+      (let ((x (pop stack)))
+        (unless (member x out)
+          (push x out)
+          (dolist (g groups) (when (equal (car g) x) (setq stack (append (cdr g) stack)))))))
+    out))
+
+(defun lemmax--tags-match-p (r wanted infos)
+  "Whether R's tags hold, for each tag of WANTED, it or a tag under it."
+  (cl-every (lambda (w) (cl-intersection (plist-get r :tags) (lemmax--tag-under w infos) :test #'equal)) wanted))
 
 ;;;; Code markers
 
@@ -1209,7 +1272,19 @@ One git process reads every revision of a file; a blob seen before is skipped."
               (lemmax--out "  %s -> %s [style=dashed];" (lemmax--dot-quote (car e)) (lemmax--dot-quote (cdr e))))))))
     (lemmax--out "}")))
 
+(defvar lemmax--trace-tags nil "The --tag values of trace.")
+
 (defun lemmax-trace (args)
+  ;; lemma: 01a2039c-9e67-74bb-9ac4-63eb06d24a3f
+  (let (rest)
+    (while args
+      (let ((a (pop args)))
+        (if (equal a "--tag")
+            (let ((v (pop args)))
+              (unless v (lemmax--err "lemmax: --tag takes a tag") (kill-emacs 1))
+              (setq lemmax--trace-tags (append lemmax--trace-tags (list v))))
+          (push a rest))))
+    (setq args (nreverse rest)))
   (when (member "--run-tests" args)
     (setq lemmax--run-tests t args (remove "--run-tests" args)))
   (let ((bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (equal a "--dot")))) args)))
@@ -1267,8 +1342,9 @@ One git process reads every revision of a file; a blob seen before is skipped."
               (lemmax--err "lemmax: %s is used %d times" want (length all))
               (kill-emacs 1)))
         (dolist (r reqs)
-          (lemmax--block r reqs (funcall addr-of r) commits suspects nil)
-          (lemmax--out ""))
+          (when (or (null lemmax--trace-tags) (lemmax--tags-match-p r lemmax--trace-tags infos))
+            (lemmax--block r reqs (funcall addr-of r) commits suspects nil)
+            (lemmax--out "")))
         (let* ((named (cl-mapcan (lambda (r) (copy-sequence (plist-get r :verify))) reqs))
                (orphans (cl-loop for info in (and lemmax--run-tests infos)
                                  for res = (lemmax--test-addresses (plist-get info :tests))
@@ -1339,6 +1415,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
           (or (not (plist-get opts :unmarked))
               (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r))
                    (not (cl-some (lambda (m) (not (nth 3 m))) (plist-get r :markers)))))
+          (or (null (plist-get opts :tags))
+              (lemmax--tags-match-p r (plist-get opts :tags) (lemmax--listed (lemmax--worktree-files))))
           (or (not (plist-get opts :ready))
               (and (lemmax--open-p (plist-get r :state)) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r))
                    (plist-get r :approved)))))
@@ -1404,6 +1482,10 @@ One git process reads every revision of a file; a blob seen before is skipped."
           ("--ready" (setq opts (plist-put opts :ready t)))
           ("--unlinked" (setq opts (plist-put opts :unlinked t)))
           ("--duplicates" (setq opts (plist-put opts :duplicates t)))
+          ;; lemma: 01a2039c-9e67-74bb-9ac4-63eb06d24a3f
+          ("--tag" (let ((v (pop args)))
+                     (unless v (lemmax--err "lemmax: --tag takes a tag") (kill-emacs 1))
+                     (setq opts (plist-put opts :tags (append (plist-get opts :tags) (list v))))))
           ("--all" (setq opts (plist-put opts :all t)))
           ("--json" (setq opts (plist-put opts :json t)))
           ("--no-tests" (setq opts (plist-put opts :no-tests t)))
@@ -1788,7 +1870,7 @@ example: lemmax commit-msg .git/COMMIT_EDITMSG"
 requirement and name it. Comment lines (#) do not count. An id matches as a
 whole word: RQ-1 is not RQ-10.")
     (trace
-     "usage: lemmax trace [--project DIR] [--run-tests] [ID | --dot]
+     "usage: lemmax trace [--project DIR] [--run-tests] [--tag T]... [ID | --dot]
 Print each requirement's parents, children, tests and commits.
 example: lemmax trace RT-3"
      "With no ID: one block per requirement, then the orphan tests, which no
@@ -1803,7 +1885,7 @@ tests; without it nothing of the repo's runs, and verify says unchecked.
 --dot: the lemma graph in Graphviz's dot language, nodes filled by state,
 :NEEDS: edges solid and id: link edges dashed: lemmax trace --dot | dot -Tsvg")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--duplicates] [--unlinked] [--all] [--json] [--run-tests]
+     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
 Print every requirement in a table, grouped by state and approval.
 example: lemmax list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
@@ -1815,6 +1897,8 @@ Groups: waiting for approval, approved and open, done, dropped.
 --unmarked    DONE ones with no code marker: no comment line starting lemma: ID outside tests
 --ready       approved and still OPEN
 --duplicates  only lemmas whose id another lemma also has, in any file
+--tag T       only headings tagged T or a tag under T in a #+TAGS: group;
+              again for more, all of them
 --unlinked    instead of the table, each FILE:LINE: ID where an .org file's text
               names a lemma id with no [[id:]] link; never a lint finding
 --project DIR the git repo that holds DIR; give it again for more, one table each
