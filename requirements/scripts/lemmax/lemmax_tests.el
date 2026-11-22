@@ -1120,3 +1120,17 @@
     (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run d "list"))))
       (should (= 2 (nth 0 r)))
       (should (string-match-p "lemmax: needs Emacs 29 or newer; found 28.2" (nth 2 r))))))
+
+;;;; 01a202f3-86d9-7db2-a0dc-accec28dfe29 and 01a202f3-863b-7c04-9728-0c9dd9346002: CI
+
+(defun rt-workflow ()
+  (with-temp-buffer
+    (insert-file-contents (expand-file-name ".github/workflows/lemmax.yml" rt-agent1))
+    (buffer-string)))
+
+(ert-deftest lemmax-ci-workflow ()
+  (let ((w (rt-workflow)))
+    (should (string-match-p "^on:\n  push:\n  pull_request:" w))
+    (should (string-match-p "run: requirements/scripts/lemmax/run_tests$" w))
+    (should (string-match-p "run: requirements/scripts/lemmax/lemmax lint$" w))
+    (should-not (string-match-p "lemmax lint --no-tests" w))))

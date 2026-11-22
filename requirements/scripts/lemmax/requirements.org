@@ -697,13 +697,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN CI lints and tests on every push                                  :tests:
+** DONE CI lints and tests on every push                                  :tests:
 :PROPERTIES:
 :ID:          01a202f3-86d9-7db2-a0dc-accec28dfe29
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-ci-workflow
+:IMPLEMENTED: 2026-11-22
 :END:
 - .github/workflows/lemmax.yml: on push and pull request, run_tests, then lemmax lint (with tests)
 - So --no-verify or a machine without the hooks cannot land a broken lemma unseen

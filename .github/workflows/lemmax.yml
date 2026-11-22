@@ -1,0 +1,23 @@
+# lemmax: its own tests, then lint of every opted-in requirements file, on
+# every push and pull request; hooks can be skipped, this cannot.
+# lemma: 01a202f3-86d9-7db2-a0dc-accec28dfe29
+name: lemmax
+on:
+  push:
+  pull_request:
+jobs:
+  lemmax:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs_version: ["29.4"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@v6.0
+        with:
+          version: ${{ matrix.emacs_version }}
+      - name: tests
+        run: requirements/scripts/lemmax/run_tests
+      - name: lint
+        run: requirements/scripts/lemmax/lemmax lint
