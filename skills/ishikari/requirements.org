@@ -1,18 +1,16 @@
 #+title: Ishikari requirements
 #+STARTUP: overview
-#+TODO: OPEN(o) | DONE(d) DROPPED(x)
+#+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 
 Process: [[file:../../requirements/requirements.org][Requirements requirements]].
 
-* DONE [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
+* LEMMA [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
 :PROPERTIES:
 :ID:          ISH-1
 :CREATED:     2026-11-18
 :LAST_EDITED: 2026-11-18
 :APPROVED:    2026-11-18
 :IMPLEMENTED: 2026-11-18
-:VERIFY:      "tests/test_ishikari.py test_metro_map"
-:VERIFY+:     "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice"
 :END:
 The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows the workflow exactly as ishikari-plan.js, ishikari-build.js and ishikari-finish.js run it, so a newcomer can read the whole run from it.
 - Plan-stage logging: ishikari-plan.js runs no planning ant; it logs its own check (plans checked or plans refused) in its result's log, like build and finish; `ishikari.py save` appends it. No ant writes the logbook, and a failed append never blocks or fails the run.
@@ -26,12 +24,10 @@ The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows t
 - test_metro_map runs metro.clj (with bb) to a temporary path and checks four things in the SVG: every agent label kind from the four scripts has a station; the named stations and notes are there; no old wrong note is left; no two text boxes overlap, measured from each text element's x, y, font size and length.
 Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 and ishikari-build.js:160-180; plan agent labels at ishikari-plan.js:155,191,227,262; the test stand-in already swallows 'logbook-clerk:now' (tests/test_workflows.mjs:19); metro.py is a 140-line stdlib Python script writing plain <text class="h" x y font-size> elements that xml.etree can parse; ishikari.py log append accepts run, who, event, task, detail, score (design/index.md Rules); investigation report /Users/raveen_kumar_personal/.ishikari/agent1-997906a8/plans/20261118-225807-5c22/investigation_report.md (D1-D4, F1-F10).
 
-* DONE [#B] A trivial task takes a fast path with no planning or build ants  :ishikari:
+* LEMMA [#B] A trivial task takes a fast path with no planning or build ants  :ishikari:
 :PROPERTIES:
 :ID:          ISH-2
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice"
-:VERIFY+:     "tests/test_ishikari.py test_metro_map"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -45,13 +41,11 @@ The investigator judges each task once its report is written, and a trivial task
 - The metro map shows the fast path as a chord from the product spec straight across to MAIN.
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
 
-* DONE [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
+* THEOREM [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
 :PROPERTIES:
 :ID:          ISH-3
+:USES:        ISH-14
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings"
-:VERIFY+:     "tests/test_workflows.mjs retro: a dead or shapeless retrospective ant is an error, never a silent pass"
-:VERIFY+:     "tests/test_ishikari.py test_metro_map"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -61,17 +55,11 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Read only: its one write is <state>/plans/<run>/retrospective.md. Findings are ranked costliest first, each with category (bug, error, inefficiency, gap, missing, improvement), evidence, impact, change and where.
 - The main session saves every workflow result to the plans folder, and the final report shows the summary and top 3 findings.
 
-* DONE [#A] Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent  :ishikari:
+* THEOREM [#A] Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent  :ishikari:
 :PROPERTIES:
 :ID:          ISH-4
+:USES:        ISH-13
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs finish: main moves to the checked commit, never to a branch name, and a retry sees it already moved"
-:VERIFY+:     "tests/test_workflows.mjs finish: a docs update that is not accepted is put back, its branch kept, and main moves without it"
-:VERIFY+:     "tests/test_workflows.mjs finish: a later round uses its own upkeep branches and counts earlier landed tasks as in main"
-:VERIFY+:     "tests/test_workflows.mjs build: an ant call that throws is a dead ant, never a lost stage"
-:VERIFY+:     "tests/test_workflows.mjs build: clash fixes run one at a time, and tasks built on a fixed task take it in and are checked again"
-:VERIFY+:     "tests/test_workflows.mjs every script refuses paths, branches and commands the ants' shell cannot carry"
-:VERIFY+:     "tests/test_ishikari.py test_hardening"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -84,11 +72,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Tool and scripts: unsafe paths, branch names and commands are refused; stage results are saved with ishikari.py save; each run has its own copy of the scripts; a dead logbook clerk is retried and what it lost comes back as logLost.
 - The retrospective's read-only promise is checked with a before and after digest of the repo's refs, worktrees and status.
 
-* DONE [#C] The metro map is one open ring, read clockwise  :ishikari:docs:
+* LEMMA [#C] The metro map is one open ring, read clockwise  :ishikari:docs:
 :PROPERTIES:
 :ID:          ISH-5
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_ishikari.py test_metro_map"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -97,14 +84,11 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
 - A station's position code is its place in the list (s6), shown beside its name; spurs name their target by it.
 
-* DONE [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
+* THEOREM [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
 :PROPERTIES:
 :ID:          ISH-6
+:USES:        ISH-10
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
-:VERIFY+:     "tests/test_workflows.mjs plan: plans that would clash or leave the repo come back as problems, never as an error or a pass"
-:VERIFY+:     "tests/test_workflows.mjs plan: bad arguments are an error"
-:VERIFY+:     "tests/test_ishikari.py test_metro_map"
 :LAST_EDITED: 2026-11-20
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -117,14 +101,11 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - The no-Agent-tool fallback is removed: without the Agent tool Ishikari stops at the start.
 - The map shows the two specs and the worker plans as one file station, Specs + worker plans: everything the investigator writes.
 
-* DONE [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
+* THEOREM [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
 :PROPERTIES:
 :ID:          ISH-7
+:USES:        ISH-12
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs plan: every behaviour and invariant needs a worker, and no plan may claim an unknown one"
-:VERIFY+:     "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids"
-:VERIFY+:     "tests/test_workflows.mjs finish: the judge and jurors score against the product spec, id by id"
-:VERIFY+:     "tests/test_ishikari.py test_metro_map"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -137,12 +118,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - The trivial verdict comes after the product spec; a trivial task is built from it alone.
 - Detectives check a task against its plan and the tech spec. The judge and jurors score the merged code against the product spec, id by id.
 
-* DONE [#B] Plans are thin slices of the specs; a one-worker run has no plan file  :ishikari:
+* LEMMA [#B] Plans are thin slices of the specs; a one-worker run has no plan file  :ishikari:
 :PROPERTIES:
 :ID:          ISH-8
 :CREATED:     2026-11-19
-:VERIFY:      "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
-:VERIFY+:     "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids"
 :LAST_EDITED: 2026-11-19
 :APPROVED:    2026-11-19
 :IMPLEMENTED: 2026-11-19
@@ -151,15 +130,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - A run with one worker has no plan file: the plan check returns its plan with file null, and the worker and detective are told the task is the whole of the two specs.
 - The specs stay the shared source: one place for the interfaces between parallel workers and the full list of behaviours and invariants.
 
-* DONE [#B] Ant Eater shows what each ant, station, stage and task of a run cost, with no AI  :ishikari:anteater:
+* LEMMA [#B] Ant Eater shows what each ant, station, stage and task of a run cost, with no AI  :ishikari:anteater:
 :PROPERTIES:
 :ID:          ISH-9
 :CREATED:     2026-11-20
-:VERIFY:      "tests/test_anteater.py test_counts"
-:VERIFY+:     "tests/test_anteater.py test_label_guard"
-:VERIFY+:     "tests/test_anteater.py test_ishikari_hooks"
-:VERIFY+:     "tests/test_anteater.py test_limit"
-:VERIFY+:     "tests/test_anteater.py test_server_and_help"
 :LAST_EDITED: 2026-11-20
 :APPROVED:    2026-11-20
 :IMPLEMENTED: 2026-11-20
@@ -181,13 +155,11 @@ Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows li
 - test_label_guard fails when an ant label kind in the four workflow scripts has no station rule.
 Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workflows/<wf>/agent-*.jsonl and label and phase in agent-*.meta.json (read 2026-11-20); workflow records carry workflowName and args.env.run (wf_a1f92fc9-0f4.json); researchers carry parentAgentId and spawnDepth 2; one message id appears twice with the same usage (msg_011ChCVnW8L3wgeorcjUJdsV); Claude Code 2.1.329 builds rate_limits.five_hour {used_percentage, resets_at} into the status line JSON (strings of the binary); the shell has CLAUDE_CODE_SESSION_ID; the user chose every rule above on 2026-11-20.
 
-* DONE [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
+* THEOREM [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
 :PROPERTIES:
 :ID:          ISH-10
+:USES:        ISH-11
 :CREATED:     2026-11-20
-:NEEDS:       ISH-6
-:VERIFY:      "tests/test_ishikari.py test_investigator_skill"
-:VERIFY+:     "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
 :LAST_EDITED: 2026-11-20
 :APPROVED:    2026-11-20
 :IMPLEMENTED: 2026-11-20
@@ -201,12 +173,10 @@ The investigator's instructions move from assets/prompts/investigator.md into a 
 - test_investigator_skill checks that the skill has both modes and the proof rule, that Ishikari's investigator prompt loads it, and that add-requirement points to its proof step.
 Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari/SKILL.md, step "docs ant runs /docs"); the investigator prompt is one file, skills/ishikari/assets/prompts/investigator.md (130 lines); proof steps at skills/add-requirement/SKILL.md section 3.
 
-* DONE [#B] The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant  :ishikari:
+* LEMMA [#B] The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant  :ishikari:
 :PROPERTIES:
 :ID:          ISH-11
 :CREATED:     2026-11-20
-:NEEDS:       ISH-10
-:VERIFY:      "tests/test_workflows.mjs finish: the janitor cleans, tests, commits and lands its cleanup alone, judge after it"
 :LAST_EDITED: 2026-11-20
 :APPROVED:    2026-11-20
 :IMPLEMENTED: 2026-11-20
@@ -218,12 +188,10 @@ What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js 
 - Ishikari mode: never asks; the ant keeps its git steps, note file, reply schema and JANITOR_MIN_LINES skip. The ant loads /janitor-ant, or reads the skill file when it is unavailable.
 Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-finish.js docsChain); ISH-10 did the same for the investigator.
 
-* DONE [#B] The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants  :ishikari:
+* LEMMA [#B] The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants  :ishikari:
 :PROPERTIES:
 :ID:          ISH-12
 :CREATED:     2026-11-21
-:NEEDS:       ISH-7
-:VERIFY:      "tests/test_workflows.mjs finish: many tasks, one juror per task, at most parallel at once, judge sees their reports"
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :IMPLEMENTED: 2026-11-21
@@ -236,12 +204,10 @@ The scoring rules move from the judge and juror prompts in scripts/ishikari-fini
 - Ishikari mode: never asks; the ants keep their paths, jury text, parallel rule and JSON schema, and load /judge-ant or read the skill file.
 Evidence: ISH-10 and ISH-11 load skills the same way from inside ants.
 
-* DONE [#B] The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants  :ishikari:
+* LEMMA [#B] The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants  :ishikari:
 :PROPERTIES:
 :ID:          ISH-13
 :CREATED:     2026-11-21
-:NEEDS:       ISH-4
-:VERIFY:      "tests/test_workflows.mjs finish: a low judge score gets one fix round, then a second score"
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :IMPLEMENTED: 2026-11-21
@@ -253,12 +219,11 @@ The detective's checking rules go into a skill, skills/detective-ant/SKILL.md, l
 - Ishikari mode: never asks; the ants keep their prompts, git steps and JSON schema, and load /detective-ant or read the skill file.
 Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
 
-* DONE [#B] The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant  :ishikari:
+* THEOREM [#B] The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant  :ishikari:
 :PROPERTIES:
 :ID:          ISH-14
+:USES:        ISH-15
 :CREATED:     2026-11-21
-:NEEDS:       ISH-3
-:VERIFY:      "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings"
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :IMPLEMENTED: 2026-11-21
@@ -270,15 +235,10 @@ What to look for and how to rank it go into a skill, skills/retrospective-ant/SK
 - Ishikari mode: never asks; the ant keeps its reading list, digest check, one report file, categories and JSON schema, and loads /retrospective-ant or reads the skill file.
 Evidence: ISH-10 to ISH-13 load skills the same way from inside ants.
 
-* DONE [#B] The ant skills' fixed steps run as code, not by an agent  :ishikari:
+* LEMMA [#B] The ant skills' fixed steps run as code, not by an agent  :ishikari:
 :PROPERTIES:
 :ID:          ISH-15
 :CREATED:     2026-11-21
-:NEEDS:       ISH-14
-:VERIFY:      "tests/test_ant.py test_tests_verdicts"
-:VERIFY+:     "tests/test_ant.py test_scope"
-:VERIFY+:     "tests/test_ant.py test_session"
-:VERIFY+:     "tests/test_ant.py test_skills_share_mode_rules_and_point_to_ant"
 :LAST_EDITED: 2026-11-21
 :APPROVED:    2026-11-21
 :IMPLEMENTED: 2026-11-21
