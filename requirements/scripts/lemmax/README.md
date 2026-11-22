@@ -69,3 +69,9 @@ headings in it are body, not lemmas. Every rule for a heading lemma holds.
 
 Body text.
 ```
+
+## Aliases and refs
+
+- `:ALIASES: ID...` keeps old ids working: markers, `:NEEDS:`, `id:` links,
+  commit messages and `trace ID` that name an alias count as the lemma. lint
+  refuses an alias two lemmas share, or one that is a lemma's `:ID:`.

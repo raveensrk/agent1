@@ -129,6 +129,8 @@ A file that is one lemma gives its one pair."
         :implemented (funcall get "IMPLEMENTED")
         :reviewed (funcall get "REVIEWED")
         :needs (let ((v (funcall get "NEEDS"))) (and v (split-string v)))
+        ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
+        :aliases (let ((v (funcall get "ALIASES"))) (and v (split-string v)))
         :verify (let ((v (funcall get "VERIFY"))) (and v (split-string-and-unquote v)))
         :text (lemmax--entry-text raw)
         :body (lemmax--entry-body raw)))
@@ -306,7 +308,23 @@ a FOLDER that holds no tracked file."
 
 (defun lemmax--opted (infos) (cl-remove-if-not (lambda (i) (plist-get i :opted)) infos))
 (defun lemmax--listed (infos) (cl-remove-if-not (lambda (i) (plist-get i :listed)) infos))
-(defun lemmax--all-reqs (infos) (cl-mapcan (lambda (i) (copy-sequence (plist-get i :reqs))) infos))
+(defun lemmax--all-reqs (infos)
+  "Every lemma of INFOS, its :NEEDS: naming each parent by its :ID:, never an alias."
+  (let* ((reqs (cl-mapcan (lambda (i) (copy-sequence (plist-get i :reqs))) infos))
+         (canon (make-hash-table :test #'equal)))
+    (dolist (r reqs)
+      (dolist (a (plist-get r :aliases)) (puthash a (plist-get r :id) canon)))
+    (if (zerop (hash-table-count canon))
+        reqs
+      (mapcar (lambda (r)
+                (if (plist-get r :needs)
+                    (plist-put (copy-sequence r) :needs
+                               (mapcar (lambda (n) (or (and (not (cl-find n reqs :key (lambda (x) (plist-get x :id)) :test #'equal))
+                                                            (gethash n canon))
+                                                       n))
+                                       (plist-get r :needs)))
+                  r))
+              reqs))))
 
 ;;;; The test command (RT-5)
 
@@ -395,6 +413,20 @@ a FOLDER that holds no tracked file."
                 (lemmax--finding f l id (format "the id is used twice, first at %s" (gethash id seen))
                                    "give this one a new id"))
             (puthash id (format "%s:%s" f l) seen)))))
+    ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
+    (let ((owner (make-hash-table :test #'equal)))
+      (dolist (r all)
+        (dolist (a (plist-get r :aliases))
+          (let ((f (plist-get r :file)) (l (plist-get r :line)) (id (plist-get r :id)))
+            (when (funcall show r)
+              (cond ((gethash a seen)
+                     (lemmax--finding f l id (format "the alias %s is also the :ID: at %s" a (gethash a seen))
+                                      "remove the alias"))
+                    ((gethash a owner)
+                     (lemmax--finding f l id (format "the alias %s is also an alias of %s" a (gethash a owner))
+                                      "keep it on one lemma"))))
+            (unless (gethash a owner) (puthash a id owner)))))
+      (maphash (lambda (a id) (puthash a (format "alias of %s" id) seen)) owner))
     ;; NEEDS: unknown ids and cycles.
     (dolist (r all)
       (when (funcall show r)
@@ -534,23 +566,25 @@ With CACHED, read the staged copies."
 
 (defun lemmax--all-markers (infos &optional cached)
   "The markers of this repo and of every repo #+LEMMAX_MARKERS_IN: names."
-  (let ((patterns (lemmax--test-paths infos)))
-    (append (lemmax--markers patterns cached)
+  (let* ((patterns (lemmax--test-paths infos))
+         (known (lemmax--known (lemmax--all-reqs infos))))
+    (mapcar
+     (lambda (m) (let ((r (gethash (car m) known))) (if r (cons (plist-get r :id) (cdr m)) m)))
+     (append (lemmax--markers patterns cached)
             (cl-loop for dir in (delete-dups (cl-mapcan (lambda (i) (copy-sequence (plist-get i :markers-in))) infos))
                      for full = (expand-file-name dir default-directory)
                      when (file-directory-p full)
                      append (let ((default-directory (file-name-as-directory full)))
                               (mapcar (lambda (m) (list (nth 0 m) (concat (directory-file-name dir) "/" (nth 1 m))
                                                         (nth 2 m) (nth 3 m)))
-                                      (lemmax--markers patterns)))))))
+                                      (lemmax--markers patterns))))))))
 
 (defun lemmax--lint-markers (infos only cached)
   "Markers that name no lemma or a DROPPED one; DONE lemmas from 2026-11-22 with no code marker."
   (let* ((known (make-hash-table :test #'equal))
          (markers (lemmax--all-markers infos cached))
          (reqs (lemmax--all-reqs infos)))
-    (dolist (r (lemmax--all-reqs (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files)))))
-      (when (plist-get r :id) (puthash (plist-get r :id) r known)))
+    (setq known (lemmax--known (lemmax--all-reqs (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files))))))
     (dolist (m markers)
       (let ((r (gethash (nth 0 m) known)))
         (cond ((null r)
@@ -641,7 +675,8 @@ With CACHED, read the staged copies."
       (let* ((msg (string-join (cl-remove-if (lambda (l) (string-prefix-p "#" l))
                                              (split-string (with-temp-buffer (insert-file-contents msgfile) (buffer-string)) "\n"))
                                "\n"))
-             (ids (delq nil (mapcar (lambda (r) (plist-get r :id)) (lemmax--all-reqs infos)))))
+             (ids (delq nil (cl-mapcan (lambda (r) (cons (plist-get r :id) (copy-sequence (plist-get r :aliases))))
+                                       (lemmax--all-reqs infos)))))
         (unless (cl-some (lambda (id) (lemmax--names-id-p msg id)) ids)
           (lemmax--finding msgfile 1 nil
                              (format "this commit changes code (%s) and names no requirement id" touches)
@@ -742,7 +777,9 @@ With CACHED, read the staged copies."
 
 (defun lemmax-trace (args)
   (let* ((want (car args))
-         (infos (and (lemmax--root) (lemmax--opted (lemmax--worktree-files)))))
+         (infos (and (lemmax--root) (lemmax--opted (lemmax--worktree-files))))
+         (hit (and want (gethash want (lemmax--known (lemmax--all-reqs infos))))))
+    (when hit (setq want (plist-get hit :id)))
     (when (and want (null lemmax--projects)
                (not (cl-some (lambda (r) (equal want (plist-get r :id))) (lemmax--all-reqs infos))))
       (let ((hits (lemmax--projects-with want)))

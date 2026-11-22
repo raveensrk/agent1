@@ -525,7 +525,7 @@ Evidence: org-element reads a file-level property drawer as the first child of t
 - Asked by the owner on 2026-11-22
 Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam backlinks.
 
-** OPEN :ALIASES: keeps old ids working                            :ids:
+** DONE :ALIASES: keeps old ids working                            :ids:
 :PROPERTIES:
 :ID:          01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
 :NEEDS:       RT-4
@@ -533,6 +533,7 @@ Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam bac
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-alias-resolves ert/lemmax-alias-twice
+:IMPLEMENTED: 2026-11-22
 :END:
 - =:ALIASES: ID...= on a lemma: markers, =:NEEDS:=, =id:= links, commit messages and =trace ID= that name an alias count as the lemma
 - lint reports an alias two lemmas share, or one that is also a lemma's =:ID:=

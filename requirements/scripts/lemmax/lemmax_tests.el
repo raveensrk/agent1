@@ -60,13 +60,15 @@
   (declare (indent 1))
   `(let ((process-environment (append ,vars process-environment))) ,@body))
 
-(cl-defun rt-req (id &key (state "OPEN") title (level 1) needs verify verify+
+(cl-defun rt-req (id &key (state "OPEN") title (level 1) needs verify verify+ aliases refs
                      (approved "2026-01-05") (created "2026-01-05") (last "2026-01-05")
                      implemented reviewed body noid)
   (concat (make-string level ?*) " " (if state (concat state " ") "") (or title (concat "Title of " id)) "\n"
           ":PROPERTIES:\n"
           (if noid "" (format ":ID:          %s\n" id))
           (if needs (format ":NEEDS:       %s\n" needs) "")
+          (if aliases (format ":ALIASES:     %s\n" aliases) "")
+          (if refs (format ":REFS:        %s\n" refs) "")
           (if created (format ":CREATED:     %s\n" created) "")
           (if last (format ":LAST_EDITED: %s\n" last) "")
           (if approved (format ":APPROVED:    %s\n" approved) "")
@@ -890,3 +892,27 @@
     (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DROPPED" :verify "unit/a"))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+
+;;;; 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0: :ALIASES:
+
+(ert-deftest lemmax-alias-resolves ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (rt-files (rt-done "RQ-10" :aliases "RQ-1" :implemented "2026-11-22")
+                              (rt-req "RQ-2" :needs "RQ-1" :body "See [[id:RQ-1]].\n")))))
+    (rt-set d "src/x.clj" ";; lemma: RQ-1\n")
+    (rt-commit d "code (RQ-1)")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (let ((tr (nth 1 (rt-run d "trace" "RQ-1"))))
+      (should (string-match-p "^RQ-10 DONE" tr))
+      (should (string-match-p "children: RQ-2" tr))
+      (should (string-match-p "code: src/x\\.clj:1" tr)))
+    (rt-set d "src/x.clj" "(ns x) ;; 3\n")
+    (rt-git d "add" "-A")
+    (let ((msg (make-temp-file "rt-msg" nil nil "fix it (RQ-1)\n")))
+      (rt-should-clean (rt-run d "commit-msg" msg)))))
+
+(ert-deftest lemmax-alias-twice ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :aliases "RQ-9") (rt-req "RQ-2" :aliases "RQ-9 RQ-1")))))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "RQ-2: the alias RQ-9 is also an alias of RQ-1")
+      (should (string-match-p "RQ-2: the alias RQ-1 is also the :ID: at" (nth 2 r))))))
