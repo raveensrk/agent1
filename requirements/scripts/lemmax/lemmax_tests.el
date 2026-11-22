@@ -2094,3 +2094,19 @@ run of its finding's why text."
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged" "--no-tests")))
     (rt-set d "requirements.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2")))
     (rt-should-find (rt-run d "lint" "--no-tests") "used twice")))
+
+;;;; 01a203a6-a752-75ed-8359-a8147e95a33d: lemmax publish
+
+(ert-deftest lemmax-publish ()
+  :tags '(timeout-60)
+  (let* ((d (rt-repo (rt-math-files (list (replace-regexp-in-string "Statement\\." "See [[id:PR-1][its proof]]." (rt-lemma "RQ-1") t))
+                                    (list (rt-proof "PR-1" "RQ-1")))))
+         (r (rt-run d "publish")))
+    (should (= 0 (nth 0 r)))
+    (should (string-match-p "^.lemmax/html/requirements.html$" (nth 1 r)))
+    (let ((html (with-temp-buffer (insert-file-contents (expand-file-name ".lemmax/html/requirements.html" d)) (buffer-string))))
+      (should (string-match-p "href=\"requirements.proofs.html#ID-PR-1\"" html)))
+    (should (equal "*\n" (with-temp-buffer (insert-file-contents (expand-file-name ".lemmax/.gitignore" d)) (buffer-string))))
+    (should (equal "" (nth 1 (rt-git d "status" "--porcelain"))))
+    (rt-run d "publish" "--out" "site")
+    (should (file-exists-p (expand-file-name "site/requirements.proofs.html" d)))))

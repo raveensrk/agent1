@@ -116,6 +116,14 @@ tasks 30 days old (`--days N`); `--write` moves them with `org-archive-subtree`
 to `NAME_archive.org` (`NAME_archive.tasks.org` for tasks). Lint reads archives,
 so links resolve and ids stay unique.
 
+## Publish
+
+<!-- lemma: 01a203a6-a752-75ed-8359-a8147e95a33d -->
+
+`lemmax publish` writes every listed lemmax file to HTML with `ox-publish`;
+id: links become page links. Pages go to `.lemmax/html/` (git ignores it
+through `.lemmax/.gitignore`), or `--out DIR`.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->

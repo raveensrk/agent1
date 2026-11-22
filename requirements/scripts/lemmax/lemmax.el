@@ -1953,17 +1953,61 @@ order; a parent no chunk holds is named on stderr."
       (when (and write moved) (lemmax--out "to %s" arel))
       (kill-emacs 0))))
 
+;;;; publish (01a203a6-a752-75ed-8359-a8147e95a33d)
+
+;; lemma: 01a203a6-a752-75ed-8359-a8147e95a33d
+;; Org's own variables, bound dynamically: ox-publish and org-id load late.
+(defvar org-id-locations-file) (defvar org-id-track-globally) (defvar org-id-locations)
+(defvar org-publish-timestamp-directory) (defvar org-html-validation-link)
+(defvar org-publish-project-alist)
+(defun lemmax-publish (args)
+  "Write the repo's listed lemmax files to HTML under .lemmax/html, or --out DIR."
+  (let ((out nil))
+    (while args
+      (let ((a (pop args)))
+        (cond ((equal a "--out") (setq out (or (pop args) (progn (lemmax--err "lemmax: --out takes a folder") (kill-emacs 1)))))
+              (t (lemmax--err "lemmax: unknown argument %s; see lemmax publish --help" a) (kill-emacs 1)))))
+    (require 'ox-publish)
+    (require 'org-id)
+    (let* ((root (file-truename default-directory))
+           (dir (if out (expand-file-name out (or lemmax--cwd default-directory)) (expand-file-name ".lemmax/html" root)))
+           (files (mapcar (lambda (i) (plist-get i :file)) (lemmax--listed (lemmax--worktree-files))))
+           (tmp (make-temp-file "lemmax-publish" t))
+           (org-id-locations-file (expand-file-name "ids" tmp))
+           (org-id-track-globally t)
+           (org-publish-timestamp-directory (file-name-as-directory (expand-file-name "ts" tmp)))
+           (org-html-validation-link nil)
+           (org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
+                                          "REFUTED" "PASSED" "CANCELLED" "AXIOM")))
+           (org-publish-project-alist
+            (list (list "lemmax" :base-directory root :base-extension "lemmax-none" :include files
+                        :publishing-directory dir :publishing-function 'org-html-publish-to-html
+                        :with-toc nil :section-numbers nil))))
+      (unwind-protect
+          (progn
+            (unless out
+              (make-directory (expand-file-name ".lemmax" root) t)
+              (with-temp-file (expand-file-name ".lemmax/.gitignore" root) (insert "*\n")))
+            (let ((inhibit-message t))
+              (org-id-update-id-locations (mapcar (lambda (f) (expand-file-name f root)) files))
+              (org-publish "lemmax" t))
+            (dolist (f files)
+              (lemmax--out "%s" (file-relative-name (expand-file-name (concat (file-name-sans-extension f) ".html") dir)
+                                                    (file-truename (or lemmax--cwd default-directory))))))
+        (delete-directory tmp t)))
+    (kill-emacs 0)))
+
 ;;;; Help (RT-2)
 
 (defconst lemmax--help
   '((main
      "usage: lemmax COMMAND [ARGS]
 Lint, trace and list a repo's org requirements.
-Commands: lint, commit-msg, trace, list, new-id, next-id, install-hooks, migrate, archive, help
+Commands: lint, commit-msg, trace, list, new-id, next-id, install-hooks, migrate, archive, publish, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and writes no file; install-hooks writes the repo's two hooks and
 migrate --write a requirements file and its proofs file, archive --write a
-file and its archive.
+file and its archive, publish the HTML under .lemmax.
 example: lemmax list --ready -p ~/repos/other-project"
      "Commands:
   lint [--staged] [--no-tests] [FILE...]  check the requirements files' rules
@@ -1975,6 +2019,7 @@ example: lemmax list --ready -p ~/repos/other-project"
   install-hooks                           put lemmax in this repo's pre-commit and commit-msg
   migrate [--write] FILE                  move FILE to conjectures, proofs, lemmas and theorems
   archive [--write] FILE                  move refuted and finished headings to FILE's archive
+  publish [--out DIR]                     write the lemmax files to HTML
   help                                    this text
 Each command takes -h, --help and help. lemmax --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
@@ -2073,6 +2118,13 @@ commit-msg runs commit-msg. A hook already there is kept as NAME.local and
 run after lemmax's. Run again, it changes nothing. It is the one command
 that writes, and it writes only those two files. If core.hooksPath is set,
 git runs those hooks instead, and lemmax says so.")
+    (publish
+     "usage: lemmax publish [--project DIR] [--out DIR]
+Write every lemmax file the repo lists to HTML, id: links as page links.
+example: lemmax publish"
+     "Pages go to .lemmax/html at the repo root, where .lemmax/.gitignore keeps
+git from tracking them, or to --out DIR. It uses Org's ox-publish, with its
+own id and timestamp caches, and prints each page it wrote.")
     (archive
      "usage: lemmax archive [--project DIR] [--write] [--days N] FILE
 List, or with --write move, FILE's finished headings to its archive.
@@ -2174,6 +2226,7 @@ example: lemmax next-id M"
               ("install-hooks" (lemmax-install-hooks rest))
               ("migrate" (lemmax-migrate rest))
               ("archive" (lemmax-archive rest))
+              ("publish" (lemmax-publish rest))
               (_ (lemmax--help-for 'main nil))))))))))
 
 (when (and noninteractive (not (getenv "LEMMAX_LOAD_ONLY")))

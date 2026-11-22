@@ -15,7 +15,7 @@ The first public release.
 - `lemma:` code markers, checked both ways.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
-- `lemmax archive`; id: links in link properties and `migrate --links`;
+- `lemmax publish` and `lemmax archive`; id: links in link properties and `migrate --links`;
   `:ORDERED:` and `:BLOCKER:` read by lint; `:LOGBOOK:` is not text.
 - Tags: declared in `#+TAGS:`, nested by group tags, inherited; `list --tag`
   and `trace --tag`. Tags are not a heading's text.

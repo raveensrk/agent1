@@ -723,7 +723,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: lemmax publish writes HTML
+* PASSED Proof: lemmax publish writes HTML
 :PROPERTIES:
 :ID:          01a203b5-97fc-75bd-b18f-c5d4a16b589a
 :PROVES:      01a203a6-a752-75ed-8359-a8147e95a33d
