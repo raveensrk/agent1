@@ -128,3 +128,13 @@ and pull request, on Emacs 29.4 and 30.1. `lint` runs the repo's own test
 command, so in CI a pull request's code runs: the workflow has a read-only
 token and no secrets, as GitHub gives `pull_request` from a fork. Never run
 lemmax under `pull_request_target`, which has the base repo's secrets.
+
+## Output and exit codes
+
+These are stable from 1.0.0:
+
+- A finding is one line on stderr: `lemmax: FILE:LINE: ID: WHY; FIX`, with `-`
+  for no id. `lint --json` prints them instead as
+  `{"version": 1, "findings": [{"file", "line", "id", "why", "fix"}]}` on stdout.
+- Exit 0: clean. Exit 1: a finding, or lemmax could not do what was asked.
+  Exit 2: lemmax cannot run here (no Emacs, or one older than 29).

@@ -47,9 +47,18 @@ test turns each rule off so, to show a test fails without it."
   (unless (let ((m (getenv "LEMMAX_MUTATE"))) (and m (string-match-p (regexp-quote m) why)))
     (lemmax--finding-1 file line id why fix)))
 
+;; lemma: 01a20336-ca8d-75bf-bedc-33da69c29468
+(defvar lemmax--json-findings nil
+  "With lint --json, the findings so far, newest first; else t is never set.")
+(defvar lemmax--json-mode nil "Whether lint prints its findings as JSON.")
+
 (defun lemmax--finding-1 (file line id why fix)
   (setq lemmax--findings (1+ lemmax--findings))
-  (lemmax--err "lemmax: %s:%s: %s: %s; %s" file line (or id "-") why fix))
+  (if lemmax--json-mode
+      (push (list (cons 'file file) (cons 'line line) (cons 'id (or id :null)) (cons 'why why) (cons 'fix fix))
+            lemmax--json-findings)
+    ;; The stable line: lemmax: FILE:LINE: ID: WHY; FIX
+    (lemmax--err "lemmax: %s:%s: %s: %s; %s" file line (or id "-") why fix)))
 
 ;;;; Git
 
@@ -625,11 +634,12 @@ for HEAD; read by one git process, once a run."
                                  (format "set :IMPLEMENTED: %s" today)))))))))
 
 (defun lemmax-lint (args)
+  (setq lemmax--json-mode (and (member "--json" args) t))
   (let ((staged (member "--staged" args))
         (no-tests (member "--no-tests" args))
         (only (cl-remove-if (lambda (a) (string-prefix-p "--" a)) args)))
     (let ((bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a)
-                                             (not (member a '("--staged" "--no-tests")))))
+                                             (not (member a '("--staged" "--no-tests" "--json")))))
                            args)))
       (when bad (lemmax--err "lemmax: unknown option %s; see lemmax lint --help" bad) (kill-emacs 1)))
     (lemmax--lint-config staged)
@@ -664,6 +674,10 @@ for HEAD; read by one git process, once a run."
           ;; Every HEAD file, opted in then or not: a lemma is matched by :ID:,
           ;; wherever it lived, so a moved lemma is not new.
           (lemmax--lint-staged infos (lemmax--rev-files "HEAD")))))
+    (when lemmax--json-mode
+      (princ (concat (json-encode (list (cons 'version 1)
+                                        (cons 'findings (vconcat (reverse lemmax--json-findings)))))
+                     "\n")))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
 
 ;;;; Code markers
@@ -1374,13 +1388,15 @@ a requirements/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>
 Exit 0 when clean, 1 on any finding or failure.")
     (lint
-     "usage: lemmax lint [--project DIR] [--staged] [--no-tests] [FILE...]
+     "usage: lemmax lint [--project DIR] [--staged] [--no-tests] [--json] [FILE...]
 Check the requirements files' rules, in files that opt in.
 example: lemmax lint --staged --no-tests"
      "--staged    read the staged copies and refuse changes against HEAD:
             a DONE requirement whose text changed, :LAST_EDITED: not today,
             a new requirement not dated today, a DONE one not :IMPLEMENTED: today
 --no-tests  skip the test command and the :VERIFY: rule
+--json      the findings on stdout as {"version": 1, "findings": [{file, line,
+            id, why, fix}]}, none on stderr; the same exit code
 FILE...     report findings for these files only
 LEMMAX_TEST_SECONDS sets the test command's time (60 s); LEMMAX_TODAY sets today.")
     (commit-msg

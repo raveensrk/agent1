@@ -1567,3 +1567,30 @@ run of its finding's why text."
       (rt-should-find r ":code names gone/, which holds no tracked file")
       (should (string-match-p ":test-paths names _spec\\., which no tracked file matches" (nth 2 r)))
       (should-not (string-match-p "names src/\\|names tests\\.sh" (nth 2 r))))))
+
+;;;; 01a20336-ca8d-75bf-bedc-33da69c29468: stable output, lint speaks JSON
+
+(ert-deftest lemmax-lint-json ()
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil) (rt-req "RQ-2"))))
+         (r (rt-run d "lint" "--no-tests" "--json"))
+         (j (json-parse-string (nth 1 r) :object-type 'alist :null-object nil)))
+    (should (= 1 (nth 0 r)))
+    (should (equal "" (nth 2 r)))
+    (should (equal 1 (alist-get 'version j)))
+    (let ((f (aref (alist-get 'findings j) 0)))
+      (should (equal '(file line id why fix) (mapcar #'car f)))
+      (should (equal "RQ-1" (alist-get 'id f)))
+      (should (equal "no :CREATED:" (alist-get 'why f)))))
+  (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "lint" "--no-tests" "--json")))
+    (should (= 0 (nth 0 r)))
+    (should (equal "{\"version\":1,\"findings\":[]}\n" (nth 1 r)))))
+
+(ert-deftest lemmax-exit-codes ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (should (= 0 (nth 0 (rt-run d "lint" "--no-tests"))))
+    (should (string-match-p "\\`lemmax: requirements\\.org:[0-9]+: RQ-1: [^;]+; .+\n\\'"
+                            (progn (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :created nil)))
+                                   (nth 2 (rt-run d "lint" "--no-tests")))))
+    (should (= 1 (nth 0 (rt-run d "lint" "--no-tests"))))
+    (should (= 1 (nth 0 (rt-run d "lint" "--bogus"))))
+    (should (= 1 (nth 0 (rt-run d "nonsense"))))))

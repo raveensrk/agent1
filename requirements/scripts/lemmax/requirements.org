@@ -903,13 +903,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** OPEN Output is stable, and lint speaks JSON                               :cli:
+** DONE Output is stable, and lint speaks JSON                               :cli:
 :PROPERTIES:
 :ID:          01a20336-ca8d-75bf-bedc-33da69c29468
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-lint-json ert/lemmax-exit-codes
+:IMPLEMENTED: 2026-11-22
 :END:
 - The README pins the finding line, "lemmax: FILE:LINE: ID: WHY; FIX", and exit codes 0 clean, 1 findings or failure, 2 cannot run
 - lint --json prints {"version": 1, "findings": [{file, line, id, why, fix}]} on stdout, with the same exit code
