@@ -742,3 +742,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: Every footnote has a definition
+:PROPERTIES:
+:ID:          01a203b9-3ba2-7230-8a83-6b1140fdb767
+:PROVES:      01a203a6-a779-73fc-8abf-99f8c8816867
+:TEST:        ert/lemmax-footnotes
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.

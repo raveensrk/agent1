@@ -1110,3 +1110,16 @@ Evidence: a spike in batch Emacs ran =org-publish= after =org-id-update-id-locat
 - =org-enforce-todo-dependencies= is an Emacs setting, not a keyword: a setup file cannot turn it on
 - Asked by the owner on 2026-11-22
 Evidence: a spike in batch Emacs read =#+LEMMAX_TESTS:=, =#+TODO:= and =#+TAGS:= from =lemmax.setup= through =#+SETUPFILE:= with =org-collect-keywords=.
+
+** CONJECTURE Every footnote has a definition                                       :lint:
+:PROPERTIES:
+:ID:          01a203a6-a779-73fc-8abf-99f8c8816867
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- Footnotes and citations may stand in any heading's body, and count as its text
+- lint refuses a =[fn:NAME]= reference with no =[fn:NAME] text= definition in the same file; an inline =[fn:NAME: text]= or =[fn:: text]= defines itself
+- org-cite =[cite:...]= is left to export; lint does not check it
+- Asked by the owner on 2026-11-22
+Evidence: Org footnote syntax: https://orgmode.org/manual/Creating-Footnotes.html
