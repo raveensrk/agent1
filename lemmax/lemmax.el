@@ -475,7 +475,7 @@ file under a requirements/ or theory/ folder."
 
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
 (defconst lemmax--candidate-re
-  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*\\b(OPEN|CONJECTURE)\\b)"
+  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)([^[:alnum:]_]|$)|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)([^[:alnum:]_]|$)|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*[^[:alnum:]_](OPEN|CONJECTURE)([^[:alnum:]_]|$))"
   "A line only a file that may hold lemmas has, for git grep -E.")
 
 (defvar lemmax--files-cache (make-hash-table :test #'equal)

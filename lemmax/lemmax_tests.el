@@ -1460,9 +1460,13 @@ run of its finding's why text."
                                                    (format "* Note %d\n:PROPERTIES:\n:ID: note-%d\n:END:\nText.\n" i i)))))))
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :created "2026-11-22" :last "2026-11-22" :body "Changed.\n")))
     (rt-git d "add" "-A")
-    (let* ((start (float-time))
-           (r (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged" "--no-tests")))
-           (took (- (float-time) start)))
+    ;; The fastest of 3 runs: run_tests runs 8 tests at once, and their load
+    ;; alone can push one run past 2 s on a lemmax that takes 0.3 s idle.
+    (let (r took)
+      (dotimes (_ 3)
+        (let ((start (float-time)))
+          (setq r (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged" "--no-tests")))
+          (setq took (min (or took 1e9) (- (float-time) start)))))
       (rt-should-clean r)
       (should (< took 2.0)))))
 
