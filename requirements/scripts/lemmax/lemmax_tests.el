@@ -1594,3 +1594,58 @@ run of its finding's why text."
     (should (= 1 (nth 0 (rt-run d "lint" "--no-tests"))))
     (should (= 1 (nth 0 (rt-run d "lint" "--bogus"))))
     (should (= 1 (nth 0 (rt-run d "nonsense"))))))
+
+;;;; 01a20336-c6c6-7ac0-aea1-6d5ff12a8fea: lemmax install-hooks
+
+(defun rt-hook-env ()
+  "PATH with lemmax on it, as a user's install leaves it."
+  (let ((bin (expand-file-name "bin" (rt-tmp))))
+    (make-directory bin t)
+    (make-symbolic-link rt-bin (expand-file-name "lemmax" bin))
+    (list (concat "PATH=" bin ":" (getenv "PATH")))))
+
+(defun rt-real-commit (dir msg)
+  "git commit in DIR through its .git/hooks: (EXIT STDOUT STDERR)."
+  (rt-sh dir "git" "-c" "core.hooksPath=.git/hooks" "-c" "user.name=Test" "-c" "user.email=test@example.invalid"
+         "-c" "commit.gpgsign=false" "commit" "-q" "-m" msg))
+
+(ert-deftest lemmax-install-hooks ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1"))))
+        (env (rt-hook-env)))
+    (should (string-match-p "pre-commit: written\ncommit-msg: written" (nth 1 (rt-run d "install-hooks"))))
+    (rt-env env
+      ;; pre-commit refuses a broken lemma.
+      (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :created nil)))
+      (rt-git d "add" "-A")
+      (let ((r (rt-real-commit d "docs: break it")))
+        (should (/= 0 (nth 0 r)))
+        (should (string-match-p "no :CREATED:" (nth 2 r))))
+      ;; commit-msg refuses a code commit that names no id.
+      (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1")))
+      (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+      (rt-git d "add" "-A")
+      (should (/= 0 (nth 0 (rt-real-commit d "change it"))))
+      (should (= 0 (nth 0 (rt-real-commit d "change it (RQ-1)")))))))
+
+(ert-deftest lemmax-install-hooks-chains ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1"))))
+        (env (rt-hook-env)))
+    (rt-write d (list (cons ".git/hooks/pre-commit" "#!/bin/sh\ntouch OLD_RAN\n")))
+    (set-file-modes (expand-file-name ".git/hooks/pre-commit" d) #o755)
+    (should (string-match-p "kept the old hook as pre-commit.local" (nth 1 (rt-run d "install-hooks"))))
+    (rt-env env
+      (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+      (rt-git d "add" "-A")
+      (should (= 0 (nth 0 (rt-real-commit d "change it (RQ-1)")))))
+    (should (file-exists-p (expand-file-name "OLD_RAN" d)))))
+
+(ert-deftest lemmax-install-hooks-again ()
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
+         (_ (rt-run d "install-hooks"))
+         (before (with-temp-buffer (insert-file-contents (expand-file-name ".git/hooks/pre-commit" d)) (buffer-string)))
+         (out (nth 1 (rt-run d "install-hooks"))))
+    (should (string-match-p "pre-commit: already lemmax's\ncommit-msg: already lemmax's" out))
+    (should-not (file-exists-p (expand-file-name ".git/hooks/pre-commit.local" d)))
+    (should (equal before (with-temp-buffer (insert-file-contents (expand-file-name ".git/hooks/pre-commit" d)) (buffer-string))))))

@@ -23,7 +23,9 @@ lemmax lint --staged          # what the pre-commit hook runs
 - Every day lemmax reads or writes is a UTC day: today, and the commit days of `trace`.
 - `lemmax --help` is the short help, `lemmax help` the long one; each command takes both.
 - `lemmax` is a Bash launcher for `lemmax.el`, run by `emacs -Q --script`.
-- `install` puts a wrapper on PATH as `~/.local/bin/lemmax`.
+- `install` puts a wrapper on PATH as `~/.local/bin/lemmax`; then, in each repo,
+  `lemmax install-hooks` writes `.git/hooks/pre-commit` and `commit-msg` to
+  call it. A hook already there is kept as `NAME.local` and run after.
 - `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, 8 at a time.
   `golden/` pins `trace` and `list` output (`LEMMAX_UPDATE_GOLDEN=1` rewrites it);
   a seeded test parses 200 generated files; the mutation test turns each lint

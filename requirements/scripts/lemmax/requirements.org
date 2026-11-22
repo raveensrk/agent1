@@ -817,13 +817,14 @@ Evidence: probe 2026-11-22: lemmax lint ../requirements.org from a subfolder pas
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el holds 2026-11-22, RF-3, "agent1's id rule" and "what requirements.org forbids".
 
-** OPEN lemmax install-hooks puts lemmax in a repo's hooks               :cli:
+** DONE lemmax install-hooks puts lemmax in a repo's hooks               :cli:
 :PROPERTIES:
 :ID:          01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-install-hooks ert/lemmax-install-hooks-chains ert/lemmax-install-hooks-again
+:IMPLEMENTED: 2026-11-22
 :END:
 - Writes .git/hooks/pre-commit and commit-msg that call lemmax from PATH, with the same opt-in test as agent1's hooks
 - An existing hook is kept and called after lemmax's; running it twice changes nothing

@@ -2,7 +2,7 @@
 
 ;; Run through the launcher: requirements/scripts/lemmax/lemmax COMMAND ...
 ;; Requirements: requirements/scripts/lemmax/requirements.org (RT-1 to RT-15).
-;; It reads files and git, and never writes a file.
+;; It reads files and git, and writes no file but the two hooks install-hooks puts in place.
 
 ;; lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
 ;; The floor is Emacs 29 with its Org 9.6; checked before anything else loads.
@@ -1353,15 +1353,59 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
       (lemmax--out "%s-%d" letter (1+ top))
       (kill-emacs 0))))
 
+;;;; install-hooks (01a20336-c6c6-7ac0-aea1-6d5ff12a8fea)
+
+(defconst lemmax--hook-mark "# lemmax install-hooks wrote this hook."
+  "The line that marks a hook as lemmax's, so a second install changes nothing.")
+
+(defun lemmax--hook-text (name)
+  "The hook NAME (pre-commit or commit-msg): lemmax from PATH, in a repo that
+opts in, then the hook that was there before, kept as NAME.local."
+  (concat "#!/usr/bin/env bash\n" lemmax--hook-mark "\n"
+          "# lemmax " lemmax-version "; the hook that was here first is " name ".local, run after.\n"
+          "if git grep --cached -q -E '^#\\+LEMMAX_TESTS:' -- '*.org' 2>/dev/null \\\n"
+          "\t|| git cat-file -e :lemmax/config.eld 2>/dev/null; then\n"
+          (if (equal name "pre-commit")
+              "\tlemmax lint --staged --no-tests || exit 1\n"
+            "\tlemmax commit-msg \"$1\" || exit 1\n")
+          "fi\n"
+          "chained=\"$(dirname \"$0\")/" name ".local\"\n"
+          "if [ -x \"$chained\" ]; then exec \"$chained\" \"$@\"; fi\n"))
+
+;; lemma: 01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
+(defun lemmax-install-hooks (args)
+  "Write .git/hooks/pre-commit and commit-msg; the only lemmax command that writes."
+  (when args (lemmax--err "lemmax: install-hooks takes no arguments") (kill-emacs 1))
+  (let* ((git-dir (string-trim (or (lemmax--git-out "rev-parse" "--absolute-git-dir") "")))
+         (dir (expand-file-name "hooks" git-dir)))
+    (make-directory dir t)
+    (dolist (name '("pre-commit" "commit-msg"))
+      (let* ((file (expand-file-name name dir))
+             (old (and (file-exists-p file) (with-temp-buffer (insert-file-contents file) (buffer-string)))))
+        (cond
+         ((and old (string-search lemmax--hook-mark old))
+          (lemmax--out "%s: already lemmax's" name))
+         (t
+          (when old
+            (rename-file file (concat file ".local") t)
+            (lemmax--out "%s: kept the old hook as %s.local, run after lemmax" name name))
+          (with-temp-file file (insert (lemmax--hook-text name)))
+          (set-file-modes file #o755)
+          (lemmax--out "%s: written" name)))))
+    (let ((hp (lemmax--git-out "config" "core.hooksPath")))
+      (when (and hp (not (string-empty-p (string-trim hp))))
+        (lemmax--err "lemmax: core.hooksPath is %s, so git runs those hooks, not .git/hooks" (string-trim hp))))
+    (kill-emacs 0)))
+
 ;;;; Help (RT-2)
 
 (defconst lemmax--help
   '((main
      "usage: lemmax COMMAND [ARGS]
 Lint, trace and list a repo's org requirements.
-Commands: lint, commit-msg, trace, list, new-id, next-id, help
+Commands: lint, commit-msg, trace, list, new-id, next-id, install-hooks, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
-It reads, and never writes a file.
+It reads, and writes no file; install-hooks alone writes the repo's two hooks.
 example: lemmax list --ready -p ~/repos/other-project"
      "Commands:
   lint [--staged] [--no-tests] [FILE...]  check the requirements files' rules
@@ -1370,6 +1414,7 @@ example: lemmax list --ready -p ~/repos/other-project"
   list [filters] [--all] [--json]         every requirement in a table
   new-id                                  a new requirement id, a UUID v7
   next-id LETTER                          the next counted id, as M-15, for old projects
+  install-hooks                           put lemmax in this repo's pre-commit and commit-msg
   help                                    this text
 Each command takes -h, --help and help. lemmax --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
@@ -1451,6 +1496,15 @@ example: lemmax new-id"
      "The first 12 hex digits are the time in milliseconds, so ids sort by age;
 the rest is random from /dev/urandom. It needs no check against other ids.
 next-id stays for projects whose old ids still count up.")
+    (install-hooks
+     "usage: lemmax install-hooks
+Write this repo's .git/hooks/pre-commit and commit-msg to call lemmax from PATH.
+example: lemmax install-hooks"
+     "In a repo that opts in, pre-commit runs lint --staged --no-tests and
+commit-msg runs commit-msg. A hook already there is kept as NAME.local and
+run after lemmax's. Run again, it changes nothing. It is the one command
+that writes, and it writes only those two files. If core.hooksPath is set,
+git runs those hooks instead, and lemmax says so.")
     (next-id
      "usage: lemmax next-id [--project DIR] LETTER
 Print the next free id for a section: one more than the highest in use.
@@ -1525,6 +1579,7 @@ example: lemmax next-id M"
               ("list" (lemmax-list rest))
               ("new-id" (lemmax-new-id rest))
               ("next-id" (lemmax-next-id rest))
+              ("install-hooks" (lemmax-install-hooks rest))
               (_ (lemmax--help-for 'main nil))))))))))
 
 (when (and noninteractive (not (getenv "LEMMAX_LOAD_ONLY")))
