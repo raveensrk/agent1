@@ -455,3 +455,25 @@ Two things a project meets when it starts to follow lemmax, as Arcadia does.
 - Asked by the owner on 2026-11-22
 Evidence: Arcadia's requirements live in arcadia_docs and its code in arcadia; the first opt-in lint saw every requirement as new.
 
+
+** DONE Settings live in lemmax/config.eld                                :lint:
+:PROPERTIES:
+:ID:          01a202b0-1d09-75f3-99dc-677a4b2ec0be
+:NEEDS:       RT-1 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-config-folder-settings ert/lemmax-config-header-wins
+:VERIFY+:     ert/lemmax-config-longest-folder ert/lemmax-config-staged
+:VERIFY+:     ert/lemmax-config-never-evaluated ert/lemmax-config-findings
+:IMPLEMENTED: 2026-11-22
+:END:
+A repo's lemmax settings are in one file, so lemmas may be headings in one file or one lemma per .org file.
+- =lemmax/config.eld= at the repo root holds =(:folders ((FOLDER :tests CMD :code (PATH...) :test-paths (PAT...) :markers-in (DIR...)) ...))=
+- An .org file in FOLDER or below takes the entry with the longest matching FOLDER; it is then opted in and listed
+- A file with any =#+LEMMAX_*= line of its own uses only its own header, as before
+- The config is read with =read=, never evaluated; it is read from the work tree, the index (=lint --staged=) or HEAD, like the .org files
+- lint reports a config that does not read, an unknown key, or a FOLDER that does not exist
+- The pre-commit and commit-msg hooks and =harness/checks/lemmax_lint.py= treat a repo with the config as opted in
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lemmas across files; the opt-in is per file in =lemmax--worktree-files= and =lemmax--rev-files=; Emacs 29.3 runs the tests here.

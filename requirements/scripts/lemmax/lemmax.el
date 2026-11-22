@@ -157,11 +157,112 @@ property drawer, trimmed (RT-17)."
                             (and todo (string-match-p "\\_<OPEN\\_>" todo) t))
                 :reqs (nreverse reqs)))))))
 
+;;;; Config (01a202b0-1d09-75f3-99dc-677a4b2ec0be)
+
+;; lemma: 01a202b0-1d09-75f3-99dc-677a4b2ec0be
+(defconst lemmax-config-file "lemmax/config.eld")
+(defconst lemmax--config-keys '(:tests :code :test-paths :markers-in))
+
+(defun lemmax--config-text (rev)
+  "The config's text: from the work tree when REV is nil, else at REV
+\(\"\" for the index, \"HEAD\" for HEAD); nil when there is none."
+  (if rev
+      (lemmax--git-out "show" (concat rev ":" lemmax-config-file))
+    (and (file-readable-p lemmax-config-file)
+         (with-temp-buffer (insert-file-contents lemmax-config-file) (buffer-string)))))
+
+(defun lemmax--config-read (text)
+  "Read TEXT, the config, as data: (FOLDERS . PROBLEMS).
+FOLDERS is a list of (FOLDER . PLIST), FOLDER ending in / or \"\" for the root.
+It is read with `read' and `read-eval' off, so nothing in it ever runs."
+  (let (data problems folders)
+    (condition-case err
+        (let ((read-eval nil))
+          (setq data (car (read-from-string text)))
+          (let ((rest (string-trim (substring text (cdr (read-from-string text))))))
+            (unless (or (string-empty-p rest) (string-prefix-p ";" rest))
+              (push "more than one form; the config is one (:folders ...) list" problems))))
+      (error (push (format "it does not read: %s" (error-message-string err)) problems)
+             (setq data nil)))
+    (when (and data (not problems))
+      (if (not (and (listp data) (plist-member data :folders)))
+          (push "it is not a (:folders ...) list" problems)
+        (cl-loop for (k _) on data by #'cddr
+                 unless (eq k :folders) do (push (format "unknown key %S" k) problems))
+        (dolist (e (plist-get data :folders))
+          (if (not (and (consp e) (stringp (car e)) (cl-evenp (length (cdr e)))))
+              (push (format "a folder entry is not (\"FOLDER\" :key value ...): %S" e) problems)
+            (let ((folder (string-remove-prefix "./" (car e))) (plist (cdr e)) ok)
+              (setq folder (if (member folder '("" ".")) "" (file-name-as-directory folder)))
+              (setq ok t)
+              (cl-loop for (k v) on plist by #'cddr
+                       do (cond ((not (memq k lemmax--config-keys))
+                                 (setq ok nil)
+                                 (push (format "%s: unknown key %S" (car e) k) problems))
+                                ((eq k :tests)
+                                 (unless (stringp v)
+                                   (setq ok nil)
+                                   (push (format "%s: :tests is not a string" (car e)) problems)))
+                                ((not (and (listp v) (cl-every #'stringp v)))
+                                 (setq ok nil)
+                                 (push (format "%s: %S is not a list of strings" (car e) k) problems))))
+              (when ok (push (cons folder plist) folders)))))))
+    (cons (nreverse folders) (nreverse problems))))
+
+(defun lemmax--config (rev)
+  "The config's folder entries at REV (see `lemmax--config-text'); nil when none."
+  (let ((text (lemmax--config-text rev)))
+    (and text (car (lemmax--config-read text)))))
+
+(defun lemmax--own-settings-p (info)
+  "Whether INFO's file has any #+LEMMAX_* (or older #+REQTRACE_*) line."
+  (cl-some (lambda (k) (string-match-p "\\`\\(?:LEMMAX\\|REQTRACE\\)_" (car k)))
+           (plist-get info :keywords)))
+
+(defun lemmax--apply-config (infos folders)
+  "INFOS, each file with no header of its own taking the entry of FOLDERS
+whose folder is the longest that holds it."
+  (mapcar
+   (lambda (info)
+     (let* ((file (plist-get info :file))
+            (best (and folders (not (lemmax--own-settings-p info))
+                       (car (sort (cl-remove-if-not (lambda (f) (string-prefix-p (car f) file))
+                                                    (copy-sequence folders))
+                                  (lambda (a b) (> (length (car a)) (length (car b)))))))))
+       (if (not best)
+           info
+         (let ((s (cdr best)) (out (copy-sequence info)))
+           (setq out (plist-put out :tests (plist-get s :tests)))
+           (setq out (plist-put out :opted (and (plist-get s :tests) t)))
+           (setq out (plist-put out :code (plist-get s :code)))
+           (setq out (plist-put out :test-paths (plist-get s :test-paths)))
+           (setq out (plist-put out :markers-in (plist-get s :markers-in)))
+           (plist-put out :listed t)))))
+   infos))
+
+(defun lemmax--lint-config (staged)
+  "Findings for the config itself: one that does not read, an unknown key,
+a FOLDER that holds no tracked file."
+  (let ((text (lemmax--config-text (and staged ""))))
+    (when text
+      (let ((res (lemmax--config-read text))
+            (tracked (lemmax--lines (lemmax--git-out "ls-files"))))
+        (dolist (p (cdr res))
+          (lemmax--finding lemmax-config-file 1 nil p "see lemmax help for the config's form"))
+        (dolist (f (car res))
+          (unless (or (string-empty-p (car f))
+                      (cl-some (lambda (p) (string-prefix-p (car f) p)) tracked))
+            (lemmax--finding lemmax-config-file 1 nil
+                             (format "the folder %s holds no tracked file" (car f))
+                             "fix the folder, or remove its entry")))))))
+
 (defun lemmax--worktree-files ()
   "Parsed infos of the repo's git-tracked .org files, from the work tree."
-  (cl-loop for f in (lemmax--lines (lemmax--git-out "ls-files" "*.org"))
-           when (file-readable-p f)
-           collect (lemmax--parse (with-temp-buffer (insert-file-contents f) (buffer-string)) f)))
+  (lemmax--apply-config
+   (cl-loop for f in (lemmax--lines (lemmax--git-out "ls-files" "*.org"))
+            when (file-readable-p f)
+            collect (lemmax--parse (with-temp-buffer (insert-file-contents f) (buffer-string)) f))
+   (lemmax--config nil)))
 
 (defun lemmax--rev-files (rev)
   "Parsed infos of the .org files at REV: \"\" for the index, \"HEAD\" for HEAD."
@@ -169,9 +270,11 @@ property drawer, trimmed (RT-17)."
                    (lemmax--lines (lemmax--git-out "ls-files" "*.org"))
                  (cl-remove-if-not (lambda (f) (string-suffix-p ".org" f))
                                    (lemmax--lines (lemmax--git-out "ls-tree" "-r" "--name-only" rev))))))
-    (cl-loop for f in names
-             for c = (lemmax--git-out "show" (concat rev ":" f))
-             when c collect (lemmax--parse c f))))
+    (lemmax--apply-config
+     (cl-loop for f in names
+              for c = (lemmax--git-out "show" (concat rev ":" f))
+              when c collect (lemmax--parse c f))
+     (lemmax--config rev))))
 
 (defun lemmax--opted (infos) (cl-remove-if-not (lambda (i) (plist-get i :opted)) infos))
 (defun lemmax--listed (infos) (cl-remove-if-not (lambda (i) (plist-get i :listed)) infos))
@@ -342,10 +445,11 @@ property drawer, trimmed (RT-17)."
                                              (not (member a '("--staged" "--no-tests")))))
                            args)))
       (when bad (lemmax--err "lemmax: unknown option %s; see lemmax lint --help" bad) (kill-emacs 1)))
+    (lemmax--lint-config staged)
     (let* ((infos (lemmax--opted (if staged (lemmax--rev-files "") (lemmax--worktree-files))))
            (only (and only (mapcar (lambda (f) (file-relative-name (expand-file-name f) default-directory)) only))))
       (if (null infos)
-          (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS:")
+          (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-markers infos only staged)
         (unless no-tests (lemmax--lint-verify infos only))
@@ -541,8 +645,9 @@ With CACHED, read the staged copies."
         (lemmax--out "    %s" l)))))
 
 (defun lemmax--opted-here-p ()
-  "Whether this repo has an opted-in file; a git grep, so no parse."
-  (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" "^#\\+LEMMAX_TESTS:" "--" "*.org"))))
+  "Whether this repo has an opted-in file or a config; a git grep, so no parse."
+  (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" "^#\\+LEMMAX_TESTS:" "--" "*.org")))
+      (zerop (car (lemmax--git "cat-file" "-e" (concat ":" lemmax-config-file))))))
 
 (defun lemmax--projects-with (id)
   "Git roots under ~/repos, other than this one, whose opted-in files hold ID (RT-19)."
@@ -812,7 +917,13 @@ example: lemmax list --ready -p ~/repos/arcadia_docs"
 Each command takes -h, --help and help.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
 instead of the one here. list takes it more than once: one table each.
-lint, commit-msg and trace read files whose header has #+LEMMAX_TESTS:.
+lint, commit-msg and trace read files whose header has #+LEMMAX_TESTS:, or
+that lemmax/config.eld names, by folder:
+  (:folders ((\"requirements/\" :tests \"CMD\" :code (\"src/\")
+              :test-paths (\"tests/\") :markers-in (\"../code\"))))
+A file takes the entry with the longest folder that holds it; a file with a
+#+LEMMAX_* line of its own uses only its own header. The config is read as
+data and never run. So lemmas may be headings in one file, or one per file.
 list and next-id read every requirements file: requirements.org, files under
 a requirements/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>

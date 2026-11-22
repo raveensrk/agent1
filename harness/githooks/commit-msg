@@ -4,7 +4,7 @@
 rules/git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
 off (2026-10-08), but pi and other harnesses can still write one, so git
 itself refuses it. A human co-author passes. Comment lines (#) are ignored.
-In a repo whose requirements file opts in (#+LEMMAX_TESTS:), it then runs
+In a repo whose requirements opt in (#+LEMMAX_TESTS: or lemmax/config.eld), it then runs
 lemmax commit-msg: a code commit names a requirement id (RT-11).
 
 Runs for every repo through the global core.hooksPath, which points here:
@@ -62,7 +62,8 @@ def main(argv):
     # RT-11: in a repo whose requirements opt in, a code commit names an id.
     # The grep keeps every other repo fast: Emacs never starts there.
     opted = subprocess.run(["git", "grep", "--cached", "-q", "-E", r"^#\+LEMMAX_TESTS:", "--", "*.org"],
-                           capture_output=True).returncode == 0
+                           capture_output=True).returncode == 0 or subprocess.run(
+        ["git", "cat-file", "-e", ":lemmax/config.eld"], capture_output=True).returncode == 0
     if opted:
         lemmax = os.environ.get("LEMMAX") or os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),

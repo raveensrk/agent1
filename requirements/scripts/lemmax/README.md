@@ -16,7 +16,8 @@ lemmax lint --staged          # what the pre-commit hook runs
 - `lemmax` is a Bash launcher for `lemmax.el`, run by `emacs -Q --script`.
 - `install` puts a wrapper on PATH as `~/.local/bin/lemmax`.
 - `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, 8 at a time.
-- `lint`, `commit-msg` and `trace` read files whose header has `#+LEMMAX_TESTS:`.
+- `lint`, `commit-msg` and `trace` read files whose header has `#+LEMMAX_TESTS:`,
+  or that `lemmax/config.eld` names (see Config).
   `list` and `next-id` read every requirements file.
 - The global hooks in `harness/githooks` call it: `pre-commit` runs
   `lint --staged --no-tests`, `commit-msg` runs `commit-msg`. A repo with no
@@ -33,3 +34,20 @@ lemma done from 2026-11-22 on with no code marker. `lemmax list --unmarked`
 shows older done lemmas without one. Test paths default to `test/`, `tests/`,
 `e2e/`, `_test.`, `-test.`, `.spec.` and `_tests.`; `#+LEMMAX_TEST_PATHS:`
 replaces them.
+
+## Config
+
+`lemmax/config.eld` at a repo's root holds its settings by folder, so lemmas
+may be headings in one file or one lemma per `.org` file, with no header:
+
+```elisp
+(:folders
+ (("requirements/" :tests "./run_tests --addresses" :code ("src/")
+   :test-paths ("tests/") :markers-in ("../code"))))
+```
+
+- A file takes the entry with the longest folder that holds it; `""` is the root.
+- A file with any `#+LEMMAX_*` line of its own uses only its header.
+- It is read as data with `read-eval` off and never run; `lint` reports a form
+  that does not read, an unknown key, or a folder with no tracked file.
+- The hooks and `lemmax_lint.py` treat a repo with the file as opted in.
