@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # harness-check: {"id": "lemmax_lint", "applies": ["*.org"], "quadrant": "feedback/computational"}
+# lemma: RT-10
 """A requirements file that opts in keeps requirements.org's format (RT-10).
 
 For each candidate .org file whose header has #+LEMMAX_TESTS:, or in a repo

@@ -2,6 +2,7 @@
 
 ;; Each test builds an invented repo under ~/tmp and runs the real launcher.
 ;; Commits in test repos skip every hook. Run: requirements/scripts/lemmax/run_tests
+;; lemma: RT-12
 
 (require 'ert)
 (require 'cl-lib)

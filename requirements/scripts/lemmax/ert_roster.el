@@ -1,4 +1,5 @@
 ;;; ert_roster.el --- list ERT tests with their time, for run_tests  -*- lexical-binding: t; -*-
+;; lemma: RT-12
 (require 'ert)
 (require 'cl-lib)
 

@@ -2,6 +2,7 @@
 # install - put lemmax on PATH as ~/.local/bin/lemmax, a wrapper script, not a link.
 # usage: requirements/scripts/lemmax/install [-h|--help]
 # example: bash requirements/scripts/lemmax/install
+# lemma: 01a1ff25-116d-73f1-a45e-dd77e482a983
 set -euo pipefail
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
