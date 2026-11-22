@@ -1546,3 +1546,10 @@ run of its finding's why text."
     (should-not (string-match-p "^  pull_request_target:" w))
     (should-not (string-match-p "\\${{ *secrets\\." w))
     (should (string-match-p "Never run\nlemmax under `pull_request_target`" readme))))
+
+;;;; 01a20336-cb25-779d-9e80-e04a22bd235d: where lemmax runs is said
+
+(ert-deftest lemmax-readme-platforms ()
+  (let ((readme (with-temp-buffer (insert-file-contents (expand-file-name "README.md" rt-dir)) (buffer-string))))
+    (dolist (w '("macOS and Linux" "WSL or Git Bash" "Emacs 29 or newer" "git and Bash" "Perl"))
+      (should (string-search w readme)))))

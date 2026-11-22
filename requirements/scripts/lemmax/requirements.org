@@ -916,13 +916,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** OPEN Where lemmax runs is said                                            :cli:
+** DONE Where lemmax runs is said                                            :cli:
 :PROPERTIES:
 :ID:          01a20336-cb25-779d-9e80-e04a22bd235d
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-readme-platforms
+:IMPLEMENTED: 2026-11-22
 :END:
 - The README says: macOS and Linux; Windows through WSL or Git Bash; Emacs 29 or newer, git, Bash, Perl for run_tests
 - Asked by the owner on 2026-11-22
