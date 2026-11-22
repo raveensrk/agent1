@@ -449,6 +449,14 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (ert-deftest lemmax-harness-check-finding ()
   (let ((d (rt-repo (rt-files (rt-done "RQ-1" :approved nil)))))
     (should (string-match-p "^requirements\\.org:6: RQ-1: DONE with no :APPROVED:" (rt-check d "requirements.org\n")))))
+;; lemma: 01a203e8-0c8b-713e-8f21-ffee439bcbb0
+(ert-deftest lemmax-harness-check-setupfile ()
+  ;; A file that opts in only through #+SETUPFILE: is checked.
+  (let ((d (rt-repo (list (cons "lemmax.setup" "#+TODO: OPEN | DONE DROPPED\n#+LEMMAX_TESTS: ./tests.sh\n")
+                          (cons "requirements.org" (concat "#+SETUPFILE: lemmax.setup\n\n" (rt-done "RQ-1" :approved nil)))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))))))
+    (should (string-match-p "^requirements\\.org:[0-9]+: RQ-1: DONE with no :APPROVED:" (rt-check d "requirements.org\n")))))
+
 (ert-deftest lemmax-harness-check-plain-org ()
   (let ((d (rt-repo (list (cons "notes.org" (rt-req "RQ-1" :approved nil))))))
     (should (equal "" (rt-check d "notes.org\n")))))

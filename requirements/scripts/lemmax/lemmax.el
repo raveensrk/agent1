@@ -864,8 +864,8 @@ of its own, the :TEST: addresses of its proofs as :verify."
            (tracked (lemmax--lines (lemmax--git-out "ls-files" "*.org")))
            (only (and only
                       (mapcar (lambda (f)
-                                (let ((rel (file-relative-name (expand-file-name f (or lemmax--cwd default-directory))
-                                                               default-directory)))
+                                (let ((rel (file-relative-name (file-truename (expand-file-name f (or lemmax--cwd default-directory)))
+                                                               (file-truename default-directory))))
                                   (unless (member rel tracked)
                                     (lemmax--err "lemmax: %s: not a tracked .org file" f)
                                     (kill-emacs 1))

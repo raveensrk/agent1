@@ -773,7 +773,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: The edit check opts in as the hooks do
+* PASSED Proof: The edit check opts in as the hooks do
 :PROPERTIES:
 :ID:          01a203e8-f7ca-7104-bb1c-1f4821e22bf0
 :PROVES:      01a203e8-0c8b-713e-8f21-ffee439bcbb0

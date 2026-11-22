@@ -1154,12 +1154,13 @@ Evidence: =emacs -Q --batch= with =org-modules= nil ran =(org-mode)= in 0.48 s, 
 - Asked by the owner on 2026-11-22
 Evidence: lemmax ends each command with =kill-emacs=, which a test can catch by binding it to a =throw=.
 
-** CONJECTURE The edit check opts in as the hooks do                                :hooks:
+** LEMMA The edit check opts in as the hooks do                                :hooks:
 :PROPERTIES:
 :ID:          01a203e8-0c8b-713e-8f21-ffee439bcbb0
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - =harness/checks/lemmax_lint.py= lints an edited =.org= file when the file holds =#+LEMMAX_TESTS:=, its repo has =lemmax/config.eld=, or its repo has a tracked =*.setup= file holding =#+LEMMAX_TESTS:=, as the global hooks decide
 - So a file that opts in only through =#+SETUPFILE:= is checked on each edit
