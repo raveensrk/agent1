@@ -197,11 +197,14 @@ then the bare words left."
       (append (nreverse ids)
               (split-string (replace-regexp-in-string "\\[\\[id:[^]\n]+\\]\\(?:\\[[^]\n]*\\]\\)?\\]" " " v))))))
 
-(defun lemmax--record (get id state title file line end raw &optional tags-own tags)
+(defun lemmax--record (get id state title file line end raw &optional tags-own tags before)
   "A lemma's plist; GET reads one of its properties, RAW is its text;
 TAGS-OWN its own tags, TAGS those with the inherited and file tags."
   (list :id id :state state :title title :file file :line line :end end
         :tags-own tags-own :tags tags
+        ;; lemma: 01a203a6-a716-738e-a95b-18086050d5eb
+        :before before
+        :blocker (let ((v (funcall get "BLOCKER"))) (and v (lemmax--id-list v)))
         :created (funcall get "CREATED")
         :last-edited (funcall get "LAST_EDITED")
         :approved (funcall get "APPROVED")
@@ -276,7 +279,8 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                                        ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
                                        (mapcar #'substring-no-properties (org-get-tags nil t))
                                        (let ((org-use-tag-inheritance t))
-                                         (delete-dups (mapcar #'substring-no-properties (org-get-tags)))))
+                                         (delete-dups (mapcar #'substring-no-properties (org-get-tags))))
+                                       (lemmax--ordered-before))
                        reqs)))))))
         (let* ((tests-kw (or (assoc "LEMMAX_TESTS" kw) (assoc "REQTRACE_TESTS" kw)))
                (code-kw (or (assoc "LEMMAX_CODE" kw) (assoc "REQTRACE_CODE" kw)))
@@ -300,6 +304,18 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                             (member "requirements" (split-string (or (file-name-directory file) "") "/" t))
                             (and todo (string-match-p "\\_<\\(?:OPEN\\|CONJECTURE\\)\\_>" todo) t))
                 :reqs (nreverse reqs)))))))
+
+;; lemma: 01a203a6-a716-738e-a95b-18086050d5eb
+(defun lemmax--ordered-before ()
+  "At a heading whose parent has :ORDERED: t, its earlier siblings as (ID . STATE)."
+  (save-excursion
+    (when (and (save-excursion (and (org-up-heading-safe)
+                                    (let ((v (org-entry-get nil "ORDERED"))) (and v (not (member v '("nil" "")))))))
+               t)
+      (let (out)
+        (while (org-get-last-sibling)
+          (push (cons (let ((v (org-entry-get nil "ID"))) (and v (string-trim v))) (org-get-todo-state)) out))
+        out))))
 
 ;;;; Config (01a202b0-1d09-75f3-99dc-677a4b2ec0be)
 
@@ -626,6 +642,18 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                    "write it as YYYY-MM-DD"))))
           (when (and (equal state "DONE") (not (lemmax--task-p r)) (null (plist-get r :verify)))
             (lemmax--finding f l id "DONE with no :VERIFY:" "name the checks that verify it"))
+          ;; lemma: 01a203a6-a716-738e-a95b-18086050d5eb
+          (when (lemmax--done-p state)
+            (dolist (b (plist-get r :before))
+              (unless (or (lemmax--done-p (cdr b)) (lemmax--dropped-p (cdr b)) (equal (cdr b) "PASSED"))
+                (lemmax--finding f l id (format "ORDERED: proven before its earlier sibling %s, which is %s"
+                                                (or (car b) "(no id)") (or (cdr b) "no state"))
+                                 "prove the earlier sibling first, or drop :ORDERED:"))))
+          (when (and (plist-get r :blocker)
+                     (not (equal (sort (copy-sequence (remove "previous-sibling" (plist-get r :blocker))) #'string<)
+                                 (sort (copy-sequence (plist-get r :needs)) #'string<))))
+            (lemmax--finding f l id ":BLOCKER: and :USES: name different ids"
+                             "make :BLOCKER: name the ids :USES: names"))
           (if (lemmax--unproven-p r)
               (lemmax--lint-unproven r all f l id state)
             (lemmax--lint-math r all f l id state)))

@@ -2031,3 +2031,20 @@ run of its finding's why text."
       (let ((out (nth 1 (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d2 "migrate" "--links" "requirements.org")))))
         (should (string-match-p "^\\+:USES: +\\[\\[id:RQ-2\\]\\[Title of RQ-2\\]\\]" out))
         (should (string-match-p "^\\+:PROVES: +\\[\\[id:RQ-1\\]\\[Title of RQ-1\\]\\]" out))))))
+
+;;;; 01a203a6-a716-738e-a95b-18086050d5eb: ORDERED and BLOCKER
+
+(ert-deftest lemmax-ordered-blocker ()
+  :tags '(timeout-60)
+  (let* ((parent "* CONJECTURE Parent\n:PROPERTIES:\n:ID:          RQ-0\n:ORDERED:     t\n:CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\n")
+         (d (rt-repo (rt-math-files (list parent (rt-lemma "RQ-1" :level 2) (rt-conj "RQ-2" :level 2))
+                                    (list (rt-proof "PR-1" "RQ-1"))))))
+    (rt-should-clean (rt-run d "lint"))
+    (rt-set d "requirements.org" (concat rt-math-head parent (rt-conj "RQ-2" :level 2) (rt-lemma "RQ-1" :level 2)))
+    (rt-should-find (rt-run d "lint" "--no-tests") "ORDERED: proven before its earlier sibling RQ-2, which is CONJECTURE")
+    (rt-set d "requirements.org"
+            (concat rt-math-head (rt-lemma "RQ-1")
+                    (replace-regexp-in-string ":END:" ":BLOCKER:     RQ-9\n:END:"
+                                              (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))))
+    (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 RQ-3")))
+    (rt-should-find (rt-run d "lint" "--no-tests") ":BLOCKER: and :USES: name different ids")))

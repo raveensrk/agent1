@@ -693,7 +693,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: ORDERED and BLOCKER agree with lemmax
+* PASSED Proof: ORDERED and BLOCKER agree with lemmax
 :PROPERTIES:
 :ID:          01a203b2-01c9-7100-868f-41e1b524becb
 :PROVES:      01a203a6-a716-738e-a95b-18086050d5eb

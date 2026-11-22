@@ -91,6 +91,14 @@ Three kinds need no proof:
 `:USES:`, `:PROVES:`, `:FOR:`, `:ABOUT:` and `:FOLLOWS:` take bare ids and
 `[[id:X][label]]` links, mixed. `lemmax migrate --links` writes links.
 
+## ORDERED and BLOCKER
+
+<!-- lemma: 01a203a6-a716-738e-a95b-18086050d5eb -->
+
+Lint reads Org's blocking properties and stays the authority: under
+`:ORDERED: t`, a child may not be proven before an earlier sibling, and a
+`:BLOCKER:` must name the ids `:USES:` names.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->
