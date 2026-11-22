@@ -4,6 +4,7 @@ Lint, trace and list a repo's org requirements.
 Requirements: [requirements.org](requirements.org), RT-1 to RT-15.
 
 <!-- lemma: 01a20336-cb25-779d-9e80-e04a22bd235d -->
+
 Runs on macOS and Linux; on Windows through WSL or Git Bash, not natively.
 Needs Emacs 29 or newer, git and Bash; `run_tests` also needs Perl.
 
