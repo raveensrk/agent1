@@ -2312,3 +2312,44 @@ committed on DAY, with EXTRA files."
                        (list (cons "src/README.md" "Plain prose.\n") (cons "src/LICENSE" "MIT\n")
                              (cons "src/run" "#!/bin/sh\necho hi\n")))))
     (should (equal "src/run:2\n" (nth 1 (rt-run d "list" "--uncovered"))))))
+
+;;;; Environment (01a204fc-dec1-7ac6-8408-c3a69aedfebd)
+
+;; lemma: 01a204fc-e0b3-7557-a319-f3ab61c5bc52
+(defun rt-env-repo (env)
+  "A repo with one proven lemma and requirements.env.org holding ENV."
+  (rt-repo (append (rt-math-files (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1")))
+                   (list (cons "requirements.env.org" env)))))
+
+(ert-deftest lemmax-env-toolchain-version ()
+  :tags '(timeout-30)
+  (rt-should-find (rt-run (rt-env-repo "* Toolchain\n** Emacs\n") "lint" "--no-tests")
+                  "requirements\\.env\\.org:2: -: toolchain Emacs has no :VERSION:")
+  (rt-should-find (rt-run (rt-env-repo "* Tools\n** Emacs\n") "lint" "--no-tests")
+                  "Tools is no environment section")
+  (rt-should-clean (rt-run (rt-env-repo "* Toolchain\n** Emacs\n:PROPERTIES:\n:VERSION: 29.4\n:END:\n") "lint" "--no-tests")))
+
+(ert-deftest lemmax-env-secret-no-value ()
+  :tags '(timeout-30)
+  (rt-should-clean (rt-run (rt-env-repo "* Secrets\n** API key\n:PROPERTIES:\n:WHERE: the macOS keychain\n:END:\n")
+                           "lint" "--no-tests"))
+  (rt-should-find (rt-run (rt-env-repo "* Secrets\n** API key\n:PROPERTIES:\n:WHERE: keychain\n:VALUE: sk-123\n:END:\n")
+                          "lint" "--no-tests")
+                  "secret API key holds more than its :WHERE:")
+  (rt-should-find (rt-run (rt-env-repo "* Secrets\n** API key\nsk-123\n") "lint" "--no-tests")
+                  "secret API key holds more than its :WHERE:"))
+
+(ert-deftest lemmax-env-first-in-plan ()
+  :tags '(timeout-30)
+  (let* ((d (rt-env-repo (concat "* Setup\n** Install Emacs\nbrew install emacs\n"
+                                 "* Toolchain\n** Emacs\n:PROPERTIES:\n:VERSION: 29.4\n:END:\n")))
+         (out (nth 1 (rt-run d "plan")))
+         (j (json-parse-string (nth 1 (rt-run d "plan" "--json")) :object-type 'alist))
+         (steps (alist-get 'steps j)))
+    (should (string-match-p "\\`Step 1: Toolchain: Emacs  version=29\\.4\n" out))
+    (should (string-match-p "^Step 2: Setup: Install Emacs\n.*\n  | brew install emacs" out))
+    (should (string-match-p "^Step 3: RQ-1 LEMMA" out))
+    (should (string-match-p "Total: 3 steps" out))
+    (should (equal "environment" (alist-get 'kind (aref steps 0))))
+    (should (equal "29.4" (alist-get 'version (alist-get 'properties (aref steps 0)))))
+    (should (equal "lemma" (alist-get 'kind (aref steps 2))))))

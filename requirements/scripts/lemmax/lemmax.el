@@ -882,6 +882,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
         (lemmax--lint-footnotes infos only staged)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-coverage infos only staged)
+        (lemmax--lint-env only)
         (lemmax--lint-links infos only staged)
         (lemmax--lint-markers-in infos only)
         (dolist (i infos)
@@ -1737,6 +1738,78 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
                        (concat (if (> proofs 0) (format "; %d proof%s" proofs (if (= proofs 1) "" "s")) "") others)))))
     (kill-emacs 0)))
 
+;;;; Environment (01a204fc-dec1-7ac6-8408-c3a69aedfebd)
+
+;; lemma: 01a204fc-dec1-7ac6-8408-c3a69aedfebd
+(defconst lemmax--env-sections '("Toolchain" "Data" "Setup" "Secrets")
+  "The top headings of a FILE.env.org, in the order a rebuild takes them.")
+
+(defun lemmax--env-items (text file)
+  "The items of FILE.env.org TEXT: a list of plists (:section :title :file :line
+:props :body), one per heading under a section, in file order."
+  (with-temp-buffer
+    (insert text)
+    (let ((org-inhibit-startup t)) (delay-mode-hooks (org-mode)))
+    (let (items)
+      (org-map-entries
+       (lambda ()
+         (when (= 2 (org-current-level))
+           (let ((section (save-excursion (org-up-heading-safe) (org-get-heading t t t t)))
+                 (beg (point)))
+             (push (list :section section :title (org-get-heading t t t t) :file file
+                         :line (line-number-at-pos beg)
+                         :props (cl-remove-if (lambda (p) (member (car p) '("CATEGORY")))
+                                              (org-entry-properties nil 'standard))
+                         :body (string-trim
+                                (let ((end (save-excursion (outline-next-heading) (point))))
+                                  (save-excursion
+                                    (forward-line 1)
+                                    (when (looking-at-p "[ \t]*:PROPERTIES:")
+                                      (re-search-forward "^[ \t]*:END:" end t) (forward-line 1))
+                                    (buffer-substring-no-properties (min (point) end) end)))))
+                   items)))))
+      (nreverse items))))
+
+(defun lemmax--env-files ()
+  "Each tracked FILE.env.org of the repo here: a list of (FILE . TEXT)."
+  (cl-loop for f in (lemmax--lines (lemmax--git-out "ls-files" "*.env.org"))
+           when (file-readable-p f)
+           collect (cons f (with-temp-buffer (insert-file-contents f) (buffer-string)))))
+
+(defun lemmax--env ()
+  "Every environment item of the repo here, sections in rebuild order."
+  (let ((items (cl-mapcan (lambda (f) (lemmax--env-items (cdr f) (car f))) (lemmax--env-files))))
+    (cl-loop for sec in lemmax--env-sections
+             append (cl-remove-if-not (lambda (i) (equal (plist-get i :section) sec)) items))))
+
+(defun lemmax--lint-env (only)
+  "A Toolchain item with no :VERSION:, a Secrets item holding more than :WHERE:,
+and a top heading that is no section."
+  (unless only
+    (dolist (f (lemmax--env-files))
+      (with-temp-buffer
+        (insert (cdr f))
+        (let ((org-inhibit-startup t)) (delay-mode-hooks (org-mode)))
+        (org-map-entries
+         (lambda ()
+           (when (and (= 1 (org-current-level)) (not (member (org-get-heading t t t t) lemmax--env-sections)))
+             (lemmax--finding (car f) (line-number-at-pos) nil
+                              (format "%s is no environment section" (org-get-heading t t t t))
+                              "use Toolchain, Data, Setup or Secrets")))))
+      (dolist (i (lemmax--env-items (cdr f) (car f)))
+        (pcase (plist-get i :section)
+          ("Toolchain"
+           (unless (cdr (assoc "VERSION" (plist-get i :props)))
+             (lemmax--finding (car f) (plist-get i :line) nil
+                              (format "toolchain %s has no :VERSION:" (plist-get i :title))
+                              "add :VERSION: with its exact version, as 29.4")))
+          ("Secrets"
+           (let ((extra (cl-remove-if (lambda (p) (equal (car p) "WHERE")) (plist-get i :props))))
+             (when (or extra (not (string-empty-p (plist-get i :body))))
+               (lemmax--finding (car f) (plist-get i :line) nil
+                                (format "secret %s holds more than its :WHERE:" (plist-get i :title))
+                                "keep only :WHERE:; a secret's value is never stored")))))))))
+
 ;;;; plan (01a204fc-d718-7e50-95a3-4ca72898a15b)
 
 ;; lemma: 01a204fc-d718-7e50-95a3-4ca72898a15b
@@ -1808,7 +1881,10 @@ higher priority, none last, then older by :CREATED:, then by id."
         (_ (lemmax--err "lemmax: unknown option %s; see lemmax plan --help" a) (kill-emacs 1))))
     (let* ((rows (lemmax--rows t))
            (plan (lemmax--plan rows))
-           (steps (car plan)))
+           (steps (car plan))
+           ;; lemma: 01a204fc-dec1-7ac6-8408-c3a69aedfebd
+           (env (lemmax--env))
+           (k (length env)))
       (when (cdr plan)
         (let ((first (cl-find (car (cdr plan)) rows :key (lambda (r) (plist-get r :id)) :test #'equal)))
           (lemmax--finding (plist-get first :file) (plist-get first :line) (car (cdr plan))
@@ -1820,8 +1896,17 @@ higher priority, none last, then older by :CREATED:, then by id."
                           (list (cons 'version 1)
                                 (cons 'steps
                                       (vconcat
-                                       (cl-loop for r in steps for n from 1
-                                                collect (list (cons 'step n) (cons 'id (plist-get r :id))
+                                       (cl-loop for e in env for n from 1
+                                                collect (list (cons 'step n) (cons 'kind "environment")
+                                                              (cons 'section (plist-get e :section))
+                                                              (cons 'title (plist-get e :title))
+                                                              (cons 'file (plist-get e :file)) (cons 'line (plist-get e :line))
+                                                              (cons 'properties (or (mapcar (lambda (p) (cons (intern (downcase (car p))) (cdr p)))
+                                                                                            (plist-get e :props))
+                                                                                    (make-hash-table)))
+                                                              (cons 'statement (plist-get e :body))))
+                                       (cl-loop for r in steps for n from (1+ k)
+                                                collect (list (cons 'step n) (cons 'kind "lemma") (cons 'id (plist-get r :id))
                                                               (cons 'state (plist-get r :state))
                                                               (cons 'title (plist-get r :title))
                                                               (cons 'file (plist-get r :file)) (cons 'line (plist-get r :line))
@@ -1833,7 +1918,13 @@ higher priority, none last, then older by :CREATED:, then by id."
                                                                                                        (cons 'test (vconcat (plist-get p :verify)))))
                                                                                      (lemmax--plan-proofs r rows))))))))))
                          "\n"))
-        (cl-loop for r in steps for n from 1
+        (cl-loop for e in env for n from 1
+                 do (lemmax--out "Step %d: %s: %s%s" n (plist-get e :section) (plist-get e :title)
+                                 (mapconcat (lambda (p) (format "  %s=%s" (downcase (car p)) (cdr p))) (plist-get e :props) ""))
+                 (lemmax--out "  at: %s:%d" (plist-get e :file) (plist-get e :line))
+                 (dolist (l (split-string (plist-get e :body) "\n" t)) (lemmax--out "  | %s" l))
+                 (lemmax--out ""))
+        (cl-loop for r in steps for n from (1+ k)
                  do (lemmax--out "Step %d: %s %s %s" n (plist-get r :id) (plist-get r :state) (plist-get r :title))
                  (lemmax--out "  at: %s:%d" (plist-get r :file) (plist-get r :line))
                  (when (plist-get r :needs) (lemmax--out "  uses: %s" (string-join (plist-get r :needs) " ")))
@@ -1843,7 +1934,7 @@ higher priority, none last, then older by :CREATED:, then by id."
                    (lemmax--out "  proof %s %s: %s" (plist-get p :id) (plist-get p :state)
                                 (string-join (plist-get p :verify) " ")))
                  (lemmax--out ""))
-        (lemmax--out "Total: %d step%s" (length steps) (if (= 1 (length steps)) "" "s")))
+        (let ((n (+ k (length steps)))) (lemmax--out "Total: %d step%s" n (if (= 1 n) "" "s"))))
       (kill-emacs 0))))
 
 ;;;; new-id (01a1fe0c-9c5c-7057-8edc-bc68ccfa0490)
@@ -2273,6 +2364,8 @@ of it PASSED; a THEOREM's :USES: names the lemmas it uses.
 Tasks, in FILE.tasks.org (TODO | DONE CANCELLED, :FOR: IDS), are dev chores;
 notes, in FILE.notes.org (no state, :ABOUT: IDS), are text; an AXIOM heading
 is a rule accepted without proof. None of the three needs a proof.
+FILE.env.org says what a rebuild needs besides code: Toolchain (:VERSION:),
+Data, Setup and Secrets (:WHERE: only, never a value) headings.
 list and next-id read every requirements file: requirements.org, files under
 a requirements/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>
@@ -2315,14 +2408,16 @@ tests; without it nothing of the repo's runs, and verify says unchecked.
      "usage: lemmax plan [--project DIR] [--json]
 Print the steps to rebuild the project from scratch, one lemma at a time.
 example: lemmax plan --json"
-     "One step per AXIOM, LEMMA or THEOREM (and old DONE): its id, state, title,
+     "First one step per item of each FILE.env.org: Toolchain, Data, Setup, then
+Secrets. Then one step per AXIOM, LEMMA or THEOREM (and old DONE): its id, state, title,
 file:line, the ids it :USES:, its statement, and each proof with its :TEST:.
 A step comes after every step it uses; axioms come first. Steps with no
 order between them go higher priority first ([#A] before [#B], none last),
 then older by :CREATED:, then by id. The same files print the same plan.
 A :USES: cycle is a finding naming its ids, and exit 1.
---json  {\"version\": 1, \"steps\": [{step, id, state, title, file, line, uses,
-        statement, proofs: [{id, state, test}]}]}")
+--json  {\"version\": 1, \"steps\": [{step, kind, ...}]}: kind environment has
+        section, title, file, line, properties, statement; kind lemma has id,
+        state, title, file, line, uses, statement, proofs: [{id, state, test}]")
     (list
      "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--uncovered] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
 Print every requirement in a table, grouped by state and approval.

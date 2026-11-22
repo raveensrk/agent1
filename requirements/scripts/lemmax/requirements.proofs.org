@@ -803,7 +803,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: The environment is captured
+* PASSED Proof: The environment is captured
 :PROPERTIES:
 :ID:          01a204fc-e0b3-7557-a319-f3ab61c5bc52
 :PROVES:      01a204fc-dec1-7ac6-8408-c3a69aedfebd

@@ -15,7 +15,7 @@ Needs Emacs 29 or newer, git and Bash; `run_tests` also needs Perl.
 ```sh
 lemmax list --ready           # every requirement, grouped; only approved and open
 lemmax list --all --json      # every repo under ~/repos, for an AI
-lemmax plan                   # the steps to rebuild the project, one lemma at a time
+lemmax plan                   # the steps to rebuild the project: environment, then one lemma at a time
 lemmax next-id M              # the next free id, as M-15
 lemmax trace RT-3             # one requirement's links, tests and commits
 lemmax trace --dot | dot -Tsvg > lemmas.svg   # the lemma graph

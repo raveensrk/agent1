@@ -23,6 +23,8 @@ The first public release.
 - Coverage: with `:coverage-required-from DAY`, lint refuses code above a
   file's first `lemma:` marker in files changed from DAY; `list --uncovered`
   lists them. A proof's id marks its tests, never other code.
+- `FILE.env.org`: Toolchain (`:VERSION:`), Data, Setup and Secrets (`:WHERE:`
+  only); lint checks them and `plan` prints them as its first steps.
 - Tags: declared in `#+TAGS:`, nested by group tags, inherited; `list --tag`
   and `trace --tag`. Tags are not a heading's text.
 - Tasks (`FILE.tasks.org`), notes (`FILE.notes.org`) and `AXIOM` headings,
