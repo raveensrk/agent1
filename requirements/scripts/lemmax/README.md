@@ -70,6 +70,20 @@ ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
   `lemmax migrate FILE` prints the move as a diff; `--write` makes it.
 
+## Tasks, notes and axioms
+
+<!-- lemma: 01a2038d-cc5f-7324-8de8-1b067284e640 -->
+
+Three kinds need no proof:
+
+- A task is a dev chore in `FILE.tasks.org`: `TODO | DONE CANCELLED`, an `:ID:`,
+  dates, and `:FOR:` with the ids it serves. A commit may name its id.
+- A note is text in `FILE.notes.org`: an `:ID:`, no state, `:ABOUT:` any ids.
+- An `AXIOM` heading is a rule accepted without proof; agent1's are in
+  `requirements/axioms.org`. A proof may not prove one; a theorem may use one.
+
+`list` groups each kind apart; lint checks their links.
+
 ## Code markers
 
 A comment line whose first words are `lemma:` and ids links code to its lemmas.

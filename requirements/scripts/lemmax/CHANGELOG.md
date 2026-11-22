@@ -15,6 +15,8 @@ The first public release.
 - `lemma:` code markers, checked both ways.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
+- Tasks (`FILE.tasks.org`), notes (`FILE.notes.org`) and `AXIOM` headings,
+  which need no proof; a commit may name a task id.
 - The math names: conjectures (`CONJECTURE | LEMMA THEOREM REFUTED`),
   proofs in `FILE.proofs.org` (`OPEN | PASSED`, `:PROVES:`, `:TEST:`),
   `:USES:` for theorems, and `lemmax migrate`. Old files still read.

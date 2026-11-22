@@ -1880,3 +1880,71 @@ run of its finding's why text."
     (let ((dot (nth 1 (rt-run d "trace" "--dot"))))
       (should (string-match-p "\"PR-1\" \\[label=[^]]*shape=ellipse\\]" dot))
       (should (string-match-p "\"PR-1\" -> \"RQ-2\" \\[style=dotted\\];" dot)))))
+
+;;;; 01a2038d-cc5f-7324-8de8-1b067284e640 and the rest: tasks, notes, axioms, task ids
+
+(defconst rt-tasks-head "#+title: Tasks\n#+TODO: TODO | DONE CANCELLED\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n\n")
+(defconst rt-notes-head "#+title: Notes\n#+LEMMAX_TESTS: ./tests.sh\n\n")
+
+(cl-defun rt-task (id &key (state "TODO") for)
+  (concat "* " (if state (concat state " ") "") "Task " id "\n:PROPERTIES:\n:ID:          " id "\n"
+          (if for (format ":FOR:         %s\n" for) "")
+          ":CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\nTidy it.\n"))
+
+(cl-defun rt-note (id &key about state)
+  (concat "* " (if state (concat state " ") "") "Note " id "\n:PROPERTIES:\n:ID:          " id "\n"
+          (if about (format ":ABOUT:       %s\n" about) "") ":END:\nA thought.\n"))
+
+(defun rt-kinds-files (&rest extra)
+  (append (rt-math-files (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1"))) extra))
+
+(ert-deftest lemmax-tasks-file ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-kinds-files (cons "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1" :for "RQ-1")
+                                                                    (rt-task "TK-2" :state "DONE")
+                                                                    (rt-task "TK-3" :state "CANCELLED")))))))
+    (rt-should-clean (rt-run d "lint"))
+    (let ((out (nth 1 (rt-run d "list"))))
+      (should (string-match-p "^Tasks (3)\n  TK-1 " out))
+      (should (string-match-p "; 3 tasks" out)))
+    (should (string-match-p "TK-1" (nth 1 (rt-run d "list" "--state" "todo"))))
+    (should (string-match-p "TK-3" (nth 1 (rt-run d "list" "--state" "cancelled"))))
+    (should (string-match-p "for: RQ-1" (nth 1 (rt-run d "trace" "TK-1"))))
+    (rt-set d "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1" :for "RQ-9")))
+    (rt-should-find (rt-run d "lint" "--no-tests") ":FOR: names RQ-9, which no record has")
+    (rt-set d "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1" :state nil)))
+    (rt-should-find (rt-run d "lint" "--no-tests") "a task's state is TODO, DONE or CANCELLED, not none")))
+
+(ert-deftest lemmax-notes-file ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-kinds-files (cons "ideas.notes.org" (concat rt-notes-head (rt-note "NT-1" :about "RQ-1 PR-1")))))))
+    (rt-should-clean (rt-run d "lint"))
+    (should (string-match-p "^Notes (1)\n  NT-1 " (nth 1 (rt-run d "list"))))
+    (should (string-match-p "about: RQ-1 PR-1" (nth 1 (rt-run d "trace" "NT-1"))))
+    (rt-set d "ideas.notes.org" (concat rt-notes-head (rt-note "NT-1" :about "RQ-7")))
+    (rt-should-find (rt-run d "lint" "--no-tests") ":ABOUT: names RQ-7, which no record has")
+    (rt-set d "ideas.notes.org" (concat "#+TODO: TODO | DONE\n" rt-notes-head (rt-note "NT-1" :state "TODO")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "a note has no state, not TODO")))
+
+(ert-deftest lemmax-axioms ()
+  :tags '(timeout-60)
+  (let* ((ax "* AXIOM Git\n:PROPERTIES:\n:ID:          AX-1\n:CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\nSee [[file:rules/git.md][Git]].\n")
+         (d (rt-repo (rt-kinds-files (cons "axioms.org" (concat "#+TODO: | AXIOM\n#+LEMMAX_TESTS: ./tests.sh\n\n" ax))))))
+    (rt-should-clean (rt-run d "lint"))
+    (should (string-match-p "^Axioms (1)\n  AX-1 " (nth 1 (rt-run d "list"))))
+    (should (string-match-p "AX-1" (nth 1 (rt-run d "list" "--state" "axiom"))))
+    ;; A theorem may use an axiom.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-conj "RQ-1" :state "THEOREM" :uses "AX-1" :implemented "2026-01-06")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 AX-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests") ":PROVES: names the axiom AX-1; an axiom is accepted without proof")))
+
+(ert-deftest lemmax-commit-task-id ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-kinds-files (cons "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1")))))))
+    (rt-set d "src/x.clj" "(ns x) ;; tidy\n")
+    (rt-git d "add" "-A")
+    (rt-set d "msg" "refactor: tidy (TK-1)\n")
+    (rt-should-clean (rt-run d "commit-msg" "msg"))
+    (rt-set d "msg" "refactor: tidy\n")
+    (rt-should-find (rt-run d "commit-msg" "msg") "names no requirement id")))

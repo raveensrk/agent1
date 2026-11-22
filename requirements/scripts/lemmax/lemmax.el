@@ -22,14 +22,24 @@
 (defconst lemmax-version "1.0.0" "lemmax's release, semver; CHANGELOG.md names each.")
 
 ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
-(defconst lemmax-states '("OPEN" "DONE" "DROPPED" "CONJECTURE" "LEMMA" "THEOREM" "REFUTED" "PASSED")
-  "Every state: the old three, a conjecture's four, a proof's PASSED.")
+;; lemma: 01a2038d-cc5f-7324-8de8-1b067284e640 01a2038d-cc86-72be-b225-eeff9ee2c7a6
+(defconst lemmax-states '("OPEN" "DONE" "DROPPED" "CONJECTURE" "LEMMA" "THEOREM" "REFUTED" "PASSED"
+                          "TODO" "CANCELLED" "AXIOM")
+  "Every state: the old three, a conjecture's four, a proof's PASSED, a task's and AXIOM.")
 (defun lemmax--done-p (s) "Whether S is proven: DONE, LEMMA or THEOREM." (and (member s '("DONE" "LEMMA" "THEOREM")) t))
 (defun lemmax--open-p (s) "Whether S is not yet proven: OPEN or CONJECTURE." (and (member s '("OPEN" "CONJECTURE")) t))
 (defun lemmax--dropped-p (s) "Whether S is given up: DROPPED or REFUTED." (and (member s '("DROPPED" "REFUTED")) t))
 (defun lemmax--new-state-p (s) "Whether S is one of the math names of a conjecture."
   (and (member s '("CONJECTURE" "LEMMA" "THEOREM" "REFUTED")) t))
 (defun lemmax--proofs-file-p (file) (string-suffix-p ".proofs.org" (or file "")))
+;; lemma: 01a2038d-cc5f-7324-8de8-1b067284e640 01a2038d-cc73-7594-9dd3-d758bee5aadc 01a2038d-cc86-72be-b225-eeff9ee2c7a6
+(defun lemmax--task-p (r) "Whether R is a task: it lives in a .tasks.org file."
+  (string-suffix-p ".tasks.org" (or (plist-get r :file) "")))
+(defun lemmax--note-p (r) "Whether R is a note: it lives in a .notes.org file."
+  (string-suffix-p ".notes.org" (or (plist-get r :file) "")))
+(defun lemmax--axiom-p (r) "Whether R is an axiom." (equal (plist-get r :state) "AXIOM"))
+(defun lemmax--unproven-p (r) "Whether R needs no proof: a task, a note or an axiom."
+  (or (lemmax--task-p r) (lemmax--note-p r) (lemmax--axiom-p r)))
 (defun lemmax--proof-p (r) "Whether R is a proof: it has :PROVES:, or lives in a proofs file."
   (and (or (plist-get r :proves) (lemmax--proofs-file-p (plist-get r :file))) t))
 (defconst lemmax-dates '("CREATED" "LAST_EDITED" "APPROVED" "IMPLEMENTED" "REVIEWED"))
@@ -184,6 +194,8 @@ once a run, however many revisions hold it."
         :needs (append (let ((v (funcall get "NEEDS"))) (and v (split-string v)))
                        (let ((v (funcall get "USES"))) (and v (split-string v))))
         :proves (let ((v (funcall get "PROVES"))) (and v (split-string v)))
+        :for (let ((v (funcall get "FOR"))) (and v (split-string v)))
+        :about (let ((v (funcall get "ABOUT"))) (and v (split-string v)))
         :own-verify (and (funcall get "VERIFY") t)
         ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
         :aliases (let ((v (funcall get "ALIASES"))) (and v (split-string v)))
@@ -200,7 +212,8 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
   (setq content (replace-regexp-in-string "\r$" "" (string-remove-prefix "\ufeff" content)))
   (with-temp-buffer
     (insert content)
-    (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "|" "DONE" "DROPPED" "LEMMA" "THEOREM" "REFUTED" "PASSED")))
+    (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM" "REFUTED" "PASSED"
+                                         "CANCELLED" "AXIOM")))
           (org-element-use-cache nil)
           (org-inhibit-startup t))
       (delay-mode-hooks (org-mode))
@@ -390,7 +403,7 @@ a FOLDER that holds no tracked file."
 
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
 (defconst lemmax--candidate-re
-  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+TODO:.*\\b(OPEN|CONJECTURE)\\b)"
+  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+TODO:.*\\b(OPEN|CONJECTURE)\\b)"
   "A line only a file that may hold lemmas has, for git grep -E.")
 
 (defvar lemmax--files-cache (make-hash-table :test #'equal)
@@ -417,6 +430,7 @@ lemmax keyword or an OPEN #+TODO: in. No other .org file is read."
                                                      '("--" "*.org")))))))
     (cl-remove-if-not
      (lambda (f) (or (member f hits)
+                     (string-suffix-p ".tasks.org" f) (string-suffix-p ".notes.org" f)
                      (equal (file-name-nondirectory f) "requirements.org")
                      (member "requirements" (split-string (or (file-name-directory f) "") "/" t))
                      (cl-some (lambda (d) (string-prefix-p d f)) folders)))
@@ -564,13 +578,13 @@ of its own, the :TEST: addresses of its proofs as :verify."
                  (lemmax--finding f l id "the id is neither a UUID v7 nor shaped [A-Z]+-[0-9]+"
                                     "make a new one with python3 -c 'import uuid; print(uuid.uuid7())'")))
           ;; lemma: RT-4
-          (when (and (lemmax--done-p state) (not (lemmax--proof-p r)) (null (plist-get r :approved)))
+          (when (and (lemmax--done-p state) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r)) (null (plist-get r :approved)))
             (lemmax--finding f l id (format "%s with no :APPROVED:" state)
                                "get the owner's approval, then add :APPROVED: with its day"))
-          (unless (plist-get r :created) (lemmax--finding f l id "no :CREATED:" "add :CREATED: YYYY-MM-DD"))
-          (unless (plist-get r :last-edited)
+          (unless (or (plist-get r :created) (lemmax--note-p r)) (lemmax--finding f l id "no :CREATED:" "add :CREATED: YYYY-MM-DD"))
+          (unless (or (plist-get r :last-edited) (lemmax--note-p r))
             (lemmax--finding f l id "no :LAST_EDITED:" "add :LAST_EDITED: YYYY-MM-DD"))
-          (when (and (lemmax--done-p state) (not (lemmax--proof-p r)) (null (plist-get r :implemented)))
+          (when (and (lemmax--done-p state) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r)) (null (plist-get r :implemented)))
             (lemmax--finding f l id (format "%s with no :IMPLEMENTED:" state) "add :IMPLEMENTED: with the day it was built"))
           (when (and (or (lemmax--open-p state) (lemmax--dropped-p state)) (not (lemmax--proof-p r))
                      (plist-get r :implemented))
@@ -582,9 +596,11 @@ of its own, the :TEST: addresses of its proofs as :verify."
               (when (and v (not (lemmax--day-p v)))
                 (lemmax--finding f l id (format "%s is not a real day: %s" (substring (symbol-name p) 1) v)
                                    "write it as YYYY-MM-DD"))))
-          (when (and (equal state "DONE") (null (plist-get r :verify)))
+          (when (and (equal state "DONE") (not (lemmax--task-p r)) (null (plist-get r :verify)))
             (lemmax--finding f l id "DONE with no :VERIFY:" "name the checks that verify it"))
-          (lemmax--lint-math r all f l id state))
+          (if (lemmax--unproven-p r)
+              (lemmax--lint-unproven r all f l id state)
+            (lemmax--lint-math r all f l id state)))
         (when id
           (if (gethash id seen)
               (when (funcall show r)
@@ -638,6 +654,24 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                    ":NEEDS: makes a cycle back to this id"
                                    "remove one :NEEDS: link of the cycle")))))))))
 
+;; lemma: 01a2038d-cc5f-7324-8de8-1b067284e640 01a2038d-cc73-7594-9dd3-d758bee5aadc 01a2038d-cc86-72be-b225-eeff9ee2c7a6
+(defun lemmax--lint-unproven (r all f l id state)
+  "The rules of a task, a note or an axiom R, one of ALL, at F:L."
+  (let ((known (lambda (x) (cl-find x all :key (lambda (y) (plist-get y :id)) :test #'equal))))
+    (cond ((lemmax--task-p r)
+           (unless (member state '("TODO" "DONE" "CANCELLED"))
+             (lemmax--finding f l id (format "a task's state is TODO, DONE or CANCELLED, not %s" (or state "none"))
+                              "give it one of those"))
+           (dolist (x (plist-get r :for))
+             (unless (funcall known x)
+               (lemmax--finding f l id (format ":FOR: names %s, which no record has" x) "fix the id, or remove it"))))
+          ((lemmax--note-p r)
+           (when state
+             (lemmax--finding f l id (format "a note has no state, not %s" state) "remove the state"))
+           (dolist (x (plist-get r :about))
+             (unless (funcall known x)
+               (lemmax--finding f l id (format ":ABOUT: names %s, which no record has" x) "fix the id, or remove it")))))))
+
 ;; lemma: 01a20369-38f7-7229-8232-1b8cbb98e6bc
 (defun lemmax--lint-math (r all f l id state)
   "The rules of conjectures and proofs for R, one of ALL, at F:L."
@@ -655,9 +689,13 @@ of its own, the :TEST: addresses of its proofs as :verify."
               (lemmax--finding f l id "a proof with no :PROVES:" "name the conjectures it proves in :PROVES:")
             (dolist (c (plist-get r :proves))
               (let ((x (funcall known c)))
-                (when (or (null x) (lemmax--proof-p x))
-                  (lemmax--finding f l id (format ":PROVES: names %s, which no conjecture has" c)
-                                   "fix the id, or remove it")))))
+                (cond ((and x (lemmax--axiom-p x))
+                       ;; lemma: 01a2038d-cc86-72be-b225-eeff9ee2c7a6
+                       (lemmax--finding f l id (format ":PROVES: names the axiom %s; an axiom is accepted without proof" c)
+                                        "remove it from :PROVES:"))
+                      ((or (null x) (lemmax--proof-p x) (lemmax--unproven-p x))
+                       (lemmax--finding f l id (format ":PROVES: names %s, which no conjecture has" c)
+                                        "fix the id, or remove it"))))))
           (when (and (equal state "PASSED") (null (plist-get r :verify)))
             (lemmax--finding f l id "a PASSED proof with no :TEST:" "name the tests that prove it in :TEST:")))
       (when (equal state "PASSED")
@@ -682,7 +720,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
       (when (equal state "THEOREM")
         (dolist (u (plist-get r :needs))
           (let ((x (funcall known u)))
-            (when (and x (not (lemmax--done-p (plist-get x :state))))
+            (when (and x (not (lemmax--done-p (plist-get x :state))) (not (lemmax--axiom-p x)))
               (lemmax--finding f l id (format "a THEOREM that uses %s, which is %s, not proven" u (or (plist-get x :state) "no state"))
                                "prove it first, or make this CONJECTURE"))))))))
 
@@ -697,7 +735,8 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                "make the command print one test address a line")
           (dolist (r (plist-get info :reqs))
             ;; lemma: 01a20369-38f7-7229-8232-1b8cbb98e6bc
-            (when (if (lemmax--proof-p r) (equal (plist-get r :state) "PASSED") (lemmax--done-p (plist-get r :state)))
+            (when (if (lemmax--proof-p r) (equal (plist-get r :state) "PASSED")
+                    (and (lemmax--done-p (plist-get r :state)) (not (lemmax--unproven-p r))))
               (dolist (a (plist-get r :verify))
                 (unless (member a (cdr res))
                   (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
@@ -713,7 +752,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
     (dolist (r (lemmax--all-reqs staged))
       (let* ((id (plist-get r :id)) (old (and id (gethash id before)))
              (f (plist-get r :file)) (l (plist-get r :line))
-             (done (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r)))))
+             (done (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r)))))
         (when id
           (if old
               (let ((changed (not (equal (plist-get old :text) (plist-get r :text)))))
@@ -877,7 +916,7 @@ after the config's :markers-required-from with no code marker."
                (lemmax--finding (nth 1 m) (nth 2 m) (nth 0 m) (format "the marker names a %s lemma" (plist-get r :state))
                                 "remove the marker, or the code it marks")))))
     (dolist (r reqs)
-      (when (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r))
+      (when (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r))
                  (or (null only) (member (plist-get r :file) only))
                  (plist-get r :implemented) from (not (string< (plist-get r :implemented) from))
                  (not (cl-some (lambda (m) (and (equal (nth 0 m) (plist-get r :id)) (not (nth 3 m)))) markers)))
@@ -945,6 +984,8 @@ With CACHED, read the staged copies."
                   text))
 
 ;; lemma: RT-7
+;; lemma: 01a2038d-cc9a-7496-b943-49cb1444826d
+;; A task's id counts: the ids come from every record, tasks too.
 (defun lemmax-commit-msg (args)
   (unless (= (length args) 1)
     (lemmax--err "lemmax: commit-msg takes one MSGFILE; see lemmax commit-msg --help")
@@ -1071,6 +1112,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
     (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
     ;; lemma: 01a20369-393d-77bf-a35a-a1c03780a751
     (when (plist-get r :proves) (lemmax--out "  proves: %s" (string-join (plist-get r :proves) " ")))
+    (when (plist-get r :for) (lemmax--out "  for: %s" (string-join (plist-get r :for) " ")))
+    (when (plist-get r :about) (lemmax--out "  about: %s" (string-join (plist-get r :about) " ")))
     (dolist (p (plist-get r :proofs))
       (lemmax--out "  proof: %s %s" (car p) (or (cdr p) "-")))
     (let ((from (and id (lemmax--backlinks id reqs lemmax--links))))
@@ -1244,6 +1287,9 @@ One git process reads every revision of a file; a blob seen before is skipped."
   (let ((state (plist-get r :state)))
     ;; lemma: 01a20369-393d-77bf-a35a-a1c03780a751
     (cond ((lemmax--proof-p r) "proofs")
+          ((lemmax--task-p r) "tasks")
+          ((lemmax--note-p r) "notes")
+          ((lemmax--axiom-p r) "axioms")
           ((lemmax--done-p state) "done")
           ((lemmax--dropped-p state) "dropped")
           ((plist-get r :approved) "approved")
@@ -1251,7 +1297,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
 
 (defconst lemmax--group-names
   '(("waiting" . "Waiting for approval") ("approved" . "Approved and open")
-    ("done" . "Done") ("dropped" . "Dropped") ("proofs" . "Proofs")))
+    ("done" . "Done") ("dropped" . "Dropped") ("proofs" . "Proofs")
+    ("tasks" . "Tasks") ("notes" . "Notes") ("axioms" . "Axioms")))
 
 (defun lemmax--rows (no-tests)
   "Rows for every listed requirement of the repo here."
@@ -1293,7 +1340,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
               (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r))
                    (not (cl-some (lambda (m) (not (nth 3 m))) (plist-get r :markers)))))
           (or (not (plist-get opts :ready))
-              (and (lemmax--open-p (plist-get r :state)) (not (lemmax--proof-p r)) (plist-get r :approved)))))
+              (and (lemmax--open-p (plist-get r :state)) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r))
+                   (plist-get r :approved)))))
    rows))
 
 (defun lemmax--trunc (s n) (if (> (length s) n) (concat (substring s 0 (1- n)) "…") s))
@@ -1343,8 +1391,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
       (let ((a (pop args)))
         (pcase a
           ("--state" (let ((v (pop args)))
-                       (unless (member v '("open" "done" "dropped" "conjecture" "lemma" "theorem" "refuted" "passed"))
-                         (lemmax--err "lemmax: --state takes open, done, dropped, conjecture, lemma, theorem, refuted or passed")
+                       (unless (member v '("open" "done" "dropped" "conjecture" "lemma" "theorem" "refuted" "passed" "todo" "cancelled" "axiom"))
+                         (lemmax--err "lemmax: --state takes open, done, dropped, conjecture, lemma, theorem, refuted, passed, todo, cancelled or axiom")
                          (kill-emacs 1))
                        (setq opts (plist-put opts :state v))))
           ("--section" (let ((v (pop args)))
@@ -1425,14 +1473,17 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
         (when (car p) (lemmax--out "")))
       (let ((all (cl-mapcan (lambda (p) (copy-sequence (cdr p))) per)))
         (let ((proofs (cl-count-if #'lemmax--proof-p all))
-              (conj (cl-remove-if #'lemmax--proof-p all)))
+              (others (cl-loop for (k . p) in '(("task" . lemmax--task-p) ("note" . lemmax--note-p) ("axiom" . lemmax--axiom-p))
+                               for n = (cl-count-if p all)
+                               when (> n 0) concat (format "; %d %s%s" n k (if (= n 1) "" "s"))))
+              (conj (cl-remove-if (lambda (r) (or (lemmax--proof-p r) (lemmax--unproven-p r))) all)))
           (lemmax--out "Total: %d requirement%s%s: %d open, %d done, %d dropped%s"
                        (length conj) (if (= 1 (length conj)) "" "s")
                        (if many (let ((n (length per))) (format " in %d repo%s" n (if (= n 1) "" "s"))) "")
                        (cl-count-if (lambda (r) (lemmax--open-p (plist-get r :state))) conj)
                        (cl-count-if (lambda (r) (lemmax--done-p (plist-get r :state))) conj)
                        (cl-count-if (lambda (r) (lemmax--dropped-p (plist-get r :state))) conj)
-                       (if (> proofs 0) (format "; %d proof%s" proofs (if (= proofs 1) "" "s")) "")))))
+                       (concat (if (> proofs 0) (format "; %d proof%s" proofs (if (= proofs 1) "" "s")) "") others)))))
     (kill-emacs 0)))
 
 ;;;; new-id (01a1fe0c-9c5c-7057-8edc-bc68ccfa0490)
@@ -1710,6 +1761,9 @@ title and :STATE: its OPEN, DONE or DROPPED, or CONJECTURE, LEMMA, THEOREM or RE
 A conjecture is proven by proofs: headings in FILE.proofs.org, OPEN or PASSED,
 with :PROVES: IDS and :TEST: addresses. A LEMMA or THEOREM needs every proof
 of it PASSED; a THEOREM's :USES: names the lemmas it uses.
+Tasks, in FILE.tasks.org (TODO | DONE CANCELLED, :FOR: IDS), are dev chores;
+notes, in FILE.notes.org (no state, :ABOUT: IDS), are text; an AXIOM heading
+is a rule accepted without proof. None of the three needs a proof.
 list and next-id read every requirements file: requirements.org, files under
 a requirements/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>

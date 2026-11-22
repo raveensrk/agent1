@@ -59,7 +59,7 @@ agent1's requirement workflow has a name: Lemmax, from "lemma". In mathematics a
 Conjecture + proof = lemma. The names are the files' own words, not only an explanation.
 | Mathematics    | Lemmax                                                               |
 |----------------+----------------------------------------------------------------------|
-| Axiom          | an agent1 rule: where every project starts, never proven             |
+| Axiom          | an agent1 rule, an =AXIOM= heading in [[file:axioms.org][axioms.org]]: never proven      |
 | Definition     | a glossary term a conjecture uses, never proven                      |
 | Conjecture     | a requirement not yet proven: statement, ideas, design; =CONJECTURE= |
 | Proof          | a heading in =FILE.proofs.org=: =:PROVES:= ids, =:TEST:= its tests   |
@@ -68,16 +68,20 @@ Conjecture + proof = lemma. The names are the files' own words, not only an expl
 | Corollary      | a project's requirement that =:FOLLOWS:= an agent1 rule              |
 | Counterexample | a failing proof test: the proof is OPEN, its lemma CONJECTURE again  |
 | Refuted        | a conjecture disproven or given up, kept saying why; =REFUTED=       |
+| Task           | a dev chore in =FILE.tasks.org=: =TODO | DONE CANCELLED=, needs no proof |
+| Note           | text in =FILE.notes.org=: no state, =:ABOUT:= ids, needs no proof     |
 | Q.E.D.         | =PASSED= on the last proof, then =LEMMA= or =THEOREM=                |
 - A conjecture becomes a lemma only when it has a proof and every proof of it is PASSED.
 - A theorem is proven only when its own proofs pass and every lemma it uses is proven.
 - A failing proof test is a counterexample: its proof goes OPEN, and the lemma goes back to CONJECTURE until it passes; only the owner makes a conjecture REFUTED.
+- An axiom is accepted without proof: a proof never =:PROVES:= one, and a theorem may =:USES:= one.
 - A project that follows these rules "follows Lemmax".
 - Changed on 2026-11-22: the math names are the files' own words: states CONJECTURE, LEMMA, THEOREM, REFUTED; proofs in =FILE.proofs.org=; =:USES:= for =:NEEDS:=; a proof's =:TEST:= for =:VERIFY:=.
 - Named on 2026-11-21. A web search that day found no "Lemmax"; Lemax, one m, is a travel-booking software company.
 ** Every change starts as a requirement
 An idea that changes what the app does, shows or stores becomes a conjecture at once; there is no other inbox.
-- Chores that change no behaviour live in a notes file.
+- Chores that change no behaviour are tasks in a =*.tasks.org= file, with =:FOR:= naming the ids they serve; thoughts with no state are notes in a =*.notes.org= file, with =:ABOUT:=.
+- A commit may name a task's id instead of a conjecture's.
 - Every app commit names the requirement it builds: =(S-8)=.
 - A =commit-msg= hook refuses a source or test commit that names no existing id.
 ** Feasibility first

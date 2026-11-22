@@ -62,6 +62,9 @@ Draft as an org heading, CONJECTURE (old files: OPEN), with:
 - Its proof: a heading in `FILE.proofs.org`, OPEN, with a new `:ID:`,
   `:PROVES:` the conjecture's id and `:TEST:` the named check (old files:
   `:VERIFY:` on the conjecture). `lemmax migrate FILE` moves an old file over.
+- A chore that changes no behaviour is not a requirement: make it a task in
+  `FILE.tasks.org` (`TODO`, `:FOR:` ids). A thought with no state is a note in
+  `FILE.notes.org` (`:ABOUT:` ids).
 - Body - what it does, in plain lines.
 - One `Evidence:` line with links or paths.
 
