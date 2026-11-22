@@ -769,3 +769,177 @@ Evidence: the hardening review of 2026-11-22.
 - An :ID: holding a space is a finding: "an id has no spaces"
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
+
+** OPEN lint reads only files that can hold lemmas, once                  :lint:
+:PROPERTIES:
+:ID:          01a20336-c4d6-73d3-a429-0a755d277123
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-reads-candidates-only ert/lemmax-parse-once ert/lemmax-big-notes-repo-time
+:END:
+- A run parses each file at most once: work tree, index and HEAD each cached
+- It reads opted-in files, files the config names, requirements files, and files a git grep finds holding :ID: and OPEN, DONE or DROPPED; no other .org file
+- lint --staged in a repo of 1500 note files and one requirements file takes under 2 s
+- Asked by the owner on 2026-11-22
+Evidence: probe 2026-11-22: 16 s for that repo; lemmax.el reads every tracked .org file in 13 places.
+
+** OPEN FILE arguments are paths from where lemmax runs                    :cli:
+:PROPERTIES:
+:ID:          01a20336-c583-720a-b661-c9b5a5dec1a4
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-file-arg-from-cwd ert/lemmax-file-arg-unknown
+:END:
+- lint FILE... reads each FILE from the current folder, as ../requirements.org from a subfolder
+- A FILE that is not a tracked .org file exits 1: "lemmax: FILE: not a tracked .org file"
+- Asked by the owner on 2026-11-22
+Evidence: probe 2026-11-22: lemmax lint ../requirements.org from a subfolder passed on a broken file.
+
+** OPEN agent1's own rules are config, with neutral defaults                :lint:
+:PROPERTIES:
+:ID:          01a20336-c611-73c8-bb70-4a8e70e675d1
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-config-markers-required-from ert/lemmax-config-repos ert/lemmax-messages-neutral
+:END:
+- :markers-required-from DAY: a DONE lemma implemented on or after DAY needs a code marker; none by default
+- :repos DIR: the folder of list --all and of trace in other projects; LEMMAX_REPOS, then ~/repos
+- Findings, help and docs name no agent1 id, rule or file; examples use RQ-1
+- agent1's lemmax/config.eld sets :markers-required-from "2026-11-22", so agent1 keeps its rule
+- Asked by the owner on 2026-11-22
+Evidence: lemmax.el holds 2026-11-22, RF-3, "agent1's id rule" and "what requirements.org forbids".
+
+** OPEN lemmax install-hooks puts lemmax in a repo's hooks               :cli:
+:PROPERTIES:
+:ID:          01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-install-hooks ert/lemmax-install-hooks-chains ert/lemmax-install-hooks-again
+:END:
+- Writes .git/hooks/pre-commit and commit-msg that call lemmax from PATH, with the same opt-in test as agent1's hooks
+- An existing hook is kept and called after lemmax's; running it twice changes nothing
+- It is the one lemmax command that writes; it writes only those 2 files
+- agent1's global hooks keep working as they are
+- Asked by the owner on 2026-11-22
+Evidence: harness/githooks/pre-commit finds lemmax at ../../requirements/scripts/lemmax.
+
+** OPEN Tests clean up after themselves                                     :tests:
+:PROPERTIES:
+:ID:          01a20336-c75e-78ac-bf5e-7a72262f73e6
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-tests-clean-up
+:END:
+- Test repos go under $TMPDIR, else /tmp, and each test deletes its own when done, passed or failed
+- LEMMAX_KEEP_TMP=1 keeps them
+- Asked by the owner on 2026-11-22
+Evidence: 6538 folders, 1.4 GB, under ~/tmp after this session's runs.
+
+** OPEN lemmax says its version; MIT licence; a changelog                    :cli:
+:PROPERTIES:
+:ID:          01a20336-c80d-733a-a251-ad26a0ebf7d3
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-version ert/lemmax-licence-and-changelog
+:END:
+- lemmax --version prints "lemmax VERSION", semver, the same in lemmax.el and CHANGELOG.md; the first is 1.0.0
+- requirements/scripts/lemmax/LICENSE is the MIT licence; CHANGELOG.md names each version's changes
+- list --json version stays the JSON shape's own number
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
+
+** OPEN CI passes on every Emacs of its matrix                               :tests:
+:PROPERTIES:
+:ID:          01a20336-c8a5-702e-86c3-655c93d44c9e
+:NEEDS:       01a202f3-863b-7c04-9728-0c9dd9346002
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-ci-matrix
+:END:
+- The workflow is green on each Emacs of its matrix on the release commit
+- Asked by the owner on 2026-11-22
+Evidence: run 1 failed in setup-emacs: Nix flakes off on the runner.
+
+** OPEN Markers come only from sibling repos                                 :lint:
+:PROPERTIES:
+:ID:          01a20336-c953-745d-aef4-90ee2141e08d
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-markers-in-siblings-only
+:END:
+- #+LEMMAX_MARKERS_IN: and :markers-in take only ../NAME, a folder beside the repo that is a git repo
+- Any other path, or one that is no git repo, is a lint finding and is not read
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
+
+** OPEN Fork pull requests are safe in the shipped workflow                  :tests:
+:PROPERTIES:
+:ID:          01a20336-c9e9-7664-ba5c-e5e12d249d48
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-ci-safe-trigger
+:END:
+- The workflow runs on push and pull_request only, with permissions: contents: read
+- The README says lint runs the repo's test command, and never to run lemmax under pull_request_target
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
+
+** OPEN Output is stable, and lint speaks JSON                               :cli:
+:PROPERTIES:
+:ID:          01a20336-ca8d-75bf-bedc-33da69c29468
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-lint-json ert/lemmax-exit-codes
+:END:
+- The README pins the finding line, "lemmax: FILE:LINE: ID: WHY; FIX", and exit codes 0 clean, 1 findings or failure, 2 cannot run
+- lint --json prints {"version": 1, "findings": [{file, line, id, why, fix}]} on stdout, with the same exit code
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
+
+** OPEN Where lemmax runs is said                                            :cli:
+:PROPERTIES:
+:ID:          01a20336-cb25-779d-9e80-e04a22bd235d
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-readme-platforms
+:END:
+- The README says: macOS and Linux; Windows through WSL or Git Bash; Emacs 29 or newer, git, Bash, Perl for run_tests
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
+
+** OPEN Config checks every path it names                                    :lint:
+:PROPERTIES:
+:ID:          01a20336-cbc7-70a7-9473-18325683fba6
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-config-empty-tests ert/lemmax-config-unknown-paths
+:END:
+- lint reports an empty :tests, and a :code or :test-paths entry that matches no tracked file
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
+
+** OPEN The name is lemmax everywhere                                        :tests:
+:PROPERTIES:
+:ID:          01a20336-cc5d-70ae-878b-b241ecc9ef61
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-no-old-name
+:END:
+- Tests named reqtrace-* become lemmax-*, :VERIFY: lines follow; RT-1 to RT-19 titles and text say lemmax
+- The renamed DONE lemmas go OPEN in one commit and DONE again in the next, as lint asks
+- A test finds reqtrace only in README's "lemmax was reqtrace" line and the old-keyword reader
+- Asked by the owner on 2026-11-22
+Evidence: the release review of 2026-11-22.
