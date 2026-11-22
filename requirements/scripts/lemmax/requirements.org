@@ -1124,3 +1124,30 @@ Evidence: a spike in batch Emacs read =#+LEMMAX_TESTS:=, =#+TODO:= and =#+TAGS:=
 - org-cite =[cite:...]= is left to export; lint does not check it
 - Asked by the owner on 2026-11-22
 Evidence: Org footnote syntax: https://orgmode.org/manual/Creating-Footnotes.html
+
+** CONJECTURE A lemmax run loads only the Org it needs                              :tests:
+:PROPERTIES:
+:ID:          01a203c1-983f-77e1-a367-92ea000ab72f
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+A lemmax run on a small repo takes about 0.5 s, not 1.2 s.
+- Measured on 2026-11-22: 1.16 s a run; the first =(org-mode)= took 0.68 s of it, almost all of it loading the link modules in =org-modules= (gnus, bbdb, irc, w3m and more), which lemmax never uses
+- lemmax sets =org-modules= to nil before it loads Org; =publish= loads Org's default link modules itself, so exported links work as before
+- The parse is the same: the goldens and every test give the same output
+- Asked by the owner on 2026-11-22
+Evidence: =emacs -Q --batch= with =org-modules= nil ran =(org-mode)= in 0.48 s, against 1.17 s with the default, on this Mac.
+
+** CONJECTURE Tests run lemmax in their own Emacs                                   :tests:
+:PROPERTIES:
+:ID:          01a203c1-983f-77e1-a367-92eb7cba2954
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- A test's =rt-run= calls =lemmax-main= in the test's own Emacs: stdout, stderr and the exit code are caught, =default-directory= is the folder given, and lemmax's state is reset each call
+- A few tests still run the real launcher in a process: the CLI wrapper, =--version=, and the git hooks
+- A test that ran lemmax 8 times takes about 1 s, not 12 s
+- Asked by the owner on 2026-11-22
+Evidence: lemmax ends each command with =kill-emacs=, which a test can catch by binding it to a =throw=.

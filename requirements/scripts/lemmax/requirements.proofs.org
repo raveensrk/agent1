@@ -752,3 +752,23 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: A lemmax run loads only the Org it needs
+:PROPERTIES:
+:ID:          01a203c1-c398-74b3-9ac0-ff71b00ec816
+:PROVES:      01a203c1-983f-77e1-a367-92ea000ab72f
+:TEST:        ert/lemmax-golden-trace ert/lemmax-golden-list ert/lemmax-run-time
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: Tests run lemmax in their own Emacs
+:PROPERTIES:
+:ID:          01a203c1-c3ae-7763-99e6-0ba7c87657bd
+:PROVES:      01a203c1-983f-77e1-a367-92eb7cba2954
+:TEST:        ert/lemmax-in-process ert/lemmax-cli-short-help
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
