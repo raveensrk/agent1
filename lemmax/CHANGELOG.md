@@ -13,6 +13,8 @@ The first public release.
 - `[[id:]]` links, backlinks, `:ALIASES:`, `:REFS:`, `list --unlinked` and
   `trace --dot`, after org-roam and org-id.
 - `lemma:` code markers, checked both ways.
+- `list` and `next-id` read `theory.org` and `theory/` by name, beside
+  `requirements.org` and `requirements/`.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
 - `#+SETUPFILE:` keywords; footnote definitions checked.

@@ -1430,6 +1430,21 @@ run of its finding's why text."
         (should (equal (sort (copy-sequence read) #'string<)
                        '("notes/file-lemma.org" "notes/todo.org" "requirements.org" "requirements/gui.org")))))))
 
+;; lemma: 01a2058c-5dff-75bc-b089-998d5425915a
+(ert-deftest lemmax-reads-theory-files ()
+  ;; Unmarked theory.org, theory/a.org and requirements.org: list shows all
+  ;; three; lint checks none, since none has #+LEMMAX_TESTS:.
+  (let* ((file (lambda (id) (concat "#+TODO: CONJECTURE | LEMMA THEOREM REFUTED\n\n"
+                                    "* CONJECTURE A thing\n:PROPERTIES:\n:ID:          " id
+                                    "\n:CREATED:     2026-01-01\n:LAST_EDITED: 2026-01-01\n:END:\nBody.\n")))
+         (d (rt-repo (list (cons "theory.org" (funcall file "X-1"))
+                           (cons "theory/a.org" (funcall file "X-2"))
+                           (cons "requirements.org" (funcall file "X-3")))))
+         (out (nth 1 (rt-run d "list"))))
+    (dolist (id '("X-1" "X-2" "X-3"))
+      (should (string-match-p (concat "^  " id " ") out)))
+    (should (= 0 (nth 0 (rt-run d "lint" "--no-tests"))))))
+
 (ert-deftest lemmax-parse-once ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
     (rt-in d

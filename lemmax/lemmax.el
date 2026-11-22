@@ -316,8 +316,7 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                 :test-paths (let ((c (cadr (assoc "LEMMAX_TEST_PATHS" kw)))) (and c (split-string c)))
                 :markers-in (let ((c (cadr (assoc "LEMMAX_MARKERS_IN" kw)))) (and c (split-string c)))
                 :listed (or opted
-                            (equal (file-name-nondirectory file) "requirements.org")
-                            (member "requirements" (split-string (or (file-name-directory file) "") "/" t))
+                            (lemmax--theory-name-p file)
                             (and todo (string-match-p "\\_<\\(?:OPEN\\|CONJECTURE\\)\\_>" todo) t))
                 :reqs (nreverse reqs)))))))
 
@@ -465,6 +464,15 @@ a FOLDER that holds no tracked file."
                                (format "%s: :test-paths names %s, which no tracked file matches" (car f) tp)
                                "fix the pattern, or remove it"))))))))
 
+;; lemma: 01a2058c-5dff-75bc-b089-998d5425915a
+(defun lemmax--theory-name-p (file)
+  "Whether FILE is a theory file by name: requirements.org or theory.org, or a
+file under a requirements/ or theory/ folder."
+  (or (member (file-name-nondirectory file) '("requirements.org" "theory.org"))
+      (cl-intersection '("requirements" "theory")
+                       (split-string (or (file-name-directory file) "") "/" t)
+                       :test #'equal)))
+
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
 (defconst lemmax--candidate-re
   "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*\\b(OPEN|CONJECTURE)\\b)"
@@ -495,8 +503,7 @@ lemmax keyword or an OPEN #+TODO: in. No other .org file is read."
     (cl-remove-if-not
      (lambda (f) (or (member f hits)
                      (string-suffix-p ".tasks.org" f) (string-suffix-p ".notes.org" f)
-                     (equal (file-name-nondirectory f) "requirements.org")
-                     (member "requirements" (split-string (or (file-name-directory f) "") "/" t))
+                     (lemmax--theory-name-p f)
                      (cl-some (lambda (d) (string-prefix-p d f)) folders)))
      all)))
 
@@ -2366,8 +2373,8 @@ notes, in FILE.notes.org (no state, :ABOUT: IDS), are text; an AXIOM heading
 is a rule accepted without proof. None of the three needs a proof.
 FILE.env.org says what a rebuild needs besides code: Toolchain (:VERSION:),
 Data, Setup and Secrets (:WHERE: only, never a value) headings.
-list and next-id read every requirements file: requirements.org, files under
-a requirements/ folder, and files whose #+TODO names OPEN.
+list and next-id read every requirements file: requirements.org or theory.org,
+files under a requirements/ or theory/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>
 Exit 0 when clean, 1 on any finding or failure.")
     (lint
