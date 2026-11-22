@@ -1096,12 +1096,13 @@ Evidence: a spike ran =org-archive-subtree= in batch Emacs and moved a REFUTED h
 - Asked by the owner on 2026-11-22
 Evidence: a spike in batch Emacs ran =org-publish= after =org-id-update-id-locations=; =[[id:p-1][the proof]]= became =href="r.proofs.html#ID-p-1"=.
 
-** CONJECTURE SETUPFILE carries a file's keywords                                   :lint:
+** LEMMA SETUPFILE carries a file's keywords                                   :lint:
 :PROPERTIES:
 :ID:          01a203a6-a766-76c6-9931-753ee75e9318
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - A file's =#+SETUPFILE:= is read when lemmax reads its keywords: =#+TODO:=, =#+TAGS:=, =#+FILETAGS:=, =#+STARTUP:= and the =#+LEMMAX_*= lines, as Org reads them
 - One =lemmax.setup= per repo can hold them all; a relative path is read from the folder of the file that names it, in the work tree, also when lemmax reads an older revision

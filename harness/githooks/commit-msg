@@ -62,7 +62,7 @@ def main(argv):
         return 1
     # RT-11: in a repo whose requirements opt in, a code commit names an id.
     # The grep keeps every other repo fast: Emacs never starts there.
-    opted = subprocess.run(["git", "grep", "--cached", "-q", "-E", r"^#\+LEMMAX_TESTS:", "--", "*.org"],
+    opted = subprocess.run(["git", "grep", "--cached", "-q", "-E", r"^#\+LEMMAX_TESTS:", "--", "*.org", "*.setup"],
                            capture_output=True).returncode == 0 or subprocess.run(
         ["git", "cat-file", "-e", ":lemmax/config.eld"], capture_output=True).returncode == 0
     if opted:

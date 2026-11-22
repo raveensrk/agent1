@@ -733,7 +733,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: SETUPFILE carries a file's keywords
+* PASSED Proof: SETUPFILE carries a file's keywords
 :PROPERTIES:
 :ID:          01a203b8-08ba-757e-ac20-441a3b2c22b9
 :PROVES:      01a203a6-a766-76c6-9931-753ee75e9318

@@ -13,7 +13,7 @@ set -uo pipefail
 # lemma: RT-11
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-if git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' 2>/dev/null \
+if git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' '*.setup' 2>/dev/null \
 	|| git cat-file -e :lemmax/config.eld 2>/dev/null; then
 	"${LEMMAX:-$here/../../requirements/scripts/lemmax/lemmax}" lint --staged --no-tests || exit 1
 fi

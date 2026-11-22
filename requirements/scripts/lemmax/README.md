@@ -124,6 +124,15 @@ so links resolve and ids stay unique.
 id: links become page links. Pages go to `.lemmax/html/` (git ignores it
 through `.lemmax/.gitignore`), or `--out DIR`.
 
+## SETUPFILE
+
+<!-- lemma: 01a203a6-a766-76c6-9931-753ee75e9318 -->
+
+`#+SETUPFILE: lemmax.setup` brings in `#+TODO:`, `#+TAGS:`, `#+STARTUP:` and
+`#+LEMMAX_*` lines, as Org reads them; a relative path is read from the
+file's folder in the work tree. `org-enforce-todo-dependencies` is an Emacs
+setting, so a setup file cannot turn it on.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->

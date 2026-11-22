@@ -238,7 +238,10 @@ TAGS-OWN its own tags, TAGS those with the inherited and file tags."
 A UTF-8 BOM and CRLF line ends are read as the plain form."
   ;; lemma: 01a202f3-8964-7333-8165-dba3d86556b5
   (setq content (replace-regexp-in-string "\r$" "" (string-remove-prefix "\ufeff" content)))
+  ;; lemma: 01a203a6-a766-76c6-9931-753ee75e9318
+  ;; A #+SETUPFILE: path is read from the file's folder, in the work tree.
   (with-temp-buffer
+    (setq default-directory (file-name-as-directory (expand-file-name (or (file-name-directory file) "") default-directory)))
     (insert content)
     (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM" "REFUTED" "PASSED"
                                          "CANCELLED" "AXIOM")))
@@ -455,7 +458,7 @@ a FOLDER that holds no tracked file."
 
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
 (defconst lemmax--candidate-re
-  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+TODO:.*\\b(OPEN|CONJECTURE)\\b)"
+  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*\\b(OPEN|CONJECTURE)\\b)"
   "A line only a file that may hold lemmas has, for git grep -E.")
 
 (defvar lemmax--files-cache (make-hash-table :test #'equal)
@@ -1265,7 +1268,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
 
 (defun lemmax--opted-here-p ()
   "Whether this repo has an opted-in file or a config; a git grep, so no parse."
-  (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" "^#\\+LEMMAX_TESTS:" "--" "*.org")))
+  (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" "^#\\+LEMMAX_TESTS:" "--" "*.org" "*.setup")))
       (zerop (car (lemmax--git "cat-file" "-e" (concat ":" lemmax-config-file))))))
 
 ;; lemma: RT-19
@@ -1674,7 +1677,7 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
 opts in, then the hook that was there before, kept as NAME.local."
   (concat "#!/usr/bin/env bash\n" lemmax--hook-mark "\n"
           "# lemmax " lemmax-version "; the hook that was here first is " name ".local, run after.\n"
-          "if git grep --cached -q -E '^#\\+LEMMAX_TESTS:' -- '*.org' 2>/dev/null \\\n"
+          "if git grep --cached -q -E '^#\\+LEMMAX_TESTS:' -- '*.org' '*.setup' 2>/dev/null \\\n"
           "\t|| git cat-file -e :lemmax/config.eld 2>/dev/null; then\n"
           (if (equal name "pre-commit")
               "\tlemmax lint --staged --no-tests || exit 1\n"

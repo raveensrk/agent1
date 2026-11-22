@@ -2110,3 +2110,22 @@ run of its finding's why text."
     (should (equal "" (nth 1 (rt-git d "status" "--porcelain"))))
     (rt-run d "publish" "--out" "site")
     (should (file-exists-p (expand-file-name "site/requirements.proofs.html" d)))))
+
+;;;; 01a203a6-a766-76c6-9931-753ee75e9318: SETUPFILE carries a file's keywords
+
+(ert-deftest lemmax-setupfile ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (list (cons "lemmax.setup" "#+TODO: CONJECTURE | LEMMA THEOREM REFUTED\n#+TAGS: ui\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n")
+                          (cons "reqs/requirements.org" (concat "#+SETUPFILE: ../lemmax.setup\n\n" (rt-tagged "RQ-1" ":ui:")))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))
+                          (cons "src/x.clj" "(ns x)\n")))))
+    (rt-should-clean (rt-run d "lint"))
+    (should (string-match-p "RQ-1" (nth 1 (rt-run d "list" "--tag" "ui"))))
+    ;; The setup's #+LEMMAX_CODE: holds: a code commit names an id.
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-git d "add" "-A")
+    (rt-set d "msg" "fix: no id\n")
+    (rt-should-find (rt-run d "commit-msg" "msg") "names no requirement id")
+    ;; The setup's tags are the declared list.
+    (rt-set d "reqs/requirements.org" (concat "#+SETUPFILE: ../lemmax.setup\n\n" (rt-tagged "RQ-1" ":zz:")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "the tag zz is not declared")))
