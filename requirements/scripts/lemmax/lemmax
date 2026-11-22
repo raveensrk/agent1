@@ -6,4 +6,10 @@
 # example: lemmax list --ready
 # lemma: 01a1ff25-116d-73f1-a45e-dd77e482a983
 src="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+# lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
+# Exit 2 when Emacs is missing; lemmax.el says so for an old one.
+if ! command -v emacs >/dev/null 2>&1; then
+	echo "lemmax: needs Emacs 29 or newer; found none on PATH" >&2
+	exit 2
+fi
 exec emacs -Q --script "$src/lemmax.el" -- "$@"

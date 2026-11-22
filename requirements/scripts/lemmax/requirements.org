@@ -669,13 +669,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN Missing or old Emacs is said plainly                              :cli:
+** DONE Missing or old Emacs is said plainly                              :cli:
 :PROPERTIES:
 :ID:          01a202f3-85a4-76cd-bf13-05f6e723c5b2
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-launcher-no-emacs ert/lemmax-launcher-old-emacs
+:IMPLEMENTED: 2026-11-22
 :END:
 - The launcher prints "lemmax: needs Emacs 29 or newer; found NONE|VERSION" and exits 2
 - The pre-commit and commit-msg hooks refuse the commit with that line, in an opted-in repo

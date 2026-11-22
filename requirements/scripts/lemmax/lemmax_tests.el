@@ -1091,3 +1091,32 @@
     (let ((utc (format-time-string "%F" nil t))
           (r (rt-env '("TZ=Pacific/Kiritimati") (rt-run d "lint" "--staged" "--no-tests"))))
       (should (string-match-p (concat "set both to " utc) (nth 2 r))))))
+
+;;;; 01a202f3-85a4-76cd-bf13-05f6e723c5b2: missing or old Emacs
+
+(defun rt-bin-dir (&rest progs)
+  "A folder holding links to PROGS, to stand for PATH."
+  (let ((b (expand-file-name "bin" (rt-tmp))))
+    (make-directory b t)
+    (dolist (p progs) (make-symbolic-link (executable-find p) (expand-file-name p b)))
+    b))
+
+(ert-deftest lemmax-launcher-no-emacs ()
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
+         (bin (rt-bin-dir "bash" "dirname" "readlink" "git")))
+    (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run d "list"))))
+      (should (= 2 (nth 0 r)))
+      (should (string-match-p "lemmax: needs Emacs 29 or newer; found none on PATH" (nth 2 r))))))
+
+(ert-deftest lemmax-launcher-old-emacs ()
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
+         (bin (rt-bin-dir "bash" "dirname" "readlink" "git")))
+    (with-temp-file (expand-file-name "emacs" bin)
+      ;; The launcher calls emacs -Q --script FILE -- ARGS; --script runs before any
+      ;; --eval, so the stand-in loads FILE with -l after setting the version.
+      (insert "#!" (executable-find "bash") "\nshift 2\nf=\"$1\"; shift\nexec " (executable-find "emacs")
+              " -Q --batch --eval '(setq emacs-major-version 28 emacs-version \"28.2\")' -l \"$f\" \"$@\"\n"))
+    (set-file-modes (expand-file-name "emacs" bin) #o755)
+    (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run d "list"))))
+      (should (= 2 (nth 0 r)))
+      (should (string-match-p "lemmax: needs Emacs 29 or newer; found 28.2" (nth 2 r))))))

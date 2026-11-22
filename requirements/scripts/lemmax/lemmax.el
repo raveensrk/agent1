@@ -4,6 +4,12 @@
 ;; Requirements: requirements/scripts/lemmax/requirements.org (RT-1 to RT-15).
 ;; It reads files and git, and never writes a file.
 
+;; lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
+;; The floor is Emacs 29 with its Org 9.6; checked before anything else loads.
+(when (< emacs-major-version 29)
+  (message "lemmax: needs Emacs 29 or newer; found %s" emacs-version)
+  (kill-emacs 2))
+
 ;; lemma: RT-1
 (require 'org)
 (require 'org-element)
