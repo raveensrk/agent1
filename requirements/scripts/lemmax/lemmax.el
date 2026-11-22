@@ -157,7 +157,10 @@ once a run, however many revisions hold it."
         :body (lemmax--entry-body raw)))
 
 (defun lemmax--parse (content file)
-  "Parse org CONTENT named FILE: plist (:file :keywords :opted :listed :reqs)."
+  "Parse org CONTENT named FILE: plist (:file :keywords :opted :listed :reqs).
+A UTF-8 BOM and CRLF line ends are read as the plain form."
+  ;; lemma: 01a202f3-8964-7333-8165-dba3d86556b5
+  (setq content (replace-regexp-in-string "\r$" "" (string-remove-prefix "\ufeff" content)))
   (with-temp-buffer
     (insert content)
     (let ((org-todo-keywords '((sequence "OPEN" "|" "DONE" "DROPPED")))
@@ -419,6 +422,8 @@ a FOLDER that holds no tracked file."
             (lemmax--finding f l id "the heading text starts with an id"
                                "keep the id in :ID: only"))
           (cond ((null id) (lemmax--finding f l nil "no :ID:" "add :ID: as RF-3"))
+                ((string-match-p "[ \t]" id)
+                 (lemmax--finding f l id "an id has no spaces" "keep the id one word, as RF-3 or a UUID v7"))
                 ((not (or (string-match-p "\\`[A-Z]+-[0-9]+\\'" id) (lemmax--uuid7-p id)))
                  (lemmax--finding f l id "the id is neither a UUID v7 nor shaped [A-Z]+-[0-9]+"
                                     "make a new one with python3 -c 'import uuid; print(uuid.uuid7())'")))

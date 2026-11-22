@@ -1182,3 +1182,26 @@
       (should (string-match-p "suspect: parent RQ-1 changed 2026-02-01" out))
       (message "trace over 500 commits: %.2f s" took)
       (should (< took 2.0)))))
+
+;;;; 01a202f3-8964-7333-8165-dba3d86556b5: odd input reads as plain input
+
+(defun rt-lemmas (content)
+  (mapcar (lambda (r) (list (plist-get r :id) (plist-get r :state) (plist-get r :title)
+                            (plist-get r :verify) (plist-get r :text) (plist-get r :created)))
+          (plist-get (lemmax--parse content "f.org") :reqs)))
+
+(ert-deftest lemmax-odd-input ()
+  (rt-load)
+  (let* ((plain (concat rt-head (rt-req "RQ-1" :verify "unit/a \"unit/with space\"") (rt-req "RQ-2")))
+         (want (rt-lemmas plain)))
+    (should (equal '("unit/a" "unit/with space") (nth 3 (car want))))
+    (should (equal want (rt-lemmas (replace-regexp-in-string "\n" "\r\n" plain))))
+    (should (equal want (rt-lemmas (concat "\ufeff" plain))))
+    (should (equal want (rt-lemmas (replace-regexp-in-string "^\\(:[A-Z_]+:\\) +" "\\1\t" plain))))
+    (should (null (rt-lemmas "")))
+    (should (equal (mapcar #'car (rt-lemmas (rt-file-lemma "RQ-3")))
+                   (mapcar #'car (rt-lemmas (concat "\ufeff" (replace-regexp-in-string "\n" "\r\n" (rt-file-lemma "RQ-3")))))))))
+
+(ert-deftest lemmax-odd-input-id-space ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ 1")))))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ 1: an id has no spaces")))

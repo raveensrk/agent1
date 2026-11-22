@@ -755,13 +755,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN Odd input reads as plain input                                    :lint:
+** DONE Odd input reads as plain input                                    :lint:
 :PROPERTIES:
 :ID:          01a202f3-8964-7333-8165-dba3d86556b5
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:VERIFY:      ert/lemmax-odd-input
+:VERIFY:      ert/lemmax-odd-input ert/lemmax-odd-input-id-space
+:IMPLEMENTED: 2026-11-22
 :END:
 - CRLF lines, a UTF-8 BOM, tabs in drawers, an empty file, :VERIFY: with a quoted name holding spaces: each parses as the plain form would
 - An :ID: holding a space is a finding: "an id has no spaces"
