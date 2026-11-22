@@ -54,3 +54,15 @@ Tests can refute a conjecture but never prove it. Say so in the README and the m
 :LAST_EDITED: 2026-11-22
 :END:
 For the next five small edits, note the steps Lemmax asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
+
+* TODO Check the review's conjectures and tasks before approval
+:PROPERTIES:
+:ID:          01a205a7-f8ef-7b54-8b1b-4e602877f925
+:FOR:         01a205a5-79df-745d-bb66-69f6cae232c6 01a205a5-79e2-7959-9296-5e465af6acc7 01a205a5-79e4-7b10-a3ec-9a86ac4d58f9
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+They were written in a session with no Emacs, so nothing checked them.
+- Run =lemmax lint= on =theory.org= and =theory.tasks.org= and fix what it finds
+- Check the evidence of "An unrun proof is not a counterexample" against =lemmax.el=: that proof states come from the =#+TODO:= line of =theory.proofs.org=; correct it if not
+- Their ids were made by a script, not =lemmax new-id=; check each is a valid UUID v7
