@@ -2,6 +2,18 @@
 #+STARTUP: overview
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 
+* Goal
+Any project that follows Lemmax can be rebuilt from scratch, from its requirements alone.
+- A builder reads only the requirements, their proofs and the axioms; app code and test code are both rebuilt from them.
+- Lemmax lists the rebuild in order: one lemma at a time, each after the lemmas and axioms it =:USES:=, each with its proofs and tests. Lemmas with no order between them go higher priority first, then older first, so the list is the same every time.
+- The list is the rebuild instructions. Each step is clear: a fresh agent can build it from its text without asking a question.
+- Look is stated in conjectures like any other behaviour; a proven conjecture reproduces it.
+- A lemma holds only when both its conjecture and its proof are correct: the conjecture says one clear, testable thing, and the proof's tests check exactly that. The owner or a judge reviews each pair.
+- The environment is captured: toolchain versions, data, setup steps; secrets are named, never stored.
+- All code in a Lemmax project is covered by Lemmax. Each implementation starts with a comment naming its id, and the code below it is that implementation: one comment per conjecture's implementation, one per proof's tests.
+- =lemmax lint= shows the project is complete: every requirement has a PASSED proof, every piece of code sits under an id comment, and nothing a rebuild needs is left unsaid.
+- Anything a rebuild needs but the files do not say is a gap, and closing it is a requirement on Lemmax.
+
 * Each Requirement must be an org mode heading
 * A requirement file can be 1 file or multiple files
 * Requirements can be scheduled.
