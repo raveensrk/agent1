@@ -742,13 +742,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN The history walk stays fast                                       :trace:
+** DONE The history walk stays fast                                       :trace:
 :PROPERTIES:
 :ID:          01a202f3-88bb-704d-9ea9-74714f841514
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-history-cache ert/reqtrace-suspect-walk-time
+:IMPLEMENTED: 2026-11-22
 :END:
 - The last-change walk reads each file revision once per run, skips revisions whose blob it has seen, and keeps suspects under 2 s for 500 commits
 - Asked by the owner on 2026-11-22

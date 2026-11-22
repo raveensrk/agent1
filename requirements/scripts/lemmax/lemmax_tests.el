@@ -1162,3 +1162,23 @@
                      (check . string) (needs . array) (refs . array) (linked_from . array) (title . string)
                      (file . string) (line . number) (markers . array))
                    (mapcar (lambda (kv) (cons (car kv) (funcall type (cdr kv)))) row)))))
+
+;;;; 01a202f3-88bb-704d-9ea9-74714f841514: the history walk stays fast
+
+(ert-deftest lemmax-history-cache ()
+  :tags '(timeout-300)
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1")) "2026-01-01"))
+         (reqs (lambda (n) (concat rt-head (rt-req "RQ-1" :body (format "Text %d.\n" (/ n 50)))
+                                   (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-02")
+                                   (mapconcat (lambda (i) (rt-req (format "RQ-%d" i))) (number-sequence 3 20) "")))))
+    ;; 500 commits: the requirements file changes on 1 in 5, back and forth.
+    (dotimes (n 500)
+      (if (= 0 (% n 5))
+          (rt-set d "requirements.org" (funcall reqs n))
+        (rt-set d "src/x.clj" (format "(ns x) ;; %d\n" n)))
+      (rt-commit d (format "c%d" n) "2026-02-01"))
+    (rt-git d "repack" "-adq")
+    (let* ((start (float-time)) (out (nth 1 (rt-run d "trace"))) (took (- (float-time) start)))
+      (should (string-match-p "suspect: parent RQ-1 changed 2026-02-01" out))
+      (message "trace over 500 commits: %.2f s" took)
+      (should (< took 2.0)))))

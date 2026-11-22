@@ -743,19 +743,47 @@ With CACHED, read the staged copies."
              for f = (split-string (string-trim-left rec) "\x1f")
              when (>= (length f) 5) collect f)))
 
+(defun lemmax--blobs (specs)
+  "The contents of SPECS, each REV:PATH, read by one git cat-file --batch:
+a list of (BLOB-ID . TEXT), or nil for a spec git does not have."
+  (when specs
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (let ((coding-system-for-read 'no-conversion) (coding-system-for-write 'utf-8-unix)
+            (process-environment (cons "TZ=UTC0" process-environment)))
+        (insert (mapconcat #'identity specs "\n") "\n")
+        (call-process-region (point-min) (point-max) "git" t t nil "cat-file" "--batch"))
+      (goto-char (point-min))
+      (cl-loop for _ in specs
+               collect (let ((head (buffer-substring (point) (line-end-position))))
+                         (forward-line 1)
+                         (if (string-match "\\`\\([0-9a-f]+\\) [a-z]+ \\([0-9]+\\)\\'" head)
+                             (let* ((size (string-to-number (match-string 2 head)))
+                                    (text (buffer-substring (point) (+ (point) size))))
+                               (goto-char (+ (point) size 1))
+                               (cons (match-string 1 head) (decode-coding-string text 'utf-8)))
+                           nil))))))
+
+;; lemma: 01a202f3-88bb-704d-9ea9-74714f841514
 (defun lemmax--last-changes (infos)
-  "Hash ID -> the last day its text changed in git, walking each file's revisions."
+  "Hash ID -> the last day its text changed in git, walking each file's revisions.
+One git process reads every revision of a file; a blob seen before is skipped."
   (let ((changed (make-hash-table :test #'equal)))
     (dolist (info infos)
-      (let ((file (plist-get info :file)) (prev (make-hash-table :test #'equal)))
-        (dolist (line (lemmax--lines (lemmax--git-out "log" "--reverse" "--date=format-local:%Y-%m-%d" "--format=%H %cd" "--" file)))
-          (let* ((parts (split-string line " ")) (rev (car parts)) (day (cadr parts))
-                 (content (lemmax--git-out "show" (concat rev ":" file))))
-            (when content
-              (dolist (pair (lemmax--quick-ids content))
-                (unless (equal (gethash (car pair) prev) (cdr pair))
-                  (puthash (car pair) day changed)
-                  (puthash (car pair) (cdr pair) prev))))))))
+      (let* ((file (plist-get info :file)) (prev (make-hash-table :test #'equal))
+             (seen (make-hash-table :test #'equal))
+             (revs (mapcar (lambda (l) (split-string l " "))
+                           (lemmax--lines (lemmax--git-out "log" "--reverse" "--date=format-local:%Y-%m-%d"
+                                                           "--format=%H %cd" "--" file))))
+             (blobs (lemmax--blobs (mapcar (lambda (r) (concat (car r) ":" file)) revs))))
+        (cl-loop for (_rev day) in revs
+                 for blob in blobs
+                 when (and blob (not (gethash (car blob) seen)))
+                 do (puthash (car blob) t seen)
+                    (dolist (pair (lemmax--quick-ids (cdr blob)))
+                      (unless (equal (gethash (car pair) prev) (cdr pair))
+                        (puthash (car pair) day changed)
+                        (puthash (car pair) (cdr pair) prev))))))
     changed))
 
 (defun lemmax--suspects (reqs changed)
