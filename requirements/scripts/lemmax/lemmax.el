@@ -110,29 +110,26 @@ property drawer, trimmed (RT-17)."
     (cl-loop for (a b) on starts
              collect (substring content a (or b (length content))))))
 
-;; lemma: 01a202bc-4a88-7993-a717-e8022392b801
-(defun lemmax--file-lemma-raw (content)
-  "When CONTENT is one lemma, a file whose top drawer has :ID:, (ID . RAW):
-RAW is the file as one entry, a heading line of its #+title: and the rest,
-without its :STATE: line, so `lemmax--entry-text' reads it like a heading."
-  (let* ((pre (if (string-match "^\\*+ " content) (substring content 0 (match-beginning 0)) content))
-         (drawer (and (string-match "^[ \t]*:PROPERTIES:[ \t]*\n\\(\\(?:.*\n\\)*?\\)[ \t]*:END:" pre)
-                      (match-string 1 pre))))
-    (when (and drawer (string-match "^[ \t]*:ID:[ \t]+\\(\\S-+\\)" drawer))
-      (let ((id (match-string 1 drawer))
-            (title (if (string-match "^#\\+title:[ \t]*\\(.*\\)$" content) (string-trim (match-string 1 content)) "")))
-        (cons id (concat "* " title "\n"
-                         (replace-regexp-in-string "^[ \t]*:STATE:.*\n?" "" content)))))))
+;; lemma: 01a202f3-83dc-76e8-b198-68db19d1e4cd
+(defvar lemmax--entry-cache (make-hash-table :test #'equal)
+  "Entry text -> its (ID . TEXT) pairs, for the history walk of one run.")
 
-(cl-defun lemmax--quick-ids (content)
-  "Alist (ID . TEXT) for each heading of CONTENT with an :ID:; headlines only (RT-9).
-A file that is one lemma gives its one pair."
-  (let ((one (lemmax--file-lemma-raw content)) out)
-    (when one (cl-return-from lemmax--quick-ids (list (cons (car one) (lemmax--entry-text (cdr one))))))
-    (dolist (c (lemmax--split-headings content))
-      (when (string-match "^[ \t]*:ID:[ \t]+\\(\\S-+\\)" c)
-        (push (cons (match-string 1 c) (lemmax--entry-text c)) out)))
-    (nreverse out)))
+;; lemma: 01a202f3-88bb-704d-9ea9-74714f841514
+(defun lemmax--quick-ids (content)
+  "Alist (ID . TEXT) for each lemma of CONTENT with an :ID: (RT-9), read by
+`lemmax--parse', so the history walk and lint never disagree on a lemma.
+A heading lemma's record depends on its entry alone, so each entry is parsed
+once a run, however many revisions hold it."
+  (let ((pairs (lambda (text)
+                 (or (gethash text lemmax--entry-cache)
+                     (puthash text
+                              (cl-loop for r in (plist-get (lemmax--parse text "") :reqs)
+                                       when (plist-get r :id)
+                                       collect (cons (plist-get r :id) (plist-get r :text)))
+                              lemmax--entry-cache)))))
+    (if (string-match-p "\\`\\(?:#[ \t].*\n\\|#\n\\|[ \t]*\n\\)*[ \t]*:PROPERTIES:" content)
+        (funcall pairs content)
+      (cl-mapcan (lambda (e) (copy-sequence (funcall pairs e))) (lemmax--split-headings content)))))
 
 (defun lemmax--record (get id state title file line end raw)
   "A lemma's plist; GET reads one of its properties, RAW is its text."
@@ -163,14 +160,25 @@ A file that is one lemma gives its one pair."
                                          ;; The names before lemmax, read so older commits still match.
                                          "REQTRACE_TESTS" "REQTRACE_CODE")))
              (todo (cadr (assoc "TODO" kw)))
-             (one (lemmax--file-lemma-raw content))
+             ;; lemma: 01a202bc-4a88-7993-a717-e8022392b801
+             ;; lemma: 01a202f3-8475-7f4f-b0e2-5cd8c782e520
+             ;; Org's own reading: a drawer is the file's only when it comes
+             ;; first, after comment lines at most.
+             (one (save-excursion (goto-char (point-min))
+                                  (and (not (org-at-heading-p))
+                                       (let ((v (org-entry-get nil "ID"))) (and v (string-trim v))))))
+             (pre (if (string-match "^\\*+ " content) (substring content 0 (match-beginning 0)) content))
+             (misplaced (and (not one)
+                             (string-match "^[ \t]*:PROPERTIES:[ \t]*\n\\(?:.*\n\\)*?[ \t]*:ID:" pre)
+                             (1+ (cl-count ?\n (substring pre 0 (match-beginning 0))))))
              reqs)
         (if one
             (let ((get (lambda (p) (let ((v (save-excursion (goto-char (point-min)) (org-entry-get nil p))))
                                      (and v (not (string-empty-p (string-trim v))) (string-trim v)))))
                   (title (string-trim (or (cadr (assoc "TITLE" (org-collect-keywords '("TITLE")))) ""))))
-              (push (lemmax--record get (car one) (let ((st (funcall get "STATE"))) (and (member st lemmax-states) st))
-                                    title file 1 (count-lines (point-min) (point-max)) (cdr one))
+              (push (lemmax--record get one (let ((st (funcall get "STATE"))) (and (member st lemmax-states) st))
+                                    title file 1 (count-lines (point-min) (point-max))
+                                    (concat "* " title "\n" content))
                     reqs))
         (org-map-entries
          (lambda ()
@@ -191,6 +199,7 @@ A file that is one lemma gives its one pair."
                (code-kw (or (assoc "LEMMAX_CODE" kw) (assoc "REQTRACE_CODE" kw)))
                (opted (and tests-kw t)))
           (list :file file
+                :misplaced misplaced
                 :keywords kw
                 :opted opted
                 :tests (cadr tests-kw)
@@ -536,6 +545,11 @@ a FOLDER that holds no tracked file."
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-links infos only staged)
+        (dolist (i infos)
+          (when (and (plist-get i :misplaced) (or (null only) (member (plist-get i :file) only)))
+            (lemmax--finding (plist-get i :file) (plist-get i :misplaced) nil
+                             "a drawer with :ID: below other text is no file lemma; Org reads only a first drawer"
+                             "move the drawer to the top of the file")))
         (unless no-tests (lemmax--lint-verify infos only))
         (when staged
           ;; lemma: 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
@@ -1316,7 +1330,7 @@ example: lemmax next-id M"
               ("next-id" (lemmax-next-id rest))
               (_ (lemmax--help-for 'main nil))))))))))
 
-(when noninteractive
+(when (and noninteractive (not (getenv "LEMMAX_LOAD_ONLY")))
   (condition-case err
       (lemmax-main (prog1 command-line-args-left (setq command-line-args-left nil)))
     (error (lemmax--err "lemmax: %s" (error-message-string err)) (kill-emacs 1))))

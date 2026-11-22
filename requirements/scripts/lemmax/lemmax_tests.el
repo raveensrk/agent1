@@ -1034,3 +1034,42 @@
     (should (string-match-p "RQ-1 +DONE +approved found" (rt-list d "--run-tests")))
     (should (string-match-p "verify: unit/a found" (nth 1 (rt-run d "trace" "RQ-1" "--run-tests"))))
     (should (string-match-p "verify: unit/a unchecked" (nth 1 (rt-run d "trace" "RQ-1"))))))
+
+;;;; In-process tests: lemmax.el loaded, its command line not run
+
+(defun rt-load ()
+  (unless (fboundp 'lemmax--parse)
+    (let ((process-environment (cons "LEMMAX_LOAD_ONLY=1" process-environment)))
+      (load (expand-file-name "lemmax.el" rt-dir) nil t))))
+
+;;;; 01a202f3-83dc-76e8-b198-68db19d1e4cd: one parser
+
+(defconst rt-odd-files
+  (list (concat rt-head (rt-req "RQ-1") (rt-req "RQ-2" :level 2) "* Notes\nNo id.\n" (rt-req "RQ-3" :state nil))
+        (concat "# a comment\n" (rt-file-lemma "RQ-4" :body "Body.\n* Sub\n:PROPERTIES:\n:ID: NOT-1\n:END:\n"))
+        (concat "#+title: Late\n:PROPERTIES:\n:ID: RQ-5\n:END:\n* OPEN Real\n:PROPERTIES:\n:ID: RQ-6\n:END:\n")
+        (concat rt-head (rt-req "RQ-7" :body "Has [[id:RQ-1][a link]] and\n\n\n trailing.\n\n"))
+        ""))
+
+(ert-deftest lemmax-one-parser-same-ids ()
+  (rt-load)
+  (dolist (c rt-odd-files)
+    (let ((full (cl-loop for r in (plist-get (lemmax--parse c "f.org") :reqs)
+                         when (plist-get r :id) collect (cons (plist-get r :id) (plist-get r :text))))
+          (quick (lemmax--quick-ids c)))
+      (should (equal full quick))))
+  (should (equal '("RQ-4") (mapcar #'car (lemmax--quick-ids (nth 1 rt-odd-files)))))
+  (should (equal '("RQ-6") (mapcar #'car (lemmax--quick-ids (nth 2 rt-odd-files))))))
+
+;;;; 01a202f3-8475-7f4f-b0e2-5cd8c782e520: a file lemma's drawer comes first
+
+(ert-deftest lemmax-file-drawer-first ()
+  :tags '(timeout-30)
+  (let ((d (rt-file-lemma-repo
+            (cons "reqs/late.org" "#+title: Late\n\n:PROPERTIES:\n:ID: RQ-5\n:END:\nBody.\n")
+            (cons "reqs/ok.org" (concat "# kept\n" (rt-file-lemma "RQ-1"))))))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "reqs/late\\.org:3: -: a drawer with :ID: below other text is no file lemma")
+      (should-not (string-match-p "reqs/ok\\.org" (nth 2 r))))
+    (should-not (string-match-p "RQ-5" (rt-list d)))
+    (should (string-match-p "RQ-1" (rt-list d)))))

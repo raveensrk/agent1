@@ -627,26 +627,28 @@ Evidence: probe 2026-11-22: a marker naming an unknown id in a:b.el gave no find
 - Asked by the owner on 2026-11-22
 Evidence: probe 2026-11-22: lemmax list ran tests.sh.
 
-** OPEN One parser for every reader                                       :lint:
+** DONE One parser for every reader                                       :lint:
 :PROPERTIES:
 :ID:          01a202f3-83dc-76e8-b198-68db19d1e4cd
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-one-parser-same-ids
+:IMPLEMENTED: 2026-11-22
 :END:
 - The history walk (suspects) and file-lemma detection read lemmas through lemmax--parse, not their own regexps
 - A test feeds odd files to both paths and finds the same ids and texts
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN A file lemma's drawer is the file's first element                :lint:
+** DONE A file lemma's drawer is the file's first element                :lint:
 :PROPERTIES:
 :ID:          01a202f3-8475-7f4f-b0e2-5cd8c782e520
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-file-drawer-first
+:IMPLEMENTED: 2026-11-22
 :END:
 - Only a property drawer before any text but comment lines makes a file a lemma, as Org and org-roam read it
 - lint reports a drawer with :ID: further down the preamble: "move the drawer to the top"
