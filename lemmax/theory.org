@@ -7,14 +7,13 @@
 
 Process: [[file:../requirements/requirements.org][Requirements requirements]].
 
-* THEOREM [#A] lemmax lints and traces org requirements           :lemmax:
+* CONJECTURE [#A] lemmax lints and traces org requirements           :lemmax:
 :PROPERTIES:
 :ID:          RT-1
 :USES:        RT-2 RT-3 RT-4 RT-7 RT-8 RT-12 RT-13 01a1ff25-116d-73f1-a45e-dd77e482a983 01a202b0-1d09-75f3-99dc-677a4b2ec0be
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 One command in agent1 for every repo whose requirements file opts in.
@@ -204,14 +203,13 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - =harness/self_check= runs it.
 Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
 
-** THEOREM list: every requirement in a table                           :list:
+** CONJECTURE list: every requirement in a table                           :list:
 :PROPERTIES:
 :ID:          RT-13
-:USES:        RT-14 RT-15 RT-18
+:USES:        RT-14 RT-15 RT-18 01a2058c-5dff-75bc-b089-998d5425915a
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax list [--state open|done|dropped] [--section M] [--unchecked] [--ready] [--all] [--json]=
 - One line per requirement: id, state, approved or not, VERIFY found or missing, title, file:line
@@ -225,6 +223,21 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 - =--json=: the same rows as a JSON array, for the AI
 - It reads, and never writes a file
 Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-1's spike); =git ls-files '*.org'= lists a repo's files.
+
+** CONJECTURE list and next-id read theory files by name            :list:
+:PROPERTIES:
+:ID:          01a2058c-5dff-75bc-b089-998d5425915a
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+A theory file is a requirements file under its math name.
+- list and next-id read a tracked theory.org, and any .org file under a theory/ folder, as they read requirements.org and requirements/, with no #+LEMMAX_TESTS: header
+- requirements.org and requirements/ are still read; both names work side by side
+- lint's rules still read only files with #+LEMMAX_TESTS: or a lemmax/config.eld entry
+- The long help names both: "requirements.org or theory.org, files under a requirements/ or theory/ folder"
+- Asked by the owner on 2026-11-22
+Evidence: lemmax.el:319 and lemmax.el:498 match the name "requirements" only; spike 2026-11-22: in a throwaway repo, lemmax list showed requirements.org and skipped an unmarked theory.org and theory/a.org.
 
 ** THEOREM next-id: the next free id for a section                      :list:
 :PROPERTIES:

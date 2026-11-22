@@ -812,3 +812,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: list and next-id read theory files by name
+:PROPERTIES:
+:ID:          01a2058d-3182-7369-bcbb-06e8493e41bc
+:PROVES:      01a2058c-5dff-75bc-b089-998d5425915a
+:TEST:        ert/lemmax-reads-theory-files
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+A repo with unmarked theory.org, theory/a.org and requirements.org: list shows all three; lint checks none of them.
