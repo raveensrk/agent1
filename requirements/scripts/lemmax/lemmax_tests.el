@@ -916,3 +916,16 @@
     (let ((r (rt-run d "lint" "--no-tests")))
       (rt-should-find r "RQ-2: the alias RQ-9 is also an alias of RQ-1")
       (should (string-match-p "RQ-2: the alias RQ-1 is also the :ID: at" (nth 2 r))))))
+
+;;;; 01a202bc-4cc4-753e-8d51-12d8327dfd9c: :REFS:
+
+(ert-deftest lemmax-refs-shown ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :refs "https://example.invalid/issues/4 http://example.invalid/spec")))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "  refs: https://example.invalid/issues/4 http://example.invalid/spec"
+                            (nth 1 (rt-run d "trace" "RQ-1"))))
+    (let ((row (aref (json-read-from-string (nth 1 (rt-run d "list" "--json" "--no-tests"))) 0)))
+      (should (equal ["https://example.invalid/issues/4" "http://example.invalid/spec"] (alist-get 'refs row))))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :refs "issue-4")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: :REFS: names issue-4, which is not an http(s) URL")))

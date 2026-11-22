@@ -75,3 +75,5 @@ Body text.
 - `:ALIASES: ID...` keeps old ids working: markers, `:NEEDS:`, `id:` links,
   commit messages and `trace ID` that name an alias count as the lemma. lint
   refuses an alias two lemmas share, or one that is a lemma's `:ID:`.
+- `:REFS: URL...` names the issues, PRs or specs a lemma came from; `trace`
+  prints them and `list --json` gives them as `refs`.

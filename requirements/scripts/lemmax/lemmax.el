@@ -131,6 +131,8 @@ A file that is one lemma gives its one pair."
         :needs (let ((v (funcall get "NEEDS"))) (and v (split-string v)))
         ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
         :aliases (let ((v (funcall get "ALIASES"))) (and v (split-string v)))
+        ;; lemma: 01a202bc-4cc4-753e-8d51-12d8327dfd9c
+        :refs (let ((v (funcall get "REFS"))) (and v (split-string v)))
         :verify (let ((v (funcall get "VERIFY"))) (and v (split-string-and-unquote v)))
         :text (lemmax--entry-text raw)
         :body (lemmax--entry-body raw)))
@@ -413,6 +415,13 @@ a FOLDER that holds no tracked file."
                 (lemmax--finding f l id (format "the id is used twice, first at %s" (gethash id seen))
                                    "give this one a new id"))
             (puthash id (format "%s:%s" f l) seen)))))
+    (dolist (r all)
+      (when (funcall show r)
+        (dolist (u (plist-get r :refs))
+          (unless (string-match-p "\\`https?://[^ \t]+\\'" u)
+            (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
+                             (format ":REFS: names %s, which is not an http(s) URL" u)
+                             "write it as https://...")))))
     ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
     (let ((owner (make-hash-table :test #'equal)))
       (dolist (r all)
@@ -729,6 +738,7 @@ With CACHED, read the staged copies."
     (lemmax--out "  file: %s:%d" (plist-get r :file) (plist-get r :line))
     (lemmax--out "  parents: %s" (if (plist-get r :needs) (string-join (plist-get r :needs) " ") "none"))
     (lemmax--out "  children: %s" (if children (string-join children " ") "none"))
+    (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
     (if (plist-get r :verify)
         (dolist (a (plist-get r :verify))
           (lemmax--out "  verify: %s %s" a
@@ -904,6 +914,7 @@ With CACHED, read the staged copies."
             (cons 'verify (vconcat (plist-get r :verify)))
             (cons 'check (plist-get r :check))
             (cons 'needs (vconcat (plist-get r :needs)))
+            (cons 'refs (vconcat (plist-get r :refs)))
             (cons 'title (plist-get r :title))
             (cons 'file (plist-get r :file))
             (cons 'line (plist-get r :line))

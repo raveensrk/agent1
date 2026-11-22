@@ -540,13 +540,14 @@ Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam bac
 - Asked by the owner on 2026-11-22
 Evidence: lemmax resolves ids through one table per run; idea from org-roam's =ROAM_ALIASES=.
 
-** OPEN :REFS: names where a lemma came from                       :ids:
+** DONE :REFS: names where a lemma came from                       :ids:
 :PROPERTIES:
 :ID:          01a202bc-4cc4-753e-8d51-12d8327dfd9c
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-refs-shown
+:IMPLEMENTED: 2026-11-22
 :END:
 - =:REFS: URL...= names issues, PRs or specs; trace prints =refs:= and =list --json= gives =refs=
 - lint reports a ref that is not an http(s) URL
