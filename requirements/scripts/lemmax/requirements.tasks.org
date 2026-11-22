@@ -1,0 +1,15 @@
+#+TODO: TODO | DONE CANCELLED
+
+* TODO Rename the date property =IMPLEMENTED= to =PROVEN=
+:PROPERTIES:
+:ID:          01a2052f-a14c-7e72-8a8f-57ab97635a10
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+The date records the day a conjecture became LEMMA or THEOREM, not the day code was built.
+- Rename in lemmax.el, lemmax_tests.el, requirements.org, and agent1 requirements/requirements.org.
+- Old files keep :IMPLEMENTED: until lemmax migrate moves it, like :NEEDS: to :USES:.
+- Migrate requirements/components.org and skills/ishikari/requirements.org.
+- Proofs get no date; only conjectures carry :PROVEN:.
+- Skip demo/web/public/js/cljs-runtime (generated) and #components.org# (autosave).
+- Asked by the owner on 2026-11-22.
