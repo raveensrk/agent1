@@ -597,18 +597,19 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** LEMMA Today is one clock                                                :lint:
+** CONJECTURE Today is the local day                                      :lint:
 :PROPERTIES:
 :ID:          01a202f3-850b-7e3f-93f9-655397189d53
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
 :END:
-- Today is the UTC day, for lint and its fixes; LEMMAX_TODAY still sets it
-- Commit days in trace and suspects are UTC too (git log --date=format-local with TZ=UTC)
+- Today is the machine's local day, for lint and its fixes; LEMMAX_TODAY still sets it
+- Commit days in trace and suspects are local days too (git log --date=format-local, no TZ override)
+- TZ in the environment picks the zone, as for any program; CI runs in UTC unless it sets TZ
+- Changed on 2026-11-23: it was the UTC day; the owner wants dates to match their clock
 - Asked by the owner on 2026-11-22
-Evidence: the hardening review of 2026-11-22.
+Evidence: lemmax.el:625 calls format-time-string with UTC set to t; with nil it gives the local day, so 23 Nov 03:46 IST reads as 2026-11-23, not 2026-11-22.
 
 ** LEMMA Missing or old Emacs is said plainly                              :cli:
 :PROPERTIES:
