@@ -963,3 +963,20 @@
       (should (= 2 (length (split-string out "\n" t))))
       ;; Never a lint finding.
       (rt-should-clean (rt-run d "lint" "--no-tests")))))
+
+;;;; 01a202bc-4e0c-745b-9f61-980ada0f93e5: trace --dot
+
+(ert-deftest lemmax-trace-dot ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1" :title "Say \"hi\"")
+                              (rt-req "RQ-2" :needs "RQ-1" :body "See [[id:RQ-1]] and [[id:RQ-1][again]].\n")
+                              (rt-req "RQ-3" :state "DROPPED")))))
+    (let* ((r (rt-run d "trace" "--dot")) (out (nth 1 r)))
+      (should (= 0 (nth 0 r)))
+      (should (string-prefix-p "digraph lemmax {" out))
+      (should (string-match-p "\"RQ-1\" \\[label=\"RQ-1\\\\nSay \\\\\"hi\\\\\"\" fillcolor=palegreen\\];" out))
+      (should (string-match-p "\"RQ-2\" .*fillcolor=lightyellow" out))
+      (should (string-match-p "\"RQ-3\" .*fillcolor=lightgray" out))
+      (should (string-match-p "^  \"RQ-2\" -> \"RQ-1\";$" out))
+      (should (= 1 (cl-count-if (lambda (l) (string-match-p "\\[style=dashed\\]" l)) (split-string out "\n"))))
+      (should (string-suffix-p "}\n" out)))))

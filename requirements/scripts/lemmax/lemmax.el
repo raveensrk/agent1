@@ -811,7 +811,48 @@ With CACHED, read the staged copies."
                                   (lemmax--all-reqs (lemmax--opted (lemmax--worktree-files))))))
              collect d)))
 
+
+;; lemma: 01a202bc-4e0c-745b-9f61-980ada0f93e5
+(defun lemmax--dot-quote (&rest parts)
+  "PARTS as one quoted dot string, each escaped, joined by dot's \\n line break."
+  (concat "\"" (mapconcat (lambda (s) (replace-regexp-in-string "[\"\\]" (lambda (m) (concat "\\" m)) s t t))
+                          parts "\\n")
+          "\""))
+
+(defun lemmax--dot (infos)
+  "Print the lemmas of INFOS as a Graphviz digraph: :NEEDS: solid, id: links dashed."
+  (let* ((reqs (cl-remove-if-not (lambda (r) (plist-get r :id)) (lemmax--all-reqs infos)))
+         (links (lemmax--repo-links (lemmax--all-reqs (lemmax--listed (lemmax--worktree-files)))))
+         (ids (mapcar (lambda (r) (plist-get r :id)) reqs))
+         edges)
+    (lemmax--out "digraph lemmax {")
+    (lemmax--out "  node [shape=box style=filled fontname=Helvetica];")
+    (dolist (r reqs)
+      (lemmax--out "  %s [label=%s fillcolor=%s];" (lemmax--dot-quote (plist-get r :id))
+                   (lemmax--dot-quote (plist-get r :id) (lemmax--trunc (plist-get r :title) 40))
+                   (pcase (plist-get r :state) ("DONE" "palegreen") ("OPEN" "lightyellow")
+                          ("DROPPED" "lightgray") (_ "white"))))
+    (dolist (r reqs)
+      (dolist (n (plist-get r :needs))
+        (when (member n ids)
+          (lemmax--out "  %s -> %s;" (lemmax--dot-quote (plist-get r :id)) (lemmax--dot-quote n)))))
+    (dolist (k links)
+      (let ((src (lemmax--lemma-at reqs (nth 1 k) (nth 2 k))))
+        (when (and src (member (car k) ids) (not (equal (plist-get src :id) (car k))))
+          (let ((e (cons (plist-get src :id) (car k))))
+            (unless (member e edges)
+              (push e edges)
+              (lemmax--out "  %s -> %s [style=dashed];" (lemmax--dot-quote (car e)) (lemmax--dot-quote (cdr e))))))))
+    (lemmax--out "}")))
+
 (defun lemmax-trace (args)
+  (when (member "--dot" args)
+    (let ((infos (and (lemmax--root) (lemmax--opted (lemmax--worktree-files)))))
+      (unless infos
+        (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS:; name a project with -p DIR")
+        (kill-emacs 1))
+      (lemmax--dot infos)
+      (kill-emacs 0)))
   (let* ((want (car args))
          (infos (and (lemmax--root) (lemmax--opted (lemmax--worktree-files))))
          (hit (and want (gethash want (lemmax--known (lemmax--all-reqs infos))))))
@@ -1137,7 +1178,7 @@ example: lemmax commit-msg .git/COMMIT_EDITMSG"
 requirement and name it. Comment lines (#) do not count. An id matches as a
 whole word: RF-3 is not RF-30.")
     (trace
-     "usage: lemmax trace [--project DIR] [ID]
+     "usage: lemmax trace [--project DIR] [ID | --dot]
 Print each requirement's parents, children, tests and commits.
 example: lemmax trace RT-3"
      "With no ID: one block per requirement, then the orphan tests, which no
@@ -1145,7 +1186,9 @@ example: lemmax trace RT-3"
 text changed in git after their :IMPLEMENTED: or :REVIEWED: day.
 With an ID: that one block, and the files each of its commits touched.
 An ID not in this project is looked for in every project under ~/repos,
-and shown under a project: line.")
+and shown under a project: line.
+--dot: the lemma graph in Graphviz's dot language, nodes filled by state,
+:NEEDS: edges solid and id: link edges dashed: lemmax trace --dot | dot -Tsvg")
     (list
      "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--unlinked] [--all] [--json] [--no-tests]
 Print every requirement in a table, grouped by state and approval.

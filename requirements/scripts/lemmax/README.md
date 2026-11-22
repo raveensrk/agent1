@@ -8,6 +8,7 @@ lemmax list --ready           # every requirement, grouped; only approved and op
 lemmax list --all --json      # every repo under ~/repos, for an AI
 lemmax next-id M              # the next free id, as M-15
 lemmax trace RT-3             # one requirement's links, tests and commits
+lemmax trace --dot | dot -Tsvg > lemmas.svg   # the lemma graph
 lemmax list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from any folder
 lemmax lint --staged          # what the pre-commit hook runs
 ```

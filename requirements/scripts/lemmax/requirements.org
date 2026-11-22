@@ -570,7 +570,7 @@ Evidence: idea from org-roam's =ROAM_REFS=.
 - Asked by the owner on 2026-11-22
 Evidence: idea from org-roam's unlinked references.
 
-** OPEN trace --dot prints the lemma graph                       :trace:
+** DONE trace --dot prints the lemma graph                       :trace:
 :PROPERTIES:
 :ID:          01a202bc-4e0c-745b-9f61-980ada0f93e5
 :NEEDS:       01a202bc-49e2-7dba-94f5-0c0952fc91f0 RT-8
@@ -578,6 +578,7 @@ Evidence: idea from org-roam's unlinked references.
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-trace-dot
+:IMPLEMENTED: 2026-11-22
 :END:
 - =trace --dot= prints a Graphviz digraph: a node per lemma, labelled with its title, filled by state; solid edges for =:NEEDS:=, dashed for =id:= links
 - It writes nothing; pipe it into =dot -Tsvg=
