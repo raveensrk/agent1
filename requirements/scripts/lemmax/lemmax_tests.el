@@ -980,3 +980,22 @@
       (should (string-match-p "^  \"RQ-2\" -> \"RQ-1\";$" out))
       (should (= 1 (cl-count-if (lambda (l) (string-match-p "\\[style=dashed\\]" l)) (split-string out "\n"))))
       (should (string-suffix-p "}\n" out)))))
+
+;;;; 01a202f3-8216-7a1e-a34c-80c99d7bbf02: a moved lemma keeps its history
+
+(ert-deftest lemmax-move-lemma-file ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1")))))
+    (make-directory (expand-file-name "reqs" d))
+    (rt-git d "mv" "requirements.org" "reqs/moved.org")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+
+(ert-deftest lemmax-move-lemma-between-files ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (append (rt-files (rt-done "RQ-1") (rt-done "RQ-2"))
+                            (list (rt-config '("reqs/" :tests "./tests.sh")))))))
+    ;; RQ-2 leaves the shared file for a file of its own, as a file lemma.
+    (rt-set d "requirements.org" (concat rt-head (rt-done "RQ-1")))
+    (rt-set d "reqs/RQ-2.org" (concat ":PROPERTIES:\n:ID: RQ-2\n:STATE: DONE\n:CREATED: 2026-01-05\n:LAST_EDITED: 2026-01-05\n:APPROVED: 2026-01-05\n:IMPLEMENTED: 2026-01-06\n:VERIFY: unit/a\n:END:\n#+title: Title of RQ-2\n\nBody text.\n"))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))

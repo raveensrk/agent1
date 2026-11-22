@@ -585,13 +585,14 @@ Evidence: idea from org-roam's unlinked references.
 - Asked by the owner on 2026-11-22
 Evidence: Graphviz's dot language is plain text; idea from org-roam-ui.
 
-** OPEN A lemma moved to another file keeps its history                 :lint:
+** DONE A lemma moved to another file keeps its history                 :lint:
 :PROPERTIES:
 :ID:          01a202f3-8216-7a1e-a34c-80c99d7bbf02
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-move-lemma-file ert/lemmax-move-lemma-between-files
+:IMPLEMENTED: 2026-11-22
 :END:
 - lint --staged compares each staged lemma with the HEAD lemma of the same :ID: in any HEAD file, opted in then or not
 - So git mv of a requirements file, or cutting a lemma into a file of its own, is no new lemma

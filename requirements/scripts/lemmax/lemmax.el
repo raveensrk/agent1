@@ -53,27 +53,37 @@
 ;;;; Parsing
 
 (defun lemmax--entry-text (raw)
-  "The text of an entry from RAW, its heading line to the next heading:
-heading, body and properties, without its state and the 5 dates."
+  "The text of an entry from RAW, its heading line to the next heading, in one
+form for heading and file lemmas: the title (priority and tags kept, no stars,
+state or leading id), the drawer's properties but :STATE: and the 5 dates, one
+space after each key, and the trimmed body without #+title:."
   (let* ((lines (split-string raw "\n"))
          (head (replace-regexp-in-string
-                (concat "\\`\\(\\*+\\) +" (regexp-opt lemmax-states) "\\_>")
-                "\\1" (car lines)))
+                (concat "\\`\\*+ +\\(?:" (regexp-opt lemmax-states) "\\_>\\)? *") "" (car lines)))
          ;; lemma: 01a2002a-bf93-7475-94c3-d083c65a87d6
-         (head (replace-regexp-in-string
-                "\\`\\(\\*+\\(?: +\\[#.\\]\\)?\\) +[A-Z]+-[0-9]+ " "\\1 " head))
-         (date-re (concat "\\`[ \t]*:" (regexp-opt lemmax-dates) ":")))
+         (head (replace-regexp-in-string "\\`\\(\\[#.\\] +\\)?[A-Z]+-[0-9]+ " "\\1" head))
+         (skip-re (concat "\\`[ \t]*:" (regexp-opt (cons "STATE" lemmax-dates)) ":"))
+         (in nil) props body)
+    ;; lemma: 01a202f3-8216-7a1e-a34c-80c99d7bbf02
+    (dolist (l (cdr lines))
+      (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
+            ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
+            (in (unless (string-match-p skip-re l)
+                  (push (if (string-match "\\`[ \t]*\\(:[^: \t]+:\\)[ \t]*\\(.*?\\)[ \t]*\\'" l)
+                            (concat (match-string 1 l) " " (match-string 2 l))
+                          (string-trim l))
+                        props)))
+            ((string-match-p "\\`#\\+[Tt][Ii][Tt][Ll][Ee]:" l))
+            (t (push l body))))
     (replace-regexp-in-string
      ;; lemma: 01a202bc-49e2-7dba-94f5-0c0952fc91f0
      ;; The text an id: link shows is not the lemma's text.
      "\\[\\[id:\\([^]\n]+\\)\\]\\[[^]\n]*\\]\\]" "[[id:\\1]]"
      (replace-regexp-in-string
-     ;; A link to a heading that starts with an id holds the same text without it.
-     "\\(\\[\\[\\(?:[^]\n]*::\\)?\\*\\)[A-Z]+-[0-9]+ " "\\1"
-     (string-trim-right
-      (string-join (cons (string-trim-right head)
-                         (cl-remove-if (lambda (l) (string-match-p date-re l)) (cdr lines)))
-                   "\n"))))))
+      ;; A link to a heading that starts with an id holds the same text without it.
+      "\\(\\[\\[\\(?:[^]\n]*::\\)?\\*\\)[A-Z]+-[0-9]+ " "\\1"
+      (concat (string-trim head) "\n" (string-join (nreverse props) "\n") "\n"
+              (string-trim (string-join (nreverse body) "\n")))))))
 
 ;; lemma: RT-17
 (defun lemmax--entry-body (raw)
@@ -525,9 +535,10 @@ a FOLDER that holds no tracked file."
         (unless no-tests (lemmax--lint-verify infos only))
         (when staged
           ;; lemma: 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
-          (let ((names (mapcar (lambda (i) (plist-get i :file)) infos)))
-            (lemmax--lint-staged infos (cl-remove-if-not (lambda (i) (member (plist-get i :file) names))
-                                                         (lemmax--rev-files "HEAD")))))))
+          ;; lemma: 01a202f3-8216-7a1e-a34c-80c99d7bbf02
+          ;; Every HEAD file, opted in then or not: a lemma is matched by :ID:,
+          ;; wherever it lived, so a moved lemma is not new.
+          (lemmax--lint-staged infos (lemmax--rev-files "HEAD")))))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
 
 ;;;; Code markers
