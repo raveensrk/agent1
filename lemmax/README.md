@@ -25,7 +25,7 @@ lemmax lint --staged          # what the pre-commit hook runs
 
 - `list` and `trace` never run a repo's test command unless given `--run-tests`:
   the command is the repo's own code. `lint` runs it unless `--no-tests`.
-- Every day lemmax reads or writes is a UTC day: today, and the commit days of `trace`.
+- Every day lemmax reads or writes is a local day: today, and the commit days of `trace`. `TZ` picks the zone.
 - `lemmax --help` is the short help, `lemmax help` the long one; each command takes both.
 - `lemmax` is a Bash launcher for `lemmax.el`, run by `emacs -Q --script`.
 - `install` puts a wrapper on PATH as `~/.local/bin/lemmax`; then, in each repo,

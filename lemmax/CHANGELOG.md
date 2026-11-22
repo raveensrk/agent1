@@ -15,6 +15,7 @@ The first public release.
 - `lemma:` code markers, checked both ways.
 - `list` and `next-id` read `theory.org` and `theory/` by name, beside
   `requirements.org` and `requirements/`.
+- Today and commit days are local days; `TZ` picks the zone. They were UTC.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
 - `#+SETUPFILE:` keywords; footnote definitions checked.

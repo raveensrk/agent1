@@ -89,10 +89,9 @@ test turns each rule off so, to show a test fails without it."
 
 (defun lemmax--git (&rest args)
   "Run git with ARGS in `default-directory'; (EXIT . OUTPUT).
-Git's local dates are UTC, the one clock of lemmax."
+Git's local dates are the local days of TZ, the one clock of lemmax."
   (with-temp-buffer
-    (let* ((process-environment (cons "TZ=UTC0" process-environment))
-           (code (apply #'call-process "git" nil (list t nil) nil args)))
+    (let* ((code (apply #'call-process "git" nil (list t nil) nil args)))
       (cons code (buffer-string)))))
 
 (defun lemmax--git-out (&rest args)
@@ -622,7 +621,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
 
 (defun lemmax--today ()
   ;; lemma: 01a202f3-850b-7e3f-93f9-655397189d53
-  (or (getenv "LEMMAX_TODAY") (format-time-string "%F" nil t)))
+  (or (getenv "LEMMAX_TODAY") (format-time-string "%F" nil (getenv "TZ"))))
 
 ;;;; lint (RT-4, RT-5, RT-6)
 
@@ -1259,8 +1258,7 @@ a list of (BLOB-ID . TEXT), or nil for a spec git does not have."
   (when specs
     (with-temp-buffer
       (set-buffer-multibyte nil)
-      (let ((coding-system-for-read 'no-conversion) (coding-system-for-write 'utf-8-unix)
-            (process-environment (cons "TZ=UTC0" process-environment)))
+      (let ((coding-system-for-read 'no-conversion) (coding-system-for-write 'utf-8-unix))
         (insert (mapconcat #'identity specs "\n") "\n")
         (call-process-region (point-min) (point-max) "git" t t nil "cat-file" "--batch"))
       (goto-char (point-min))

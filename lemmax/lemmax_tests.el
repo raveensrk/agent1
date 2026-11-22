@@ -1136,23 +1136,25 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (should-not (string-match-p "RQ-5" (rt-list d)))
     (should (string-match-p "RQ-1" (rt-list d)))))
 
-;;;; 01a202f3-850b-7e3f-93f9-655397189d53: today is one clock
+;;;; 01a202f3-850b-7e3f-93f9-655397189d53: today is the local day
 
-(ert-deftest lemmax-today-utc ()
+(ert-deftest lemmax-today-local ()
   :tags '(timeout-30)
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
-    ;; 02:00 at +05:00 is 21:00 UTC the day before.
+    ;; 02:00 at +05:00: 2026-01-08 in Karachi, 2026-01-07 in UTC.
     (rt-set d "src/x.clj" "(ns x) ;; 2\n")
     (rt-git d "add" "-A")
     (rt-env '("GIT_COMMITTER_DATE=2026-01-08T02:00:00+05:00" "GIT_AUTHOR_DATE=2026-01-08T02:00:00+05:00")
       (rt-git d "commit" "-q" "-m" "build it (RQ-1)"))
-    (should (string-match-p "commit: [0-9a-f]+ 2026-01-07 build it" (nth 1 (rt-env '("TZ=Asia/Karachi") (rt-run d "trace" "RQ-1")))))
-    ;; With no LEMMAX_TODAY, the fix names the UTC day, whatever TZ says.
+    (should (string-match-p "commit: [0-9a-f]+ 2026-01-08 build it" (nth 1 (rt-env '("TZ=Asia/Karachi") (rt-run d "trace" "RQ-1")))))
+    (should (string-match-p "commit: [0-9a-f]+ 2026-01-07 build it" (nth 1 (rt-env '("TZ=UTC0") (rt-run d "trace" "RQ-1")))))
+    ;; With no LEMMAX_TODAY, the fix names the local day of TZ.
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1") (rt-req "RQ-2")))
     (rt-git d "add" "-A")
-    (let ((utc (format-time-string "%F" nil t))
-          (r (rt-env '("TZ=Pacific/Kiritimati") (rt-run d "lint" "--staged" "--no-tests"))))
-      (should (string-match-p (concat "set both to " utc) (nth 2 r))))))
+    (dolist (tz '("Pacific/Kiritimati" "Pacific/Pago_Pago"))
+      (let ((day (format-time-string "%F" nil tz))
+            (r (rt-env (list (concat "TZ=" tz)) (rt-run d "lint" "--staged" "--no-tests"))))
+        (should (string-match-p (concat "set both to " day) (nth 2 r)))))))
 
 ;;;; 01a202f3-85a4-76cd-bf13-05f6e723c5b2: missing or old Emacs
 

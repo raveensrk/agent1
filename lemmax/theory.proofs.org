@@ -373,13 +373,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: Today is one clock
+* PASSED Proof: Today is the local day
 :PROPERTIES:
 :ID:          01a20389-b193-7222-9232-405ee4bb17b7
 :PROVES:      01a202f3-850b-7e3f-93f9-655397189d53
-:TEST:        ert/lemmax-today-utc
+:TEST:        ert/lemmax-today-local
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
