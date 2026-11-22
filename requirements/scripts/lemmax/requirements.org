@@ -478,7 +478,7 @@ A repo's lemmax settings are in one file, so lemmas may be headings in one file 
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lemmas across files; the opt-in is per file in =lemmax--worktree-files= and =lemmax--rev-files=; Emacs 29.3 runs the tests here.
 
-** OPEN Lemmas link by [[id:...]], and lint checks the links      :lint:
+** DONE Lemmas link by id: links, and lint checks them                 :lint:
 :PROPERTIES:
 :ID:          01a202bc-49e2-7dba-94f5-0c0952fc91f0
 :NEEDS:       RT-4
@@ -486,6 +486,7 @@ Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lem
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-id-link-unknown ert/lemmax-id-link-dropped ert/lemmax-id-link-ok
+:IMPLEMENTED: 2026-11-22
 :END:
 - A link =[[id:ID]]= or =[[id:ID][text]]= in an opted-in file names a lemma by its =:ID:=
 - lint reports a link to an id no lemma has, or to a DROPPED one

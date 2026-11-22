@@ -64,12 +64,16 @@ heading, body and properties, without its state and the 5 dates."
                 "\\`\\(\\*+\\(?: +\\[#.\\]\\)?\\) +[A-Z]+-[0-9]+ " "\\1 " head))
          (date-re (concat "\\`[ \t]*:" (regexp-opt lemmax-dates) ":")))
     (replace-regexp-in-string
+     ;; lemma: 01a202bc-49e2-7dba-94f5-0c0952fc91f0
+     ;; The text an id: link shows is not the lemma's text.
+     "\\[\\[id:\\([^]\n]+\\)\\]\\[[^]\n]*\\]\\]" "[[id:\\1]]"
+     (replace-regexp-in-string
      ;; A link to a heading that starts with an id holds the same text without it.
      "\\(\\[\\[\\(?:[^]\n]*::\\)?\\*\\)[A-Z]+-[0-9]+ " "\\1"
      (string-trim-right
       (string-join (cons (string-trim-right head)
                          (cl-remove-if (lambda (l) (string-match-p date-re l)) (cdr lines)))
-                   "\n")))))
+                   "\n"))))))
 
 ;; lemma: RT-17
 (defun lemmax--entry-body (raw)
@@ -452,6 +456,7 @@ a FOLDER that holds no tracked file."
           (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-markers infos only staged)
+        (lemmax--lint-links infos only staged)
         (unless no-tests (lemmax--lint-verify infos only))
         (when staged
           ;; lemma: 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
@@ -538,6 +543,57 @@ With CACHED, read the staged copies."
         (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
                          "DONE with no code marker"
                          (format "put a comment line \"lemma: %s\" where it is built" (plist-get r :id)))))))
+
+;;;; id: links (01a202bc-49e2-7dba-94f5-0c0952fc91f0)
+
+(defconst lemmax--id-link-re "\\[\\[id:\\([^]\n]+\\)\\]"
+  "An org-id link; group 1 is the id.")
+
+;; lemma: 01a202bc-49e2-7dba-94f5-0c0952fc91f0
+(defun lemmax--id-links (&optional cached)
+  "Every [[id:...]] link in the tracked .org files: a list of (ID FILE LINE).
+With CACHED, read the staged copies."
+  (let ((out (apply #'lemmax--git-out
+                    (append '("grep" "-n" "-I" "-F") (and cached '("--cached"))
+                            '("[[id:" "--" "*.org"))))
+        res)
+    (dolist (l (lemmax--lines out))
+      (when (string-match "\\`\\([^:]+\\):\\([0-9]+\\):\\(.*\\)\\'" l)
+        (let ((file (match-string 1 l)) (line (string-to-number (match-string 2 l)))
+              (text (lemmax--blank-verbatim (match-string 3 l))) (pos 0))
+          (while (string-match lemmax--id-link-re text pos)
+            (push (list (string-trim (match-string 1 text)) file line) res)
+            (setq pos (match-end 0))))))
+    (nreverse res)))
+
+(defun lemmax--blank-verbatim (text)
+  "TEXT with =verbatim= and ~code~ spans blanked: org shows no link there."
+  (replace-regexp-in-string "\\(?:=[^=\n]+=\\|~[^~\n]+~\\)"
+                            (lambda (m) (make-string (length m) ?\s)) text t t))
+
+(defun lemmax--known (reqs)
+  "Hash: each id of REQS, and each alias, to its lemma."
+  (let ((known (make-hash-table :test #'equal)))
+    (dolist (r reqs)
+      (when (plist-get r :id) (puthash (plist-get r :id) r known)))
+    (dolist (r reqs)
+      (dolist (a (plist-get r :aliases))
+        (unless (gethash a known) (puthash a r known))))
+    known))
+
+(defun lemmax--lint-links (infos only cached)
+  "An id: link in an opted-in file that names no lemma, or a DROPPED one."
+  (let ((known (lemmax--known (lemmax--all-reqs (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files))))))
+        (files (mapcar (lambda (i) (plist-get i :file)) infos)))
+    (dolist (k (lemmax--id-links cached))
+      (when (and (member (nth 1 k) files) (or (null only) (member (nth 1 k) only)))
+        (let ((r (gethash (nth 0 k) known)))
+          (cond ((null r)
+                 (lemmax--finding (nth 1 k) (nth 2 k) (nth 0 k) "the id: link names an id no lemma has"
+                                  "fix the id, or remove the link"))
+                ((equal (plist-get r :state) "DROPPED")
+                 (lemmax--finding (nth 1 k) (nth 2 k) (nth 0 k) "the id: link names a DROPPED lemma"
+                                  "link the lemma that replaced it, or remove the link"))))))))
 
 ;;;; commit-msg (RT-7)
 

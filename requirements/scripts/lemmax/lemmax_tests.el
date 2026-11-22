@@ -810,3 +810,24 @@
       (should (string-match-p "the folder gone/ holds no tracked file" (nth 2 r))))
     (rt-set d "lemmax/config.eld" "(:folders (\"reqs/\" :tests \"x\")")
     (rt-should-find (rt-run d "lint" "--no-tests") "does not read")))
+
+;;;; 01a202bc-49e2-7dba-94f5-0c0952fc91f0: id: links
+
+(ert-deftest lemmax-id-link-unknown ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :body "See [[id:RQ-9][nine]]; as text, =[[id:ID]]=.\n")))))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "requirements.org:[0-9]+: RQ-9: the id: link names an id no lemma has")
+      (should-not (string-match-p ": ID: " (nth 2 r))))))
+
+(ert-deftest lemmax-id-link-dropped ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :body "See [[id:RQ-2]].\n") (rt-req "RQ-2" :state "DROPPED")))))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-2: the id: link names a DROPPED lemma")))
+
+(ert-deftest lemmax-id-link-ok ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1" :body "See [[id:RQ-2][two]].\n") (rt-req "RQ-2")))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; Only the shown text of the link changed: not a text change of a DONE lemma.
+    (rt-set d "requirements.org" (concat rt-head (rt-done "RQ-1" :body "See [[id:RQ-2][the second]].\n") (rt-req "RQ-2")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
