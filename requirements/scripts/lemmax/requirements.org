@@ -683,7 +683,7 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN Tests run on Emacs 29 and the newest Emacs                        :tests:
+** DONE Tests run on Emacs 29 and the newest Emacs                        :tests:
 :PROPERTIES:
 :ID:          01a202f3-863b-7c04-9728-0c9dd9346002
 :NEEDS:       01a202f3-86d9-7db2-a0dc-accec28dfe29
@@ -691,6 +691,7 @@ Evidence: the hardening review of 2026-11-22.
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-ci-matrix
+:IMPLEMENTED: 2026-11-22
 :END:
 - The CI job runs run_tests on Emacs 29.x and the newest release
 - lemmax.el states its floor: Emacs 29, Org 9.6

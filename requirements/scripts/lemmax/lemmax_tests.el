@@ -1134,3 +1134,11 @@
     (should (string-match-p "run: requirements/scripts/lemmax/run_tests$" w))
     (should (string-match-p "run: requirements/scripts/lemmax/lemmax lint$" w))
     (should-not (string-match-p "lemmax lint --no-tests" w))))
+
+(ert-deftest lemmax-ci-matrix ()
+  (let ((w (rt-workflow)))
+    (should (string-match "emacs_version: \\[\\(.*\\)\\]" w))
+    (let ((vs (split-string (match-string 1 w) "[\", ]+" t)))
+      (should (member "29.4" vs))
+      (should (cl-some (lambda (v) (or (equal v "release-snapshot") (>= (string-to-number v) 30))) vs)))
+    (should (string-match-p "version: \\${{ matrix.emacs_version }}" w))))
