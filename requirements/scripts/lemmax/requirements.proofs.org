@@ -622,3 +622,43 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: Tasks files hold dev chores
+:PROPERTIES:
+:ID:          01a2038d-ccac-777a-beff-8d9205e4eeb2
+:PROVES:      01a2038d-cc5f-7324-8de8-1b067284e640
+:TEST:        ert/lemmax-tasks-file
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: Notes files hold text that needs no state
+:PROPERTIES:
+:ID:          01a2038d-ccc1-777e-9c03-8ee7d1019acb
+:PROVES:      01a2038d-cc73-7594-9dd3-d758bee5aadc
+:TEST:        ert/lemmax-notes-file
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: AXIOM headings are accepted without proof
+:PROPERTIES:
+:ID:          01a2038d-ccd4-75b9-bdfc-3482d47f84d5
+:PROVES:      01a2038d-cc86-72be-b225-eeff9ee2c7a6
+:TEST:        ert/lemmax-axioms
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: A commit may name a task id
+:PROPERTIES:
+:ID:          01a2038d-cce6-741c-b5d3-234219cb2e96
+:PROVES:      01a2038d-cc9a-7496-b943-49cb1444826d
+:TEST:        ert/lemmax-commit-task-id
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.

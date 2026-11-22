@@ -926,3 +926,58 @@ Evidence: =lemmax-uuid7= makes ids; =git diff --no-index= makes the diff.
 - trace --dot draws a proof as an ellipse, with a dotted edge to each conjecture it proves
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--block=, =lemmax--group= and =lemmax--dot= print these today.
+
+** CONJECTURE Tasks files hold dev chores                                           :lemmax:
+:PROPERTIES:
+:ID:          01a2038d-cc5f-7324-8de8-1b067284e640
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+A task is a dev chore that changes no behaviour: a refactor, a cleanup, a migration. It needs no proof.
+- Tasks are headings in a file named =*.tasks.org=, states =TODO | DONE CANCELLED=, each with a UUID v7 :ID:, :CREATED: and :LAST_EDITED:
+- :FOR: names the ids a task serves, if any; lint refuses an id no record has
+- A task needs no :APPROVED:, :IMPLEMENTED:, proof or code marker
+- list puts tasks in a group of their own, Tasks; --state takes todo and cancelled; trace prints =for: IDS=
+- Personal todos stay in task-router-2; tasks here are only a repo's dev work
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax--proof-p= picks proofs by file name; tasks use the same way.
+
+** CONJECTURE Notes files hold text that needs no state                             :lemmax:
+:PROPERTIES:
+:ID:          01a2038d-cc73-7594-9dd3-d758bee5aadc
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- Notes are headings in a file named =*.notes.org=, with an :ID: and no state; :ABOUT: names any ids: conjectures, proofs, tasks or axioms
+- lint checks a note only for its :ID: and its :ABOUT: links; a note needs no dates
+- list puts notes in a group of their own, Notes; trace prints =about: IDS=
+- Asked by the owner on 2026-11-22
+Evidence: a heading with :ID: and no state is already read as a record by =lemmax--parse=.
+
+** CONJECTURE AXIOM headings are accepted without proof                             :lemmax:
+:PROPERTIES:
+:ID:          01a2038d-cc86-72be-b225-eeff9ee2c7a6
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- A heading in state =AXIOM= is an axiom: an agent1 rule, accepted without proof; agent1 keeps one per rule in =requirements/axioms.org=, linking its rules/ file
+- An axiom needs no :APPROVED:, :IMPLEMENTED:, proof or code marker
+- lint refuses a proof whose :PROVES: names an axiom; a theorem may use an axiom as proven
+- list puts axioms in a group of their own, Axioms; --state takes axiom
+- Asked by the owner on 2026-11-22
+Evidence: states are read through =lemmax-states=.
+
+** CONJECTURE A commit may name a task id                                           :cli:
+:PROPERTIES:
+:ID:          01a2038d-cc9a-7496-b943-49cb1444826d
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- =lemmax commit-msg= accepts a code commit that names the id of a task in an opted-in tasks file, as it does a conjecture's id
+- A code commit that names no id is still refused
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax-commit-msg= takes its ids from =lemmax--all-reqs=, which holds every record of the opted-in files.
