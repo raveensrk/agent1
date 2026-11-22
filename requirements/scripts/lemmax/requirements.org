@@ -991,3 +991,30 @@ Evidence: states are read through =lemmax-states=.
 - A code commit that names no id is still refused
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax-commit-msg= takes its ids from =lemmax--all-reqs=, which holds every record of the opted-in files.
+
+** CONJECTURE Tags are declared, nested and inherited                               :lint:
+:PROPERTIES:
+:ID:          01a2039c-9e67-74bb-9ac4-63eac14f1e7c
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+Every heading kind takes org tags: conjecture, lemma, theorem, proof, task, note and axiom.
+- A file declares its tags in =#+TAGS:=; lint refuses a heading or =#+FILETAGS:= tag the file does not declare
+- Org group tags nest them: =#+TAGS: [ ui : button menu ]=; a group may hold a group, to any depth; lint refuses a cycle
+- A heading's tags are its own, every ancestor heading's, and the file's =#+FILETAGS:=, as Org's tag inheritance reads them
+- Tags are not a heading's text: a tag edit leaves a lemma, and what uses it, as it was
+- Asked by the owner on 2026-11-22
+Evidence: Org's =org-tag-alist-to-groups= and =org-get-tags= read groups and inherited tags in batch Emacs.
+
+** CONJECTURE list and trace filter by tag                                          :cli:
+:PROPERTIES:
+:ID:          01a2039c-9e67-74bb-9ac4-63eb06d24a3f
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- =lemmax list --tag T= and =lemmax trace --tag T= show only headings whose tags hold T or a tag under T in a group
+- --tag given more than once means all of them: AND
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax--filter= already filters rows by state and section.

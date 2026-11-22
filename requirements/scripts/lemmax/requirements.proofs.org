@@ -662,3 +662,23 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: Tags are declared, nested and inherited
+:PROPERTIES:
+:ID:          01a203a1-1f8f-76a1-9d71-0eb10be5e582
+:PROVES:      01a2039c-9e67-74bb-9ac4-63eac14f1e7c
+:TEST:        ert/lemmax-tags-declared ert/lemmax-tags-groups ert/lemmax-tags-inherit
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: list and trace filter by tag
+:PROPERTIES:
+:ID:          01a203a1-1f8f-76a1-9d71-0eb2b337a0ef
+:PROVES:      01a2039c-9e67-74bb-9ac4-63eb06d24a3f
+:TEST:        ert/lemmax-tags-filter
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
