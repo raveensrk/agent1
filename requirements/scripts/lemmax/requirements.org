@@ -1222,3 +1222,17 @@ Evidence: markers are read today with =git grep -n -I -E= (lemma 01a20014-e361-7
 - =lemmax plan= prints the environment as its first steps, Toolchain, Data, Setup, then Secrets
 - Asked by the owner on 2026-11-22
 Evidence: lemmax already reads =FILE.tasks.org= and =FILE.notes.org= beside a requirements file (lemmas on tasks and notes files).
+
+** CONJECTURE [#B] The proven date is called PROVEN                        :lemmax:
+:PROPERTIES:
+:ID:          01a2052f-a14c-7e72-8a8f-57ab97635a10
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+The date a conjecture turns LEMMA or THEOREM is =:PROVEN:=, not =:IMPLEMENTED:=; it records the day of Q.E.D., not the day code was built.
+- Only a LEMMA or THEOREM has =:PROVEN:=; a proof never has a date of its own
+- Old files keep =:IMPLEMENTED:= until =lemmax migrate= moves it, as =:NEEDS:= moved to =:USES:=
+- =lemmax lint= and =lemmax trace= read =:PROVEN:= wherever they read =:IMPLEMENTED:= today, including the suspect check
+- agent1 =requirements/requirements.org=, =requirements/components.org= and =skills/ishikari/requirements.org= are migrated
+- Asked by the owner on 2026-11-23
+Evidence: =lemmax migrate= already renames =:NEEDS:= to =:USES:= and =:VERIFY:= to =:TEST:=.
