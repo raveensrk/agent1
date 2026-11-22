@@ -889,13 +889,14 @@ Evidence: run 1 failed in setup-emacs: Nix flakes off on the runner.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** OPEN Fork pull requests are safe in the shipped workflow                  :tests:
+** DONE Fork pull requests are safe in the shipped workflow                  :tests:
 :PROPERTIES:
 :ID:          01a20336-c9e9-7664-ba5c-e5e12d249d48
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-ci-safe-trigger
+:IMPLEMENTED: 2026-11-22
 :END:
 - The workflow runs on push and pull_request only, with permissions: contents: read
 - The README says lint runs the repo's test command, and never to run lemmax under pull_request_target

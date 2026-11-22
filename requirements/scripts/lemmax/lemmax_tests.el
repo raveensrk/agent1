@@ -1536,3 +1536,13 @@ run of its finding's why text."
         (rt-should-find r (concat "markers-in names " (regexp-quote dir) ", which is not a git repo beside this one"))
         ;; Not read: far's marker for RQ-9 would be a finding of its own.
         (should-not (string-match-p "RQ-9" (nth 2 r)))))))
+
+;;;; 01a20336-c9e9-7664-ba5c-e5e12d249d48: fork pull requests are safe
+
+(ert-deftest lemmax-ci-safe-trigger ()
+  (let ((w (rt-workflow))
+        (readme (with-temp-buffer (insert-file-contents (expand-file-name "README.md" rt-dir)) (buffer-string))))
+    (should (string-match-p "^permissions:\n  contents: read$" w))
+    (should-not (string-match-p "^  pull_request_target:" w))
+    (should-not (string-match-p "\\${{ *secrets\\." w))
+    (should (string-match-p "Never run\nlemmax under `pull_request_target`" readme))))

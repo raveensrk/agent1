@@ -115,3 +115,11 @@ in plain text, as org-roam's unlinked references; lint never reports it.
 ## Licence
 
 MIT; see [LICENSE](LICENSE). Changes by release: [CHANGELOG.md](CHANGELOG.md).
+
+## CI
+
+`.github/workflows/lemmax.yml` runs the tests and `lemmax lint` on every push
+and pull request, on Emacs 29.4 and 30.1. `lint` runs the repo's own test
+command, so in CI a pull request's code runs: the workflow has a read-only
+token and no secrets, as GitHub gives `pull_request` from a fork. Never run
+lemmax under `pull_request_target`, which has the base repo's secrets.

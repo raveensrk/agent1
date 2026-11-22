@@ -6,6 +6,11 @@ name: lemmax
 on:
   push:
   pull_request:
+# lint runs the repo's test command, so a pull request's code runs here: read
+# only, no secrets. Never run lemmax under pull_request_target.
+# lemma: 01a20336-c9e9-7664-ba5c-e5e12d249d48
+permissions:
+  contents: read
 jobs:
   lemmax:
     runs-on: ubuntu-latest
