@@ -572,11 +572,13 @@ a FOLDER that holds no tracked file."
   "Every marker in the tracked files but .org: a list of (ID FILE LINE TEST-P).
 With CACHED, read the staged copies."
   (let ((out (apply #'lemmax--git-out
-                    (append '("grep" "-n" "-I" "-E") (and cached '("--cached"))
+                    (append '("grep" "-n" "-z" "-I" "-E") (and cached '("--cached"))
                             '("lemma:[[:space:]]+[A-Za-z0-9]" "--" "." ":(exclude)*.org"))))
         res)
     (dolist (l (lemmax--lines out))
-      (when (string-match "\\`\\([^:]+\\):\\([0-9]+\\):\\(.*\\)\\'" l)
+      ;; lemma: 01a202f3-82c0-7905-9aa6-cafdcd9235e8
+      ;; -z: FILE NUL LINE NUL TEXT, so a path may hold a colon.
+      (when (string-match "\\`\\([^\0]+\\)\0\\([0-9]+\\)\0\\(.*\\)\\'" l)
         (let ((file (match-string 1 l)) (line (string-to-number (match-string 2 l)))
               (text (match-string 3 l)))
           (when (string-match lemmax--marker-re text)
@@ -632,11 +634,13 @@ With CACHED, read the staged copies."
   "Every [[id:...]] link in the tracked .org files: a list of (ID FILE LINE).
 With CACHED, read the staged copies."
   (let ((out (apply #'lemmax--git-out
-                    (append '("grep" "-n" "-I" "-F") (and cached '("--cached"))
+                    (append '("grep" "-n" "-z" "-I" "-F") (and cached '("--cached"))
                             '("[[id:" "--" "*.org"))))
         res)
     (dolist (l (lemmax--lines out))
-      (when (string-match "\\`\\([^:]+\\):\\([0-9]+\\):\\(.*\\)\\'" l)
+      ;; lemma: 01a202f3-82c0-7905-9aa6-cafdcd9235e8
+      ;; -z: FILE NUL LINE NUL TEXT, so a path may hold a colon.
+      (when (string-match "\\`\\([^\0]+\\)\0\\([0-9]+\\)\0\\(.*\\)\\'" l)
         (let ((file (match-string 1 l)) (line (string-to-number (match-string 2 l)))
               (text (lemmax--blank-verbatim (match-string 3 l))) (pos 0))
           (while (string-match lemmax--id-link-re text pos)

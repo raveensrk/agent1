@@ -599,13 +599,14 @@ Evidence: Graphviz's dot language is plain text; idea from org-roam-ui.
 - Asked by the owner on 2026-11-22
 Evidence: probe 2026-11-22: git mv requirements.org requirements/moved.org gave "a new requirement ... not dated today".
 
-** OPEN Paths with colons are read whole                                 :lint:
+** DONE Paths with colons are read whole                                 :lint:
 :PROPERTIES:
 :ID:          01a202f3-82c0-7905-9aa6-cafdcd9235e8
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-colon-path-marker ert/lemmax-colon-path-link
+:IMPLEMENTED: 2026-11-22
 :END:
 - Markers and id: links are found with git grep -z, so a path holding ":" keeps its marker
 - Asked by the owner on 2026-11-22

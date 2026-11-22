@@ -999,3 +999,17 @@
     (rt-set d "reqs/RQ-2.org" (concat ":PROPERTIES:\n:ID: RQ-2\n:STATE: DONE\n:CREATED: 2026-01-05\n:LAST_EDITED: 2026-01-05\n:APPROVED: 2026-01-05\n:IMPLEMENTED: 2026-01-06\n:VERIFY: unit/a\n:END:\n#+title: Title of RQ-2\n\nBody text.\n"))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+
+;;;; 01a202f3-82c0-7905-9aa6-cafdcd9235e8: paths with colons
+
+(ert-deftest lemmax-colon-path-marker ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-set d "src/a:b.el" ";; lemma: RQ-9\n")
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-run d "lint" "--no-tests") "src/a:b\\.el:1: RQ-9: the marker names an id no lemma has")))
+
+(ert-deftest lemmax-colon-path-link ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-set d "notes/a:b.org" "See [[id:RQ-1]].\n")
+    (rt-git d "add" "-A")
+    (should (string-match-p "linked from: notes/a:b\\.org:1" (nth 1 (rt-run d "trace" "RQ-1"))))))
