@@ -799,13 +799,15 @@ Evidence: probe 2026-11-22: 16 s for that repo; lemmax.el reads every tracked .o
 - Asked by the owner on 2026-11-22
 Evidence: probe 2026-11-22: lemmax lint ../requirements.org from a subfolder passed on a broken file.
 
-** OPEN agent1's own rules are config, with neutral defaults                :lint:
+** DONE agent1's own rules are config, with neutral defaults                :lint:
 :PROPERTIES:
 :ID:          01a20336-c611-73c8-bb70-4a8e70e675d1
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-config-markers-required-from ert/lemmax-config-repos ert/lemmax-messages-neutral
+:IMPLEMENTED: 2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - :markers-required-from DAY: a DONE lemma implemented on or after DAY needs a code marker; none by default
 - :repos DIR: the folder of list --all and of trace in other projects; LEMMAX_REPOS, then ~/repos

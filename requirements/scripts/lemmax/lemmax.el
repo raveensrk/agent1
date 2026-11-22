@@ -258,10 +258,17 @@ It is read with `read' and `read-eval' off, so nothing in it ever runs."
       (error (push (format "it does not read: %s" (error-message-string err)) problems)
              (setq data nil)))
     (when (and data (not problems))
-      (if (not (and (listp data) (plist-member data :folders)))
+      (if (not (and (listp data) (cl-evenp (length data)) (keywordp (car data))))
           (push "it is not a (:folders ...) list" problems)
-        (cl-loop for (k _) on data by #'cddr
-                 unless (eq k :folders) do (push (format "unknown key %S" k) problems))
+        ;; lemma: 01a20336-c611-73c8-bb70-4a8e70e675d1
+        (cl-loop for (k v) on data by #'cddr
+                 do (pcase k
+                      (:folders nil)
+                      (:markers-required-from
+                       (unless (and (stringp v) (lemmax--day-p v))
+                         (push ":markers-required-from is not a day, YYYY-MM-DD" problems)))
+                      (:repos (unless (stringp v) (push ":repos is not a folder name" problems)))
+                      (_ (push (format "unknown key %S" k) problems))))
         (dolist (e (plist-get data :folders))
           (if (not (and (consp e) (stringp (car e)) (cl-evenp (length (cdr e)))))
               (push (format "a folder entry is not (\"FOLDER\" :key value ...): %S" e) problems)
@@ -281,6 +288,12 @@ It is read with `read' and `read-eval' off, so nothing in it ever runs."
                                  (push (format "%s: %S is not a list of strings" (car e) k) problems))))
               (when ok (push (cons folder plist) folders)))))))
     (cons (nreverse folders) (nreverse problems))))
+
+(defun lemmax--config-setting (key)
+  "The top-level setting KEY of the work tree's config, or nil."
+  (let ((text (lemmax--config-text nil)))
+    (and text (null (cdr (lemmax--config-read text)))
+         (let ((read-eval nil)) (plist-get (car (read-from-string text)) key)))))
 
 (defun lemmax--config (rev)
   "The config's folder entries at REV (see `lemmax--config-text'); nil when none."
@@ -453,7 +466,7 @@ for HEAD; read by one git process, once a run."
 ;;;; lint (RT-4, RT-5, RT-6)
 
 (defun lemmax--uuid7-p (id)
-  "Whether ID is a lower-case UUID v7, as agent1's id rule asks for new requirements."
+  "Whether ID is a lower-case UUID v7, the id lemmax new-id makes."
   (string-match-p "\\`[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7[0-9a-f]\\{3\\}-[89ab][0-9a-f]\\{3\\}-[0-9a-f]\\{12\\}\\'" id))
 
 (defun lemmax--lint-file-rules (infos only)
@@ -468,9 +481,9 @@ for HEAD; read by one git process, once a run."
           (when (string-match-p "\\`[A-Z]+-[0-9]+\\_>" (plist-get r :title))
             (lemmax--finding f l id "the heading text starts with an id"
                                "keep the id in :ID: only"))
-          (cond ((null id) (lemmax--finding f l nil "no :ID:" "add :ID: as RF-3"))
+          (cond ((null id) (lemmax--finding f l nil "no :ID:" "add :ID:, as RQ-1 or a UUID v7 from lemmax new-id"))
                 ((string-match-p "[ \t]" id)
-                 (lemmax--finding f l id "an id has no spaces" "keep the id one word, as RF-3 or a UUID v7"))
+                 (lemmax--finding f l id "an id has no spaces" "keep the id one word, as RQ-1 or a UUID v7"))
                 ((not (or (string-match-p "\\`[A-Z]+-[0-9]+\\'" id) (lemmax--uuid7-p id)))
                  (lemmax--finding f l id "the id is neither a UUID v7 nor shaped [A-Z]+-[0-9]+"
                                     "make a new one with python3 -c 'import uuid; print(uuid.uuid7())'")))
@@ -692,8 +705,10 @@ With CACHED, read the staged copies."
                                       (lemmax--markers patterns))))))))
 
 (defun lemmax--lint-markers (infos only cached)
-  "Markers that name no lemma or a DROPPED one; DONE lemmas from 2026-11-22 with no code marker."
+  "Markers that name no lemma or a DROPPED one; DONE lemmas implemented on or
+after the config's :markers-required-from with no code marker."
   (let* ((known (make-hash-table :test #'equal))
+         (from (lemmax--config-setting :markers-required-from))
          (markers (lemmax--all-markers infos cached))
          (reqs (lemmax--all-reqs infos)))
     (setq known (lemmax--known (lemmax--all-reqs (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files))))))
@@ -708,7 +723,7 @@ With CACHED, read the staged copies."
     (dolist (r reqs)
       (when (and (equal (plist-get r :state) "DONE")
                  (or (null only) (member (plist-get r :file) only))
-                 (plist-get r :implemented) (not (string< (plist-get r :implemented) "2026-11-22"))
+                 (plist-get r :implemented) from (not (string< (plist-get r :implemented) from))
                  (not (cl-some (lambda (m) (and (equal (nth 0 m) (plist-get r :id)) (not (nth 3 m)))) markers)))
         (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
                          "DONE with no code marker"
@@ -794,7 +809,7 @@ With CACHED, read the staged copies."
         (unless (cl-some (lambda (id) (lemmax--names-id-p msg id)) ids)
           (lemmax--finding msgfile 1 nil
                              (format "this commit changes code (%s) and names no requirement id" touches)
-                             "name one in the message, as (RF-3)"))))
+                             "name one in the message, as (RQ-1)"))))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
 
 ;;;; trace (RT-8, RT-9)
@@ -999,7 +1014,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
       (let ((hits (lemmax--projects-with want)))
         (unless hits
           (lemmax--err "lemmax: unknown id %s, here or in any project under %s; lemmax list --all shows the ids"
-                         want (abbreviate-file-name (expand-file-name (or (getenv "LEMMAX_REPOS") "~/repos"))))
+                         want (abbreviate-file-name (expand-file-name (lemmax--repos-dir))))
           (kill-emacs 1))
         (dolist (d hits)
           (lemmax--out "project: %s" (abbreviate-file-name (directory-file-name d)))
@@ -1161,8 +1176,12 @@ One git process reads every revision of a file; a blob seen before is skipped."
           (_ (lemmax--err "lemmax: unknown option %s; see lemmax list --help" a) (kill-emacs 1)))))
     opts))
 
+(defun lemmax--repos-dir ()
+  "The folder of the repos list --all reads: the config's :repos, LEMMAX_REPOS, ~/repos."
+  (or (lemmax--config-setting :repos) (getenv "LEMMAX_REPOS") "~/repos"))
+
 (defun lemmax--repos ()
-  (let ((base (expand-file-name (or (getenv "LEMMAX_REPOS") "~/repos"))))
+  (let ((base (expand-file-name (lemmax--repos-dir))))
     (cl-loop for d in (directory-files base t "\\`[^.]")
              when (and (file-directory-p d) (file-exists-p (expand-file-name ".git" d)))
              collect (file-name-as-directory d))))
@@ -1280,9 +1299,9 @@ Lint, trace and list a repo's org requirements.
 Commands: lint, commit-msg, trace, list, new-id, next-id, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and never writes a file.
-example: lemmax list --ready -p ~/repos/arcadia_docs"
+example: lemmax list --ready -p ~/repos/other-project"
      "Commands:
-  lint [--staged] [--no-tests] [FILE...]  refuse what requirements.org forbids
+  lint [--staged] [--no-tests] [FILE...]  check the requirements files' rules
   commit-msg MSGFILE                      refuse a code commit that names no id
   trace [ID]                              each requirement's links, tests and commits
   list [filters] [--all] [--json]         every requirement in a table
@@ -1307,7 +1326,7 @@ A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>
 Exit 0 when clean, 1 on any finding or failure.")
     (lint
      "usage: lemmax lint [--project DIR] [--staged] [--no-tests] [FILE...]
-Refuse what requirements.org forbids, in files with #+LEMMAX_TESTS:.
+Check the requirements files' rules, in files that opt in.
 example: lemmax lint --staged --no-tests"
      "--staged    read the staged copies and refuse changes against HEAD:
             a DONE requirement whose text changed, :LAST_EDITED: not today,
@@ -1321,7 +1340,7 @@ Refuse a commit that changes code under #+LEMMAX_CODE: and names no requirement 
 example: lemmax commit-msg .git/COMMIT_EDITMSG"
      "The ids come from the staged requirements files, so one commit may add a
 requirement and name it. Comment lines (#) do not count. An id matches as a
-whole word: RF-3 is not RF-30.")
+whole word: RQ-1 is not RQ-10.")
     (trace
      "usage: lemmax trace [--project DIR] [--run-tests] [ID | --dot]
 Print each requirement's parents, children, tests and commits.
@@ -1330,7 +1349,8 @@ example: lemmax trace RT-3"
 :VERIFY: names, then the suspect children: DONE requirements whose parent's
 text changed in git after their :IMPLEMENTED: or :REVIEWED: day.
 With an ID: that one block, and the files each of its commits touched.
-An ID not in this project is looked for in every project under ~/repos,
+An ID not in this project is looked for in every project under the repos
+folder (the config's :repos, LEMMAX_REPOS, else ~/repos),
 and shown under a project: line.
 --run-tests: run the repo's test command, to check :VERIFY: and find orphan
 tests; without it nothing of the repo's runs, and verify says unchecked.
@@ -1351,7 +1371,8 @@ Groups: waiting for approval, approved and open, done, dropped.
 --unlinked    instead of the table, each FILE:LINE: ID where an .org file's text
               names a lemma id with no [[id:]] link; never a lint finding
 --project DIR the git repo that holds DIR; give it again for more, one table each
---all         every git repo under ~/repos (LEMMAX_REPOS sets the folder)
+--all         every git repo in the repos folder: the config's :repos,
+              LEMMAX_REPOS, else ~/repos
 --json        {"version": 1, "rows": [...]}: one object a row; version
               changes when a key or type of a row does
 --run-tests   run the repo's test command for the check column; without it
@@ -1359,7 +1380,7 @@ Groups: waiting for approval, approved and open, done, dropped.
 --no-tests    the default; kept so older calls still work")
     (new-id
      "usage: lemmax new-id
-Print a new requirement id: a UUID v7, lower case, as agent1's id rule asks.
+Print a new requirement id: a UUID v7, lower case.
 example: lemmax new-id"
      "The first 12 hex digits are the time in milliseconds, so ids sort by age;
 the rest is random from /dev/urandom. It needs no check against other ids.

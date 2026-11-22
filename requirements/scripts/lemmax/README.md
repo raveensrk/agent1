@@ -53,6 +53,10 @@ may be headings in one file or one lemma per `.org` file, with no header:
    :test-paths ("tests/") :markers-in ("../code"))))
 ```
 
+- Top-level keys, beside `:folders`: `:markers-required-from "YYYY-MM-DD"` makes
+  a DONE lemma implemented on or after that day need a `lemma:` code marker
+  (no key: none needs one); `:repos "DIR"` is the folder `list --all` and
+  cross-project `trace` read (else `LEMMAX_REPOS`, else `~/repos`).
 - A file takes the entry with the longest folder that holds it; `""` is the root.
 - A file with any `#+LEMMAX_*` line of its own uses only its header.
 - It is read as data with `read-eval` off and never run; `lint` reports a form
