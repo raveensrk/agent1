@@ -15,3 +15,8 @@ The first public release.
 - `lemma:` code markers, checked both ways.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
+- The math names: conjectures (`CONJECTURE | LEMMA THEOREM REFUTED`),
+  proofs in `FILE.proofs.org` (`OPEN | PASSED`, `:PROVES:`, `:TEST:`),
+  `:USES:` for theorems, and `lemmax migrate`. Old files still read.
+- `:VERIFY:` is no longer part of a requirement's text: changing it no longer
+  reopens a DONE requirement or makes its children suspect.

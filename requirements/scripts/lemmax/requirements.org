@@ -1007,7 +1007,7 @@ Evidence: =lemmax--lint-file-rules= and =lemmax--lint-verify= hold the rules thi
 - :NEEDS: becomes :USES:; the #+TODO: line becomes =CONJECTURE | LEMMA THEOREM REFUTED=
 - Each :VERIFY: (and :VERIFY+:) leaves its conjecture for a new proof in =FILE= with =.proofs.org= for =.org=: a new UUID v7, :PROVES: the conjecture, :TEST: the addresses, PASSED when the conjecture was DONE, else OPEN, dated today
 - The proofs file gets the requirements file's #+LEMMAX_TESTS: and #+LEMMAX_CODE: lines
-- A migrated file lints clean when the old one did
+- A migrated file lints clean when the old one did, but for a theorem that uses an unproven conjecture, which lint then names
 - With --write it is the second command that writes; it writes only FILE and its proofs file
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax-uuid7= makes ids; =git diff --no-index= makes the diff.

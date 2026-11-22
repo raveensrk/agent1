@@ -28,7 +28,8 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 ## 4. Prove it can be tested
 
-- Name the check for `:VERIFY:`: unit test, window check or acceptance check.
+- Name the check that will prove it: unit test, window check or acceptance check.
+  In a file on the math names it goes in a proof's `:TEST:`; in an old file, `:VERIFY:`.
 - The project's test tools must be able to run it. No manual look, no dev session.
 
 ## 5. When it cannot be built as asked
@@ -49,16 +50,18 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 - Conflict: show both, ask which wins.
 
-- Parent fits: set `:NEEDS:` to its `:ID:`.
+- It builds on another: set `:USES:` (old files: `:NEEDS:`) to its `:ID:`.
 
 ## 7. Draft and approve
 
-Draft as an org heading, OPEN, with:
+Draft as an org heading, CONJECTURE (old files: OPEN), with:
 
 - `:ID:` - new, never reused: a UUID v7 from `lemmax new-id`; a project whose old ids still count up may use `lemmax next-id <LETTER>`.
 - `:CREATED:`, `:LAST_EDITED:` - today, `YYYY-MM-DD`.
-- `:NEEDS:` if a parent fits.
-- `:VERIFY:` - the named check.
+- `:USES:` (old files: `:NEEDS:`) if it builds on another.
+- Its proof: a heading in `FILE.proofs.org`, OPEN, with a new `:ID:`,
+  `:PROVES:` the conjecture's id and `:TEST:` the named check (old files:
+  `:VERIFY:` on the conjecture). `lemmax migrate FILE` moves an old file over.
 - Body - what it does, in plain lines.
 - One `Evidence:` line with links or paths.
 

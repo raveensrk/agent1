@@ -43,6 +43,32 @@ lemmax lint --staged          # what the pre-commit hook runs
 - `harness/checks/lemmax_lint.py` runs `lint --no-tests` on each opted-in
   `.org` file an agent edits.
 
+## Conjectures, proofs, lemmas and theorems
+
+<!-- lemma: 01a20369-38d2-7202-8b53-6e296aaac489 -->
+
+Conjecture + proof = lemma. A requirement is a conjecture: its statement,
+ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
+
+```org
+* PASSED Proof: lint reads states
+:PROPERTIES:
+:ID:          01a20369-...
+:PROVES:      01a20369-38d2-7202-8b53-6e296aaac489
+:TEST:        ert/lemmax-math-states
+:END:
+```
+
+- Conjecture states: `CONJECTURE | LEMMA THEOREM REFUTED`; proof states: `OPEN | PASSED`.
+- A `LEMMA` has a proof, and every proof of it is `PASSED`. An `OPEN` proof is
+  a counterexample until it passes: lint refuses the lemma.
+- A `THEOREM` names the lemmas it uses in `:USES:`; each must be proven.
+- A proof may prove many conjectures; a conjecture may have many proofs.
+- `:VERIFY:` lines are not a lemma's text: a changed proof leaves the lemma,
+  and its theorems, as they were.
+- Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
+  `lemmax migrate FILE` prints the move as a diff; `--write` makes it.
+
 ## Code markers
 
 A comment line whose first words are `lemma:` and ids links code to its lemmas.
