@@ -1339,3 +1339,53 @@ run of its finding's why text."
                            tests)
             (push key survived)))))
     (should (equal (list :uncovered nil :survived nil) (list :uncovered uncovered :survived survived)))))
+
+;;;; 01a20336-c4d6-73d3-a429-0a755d277123: read only candidate files, once
+
+(defmacro rt-in (dir &rest body)
+  "BODY with lemmax loaded, in DIR, its caches empty."
+  (declare (indent 1))
+  `(progn (rt-load)
+          (let ((default-directory (file-name-as-directory ,dir)))
+            (clrhash lemmax--files-cache)
+            ,@body)))
+
+(defun rt-counting-parses (thunk)
+  "Call THUNK; the list of files `lemmax--parse' read meanwhile."
+  (let (seen)
+    (let ((f (lambda (_content file) (push file seen))))
+      (advice-add 'lemmax--parse :before f)
+      (unwind-protect (funcall thunk) (advice-remove 'lemmax--parse f)))
+    (nreverse seen)))
+
+(ert-deftest lemmax-reads-candidates-only ()
+  (let ((d (rt-repo (append (rt-files (rt-req "RQ-1"))
+                            (list (cons "notes/plain.org" "* A note\n:PROPERTIES:\n:ID: n-1\n:END:\nOPEN word in text.\n")
+                                  (cons "notes/todo.org" "* DONE A done note\n")
+                                  (cons "notes/file-lemma.org" (rt-file-lemma "RQ-2"))
+                                  (cons "requirements/gui.org" "* Title only\n"))))))
+    (rt-in d
+      (let ((read (rt-counting-parses #'lemmax--worktree-files)))
+        (should (equal (sort (copy-sequence read) #'string<)
+                       '("notes/file-lemma.org" "notes/todo.org" "requirements.org" "requirements/gui.org")))))))
+
+(ert-deftest lemmax-parse-once ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (rt-in d
+      (let ((read (rt-counting-parses (lambda () (lemmax--worktree-files) (lemmax--worktree-files)
+                                         (lemmax--rev-files "") (lemmax--rev-files "") (lemmax--rev-files "HEAD")))))
+        (should (equal read '("requirements.org" "requirements.org" "requirements.org")))))))
+
+(ert-deftest lemmax-big-notes-repo-time ()
+  :tags '(timeout-120)
+  (let ((d (rt-repo (append (rt-files (rt-req "RQ-1" :created "2026-11-22" :last "2026-11-22"))
+                            (cl-loop for i from 1 to 1500
+                                     collect (cons (format "notes/n%d.org" i)
+                                                   (format "* Note %d\n:PROPERTIES:\n:ID: note-%d\n:END:\nText.\n" i i)))))))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :created "2026-11-22" :last "2026-11-22" :body "Changed.\n")))
+    (rt-git d "add" "-A")
+    (let* ((start (float-time))
+           (r (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged" "--no-tests")))
+           (took (- (float-time) start)))
+      (rt-should-clean r)
+      (should (< took 2.0)))))

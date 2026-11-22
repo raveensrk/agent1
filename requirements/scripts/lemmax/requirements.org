@@ -770,13 +770,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN lint reads only files that can hold lemmas, once                  :lint:
+** DONE lint reads only files that can hold lemmas, once                  :lint:
 :PROPERTIES:
 :ID:          01a20336-c4d6-73d3-a429-0a755d277123
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-reads-candidates-only ert/lemmax-parse-once ert/lemmax-big-notes-repo-time
+:IMPLEMENTED: 2026-11-22
 :END:
 - A run parses each file at most once: work tree, index and HEAD each cached
 - It reads opted-in files, files the config names, requirements files, and files a git grep finds holding :ID: and OPEN, DONE or DROPPED; no other .org file

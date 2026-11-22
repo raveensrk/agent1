@@ -329,25 +329,62 @@ a FOLDER that holds no tracked file."
                              (format "the folder %s holds no tracked file" (car f))
                              "fix the folder, or remove its entry")))))))
 
+;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
+(defconst lemmax--candidate-re
+  "^(\\*+ +(OPEN|DONE|DROPPED)\\b|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED)\\b|#\\+(LEMMAX|REQTRACE)_|#\\+TODO:.*\\bOPEN\\b)"
+  "A line only a file that may hold lemmas has, for git grep -E.")
+
+(defvar lemmax--files-cache (make-hash-table :test #'equal)
+  "(REPO . REV), REV nil for the work tree -> its parsed infos, once a run.")
+
+(defun lemmax--candidates (rev)
+  "The .org files at REV that may hold lemmas: requirements files by name or
+folder, files under a config folder, and files git grep finds a state, a
+lemmax keyword or an OPEN #+TODO: in. No other .org file is read."
+  (let* ((all (lemmax--lines (cond ((null rev) (lemmax--git-out "ls-files" "*.org"))
+                                   ((string-empty-p rev) (lemmax--git-out "ls-files" "*.org"))
+                                   (t (mapconcat #'identity
+                                                 (cl-remove-if-not (lambda (f) (string-suffix-p ".org" f))
+                                                                   (lemmax--lines (lemmax--git-out "ls-tree" "-r" "--name-only" rev)))
+                                                 "\n")))))
+         (folders (mapcar #'car (lemmax--config rev)))
+         (hits (mapcar (lambda (l) (if (and rev (not (string-empty-p rev))) (string-remove-prefix (concat rev ":") l) l))
+                       (lemmax--lines (apply #'lemmax--git-out
+                                             (append '("grep" "-l" "-I" "-E")
+                                                     (cond ((null rev) nil) ((string-empty-p rev) '("--cached")))
+                                                     (list lemmax--candidate-re)
+                                                     (and rev (not (string-empty-p rev)) (list rev))
+                                                     '("--" "*.org")))))))
+    (cl-remove-if-not
+     (lambda (f) (or (member f hits)
+                     (equal (file-name-nondirectory f) "requirements.org")
+                     (member "requirements" (split-string (or (file-name-directory f) "") "/" t))
+                     (cl-some (lambda (d) (string-prefix-p d f)) folders)))
+     all)))
+
 (defun lemmax--worktree-files ()
-  "Parsed infos of the repo's git-tracked .org files, from the work tree."
-  (lemmax--apply-config
-   (cl-loop for f in (lemmax--lines (lemmax--git-out "ls-files" "*.org"))
-            when (file-readable-p f)
-            collect (lemmax--parse (with-temp-buffer (insert-file-contents f) (buffer-string)) f))
-   (lemmax--config nil)))
+  "Parsed infos of the repo's candidate .org files, from the work tree; once a run."
+  (or (gethash (cons default-directory nil) lemmax--files-cache)
+      (puthash (cons default-directory nil)
+               (lemmax--apply-config
+                (cl-loop for f in (lemmax--candidates nil)
+                         when (file-readable-p f)
+                         collect (lemmax--parse (with-temp-buffer (insert-file-contents f) (buffer-string)) f))
+                (lemmax--config nil))
+               lemmax--files-cache)))
 
 (defun lemmax--rev-files (rev)
-  "Parsed infos of the .org files at REV: \"\" for the index, \"HEAD\" for HEAD."
-  (let ((names (if (string-empty-p rev)
-                   (lemmax--lines (lemmax--git-out "ls-files" "*.org"))
-                 (cl-remove-if-not (lambda (f) (string-suffix-p ".org" f))
-                                   (lemmax--lines (lemmax--git-out "ls-tree" "-r" "--name-only" rev))))))
-    (lemmax--apply-config
-     (cl-loop for f in names
-              for c = (lemmax--git-out "show" (concat rev ":" f))
-              when c collect (lemmax--parse c f))
-     (lemmax--config rev))))
+  "Parsed infos of the candidate .org files at REV: \"\" for the index, \"HEAD\"
+for HEAD; read by one git process, once a run."
+  (or (gethash (cons default-directory rev) lemmax--files-cache)
+      (puthash (cons default-directory rev)
+               (let ((names (lemmax--candidates rev)))
+                 (lemmax--apply-config
+                  (cl-loop for f in names
+                           for b in (lemmax--blobs (mapcar (lambda (f) (concat rev ":" f)) names))
+                           when b collect (lemmax--parse (cdr b) f))
+                  (lemmax--config rev)))
+               lemmax--files-cache)))
 
 (defun lemmax--opted (infos) (cl-remove-if-not (lambda (i) (plist-get i :opted)) infos))
 (defun lemmax--listed (infos) (cl-remove-if-not (lambda (i) (plist-get i :listed)) infos))
