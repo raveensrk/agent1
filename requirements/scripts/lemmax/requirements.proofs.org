@@ -703,7 +703,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: A LOGBOOK is not the text
+* PASSED Proof: A LOGBOOK is not the text
 :PROPERTIES:
 :ID:          01a203b2-e90f-73e4-bac1-209873198b9e
 :PROVES:      01a203a6-a729-7420-980a-1702a0de05ad

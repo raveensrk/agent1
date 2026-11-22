@@ -1050,12 +1050,13 @@ Evidence: =lemmax--id-link-re= already reads id: links in bodies.
 - Asked by the owner on 2026-11-22
 Evidence: =org-entry-get= reads :ORDERED: and =org-get-last-sibling= walks siblings in batch Emacs.
 
-** CONJECTURE A LOGBOOK is not the text                                             :lint:
+** LEMMA A LOGBOOK is not the text                                             :lint:
 :PROPERTIES:
 :ID:          01a203a6-a729-7420-980a-1702a0de05ad
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - With =#+STARTUP: logdone lognotestate=, Emacs logs each state change to a heading's =:LOGBOOK:= drawer
 - A =:LOGBOOK:= drawer is not a heading's text, nor its body: a logged state change makes nothing suspect

@@ -99,6 +99,14 @@ Lint reads Org's blocking properties and stays the authority: under
 `:ORDERED: t`, a child may not be proven before an earlier sibling, and a
 `:BLOCKER:` must name the ids `:USES:` names.
 
+## LOGBOOK
+
+<!-- lemma: 01a203a6-a729-7420-980a-1702a0de05ad -->
+
+With `#+STARTUP: logdone lognotestate`, Emacs logs state changes to
+`:LOGBOOK:`. The drawer is not a heading's text, so a log makes nothing
+suspect. "Changed on" lines are still required.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->

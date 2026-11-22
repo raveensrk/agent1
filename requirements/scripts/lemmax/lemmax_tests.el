@@ -2048,3 +2048,20 @@ run of its finding's why text."
                                               (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))))
     (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 RQ-3")))
     (rt-should-find (rt-run d "lint" "--no-tests") ":BLOCKER: and :USES: name different ids")))
+
+;;;; 01a203a6-a729-7420-980a-1702a0de05ad: a LOGBOOK is not the text
+
+(ert-deftest lemmax-logbook ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-files (rt-done "RQ-1") (rt-req "RQ-2" :state "DONE" :implemented "2026-01-06" :verify "unit/a" :needs "RQ-1"))
+                    "2026-01-06")))
+    (rt-set d "requirements.org"
+            (concat rt-head
+                    (replace-regexp-in-string ":END:\n" ":END:\n:LOGBOOK:\n- State \"DONE\"       from \"OPEN\"       [2026-01-06 Tue 10:00]\n:END:\n"
+                                              (rt-done "RQ-1"))
+                    (rt-req "RQ-2" :state "DONE" :implemented "2026-01-06" :verify "unit/a" :needs "RQ-1")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged" "--no-tests")))
+    (rt-commit d "log")
+    (should (string-match-p "Suspect: none" (nth 1 (rt-run d "trace"))))
+    (should-not (string-match-p "State \"DONE\"" (nth 1 (rt-run d "trace" "RQ-1"))))))

@@ -121,8 +121,13 @@ space after each key, and the trimmed body without #+title:."
          (skip-re (concat "\\`[ \t]*:" (regexp-opt (append '("STATE" "VERIFY" "VERIFY+" "NEEDS" "USES") lemmax-dates)) ":"))
          (in nil) props body)
     ;; lemma: 01a202f3-8216-7a1e-a34c-80c99d7bbf02
+    ;; lemma: 01a203a6-a729-7420-980a-1702a0de05ad
+    ;; A :LOGBOOK: drawer is history, not text.
     (dolist (l (cdr lines))
-      (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
+      (cond ((string-match-p "\\`[ \t]*:LOGBOOK:[ \t]*\\'" l) (setq in 'log))
+            ((and (eq in 'log) (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
+            ((eq in 'log))
+            ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
             (in (unless (string-match-p skip-re l)
                   (push (if (string-match "\\`[ \t]*\\(:[^: \t]+:\\)[ \t]*\\(.*?\\)[ \t]*\\'" l)
@@ -147,7 +152,10 @@ space after each key, and the trimmed body without #+title:."
 property drawer, trimmed (RT-17)."
   (let ((lines (cdr (split-string raw "\n"))) (in nil) out)
     (dolist (l lines)
-      (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
+      (cond ((string-match-p "\\`[ \t]*:LOGBOOK:[ \t]*\\'" l) (setq in 'log))
+            ((and (eq in 'log) (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
+            ((eq in 'log))
+            ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
             ;; A file lemma's #+title: is its title, not its body.
             ((string-match-p "\\`#\\+[Tt][Ii][Tt][Ll][Ee]:" l))
