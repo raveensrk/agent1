@@ -27,3 +27,30 @@ Only the related tests ran when they were built. Run =lemmax/run_tests= once and
 :LAST_EDITED: 2026-11-22
 :END:
 =theory.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
+
+* TODO Rebuild lemmax from its requirements alone
+:PROPERTIES:
+:ID:          01a205a5-79e6-72b6-88e6-113ea1cc9f1e
+:FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+A fresh agent, given only =lemmax plan=, the requirements, proofs and axioms, rebuilds lemmax in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
+
+* TODO Say that a passing test is evidence, not proof
+:PROPERTIES:
+:ID:          01a205a5-79e8-76df-8569-07f88a824da2
+:FOR:         01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+Tests can refute a conjecture but never prove it. Say so in the README and the math table, and say that the owner's or judge's review of each conjecture and proof pair is what makes a lemma hold.
+
+* TODO Measure what a small change costs
+:PROPERTIES:
+:ID:          01a205a5-79ea-7217-a6b3-12e41ea07d43
+:FOR:         01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+For the next five small edits, note the steps Lemmax asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
