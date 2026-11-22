@@ -1,7 +1,7 @@
 ;;; lemmax.el --- lint, trace and list org requirements  -*- lexical-binding: t; -*-
 
 ;; Run through the launcher: lemmax/lemmax COMMAND ...
-;; Requirements: lemmax/requirements.org (RT-1 to RT-15).
+;; Requirements: lemmax/theory.org (RT-1 to RT-15).
 ;; It reads files and git, and writes no file but the two hooks install-hooks puts in place.
 
 ;; lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2

@@ -26,4 +26,4 @@ Only the related tests ran when they were built. Run =lemmax/run_tests= once and
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-=requirements.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
+=theory.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.

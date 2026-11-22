@@ -1704,12 +1704,12 @@ run of its finding's why text."
     (dolist (f (split-string (with-temp-buffer
                                (let ((default-directory rt-agent1))
                                  (call-process "git" nil t nil "ls-files" "lemmax" "skills/add-requirement"
-                                               ".github" "lemmax"))
+                                               ".github"))
                                (buffer-string))
                              "\n" t))
       (unless (member (file-name-nondirectory f) '("install" "lemmax_tests.el"))
         (let ((text (with-temp-buffer (insert-file-contents (expand-file-name f rt-agent1)) (buffer-string))))
-          (if (or (string-suffix-p "requirements.org" f) (string-suffix-p ".proofs.org" f))
+          (if (or (string-suffix-p "theory.org" f) (string-suffix-p ".proofs.org" f))
               (dolist (e (split-string text "^\\*+ " t))
                 ;; A proof of an allowed lemma takes its title.
                 (when (and (string-search "reqtrace" e)
