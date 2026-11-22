@@ -858,7 +858,7 @@ Evidence: 6538 folders, 1.4 GB, under ~/tmp after this session's runs.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** OPEN CI passes on every Emacs of its matrix                               :tests:
+** DONE CI passes on every Emacs of its matrix                               :tests:
 :PROPERTIES:
 :ID:          01a20336-c8a5-702e-86c3-655c93d44c9e
 :NEEDS:       01a202f3-863b-7c04-9728-0c9dd9346002
@@ -866,6 +866,7 @@ Evidence: the release review of 2026-11-22.
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-ci-matrix
+:IMPLEMENTED: 2026-11-22
 :END:
 - The workflow is green on each Emacs of its matrix on the release commit
 - Asked by the owner on 2026-11-22
