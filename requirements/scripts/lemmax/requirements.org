@@ -584,3 +584,175 @@ Evidence: idea from org-roam's unlinked references.
 - It writes nothing; pipe it into =dot -Tsvg=
 - Asked by the owner on 2026-11-22
 Evidence: Graphviz's dot language is plain text; idea from org-roam-ui.
+
+** OPEN A lemma moved to another file keeps its history                 :lint:
+:PROPERTIES:
+:ID:          01a202f3-8216-7a1e-a34c-80c99d7bbf02
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-move-lemma-file ert/lemmax-move-lemma-between-files
+:END:
+- lint --staged compares each staged lemma with the HEAD lemma of the same :ID: in any HEAD file, opted in then or not
+- So git mv of a requirements file, or cutting a lemma into a file of its own, is no new lemma
+- Asked by the owner on 2026-11-22
+Evidence: probe 2026-11-22: git mv requirements.org requirements/moved.org gave "a new requirement ... not dated today".
+
+** OPEN Paths with colons are read whole                                 :lint:
+:PROPERTIES:
+:ID:          01a202f3-82c0-7905-9aa6-cafdcd9235e8
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-colon-path-marker ert/lemmax-colon-path-link
+:END:
+- Markers and id: links are found with git grep -z, so a path holding ":" keeps its marker
+- Asked by the owner on 2026-11-22
+Evidence: probe 2026-11-22: a marker naming an unknown id in a:b.el gave no finding.
+
+** OPEN list and trace run no test command unless asked                 :cli:
+:PROPERTIES:
+:ID:          01a202f3-834a-7fcc-9a94-a50f2d1ab85c
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-list-runs-no-tests ert/lemmax-run-tests-flag
+:END:
+- list and trace never run a repo's test command by default; the check column says named
+- --run-tests runs it, as today; lint runs it unless --no-tests, as today
+- Why: list --all ran every repo's test command under ~/repos: a cloned repo's code
+- Asked by the owner on 2026-11-22
+Evidence: probe 2026-11-22: lemmax list ran tests.sh.
+
+** OPEN One parser for every reader                                       :lint:
+:PROPERTIES:
+:ID:          01a202f3-83dc-76e8-b198-68db19d1e4cd
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-one-parser-same-ids
+:END:
+- The history walk (suspects) and file-lemma detection read lemmas through lemmax--parse, not their own regexps
+- A test feeds odd files to both paths and finds the same ids and texts
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN A file lemma's drawer is the file's first element                :lint:
+:PROPERTIES:
+:ID:          01a202f3-8475-7f4f-b0e2-5cd8c782e520
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-file-drawer-first
+:END:
+- Only a property drawer before any text but comment lines makes a file a lemma, as Org and org-roam read it
+- lint reports a drawer with :ID: further down the preamble: "move the drawer to the top"
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN Today is one clock                                                :lint:
+:PROPERTIES:
+:ID:          01a202f3-850b-7e3f-93f9-655397189d53
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-today-utc
+:END:
+- Today is the UTC day, for lint and its fixes; LEMMAX_TODAY still sets it
+- Commit days in trace and suspects are UTC too (git log --date=format-local with TZ=UTC)
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN Missing or old Emacs is said plainly                              :cli:
+:PROPERTIES:
+:ID:          01a202f3-85a4-76cd-bf13-05f6e723c5b2
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-launcher-no-emacs ert/lemmax-launcher-old-emacs
+:END:
+- The launcher prints "lemmax: needs Emacs 29 or newer; found NONE|VERSION" and exits 2
+- The pre-commit and commit-msg hooks refuse the commit with that line, in an opted-in repo
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN Tests run on Emacs 29 and the newest Emacs                        :tests:
+:PROPERTIES:
+:ID:          01a202f3-863b-7c04-9728-0c9dd9346002
+:NEEDS:       01a202f3-86d9-7db2-a0dc-accec28dfe29
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-ci-matrix
+:END:
+- The CI job runs run_tests on Emacs 29.x and the newest release
+- lemmax.el states its floor: Emacs 29, Org 9.6
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN CI lints and tests on every push                                  :tests:
+:PROPERTIES:
+:ID:          01a202f3-86d9-7db2-a0dc-accec28dfe29
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-ci-workflow
+:END:
+- .github/workflows/lemmax.yml: on push and pull request, run_tests, then lemmax lint (with tests)
+- So --no-verify or a machine without the hooks cannot land a broken lemma unseen
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN --json says its version                                           :list:
+:PROPERTIES:
+:ID:          01a202f3-878b-75cb-98e0-9d7929ef88c1
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-json-version ert/lemmax-json-shape
+:END:
+- list --json prints {"version": 1, "rows": [...]}; a test pins every row key and type
+- A change of shape bumps version
+- Breaks today's readers of the bare array: /add-requirement is updated in the same commit
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN Golden, generated and mutation tests                              :tests:
+:PROPERTIES:
+:ID:          01a202f3-8822-7602-98a4-67acc268e3b0
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-golden-trace ert/lemmax-golden-list ert/lemmax-generated-roundtrip
+:VERIFY+:     ert/lemmax-mutation-lint-rules
+:END:
+- Golden files pin trace and list text for one invented repo
+- 200 generated org files, seeded: parse finds each generated lemma with its fields
+- Mutation: each lint rule switched off in turn makes at least one test fail
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN The history walk stays fast                                       :trace:
+:PROPERTIES:
+:ID:          01a202f3-88bb-704d-9ea9-74714f841514
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-history-cache ert/reqtrace-suspect-walk-time
+:END:
+- The last-change walk reads each file revision once per run, skips revisions whose blob it has seen, and keeps suspects under 2 s for 500 commits
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
+
+** OPEN Odd input reads as plain input                                    :lint:
+:PROPERTIES:
+:ID:          01a202f3-8964-7333-8165-dba3d86556b5
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-odd-input
+:END:
+- CRLF lines, a UTF-8 BOM, tabs in drawers, an empty file, :VERIFY: with a quoted name holding spaces: each parses as the plain form would
+- An :ID: holding a space is a finding: "an id has no spaces"
+- Asked by the owner on 2026-11-22
+Evidence: the hardening review of 2026-11-22.
