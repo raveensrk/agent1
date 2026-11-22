@@ -8,20 +8,22 @@ on:
 jobs:
   lemmax:
     runs-on: ubuntu-latest
-    env:
-      # setup-emacs builds Emacs with Nix flakes, off on the runner's Nix.
-      NIX_CONFIG: experimental-features = nix-command flakes
     strategy:
       fail-fast: false
       matrix:
-        # The floor (lemmax.el checks for 29), the newest release, and its branch.
+        # The floor (lemmax.el checks for 29) and the newest release.
         # lemma: 01a202f3-863b-7c04-9728-0c9dd9346002
-        emacs_version: ["29.4", "30.1", "release-snapshot"]
+        emacs_version: ["29.4", "30.1"]
+    # A prebuilt Emacs per version; no Nix, no build.
+    container: silex/emacs:${{ matrix.emacs_version }}
     steps:
+      - name: tools
+        run: |
+          command -v git >/dev/null && command -v perl >/dev/null \
+            || (apt-get update -qq && apt-get install -y -qq git perl)
       - uses: actions/checkout@v5
-      - uses: purcell/setup-emacs@v6.0
-        with:
-          version: ${{ matrix.emacs_version }}
+      - name: trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: tests
         run: requirements/scripts/lemmax/run_tests
       - name: lint

@@ -1142,7 +1142,7 @@
     (let ((vs (split-string (match-string 1 w) "[\", ]+" t)))
       (should (member "29.4" vs))
       (should (cl-some (lambda (v) (or (equal v "release-snapshot") (>= (string-to-number v) 30))) vs)))
-    (should (string-match-p "version: \\${{ matrix.emacs_version }}" w))))
+    (should (string-match-p "container: silex/emacs:\\${{ matrix.emacs_version }}" w))))
 
 ;;;; 01a202f3-878b-75cb-98e0-9d7929ef88c1: --json says its version
 
