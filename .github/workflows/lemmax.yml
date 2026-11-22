@@ -1,0 +1,38 @@
+# lemmax: its own tests, then lint of every opted-in requirements file, on
+# every push and pull request; hooks can be skipped, this cannot.
+# lemma: 01a202f3-86d9-7db2-a0dc-accec28dfe29
+# lemma: 01a20336-c8a5-702e-86c3-655c93d44c9e (green on 29.4 and 30.1 from run 8)
+name: lemmax
+on:
+  push:
+  pull_request:
+# lint runs the repo's test command, so a pull request's code runs here: read
+# only, no secrets. Never run lemmax under pull_request_target.
+# lemma: 01a20336-c9e9-7664-ba5c-e5e12d249d48
+permissions:
+  contents: read
+jobs:
+  lemmax:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor (lemmax.el checks for 29) and the newest release.
+        # lemma: 01a202f3-863b-7c04-9728-0c9dd9346002
+        emacs_version: ["29.4", "30.1"]
+    # A prebuilt Emacs per version; no Nix, no build.
+    container: silex/emacs:${{ matrix.emacs_version }}
+    steps:
+      - name: tools
+        run: |
+          # git and perl for lemmax and run_tests; python3 for agent1's hooks,
+          # which some tests run.
+          command -v git >/dev/null && command -v perl >/dev/null && command -v python3 >/dev/null \
+            || (apt-get update -qq && apt-get install -y -qq git perl python3)
+      - uses: actions/checkout@v5
+      - name: trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: tests
+        run: requirements/scripts/lemmax/run_tests
+      - name: lint
+        run: requirements/scripts/lemmax/lemmax lint

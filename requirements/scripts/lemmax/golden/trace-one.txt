@@ -1,0 +1,11 @@
+RQ-2 DONE Builds on it
+  file: requirements.org:17
+  parents: RQ-1
+  children: none
+  linked from: notes/n.org:1
+  verify: unit/a found
+  code: src/x.clj:1
+  commit: HASH 2026-01-06 build them (RQ-1 RQ-2)
+    src/x.clj
+  text:
+    Uses [[id:RQ-1]].
