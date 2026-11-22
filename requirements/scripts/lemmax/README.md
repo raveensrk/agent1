@@ -62,10 +62,11 @@ ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 - Conjecture states: `CONJECTURE | LEMMA THEOREM REFUTED`; proof states: `OPEN | PASSED`.
 - A `LEMMA` has a proof, and every proof of it is `PASSED`. An `OPEN` proof is
   a counterexample until it passes: lint refuses the lemma.
-- A `THEOREM` names the lemmas it uses in `:USES:`; each must be proven.
+- A `THEOREM` names the smaller lemmas it builds on in `:USES:`, from the
+  bigger item down; each must be proven. Old `:NEEDS:` pointed child to
+  parent, so `migrate` inverts it: the parent gets `:USES:`.
+- `:VERIFY:`, `:NEEDS:` and `:USES:` lines are not a lemma's text.
 - A proof may prove many conjectures; a conjecture may have many proofs.
-- `:VERIFY:` lines are not a lemma's text: a changed proof leaves the lemma,
-  and its theorems, as they were.
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
   `lemmax migrate FILE` prints the move as a diff; `--write` makes it.
 

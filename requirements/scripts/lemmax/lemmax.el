@@ -104,8 +104,8 @@ space after each key, and the trimmed body without #+title:."
          ;; lemma: 01a2002a-bf93-7475-94c3-d083c65a87d6
          (head (replace-regexp-in-string "\\`\\(\\[#.\\] +\\)?[A-Z]+-[0-9]+ " "\\1" head))
          ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
-         ;; A proof is not the statement: :VERIFY: lines are not the text.
-         (skip-re (concat "\\`[ \t]*:" (regexp-opt (append '("STATE" "VERIFY" "VERIFY+") lemmax-dates)) ":"))
+         ;; A proof is not the statement, nor are links: :VERIFY:, :NEEDS: and :USES: are not the text.
+         (skip-re (concat "\\`[ \t]*:" (regexp-opt (append '("STATE" "VERIFY" "VERIFY+" "NEEDS" "USES") lemmax-dates)) ":"))
          (in nil) props body)
     ;; lemma: 01a202f3-8216-7a1e-a34c-80c99d7bbf02
     (dolist (l (cdr lines))
@@ -113,8 +113,7 @@ space after each key, and the trimmed body without #+title:."
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil))
             (in (unless (string-match-p skip-re l)
                   (push (if (string-match "\\`[ \t]*\\(:[^: \t]+:\\)[ \t]*\\(.*?\\)[ \t]*\\'" l)
-                            (concat (let ((k (match-string 1 l))) (if (equal k ":USES:") ":NEEDS:" k))
-                                    " " (match-string 2 l))
+                            (concat (match-string 1 l) " " (match-string 2 l))
                           (string-trim l))
                         props)))
             ((string-match-p "\\`#\\+[Tt][Ii][Tt][Ll][Ee]:" l))
@@ -1065,8 +1064,10 @@ One git process reads every revision of a file; a blob seen before is skipped."
          (children (cl-loop for c in reqs when (member id (plist-get c :needs)) collect (plist-get c :id))))
     (lemmax--out "%s %s %s" (or id "(no id)") (or (plist-get r :state) "-") (plist-get r :title))
     (lemmax--out "  file: %s:%d" (plist-get r :file) (plist-get r :line))
-    (lemmax--out "  parents: %s" (if (plist-get r :needs) (string-join (plist-get r :needs) " ") "none"))
-    (lemmax--out "  children: %s" (if children (string-join children " ") "none"))
+    ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
+    (let ((math (or (lemmax--new-state-p (plist-get r :state)) (lemmax--proof-p r))))
+      (lemmax--out (if math "  uses: %s" "  parents: %s") (if (plist-get r :needs) (string-join (plist-get r :needs) " ") "none"))
+      (lemmax--out (if math "  used by: %s" "  children: %s") (if children (string-join children " ") "none")))
     (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
     ;; lemma: 01a20369-393d-77bf-a35a-a1c03780a751
     (when (plist-get r :proves) (lemmax--out "  proves: %s" (string-join (plist-get r :proves) " ")))
@@ -1303,7 +1304,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
       (when in
         (lemmax--out "%s (%d)" (cdr g) (length in))
         (dolist (r in)
-          (lemmax--out "  %-22s %-7s %-8s %-7s %-60s %s:%d  code:%d"
+          (lemmax--out "  %-22s %-10s %-8s %-7s %-60s %s:%d  code:%d"
                          (or (plist-get r :id) "(no id)") (or (plist-get r :state) "-")
                          (if (plist-get r :approved) "approved" "-")
                          (plist-get r :check) (lemmax--trunc (plist-get r :title) 60)
@@ -1530,9 +1531,10 @@ opts in, then the hook that was there before, kept as NAME.local."
 ;; lemma: 01a20369-391b-768e-8c98-180facc0ff77
 (defconst lemmax--migrate-states '(("OPEN" . "CONJECTURE") ("DROPPED" . "REFUTED")))
 
-(defun lemmax--migrate-chunk (chunk today file-lemma title)
+(defun lemmax--migrate-chunk (chunk today file-lemma title uses-of)
   "CHUNK, one heading's text (or a file lemma's, with FILE-LEMMA and TITLE), in
-the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text."
+the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text.
+USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
   (let* ((lines (split-string chunk "\n"))
          (head (if file-lemma nil (car lines)))
          (rest (if file-lemma lines (cdr lines)))
@@ -1542,11 +1544,12 @@ the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text."
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil) (push l out))
             ((and in (string-match "\\`[ \t]*:VERIFY\\+?:[ \t]*\\(.*?\\)[ \t]*\\'" l))
              (setq verify (append verify (list (match-string 1 l)))))
-            ((and in (string-match "\\`\\([ \t]*\\):NEEDS:\\([ \t]*\\)\\(.*\\)\\'" l))
-             (setq needs t)
-             (push (concat (match-string 1 l) ":USES:" (match-string 2 l) " " (match-string 3 l)) out))
+            ;; :NEEDS: pointed child to parent; the parent gets :USES: instead.
+            ((and in (string-match-p "\\`[ \t]*:NEEDS:" l)))
             ((and in (string-match "\\`[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*\\'" l))
-             (setq id (match-string 1 l)) (push l out))
+             (setq id (match-string 1 l)) (push l out)
+             (let ((u (gethash id uses-of)))
+               (when u (setq needs t) (push (format ":USES:        %s" (string-join u " ")) out))))
             ((and in file-lemma (string-match "\\`\\([ \t]*:STATE:[ \t]*\\)\\([A-Z]+\\)\\(.*\\)\\'" l))
              (setq old-state (match-string 2 l))
              (push (concat (match-string 1 l) "@STATE@" (match-string 3 l)) out))
@@ -1581,6 +1584,24 @@ the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text."
           (setq text chunk))
         (cons text proof)))))
 
+(defun lemmax--migrate-uses (chunks)
+  "Hash: each parent id named in a :NEEDS: of CHUNKS to its children's ids, in
+order; a parent no chunk holds is named on stderr."
+  (let ((uses (make-hash-table :test #'equal)) (ids nil) (pairs nil))
+    (dolist (c chunks)
+      (let ((id (and (string-match "^[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*$" c) (match-string 1 c))))
+        (when id
+          (push id ids)
+          (when (string-match "^[ \t]*:NEEDS:[ \t]*\\(.*?\\)[ \t]*$" c)
+            (dolist (p (split-string (match-string 1 c)))
+              (push (cons p id) pairs))))))
+    (dolist (pr (nreverse pairs))
+      (if (member (car pr) ids)
+          (puthash (car pr) (append (gethash (car pr) uses) (list (cdr pr))) uses)
+        (lemmax--err "lemmax: %s needs %s, which is not in this file; add :USES: %s to it by hand"
+                     (cdr pr) (car pr) (cdr pr))))
+    uses))
+
 (defun lemmax--migrate-text (content file today)
   "CONTENT of FILE in the math names: (NEW-CONTENT . PROOFS-TEXT-or-nil)."
   (let* ((first (if (string-match "^\\*+ " content) (match-beginning 0) (length content)))
@@ -1589,13 +1610,15 @@ the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text."
          (title (let ((case-fold-search t))
                   (and (string-match "^#\\+title:[ \t]*\\(.*\\)$" pre) (string-trim (match-string 1 pre)))))
          (proofs nil)
-         (pre-new (let ((r (if file-lemma (lemmax--migrate-chunk pre today t (or title file)) (cons pre nil))))
+         (heads (lemmax--split-headings (substring content first)))
+         (uses-of (lemmax--migrate-uses (if file-lemma (cons pre heads) heads)))
+         (pre-new (let ((r (if file-lemma (lemmax--migrate-chunk pre today t (or title file) uses-of) (cons pre nil))))
                     (when (cdr r) (push (cdr r) proofs))
                     (car r)))
-         (chunks (mapcar (lambda (c) (let ((r (lemmax--migrate-chunk c today nil nil)))
+         (chunks (mapcar (lambda (c) (let ((r (lemmax--migrate-chunk c today nil nil uses-of)))
                                        (when (cdr r) (push (cdr r) proofs))
                                        (car r)))
-                         (lemmax--split-headings (substring content first))))
+                         heads))
          (new (concat pre-new (apply #'concat chunks))))
     (setq new (replace-regexp-in-string "^#\\+TODO:.*\\_<OPEN\\_>.*$"
                                         "#+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)" new t t))
@@ -1769,8 +1792,10 @@ git runs those hooks instead, and lemmax says so.")
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
 example: lemmax migrate requirements.org"
      "Without --write it prints a unified diff and writes nothing.
-OPEN becomes CONJECTURE, DROPPED REFUTED, DONE THEOREM when it has :NEEDS:,
-else LEMMA. :NEEDS: becomes :USES:, and the #+TODO: line names the new states.
+OPEN becomes CONJECTURE, DROPPED REFUTED, DONE THEOREM when it has children,
+else LEMMA. :NEEDS: is inverted: a parent gets :USES: with its former
+children, each child drops :NEEDS:, so a parent with children is a THEOREM;
+the #+TODO: line names the new states.
 Each :VERIFY: moves to a new proof with a UUID v7, :PROVES: the conjecture and
 :TEST: the addresses: PASSED when it was DONE, else OPEN, dated today. The
 proofs file takes FILE's #+LEMMAX_TESTS: and #+LEMMAX_CODE: lines. A lemma's

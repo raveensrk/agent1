@@ -18,5 +18,6 @@ The first public release.
 - The math names: conjectures (`CONJECTURE | LEMMA THEOREM REFUTED`),
   proofs in `FILE.proofs.org` (`OPEN | PASSED`, `:PROVES:`, `:TEST:`),
   `:USES:` for theorems, and `lemmax migrate`. Old files still read.
-- `:VERIFY:` is no longer part of a requirement's text: changing it no longer
-  reopens a DONE requirement or makes its children suspect.
+- `:VERIFY:`, `:NEEDS:` and `:USES:` are no longer part of a requirement's
+  text: changing them no longer reopens a DONE requirement or makes its
+  children suspect.
