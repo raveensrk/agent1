@@ -70,6 +70,12 @@ headings in it are body, not lemmas. Every rule for a heading lemma holds.
 Body text.
 ```
 
+## Links
+
+`[[id:ID]]` links a lemma by its `:ID:`; lint refuses one to an unknown or
+DROPPED id. `trace ID` prints `linked from:` for each lemma, and each other
+`.org` file and line, that links to it; `list --json` gives `linked_from`.
+
 ## Aliases and refs
 
 - `:ALIASES: ID...` keeps old ids working: markers, `:NEEDS:`, `id:` links,

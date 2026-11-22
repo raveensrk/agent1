@@ -511,7 +511,7 @@ Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 us
 - Asked by the owner on 2026-11-22
 Evidence: org-element reads a file-level property drawer as the first child of the document; idea from org-roam file nodes.
 
-** OPEN trace shows what links to a lemma                        :trace:
+** DONE trace shows what links to a lemma                        :trace:
 :PROPERTIES:
 :ID:          01a202bc-4b52-74e6-9d78-591320edcb4f
 :NEEDS:       01a202bc-49e2-7dba-94f5-0c0952fc91f0 RT-8
@@ -519,6 +519,7 @@ Evidence: org-element reads a file-level property drawer as the first child of t
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-trace-backlinks
+:IMPLEMENTED: 2026-11-22
 :END:
 - =trace ID= prints =linked from:= with each lemma, and each other tracked .org file and line, whose =[[id:ID]]= link names it
 - =list --json= gives the same as =linked_from=

@@ -929,3 +929,22 @@
       (should (equal ["https://example.invalid/issues/4" "http://example.invalid/spec"] (alist-get 'refs row))))
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :refs "issue-4")))
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: :REFS: names issue-4, which is not an http(s) URL")))
+
+;;;; 01a202bc-4b52-74e6-9d78-591320edcb4f: backlinks
+
+(ert-deftest lemmax-trace-backlinks ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (append (rt-files (rt-req "RQ-1" :body "Self [[id:RQ-1]].\n")
+                                       (rt-req "RQ-2" :body "Needs [[id:RQ-1][one]].\n")
+                                       "* Notes\nAlso [[id:RQ-1]].\n")
+                            (list (cons "notes/talk.org" "* Talk\nAbout [[id:RQ-1]] and =[[id:RQ-1]]=.\n"))))))
+    (let ((tr (nth 1 (rt-run d "trace" "RQ-1"))))
+      (should (string-match-p "  linked from: RQ-2 requirements\\.org:[0-9]+" tr))
+      (should (string-match-p "  linked from: requirements\\.org:[0-9]+$" (replace-regexp-in-string "RQ-2 " "" tr)))
+      (should (string-match-p "  linked from: notes/talk\\.org:2" tr))
+      (should (= 3 (cl-count-if (lambda (l) (string-prefix-p "  linked from:" l)) (split-string tr "\n")))))
+    (should (string-match-p "  linked from: none" (nth 1 (rt-run d "trace" "RQ-2"))))
+    (let* ((rows (json-read-from-string (nth 1 (rt-run d "list" "--json" "--no-tests"))))
+           (one (cl-find "RQ-1" rows :key (lambda (r) (alist-get 'id r)) :test #'equal)))
+      (should (= 3 (length (alist-get 'linked_from one))))
+      (should (cl-find "RQ-2" (alist-get 'linked_from one) :key (lambda (b) (alist-get 'id b)) :test #'equal)))))

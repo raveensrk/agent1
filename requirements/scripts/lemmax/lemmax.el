@@ -730,6 +730,27 @@ With CACHED, read the staged copies."
     (nreverse out)))
 
 (defvar lemmax--marks nil "The markers of the repo being traced.")
+(defvar lemmax--links nil "The id: links of the repo being traced, as (ID FILE LINE).")
+
+;; lemma: 01a202bc-4b52-74e6-9d78-591320edcb4f
+(defun lemmax--lemma-at (reqs file line)
+  "The lemma of REQS in FILE whose lines hold LINE, or nil."
+  (cl-find-if (lambda (r) (and (equal (plist-get r :file) file)
+                               (<= (plist-get r :line) line (or (plist-get r :end) (plist-get r :line)))))
+              reqs))
+
+(defun lemmax--repo-links (reqs)
+  "The id: links of the work tree, each id read through REQS' aliases."
+  (let ((known (lemmax--known reqs)))
+    (mapcar (lambda (k) (let ((r (gethash (car k) known))) (if r (cons (plist-get r :id) (cdr k)) k)))
+            (lemmax--id-links))))
+
+(defun lemmax--backlinks (id reqs links)
+  "What links to ID: a list of (SOURCE-ID-or-nil FILE LINE), not ID itself."
+  (cl-loop for k in links
+           for src = (lemmax--lemma-at reqs (nth 1 k) (nth 2 k))
+           when (and (equal (car k) id) (not (and src (equal (plist-get src :id) id))))
+           collect (list (and src (plist-get src :id)) (nth 1 k) (nth 2 k))))
 
 (defun lemmax--block (r reqs addresses commits suspects one)
   (let* ((id (plist-get r :id))
@@ -739,6 +760,11 @@ With CACHED, read the staged copies."
     (lemmax--out "  parents: %s" (if (plist-get r :needs) (string-join (plist-get r :needs) " ") "none"))
     (lemmax--out "  children: %s" (if children (string-join children " ") "none"))
     (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
+    (let ((from (and id (lemmax--backlinks id reqs lemmax--links))))
+      (if (null from)
+          (lemmax--out "  linked from: none")
+        (dolist (b from)
+          (lemmax--out "  linked from: %s%s:%d" (if (car b) (concat (car b) " ") "") (nth 1 b) (nth 2 b)))))
     (if (plist-get r :verify)
         (dolist (a (plist-get r :verify))
           (lemmax--out "  verify: %s %s" a
@@ -813,6 +839,7 @@ With CACHED, read the staged copies."
   (progn
     (let* ((reqs (lemmax--all-reqs infos))
            (lemmax--marks (lemmax--all-markers infos))
+           (lemmax--links (lemmax--repo-links (lemmax--all-reqs (lemmax--listed (lemmax--worktree-files)))))
            (commits (lemmax--commits))
            (changed (lemmax--last-changes infos))
            (suspects (lemmax--suspects reqs changed))
@@ -856,13 +883,16 @@ With CACHED, read the staged copies."
 (defun lemmax--rows (no-tests)
   "Rows for every listed requirement of the repo here."
   (let* ((infos (lemmax--listed (lemmax--worktree-files)))
-         (marks (lemmax--all-markers infos)))
+         (marks (lemmax--all-markers infos))
+         (all (lemmax--all-reqs infos))
+         (links (lemmax--repo-links all)))
     (cl-loop for info in infos
              for addr = (and (plist-get info :opted) (not no-tests)
                              (lemmax--test-addresses (plist-get info :tests)))
              append (cl-loop for r in (plist-get info :reqs)
                              collect (let ((v (plist-get r :verify)))
                                        (append r (list :group (lemmax--group r)
+                                                       :linked-from (lemmax--backlinks (plist-get r :id) all links)
                                                        :markers (cl-loop for m in marks
                                                                          when (equal (nth 0 m) (plist-get r :id))
                                                                          collect m)
@@ -915,6 +945,9 @@ With CACHED, read the staged copies."
             (cons 'check (plist-get r :check))
             (cons 'needs (vconcat (plist-get r :needs)))
             (cons 'refs (vconcat (plist-get r :refs)))
+            (cons 'linked_from (vconcat (mapcar (lambda (b) (list (cons 'id (or (nth 0 b) :null)) (cons 'file (nth 1 b))
+                                                                  (cons 'line (nth 2 b))))
+                                                (plist-get r :linked-from))))
             (cons 'title (plist-get r :title))
             (cons 'file (plist-get r :file))
             (cons 'line (plist-get r :line))
