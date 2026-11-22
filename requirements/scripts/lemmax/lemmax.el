@@ -825,14 +825,15 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                      (if (lemmax--new-state-p (plist-get r :state))
                                          "make it CONJECTURE until the change is proven"
                                        "make it OPEN until the change is built")))
-                (when (and changed (not (equal (plist-get r :last-edited) today)))
+                (when (and changed (not (lemmax--note-p r)) (not (equal (plist-get r :last-edited) today)))
                   (lemmax--finding f l id "its text changed and :LAST_EDITED: is not today"
                                      (format "set :LAST_EDITED: %s" today)))
                 (when (and done (not (lemmax--done-p (plist-get old :state)))
                            (not (equal (plist-get r :implemented) today)))
                   (lemmax--finding f l id "it turned DONE and :IMPLEMENTED: is not today"
                                      (format "set :IMPLEMENTED: %s" today))))
-            (unless (and (equal (plist-get r :created) today) (equal (plist-get r :last-edited) today))
+            (unless (or (lemmax--note-p r)
+                        (and (equal (plist-get r :created) today) (equal (plist-get r :last-edited) today)))
               (lemmax--finding f l id "a new requirement whose :CREATED: or :LAST_EDITED: is not today"
                                  (format "set both to %s" today)))
             (when (and done (not (equal (plist-get r :implemented) today)))
@@ -1872,16 +1873,97 @@ order; a parent no chunk holds is named on stderr."
             (lemmax--out "wrote %s" prel)))
         (kill-emacs 0)))))
 
+;;;; archive (01a203a6-a73d-7772-a4cb-fc4917fefd50)
+
+;; lemma: 01a203a6-a73d-7772-a4cb-fc4917fefd50
+(defun lemmax--archive-name (file)
+  "FILE's archive: NAME_archive.org, or NAME_archive.KIND.org for a kind file."
+  (if (string-match "\\`\\(.*?\\)\\(\\.\\(?:tasks\\|notes\\|proofs\\)\\)?\\.org\\'" file)
+      (concat (match-string 1 file) "_archive" (or (match-string 2 file) "") ".org")
+    (concat file "_archive.org")))
+
+(defun lemmax--archivable-p (state file last today days)
+  "Whether a heading in STATE, in FILE, last edited LAST, may move to the archive."
+  (or (equal state "REFUTED") (equal state "CANCELLED")
+      (and (equal state "DONE") (string-suffix-p ".tasks.org" file) last (lemmax--day-p last)
+           (>= (- (time-to-days (date-to-time (concat today " 00:00:00")))
+                  (time-to-days (date-to-time (concat last " 00:00:00"))))
+               days))))
+
+(defun lemmax-archive (args)
+  "List, or with --write move, FILE's finished headings to its archive."
+  (let ((write nil) (days 30) (files nil))
+    (while args
+      (let ((a (pop args)))
+        (cond ((equal a "--write") (setq write t))
+              ((equal a "--days") (setq days (string-to-number (or (pop args) "x")))
+               (unless (> days 0) (lemmax--err "lemmax: --days takes a whole number of days") (kill-emacs 1)))
+              ((string-prefix-p "--" a) (lemmax--err "lemmax: unknown option %s; see lemmax archive --help" a) (kill-emacs 1))
+              (t (push a files)))))
+    (unless (= 1 (length files))
+      (lemmax--err "lemmax: archive takes one FILE; see lemmax archive --help") (kill-emacs 1))
+    (require 'org-archive)
+    (let* ((path (file-truename (expand-file-name (car files) (or lemmax--cwd default-directory))))
+           (rel (file-relative-name path (file-truename default-directory)))
+           (apath (lemmax--archive-name path))
+           (arel (file-relative-name apath (file-truename default-directory)))
+           (today (lemmax--today)) moved)
+      (unless (and (file-readable-p path) (string-suffix-p ".org" path))
+        (lemmax--err "lemmax: %s: not a readable .org file" (car files)) (kill-emacs 1))
+      (with-current-buffer (find-file-noselect path)
+        (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
+                                             "REFUTED" "PASSED" "CANCELLED" "AXIOM"))))
+          (org-mode))
+        (let ((head (save-excursion
+                      (goto-char (point-min))
+                      (cl-loop while (and (not (eobp)) (not (looking-at-p "^\\*")))
+                               when (looking-at "^#\\+\\(TODO\\|TAGS\\|FILETAGS\\|LEMMAX_[A-Z_]+\\|REQTRACE_[A-Z_]+\\):.*$")
+                               concat (concat (match-string 0) "\n")
+                               do (forward-line 1))))
+              (done nil))
+          (while (not done)
+            (setq done t)
+            (goto-char (point-min))
+            (catch 'one
+              (while (re-search-forward org-heading-regexp nil t)
+                (beginning-of-line)
+                (let* ((ok (lambda () (lemmax--archivable-p (org-get-todo-state) rel (org-entry-get nil "LAST_EDITED") today days)))
+                       (all (and (funcall ok)
+                                 (save-excursion
+                                   (let ((end (save-excursion (org-end-of-subtree t t))) (fine t))
+                                     (while (and fine (outline-next-heading) (< (point) end))
+                                       (setq fine (funcall ok)))
+                                     fine)))))
+                  (if (not all)
+                      (forward-line 1)
+                    (push (list (org-entry-get nil "ID") (org-get-todo-state) (org-get-heading t t t t) (line-number-at-pos)) moved)
+                    (if (not write)
+                        (org-end-of-subtree t t)
+                      (unless (file-exists-p apath)
+                        (with-temp-file apath (insert head "\n")))
+                      (let ((org-archive-location (concat apath "::")) (org-archive-save-context-info nil))
+                        (org-archive-subtree))
+                      (setq done nil)
+                      (throw 'one nil)))))))
+          (when write
+            (save-buffer)
+            (let ((ab (find-buffer-visiting apath))) (when ab (with-current-buffer ab (save-buffer)))))))
+      (dolist (m (nreverse moved))
+        (lemmax--out "%s %s:%d %s %s %s" (if write "moved" "would move") rel (nth 3 m) (or (nth 0 m) "(no id)") (nth 1 m) (nth 2 m)))
+      (when (and write moved) (lemmax--out "to %s" arel))
+      (kill-emacs 0))))
+
 ;;;; Help (RT-2)
 
 (defconst lemmax--help
   '((main
      "usage: lemmax COMMAND [ARGS]
 Lint, trace and list a repo's org requirements.
-Commands: lint, commit-msg, trace, list, new-id, next-id, install-hooks, migrate, help
+Commands: lint, commit-msg, trace, list, new-id, next-id, install-hooks, migrate, archive, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and writes no file; install-hooks writes the repo's two hooks and
-migrate --write a requirements file and its proofs file.
+migrate --write a requirements file and its proofs file, archive --write a
+file and its archive.
 example: lemmax list --ready -p ~/repos/other-project"
      "Commands:
   lint [--staged] [--no-tests] [FILE...]  check the requirements files' rules
@@ -1892,6 +1974,7 @@ example: lemmax list --ready -p ~/repos/other-project"
   next-id LETTER                          the next counted id, as M-15, for old projects
   install-hooks                           put lemmax in this repo's pre-commit and commit-msg
   migrate [--write] FILE                  move FILE to conjectures, proofs, lemmas and theorems
+  archive [--write] FILE                  move refuted and finished headings to FILE's archive
   help                                    this text
 Each command takes -h, --help and help. lemmax --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
@@ -1990,6 +2073,15 @@ commit-msg runs commit-msg. A hook already there is kept as NAME.local and
 run after lemmax's. Run again, it changes nothing. It is the one command
 that writes, and it writes only those two files. If core.hooksPath is set,
 git runs those hooks instead, and lemmax says so.")
+    (archive
+     "usage: lemmax archive [--project DIR] [--write] [--days N] FILE
+List, or with --write move, FILE's finished headings to its archive.
+example: lemmax archive --write requirements.org"
+     "It moves REFUTED conjectures, CANCELLED tasks, and DONE tasks last edited
+N days ago or more (30). A heading moves only when every heading under it
+may move too. NAME.org archives to NAME_archive.org, NAME.tasks.org to
+NAME_archive.tasks.org; a new archive takes FILE's #+TODO:, #+TAGS: and
+#+LEMMAX_* lines, so lint reads it and its ids stay unique.")
     (migrate
      "usage: lemmax migrate [--project DIR] [--write] [--links] FILE
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
@@ -2081,6 +2173,7 @@ example: lemmax next-id M"
               ("next-id" (lemmax-next-id rest))
               ("install-hooks" (lemmax-install-hooks rest))
               ("migrate" (lemmax-migrate rest))
+              ("archive" (lemmax-archive rest))
               (_ (lemmax--help-for 'main nil))))))))))
 
 (when (and noninteractive (not (getenv "LEMMAX_LOAD_ONLY")))

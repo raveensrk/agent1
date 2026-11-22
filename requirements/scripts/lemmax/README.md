@@ -107,6 +107,15 @@ With `#+STARTUP: logdone lognotestate`, Emacs logs state changes to
 `:LOGBOOK:`. The drawer is not a heading's text, so a log makes nothing
 suspect. "Changed on" lines are still required.
 
+## Archive
+
+<!-- lemma: 01a203a6-a73d-7772-a4cb-fc4917fefd50 -->
+
+`lemmax archive FILE` lists REFUTED conjectures, CANCELLED tasks and DONE
+tasks 30 days old (`--days N`); `--write` moves them with `org-archive-subtree`
+to `NAME_archive.org` (`NAME_archive.tasks.org` for tasks). Lint reads archives,
+so links resolve and ids stay unique.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->

@@ -1064,12 +1064,13 @@ Evidence: =org-entry-get= reads :ORDERED: and =org-get-last-sibling= walks sibli
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--entry-text= reads the property drawer by its =:PROPERTIES:= and =:END:= lines; a LOGBOOK drawer has the same shape.
 
-** CONJECTURE lemmax archive moves finished headings                                :cli:
+** LEMMA lemmax archive moves finished headings                                :cli:
 :PROPERTIES:
 :ID:          01a203a6-a73d-7772-a4cb-fc4917fefd50
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax archive FILE= lists the headings it would move; =--write= moves them with Org's =org-archive-subtree=.
 - It moves REFUTED conjectures, CANCELLED tasks, and DONE tasks whose :LAST_EDITED: is 30 days old or more (=--days N= sets it)
