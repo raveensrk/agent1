@@ -958,3 +958,71 @@ Evidence: the release review of 2026-11-22.
 - A test finds lemmax only in README's "lemmax was lemmax" line and the old-keyword reader
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
+
+** OPEN Conjectures, proofs, lemmas and theorems                            :lemmax:
+:PROPERTIES:
+:ID:          01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-math-states ert/lemmax-math-proofs-file
+:END:
+lemmax reads the math names of [[file:../../requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
+- A conjecture's state is CONJECTURE, LEMMA, THEOREM or REFUTED; OPEN, DONE and DROPPED still read the same, as conjecture, lemma and refuted
+- :USES: names the lemmas a theorem uses; :NEEDS: still reads the same
+- A proof is a heading in a file named =*.proofs.org=, state OPEN or PASSED; :PROVES: names one or more conjecture ids, :TEST: its test addresses, quoted like :VERIFY:
+- A conjecture's tests, in list and trace, are the :TEST: lines of every proof of it
+- A lemma's text is its statement: a :VERIFY: line, and :USES: read as :NEEDS:, are not its text, so a proof that changes leaves the lemma and its children as they were
+- Asked by the owner on 2026-11-22
+Evidence: lemmax.el reads states through =lemmax-states= and properties through =lemmax--record=; a spike added a state there and lint read it.
+
+** OPEN Lint proves a lemma from its proofs                                 :lint:
+:PROPERTIES:
+:ID:          01a20369-38f7-7229-8232-1b8cbb98e6bc
+:NEEDS:       01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-math-lint
+:END:
+- A LEMMA or THEOREM has at least one proof, and every proof of it is PASSED; an OPEN proof is a counterexample until it passes
+- A THEOREM has :USES:, and each id it uses is a LEMMA or THEOREM; a LEMMA has no :USES:
+- A conjecture in the new states has no :VERIFY:; its tests are in its proofs
+- A proof has :PROVES:, each id a conjecture; a PASSED proof has :TEST:, and lint without --no-tests checks each address as it does :VERIFY:
+- A proof needs no :APPROVED: and no :IMPLEMENTED:
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax--lint-file-rules= and =lemmax--lint-verify= hold the rules this extends.
+
+** OPEN lemmax migrate moves a file to the math names                       :cli:
+:PROPERTIES:
+:ID:          01a20369-391b-768e-8c98-180facc0ff77
+:NEEDS:       01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-migrate-dry-run ert/lemmax-migrate-write
+:END:
+=lemmax migrate FILE= prints the change as a unified diff; =--write= makes it.
+- OPEN becomes CONJECTURE, DROPPED REFUTED; DONE becomes THEOREM when it has :NEEDS:, else LEMMA
+- :NEEDS: becomes :USES:; the #+TODO: line becomes =CONJECTURE | LEMMA THEOREM REFUTED=
+- Each :VERIFY: (and :VERIFY+:) leaves its conjecture for a new proof in =FILE= with =.proofs.org= for =.org=: a new UUID v7, :PROVES: the conjecture, :TEST: the addresses, PASSED when the conjecture was DONE, else OPEN, dated today
+- The proofs file gets the requirements file's #+LEMMAX_TESTS: and #+LEMMAX_CODE: lines
+- A migrated file lints clean when the old one did
+- With --write it is the second command that writes; it writes only FILE and its proofs file
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax-uuid7= makes ids; =git diff --no-index= makes the diff.
+
+** OPEN trace and list show proofs                                          :cli:
+:PROPERTIES:
+:ID:          01a20369-393d-77bf-a35a-a1c03780a751
+:NEEDS:       01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:VERIFY:      ert/lemmax-math-trace-list
+:END:
+- trace prints =proof: ID STATE= under a conjecture for each proof of it, and =proves: IDS= under a proof
+- list puts proofs in a group of their own, Proofs; --state takes conjecture, lemma, theorem, refuted, passed too
+- trace --dot draws a proof as an ellipse, with a dotted edge to each conjecture it proves
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax--block=, =lemmax--group= and =lemmax--dot= print these today.
