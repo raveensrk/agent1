@@ -782,3 +782,33 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: lemmax plan lists the rebuild
+:PROPERTIES:
+:ID:          01a204fc-d8f9-7047-b832-7401fee4a3fc
+:PROVES:      01a204fc-d718-7e50-95a3-4ca72898a15b
+:TEST:        ert/lemmax-plan-order ert/lemmax-plan-ties ert/lemmax-plan-cycle ert/lemmax-plan-json
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: All code sits under a marker
+:PROPERTIES:
+:ID:          01a204fc-dcd2-7a9e-a3ab-d5f3376159e2
+:PROVES:      01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
+:TEST:        ert/lemmax-coverage-code-before-marker ert/lemmax-coverage-proof-marker ert/lemmax-coverage-from-day
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: The environment is captured
+:PROPERTIES:
+:ID:          01a204fc-e0b3-7557-a319-f3ab61c5bc52
+:PROVES:      01a204fc-dec1-7ac6-8408-c3a69aedfebd
+:TEST:        ert/lemmax-env-toolchain-version ert/lemmax-env-secret-no-value ert/lemmax-env-first-in-plan
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
