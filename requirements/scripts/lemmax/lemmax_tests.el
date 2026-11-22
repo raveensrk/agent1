@@ -65,7 +65,41 @@ passed or failed, unless LEMMAX_KEEP_TMP=1."
     (rt-commit d "start" day)
     d))
 
-(defun rt-run (dir &rest args) (apply #'rt-sh dir rt-bin args))
+;; lemma: 01a203c1-983f-77e1-a367-92eb7cba2954
+(defun rt-run-proc (dir &rest args)
+  "Run the real launcher in a process, for the CLI wrapper and the hooks."
+  (apply #'rt-sh dir rt-bin args))
+
+(defun rt-run (dir &rest args)
+  "Run lemmax in this Emacs, in DIR: (EXIT STDOUT STDERR), as the launcher would.
+lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
+  (rt-load)
+  (setq lemmax--findings 0 lemmax--run-tests nil lemmax--json-findings nil lemmax--json-mode nil
+        lemmax--marks nil lemmax--links nil lemmax--trace-tags nil lemmax--migrate-titles nil
+        lemmax--projects nil lemmax--cwd nil)
+  (dolist (h (list lemmax--tests-cache lemmax--entry-cache lemmax--files-cache)) (clrhash h))
+  (let* ((out (generate-new-buffer " *rt-out*")) (err (generate-new-buffer " *rt-err*"))
+         (buffers (buffer-list))
+         (default-directory (file-name-as-directory (expand-file-name dir)))
+         (code
+          (catch 'rt-exit
+            (cl-letf (((symbol-function 'kill-emacs) (lambda (&optional c) (throw 'rt-exit (if (integerp c) c 0))))
+                      ((symbol-function 'message)
+                       (lambda (fmt &rest margs)
+                         (when (and fmt (not inhibit-message))
+                           (with-current-buffer err (insert (apply #'format fmt margs) "\n")))
+                         (and fmt (apply #'format fmt margs)))))
+              (let ((standard-output out) (case-fold-search nil))
+                (condition-case e
+                    (progn (lemmax-main (copy-sequence args)) 0)
+                  (error (with-current-buffer err (insert (format "lemmax: %s\n" (error-message-string e)))) 1)))))))
+    ;; Buffers lemmax opened (archive) are not left for the next call.
+    (dolist (b (buffer-list))
+      (unless (or (memq b buffers) (eq b out) (eq b err))
+        (with-current-buffer b (set-buffer-modified-p nil))
+        (kill-buffer b)))
+    (prog1 (list code (with-current-buffer out (buffer-string)) (with-current-buffer err (buffer-string)))
+      (kill-buffer out) (kill-buffer err))))
 
 (defmacro rt-env (vars &rest body)
   (declare (indent 1))
@@ -129,7 +163,8 @@ passed or failed, unless LEMMAX_KEEP_TMP=1."
 (ert-deftest lemmax-cli-short-help ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
     (dolist (args '(("-h") ("--help") ("list" "-h") ("lint" "--help") ("trace" "-h") ("next-id" "-h") ("commit-msg" "-h")))
-      (let ((r (apply #'rt-run d args)))
+      ;; The real launcher, in a process: the CLI wrapper is part of what this shows.
+      (let ((r (apply #'rt-run-proc d args)))
         (should (= 0 (nth 0 r)))
         (should (string-match-p "^usage: lemmax" (nth 1 r)))
         (should (string-match-p "example: lemmax" (nth 1 r)))))
@@ -1122,7 +1157,7 @@ passed or failed, unless LEMMAX_KEEP_TMP=1."
 (ert-deftest lemmax-launcher-no-emacs ()
   (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
          (bin (rt-bin-dir "bash" "dirname" "readlink" "git")))
-    (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run d "list"))))
+    (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run-proc d "list"))))
       (should (= 2 (nth 0 r)))
       (should (string-match-p "lemmax: needs Emacs 29 or newer; found none on PATH" (nth 2 r))))))
 
@@ -1135,7 +1170,7 @@ passed or failed, unless LEMMAX_KEEP_TMP=1."
       (insert "#!" (executable-find "bash") "\nshift 2\nf=\"$1\"; shift\nexec " (executable-find "emacs")
               " -Q --batch --eval '(setq emacs-major-version 28 emacs-version \"28.2\")' -l \"$f\" \"$@\"\n"))
     (set-file-modes (expand-file-name "emacs" bin) #o755)
-    (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run d "list"))))
+    (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run-proc d "list"))))
       (should (= 2 (nth 0 r)))
       (should (string-match-p "lemmax: needs Emacs 29 or newer; found 28.2" (nth 2 r))))))
 
@@ -2140,3 +2175,22 @@ run of its finding's why text."
     (let ((r (rt-run d "lint" "--no-tests")))
       (rt-should-find r "requirements.org:[0-9]+: RQ-1: the footnote fn:gone has no definition")
       (should-not (string-match-p "fn:code" (nth 2 r))))))
+
+;;;; 01a203c1-983f-77e1-a367-92ea000ab72f and 01a203c1-983f-77e1-a367-92eb7cba2954: speed
+
+(ert-deftest lemmax-run-time ()
+  :tags '(timeout-60)
+  ;; One real run, launcher and all, on a small repo: well under the old 1.2 s.
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
+         (start (float-time)) (r (rt-run-proc d "list")) (took (- (float-time) start)))
+    (should (= 0 (nth 0 r)))
+    (should (< took 0.9))))
+
+(ert-deftest lemmax-in-process ()
+  ;; rt-run gives what the launcher gives: output, findings and exit code.
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil)))))
+    (let ((a (rt-run d "lint" "--no-tests")) (b (rt-run-proc d "lint" "--no-tests")))
+      (should (equal a b))
+      (should (= 1 (nth 0 a))))
+    (should (equal (rt-run d "list") (rt-run-proc d "list")))
+    (should (equal (rt-run d "bogus") (rt-run-proc d "bogus")))))

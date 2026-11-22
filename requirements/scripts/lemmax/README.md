@@ -31,6 +31,9 @@ lemmax lint --staged          # what the pre-commit hook runs
   `lemmax install-hooks` writes `.git/hooks/pre-commit` and `commit-msg` to
   call it. A hook already there is kept as `NAME.local` and run after.
 - `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, 8 at a time.
+  A test runs lemmax in its own Emacs (`rt-run`); a few run the real launcher
+  (`rt-run-proc`) for the CLI wrapper and the hooks.
+- A run sets `org-modules` to nil: Org's link modules took half a run to load.
   `golden/` pins `trace` and `list` output (`LEMMAX_UPDATE_GOLDEN=1` rewrites it);
   a seeded test parses 200 generated files; the mutation test turns each lint
   rule off in turn (`LEMMAX_MUTATE`) and needs a test to fail.

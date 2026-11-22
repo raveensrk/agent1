@@ -11,6 +11,11 @@
   (kill-emacs 2))
 
 ;; lemma: RT-1
+;; lemma: 01a203c1-983f-77e1-a367-92ea000ab72f
+;; Org's link modules (gnus, bbdb, irc, w3m ...) take most of a run to load and
+;; lemmax reads none of them; publish loads them itself.
+(defvar org-modules)
+(setq org-modules nil)
 (require 'org)
 (require 'org-element)
 (require 'subr-x)
@@ -1990,7 +1995,7 @@ order; a parent no chunk holds is named on stderr."
 ;; Org's own variables, bound dynamically: ox-publish and org-id load late.
 (defvar org-id-locations-file) (defvar org-id-track-globally) (defvar org-id-locations)
 (defvar org-publish-timestamp-directory) (defvar org-html-validation-link)
-(defvar org-publish-project-alist)
+(defvar org-publish-project-alist) (defvar org-publish-cache)
 (defun lemmax-publish (args)
   "Write the repo's listed lemmax files to HTML under .lemmax/html, or --out DIR."
   (let ((out nil))
@@ -2000,6 +2005,9 @@ order; a parent no chunk holds is named on stderr."
               (t (lemmax--err "lemmax: unknown argument %s; see lemmax publish --help" a) (kill-emacs 1)))))
     (require 'ox-publish)
     (require 'org-id)
+    ;; Org's default link modules, which a run does not load, for exported links.
+    (dolist (m '(ol-doi ol-w3m ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-eww))
+      (require m nil t))
     (let* ((root (file-truename default-directory))
            (dir (if out (expand-file-name out (or lemmax--cwd default-directory)) (expand-file-name ".lemmax/html" root)))
            (files (mapcar (lambda (i) (plist-get i :file)) (lemmax--listed (lemmax--worktree-files))))
@@ -2008,6 +2016,7 @@ order; a parent no chunk holds is named on stderr."
            (org-id-track-globally t)
            (org-publish-timestamp-directory (file-name-as-directory (expand-file-name "ts" tmp)))
            (org-html-validation-link nil)
+           (org-publish-cache nil)
            (org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
                                           "REFUTED" "PASSED" "CANCELLED" "AXIOM")))
            (org-publish-project-alist

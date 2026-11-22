@@ -753,7 +753,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: A lemmax run loads only the Org it needs
+* PASSED Proof: A lemmax run loads only the Org it needs
 :PROPERTIES:
 :ID:          01a203c1-c398-74b3-9ac0-ff71b00ec816
 :PROVES:      01a203c1-983f-77e1-a367-92ea000ab72f
@@ -763,7 +763,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: Tests run lemmax in their own Emacs
+* PASSED Proof: Tests run lemmax in their own Emacs
 :PROPERTIES:
 :ID:          01a203c1-c3ae-7763-99e6-0ba7c87657bd
 :PROVES:      01a203c1-983f-77e1-a367-92eb7cba2954
