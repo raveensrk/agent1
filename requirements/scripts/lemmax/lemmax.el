@@ -38,9 +38,11 @@ since the command is the repo's own code.")
 ;;;; Git
 
 (defun lemmax--git (&rest args)
-  "Run git with ARGS in `default-directory'; (EXIT . OUTPUT)."
+  "Run git with ARGS in `default-directory'; (EXIT . OUTPUT).
+Git's local dates are UTC, the one clock of lemmax."
   (with-temp-buffer
-    (let ((code (apply #'call-process "git" nil (list t nil) nil args)))
+    (let* ((process-environment (cons "TZ=UTC0" process-environment))
+           (code (apply #'call-process "git" nil (list t nil) nil args)))
       (cons code (buffer-string)))))
 
 (defun lemmax--git-out (&rest args)
@@ -389,7 +391,8 @@ a FOLDER that holds no tracked file."
          (and (<= 1 m 12) (<= 1 d (date-days-in-month y m))))))
 
 (defun lemmax--today ()
-  (or (getenv "LEMMAX_TODAY") (format-time-string "%F")))
+  ;; lemma: 01a202f3-850b-7e3f-93f9-655397189d53
+  (or (getenv "LEMMAX_TODAY") (format-time-string "%F" nil t)))
 
 ;;;; lint (RT-4, RT-5, RT-6)
 
@@ -729,7 +732,7 @@ With CACHED, read the staged copies."
 
 (defun lemmax--commits ()
   "List of (HASH SHORT DATE SUBJECT BODY), newest first."
-  (let ((out (lemmax--git-out "log" "--format=%H%x1f%h%x1f%cs%x1f%s%x1f%B%x1e")))
+  (let ((out (lemmax--git-out "log" "--date=format-local:%Y-%m-%d" "--format=%H%x1f%h%x1f%cd%x1f%s%x1f%B%x1e")))
     (cl-loop for rec in (split-string (or out "") "\x1e" t)
              for f = (split-string (string-trim-left rec) "\x1f")
              when (>= (length f) 5) collect f)))
@@ -739,7 +742,7 @@ With CACHED, read the staged copies."
   (let ((changed (make-hash-table :test #'equal)))
     (dolist (info infos)
       (let ((file (plist-get info :file)) (prev (make-hash-table :test #'equal)))
-        (dolist (line (lemmax--lines (lemmax--git-out "log" "--reverse" "--format=%H %cs" "--" file)))
+        (dolist (line (lemmax--lines (lemmax--git-out "log" "--reverse" "--date=format-local:%Y-%m-%d" "--format=%H %cd" "--" file)))
           (let* ((parts (split-string line " ")) (rev (car parts)) (day (cadr parts))
                  (content (lemmax--git-out "show" (concat rev ":" file))))
             (when content

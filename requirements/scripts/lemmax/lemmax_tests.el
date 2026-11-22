@@ -1073,3 +1073,21 @@
       (should-not (string-match-p "reqs/ok\\.org" (nth 2 r))))
     (should-not (string-match-p "RQ-5" (rt-list d)))
     (should (string-match-p "RQ-1" (rt-list d)))))
+
+;;;; 01a202f3-850b-7e3f-93f9-655397189d53: today is one clock
+
+(ert-deftest lemmax-today-utc ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    ;; 02:00 at +05:00 is 21:00 UTC the day before.
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-git d "add" "-A")
+    (rt-env '("GIT_COMMITTER_DATE=2026-01-08T02:00:00+05:00" "GIT_AUTHOR_DATE=2026-01-08T02:00:00+05:00")
+      (rt-git d "commit" "-q" "-m" "build it (RQ-1)"))
+    (should (string-match-p "commit: [0-9a-f]+ 2026-01-07 build it" (nth 1 (rt-env '("TZ=Asia/Karachi") (rt-run d "trace" "RQ-1")))))
+    ;; With no LEMMAX_TODAY, the fix names the UTC day, whatever TZ says.
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1") (rt-req "RQ-2")))
+    (rt-git d "add" "-A")
+    (let ((utc (format-time-string "%F" nil t))
+          (r (rt-env '("TZ=Pacific/Kiritimati") (rt-run d "lint" "--staged" "--no-tests"))))
+      (should (string-match-p (concat "set both to " utc) (nth 2 r))))))
