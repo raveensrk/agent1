@@ -1063,3 +1063,19 @@ Evidence: =org-entry-get= reads :ORDERED: and =org-get-last-sibling= walks sibli
 - "Changed on" lines stay required; the LOGBOOK is extra history
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--entry-text= reads the property drawer by its =:PROPERTIES:= and =:END:= lines; a LOGBOOK drawer has the same shape.
+
+** CONJECTURE lemmax archive moves finished headings                                :cli:
+:PROPERTIES:
+:ID:          01a203a6-a73d-7772-a4cb-fc4917fefd50
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+=lemmax archive FILE= lists the headings it would move; =--write= moves them with Org's =org-archive-subtree=.
+- It moves REFUTED conjectures, CANCELLED tasks, and DONE tasks whose :LAST_EDITED: is 30 days old or more (=--days N= sets it)
+- A heading moves only when no heading under it must stay
+- The archive of =NAME.org= is =NAME_archive.org=, of =NAME.tasks.org= =NAME_archive.tasks.org=, so the kind stays; a new archive gets FILE's =#+TODO:=, =#+TAGS:= and =#+LEMMAX_*= lines
+- lint reads archive files like any other, so links into them resolve and an id stays unique across live and archive
+- With --write it writes only FILE and its archive
+- Asked by the owner on 2026-11-22
+Evidence: a spike ran =org-archive-subtree= in batch Emacs and moved a REFUTED heading to =req_archive.org=.

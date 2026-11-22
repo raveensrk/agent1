@@ -712,3 +712,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: lemmax archive moves finished headings
+:PROPERTIES:
+:ID:          01a203b3-82df-738f-94db-797343467999
+:PROVES:      01a203a6-a73d-7772-a4cb-fc4917fefd50
+:TEST:        ert/lemmax-archive
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
