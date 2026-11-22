@@ -370,6 +370,10 @@ It is read with `read' and `read-eval' off, so nothing in it ever runs."
                       (:markers-required-from
                        (unless (and (stringp v) (lemmax--day-p v))
                          (push ":markers-required-from is not a day, YYYY-MM-DD" problems)))
+                      ;; lemma: 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
+                      (:coverage-required-from
+                       (unless (and (stringp v) (lemmax--day-p v))
+                         (push ":coverage-required-from is not a day, YYYY-MM-DD" problems)))
                       (:repos (unless (stringp v) (push ":repos is not a folder name" problems)))
                       (_ (push (format "unknown key %S" k) problems))))
         (dolist (e (plist-get data :folders))
@@ -877,6 +881,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
         (lemmax--lint-tags infos only)
         (lemmax--lint-footnotes infos only staged)
         (lemmax--lint-markers infos only staged)
+        (lemmax--lint-coverage infos only staged)
         (lemmax--lint-links infos only staged)
         (lemmax--lint-markers-in infos only)
         (dolist (i infos)
@@ -1062,7 +1067,11 @@ after the config's :markers-required-from with no code marker."
                                 "fix the id, or remove the marker"))
               ((lemmax--dropped-p (plist-get r :state))
                (lemmax--finding (nth 1 m) (nth 2 m) (nth 0 m) (format "the marker names a %s lemma" (plist-get r :state))
-                                "remove the marker, or the code it marks")))))
+                                "remove the marker, or the code it marks"))
+              ;; lemma: 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
+              ((and (lemmax--proof-p r) (not (nth 3 m)))
+               (lemmax--finding (nth 1 m) (nth 2 m) (nth 0 m) "a marker outside tests names a proof"
+                                "name the lemma it builds; a proof's id marks its tests")))))
     (dolist (r reqs)
       (when (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r))
                  (or (null only) (member (plist-get r :file) only))
@@ -1071,6 +1080,78 @@ after the config's :markers-required-from with no code marker."
         (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
                          (format "%s with no code marker" (plist-get r :state))
                          (format "put a comment line \"lemma: %s\" where it is built" (plist-get r :id)))))))
+
+;;;; Coverage (01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd)
+
+;; lemma: 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
+(defun lemmax--under-code-p (path code)
+  "Whether PATH sits under one of CODE, the #+LEMMAX_CODE: paths."
+  (cl-some (lambda (c) (or (equal path c) (string-prefix-p (file-name-as-directory (directory-file-name c)) path)
+                           (and (string-suffix-p "/" c) (string-prefix-p c path))))
+           code))
+
+(defconst lemmax--comment-re
+  "\\`[ \t]*\\(?:;\\|#\\|//\\|--\\|/\\*\\|\\*\\|<!--\\|-->\\)"
+  "A comment line in the languages lemmax knows; a shebang is one too.")
+
+(defun lemmax--uncovered-line (text)
+  "The first line of TEXT that is code above every marker, or nil.
+Blank lines and comments are not code; nil for a file with no code."
+  (let ((n 0) (hit nil) (done nil))
+    (dolist (l (split-string text "\n"))
+      (unless done
+        (setq n (1+ n))
+        (cond ((string-match lemmax--marker-re l) (setq done t))
+              ((string-match-p "\\`[ \t]*\\'" l))
+              ((string-match-p lemmax--comment-re l))
+              (t (setq hit n done t)))))
+    hit))
+
+(defconst lemmax--not-code-exts
+  '("md" "markdown" "txt" "rst" "json" "jsonl" "csv" "tsv" "dot" "svg" "yml" "yaml" "toml" "lock")
+  "Extensions of prose and data files: never code, so never refused for coverage.")
+
+(defun lemmax--code-file-p (file text)
+  "Whether FILE, holding TEXT, is code: an extension that is not prose or data,
+or no extension and a shebang."
+  (let ((ext (file-name-extension file)))
+    (if ext (not (member (downcase ext) lemmax--not-code-exts))
+      (string-prefix-p "#!" text))))
+
+(defun lemmax--code-files (infos cached)
+  "Each tracked text file under the code paths of INFOS: a list of (FILE . TEXT).
+With CACHED, the staged copies."
+  (let ((code (cl-mapcan (lambda (i) (copy-sequence (plist-get i :code))) infos)))
+    (cl-loop for f in (lemmax--lines (apply #'lemmax--git-out (append '("ls-files") (and cached '("--cached")))))
+             for text = (and (lemmax--under-code-p f code) (not (string-suffix-p ".org" f))
+                             (if cached (or (lemmax--git-out "show" (concat ":" f)) "")
+                               (if (file-readable-p f) (with-temp-buffer (insert-file-contents-literally f) (buffer-string)) "")))
+             when (and text (not (string-match-p "\0" text)) (lemmax--code-file-p f text))
+             collect (cons f text))))
+
+(defun lemmax--uncovered (infos cached)
+  "Each code file with code above its first marker: a list of (FILE LINE)."
+  (cl-loop for (f . text) in (lemmax--code-files infos cached)
+           for n = (lemmax--uncovered-line text)
+           when n collect (list f n)))
+
+(defun lemmax--changed-since (day)
+  "The files a commit on or after DAY touched, and the files changed since HEAD."
+  (delete-dups
+   (append (lemmax--lines (lemmax--git-out "log" (concat "--since=" day " 00:00") "--format=" "--name-only"))
+           (lemmax--lines (lemmax--git-out "diff" "--name-only" "HEAD"))
+           (lemmax--lines (lemmax--git-out "diff" "--cached" "--name-only")))))
+
+(defun lemmax--lint-coverage (infos only cached)
+  "Code above a file's first marker, in files changed on or after the config's
+:coverage-required-from; none when the key is not set."
+  (let ((from (lemmax--config-setting :coverage-required-from)))
+    (when (and from (null only) (not (string< (lemmax--today) from)))
+      (let ((changed (lemmax--changed-since from)))
+        (dolist (u (lemmax--uncovered infos cached))
+          (when (member (car u) changed)
+            (lemmax--finding (nth 0 u) (nth 1 u) nil "code above the file's first lemma: marker"
+                             "put a comment line \"lemma: ID\" above it, naming what it builds")))))))
 
 ;;;; id: links (01a202bc-49e2-7dba-94f5-0c0952fc91f0)
 
@@ -1142,10 +1223,7 @@ With CACHED, read the staged copies."
          (infos (lemmax--opted (lemmax--rev-files "")))
          (code (cl-mapcan (lambda (i) (copy-sequence (plist-get i :code))) infos))
          (paths (lemmax--lines (lemmax--git-out "diff" "--cached" "--name-only")))
-         (touches (cl-some (lambda (p) (cl-some (lambda (c) (or (equal p c) (string-prefix-p (file-name-as-directory (directory-file-name c)) p)
-                                                                  (and (string-suffix-p "/" c) (string-prefix-p c p))))
-                                                  code))
-                           paths)))
+         (touches (cl-some (lambda (p) (lemmax--under-code-p p code)) paths)))
     (when touches
       (let* ((msg (string-join (cl-remove-if (lambda (l) (string-prefix-p "#" l))
                                              (split-string (with-temp-buffer (insert-file-contents msgfile) (buffer-string)) "\n"))
@@ -1564,6 +1642,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
                          (setq opts (plist-put opts :section v))))
           ("--unchecked" (setq opts (plist-put opts :unchecked t)))
           ("--unmarked" (setq opts (plist-put opts :unmarked t)))
+          ("--uncovered" (setq opts (plist-put opts :uncovered t)))
           ("--ready" (setq opts (plist-put opts :ready t)))
           ("--unlinked" (setq opts (plist-put opts :unlinked t)))
           ("--duplicates" (setq opts (plist-put opts :duplicates t)))
@@ -1617,6 +1696,11 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
   (let* ((opts (lemmax--list-opts args))
          (_ (when (plist-get opts :unlinked)
               (dolist (u (lemmax--unlinked)) (lemmax--out "%s:%d: %s" (nth 0 u) (nth 1 u) (nth 2 u)))
+              (kill-emacs 0)))
+         ;; lemma: 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
+         (_ (when (plist-get opts :uncovered)
+              (dolist (u (lemmax--uncovered (lemmax--opted (lemmax--listed (lemmax--worktree-files))) nil))
+                (lemmax--out "%s:%d" (nth 0 u) (nth 1 u)))
               (kill-emacs 0)))
          (many (or (plist-get opts :all) lemmax--projects))
          (per (if many
@@ -2240,7 +2324,7 @@ A :USES: cycle is a finding naming its ids, and exit 1.
 --json  {\"version\": 1, \"steps\": [{step, id, state, title, file, line, uses,
         statement, proofs: [{id, state, test}]}]}")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
+     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--uncovered] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
 Print every requirement in a table, grouped by state and approval.
 example: lemmax list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
@@ -2250,6 +2334,10 @@ Groups: waiting for approval, approved and open, done, dropped.
 --section L   only ids that start with L-
 --unchecked   DONE ones whose :VERIFY: is empty or names a test that is missing
 --unmarked    DONE ones with no code marker: no comment line starting lemma: ID outside tests
+--uncovered   instead of the table, each FILE:LINE under #+LEMMAX_CODE: where code
+              sits above the file's first marker (prose and data files, and
+              files with no extension and no shebang, are not code); lint refuses it only in files
+              changed on or after the config's :coverage-required-from
 --ready       approved and still OPEN
 --duplicates  only lemmas whose id another lemma also has, in any file
 --tag T       only headings tagged T or a tag under T in a #+TAGS: group;

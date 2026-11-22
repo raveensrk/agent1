@@ -1186,18 +1186,20 @@ Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TEST
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el:227 already reads =:USES:= into =:needs= for every row; org-element gives each heading's =:priority=.
 
-** CONJECTURE [#A] All code sits under a marker                            :lint:
+** THEOREM [#A] All code sits under a marker                               :lint:
 :PROPERTIES:
 :ID:          01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
 :USES:        01a20014-e361-7827-b2a8-d3b2ded3e0b1
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 In a Lemmax project every piece of code is covered: a marker comment names its id, and the code below it, up to the next marker, is that implementation.
 - One marker per implementation of a conjecture, in code; one marker per proof, naming the proof's id, in tests
 - A marker in a test file may name a proof id; a marker elsewhere names a LEMMA, THEOREM or CONJECTURE
 - =lemmax lint= refuses, for each file under =#+LEMMAX_CODE:= paths, a code line before the file's first marker; a shebang, a blank line and comments do not count
+- Prose and data files are not code: =.md=, =.txt=, =.json=, =.csv=, =.yml=, =.toml= and the like, and a file with no extension and no shebang
 - The settings key =:coverage-required-from DAY= turns the refusal on for files changed on or after DAY; before that, =lemmax list --uncovered= lists them
 - Asked by the owner on 2026-11-22
 Evidence: markers are read today with =git grep -n -I -E= (lemma 01a20014-e361-7827-b2a8-d3b2ded3e0b1); run_tests already carries =# lemma:= markers above each part.

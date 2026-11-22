@@ -793,11 +793,11 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: All code sits under a marker
+* PASSED Proof: All code sits under a marker
 :PROPERTIES:
 :ID:          01a204fc-dcd2-7a9e-a3ab-d5f3376159e2
 :PROVES:      01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
-:TEST:        ert/lemmax-coverage-code-before-marker ert/lemmax-coverage-proof-marker ert/lemmax-coverage-from-day
+:TEST:        ert/lemmax-coverage-code-before-marker ert/lemmax-coverage-proof-marker ert/lemmax-coverage-from-day ert/lemmax-coverage-not-code
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:

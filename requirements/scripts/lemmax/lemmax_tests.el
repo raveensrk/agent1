@@ -2260,3 +2260,54 @@ run of its finding's why text."
     (should (equal ["RQ-1"] (alist-get 'uses (aref steps 1))))
     (should (equal "PR-1" (alist-get 'id (aref (alist-get 'proofs (aref steps 0)) 0))))
     (should (equal ["unit/a"] (alist-get 'test (aref (alist-get 'proofs (aref steps 0)) 0))))))
+
+;;;; Coverage (01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd)
+
+;; lemma: 01a204fc-dcd2-7a9e-a3ab-d5f3376159e2
+(defun rt-covered (from code &optional day extra)
+  "A repo whose src/x.clj is CODE and whose config has :coverage-required-from FROM,
+committed on DAY, with EXTRA files."
+  (rt-repo (append (rt-math-files (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1")))
+                   (list (cons "src/x.clj" code))
+                   (and from (list (cons "lemmax/config.eld" (format "(:coverage-required-from %S)\n" from))))
+                   extra)
+           day))
+
+(ert-deftest lemmax-coverage-code-before-marker ()
+  :tags '(timeout-30)
+  (rt-should-find (rt-run (rt-covered "2026-01-01" "(ns x)\n;; lemma: RQ-1\n") "lint" "--no-tests")
+                  "src/x\\.clj:1: -: code above the file's first lemma: marker")
+  (rt-should-clean (rt-run (rt-covered "2026-01-01" "#!/bin/sh\n# head\n\n;; lemma: RQ-1\n(ns x)\n;; lemma: RQ-1\n(defn f [])\n")
+                           "lint" "--no-tests"))
+  ;; A file of comments only holds no code.
+  (rt-should-clean (rt-run (rt-covered "2026-01-01" ";; nothing yet\n") "lint" "--no-tests"))
+  ;; No key: nothing is refused.
+  (rt-should-clean (rt-run (rt-covered nil "(ns x)\n;; lemma: RQ-1\n") "lint" "--no-tests")))
+
+(ert-deftest lemmax-coverage-proof-marker ()
+  :tags '(timeout-30)
+  (rt-should-clean (rt-run (rt-covered "2026-01-01" ";; lemma: RQ-1\n(ns x)\n" nil
+                                       (list (cons "test/x_test.clj" ";; lemma: PR-1\n(ns x-test)\n")))
+                           "lint" "--no-tests"))
+  (rt-should-find (rt-run (rt-covered nil ";; lemma: PR-1\n(ns x)\n") "lint" "--no-tests")
+                  "src/x\\.clj:1: PR-1: a marker outside tests names a proof"))
+
+(ert-deftest lemmax-coverage-from-day ()
+  :tags '(timeout-30)
+  ;; Committed before the day, untouched since: listed, not refused.
+  (let ((d (rt-covered "2026-06-01" "(ns x)\n" "2026-01-05")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (equal "src/x.clj:1\n" (nth 1 (rt-run d "list" "--uncovered"))))
+    ;; Changed since HEAD: refused.
+    (rt-set d "src/x.clj" "(ns x)\n(defn g [])\n")
+    (rt-should-find (rt-run d "lint" "--no-tests") "src/x\\.clj:1: -: code above"))
+  ;; A day still to come refuses nothing.
+  (rt-env '("LEMMAX_TODAY=2026-05-01")
+    (rt-should-clean (rt-run (rt-covered "2026-06-01" "(ns x)\n") "lint" "--no-tests"))))
+
+(ert-deftest lemmax-coverage-not-code ()
+  :tags '(timeout-30)
+  (let ((d (rt-covered "2026-01-01" ";; lemma: RQ-1\n(ns x)\n" nil
+                       (list (cons "src/README.md" "Plain prose.\n") (cons "src/LICENSE" "MIT\n")
+                             (cons "src/run" "#!/bin/sh\necho hi\n")))))
+    (should (equal "src/run:2\n" (nth 1 (rt-run d "list" "--uncovered"))))))

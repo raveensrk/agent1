@@ -178,7 +178,9 @@ may be headings in one file or one lemma per `.org` file, with no header:
 
 - Top-level keys, beside `:folders`: `:markers-required-from "YYYY-MM-DD"` makes
   a DONE lemma implemented on or after that day need a `lemma:` code marker
-  (no key: none needs one); `:repos "DIR"` is the folder `list --all` and
+  (no key: none needs one); `:coverage-required-from "YYYY-MM-DD"` makes lint
+  refuse code above a file's first `lemma:` marker in code files changed on or
+  after that day (`lemmax list --uncovered` lists every such file); `:repos "DIR"` is the folder `list --all` and
   cross-project `trace` read (else `LEMMAX_REPOS`, else `~/repos`).
 - A file takes the entry with the longest folder that holds it; `""` is the root.
 - A file with any `#+LEMMAX_*` line of its own uses only its header.
