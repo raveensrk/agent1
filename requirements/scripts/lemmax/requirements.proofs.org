@@ -583,7 +583,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: Conjectures, proofs, lemmas and theorems
+* PASSED Proof: Conjectures, proofs, lemmas and theorems
 :PROPERTIES:
 :ID:          01a20377-9929-703e-b430-9edbe57f6cf7
 :PROVES:      01a20369-38d2-7202-8b53-6e296aaac489
@@ -593,7 +593,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: Lint proves a lemma from its proofs
+* PASSED Proof: Lint proves a lemma from its proofs
 :PROPERTIES:
 :ID:          01a20377-992b-70e7-b4c6-42d2522bdd3b
 :PROVES:      01a20369-38f7-7229-8232-1b8cbb98e6bc
@@ -603,7 +603,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: lemmax migrate moves a file to the math names
+* PASSED Proof: lemmax migrate moves a file to the math names
 :PROPERTIES:
 :ID:          01a20377-992c-71ca-ae7d-7227c5099d81
 :PROVES:      01a20369-391b-768e-8c98-180facc0ff77
@@ -613,7 +613,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: trace and list show proofs
+* PASSED Proof: trace and list show proofs
 :PROPERTIES:
 :ID:          01a20377-992e-7ac6-9fac-c5b0e76af4f6
 :PROVES:      01a20369-393d-77bf-a35a-a1c03780a751
