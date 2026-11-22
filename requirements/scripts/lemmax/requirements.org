@@ -1080,3 +1080,17 @@ Evidence: =lemmax--entry-text= reads the property drawer by its =:PROPERTIES:= a
 - With --write it writes only FILE and its archive
 - Asked by the owner on 2026-11-22
 Evidence: a spike ran =org-archive-subtree= in batch Emacs and moved a REFUTED heading to =req_archive.org=.
+
+** CONJECTURE lemmax publish writes HTML                                            :cli:
+:PROPERTIES:
+:ID:          01a203a6-a752-75ed-8359-a8147e95a33d
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+=lemmax publish= writes every requirements, proofs, tasks, notes, axioms and archive file the repo lists to HTML, with Org's =ox-publish=.
+- An id: link becomes a link to the page and heading that hold the id
+- Pages go to =.lemmax/html/= at the repo root, or =--out DIR=; =.lemmax/.gitignore= holding =*= keeps git from tracking them
+- It writes only under that folder, and never reads Emacs's own id or publish caches
+- Asked by the owner on 2026-11-22
+Evidence: a spike in batch Emacs ran =org-publish= after =org-id-update-id-locations=; =[[id:p-1][the proof]]= became =href="r.proofs.html#ID-p-1"=.
