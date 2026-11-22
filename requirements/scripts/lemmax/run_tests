@@ -8,6 +8,9 @@
 # Each test has 10 s, or what its timeout-N tag says; a test over its time is
 # stopped and reported as TIMEOUT, and the rest still run.
 # LEMMAX_TESTS_FILE picks another tests file; LEMMAX_TEST_TIMEOUT the default time.
+# Test repos go under $TMPDIR, else /tmp, and are deleted after each test;
+# LEMMAX_KEEP_TMP=1 keeps them. A test stopped for TIMEOUT may leave its own.
+# lemma: 01a20336-c75e-78ac-bf5e-7a72262f73e6
 # Exit 0 when every test passed, 1 otherwise.
 # example: requirements/scripts/lemmax/run_tests --only ert/lemmax-list-table
 set -uo pipefail

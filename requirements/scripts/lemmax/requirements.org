@@ -831,13 +831,14 @@ Evidence: lemmax.el holds 2026-11-22, RF-3, "agent1's id rule" and "what require
 - Asked by the owner on 2026-11-22
 Evidence: harness/githooks/pre-commit finds lemmax at ../../requirements/scripts/lemmax.
 
-** OPEN Tests clean up after themselves                                     :tests:
+** DONE Tests clean up after themselves                                     :tests:
 :PROPERTIES:
 :ID:          01a20336-c75e-78ac-bf5e-7a72262f73e6
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-tests-clean-up
+:IMPLEMENTED: 2026-11-22
 :END:
 - Test repos go under $TMPDIR, else /tmp, and each test deletes its own when done, passed or failed
 - LEMMAX_KEEP_TMP=1 keeps them

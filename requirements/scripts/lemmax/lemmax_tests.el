@@ -14,9 +14,20 @@
 
 ;;;; Helpers
 
+;; lemma: 01a20336-c75e-78ac-bf5e-7a72262f73e6
+(defvar rt-made nil "The folders this Emacs's tests made, deleted when it exits.")
+
 (defun rt-tmp ()
-  (make-directory (expand-file-name "~/tmp") t)
-  (make-temp-file (expand-file-name "~/tmp/lemmax-test-") t))
+  "A new folder under $TMPDIR, else /tmp; deleted when this Emacs exits,
+passed or failed, unless LEMMAX_KEEP_TMP=1."
+  (let ((d (make-temp-file (expand-file-name "lemmax-test-" (or (getenv "TMPDIR") "/tmp")) t)))
+    (push d rt-made)
+    d))
+
+(add-hook 'kill-emacs-hook
+          (lambda ()
+            (unless (equal (getenv "LEMMAX_KEEP_TMP") "1")
+              (dolist (d rt-made) (ignore-errors (delete-directory d t))))))
 
 (defun rt-sh (dir prog &rest args)
   "Run PROG ARGS in DIR: (EXIT STDOUT STDERR)."
@@ -1448,3 +1459,21 @@ run of its finding's why text."
     (dolist (word '("agent1" "RF-3" "arcadia" "2026-11-22" "requirements.org forbids"))
       (should-not (string-search word src))
       (should-not (string-search word help)))))
+
+;;;; 01a20336-c75e-78ac-bf5e-7a72262f73e6: tests clean up after themselves
+
+(ert-deftest lemmax-tests-clean-up ()
+  :tags '(timeout-60)
+  (dolist (keep '(nil t))
+    (let ((tmp (make-temp-file "rt-clean" t)))
+      (let ((process-environment (append (list (concat "TMPDIR=" tmp) (concat "LEMMAX_KEEP_TMP=" (if keep "1" "0")))
+                                         process-environment)))
+        ;; One passing and one failing test, each in its own Emacs, as run_tests runs them.
+        (dolist (form '((ert-deftest rt-probe-pass () (rt-repo (rt-files (rt-req "RQ-1"))) (should t))
+                        (ert-deftest rt-probe-fail () (rt-repo (rt-files (rt-req "RQ-1"))) (should nil))))
+          (call-process "emacs" nil nil nil "-Q" "--batch"
+                        "-l" (expand-file-name "ert_roster.el" rt-dir) "-l" (expand-file-name "lemmax_tests.el" rt-dir)
+                        "--eval" (format "(progn %S (ert-run-tests-batch-and-exit '%s))" form (nth 1 form)))))
+      (let ((left (directory-files tmp nil "\\`lemmax-test-")))
+        (if keep (should (= 2 (length left))) (should (null left))))
+      (delete-directory tmp t))))
