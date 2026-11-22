@@ -37,7 +37,14 @@ since the command is the repo's own code.")
   (message "%s" (apply #'format fmt args)))
 
 (defun lemmax--finding (file line id why fix)
-  "One finding line on stderr (RT-2)."
+  "One finding line on stderr (RT-2).
+LEMMAX_MUTATE=TEXT drops every finding whose WHY holds TEXT: the mutation
+test turns each rule off so, to show a test fails without it."
+  ;; lemma: 01a202f3-8822-7602-98a4-67acc268e3b0
+  (unless (let ((m (getenv "LEMMAX_MUTATE"))) (and m (string-match-p (regexp-quote m) why)))
+    (lemmax--finding-1 file line id why fix)))
+
+(defun lemmax--finding-1 (file line id why fix)
   (setq lemmax--findings (1+ lemmax--findings))
   (lemmax--err "lemmax: %s:%s: %s: %s; %s" file line (or id "-") why fix))
 

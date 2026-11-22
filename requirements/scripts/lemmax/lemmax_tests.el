@@ -200,7 +200,7 @@
 (ert-deftest reqtrace-lint-needs-unknown ()
   (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-9")) "names RQ-9, which no requirement has"))
 (ert-deftest reqtrace-lint-needs-cycle ()
-  (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-2") (rt-req "RQ-2" :needs "RQ-1")) "cycle"))
+  (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-2") (rt-req "RQ-2" :needs "RQ-1")) ":NEEDS: makes a cycle back to this id"))
 (ert-deftest reqtrace-lint-unapproved ()
   (rt-should-find (rt-lint (rt-done "RQ-1" :approved nil)) "DONE with no :APPROVED:")
   (rt-should-clean (rt-lint (rt-req "RQ-1" :approved nil))))
@@ -1205,3 +1205,137 @@
 (ert-deftest lemmax-odd-input-id-space ()
   (let ((d (rt-repo (rt-files (rt-req "RQ 1")))))
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ 1: an id has no spaces")))
+
+;;;; 01a202f3-8822-7602-98a4-67acc268e3b0: golden, generated and mutation tests
+
+(defconst rt-golden-dir (expand-file-name "golden/" rt-dir))
+
+(defun rt-golden (name text)
+  "TEXT, its commit hashes masked, against golden/NAME; LEMMAX_UPDATE_GOLDEN=1 writes it."
+  (let ((text (replace-regexp-in-string "\\_<[0-9a-f]\\{7,40\\}\\_>" "HASH" text))
+        (file (expand-file-name name rt-golden-dir)))
+    (if (getenv "LEMMAX_UPDATE_GOLDEN")
+        (progn (make-directory rt-golden-dir t) (with-temp-file file (insert text)))
+      (should (equal (with-temp-buffer (insert-file-contents file) (buffer-string)) text)))))
+
+(defun rt-golden-repo ()
+  (let ((d (rt-repo (append (rt-files (rt-done "RQ-1" :title "The base" :refs "https://example.invalid/1")
+                                      (rt-done "RQ-2" :title "Builds on it" :needs "RQ-1" :body "Uses [[id:RQ-1]].\n")
+                                      (rt-req "RQ-3" :title "Not yet" :aliases "OLD-3")
+                                      (rt-req "RQ-4" :title "Dropped one" :state "DROPPED"))
+                            (list (cons "notes/n.org" "About [[id:RQ-2]].\n")))
+                    "2026-01-05")))
+    (rt-set d "src/x.clj" ";; lemma: RQ-1 RQ-2\n(ns x)\n")
+    (rt-commit d "build them (RQ-1 RQ-2)" "2026-01-06")
+    d))
+
+(ert-deftest lemmax-golden-trace ()
+  :tags '(timeout-30)
+  (let ((d (rt-golden-repo)))
+    (rt-golden "trace.txt" (nth 1 (rt-run d "trace" "--run-tests")))
+    (rt-golden "trace-one.txt" (nth 1 (rt-run d "trace" "RQ-2" "--run-tests")))
+    (rt-golden "trace.dot" (nth 1 (rt-run d "trace" "--dot")))))
+
+(ert-deftest lemmax-golden-list ()
+  :tags '(timeout-30)
+  (let ((d (rt-golden-repo)))
+    (rt-golden "list.txt" (rt-list d "--run-tests"))
+    (rt-golden "list.json" (rt-list d "--json" "--run-tests"))))
+
+(defun rt-gen-file (seed)
+  "A generated org file and the lemmas it holds, as (CONTENT . ((ID STATE TITLE NEEDS) ...))."
+  (random (format "lemmax-%d" seed))
+  (let* ((n (random 6)) (lemmas nil) (parts (list rt-head))
+         (words ["alpha" "beta" "gamma" "δέλτα" "naïve" "x=1" "~code~" "a:b" "[[id:RQ-1][l]]" "50%"]))
+    (dotimes (i n)
+      (let* ((id (format "G%d-%d" seed (1+ i)))
+             (state (nth (random 3) '("OPEN" "DONE" "DROPPED")))
+             (title (mapconcat (lambda (_) (aref words (random (length words)))) (number-sequence 0 (random 4)) " "))
+             (needs (and lemmas (= 0 (random 2)) (list (car (nth (random (length lemmas)) lemmas))))))
+        (push (list id state (string-trim title) needs) lemmas)
+        (push (rt-req id :state state :title title :level (1+ (random 3)) :needs (and needs (car needs))
+                      :body (if (= 0 (random 3)) "" (concat (aref words (random (length words))) "\n* Not a lemma\n")))
+              parts)))
+    (cons (apply #'concat (nreverse parts)) (nreverse lemmas))))
+
+(ert-deftest lemmax-generated-roundtrip ()
+  :tags '(timeout-60)
+  (rt-load)
+  (dotimes (seed 200)
+    (let* ((g (rt-gen-file seed))
+           (got (cl-loop for r in (plist-get (lemmax--parse (car g) "g.org") :reqs)
+                         when (plist-get r :id)
+                         collect (list (plist-get r :id) (plist-get r :state) (plist-get r :title) (plist-get r :needs)))))
+      (should (equal (cdr g) got))
+      (should (equal (mapcar #'car (cdr g)) (mapcar #'car (lemmax--quick-ids (car g))))))))
+
+(defun rt-lint-rules ()
+  "Each lint rule of lemmax.el, as the key that names it: the longest plain
+run of its finding's why text."
+  (let (keys)
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "lemmax.el" rt-dir))
+      (goto-char (point-min))
+      (condition-case nil
+          (while t
+            (let ((walk nil))
+              (setq walk (lambda (f)
+                           (when (consp f)
+                             (when (and (eq (car f) 'lemmax--finding) (>= (length f) 6))
+                               (let* ((why (nth 4 f))
+                                      (s (cond ((stringp why) why)
+                                               ((and (eq (car-safe why) 'format) (stringp (nth 1 why))) (nth 1 why)))))
+                                 (when s
+                                   (let ((best "") (pos 0) (s (replace-regexp-in-string "%[a-zA-Z]" "|" s)))
+                                     (while (string-match "[A-Za-z0-9_:' ]+" s pos)
+                                       (when (> (length (match-string 0 s)) (length best)) (setq best (match-string 0 s)))
+                                       (setq pos (match-end 0)))
+                                     (push (string-trim best) keys)))))
+                             (while (consp f) (funcall walk (car f)) (setq f (cdr f))))))
+              (funcall walk (read (current-buffer)))))
+        (end-of-file nil)))
+    (delete-dups (nreverse keys))))
+
+(defun rt-key-windows (key)
+  "Each two-word window of KEY, 9 characters or more."
+  (let ((w (split-string key " " t)))
+    (cl-loop for (a b) on w while b
+             for win = (concat a " " b)
+             when (>= (length win) 9) collect win)))
+
+(defun rt-tests-naming (key)
+  "Names of the tests whose code holds a two-word window of KEY, most first."
+  (let ((wins (or (rt-key-windows key) (list key))) scored)
+    (with-temp-buffer
+      (insert-file-contents (expand-file-name "lemmax_tests.el" rt-dir))
+      (goto-char (point-min))
+      (condition-case nil
+          (while t
+            (let ((f (read (current-buffer))))
+              (when (and (eq (car-safe f) 'ert-deftest)
+                         (not (eq (nth 1 f) 'lemmax-mutation-lint-rules)))
+                (let* ((code (prin1-to-string f))
+                       (n (cl-count-if (lambda (w) (string-search w code)) wins)))
+                  (when (> n 0) (push (cons n (nth 1 f)) scored))))))
+        (end-of-file nil)))
+    (mapcar #'cdr (sort (nreverse scored) (lambda (a b) (> (car a) (car b)))))))
+
+(ert-deftest lemmax-mutation-lint-rules ()
+  :tags '(timeout-600)
+  (let ((rules (rt-lint-rules)) uncovered survived)
+    (should (> (length rules) 25))
+    (dolist (key rules)
+      (let ((tests (rt-tests-naming key)))
+        (if (null tests)
+            (push key uncovered)
+          ;; With the rule off, at least one test that names it must fail.
+          (unless (cl-some (lambda (name)
+                             ;; A test that also passes with the rule on cannot show it.
+                             (/= 0 (let ((process-environment (cons (concat "LEMMAX_MUTATE=" key) process-environment)))
+                                     (call-process "emacs" nil nil nil "-Q" "--batch"
+                                                   "-l" (expand-file-name "ert_roster.el" rt-dir)
+                                                   "-l" (expand-file-name "lemmax_tests.el" rt-dir)
+                                                   "--eval" (format "(ert-run-tests-batch-and-exit '%s)" name)))))
+                           tests)
+            (push key survived)))))
+    (should (equal (list :uncovered nil :survived nil) (list :uncovered uncovered :survived survived)))))

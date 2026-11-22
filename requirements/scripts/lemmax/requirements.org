@@ -727,7 +727,7 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN Golden, generated and mutation tests                              :tests:
+** DONE Golden, generated and mutation tests                              :tests:
 :PROPERTIES:
 :ID:          01a202f3-8822-7602-98a4-67acc268e3b0
 :CREATED:     2026-11-22
@@ -735,6 +735,7 @@ Evidence: the hardening review of 2026-11-22.
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-golden-trace ert/lemmax-golden-list ert/lemmax-generated-roundtrip
 :VERIFY+:     ert/lemmax-mutation-lint-rules
+:IMPLEMENTED: 2026-11-22
 :END:
 - Golden files pin trace and list text for one invented repo
 - 200 generated org files, seeded: parse finds each generated lemma with its fields

@@ -20,6 +20,9 @@ lemmax lint --staged          # what the pre-commit hook runs
 - `lemmax` is a Bash launcher for `lemmax.el`, run by `emacs -Q --script`.
 - `install` puts a wrapper on PATH as `~/.local/bin/lemmax`.
 - `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, 8 at a time.
+  `golden/` pins `trace` and `list` output (`LEMMAX_UPDATE_GOLDEN=1` rewrites it);
+  a seeded test parses 200 generated files; the mutation test turns each lint
+  rule off in turn (`LEMMAX_MUTATE`) and needs a test to fail.
 - `lint`, `commit-msg` and `trace` read files whose header has `#+LEMMAX_TESTS:`,
   or that `lemmax/config.eld` names (see Config).
   `list` and `next-id` read every requirements file.
