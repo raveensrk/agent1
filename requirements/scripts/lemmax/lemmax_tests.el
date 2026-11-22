@@ -1477,3 +1477,20 @@ run of its finding's why text."
       (let ((left (directory-files tmp nil "\\`lemmax-test-")))
         (if keep (should (= 2 (length left))) (should (null left))))
       (delete-directory tmp t))))
+
+;;;; 01a20336-c80d-733a-a251-ad26a0ebf7d3: version, licence, changelog
+
+(ert-deftest lemmax-version ()
+  (rt-load)
+  (let ((r (rt-run (rt-tmp) "--version")))
+    (should (= 0 (nth 0 r)))
+    (should (equal (format "lemmax %s\n" lemmax-version) (nth 1 r)))
+    (should (string-match-p "\\`[0-9]+\\.[0-9]+\\.[0-9]+\\'" lemmax-version))))
+
+(ert-deftest lemmax-licence-and-changelog ()
+  (rt-load)
+  (let ((lic (with-temp-buffer (insert-file-contents (expand-file-name "LICENSE" rt-dir)) (buffer-string)))
+        (log (with-temp-buffer (insert-file-contents (expand-file-name "CHANGELOG.md" rt-dir)) (buffer-string))))
+    (should (string-prefix-p "MIT License\n" lic))
+    (should (string-match "^## \\([0-9.]+\\) " log))
+    (should (equal lemmax-version (match-string 1 log)))))

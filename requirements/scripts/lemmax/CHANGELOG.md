@@ -1,0 +1,17 @@
+# Changelog
+
+lemmax follows [semantic versioning](https://semver.org/). `list --json`
+and `lint --json` carry their own `version`, the number of their shape.
+
+## 1.0.0 - unreleased
+
+The first public release.
+
+- `lint`, `commit-msg`, `trace`, `list`, `new-id`, `next-id` over org
+  requirements ("lemmas"), as headings or one lemma per file.
+- Settings in `lemmax/config.eld`, by folder, read as data and never run.
+- `[[id:]]` links, backlinks, `:ALIASES:`, `:REFS:`, `list --unlinked` and
+  `trace --dot`, after org-roam and org-id.
+- `lemma:` code markers, checked both ways.
+- Reads only files that can hold lemmas, once a run.
+- `list` and `trace` run no repo command unless given `--run-tests`.

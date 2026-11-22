@@ -845,13 +845,14 @@ Evidence: harness/githooks/pre-commit finds lemmax at ../../requirements/scripts
 - Asked by the owner on 2026-11-22
 Evidence: 6538 folders, 1.4 GB, under ~/tmp after this session's runs.
 
-** OPEN lemmax says its version; MIT licence; a changelog                    :cli:
+** DONE lemmax says its version; MIT licence; a changelog                    :cli:
 :PROPERTIES:
 :ID:          01a20336-c80d-733a-a251-ad26a0ebf7d3
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-version ert/lemmax-licence-and-changelog
+:IMPLEMENTED: 2026-11-22
 :END:
 - lemmax --version prints "lemmax VERSION", semver, the same in lemmax.el and CHANGELOG.md; the first is 1.0.0
 - requirements/scripts/lemmax/LICENSE is the MIT licence; CHANGELOG.md names each version's changes

@@ -111,3 +111,7 @@ in plain text, as org-roam's unlinked references; lint never reports it.
 - [OpenFastTrace](https://github.com/itsallcode/openfasttrace): tags in code
   and tests that trace to requirements, and a report of what is not covered;
   the idea behind `lemma:` markers.
+
+## Licence
+
+MIT; see [LICENSE](LICENSE). Changes by release: [CHANGELOG.md](CHANGELOG.md).

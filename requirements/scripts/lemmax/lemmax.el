@@ -18,6 +18,9 @@
 (require 'json)
 (require 'time-date)
 
+;; lemma: 01a20336-c80d-733a-a251-ad26a0ebf7d3
+(defconst lemmax-version "1.0.0" "lemmax's release, semver; CHANGELOG.md names each.")
+
 (defconst lemmax-states '("OPEN" "DONE" "DROPPED"))
 (defconst lemmax-dates '("CREATED" "LAST_EDITED" "APPROVED" "IMPLEMENTED" "REVIEWED"))
 (defvar lemmax--findings 0)
@@ -1308,7 +1311,7 @@ example: lemmax list --ready -p ~/repos/other-project"
   new-id                                  a new requirement id, a UUID v7
   next-id LETTER                          the next counted id, as M-15, for old projects
   help                                    this text
-Each command takes -h, --help and help.
+Each command takes -h, --help and help. lemmax --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
 instead of the one here. list takes it more than once: one table each.
 lint, commit-msg and trace read files whose header has #+LEMMAX_TESTS:, or
@@ -1432,6 +1435,7 @@ example: lemmax next-id M"
       (lemmax--err "lemmax: %s takes one --project; list takes several" cmd)
       (kill-emacs 1))
     (cond
+     ((member cmd '("--version" "-V")) (lemmax--out "lemmax %s" lemmax-version) (kill-emacs 0))
      ((or (null cmd) (member cmd '("-h" "--help"))) (lemmax--help-for 'main nil))
      ((equal cmd "help") (lemmax--help-for 'main t))
      ((not (assq (intern cmd) lemmax--help))
