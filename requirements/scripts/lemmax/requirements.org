@@ -1021,3 +1021,16 @@ Evidence: Org's =org-tag-alist-to-groups= and =org-get-tags= read groups and inh
 - --tag given more than once means all of them: AND
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--filter= already filters rows by state and section.
+
+** CONJECTURE Link properties take id: links                                        :lint:
+:PROPERTIES:
+:ID:          01a203a6-a702-71c0-8239-e0d41380d2dd
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: take bare ids, =[[id:X]]= links and =[[id:X][label]]= links, mixed; lint resolves each the same way
+- A :FOLLOWS: target lives in another repo, so lint reads it but does not resolve it
+- =lemmax migrate --links= writes :USES: and :PROVES: as =[[id:X][title]]= links
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax--id-link-re= already reads id: links in bodies.

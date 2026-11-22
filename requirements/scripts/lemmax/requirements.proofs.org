@@ -682,3 +682,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: Link properties take id: links
+:PROPERTIES:
+:ID:          01a203b0-36f6-757f-b862-2c5d266d8ade
+:PROVES:      01a203a6-a702-71c0-8239-e0d41380d2dd
+:TEST:        ert/lemmax-id-link-props
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
