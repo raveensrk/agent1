@@ -15,6 +15,10 @@
 (defconst lemmax-states '("OPEN" "DONE" "DROPPED"))
 (defconst lemmax-dates '("CREATED" "LAST_EDITED" "APPROVED" "IMPLEMENTED" "REVIEWED"))
 (defvar lemmax--findings 0)
+;; lemma: 01a202f3-834a-7fcc-9a94-a50f2d1ab85c
+(defvar lemmax--run-tests nil
+  "Whether list and trace run a repo's test command: only with --run-tests,
+since the command is the repo's own code.")
 (defvar lemmax--tests-cache (make-hash-table :test #'equal))
 
 ;;;; Output
@@ -861,6 +865,10 @@ With CACHED, read the staged copies."
     (lemmax--out "}")))
 
 (defun lemmax-trace (args)
+  (when (member "--run-tests" args)
+    (setq lemmax--run-tests t args (remove "--run-tests" args)))
+  (let ((bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (equal a "--dot")))) args)))
+    (when bad (lemmax--err "lemmax: unknown option %s; see lemmax trace --help" bad) (kill-emacs 1)))
   (when (member "--dot" args)
     (let ((infos (and (lemmax--root) (lemmax--opted (lemmax--worktree-files)))))
       (unless infos
@@ -899,10 +907,10 @@ With CACHED, read the staged copies."
            (commits (lemmax--commits))
            (changed (lemmax--last-changes infos))
            (suspects (lemmax--suspects reqs changed))
-           (addr-of (lambda (r) (lemmax--test-addresses
+           (addr-of (lambda (r) (if (not lemmax--run-tests) (cons nil "not run") (lemmax--test-addresses
                                  (plist-get (cl-find (plist-get r :file) infos
                                                      :key (lambda (i) (plist-get i :file)) :test #'equal)
-                                            :tests)))))
+                                            :tests))))))
       (if want
           (let ((r (cl-find want reqs :key (lambda (x) (plist-get x :id)) :test #'equal)))
             (unless r
@@ -913,11 +921,12 @@ With CACHED, read the staged copies."
           (lemmax--block r reqs (funcall addr-of r) commits suspects nil)
           (lemmax--out ""))
         (let* ((named (cl-mapcan (lambda (r) (copy-sequence (plist-get r :verify))) reqs))
-               (orphans (cl-loop for info in infos
+               (orphans (cl-loop for info in (and lemmax--run-tests infos)
                                  for res = (lemmax--test-addresses (plist-get info :tests))
                                  when (car res)
                                  append (cl-remove-if (lambda (a) (member a named)) (cdr res)))))
-          (lemmax--out "Orphan tests: %s" (if orphans "" "none"))
+          (lemmax--out "Orphan tests: %s" (cond ((not lemmax--run-tests) "not checked; --run-tests runs the test command")
+                                                (orphans "") (t "none")))
           (dolist (o (delete-dups orphans)) (lemmax--out "  %s" o)))
         (lemmax--out "Suspect: %s" (if suspects "" "none"))
         (dolist (s suspects)
@@ -943,7 +952,7 @@ With CACHED, read the staged copies."
          (all (lemmax--all-reqs infos))
          (links (lemmax--repo-links all)))
     (cl-loop for info in infos
-             for addr = (and (plist-get info :opted) (not no-tests)
+             for addr = (and (plist-get info :opted) (not no-tests) lemmax--run-tests
                              (lemmax--test-addresses (plist-get info :tests)))
              append (cl-loop for r in (plist-get info :reqs)
                              collect (let ((v (plist-get r :verify)))
@@ -1031,6 +1040,7 @@ With CACHED, read the staged copies."
           ("--all" (setq opts (plist-put opts :all t)))
           ("--json" (setq opts (plist-put opts :json t)))
           ("--no-tests" (setq opts (plist-put opts :no-tests t)))
+          ("--run-tests" (setq lemmax--run-tests t))
           (_ (lemmax--err "lemmax: unknown option %s; see lemmax list --help" a) (kill-emacs 1)))))
     opts))
 
@@ -1193,7 +1203,7 @@ example: lemmax commit-msg .git/COMMIT_EDITMSG"
 requirement and name it. Comment lines (#) do not count. An id matches as a
 whole word: RF-3 is not RF-30.")
     (trace
-     "usage: lemmax trace [--project DIR] [ID | --dot]
+     "usage: lemmax trace [--project DIR] [--run-tests] [ID | --dot]
 Print each requirement's parents, children, tests and commits.
 example: lemmax trace RT-3"
      "With no ID: one block per requirement, then the orphan tests, which no
@@ -1202,10 +1212,12 @@ text changed in git after their :IMPLEMENTED: or :REVIEWED: day.
 With an ID: that one block, and the files each of its commits touched.
 An ID not in this project is looked for in every project under ~/repos,
 and shown under a project: line.
+--run-tests: run the repo's test command, to check :VERIFY: and find orphan
+tests; without it nothing of the repo's runs, and verify says unchecked.
 --dot: the lemma graph in Graphviz's dot language, nodes filled by state,
 :NEEDS: edges solid and id: link edges dashed: lemmax trace --dot | dot -Tsvg")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--unlinked] [--all] [--json] [--no-tests]
+     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--unlinked] [--all] [--json] [--run-tests]
 Print every requirement in a table, grouped by state and approval.
 example: lemmax list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
@@ -1221,7 +1233,9 @@ Groups: waiting for approval, approved and open, done, dropped.
 --project DIR the git repo that holds DIR; give it again for more, one table each
 --all         every git repo under ~/repos (LEMMAX_REPOS sets the folder)
 --json        the rows as a JSON array
---no-tests    skip the test command; the check column says named")
+--run-tests   run the repo's test command for the check column; without it
+              nothing of the repo's runs and the column says named
+--no-tests    the default; kept so older calls still work")
     (new-id
      "usage: lemmax new-id
 Print a new requirement id: a UUID v7, lower case, as agent1's id rule asks.

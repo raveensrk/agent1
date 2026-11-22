@@ -612,13 +612,14 @@ Evidence: probe 2026-11-22: git mv requirements.org requirements/moved.org gave 
 - Asked by the owner on 2026-11-22
 Evidence: probe 2026-11-22: a marker naming an unknown id in a:b.el gave no finding.
 
-** OPEN list and trace run no test command unless asked                 :cli:
+** DONE list and trace run no test command unless asked                 :cli:
 :PROPERTIES:
 :ID:          01a202f3-834a-7fcc-9a94-a50f2d1ab85c
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-list-runs-no-tests ert/lemmax-run-tests-flag
+:IMPLEMENTED: 2026-11-22
 :END:
 - list and trace never run a repo's test command by default; the check column says named
 - --run-tests runs it, as today; lint runs it unless --no-tests, as today

@@ -13,6 +13,8 @@ lemmax list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from a
 lemmax lint --staged          # what the pre-commit hook runs
 ```
 
+- `list` and `trace` never run a repo's test command unless given `--run-tests`:
+  the command is the repo's own code. `lint` runs it unless `--no-tests`.
 - `lemmax --help` is the short help, `lemmax help` the long one; each command takes both.
 - `lemmax` is a Bash launcher for `lemmax.el`, run by `emacs -Q --script`.
 - `install` puts a wrapper on PATH as `~/.local/bin/lemmax`.
