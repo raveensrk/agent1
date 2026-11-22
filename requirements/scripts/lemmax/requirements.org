@@ -494,7 +494,7 @@ Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lem
 - Asked by the owner on 2026-11-22
 Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 uses one yet; idea from org-id.
 
-** OPEN A file with :ID: at its top is one lemma                  :lint:
+** DONE A file with :ID: at its top is one lemma                  :lint:
 :PROPERTIES:
 :ID:          01a202bc-4a88-7993-a717-e8022392b801
 :NEEDS:       01a202b0-1d09-75f3-99dc-677a4b2ec0be
@@ -502,6 +502,7 @@ Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 us
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-file-lemma-read ert/lemmax-file-lemma-lint ert/lemmax-file-lemma-staged
+:IMPLEMENTED: 2026-11-22
 :END:
 - A property drawer before the first heading, with =:ID:=, makes the whole file one lemma, as an org-roam file node
 - Its title is =#+title:=, its state is =:STATE: OPEN|DONE|DROPPED=, its body is the text before the first heading

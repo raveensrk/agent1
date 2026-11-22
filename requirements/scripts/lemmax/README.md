@@ -51,3 +51,21 @@ may be headings in one file or one lemma per `.org` file, with no header:
 - It is read as data with `read-eval` off and never run; `lint` reports a form
   that does not read, an unknown key, or a folder with no tracked file.
 - The hooks and `lemmax_lint.py` treat a repo with the file as opted in.
+
+## Lemma files
+
+A file whose top property drawer has `:ID:` is one lemma, as an org-roam file
+node: `#+title:` is its title, `:STATE:` its OPEN, DONE or DROPPED, and
+headings in it are body, not lemmas. Every rule for a heading lemma holds.
+
+```org
+:PROPERTIES:
+:ID:          01a2...
+:STATE:       OPEN
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+#+title: Bar does the thing
+
+Body text.
+```

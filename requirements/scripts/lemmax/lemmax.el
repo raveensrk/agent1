@@ -96,13 +96,42 @@ property drawer, trimmed (RT-17)."
     (cl-loop for (a b) on starts
              collect (substring content a (or b (length content))))))
 
-(defun lemmax--quick-ids (content)
-  "Alist (ID . TEXT) for each heading of CONTENT with an :ID:; headlines only (RT-9)."
-  (let (out)
+;; lemma: 01a202bc-4a88-7993-a717-e8022392b801
+(defun lemmax--file-lemma-raw (content)
+  "When CONTENT is one lemma, a file whose top drawer has :ID:, (ID . RAW):
+RAW is the file as one entry, a heading line of its #+title: and the rest,
+without its :STATE: line, so `lemmax--entry-text' reads it like a heading."
+  (let* ((pre (if (string-match "^\\*+ " content) (substring content 0 (match-beginning 0)) content))
+         (drawer (and (string-match "^[ \t]*:PROPERTIES:[ \t]*\n\\(\\(?:.*\n\\)*?\\)[ \t]*:END:" pre)
+                      (match-string 1 pre))))
+    (when (and drawer (string-match "^[ \t]*:ID:[ \t]+\\(\\S-+\\)" drawer))
+      (let ((id (match-string 1 drawer))
+            (title (if (string-match "^#\\+title:[ \t]*\\(.*\\)$" content) (string-trim (match-string 1 content)) "")))
+        (cons id (concat "* " title "\n"
+                         (replace-regexp-in-string "^[ \t]*:STATE:.*\n?" "" content)))))))
+
+(cl-defun lemmax--quick-ids (content)
+  "Alist (ID . TEXT) for each heading of CONTENT with an :ID:; headlines only (RT-9).
+A file that is one lemma gives its one pair."
+  (let ((one (lemmax--file-lemma-raw content)) out)
+    (when one (cl-return-from lemmax--quick-ids (list (cons (car one) (lemmax--entry-text (cdr one))))))
     (dolist (c (lemmax--split-headings content))
       (when (string-match "^[ \t]*:ID:[ \t]+\\(\\S-+\\)" c)
         (push (cons (match-string 1 c) (lemmax--entry-text c)) out)))
     (nreverse out)))
+
+(defun lemmax--record (get id state title file line end raw)
+  "A lemma's plist; GET reads one of its properties, RAW is its text."
+  (list :id id :state state :title title :file file :line line :end end
+        :created (funcall get "CREATED")
+        :last-edited (funcall get "LAST_EDITED")
+        :approved (funcall get "APPROVED")
+        :implemented (funcall get "IMPLEMENTED")
+        :reviewed (funcall get "REVIEWED")
+        :needs (let ((v (funcall get "NEEDS"))) (and v (split-string v)))
+        :verify (let ((v (funcall get "VERIFY"))) (and v (split-string-and-unquote v)))
+        :text (lemmax--entry-text raw)
+        :body (lemmax--entry-body raw)))
 
 (defun lemmax--parse (content file)
   "Parse org CONTENT named FILE: plist (:file :keywords :opted :listed :reqs)."
@@ -116,7 +145,15 @@ property drawer, trimmed (RT-17)."
                                          ;; The names before lemmax, read so older commits still match.
                                          "REQTRACE_TESTS" "REQTRACE_CODE")))
              (todo (cadr (assoc "TODO" kw)))
+             (one (lemmax--file-lemma-raw content))
              reqs)
+        (if one
+            (let ((get (lambda (p) (let ((v (save-excursion (goto-char (point-min)) (org-entry-get nil p))))
+                                     (and v (not (string-empty-p (string-trim v))) (string-trim v)))))
+                  (title (string-trim (or (cadr (assoc "TITLE" (org-collect-keywords '("TITLE")))) ""))))
+              (push (lemmax--record get (car one) (let ((st (funcall get "STATE"))) (and (member st lemmax-states) st))
+                                    title file 1 (count-lines (point-min) (point-max)) (cdr one))
+                    reqs))
         (org-map-entries
          (lambda ()
            (let ((state (org-get-todo-state))
@@ -127,24 +164,11 @@ property drawer, trimmed (RT-17)."
                       (get (lambda (p) (let ((v (org-entry-get nil p)))
                                          (and v (not (string-empty-p (string-trim v)))
                                               (string-trim v))))))
-                 (push (list :id (and id (string-trim id))
-                             :state (and (member state lemmax-states) state)
-                             :title (org-get-heading t t t t)
-                             :file file
-                             :line (line-number-at-pos beg)
-                             :created (funcall get "CREATED")
-                             :last-edited (funcall get "LAST_EDITED")
-                             :approved (funcall get "APPROVED")
-                             :implemented (funcall get "IMPLEMENTED")
-                             :reviewed (funcall get "REVIEWED")
-                             :needs (let ((v (funcall get "NEEDS"))) (and v (split-string v)))
-                             :verify (let ((v (funcall get "VERIFY")))
-                                       (and v (split-string-and-unquote v)))
-                             :text (lemmax--entry-text
-                                    (buffer-substring-no-properties beg end))
-                             :body (lemmax--entry-body
-                                    (buffer-substring-no-properties beg end)))
-                       reqs))))))
+                 (push (lemmax--record get (and id (string-trim id)) (and (member state lemmax-states) state)
+                                       (org-get-heading t t t t) file (line-number-at-pos beg)
+                                       (save-excursion (goto-char end) (if (bolp) (max (line-number-at-pos beg) (1- (line-number-at-pos end))) (line-number-at-pos end)))
+                                       (buffer-substring-no-properties beg end))
+                       reqs)))))))
         (let* ((tests-kw (or (assoc "LEMMAX_TESTS" kw) (assoc "REQTRACE_TESTS" kw)))
                (code-kw (or (assoc "LEMMAX_CODE" kw) (assoc "REQTRACE_CODE" kw)))
                (opted (and tests-kw t)))
@@ -980,6 +1004,8 @@ that lemmax/config.eld names, by folder:
 A file takes the entry with the longest folder that holds it; a file with a
 #+LEMMAX_* line of its own uses only its own header. The config is read as
 data and never run. So lemmas may be headings in one file, or one per file.
+A file whose top property drawer has :ID: is one lemma: #+title: is its
+title and :STATE: its OPEN, DONE or DROPPED.
 list and next-id read every requirements file: requirements.org, files under
 a requirements/ folder, and files whose #+TODO names OPEN.
 A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>

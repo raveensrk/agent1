@@ -831,3 +831,62 @@
     (rt-set d "requirements.org" (concat rt-head (rt-done "RQ-1" :body "See [[id:RQ-2][the second]].\n") (rt-req "RQ-2")))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+
+;;;; 01a202bc-4a88-7993-a717-e8022392b801: a file is one lemma
+
+(cl-defun rt-file-lemma (id &key (state "OPEN") (title (concat "Title of " id)) needs verify implemented
+                            (approved "2026-01-05") (created "2026-01-05") (last "2026-01-05") (body "Body text.\n"))
+  (concat ":PROPERTIES:\n" (format ":ID:          %s\n" id)
+          (if state (format ":STATE:       %s\n" state) "")
+          (if needs (format ":NEEDS:       %s\n" needs) "")
+          (if created (format ":CREATED:     %s\n" created) "")
+          (if last (format ":LAST_EDITED: %s\n" last) "")
+          (if approved (format ":APPROVED:    %s\n" approved) "")
+          (if implemented (format ":IMPLEMENTED: %s\n" implemented) "")
+          (if verify (format ":VERIFY:      %s\n" verify) "")
+          ":END:\n#+title: " title "\n\n" body))
+
+(defun rt-file-lemma-repo (&rest files)
+  (rt-repo (append (list (rt-config '("reqs/" :tests "./tests.sh" :code ("src/")))
+                         (cons "tests.sh" (rt-tests-sh "unit/a"))
+                         (cons "src/x.clj" "(ns x)\n"))
+                   files)))
+
+(ert-deftest lemmax-file-lemma-read ()
+  :tags '(timeout-30)
+  (let ((d (rt-file-lemma-repo
+            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :title "The whole file" :body "Body.\n* A heading\nMore body.\n"))
+            (cons "reqs/two.org" (rt-file-lemma "RQ-2" :needs "RQ-1")))))
+    (let ((json (json-read-from-string (nth 1 (rt-run d "list" "--json" "--no-tests")))))
+      (should (= 2 (length json)))
+      (let ((one (cl-find "RQ-1" json :key (lambda (r) (alist-get 'id r)) :test #'equal)))
+        (should (equal "The whole file" (alist-get 'title one)))
+        (should (equal "OPEN" (alist-get 'state one)))
+        (should (equal "reqs/one.org" (alist-get 'file one)))))
+    (let ((tr (nth 1 (rt-run d "trace" "RQ-1"))))
+      (should (string-match-p "^RQ-1 OPEN The whole file" tr))
+      (should (string-match-p "children: RQ-2" tr))
+      (should (string-match-p "More body\\." tr)))))
+
+(ert-deftest lemmax-file-lemma-lint ()
+  :tags '(timeout-30)
+  (let ((d (rt-file-lemma-repo
+            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))))
+    (rt-should-clean (rt-run d "lint"))
+    (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :verify "unit/zz"))
+    (let ((r (rt-run d "lint")))
+      (rt-should-find r "reqs/one.org:1: RQ-1: DONE with no :IMPLEMENTED:")
+      (should (string-match-p "names unit/zz, which the test command does not list" (nth 2 r))))))
+
+(ert-deftest lemmax-file-lemma-staged ()
+  :tags '(timeout-30)
+  (let ((d (rt-file-lemma-repo
+            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))))
+    ;; Its state alone is no text change; its body is.
+    (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a" :body "New.\n"))
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))
+                    "DONE requirement's text changed")
+    (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DROPPED" :verify "unit/a"))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
