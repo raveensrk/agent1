@@ -27,3 +27,58 @@ Only the related tests ran when they were built. Run =lemmax/run_tests= once and
 :LAST_EDITED: 2026-11-22
 :END:
 =theory.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
+
+* TODO Rebuild lemmax from its requirements alone
+:PROPERTIES:
+:ID:          01a205a5-79e6-72b6-88e6-113ea1cc9f1e
+:FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+A fresh agent, given only =lemmax plan=, the requirements, proofs and axioms, rebuilds lemmax in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
+
+* TODO Say that a passing test is evidence, not proof
+:PROPERTIES:
+:ID:          01a205a5-79e8-76df-8569-07f88a824da2
+:FOR:         01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+Tests can refute a conjecture but never prove it. Say so in the README and the math table, and say that the owner's or judge's review of each conjecture and proof pair is what makes a lemma hold.
+
+* TODO Measure what a small change costs
+:PROPERTIES:
+:ID:          01a205a5-79ea-7217-a6b3-12e41ea07d43
+:FOR:         01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+For the next five small edits, note the steps Lemmax asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
+
+* TODO Check the review's conjectures and tasks before approval
+:PROPERTIES:
+:ID:          01a205a7-f8ef-7b54-8b1b-4e602877f925
+:FOR:         01a205a5-79df-745d-bb66-69f6cae232c6 01a205a5-79e2-7959-9296-5e465af6acc7 01a205a5-79e4-7b10-a3ec-9a86ac4d58f9
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+They were written in a session with no Emacs, so nothing checked them.
+- Run =lemmax lint= on =theory.org= and =theory.tasks.org= and fix what it finds
+- Check the evidence of "An unrun proof is not a counterexample" against =lemmax.el=: that proof states come from the =#+TODO:= line of =theory.proofs.org=; correct it if not
+- Their ids were made by a script, not =lemmax new-id=; check each is a valid UUID v7
+
+* TODO Speak in maths terms only, and define them in definitions.org
+:PROPERTIES:
+:ID:          01a205ad-8750-7196-94e6-9efa11ec9c2a
+:FOR:         01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+Lemmax says "requirement" about 160 times; it speaks in maths terms instead.
+- Scope is everything in =lemmax/=: =theory*.org=, README, every message, help text and docstring in =lemmax.el=, and internal names such as =lemmax--all-reqs=; golden output is updated
+- The word for any item whatever its state (CONJECTURE, LEMMA, THEOREM, REFUTED) is "statement": "each statement has an :ID:", "names no statement id"
+- History stays as written: CHANGELOG entries, "Why: on ..." lines, the reqtrace note; a new CHANGELOG entry records the rename
+- New =lemmax/definitions.org= lists each term and its definition; the Mathematics/Lemmax table in agent1 =requirements/requirements.org= moves there and requirements.org links to it
+- lemmax still reads files named =requirements.org= beside =theory.org=
+- Only =lemmax/= changes now; agent1's =requirements/requirements.org=, the add-requirement skill and the rules keep their words
+- In =definitions.org= each term is a =DEFINITION= heading with an =:ID:=, like an =AXIOM=: never proven, a statement may =:USES:= it, and lint checks the file

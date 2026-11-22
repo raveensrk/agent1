@@ -1254,3 +1254,44 @@ The date a conjecture turns LEMMA or THEOREM is =:PROVEN:=, not =:IMPLEMENTED:=;
 - agent1 =requirements/requirements.org=, =requirements/components.org= and =skills/ishikari/requirements.org= are migrated
 - Asked by the owner on 2026-11-23
 Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =:USES:= (line 227), =:VERIFY:= or =:TEST:= (line 237).
+
+** CONJECTURE [#B] An unrun proof is not a counterexample                   :lint:
+:PROPERTIES:
+:ID:          01a205a5-79df-745d-bb66-69f6cae232c6
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+A proof whose tests have not run yet and a proof whose tests failed are told apart.
+- A proof's states are =OPEN FAILED | PASSED=: =OPEN= is not yet run, =FAILED= is a counterexample
+- =lemmax lint= refuses a LEMMA or THEOREM with an =OPEN= or =FAILED= proof, as today, and names which
+- A conjecture with a =FAILED= proof is CONJECTURE again, or REFUTED when the owner gives it up
+- =lemmax trace= prints the proof's state beside each test
+- Asked by the owner on 2026-11-22
+Evidence: proof states are read from the file's =#+TODO:= line in =theory.proofs.org=; adding a state is a change to that line and to the lint check.
+
+** CONJECTURE [#B] lint resolves :FOLLOWS: in other projects                :lint:
+:PROPERTIES:
+:ID:          01a205a5-79e2-7959-9296-5e465af6acc7
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+A =:FOLLOWS:= target in another repo is found, as =trace= finds an id in another project (RT-19).
+- =lemmax lint= looks up each =:FOLLOWS:= id in the git repos under =~/repos= that opt in
+- An id no project holds is a finding that names the corollary and the id
+- =--no-cross= skips the lookup, for a machine without the other repos
+- Asked by the owner on 2026-11-22
+Evidence: =lemmax.el= already parses =:FOLLOWS:= (line 230), and RT-19 already walks =~/repos= for =trace=.
+
+** CONJECTURE [#B] A corollary is suspect when what it follows changes      :trace:
+:PROPERTIES:
+:ID:          01a205a5-79e4-7b10-a3ec-9a86ac4d58f9
+:USES:        01a205a5-79e2-7959-9296-5e465af6acc7
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+A corollary is suspect when its =:FOLLOWS:= target changed its text after the corollary's =:IMPLEMENTED:= or =:REVIEWED:= date, whichever is later, as a suspect theorem is for =:USES:=.
+- The target may be in this repo or another one
+- =lemmax trace= lists every suspect corollary with the target's project and change day
+- The owner reads the corollary again, then sets =:REVIEWED:= or makes it CONJECTURE
+- Asked by the owner on 2026-11-22
+Evidence: the suspect check for =:USES:= reads a lemma's last change from git; the same read works in the target's repo.
