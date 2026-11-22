@@ -1235,4 +1235,4 @@ The date a conjecture turns LEMMA or THEOREM is =:PROVEN:=, not =:IMPLEMENTED:=;
 - =lemmax lint= and =lemmax trace= read =:PROVEN:= wherever they read =:IMPLEMENTED:= today, including the suspect check
 - agent1 =requirements/requirements.org=, =requirements/components.org= and =skills/ishikari/requirements.org= are migrated
 - Asked by the owner on 2026-11-23
-Evidence: =lemmax migrate= already renames =:NEEDS:= to =:USES:= and =:VERIFY:= to =:TEST:=.
+Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =:USES:= (line 227), =:VERIFY:= or =:TEST:= (line 237).
