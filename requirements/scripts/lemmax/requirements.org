@@ -1168,12 +1168,13 @@ Evidence: lemmax ends each command with =kill-emacs=, which a test can catch by 
 - Asked by the owner on 2026-11-22
 Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' '*.setup'=.
 
-** CONJECTURE [#A] lemmax plan lists the rebuild, one lemma at a time      :cli:
+** LEMMA [#A] lemmax plan lists the rebuild, one lemma at a time           :cli:
 :PROPERTIES:
 :ID:          01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../../requirements.org::*Goal][Requirements requirements]] asks.
 - One step per LEMMA or THEOREM: its id, title, statement, the ids it =:USES:=, and each proof with its =:TEST:= addresses

@@ -1653,6 +1653,115 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
                        (concat (if (> proofs 0) (format "; %d proof%s" proofs (if (= proofs 1) "" "s")) "") others)))))
     (kill-emacs 0)))
 
+;;;; plan (01a204fc-d718-7e50-95a3-4ca72898a15b)
+
+;; lemma: 01a204fc-d718-7e50-95a3-4ca72898a15b
+(defun lemmax--plan-key (r)
+  "R's place among steps with no order between them: axioms first, then
+higher priority, none last, then older by :CREATED:, then by id."
+  (let ((text (or (plist-get r :text) "")))
+    (list (if (lemmax--axiom-p r) 0 1)
+          (if (string-match "\\`\\[#\\([A-Z0-9]\\)\\]" text) (aref (match-string 1 text) 0) 1000)
+          (or (plist-get r :created) "9999-99-99")
+          (or (plist-get r :id) ""))))
+
+(defun lemmax--plan-less (a b)
+  (let ((ka (lemmax--plan-key a)) (kb (lemmax--plan-key b)) (res nil) (done nil))
+    (while (and ka (not done))
+      (let ((x (pop ka)) (y (pop kb)))
+        (unless (equal x y)
+          (setq done t res (if (stringp x) (string< x y) (< x y))))))
+    res))
+
+(defun lemmax--plan-cycle (left)
+  "The ids of LEFT, steps no order could place, that sit on a :USES: cycle."
+  (let ((ids (mapcar (lambda (r) (plist-get r :id)) left)))
+    (cl-loop for r in left
+             for id = (plist-get r :id)
+             when (let ((seen nil) (todo (copy-sequence (plist-get r :needs))) (hit nil))
+                    (while (and todo (not hit))
+                      (let ((n (pop todo)))
+                        (cond ((equal n id) (setq hit t))
+                              ((and (member n ids) (not (member n seen)))
+                               (push n seen)
+                               (setq todo (append (plist-get (cl-find n left :key (lambda (x) (plist-get x :id)) :test #'equal) :needs)
+                                                  todo))))))
+                    hit)
+             collect id)))
+
+(defun lemmax--plan (rows)
+  "The rebuild steps of ROWS in order: (STEPS . CYCLE), CYCLE the ids on a
+:USES: cycle when not every step could be placed."
+  (let* ((steps (cl-remove-if-not
+                 (lambda (r) (and (plist-get r :id) (not (lemmax--proof-p r))
+                                  (or (lemmax--axiom-p r)
+                                      (and (lemmax--done-p (plist-get r :state))
+                                           (not (lemmax--task-p r)) (not (lemmax--note-p r))))))
+                 rows))
+         (ids (mapcar (lambda (r) (plist-get r :id)) steps))
+         (placed nil) (out nil) (left steps))
+    (catch 'stuck
+      (while left
+        (let ((ready (cl-remove-if-not
+                      (lambda (r) (cl-every (lambda (n) (or (not (member n ids)) (member n placed)))
+                                            (plist-get r :needs)))
+                      left)))
+          (unless ready (throw 'stuck nil))
+          (let ((next (car (sort (copy-sequence ready) #'lemmax--plan-less))))
+            (push next out)
+            (push (plist-get next :id) placed)
+            (setq left (delq next left))))))
+    (cons (nreverse out) (and left (lemmax--plan-cycle left)))))
+
+(defun lemmax--plan-proofs (r rows)
+  (cl-remove-if-not (lambda (p) (and (lemmax--proof-p p) (member (plist-get r :id) (plist-get p :proves)))) rows))
+
+(defun lemmax-plan (args)
+  (let ((json nil))
+    (dolist (a args)
+      (pcase a
+        ("--json" (setq json t))
+        (_ (lemmax--err "lemmax: unknown option %s; see lemmax plan --help" a) (kill-emacs 1))))
+    (let* ((rows (lemmax--rows t))
+           (plan (lemmax--plan rows))
+           (steps (car plan)))
+      (when (cdr plan)
+        (let ((first (cl-find (car (cdr plan)) rows :key (lambda (r) (plist-get r :id)) :test #'equal)))
+          (lemmax--finding (plist-get first :file) (plist-get first :line) (car (cdr plan))
+                           (concat ":USES: cycle: " (string-join (cdr plan) " "))
+                           "remove one :USES: link of the cycle"))
+        (kill-emacs 1))
+      (if json
+          (princ (concat (json-encode
+                          (list (cons 'version 1)
+                                (cons 'steps
+                                      (vconcat
+                                       (cl-loop for r in steps for n from 1
+                                                collect (list (cons 'step n) (cons 'id (plist-get r :id))
+                                                              (cons 'state (plist-get r :state))
+                                                              (cons 'title (plist-get r :title))
+                                                              (cons 'file (plist-get r :file)) (cons 'line (plist-get r :line))
+                                                              (cons 'uses (vconcat (plist-get r :needs)))
+                                                              (cons 'statement (or (plist-get r :body) ""))
+                                                              (cons 'proofs
+                                                                    (vconcat (mapcar (lambda (p) (list (cons 'id (plist-get p :id))
+                                                                                                       (cons 'state (plist-get p :state))
+                                                                                                       (cons 'test (vconcat (plist-get p :verify)))))
+                                                                                     (lemmax--plan-proofs r rows))))))))))
+                         "\n"))
+        (cl-loop for r in steps for n from 1
+                 do (lemmax--out "Step %d: %s %s %s" n (plist-get r :id) (plist-get r :state) (plist-get r :title))
+                 (lemmax--out "  at: %s:%d" (plist-get r :file) (plist-get r :line))
+                 (when (plist-get r :needs) (lemmax--out "  uses: %s" (string-join (plist-get r :needs) " ")))
+                 (dolist (l (split-string (string-trim (or (plist-get r :body) "")) "\n" t))
+                   (lemmax--out "  | %s" l))
+                 (dolist (p (lemmax--plan-proofs r rows))
+                   (lemmax--out "  proof %s %s: %s" (plist-get p :id) (plist-get p :state)
+                                (string-join (plist-get p :verify) " ")))
+                 (lemmax--out ""))
+        (lemmax--out "Total: %d step%s" (length steps) (if (= 1 (length steps)) "" "s")))
+      (kill-emacs 0))))
+
 ;;;; new-id (01a1fe0c-9c5c-7057-8edc-bc68ccfa0490)
 
 ;; lemma: 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
@@ -2043,7 +2152,7 @@ order; a parent no chunk holds is named on stderr."
   '((main
      "usage: lemmax COMMAND [ARGS]
 Lint, trace and list a repo's org requirements.
-Commands: lint, commit-msg, trace, list, new-id, next-id, install-hooks, migrate, archive, publish, help
+Commands: lint, commit-msg, trace, list, plan, new-id, next-id, install-hooks, migrate, archive, publish, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and writes no file; install-hooks writes the repo's two hooks and
 migrate --write a requirements file and its proofs file, archive --write a
@@ -2054,6 +2163,7 @@ example: lemmax list --ready -p ~/repos/other-project"
   commit-msg MSGFILE                      refuse a code commit that names no id
   trace [ID]                              each requirement's links, tests and commits
   list [filters] [--all] [--json]         every requirement in a table
+  plan [--json]                           the steps to rebuild the project, in order
   new-id                                  a new requirement id, a UUID v7
   next-id LETTER                          the next counted id, as M-15, for old projects
   install-hooks                           put lemmax in this repo's pre-commit and commit-msg
@@ -2117,6 +2227,18 @@ and shown under a project: line.
 tests; without it nothing of the repo's runs, and verify says unchecked.
 --dot: the lemma graph in Graphviz's dot language, nodes filled by state,
 :NEEDS: edges solid and id: link edges dashed: lemmax trace --dot | dot -Tsvg")
+    (plan
+     "usage: lemmax plan [--project DIR] [--json]
+Print the steps to rebuild the project from scratch, one lemma at a time.
+example: lemmax plan --json"
+     "One step per AXIOM, LEMMA or THEOREM (and old DONE): its id, state, title,
+file:line, the ids it :USES:, its statement, and each proof with its :TEST:.
+A step comes after every step it uses; axioms come first. Steps with no
+order between them go higher priority first ([#A] before [#B], none last),
+then older by :CREATED:, then by id. The same files print the same plan.
+A :USES: cycle is a finding naming its ids, and exit 1.
+--json  {\"version\": 1, \"steps\": [{step, id, state, title, file, line, uses,
+        statement, proofs: [{id, state, test}]}]}")
     (list
      "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
 Print every requirement in a table, grouped by state and approval.
@@ -2261,6 +2383,7 @@ example: lemmax next-id M"
               ("commit-msg" (lemmax-commit-msg rest))
               ("trace" (lemmax-trace rest))
               ("list" (lemmax-list rest))
+              ("plan" (lemmax-plan rest))
               ("new-id" (lemmax-new-id rest))
               ("next-id" (lemmax-next-id rest))
               ("install-hooks" (lemmax-install-hooks rest))

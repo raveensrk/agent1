@@ -18,6 +18,8 @@ The first public release.
 - `#+SETUPFILE:` keywords; footnote definitions checked.
 - `lemmax publish` and `lemmax archive`; id: links in link properties and `migrate --links`;
   `:ORDERED:` and `:BLOCKER:` read by lint; `:LOGBOOK:` is not text.
+- `lemmax plan` prints the steps to rebuild a project, one lemma at a time,
+  in `:USES:` order; ties by priority, then age, then id; `--json` too.
 - Tags: declared in `#+TAGS:`, nested by group tags, inherited; `list --tag`
   and `trace --tag`. Tags are not a heading's text.
 - Tasks (`FILE.tasks.org`), notes (`FILE.notes.org`) and `AXIOM` headings,

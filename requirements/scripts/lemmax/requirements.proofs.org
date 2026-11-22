@@ -783,7 +783,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: lemmax plan lists the rebuild
+* PASSED Proof: lemmax plan lists the rebuild
 :PROPERTIES:
 :ID:          01a204fc-d8f9-7047-b832-7401fee4a3fc
 :PROVES:      01a204fc-d718-7e50-95a3-4ca72898a15b
