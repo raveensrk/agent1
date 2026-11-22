@@ -19,8 +19,10 @@ jobs:
     steps:
       - name: tools
         run: |
-          command -v git >/dev/null && command -v perl >/dev/null \
-            || (apt-get update -qq && apt-get install -y -qq git perl)
+          # git and perl for lemmax and run_tests; python3 for agent1's hooks,
+          # which some tests run.
+          command -v git >/dev/null && command -v perl >/dev/null && command -v python3 >/dev/null \
+            || (apt-get update -qq && apt-get install -y -qq git perl python3)
       - uses: actions/checkout@v5
       - name: trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
