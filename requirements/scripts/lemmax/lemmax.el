@@ -971,6 +971,7 @@ With CACHED, read the staged copies."
           ("--unchecked" (setq opts (plist-put opts :unchecked t)))
           ("--unmarked" (setq opts (plist-put opts :unmarked t)))
           ("--ready" (setq opts (plist-put opts :ready t)))
+          ("--unlinked" (setq opts (plist-put opts :unlinked t)))
           ("--all" (setq opts (plist-put opts :all t)))
           ("--json" (setq opts (plist-put opts :json t)))
           ("--no-tests" (setq opts (plist-put opts :no-tests t)))
@@ -983,8 +984,35 @@ With CACHED, read the staged copies."
              when (and (file-directory-p d) (file-exists-p (expand-file-name ".git" d)))
              collect (file-name-as-directory d))))
 
+
+;; lemma: 01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5
+(defun lemmax--unlinked ()
+  "Each place in a tracked .org file whose text names a lemma id with no link:
+a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are not text."
+  (let* ((reqs (lemmax--all-reqs (lemmax--listed (lemmax--worktree-files))))
+         (ids (delete-dups (delq nil (cl-mapcan (lambda (r) (cons (plist-get r :id) (copy-sequence (plist-get r :aliases))))
+                                                reqs))))
+         (re (and ids (concat "\\(?:\\`\\|[^A-Za-z0-9_-]\\)\\(" (regexp-opt ids) "\\)\\(?:\\'\\|[^A-Za-z0-9_-]\\)")))
+         res)
+    (when re
+      (dolist (f (lemmax--lines (lemmax--git-out "ls-files" "*.org")))
+        (when (file-readable-p f)
+          (let ((n 0))
+            (dolist (l (split-string (with-temp-buffer (insert-file-contents f) (buffer-string)) "\n"))
+              (setq n (1+ n))
+              (unless (string-match-p "\\`[ \t]*:\\(?:ID\\|NEEDS\\|ALIASES\\):" l)
+                (let ((text (replace-regexp-in-string "\\[\\[id:[^]\n]*\\]\\(?:\\[[^]\n]*\\]\\)?\\]" " " l))
+                      (pos 0))
+                  (while (string-match re text pos)
+                    (push (list f n (match-string 1 text)) res)
+                    (setq pos (match-end 1))))))))))
+    (nreverse res)))
+
 (defun lemmax-list (args)
   (let* ((opts (lemmax--list-opts args))
+         (_ (when (plist-get opts :unlinked)
+              (dolist (u (lemmax--unlinked)) (lemmax--out "%s:%d: %s" (nth 0 u) (nth 1 u) (nth 2 u)))
+              (kill-emacs 0)))
          (many (or (plist-get opts :all) lemmax--projects))
          (per (if many
                   (cl-loop for d in (delete-dups (append lemmax--projects
@@ -1119,7 +1147,7 @@ With an ID: that one block, and the files each of its commits touched.
 An ID not in this project is looked for in every project under ~/repos,
 and shown under a project: line.")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--all] [--json] [--no-tests]
+     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--ready] [--unlinked] [--all] [--json] [--no-tests]
 Print every requirement in a table, grouped by state and approval.
 example: lemmax list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
@@ -1130,6 +1158,8 @@ Groups: waiting for approval, approved and open, done, dropped.
 --unchecked   DONE ones whose :VERIFY: is empty or names a test that is missing
 --unmarked    DONE ones with no code marker: no comment line starting lemma: ID outside tests
 --ready       approved and still OPEN
+--unlinked    instead of the table, each FILE:LINE: ID where an .org file's text
+              names a lemma id with no [[id:]] link; never a lint finding
 --project DIR the git repo that holds DIR; give it again for more, one table each
 --all         every git repo under ~/repos (LEMMAX_REPOS sets the folder)
 --json        the rows as a JSON array

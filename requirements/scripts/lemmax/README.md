@@ -75,6 +75,8 @@ Body text.
 `[[id:ID]]` links a lemma by its `:ID:`; lint refuses one to an unknown or
 DROPPED id. `trace ID` prints `linked from:` for each lemma, and each other
 `.org` file and line, that links to it; `list --json` gives `linked_from`.
+`list --unlinked` prints each `FILE:LINE: ID` where an `.org` file names an id
+in plain text, as org-roam's unlinked references; lint never reports it.
 
 ## Aliases and refs
 

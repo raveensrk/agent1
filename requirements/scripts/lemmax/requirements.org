@@ -555,7 +555,7 @@ Evidence: lemmax resolves ids through one table per run; idea from org-roam's =R
 - Asked by the owner on 2026-11-22
 Evidence: idea from org-roam's =ROAM_REFS=.
 
-** OPEN list --unlinked shows ids named without a link            :list:
+** DONE list --unlinked shows ids named without a link            :list:
 :PROPERTIES:
 :ID:          01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5
 :NEEDS:       01a202bc-49e2-7dba-94f5-0c0952fc91f0
@@ -563,6 +563,7 @@ Evidence: idea from org-roam's =ROAM_REFS=.
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-unlinked-mentions
+:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax list --unlinked= prints each place in a tracked .org file whose plain text names a lemma id outside =[[id:]]=, =:NEEDS:=, =:ID:= and =:ALIASES:=, as =FILE:LINE: ID=
 - Only on request; lint never reports it

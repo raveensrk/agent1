@@ -948,3 +948,18 @@
            (one (cl-find "RQ-1" rows :key (lambda (r) (alist-get 'id r)) :test #'equal)))
       (should (= 3 (length (alist-get 'linked_from one))))
       (should (cl-find "RQ-2" (alist-get 'linked_from one) :key (lambda (b) (alist-get 'id b)) :test #'equal)))))
+
+;;;; 01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5: list --unlinked
+
+(ert-deftest lemmax-unlinked-mentions ()
+  :tags '(timeout-30)
+  (let ((d (rt-repo (append (rt-files (rt-req "RQ-1" :aliases "OLD-1" :title "First")
+                                       (rt-req "RQ-2" :title "Second" :needs "RQ-1" :body "Builds on RQ-1, see [[id:RQ-1][it]]; not RQ-12.\n"))
+                            (list (cons "notes/n.org" "OLD-1 came first.\n[[id:RQ-2]]\n"))))))
+    (let* ((r (rt-run d "list" "--unlinked")) (out (nth 1 r)))
+      (should (= 0 (nth 0 r)))
+      (should (string-match-p "^requirements\\.org:[0-9]+: RQ-1$" out))
+      (should (string-match-p "^notes/n\\.org:1: OLD-1$" out))
+      (should (= 2 (length (split-string out "\n" t))))
+      ;; Never a lint finding.
+      (rt-should-clean (rt-run d "lint" "--no-tests")))))
