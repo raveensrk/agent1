@@ -875,13 +875,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: run 1 failed in setup-emacs: Nix flakes off on the runner.
 
-** OPEN Markers come only from sibling repos                                 :lint:
+** DONE Markers come only from sibling repos                                 :lint:
 :PROPERTIES:
 :ID:          01a20336-c953-745d-aef4-90ee2141e08d
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-markers-in-siblings-only
+:IMPLEMENTED: 2026-11-22
 :END:
 - #+LEMMAX_MARKERS_IN: and :markers-in take only ../NAME, a folder beside the repo that is a git repo
 - Any other path, or one that is no git repo, is a lint finding and is not read

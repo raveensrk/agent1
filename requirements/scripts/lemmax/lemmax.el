@@ -635,6 +635,7 @@ for HEAD; read by one git process, once a run."
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-links infos only staged)
+        (lemmax--lint-markers-in infos only)
         (dolist (i infos)
           (when (and (plist-get i :misplaced) (or (null only) (member (plist-get i :file) only)))
             (lemmax--finding (plist-get i :file) (plist-get i :misplaced) nil
@@ -694,6 +695,22 @@ With CACHED, read the staged copies."
               (push (list id file line (and (lemmax--test-path-p file patterns) t)) res))))))
     (nreverse res)))
 
+;; lemma: 01a20336-c953-745d-aef4-90ee2141e08d
+(defun lemmax--sibling-p (dir)
+  "Whether DIR is ../NAME, a folder beside this repo that is a git repo."
+  (and (string-match-p "\\`\\.\\./[^/.][^/]*/?\\'" dir)
+       (file-exists-p (expand-file-name ".git" (expand-file-name dir default-directory)))))
+
+(defun lemmax--lint-markers-in (infos only)
+  "A markers-in folder that is not a sibling git repo; it is not read."
+  (dolist (i infos)
+    (when (or (null only) (member (plist-get i :file) only))
+      (dolist (dir (plist-get i :markers-in))
+        (unless (lemmax--sibling-p dir)
+          (lemmax--finding (plist-get i :file) 1 nil
+                           (format "markers-in names %s, which is not a git repo beside this one" dir)
+                           "name a sibling repo as ../NAME, or remove it"))))))
+
 (defun lemmax--all-markers (infos &optional cached)
   "The markers of this repo and of every repo #+LEMMAX_MARKERS_IN: names."
   (let* ((patterns (lemmax--test-paths infos))
@@ -701,7 +718,8 @@ With CACHED, read the staged copies."
     (mapcar
      (lambda (m) (let ((r (gethash (car m) known))) (if r (cons (plist-get r :id) (cdr m)) m)))
      (append (lemmax--markers patterns cached)
-            (cl-loop for dir in (delete-dups (cl-mapcan (lambda (i) (copy-sequence (plist-get i :markers-in))) infos))
+            (cl-loop for dir in (cl-remove-if-not #'lemmax--sibling-p
+                                                  (delete-dups (cl-mapcan (lambda (i) (copy-sequence (plist-get i :markers-in))) infos)))
                      for full = (expand-file-name dir default-directory)
                      when (file-directory-p full)
                      append (let ((default-directory (file-name-as-directory full)))

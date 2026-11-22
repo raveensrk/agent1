@@ -1517,3 +1517,22 @@ run of its finding's why text."
          (out (rt-list d "--duplicates")))
     (should (= 2 (cl-count-if (lambda (l) (string-match-p "^  RQ-1 " l)) (split-string out "\n"))))
     (should-not (string-match-p "RQ-2" out))))
+
+;;;; 01a20336-c953-745d-aef4-90ee2141e08d: markers come only from sibling repos
+
+(ert-deftest lemmax-markers-in-siblings-only ()
+  :tags '(timeout-30)
+  (let* ((base (rt-tmp)) (book (expand-file-name "book" base)) (far (expand-file-name "x/far" base)))
+    (make-directory book) (make-directory far t)
+    (dolist (d (list book far)) (rt-git d "init" "-q" "-b" "main"))
+    (rt-write far (list (cons "src/x.clj" ";; lemma: RQ-9\n")))
+    (rt-commit far "start")
+    (make-directory (expand-file-name "plain" base))
+    (dolist (dir (list "../x/far" far "../plain" "../../etc"))
+      (rt-write book (list (cons "requirements.org" (concat rt-head (format "#+LEMMAX_MARKERS_IN: %s\n\n" dir) (rt-req "RQ-1")))
+                           (cons "tests.sh" (rt-tests-sh "unit/a"))))
+      (rt-commit book (concat "use " dir))
+      (let ((r (rt-run book "lint" "--no-tests")))
+        (rt-should-find r (concat "markers-in names " (regexp-quote dir) ", which is not a git repo beside this one"))
+        ;; Not read: far's marker for RQ-9 would be a finding of its own.
+        (should-not (string-match-p "RQ-9" (nth 2 r)))))))
