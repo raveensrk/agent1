@@ -7,13 +7,14 @@
 
 Process: [[file:../requirements/requirements.org][Requirements requirements]].
 
-* CONJECTURE [#A] lemmax lints and traces org requirements           :lemmax:
+* THEOREM [#A] lemmax lints and traces org requirements           :lemmax:
 :PROPERTIES:
 :ID:          RT-1
 :USES:        RT-2 RT-3 RT-4 RT-7 RT-8 RT-12 RT-13 01a1ff25-116d-73f1-a45e-dd77e482a983 01a202b0-1d09-75f3-99dc-677a4b2ec0be
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-15
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 One command in agent1 for every repo whose requirements file opts in.
@@ -23,13 +24,14 @@ One command in agent1 for every repo whose requirements file opts in.
 - The end-to-end test builds an invented repo with requirements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
 Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an invented file's TODO keywords, priority, tags, =:ID:=, =:NEEDS:= and =:VERIFY:= with org-element ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]).
 
-** CONJECTURE The command line                                               :cli:
+** THEOREM The command line                                               :cli:
 :PROPERTIES:
 :ID:          RT-2
 :USES:        RT-16
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-15
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax lint [--staged] [--no-tests] [FILE...]=, =lemmax commit-msg MSGFILE=, =lemmax trace [ID]=.
 - =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../requirements/cli.org][cli.org]]); a bare call prints the main help.
@@ -52,13 +54,14 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 - With no opted-in file, every command says so on stderr and exits 0.
 Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]); =git ls-files '*.org'= lists the tracked files.
 
-** CONJECTURE lint: the file rules                                          :lint:
+** THEOREM lint: the file rules                                          :lint:
 :PROPERTIES:
 :ID:          RT-4
 :USES:        RT-5 RT-6 RT-10 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490 01a20014-e361-7827-b2a8-d3b2ded3e0b1 01a202bc-49e2-7dba-94f5-0c0952fc91f0 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-15
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 In an opted-in file, =lemmax lint= refuses:
@@ -157,12 +160,13 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 - The walk parses headlines only: =trace= over 155 revisions of a 150-requirement invented file ends in under 10 s.
 Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a child implemented on 2026-01-05; a headline-level parse of all 155 revisions of arcadia_docs' requirements.org took 4.70 s, against 0.72 s for each full parse.
 
-** CONJECTURE The harness check                                            :hooks:
+** LEMMA The harness check                                            :hooks:
 :PROPERTIES:
 :ID:          RT-10
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-15
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - =harness/checks/lemmax_lint.py= applies to =*.org=. For each candidate file with =#+LEMMAX_TESTS:= it runs =lemmax lint --no-tests FILE= and prints each finding as =path:line: message=.
 - An agent sees the finding while it edits a requirements file.
@@ -185,12 +189,13 @@ Evidence: [[file:../harness/README.md][harness/README.md]] gives the check contr
 - Changed on 2026-11-22: a repo with its own hooks path delegates to the global hooks, instead of calling lemmax in one line each.
 Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githooks=, and its =commit-msg= already chains to a repo's own hook; =git config --local core.hooksPath= is =.githooks= in all 5 app repos.
 
-** CONJECTURE lemmax's own tests                                         :tests:
+** LEMMA lemmax's own tests                                         :tests:
 :PROPERTIES:
 :ID:          RT-12
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-15
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - ERT tests live in =lemmax/lemmax_tests.el=, on invented data, in throwaway git repos under =~/tmp=; never a real repo.
 - =lemmax/run_tests= runs them all; =--addresses= prints each as =ert/<name>=; =--only ADDRESS= runs one.
@@ -199,13 +204,14 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - =harness/self_check= runs it.
 Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
 
-** CONJECTURE list: every requirement in a table                           :list:
+** THEOREM list: every requirement in a table                           :list:
 :PROPERTIES:
 :ID:          RT-13
 :USES:        RT-14 RT-15 RT-18
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-21
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax list [--state open|done|dropped] [--section M] [--unchecked] [--ready] [--all] [--json]=
 - One line per requirement: id, state, approved or not, VERIFY found or missing, title, file:line
@@ -220,13 +226,14 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 - It reads, and never writes a file
 Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-1's spike); =git ls-files '*.org'= lists a repo's files.
 
-** CONJECTURE next-id: the next free id for a section                      :list:
+** THEOREM next-id: the next free id for a section                      :list:
 :PROPERTIES:
 :ID:          RT-14
 :USES:        RT-15 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-21
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax next-id M= prints one id: one more than the highest =M-= in use anywhere in the repo, as =M-15=
 - A gap is never filled: ids are never reused
@@ -234,13 +241,14 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 - Why: on 2026-11-21 a new requirement got M-11, which was already taken
 Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0.
 
-** CONJECTURE /add-requirement uses lemmax                                :skill:
+** THEOREM /add-requirement uses lemmax                                :skill:
 :PROPERTIES:
 :ID:          RT-15
 :USES:        01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-21
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - Before drafting, the skill runs =lemmax list --json= to find duplicates and a parent
 - It takes the new id from =lemmax next-id=
@@ -303,12 +311,13 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 - Asked by the owner on 2026-11-21.
 Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS:= skips repos that do not opt in, without a parse.
 
-** CONJECTURE lemmax knows UUID v7 ids                                    :ids:
+** LEMMA lemmax knows UUID v7 ids                                    :ids:
 :PROPERTIES:
 :ID:          01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-21
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 New requirement ids are UUID v7, as [[file:../requirements/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id
@@ -318,12 +327,13 @@ New requirement ids are UUID v7, as [[file:../requirements/requirements.org::*A 
 - Asked by the owner on 2026-11-21
 Evidence: Python 3.15.2's =uuid.uuid7()= printed =01a1fe0c-9c5c-7057-8edc-bc68ccfa0490=; Emacs has =random= and =current-time= for the same layout.
 
-** CONJECTURE reqtrace becomes lemmax, in lemmax/                        :cli:
+** LEMMA reqtrace becomes lemmax, in lemmax/                        :cli:
 :PROPERTIES:
 :ID:          01a1ff25-116d-73f1-a45e-dd77e482a983
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
-:APPROVED:    2026-11-21
+:APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 The tool takes the workflow's name, Lemmax, and moves beside the rules it checks.
 - The program is =lemmax=; its commands stay as they are: lint, commit-msg, trace, list, next-id
@@ -721,12 +731,13 @@ Evidence: probe 2026-11-22: lemmax lint ../requirements.org from a subfolder pas
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el holds 2026-11-22, RF-3, "agent1's id rule" and "what requirements.org forbids".
 
-** CONJECTURE lemmax install-hooks puts lemmax in a repo's hooks               :cli:
+** LEMMA lemmax install-hooks puts lemmax in a repo's hooks               :cli:
 :PROPERTIES:
 :ID:          01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - Writes .git/hooks/pre-commit and commit-msg that call lemmax from PATH, with the same opt-in test as agent1's hooks
 - An existing hook is kept and called after lemmax's; running it twice changes nothing
@@ -748,12 +759,13 @@ Evidence: harness/githooks/pre-commit finds lemmax at ../../lemmax.
 - Asked by the owner on 2026-11-22
 Evidence: 6538 folders, 1.4 GB, under ~/tmp after this session's runs.
 
-** CONJECTURE lemmax says its version; MIT licence; a changelog                    :cli:
+** LEMMA lemmax says its version; MIT licence; a changelog                    :cli:
 :PROPERTIES:
 :ID:          01a20336-c80d-733a-a251-ad26a0ebf7d3
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 - lemmax --version prints "lemmax VERSION", semver, the same in lemmax.el and CHANGELOG.md; the first is 1.0.0
 - lemmax/LICENSE is the MIT licence; CHANGELOG.md names each version's changes
@@ -850,13 +862,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** CONJECTURE Conjectures, proofs, lemmas and theorems                            :lemmax:
+** THEOREM Conjectures, proofs, lemmas and theorems                            :lemmax:
 :PROPERTIES:
 :ID:          01a20369-38d2-7202-8b53-6e296aaac489
 :USES:        01a20369-38f7-7229-8232-1b8cbb98e6bc 01a20369-391b-768e-8c98-180facc0ff77 01a20369-393d-77bf-a35a-a1c03780a751
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 lemmax reads the math names of [[file:../requirements/requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
 - A conjecture's state is CONJECTURE, LEMMA, THEOREM or REFUTED; OPEN, DONE and DROPPED still read the same, as conjecture, lemma and refuted
@@ -1155,12 +1168,13 @@ Evidence: lemmax ends each command with =kill-emacs=, which a test can catch by 
 - Asked by the owner on 2026-11-22
 Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' '*.setup'=.
 
-** CONJECTURE [#A] lemmax plan lists the rebuild, one lemma at a time           :cli:
+** LEMMA [#A] lemmax plan lists the rebuild, one lemma at a time           :cli:
 :PROPERTIES:
 :ID:          01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
+:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../requirements/requirements.org::*Goal][Requirements requirements]] asks.
 - One step per LEMMA or THEOREM: its id, title, statement, the ids it =:USES:=, and each proof with its =:TEST:= addresses
