@@ -1022,6 +1022,9 @@ With CACHED, read the staged copies."
   (let ((noid (cl-count-if (lambda (r) (null (plist-get r :id))) rows)))
     (when (> noid 0) (lemmax--out "No id: %d" noid))))
 
+(defconst lemmax-json-version 1
+  "The shape of list --json; a change of any row key or type bumps it.")
+
 (defun lemmax--json-row (r repo)
   (append
    (and repo (list (cons 'repo repo)))
@@ -1112,8 +1115,11 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
     (setq per (mapcar (lambda (p) (cons (car p) (lemmax--filter (cdr p) opts))) per))
     (when many (setq per (cl-remove-if-not #'cdr per)))
     (if (plist-get opts :json)
-        (princ (concat (json-encode (vconcat (cl-loop for (repo . rows) in per
-                                                       append (mapcar (lambda (r) (lemmax--json-row r repo)) rows))))
+        ;; lemma: 01a202f3-878b-75cb-98e0-9d7929ef88c1
+        (princ (concat (json-encode
+                        (list (cons 'version lemmax-json-version)
+                              (cons 'rows (vconcat (cl-loop for (repo . rows) in per
+                                                            append (mapcar (lambda (r) (lemmax--json-row r repo)) rows))))))
                        "\n"))
       (dolist (p per)
         (when (car p) (lemmax--out "== %s" (car p)))
@@ -1255,7 +1261,8 @@ Groups: waiting for approval, approved and open, done, dropped.
               names a lemma id with no [[id:]] link; never a lint finding
 --project DIR the git repo that holds DIR; give it again for more, one table each
 --all         every git repo under ~/repos (LEMMAX_REPOS sets the folder)
---json        the rows as a JSON array
+--json        {"version": 1, "rows": [...]}: one object a row; version
+              changes when a key or type of a row does
 --run-tests   run the repo's test command for the check column; without it
               nothing of the repo's runs and the column says named
 --no-tests    the default; kept so older calls still work")

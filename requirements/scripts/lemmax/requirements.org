@@ -712,13 +712,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** OPEN --json says its version                                           :list:
+** DONE --json says its version                                           :list:
 :PROPERTIES:
 :ID:          01a202f3-878b-75cb-98e0-9d7929ef88c1
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-json-version ert/lemmax-json-shape
+:IMPLEMENTED: 2026-11-22
 :END:
 - list --json prints {"version": 1, "rows": [...]}; a test pins every row key and type
 - A change of shape bumps version

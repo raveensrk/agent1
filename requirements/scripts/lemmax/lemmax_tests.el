@@ -477,6 +477,7 @@
 ;;;; RT-13
 
 (defun rt-list (d &rest args) (nth 1 (apply #'rt-run d "list" args)))
+(defun rt-json-rows (out) (alist-get 'rows (json-read-from-string out)))
 
 (ert-deftest reqtrace-list-table ()
   (let* ((d (rt-repo (append (rt-files (rt-done "RQ-1") (rt-req "RQ-2" :verify "unit/zzz"))
@@ -520,7 +521,7 @@
       (should (string-match-p "^Total: 2 requirements in 2 repos" out)))))
 (ert-deftest reqtrace-list-json ()
   (let* ((out (rt-list (rt-repo (rt-files (rt-done "RQ-1"))) "--json" "--run-tests"))
-         (rows (json-parse-string out :object-type 'alist)))
+         (rows (alist-get 'rows (json-parse-string out :object-type 'alist))))
     (should (= 1 (length rows)))
     (should (equal "RQ-1" (alist-get 'id (aref rows 0))))
     (should (equal "found" (alist-get 'check (aref rows 0))))))
@@ -859,7 +860,7 @@
   (let ((d (rt-file-lemma-repo
             (cons "reqs/one.org" (rt-file-lemma "RQ-1" :title "The whole file" :body "Body.\n* A heading\nMore body.\n"))
             (cons "reqs/two.org" (rt-file-lemma "RQ-2" :needs "RQ-1")))))
-    (let ((json (json-read-from-string (nth 1 (rt-run d "list" "--json" "--no-tests")))))
+    (let ((json (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests")))))
       (should (= 2 (length json)))
       (let ((one (cl-find "RQ-1" json :key (lambda (r) (alist-get 'id r)) :test #'equal)))
         (should (equal "The whole file" (alist-get 'title one)))
@@ -925,7 +926,7 @@
     (rt-should-clean (rt-run d "lint" "--no-tests"))
     (should (string-match-p "  refs: https://example.invalid/issues/4 http://example.invalid/spec"
                             (nth 1 (rt-run d "trace" "RQ-1"))))
-    (let ((row (aref (json-read-from-string (nth 1 (rt-run d "list" "--json" "--no-tests"))) 0)))
+    (let ((row (aref (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests"))) 0)))
       (should (equal ["https://example.invalid/issues/4" "http://example.invalid/spec"] (alist-get 'refs row))))
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :refs "issue-4")))
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: :REFS: names issue-4, which is not an http(s) URL")))
@@ -944,7 +945,7 @@
       (should (string-match-p "  linked from: notes/talk\\.org:2" tr))
       (should (= 3 (cl-count-if (lambda (l) (string-prefix-p "  linked from:" l)) (split-string tr "\n")))))
     (should (string-match-p "  linked from: none" (nth 1 (rt-run d "trace" "RQ-2"))))
-    (let* ((rows (json-read-from-string (nth 1 (rt-run d "list" "--json" "--no-tests"))))
+    (let* ((rows (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests"))))
            (one (cl-find "RQ-1" rows :key (lambda (r) (alist-get 'id r)) :test #'equal)))
       (should (= 3 (length (alist-get 'linked_from one))))
       (should (cl-find "RQ-2" (alist-get 'linked_from one) :key (lambda (b) (alist-get 'id b)) :test #'equal)))))
@@ -1142,3 +1143,22 @@
       (should (member "29.4" vs))
       (should (cl-some (lambda (v) (or (equal v "release-snapshot") (>= (string-to-number v) 30))) vs)))
     (should (string-match-p "version: \\${{ matrix.emacs_version }}" w))))
+
+;;;; 01a202f3-878b-75cb-98e0-9d7929ef88c1: --json says its version
+
+(ert-deftest lemmax-json-version ()
+  (let ((j (json-read-from-string (rt-list (rt-repo (rt-files (rt-req "RQ-1"))) "--json"))))
+    (should (equal 1 (alist-get 'version j)))
+    (should (vectorp (alist-get 'rows j)))))
+
+(ert-deftest lemmax-json-shape ()
+  ;; Every key of a row, and the JSON type of each: a change here bumps version.
+  (let* ((j (json-parse-string (rt-list (rt-repo (rt-files (rt-req "RQ-1"))) "--json") :object-type 'alist
+                               :null-object :null :false-object :false))
+         (row (aref (alist-get 'rows j) 0))
+         (type (lambda (v) (cond ((eq v :null) 'null) ((memq v '(t :false)) 'bool) ((stringp v) 'string)
+                                 ((numberp v) 'number) ((vectorp v) 'array) (t 'object)))))
+    (should (equal '((id . string) (state . string) (group . string) (approved . string) (verify . array)
+                     (check . string) (needs . array) (refs . array) (linked_from . array) (title . string)
+                     (file . string) (line . number) (markers . array))
+                   (mapcar (lambda (kv) (cons (car kv) (funcall type (cdr kv)))) row)))))

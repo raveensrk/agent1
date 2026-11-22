@@ -39,7 +39,7 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 ## 6. Check existing requirements
 
-- Run `lemmax list --json` in the repo that holds the file: every requirement, its id, state and `:NEEDS:`.
+- Run `lemmax list --json` in the repo that holds the file: `{"version": 1, "rows": [...]}`, a row per requirement with its id, state, `:NEEDS:` and aliases-resolved links.
 
 - Without lemmax on PATH, read the files instead.
 
