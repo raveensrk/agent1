@@ -1,0 +1,29 @@
+#+title: Tasks of lemmax
+#+TODO: TODO | DONE CANCELLED
+
+* TODO Fix ert/lemmax-config-staged
+:PROPERTIES:
+:ID:          01a20533-bd44-7bc9-b9bd-7c654360da9a
+:FOR:         01a202b0-1d09-75f3-99dc-677a4b2ec0be
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+The test fails on main, before and after the plan, coverage and environment work: its first =lint --staged= reports a finding where it expects none. Find the finding and fix lemmax or the test.
+
+* TODO Run the full test suite over plan, coverage and environment
+:PROPERTIES:
+:ID:          01a20533-bf1e-79be-a76f-0c9bf0092624
+:FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd 01a204fc-dec1-7ac6-8408-c3a69aedfebd
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+Only the related tests ran when they were built. Run =requirements/scripts/lemmax/run_tests= once and fix what fails.
+
+* TODO Find the oldest tool versions lemmax works with
+:PROPERTIES:
+:ID:          01a20533-c0f2-7bf6-8090-e843103c7faa
+:FOR:         01a204fc-dec1-7ac6-8408-c3a69aedfebd
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+=requirements.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
