@@ -1035,3 +1035,16 @@ Evidence: =lemmax--filter= already filters rows by state and section.
 - =lemmax migrate --links= writes :USES: and :PROVES: as =[[id:X][title]]= links
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--id-link-re= already reads id: links in bodies.
+
+** CONJECTURE ORDERED and BLOCKER agree with lemmax                                 :lint:
+:PROPERTIES:
+:ID:          01a203a6-a716-738e-a95b-18086050d5eb
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:APPROVED:    2026-11-22
+:END:
+- Emacs blocks by =org-enforce-todo-dependencies=, which a repo's setup file may turn on; lemmax lint stays the authority and reads the same properties
+- Under a heading with =:ORDERED: t=, lint refuses a proven child that comes after an earlier sibling not yet proven or refuted: Emacs would have blocked it
+- A heading's =:BLOCKER:= ids, as org-depend reads them, must be the ids its :USES: names; lint refuses a heading where the two disagree
+- Asked by the owner on 2026-11-22
+Evidence: =org-entry-get= reads :ORDERED: and =org-get-last-sibling= walks siblings in batch Emacs.
