@@ -772,3 +772,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
+
+* OPEN Proof: The edit check opts in as the hooks do
+:PROPERTIES:
+:ID:          01a203e8-f7ca-7104-bb1c-1f4821e22bf0
+:PROVES:      01a203e8-0c8b-713e-8f21-ffee439bcbb0
+:TEST:        ert/lemmax-harness-check-setupfile ert/lemmax-harness-check-finding ert/lemmax-file-arg-from-cwd
+:CREATED:     2026-11-22
+:LAST_EDITED: 2026-11-22
+:END:
+When the tests in :TEST: pass, the conjecture holds.
