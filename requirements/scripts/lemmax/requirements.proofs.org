@@ -103,7 +103,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: agent1's global hooks call lemmax
+* PASSED Proof: agent1's global hooks call lemmax
 :PROPERTIES:
 :ID:          01a20389-b16c-7b4c-a184-c2aaca7166c7
 :PROVES:      RT-11

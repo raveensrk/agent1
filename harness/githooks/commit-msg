@@ -16,6 +16,7 @@ A global hooksPath hides each repo's .git/hooks, so a repo's own
   commit-msg -h | --help | help
 Bypass once, deliberately: git commit --no-verify
 """
+# lemma: RT-11
 import os
 import re
 import subprocess

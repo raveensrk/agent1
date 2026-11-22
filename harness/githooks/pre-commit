@@ -10,6 +10,7 @@
 # usage: pre-commit [-h|--help|help]   (git passes no arguments)
 # Bypass once, deliberately: git commit --no-verify
 set -uo pipefail
+# lemma: RT-11
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 if git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' 2>/dev/null \
