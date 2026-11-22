@@ -133,6 +133,14 @@ through `.lemmax/.gitignore`), or `--out DIR`.
 file's folder in the work tree. `org-enforce-todo-dependencies` is an Emacs
 setting, so a setup file cannot turn it on.
 
+## Footnotes
+
+<!-- lemma: 01a203a6-a779-73fc-8abf-99f8c8816867 -->
+
+Footnotes and citations may stand in a body and count as its text. Lint
+refuses a `[fn:NAME]` with no `[fn:NAME] text` line in the file; org-cite is
+left to export.
+
 ## Tags
 
 <!-- lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c -->

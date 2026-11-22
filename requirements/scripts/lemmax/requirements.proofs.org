@@ -743,7 +743,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: Every footnote has a definition
+* PASSED Proof: Every footnote has a definition
 :PROPERTIES:
 :ID:          01a203b9-3ba2-7230-8a83-6b1140fdb767
 :PROVES:      01a203a6-a779-73fc-8abf-99f8c8816867

@@ -870,6 +870,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
           (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
+        (lemmax--lint-footnotes infos only staged)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-links infos only staged)
         (lemmax--lint-markers-in infos only)
@@ -890,6 +891,33 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                         (cons 'findings (vconcat (reverse lemmax--json-findings)))))
                      "\n")))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
+
+;;;; Footnotes (01a203a6-a779-73fc-8abf-99f8c8816867)
+
+;; lemma: 01a203a6-a779-73fc-8abf-99f8c8816867
+(defun lemmax--lint-footnotes (infos only staged)
+  "A [fn:NAME] reference with no definition in its file."
+  (dolist (i infos)
+    (let ((f (plist-get i :file)))
+      (when (or (null only) (member f only))
+        (let* ((text (if staged (or (lemmax--git-out "show" (concat ":" f)) "")
+                       (with-temp-buffer (insert-file-contents f) (buffer-string))))
+               (lines (split-string (lemmax--blank-verbatim text) "\n"))
+               (defs nil) (refs nil) (n 0))
+          (dolist (l lines)
+            (setq n (1+ n))
+            (when (string-match "\\`\\[fn:\\([^]: \t]+\\)\\]" l) (push (match-string 1 l) defs))
+            (let ((pos 0))
+              (while (string-match "\\[fn:\\([^]: \t]*\\)\\(:\\)?" l pos)
+                (let ((name (match-string 1 l)) (inline (match-string 2 l)) (start (match-beginning 0)))
+                  (cond (inline (unless (string-empty-p name) (push name defs)))
+                        ((and (> start 0) (not (string-empty-p name))) (push (cons name n) refs))))
+                (setq pos (match-end 0)))))
+          (dolist (r (nreverse refs))
+            (unless (member (car r) defs)
+              (lemmax--finding f (cdr r) (let ((x (lemmax--lemma-at (plist-get i :reqs) f (cdr r)))) (and x (plist-get x :id)))
+                               (format "the footnote fn:%s has no definition" (car r))
+                               (format "add a line \"[fn:%s] text\" to the file" (car r))))))))))
 
 ;;;; Tags (01a2039c-9e67-74bb-9ac4-63eac14f1e7c)
 

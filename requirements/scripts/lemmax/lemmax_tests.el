@@ -2129,3 +2129,14 @@ run of its finding's why text."
     ;; The setup's tags are the declared list.
     (rt-set d "reqs/requirements.org" (concat "#+SETUPFILE: ../lemmax.setup\n\n" (rt-tagged "RQ-1" ":zz:")))
     (rt-should-find (rt-run d "lint" "--no-tests") "the tag zz is not declared")))
+
+;;;; 01a203a6-a779-73fc-8abf-99f8c8816867: every footnote has a definition
+
+(ert-deftest lemmax-footnotes ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :body "Uses a rule.[fn:rule] And one inline.[fn:x: here] And [fn:: anon].\n\n[fn:rule] The rule.\n")))))
+    (rt-should-clean (rt-run d "lint"))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :body "Uses a rule.[fn:gone] Not =[fn:code]=.\n")))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "requirements.org:[0-9]+: RQ-1: the footnote fn:gone has no definition")
+      (should-not (string-match-p "fn:code" (nth 2 r))))))
