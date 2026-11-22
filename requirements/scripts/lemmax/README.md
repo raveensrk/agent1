@@ -86,3 +86,18 @@ in plain text, as org-roam's unlinked references; lint never reports it.
   refuses an alias two lemmas share, or one that is a lemma's `:ID:`.
 - `:REFS: URL...` names the issues, PRs or specs a lemma came from; `trace`
   prints them and `list --json` gives them as `refs`.
+
+## References and inspirations
+
+- [org-roam](https://github.com/org-roam/org-roam) and Org's own
+  [org-id](https://orgmode.org/manual/Handling-Links.html): file nodes,
+  `id:` links, backlinks, aliases, refs, unlinked references and the graph
+  view; lemmax borrows each as a read-only check.
+- [Doorstop](https://github.com/doorstop-dev/doorstop): requirements as one
+  file per item in version control, settings per folder, and suspect links
+  when a parent changes.
+- [StrictDoc](https://github.com/strictdoc-project/strictdoc): a plain-text
+  requirements format with parent links and traceability to source and tests.
+- [OpenFastTrace](https://github.com/itsallcode/openfasttrace): tags in code
+  and tests that trace to requirements, and a report of what is not covered;
+  the idea behind `lemma:` markers.
