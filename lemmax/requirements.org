@@ -2,43 +2,41 @@
 #+STARTUP: overview
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 #+TAGS: lemmax [ cli : list trace ] lint ids hooks tests skill
-#+LEMMAX_TESTS: requirements/scripts/lemmax/run_tests --addresses
-#+LEMMAX_CODE: requirements/scripts/lemmax/ harness/checks/lemmax_lint.py
+#+LEMMAX_TESTS: lemmax/run_tests --addresses
+#+LEMMAX_CODE: lemmax/ harness/checks/lemmax_lint.py
 
-Process: [[file:../../requirements.org][Requirements requirements]].
+Process: [[file:../requirements/requirements.org][Requirements requirements]].
 
-* THEOREM [#A] lemmax lints and traces org requirements           :lemmax:
+* CONJECTURE [#A] lemmax lints and traces org requirements           :lemmax:
 :PROPERTIES:
 :ID:          RT-1
 :USES:        RT-2 RT-3 RT-4 RT-7 RT-8 RT-12 RT-13 01a1ff25-116d-73f1-a45e-dd77e482a983 01a202b0-1d09-75f3-99dc-677a4b2ec0be
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
-:IMPLEMENTED: 2026-11-22
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 One command in agent1 for every repo whose requirements file opts in.
-- =lemmax lint= refuses what [[file:../../requirements.org][requirements.org]] forbids; =lemmax trace= shows what each requirement links to.
+- =lemmax lint= refuses what [[file:../requirements/requirements.org][requirements.org]] forbids; =lemmax trace= shows what each requirement links to.
 - Written in Emacs Lisp on org-element.
 - Why: 2 repos hold 8 check files, 867 lines, in Python and Babashka; 3 repos check nothing; =:VERIFY:= is written 4 ways.
 - The end-to-end test builds an invented repo with requirements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
 Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an invented file's TODO keywords, priority, tags, =:ID:=, =:NEEDS:= and =:VERIFY:= with org-element ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]).
 
-** THEOREM The command line                                               :cli:
+** CONJECTURE The command line                                               :cli:
 :PROPERTIES:
 :ID:          RT-2
 :USES:        RT-16
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
-:IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax lint [--staged] [--no-tests] [FILE...]=, =lemmax commit-msg MSGFILE=, =lemmax trace [ID]=.
-- =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../../cli.org][cli.org]]); a bare call prints the main help.
+- =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../requirements/cli.org][cli.org]]); a bare call prints the main help.
 - It runs from the repo root, reads, and never writes a file.
 - A finding is one line on stderr: =lemmax: <file>:<line>: <id>: <why>; <fix>=.
 - Exit 0 when clean, 1 on any finding or failure.
-- =requirements/scripts/lemmax/lemmax= is a Bash launcher: =exec emacs -Q --script lemmax.el -- "$@"=. Every =.el= file starts with a lexical-binding cookie.
+- =lemmax/lemmax= is a Bash launcher: =exec emacs -Q --script lemmax.el -- "$@"=. Every =.el= file starts with a lexical-binding cookie.
 Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-- --help --version -h= through to the script; agent1's =interpreter_resolves.py= read =#!/usr/bin/env -S emacs= as the interpreter =S=, so the launcher is Bash; Emacs 31 warned on a file with no lexical-binding cookie ([[https://www.gnu.org/software/emacs/manual/html_node/emacs/Initial-Options.html][Initial Options]]).
 
 ** LEMMA Which files it reads
@@ -54,14 +52,13 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 - With no opted-in file, every command says so on stderr and exits 0.
 Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]); =git ls-files '*.org'= lists the tracked files.
 
-** THEOREM lint: the file rules                                          :lint:
+** CONJECTURE lint: the file rules                                          :lint:
 :PROPERTIES:
 :ID:          RT-4
 :USES:        RT-5 RT-6 RT-10 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490 01a20014-e361-7827-b2a8-d3b2ded3e0b1 01a202bc-49e2-7dba-94f5-0c0952fc91f0 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
-:IMPLEMENTED: 2026-11-22
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 In an opted-in file, =lemmax lint= refuses:
@@ -160,19 +157,18 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 - The walk parses headlines only: =trace= over 155 revisions of a 150-requirement invented file ends in under 10 s.
 Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a child implemented on 2026-01-05; a headline-level parse of all 155 revisions of arcadia_docs' requirements.org took 4.70 s, against 0.72 s for each full parse.
 
-** LEMMA The harness check                                            :hooks:
+** CONJECTURE The harness check                                            :hooks:
 :PROPERTIES:
 :ID:          RT-10
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
-:IMPLEMENTED: 2026-11-22
 :END:
 - =harness/checks/lemmax_lint.py= applies to =*.org=. For each candidate file with =#+LEMMAX_TESTS:= it runs =lemmax lint --no-tests FILE= and prints each finding as =path:line: message=.
 - An agent sees the finding while it edits a requirements file.
 - =--no-tests=, because the test command may take 60 s, too slow for every edit.
 - An org file that does not opt in gets no finding.
-Evidence: [[file:../../../harness/README.md][harness/README.md]] gives the check contract: paths on stdin, =path:line: message= on stdout, exit 0.
+Evidence: [[file:../harness/README.md][harness/README.md]] gives the check contract: paths on stdin, =path:line: message= on stdout, exit 0.
 
 ** LEMMA agent1's global hooks call lemmax                          :hooks:
 :PROPERTIES:
@@ -189,29 +185,27 @@ Evidence: [[file:../../../harness/README.md][harness/README.md]] gives the check
 - Changed on 2026-11-22: a repo with its own hooks path delegates to the global hooks, instead of calling lemmax in one line each.
 Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githooks=, and its =commit-msg= already chains to a repo's own hook; =git config --local core.hooksPath= is =.githooks= in all 5 app repos.
 
-** LEMMA lemmax's own tests                                         :tests:
+** CONJECTURE lemmax's own tests                                         :tests:
 :PROPERTIES:
 :ID:          RT-12
 :CREATED:     2026-11-15
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-15
-:IMPLEMENTED: 2026-11-22
 :END:
-- ERT tests live in =requirements/scripts/lemmax/lemmax_tests.el=, on invented data, in throwaway git repos under =~/tmp=; never a real repo.
-- =requirements/scripts/lemmax/run_tests= runs them all; =--addresses= prints each as =ert/<name>=; =--only ADDRESS= runs one.
+- ERT tests live in =lemmax/lemmax_tests.el=, on invented data, in throwaway git repos under =~/tmp=; never a real repo.
+- =lemmax/run_tests= runs them all; =--addresses= prints each as =ert/<name>=; =--only ADDRESS= runs one.
 - Every test has 10 s unless it says it needs longer; a test over its time is stopped, reported as =timeout=, and the rest still run.
 - Commits in test repos skip every hook, so no global hook runs.
 - =harness/self_check= runs it.
-Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../../testing.org][testing.org]] sets the timeout and invented-data rules.
+Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
 
-** THEOREM list: every requirement in a table                           :list:
+** CONJECTURE list: every requirement in a table                           :list:
 :PROPERTIES:
 :ID:          RT-13
 :USES:        RT-14 RT-15 RT-18
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
-:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax list [--state open|done|dropped] [--section M] [--unchecked] [--ready] [--all] [--json]=
 - One line per requirement: id, state, approved or not, VERIFY found or missing, title, file:line
@@ -226,14 +220,13 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 - It reads, and never writes a file
 Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-1's spike); =git ls-files '*.org'= lists a repo's files.
 
-** THEOREM next-id: the next free id for a section                      :list:
+** CONJECTURE next-id: the next free id for a section                      :list:
 :PROPERTIES:
 :ID:          RT-14
 :USES:        RT-15 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
-:IMPLEMENTED: 2026-11-22
 :END:
 =lemmax next-id M= prints one id: one more than the highest =M-= in use anywhere in the repo, as =M-15=
 - A gap is never filled: ids are never reused
@@ -241,14 +234,13 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 - Why: on 2026-11-21 a new requirement got M-11, which was already taken
 Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0.
 
-** THEOREM /add-requirement uses lemmax                                :skill:
+** CONJECTURE /add-requirement uses lemmax                                :skill:
 :PROPERTIES:
 :ID:          RT-15
 :USES:        01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
-:IMPLEMENTED: 2026-11-22
 :END:
 - Before drafting, the skill runs =lemmax list --json= to find duplicates and a parent
 - It takes the new id from =lemmax next-id=
@@ -311,15 +303,14 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 - Asked by the owner on 2026-11-21.
 Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS:= skips repos that do not opt in, without a parse.
 
-** LEMMA lemmax knows UUID v7 ids                                    :ids:
+** CONJECTURE lemmax knows UUID v7 ids                                    :ids:
 :PROPERTIES:
 :ID:          01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
-:IMPLEMENTED: 2026-11-22
 :END:
-New requirement ids are UUID v7, as [[file:../../requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
+New requirement ids are UUID v7, as [[file:../requirements/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id
 - =lemmax new-id= prints a fresh UUID v7, and nothing else
 - =next-id= (RT-14) stays only for projects whose old ids still count up
@@ -327,17 +318,16 @@ New requirement ids are UUID v7, as [[file:../../requirements.org::*A new requir
 - Asked by the owner on 2026-11-21
 Evidence: Python 3.15.2's =uuid.uuid7()= printed =01a1fe0c-9c5c-7057-8edc-bc68ccfa0490=; Emacs has =random= and =current-time= for the same layout.
 
-** LEMMA reqtrace becomes lemmax, in requirements/scripts               :cli:
+** CONJECTURE reqtrace becomes lemmax, in lemmax/                        :cli:
 :PROPERTIES:
 :ID:          01a1ff25-116d-73f1-a45e-dd77e482a983
 :CREATED:     2026-11-21
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-21
-:IMPLEMENTED: 2026-11-22
 :END:
 The tool takes the workflow's name, Lemmax, and moves beside the rules it checks.
 - The program is =lemmax=; its commands stay as they are: lint, commit-msg, trace, list, next-id
-- It lives in =agent1/requirements/scripts/lemmax/=: the launcher =lemmax=, =lemmax.el=, its tests, =run_tests=, =install=, its README and its requirements file (RT-1 onwards, ids unchanged)
+- It lives in =agent1/lemmax/=: the launcher =lemmax=, =lemmax.el=, its tests, =run_tests=, =install=, its README and its requirements file (RT-1 onwards, ids unchanged)
 - =reqtrace= stops working: =install= writes =~/.local/bin/lemmax= and removes =~/.local/bin/reqtrace=
 - The opt-in keywords become =#+LEMMAX_TESTS:= and =#+LEMMAX_CODE:=, and the environment variables =LEMMAX_*=; only agent1's own requirements file uses them today
 - A finding starts =lemmax:=
@@ -731,20 +721,19 @@ Evidence: probe 2026-11-22: lemmax lint ../requirements.org from a subfolder pas
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el holds 2026-11-22, RF-3, "agent1's id rule" and "what requirements.org forbids".
 
-** LEMMA lemmax install-hooks puts lemmax in a repo's hooks               :cli:
+** CONJECTURE lemmax install-hooks puts lemmax in a repo's hooks               :cli:
 :PROPERTIES:
 :ID:          01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
 - Writes .git/hooks/pre-commit and commit-msg that call lemmax from PATH, with the same opt-in test as agent1's hooks
 - An existing hook is kept and called after lemmax's; running it twice changes nothing
 - It is the one lemmax command that writes; it writes only those 2 files
 - agent1's global hooks keep working as they are
 - Asked by the owner on 2026-11-22
-Evidence: harness/githooks/pre-commit finds lemmax at ../../requirements/scripts/lemmax.
+Evidence: harness/githooks/pre-commit finds lemmax at ../../lemmax.
 
 ** LEMMA Tests clean up after themselves                                     :tests:
 :PROPERTIES:
@@ -759,16 +748,15 @@ Evidence: harness/githooks/pre-commit finds lemmax at ../../requirements/scripts
 - Asked by the owner on 2026-11-22
 Evidence: 6538 folders, 1.4 GB, under ~/tmp after this session's runs.
 
-** LEMMA lemmax says its version; MIT licence; a changelog                    :cli:
+** CONJECTURE lemmax says its version; MIT licence; a changelog                    :cli:
 :PROPERTIES:
 :ID:          01a20336-c80d-733a-a251-ad26a0ebf7d3
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
 - lemmax --version prints "lemmax VERSION", semver, the same in lemmax.el and CHANGELOG.md; the first is 1.0.0
-- requirements/scripts/lemmax/LICENSE is the MIT licence; CHANGELOG.md names each version's changes
+- lemmax/LICENSE is the MIT licence; CHANGELOG.md names each version's changes
 - list --json version stays the JSON shape's own number
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
@@ -862,16 +850,15 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** THEOREM Conjectures, proofs, lemmas and theorems                            :lemmax:
+** CONJECTURE Conjectures, proofs, lemmas and theorems                            :lemmax:
 :PROPERTIES:
 :ID:          01a20369-38d2-7202-8b53-6e296aaac489
 :USES:        01a20369-38f7-7229-8232-1b8cbb98e6bc 01a20369-391b-768e-8c98-180facc0ff77 01a20369-393d-77bf-a35a-a1c03780a751
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
-lemmax reads the math names of [[file:../../requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
+lemmax reads the math names of [[file:../requirements/requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
 - A conjecture's state is CONJECTURE, LEMMA, THEOREM or REFUTED; OPEN, DONE and DROPPED still read the same, as conjecture, lemma and refuted
 - :USES: on a theorem names the smaller lemmas it builds on, pointing from the bigger item down; :NEEDS: in an old file still reads the same, child to parent
 - A proof is a heading in a file named =*.proofs.org=, state OPEN or PASSED; :PROVES: names one or more conjecture ids, :TEST: its test addresses, quoted like :VERIFY:
@@ -1168,15 +1155,14 @@ Evidence: lemmax ends each command with =kill-emacs=, which a test can catch by 
 - Asked by the owner on 2026-11-22
 Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' '*.setup'=.
 
-** LEMMA [#A] lemmax plan lists the rebuild, one lemma at a time           :cli:
+** CONJECTURE [#A] lemmax plan lists the rebuild, one lemma at a time           :cli:
 :PROPERTIES:
 :ID:          01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
-=lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../../requirements.org::*Goal][Requirements requirements]] asks.
+=lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../requirements/requirements.org::*Goal][Requirements requirements]] asks.
 - One step per LEMMA or THEOREM: its id, title, statement, the ids it =:USES:=, and each proof with its =:TEST:= addresses
 - A step comes after every lemma and axiom it uses; axioms and the environment come first
 - Steps with no order between them go higher priority first (=[#A]= before =[#B]=, none last), then older first by =:CREATED:=, then by id

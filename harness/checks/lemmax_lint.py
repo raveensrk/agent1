@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 
-LEMMAX = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "requirements", "scripts", "lemmax", "lemmax")
+LEMMAX = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "lemmax", "lemmax")
 OPTED = re.compile(r"^#\+LEMMAX_TESTS:", re.MULTILINE)
 FINDING = re.compile(r"^lemmax: ([^:]+):(\d+): (.*)$")
 

@@ -67,8 +67,7 @@ def main(argv):
         ["git", "cat-file", "-e", ":lemmax/config.eld"], capture_output=True).returncode == 0
     if opted:
         lemmax = os.environ.get("LEMMAX") or os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
-            "requirements", "scripts", "lemmax", "lemmax")
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "lemmax", "lemmax")
         if subprocess.run([lemmax, "commit-msg", argv[0]]).returncode != 0:
             return 1
     # Chain to the repo's own commit-msg hook, which the global path hides.

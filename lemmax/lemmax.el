@@ -1,7 +1,7 @@
 ;;; lemmax.el --- lint, trace and list org requirements  -*- lexical-binding: t; -*-
 
-;; Run through the launcher: requirements/scripts/lemmax/lemmax COMMAND ...
-;; Requirements: requirements/scripts/lemmax/requirements.org (RT-1 to RT-15).
+;; Run through the launcher: lemmax/lemmax COMMAND ...
+;; Requirements: lemmax/requirements.org (RT-1 to RT-15).
 ;; It reads files and git, and writes no file but the two hooks install-hooks puts in place.
 
 ;; lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
@@ -1109,7 +1109,7 @@ Blank lines and comments are not code; nil for a file with no code."
     hit))
 
 (defconst lemmax--not-code-exts
-  '("md" "markdown" "txt" "rst" "json" "jsonl" "csv" "tsv" "dot" "svg" "yml" "yaml" "toml" "lock")
+  '("md" "markdown" "txt" "rst" "json" "jsonl" "csv" "tsv" "dot" "svg" "yml" "yaml" "toml" "lock" "eld")
   "Extensions of prose and data files: never code, so never refused for coverage.")
 
 (defun lemmax--code-file-p (file text)

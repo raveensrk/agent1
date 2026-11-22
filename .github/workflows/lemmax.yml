@@ -33,6 +33,6 @@ jobs:
       - name: trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: tests
-        run: requirements/scripts/lemmax/run_tests
+        run: lemmax/run_tests
       - name: lint
-        run: requirements/scripts/lemmax/lemmax lint
+        run: lemmax/lemmax lint

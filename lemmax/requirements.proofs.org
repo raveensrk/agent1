@@ -1,7 +1,7 @@
 #+title: Proofs of lemmax requirements
 #+TODO: OPEN(o) | PASSED(p)
-#+LEMMAX_TESTS: requirements/scripts/lemmax/run_tests --addresses
-#+LEMMAX_CODE: requirements/scripts/lemmax/ harness/checks/lemmax_lint.py
+#+LEMMAX_TESTS: lemmax/run_tests --addresses
+#+LEMMAX_CODE: lemmax/ harness/checks/lemmax_lint.py
 
 * PASSED Proof: lemmax lints and traces org requirements
 :PROPERTIES:

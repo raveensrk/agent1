@@ -1,7 +1,7 @@
 ;;; lemmax_tests.el --- lemmax's own tests (RT-12)  -*- lexical-binding: t; -*-
 
 ;; Each test builds an invented repo under ~/tmp and runs the real launcher.
-;; Commits in test repos skip every hook. Run: requirements/scripts/lemmax/run_tests
+;; Commits in test repos skip every hook. Run: lemmax/run_tests
 ;; lemma: RT-12
 
 (require 'ert)
@@ -11,7 +11,7 @@
 
 (defconst rt-dir (file-name-directory (or load-file-name buffer-file-name)))
 (defconst rt-bin (expand-file-name "lemmax" rt-dir))
-(defconst rt-agent1 (file-name-as-directory (expand-file-name "../../.." rt-dir)))
+(defconst rt-agent1 (file-name-as-directory (expand-file-name ".." rt-dir)))
 
 ;;;; Helpers
 
@@ -671,7 +671,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 ;;;; 01a1ff25-116d-73f1-a45e-dd77e482a983
 
 (ert-deftest lemmax-name-and-place ()
-  (should (string-match-p "requirements/scripts/lemmax/\\'" rt-dir))
+  (should (string-match-p "lemmax/\\'" rt-dir))
   (let ((r (rt-sh rt-dir rt-bin "--help")))
     (should (= 0 (nth 0 r)))
     (should (string-match-p "^usage: lemmax COMMAND" (nth 1 r))))
@@ -1193,8 +1193,8 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (ert-deftest lemmax-ci-workflow ()
   (let ((w (rt-workflow)))
     (should (string-match-p "^on:\n  push:\n  pull_request:" w))
-    (should (string-match-p "run: requirements/scripts/lemmax/run_tests$" w))
-    (should (string-match-p "run: requirements/scripts/lemmax/lemmax lint$" w))
+    (should (string-match-p "run: lemmax/run_tests$" w))
+    (should (string-match-p "run: lemmax/lemmax lint$" w))
     (should-not (string-match-p "lemmax lint --no-tests" w))))
 
 (ert-deftest lemmax-ci-matrix ()
@@ -1703,7 +1703,7 @@ run of its finding's why text."
         bad)
     (dolist (f (split-string (with-temp-buffer
                                (let ((default-directory rt-agent1))
-                                 (call-process "git" nil t nil "ls-files" "requirements/scripts/lemmax" "skills/add-requirement"
+                                 (call-process "git" nil t nil "ls-files" "lemmax" "skills/add-requirement"
                                                ".github" "lemmax"))
                                (buffer-string))
                              "\n" t))

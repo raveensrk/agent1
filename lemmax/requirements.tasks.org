@@ -17,7 +17,7 @@ The test fails on main, before and after the plan, coverage and environment work
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-Only the related tests ran when they were built. Run =requirements/scripts/lemmax/run_tests= once and fix what fails.
+Only the related tests ran when they were built. Run =lemmax/run_tests= once and fix what fails.
 
 * TODO Find the oldest tool versions lemmax works with
 :PROPERTIES:

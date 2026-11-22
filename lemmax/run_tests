@@ -12,7 +12,7 @@
 # LEMMAX_KEEP_TMP=1 keeps them. A test stopped for TIMEOUT may leave its own.
 # lemma: 01a20336-c75e-78ac-bf5e-7a72262f73e6
 # Exit 0 when every test passed, 1 otherwise.
-# example: requirements/scripts/lemmax/run_tests --only ert/lemmax-list-table
+# example: lemmax/run_tests --only ert/lemmax-list-table
 set -uo pipefail
 # lemma: 01a203c1-983f-77e1-a367-92eb7cba2954
 # Each test runs lemmax in its own Emacs (rt-run); rt-run-proc runs the launcher.
