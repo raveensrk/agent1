@@ -597,7 +597,18 @@ for HEAD; read by one git process, once a run."
       (when bad (lemmax--err "lemmax: unknown option %s; see lemmax lint --help" bad) (kill-emacs 1)))
     (lemmax--lint-config staged)
     (let* ((infos (lemmax--opted (if staged (lemmax--rev-files "") (lemmax--worktree-files))))
-           (only (and only (mapcar (lambda (f) (file-relative-name (expand-file-name f) default-directory)) only))))
+           ;; lemma: 01a20336-c583-720a-b661-c9b5a5dec1a4
+           ;; FILE is a path from where lemmax was run, and must be a tracked .org file.
+           (tracked (lemmax--lines (lemmax--git-out "ls-files" "*.org")))
+           (only (and only
+                      (mapcar (lambda (f)
+                                (let ((rel (file-relative-name (expand-file-name f (or lemmax--cwd default-directory))
+                                                               default-directory)))
+                                  (unless (member rel tracked)
+                                    (lemmax--err "lemmax: %s: not a tracked .org file" f)
+                                    (kill-emacs 1))
+                                  rel))
+                              only))))
       (if (null infos)
           (lemmax--err "lemmax: no requirements file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
@@ -1365,6 +1376,7 @@ example: lemmax next-id M"
 ;;;; Main
 
 (defvar lemmax--projects nil "Git roots named by --project, in order.")
+(defvar lemmax--cwd nil "The folder lemmax was run in, before it moves to the repo root.")
 
 (defun lemmax--take-projects (args)
   "ARGS without --project DIR and -p DIR; each DIR's git root goes to `lemmax--projects'."
@@ -1388,6 +1400,7 @@ example: lemmax next-id M"
 ;; lemma: RT-2
 (defun lemmax-main (args)
   (setq case-fold-search nil)
+  (setq lemmax--cwd default-directory)
   (when (equal (car args) "--") (setq args (cdr args)))
   (let* ((cmd (car args))
          (rest (if (member cmd '(nil "-h" "--help" "help")) (cdr args) (lemmax--take-projects (cdr args)))))

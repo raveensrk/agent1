@@ -1389,3 +1389,19 @@ run of its finding's why text."
            (took (- (float-time) start)))
       (rt-should-clean r)
       (should (< took 2.0)))))
+
+;;;; 01a20336-c583-720a-b661-c9b5a5dec1a4: FILE arguments are paths from where lemmax runs
+
+(ert-deftest lemmax-file-arg-from-cwd ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil)))))
+    (make-directory (expand-file-name "sub" d))
+    (rt-should-find (rt-run (expand-file-name "sub" d) "lint" "--no-tests" "../requirements.org")
+                    "requirements.org:[0-9]+: RQ-1: no :CREATED:")
+    (rt-should-find (rt-run d "lint" "--no-tests" "./requirements.org") "no :CREATED:")))
+
+(ert-deftest lemmax-file-arg-unknown ()
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
+    (dolist (f '("nope.org" "src/x.clj"))
+      (let ((r (rt-run d "lint" "--no-tests" f)))
+        (should (= 1 (nth 0 r)))
+        (should (string-match-p (concat "lemmax: " (regexp-quote f) ": not a tracked \\.org file") (nth 2 r)))))))

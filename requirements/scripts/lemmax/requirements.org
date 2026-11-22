@@ -785,13 +785,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: probe 2026-11-22: 16 s for that repo; lemmax.el reads every tracked .org file in 13 places.
 
-** OPEN FILE arguments are paths from where lemmax runs                    :cli:
+** DONE FILE arguments are paths from where lemmax runs                    :cli:
 :PROPERTIES:
 :ID:          01a20336-c583-720a-b661-c9b5a5dec1a4
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :APPROVED:    2026-11-22
 :VERIFY:      ert/lemmax-file-arg-from-cwd ert/lemmax-file-arg-unknown
+:IMPLEMENTED: 2026-11-22
 :END:
 - lint FILE... reads each FILE from the current folder, as ../requirements.org from a subfolder
 - A FILE that is not a tracked .org file exits 1: "lemmax: FILE: not a tracked .org file"
