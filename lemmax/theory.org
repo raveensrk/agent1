@@ -1456,19 +1456,26 @@ Evidence: org-publish takes a :base-directory and :recursive t, so theories/ is 
 :ID:          01a20959-95da-760e-82dc-2797c5af6abc
 :USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a20930-0aba-7005-8442-d1dc3269c487 01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-23
 :END:
 lemmax bible writes one self-contained HTML file from which a project can be rebuilt from scratch, in any programming language.
 - It refuses to build until the project is finished: its root theorem and every lemma proven, and no open conjecture, proof or task; it names what is open
-- Chapters follow the /docs skeleton: Overview, Architecture, Data, Interfaces, Behavior, UI, Configuration, Build and run, Quality, Decisions, Rebuild guide, Glossary
+- Chapters, in order: Overview (problem, users, scope, non-goals, success), Architecture (context and container diagrams, stack with versions and why), one per major component, Data, Interfaces (exact contracts with examples), Behavior (flows, state machines, pseudocode, errors, edge cases), UI, Configuration (every key: type, default, effect), Build and run, Quality (acceptance as given/when/then from the tests), Decisions (context, decision, alternatives, consequences), Rebuild guide (milestones from an empty folder, each with its check), Glossary, Open questions
+- A fact appears once; other places link to it
+- A reason nobody gave goes to Open questions, never guessed
+- No secrets, tokens, personal data or hostnames: config keys, never values
 - A statement goes to a chapter by its Org tag, from a tag group the project's setup.org declares: =#+TAGS: [ chapter : overview architecture data interfaces behavior ui configuration build quality decisions ]=
 - It refuses to build while a statement has no chapter tag, naming each one
 - Glossary comes from the definitions, Build and run from the env file, Rebuild guide from lemmax plan's order, and Quality from the proofs and their tests
 - Hand-written chapters live in theories/PROJECT/PROJECT.bible.org: reasons, history and trade-offs only; a rule of behaviour there is a finding, to be made a statement
 - Its text is language-neutral: it leaves out Evidence lines, code markers and source paths; statements say what, not how
 - Diagrams are Org source blocks (dot, mermaid, d2) in the theory, run by org-babel at export and packed into the page as SVG
+- Diagrams wherever there is structure, flow or state; at least context, architecture, data model and each key flow
+- D2 with the TALA layout for architecture; Mermaid for flow, sequence, state, ER and class; Graphviz only for generated graphs
+- Each diagram: white background, Mermaid htmlLabels false, about 15 nodes, alt text that says what it shows
+- It adds a Documentation section to AGENTS.md, once: read the bible and the book first
 - The page goes to theories/_site/PROJECT.bible.html, packed like the book, with the same export filter
-- Each built bible adds a task: hand only that file to a fresh agent, have it plan a rebuild and answer questions from the code; every guess or gap becomes a conjecture
+- Each built bible adds a task: hand only that file to a fresh agent; it writes a rebuild plan and answers 10 to 15 questions written from the code; up to 3 rounds; every guess or gap becomes a conjecture
 - Asked by the owner on 2026-11-23
-Evidence: the /docs skill (skills/docs/SKILL.md) sets the chapters and the docs-only rebuild test; Org tag groups declare a tag hierarchy; org-babel runs dot blocks (ob-dot, in Org), and ob-mermaid and ob-d2 add-ons run the others; the book's export filter packs images.
+Evidence: Org tag groups declare a tag hierarchy; org-babel runs dot blocks (ob-dot, in Org), and ob-mermaid and ob-d2 add-ons run the others; the book's export filter packs images; https://d2lang.com/tour/tala/ for TALA; https://mermaid.js.org/config/schema-docs/config.html for htmlLabels.

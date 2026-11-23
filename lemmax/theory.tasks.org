@@ -194,3 +194,21 @@ Statements say what, not how: move names of lemmax.el, its functions and line nu
 :LAST_EDITED: 2026-11-23
 :END:
 Declare the chapter tag group in setup.org and tag each statement with one chapter: map today's feature tags, :cli: to interfaces, :lint: and :trace: to behavior, and so on.
+
+* TODO Ishikari's docs ant runs lemmax book
+:PROPERTIES:
+:ID:          01a20a16-794e-738a-8fb6-1a07dda88e1c
+:FOR:         01a20927-9aac-7817-8e46-8635aa0ae127
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+After a merge the docs ant runs lemmax book, not the docs skill: skills/ishikari/SKILL.md, its scripts and its tests.
+
+* TODO Delete the docs skill
+:PROPERTIES:
+:ID:          01a20a16-7d65-7a55-b198-a0bbc5a84c19
+:FOR:         01a20959-95da-760e-82dc-2797c5af6abc
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+Remove skills/docs/ and every pointer to it: skills/investigator-ant/SKILL.md, skills/determinize/scripts/inventory.py, harness/tests/test_lint.py. The bible holds its rules.
