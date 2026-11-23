@@ -161,6 +161,16 @@ in `.lemmax/book/book.org`, in rebuild order: definitions and axioms first,
 each lemma before what uses it. `id:` links point inside the page, and every
 image and video is packed in as a `data:` URI, so the file opens offline alone.
 
+## theories/
+
+<!-- lemma: 01a20930-0aba-7005-8442-d1dc3269c487 -->
+
+A repo with a `theories/` folder keeps all its Lemmax data there, one
+subfolder per project, as `theories/lemmax/`, each with a `setup.org` its
+files read with `#+SETUPFILE:`. Lint then refuses a theory file outside it.
+`publish` writes a page per file and a book per project under
+`theories/_site/`, which git ignores; `book --all` adds one book for the repo.
+
 ## SETUPFILE
 
 <!-- lemma: 01a203a6-a766-76c6-9931-753ee75e9318 -->

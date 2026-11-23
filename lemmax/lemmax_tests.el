@@ -672,7 +672,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
       (should (file-exists-p (expand-file-name (concat ".lemmax/html/" f) d))))
     ;; A video linked as a plain link is refused.
     (rt-set d "requirements.org" (concat rt-math-head (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]], [[file:pics/b.svg]], [[file:docs/c.pdf]], [[file:clip.mp4]].\n")))
-    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: it links the video clip.mp4")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: it links the video clip.mp4; publish shows a video only from a block")))
 
 ;;;; 01a20927-9aac-7817-8e46-8635aa0ae127: lemmax book writes the theory as one HTML file
 
@@ -702,6 +702,45 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
       (should-not (string-match-p "src=\"[^d]" html)))
     (rt-run d "book" "--out" "b.html")
     (should (file-exists-p (expand-file-name "b.html" d)))))
+
+;;;; 01a20930-0aba-7005-8442-d1dc3269c487: a project keeps its theory in theories/
+
+;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+(ert-deftest lemmax-theories-folder ()
+  :tags '(timeout-60)
+  (let* ((setup "#+TODO: CONJECTURE | LEMMA THEOREM REFUTED\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n")
+         (proofs "#+SETUPFILE: setup.org\n#+TODO: OPEN | PASSED\n\n")
+         (d (rt-repo (list (cons "theories/a/setup.org" setup) (cons "theories/b/setup.org" setup)
+                           (cons "theories/a/theory.org" (concat "#+SETUPFILE: setup.org\n\n" (rt-lemma "RQ-1")))
+                           (cons "theories/a/theory.proofs.org" (concat proofs (rt-proof "PR-1" "RQ-1")))
+                           (cons "theories/b/theory.org" (concat "#+SETUPFILE: setup.org\n\n" (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06")))
+                           (cons "theories/b/theory.proofs.org" (concat proofs (rt-proof "PR-2" "RQ-2")))
+                           (cons "tests.sh" (rt-tests-sh "unit/a"))
+                           (cons "src/x.clj" "(ns x)\n")))))
+    (rt-should-clean (rt-run d "lint"))
+    ;; publish: a page per file and a book per project under theories/_site/.
+    (should (= 0 (nth 0 (rt-run d "publish"))))
+    (dolist (f '("a/theory.html" "a/theory.proofs.html" "b/theory.html" "a.html" "b.html" ".gitignore"))
+      (should (file-exists-p (expand-file-name (concat "theories/_site/" f) d))))
+    (should-not (file-exists-p (expand-file-name "theories/_site/book.html" d)))
+    (should (string-match-p "Title of RQ-2" (with-temp-buffer (insert-file-contents (expand-file-name "theories/_site/b.html" d)) (buffer-string))))
+    (should-not (string-match-p "Title of RQ-1" (with-temp-buffer (insert-file-contents (expand-file-name "theories/_site/b.html" d)) (buffer-string))))
+    ;; book --all: one book for the repo too.
+    (should (= 0 (nth 0 (rt-run d "book" "--all"))))
+    (let ((html (with-temp-buffer (insert-file-contents (expand-file-name "theories/_site/book.html" d)) (buffer-string))))
+      (should (string-match-p "Title of RQ-1" html))
+      (should (string-match-p "Title of RQ-2" html)))
+    ;; git tracks nothing under _site/.
+    (should (equal "" (nth 1 (rt-git d "status" "--porcelain"))))
+    ;; A theory file outside theories/ is refused, by state, keyword or name.
+    (rt-set d "notes/x.org" (concat "#+TODO: CONJECTURE | LEMMA\n\n" (rt-conj "RQ-3")))
+    (rt-set d "theory.org" "#+title: Stray\n")
+    (rt-set d "docs/y.org" "#+LEMMAX_TESTS: ./tests.sh\n")
+    (rt-git d "add" "-A")
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (should (= 1 (nth 0 r)))
+      (dolist (f '("notes/x.org" "theory.org" "docs/y.org"))
+        (should (string-match-p (concat "^lemmax: " (regexp-quote f) ":1: -: a theory file outside theories/, and this repo keeps its theory there") (nth 2 r)))))))
 
 ;;; lemmax_tests.el ends here
 
@@ -2413,7 +2452,7 @@ run of its finding's why text."
 
 (ert-deftest lemmax-plan-order ()
   (let* ((d (rt-repo (rt-math-files (list (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2 RQ-1" :implemented "2026-01-06")
-                                          (rt-lemma "RQ-2" :uses "RQ-1")
+                                          (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06")
                                           (rt-lemma "RQ-1")
                                           (rt-conj "RQ-4"))
                                     (list (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2") (rt-proof "PR-3" "RQ-3" :test "unit/b")))))
@@ -2435,7 +2474,7 @@ run of its finding's why text."
     (should (equal '("RQ-9" "RQ-4" "RQ-2" "RQ-5") (rt-plan-ids (nth 1 (rt-run d "plan")))))))
 
 (ert-deftest lemmax-plan-cycle ()
-  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1" :uses "RQ-2") (rt-lemma "RQ-2" :uses "RQ-1") (rt-lemma "RQ-3"))
+  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1" :uses "RQ-2") (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06") (rt-lemma "RQ-3"))
                                     (list (rt-proof "PR-1" "RQ-1 RQ-2 RQ-3")))))
          (r (rt-run d "plan")))
     (should (= 1 (nth 0 r)))
@@ -2443,7 +2482,7 @@ run of its finding's why text."
     (should-not (string-match-p "RQ-3" (nth 2 r)))))
 
 (ert-deftest lemmax-plan-json ()
-  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-lemma "RQ-2" :uses "RQ-1"))
+  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))
                                     (list (rt-proof "PR-1" "RQ-1 RQ-2")))))
          (j (json-parse-string (nth 1 (rt-run d "plan" "--json")) :object-type 'alist))
          (steps (alist-get 'steps j)))

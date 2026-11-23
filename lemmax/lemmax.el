@@ -391,6 +391,8 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
 
 ;; lemma: 01a202b0-1d09-75f3-99dc-677a4b2ec0be
 (defconst lemmax-config-file "lemmax/config.eld")
+;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+(defconst lemmax--theories "theories/" "The folder a repo keeps all its Lemmax data in, one subfolder per project.")
 (defconst lemmax--config-keys '(:tests :code :test-paths :markers-in))
 
 (defun lemmax--config-text (rev)
@@ -961,6 +963,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
         (lemmax--lint-env only)
         (lemmax--lint-links infos only staged)
         (lemmax--lint-attach infos only)
+        (lemmax--lint-theories only)
         (lemmax--lint-markers-in infos only)
         (dolist (i infos)
           (when (and (plist-get i :misplaced) (or (null only) (member (plist-get i :file) only)))
@@ -1025,6 +1028,20 @@ file over 5 MB is a warning that fails nothing."
             (puthash x t seen)
             (lemmax--finding x 1 nil "a tracked file in an attach folder that no heading links"
                              "link it with attachment:NAME from its heading, or git rm it")))))))
+
+;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+(defun lemmax--lint-theories (only)
+  "In a repo with theories/, a theory file outside it: one with a Lemmax state,
+a #+LEMMAX_ keyword, or the name theory.org or requirements.org."
+  (when (lemmax--theories-p)
+    (dolist (i (lemmax--worktree-files))
+      (let ((f (plist-get i :file)))
+        (when (and (not (string-prefix-p lemmax--theories f)) (or (null only) (member f only))
+                   (or (member (file-name-nondirectory f) '("theory.org" "requirements.org"))
+                       (cl-some (lambda (k) (string-prefix-p "LEMMAX_" (car k))) (plist-get i :keywords))
+                       (cl-some (lambda (r) (plist-get r :state)) (plist-get i :statements))))
+          (lemmax--finding f 1 nil "a theory file outside theories/, and this repo keeps its theory there"
+                           "move it to theories/PROJECT/"))))))
 
 ;;;; Footnotes (01a203a6-a779-73fc-8abf-99f8c8816867)
 
@@ -2434,9 +2451,16 @@ order; a parent no chunk holds is named on stderr."
     ;; Org's default link modules, which a run does not load, for exported links.
     (dolist (m '(ol-doi ol-w3m ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-eww))
       (require m nil t))
-    (let* ((root (file-truename default-directory))
-           (dir (if out (expand-file-name out (or lemmax--cwd default-directory)) (expand-file-name ".lemmax/html" root)))
-           (files (mapcar (lambda (i) (plist-get i :file)) (lemmax--listed (lemmax--worktree-files))))
+    (let* ((repo (file-truename default-directory))
+           ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+           ;; With theories/, pages go to theories/_site/, a folder per project.
+           (theories (and (not out) (lemmax--theories-p)))
+           (root (if theories (file-name-as-directory (expand-file-name lemmax--theories repo)) repo))
+           (dir (cond (out (expand-file-name out (or lemmax--cwd default-directory)))
+                      (theories (expand-file-name (lemmax--site) repo))
+                      (t (expand-file-name ".lemmax/html" repo))))
+           (files (mapcar (lambda (i) (file-relative-name (expand-file-name (plist-get i :file) repo) root))
+                          (lemmax--listed (lemmax--worktree-files))))
            (tmp (make-temp-file "lemmax-publish" t))
            (org-id-locations-file (expand-file-name "ids" tmp))
            (org-id-track-globally t)
@@ -2448,8 +2472,9 @@ order; a parent no chunk holds is named on stderr."
            ;; lemma: 01a2090e-8b52-7173-947b-d882b237ad05
            ;; Every linked file, copied beside the pages by Org's own attachment publisher.
            (linked (delete-dups (cl-loop for r in (lemmax--all-statements (lemmax--listed (lemmax--worktree-files)))
-                                         append (cl-remove-if-not (lambda (x) (file-exists-p (expand-file-name x root)))
-                                                                  (plist-get r :files)))))
+                                         append (mapcar (lambda (x) (file-relative-name (expand-file-name x repo) root))
+                                                        (cl-remove-if-not (lambda (x) (file-exists-p (expand-file-name x repo)))
+                                                                          (plist-get r :files))))))
            (org-export-before-parsing-functions (cons #'org-attach-expand-links org-export-before-parsing-functions))
            (org-publish-project-alist
             (list (list "lemmax" :components '("lemmax-pages" "lemmax-files"))
@@ -2461,16 +2486,19 @@ order; a parent no chunk holds is named on stderr."
                         :publishing-directory dir :publishing-function 'org-publish-attachment))))
       (unwind-protect
           (progn
-            (unless out
-              (make-directory (expand-file-name ".lemmax" root) t)
-              (with-temp-file (expand-file-name ".lemmax/.gitignore" root) (insert "*\n")))
+            (unless (or out theories)
+              (make-directory (expand-file-name ".lemmax" repo) t)
+              (with-temp-file (expand-file-name ".lemmax/.gitignore" repo) (insert "*\n")))
             (let ((inhibit-message t))
               (org-id-update-id-locations (mapcar (lambda (f) (expand-file-name f root)) files))
               (org-publish "lemmax" t))
             (dolist (f files)
               (lemmax--out "%s" (file-relative-name (expand-file-name (concat (file-name-sans-extension f) ".html") dir)
                                                     (file-truename (or lemmax--cwd default-directory))))))
-        (delete-directory tmp t)))
+        (delete-directory tmp t))
+      ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+      ;; And a book per project beside the pages.
+      (when theories (let ((default-directory repo)) (lemmax--books nil nil))))
     (kill-emacs 0)))
 
 ;;;; book (01a20927-9aac-7817-8e46-8635aa0ae127)
@@ -2558,57 +2586,101 @@ statement that holds it, as Org reads it in that statement's own file."
                   (goto-char mb) (delete-region mb me)
                   (insert "[[file:" (file-name-as-directory (file-relative-name (expand-file-name (plist-get r :attach-dir) root) dir))))))))))))
 
+
+(defun lemmax--theories-p ()
+  "Whether the repo here keeps its theory in theories/: the folder exists."
+  (file-directory-p lemmax--theories))
+
+(defun lemmax--theory-project (file)
+  "The project FILE belongs to, the folder under theories/ that holds it, or nil."
+  (and (string-match "\\`theories/\\([^/]+\\)/" file) (match-string 1 file)))
+
+(defun lemmax--site ()
+  "theories/_site/, made with a .gitignore of *: git never tracks what publish builds."
+  (let ((site (expand-file-name "_site/" lemmax--theories)))
+    (make-directory site t)
+    (with-temp-file (expand-file-name ".gitignore" site) (insert "*\n"))
+    site))
+
+(defun lemmax--book-load ()
+  (require 'ox-publish)
+  (require 'org-id)
+  (require 'url-util)
+  (dolist (m '(ol-doi ol-w3m ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-eww))
+    (require m nil t)))
+
+;; lemma: 01a20927-9aac-7817-8e46-8635aa0ae127
+(defun lemmax--write-book (name title files rows statements target)
+  "Write .lemmax/book/NAME.org, titled TITLE, joining FILES in rebuild order,
+and publish it as one page to TARGET."
+  (lemmax--book-load)
+  (let* ((root (file-truename default-directory))
+         (bdir (file-name-as-directory (expand-file-name ".lemmax/book" root)))
+         (files (lemmax--book-files rows files))
+         (tmp (make-temp-file "lemmax-book" t))
+         (org-id-locations-file (expand-file-name "ids" tmp))
+         (org-id-track-globally t)
+         (org-publish-timestamp-directory (file-name-as-directory (expand-file-name "ts" tmp)))
+         (org-html-validation-link nil)
+         (org-publish-cache nil)
+         (org-export-before-parsing-functions
+          (cons (lemmax--book-fix-links statements root bdir) org-export-before-parsing-functions))
+         (org-export-filter-final-output-functions
+          (cons (lemmax--book-pack bdir) org-export-filter-final-output-functions))
+         (org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
+                                        "REFUTED" "PASSED" "CANCELLED" "AXIOM" "DEFINITION")))
+         (org-publish-project-alist
+          (list (list "lemmax-book" :base-directory bdir :base-extension "lemmax-none" :include (list (concat name ".org"))
+                      :publishing-directory tmp :publishing-function 'org-html-publish-to-html
+                      :html-doctype "html5" :html-html5-fancy t :html-inline-images t
+                      :with-toc nil :section-numbers nil))))
+    (unwind-protect
+        (progn
+          (make-directory bdir t)
+          (with-temp-file (expand-file-name ".lemmax/.gitignore" root) (insert "*\n"))
+          (with-temp-file (expand-file-name (concat name ".org") bdir)
+            (insert "#+title: " title "\n\n")
+            (dolist (f files)
+              (insert (format "#+INCLUDE: %S\n" (file-relative-name (expand-file-name f root) bdir)))))
+          (let ((inhibit-message t))
+            (org-id-update-id-locations (mapcar (lambda (f) (expand-file-name f root)) files))
+            (org-publish "lemmax-book" t))
+          (make-directory (file-name-directory target) t)
+          (copy-file (expand-file-name (concat name ".html") tmp) target t)
+          (lemmax--out "%s" (file-relative-name target (file-truename (or lemmax--cwd default-directory)))))
+      (delete-directory tmp t))))
+
+(defun lemmax--books (all out)
+  "Write the books: one for the repo, .lemmax/book.html or OUT; in a repo with
+theories/, one per project under theories/_site/, and with ALL one for the
+whole repo, theories/_site/book.html."
+  (let* ((root (file-truename default-directory))
+         (infos (lemmax--listed (lemmax--worktree-files)))
+         (rows (lemmax--rows t))
+         (statements (lemmax--all-statements infos))
+         (files (mapcar (lambda (i) (plist-get i :file)) infos))
+         (repo (file-name-nondirectory (directory-file-name root))))
+    (cond
+     (out (lemmax--write-book "book" repo files rows statements (expand-file-name out (or lemmax--cwd default-directory))))
+     ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+     ((lemmax--theories-p)
+      (let ((site (lemmax--site)))
+        (dolist (p (sort (delete-dups (delq nil (mapcar #'lemmax--theory-project files))) #'string<))
+          (lemmax--write-book p p (cl-remove-if-not (lambda (f) (equal (lemmax--theory-project f) p)) files)
+                              rows statements (expand-file-name (concat p ".html") site)))
+        (when all (lemmax--write-book "book" repo files rows statements (expand-file-name "book.html" site)))))
+     (t (lemmax--write-book "book" repo files rows statements (expand-file-name ".lemmax/book.html" root))))))
+
 ;; lemma: 01a20927-9aac-7817-8e46-8635aa0ae127
 (defun lemmax-book (args)
   "Write the repo's theory as one HTML file, .lemmax/book.html or --out FILE."
-  (let ((out nil))
+  (let ((out nil) (all nil))
     (while args
       (let ((a (pop args)))
         (cond ((equal a "--out") (setq out (or (pop args) (progn (lemmax--err "lemmax: --out takes a file") (kill-emacs 1)))))
+              ((equal a "--all") (setq all t))
               (t (lemmax--err "lemmax: unknown argument %s; see lemmax book --help" a) (kill-emacs 1)))))
-    (require 'ox-publish)
-    (require 'org-id)
-    (require 'url-util)
-    (dolist (m '(ol-doi ol-w3m ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-eww))
-      (require m nil t))
-    (let* ((root (file-truename default-directory))
-           (target (if out (expand-file-name out (or lemmax--cwd default-directory)) (expand-file-name ".lemmax/book.html" root)))
-           (bdir (file-name-as-directory (expand-file-name ".lemmax/book" root)))
-           (infos (lemmax--listed (lemmax--worktree-files)))
-           (rows (lemmax--rows t))
-           (files (lemmax--book-files rows (mapcar (lambda (i) (plist-get i :file)) infos)))
-           (tmp (make-temp-file "lemmax-book" t))
-           (org-id-locations-file (expand-file-name "ids" tmp))
-           (org-id-track-globally t)
-           (org-publish-timestamp-directory (file-name-as-directory (expand-file-name "ts" tmp)))
-           (org-html-validation-link nil)
-           (org-publish-cache nil)
-           (org-export-before-parsing-functions
-            (cons (lemmax--book-fix-links (lemmax--all-statements infos) root bdir) org-export-before-parsing-functions))
-           (org-export-filter-final-output-functions
-            (cons (lemmax--book-pack bdir) org-export-filter-final-output-functions))
-           (org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
-                                          "REFUTED" "PASSED" "CANCELLED" "AXIOM" "DEFINITION")))
-           (org-publish-project-alist
-            (list (list "lemmax-book" :base-directory bdir :base-extension "lemmax-none" :include '("book.org")
-                        :publishing-directory tmp :publishing-function 'org-html-publish-to-html
-                        :html-doctype "html5" :html-html5-fancy t :html-inline-images t
-                        :with-toc nil :section-numbers nil))))
-      (unwind-protect
-          (progn
-            (make-directory bdir t)
-            (with-temp-file (expand-file-name ".lemmax/.gitignore" root) (insert "*\n"))
-            (with-temp-file (expand-file-name "book.org" bdir)
-              (insert "#+title: " (file-name-nondirectory (directory-file-name root)) "\n\n")
-              (dolist (f files)
-                (insert (format "#+INCLUDE: %S\n" (file-relative-name (expand-file-name f root) bdir)))))
-            (let ((inhibit-message t))
-              (org-id-update-id-locations (mapcar (lambda (f) (expand-file-name f root)) files))
-              (org-publish "lemmax-book" t))
-            (make-directory (file-name-directory target) t)
-            (copy-file (expand-file-name "book.html" tmp) target t)
-            (lemmax--out "%s" (file-relative-name target (file-truename (or lemmax--cwd default-directory)))))
-        (delete-directory tmp t)))
+    (lemmax--books all out)
     (kill-emacs 0)))
 
 ;;;; Help (RT-2)
@@ -2635,7 +2707,7 @@ example: lemmax list --ready -p ~/repos/other-project"
   migrate [--write] FILE                  move FILE to conjectures, proofs, lemmas and theorems
   archive [--write] FILE                  move refuted and finished headings to FILE's archive
   publish [--out DIR]                     write the lemmax files to HTML
-  book [--out FILE]                       write the whole theory as one HTML file
+  book [--all] [--out FILE]               write the whole theory as one HTML file
   help                                    this text
 Each command takes -h, --help and help. lemmax --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
@@ -2761,16 +2833,19 @@ Write every lemmax file the repo lists to HTML, id: links as page links.
 example: lemmax publish"
      "Pages go to .lemmax/html at the repo root, where .lemmax/.gitignore keeps
 git from tracking them, or to --out DIR. It uses Org's ox-publish, with its
-own id and timestamp caches, and prints each page it wrote.")
+own id and timestamp caches, and prints each page it wrote. In a repo with
+theories/, pages go to theories/_site/, with a book per project beside them.")
     (book
-     "usage: lemmax book [--project DIR] [--out FILE]
+     "usage: lemmax book [--project DIR] [--all] [--out FILE]
 Write the repo's whole theory as one self-contained HTML file.
 example: lemmax book"
      "It writes .lemmax/book/book.org, one #+INCLUDE: per theory file and
 companion in rebuild order (definitions and axioms first, each lemma before
 what uses it), and publishes it with org-publish to .lemmax/book.html, or
 --out FILE. id: links become links inside the page; each linked image and
-video is packed in as a data: URI, so the file opens offline alone.")
+video is packed in as a data: URI, so the file opens offline alone.
+In a repo with theories/, it writes one book per project instead,
+theories/_site/PROJECT.html, and with --all also theories/_site/book.html.")
     (archive
      "usage: lemmax archive [--project DIR] [--write] [--days N] FILE
 List, or with --write move, FILE's finished headings to its archive.

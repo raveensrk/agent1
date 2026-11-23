@@ -915,13 +915,13 @@ Every M-x lemmax command gives the terminal command's output; dates are read fro
 :END:
 A repo with two theories and a PNG gives one book file: definitions before lemmas, each id: link inside the page, the PNG a data: URI, nothing else written.
 
-* OPEN Proof: A project keeps its theory in theories/
+* PASSED Proof: A project keeps its theory in theories/
 :PROPERTIES:
 :ID:          01a20930-0c8d-7e71-a22b-7f4982e1856b
 :PROVES:      01a20930-0aba-7005-8442-d1dc3269c487
 :TEST:        ert/lemmax-theories-folder
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 A repo with theories/a/ and theories/b/ lints clean; a theory file outside theories/ is refused; publish writes pages and a book per project under theories/_site/, and book --all one for the repo; git tracks nothing under _site/.
 
