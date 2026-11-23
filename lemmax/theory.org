@@ -1332,3 +1332,66 @@ Lemmax never breaks a file written in an older format; it reads the old form, wa
 - Old and new forms of one rule on the same heading are a lint error; across different headings they only warn
 - Asked by the owner on 2026-11-23
 Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =:USES:=, =:VERIFY:= or =:TEST:=.
+
+** CONJECTURE Any heading has attachments, as org-attach keeps them       :lint:
+:PROPERTIES:
+:ID:          01a2090e-8591-756c-a9f1-dd473d9c3ce4
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+- Any heading with an :ID: may have files: statements, proofs, tasks, notes, axioms and definitions; any file type
+- A heading's folder is the one org-attach-dir gives: :DIR: if set, else from :ID: under org-attach-id-dir (data/), with Org's own folder layout and inheritance
+- attachment:NAME links name files in that folder; file: links name any file in the repo
+- lint refuses a heading that has an attachment: link but no :ATTACH: tag, as Org tags it on attach
+- lint refuses a link to a file the repo does not track
+- lint refuses a tracked file in an attach folder that no heading links
+- lint warns, without failing, on a linked file over 5 MB
+- trace prints each heading's files under files:; list --json gives them as "files"
+- Web links and linked .org files are references, not attachments
+- Asked by the owner on 2026-11-23
+Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id-to-path-function-list (01a2058c-… → data/01/a2058c-…); org-attach-auto-tag is "ATTACH".
+
+** CONJECTURE A changed attachment reopens what links it                  :lint:
+:PROPERTIES:
+:ID:          01a2090e-8781-768e-86aa-fbfa698d41f9
+:USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+- A file a LEMMA or THEOREM links is part of its text: editing, adding, removing or renaming one is a text change
+- lint --staged refuses it as it refuses any text change: make it CONJECTURE until the change is proven
+- Two statements that link one file both reopen when it changes
+- A linked .org file is a reference, not part of the text; a dependency on another statement is :USES:, whose suspect check already covers it
+- The file is compared by its git blob, HEAD against staged
+- Asked by the owner on 2026-11-23
+Evidence: lint --staged already compares each statement's text, HEAD against staged; git ls-files -s gives each file's blob id.
+
+** CONJECTURE A changed proof attachment reopens the proof                :lint:
+:PROPERTIES:
+:ID:          01a2090e-895f-7dfe-8227-1bcb9f632960
+:USES:        01a2090e-8781-768e-86aa-fbfa698d41f9
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+- A file a PASSED proof links is its evidence; changing, adding, removing or renaming one refuses the commit until the proof is OPEN
+- The statement the proof proves then goes back to CONJECTURE, as for any OPEN proof
+- Asked by the owner on 2026-11-23
+Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
+
+** CONJECTURE publish shows attachments, with Org's own export            :cli:
+:PROPERTIES:
+:ID:          01a2090e-8b52-7173-947b-d882b237ad05
+:USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+- publish exports with html5-fancy and inline images on, and copies every attach folder and linked file with org-publish-attachment
+- Images, GIF and SVG, animated SVG too, show in place, as ox-html inlines them
+- A video is a #+begin_video block with #+ATTR_HTML: :src FILE :controls t, which ox-html writes as <video>; lint refuses a video file linked any other way
+- Any other file is a link
+- Asked by the owner on 2026-11-23
+Evidence: org-attach-expand-links turns attachment: into file: before export; org-html-inline-image-rules covers avif, gif, jpg, png, svg and webp; html5-fancy turns a special block named video into <video>.
