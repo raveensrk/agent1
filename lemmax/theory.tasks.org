@@ -149,3 +149,30 @@ Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other comman
 :LAST_EDITED: 2026-11-23
 :END:
 A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test command, and =lint --staged --no-tests= let one through on 2026-11-23 (d3e34aa fixed it). Make the staged lint refuse a second =#+LEMMAX_*= keyword in a file, or one below the first heading.
+
+* TODO Move agent1's theories into theories/
+:PROPERTIES:
+:ID:          01a20930-0e64-7edb-9cb9-517e282978ce
+:FOR:         01a20930-0aba-7005-8442-d1dc3269c487
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements/*.org to theories/agent1/, and skills/ishikari/requirements.org to theories/ishikari/; each gets a setup.org in place of lemmax/config.eld. Hooks, skills and links follow.
+
+* TODO Move Arcadia's theory into arcadia/theories/
+:PROPERTIES:
+:ID:          01a20930-1048-7afd-b607-6ad9f307c3cf
+:FOR:         01a20930-0aba-7005-8442-d1dc3269c487
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a setup.org, and retire the arcadia_docs repo.
+
+* TODO Point :FOLLOWS: at agent1's axioms in their new place
+:PROPERTIES:
+:ID:          01a20930-1223-7e4e-b706-90c4c0451e1f
+:FOR:         01a20930-0aba-7005-8442-d1dc3269c487
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms.org finds it in agent1/theories/agent1/ after the move.
