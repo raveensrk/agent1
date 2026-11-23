@@ -2,7 +2,7 @@
 name: ask-simple
 metadata:
   scope: global
-description: Ask the user clear questions in simple language, as if they are new to the topic, so each one is easy to answer. Use when the user says ask simple questions, assume I am a newbie, keep it simple, explain like I am new, I do not understand your question, or runs /ask-simple. Also use whenever a task needs the user's decision and they have asked for plain words.
+description: Ask the user clear questions in simple language, as if they are new to the topic, so each one is easy to answer. Use when the user says ask simple questions, assume I am a newbie, keep it simple, explain like I am new, I do not understand your question, or runs /ask-simple. Also use whenever a task needs the user's decision and they have asked for plain words. When run also ask about any open decisions remains to be answered. When invoked manually review the previous response and ask questions based on that.
 argument-hint: "[topic to ask about]"
 ---
 
