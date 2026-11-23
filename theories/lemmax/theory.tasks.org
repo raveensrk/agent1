@@ -1,4 +1,5 @@
 #+title: Tasks of lemmax
+#+SETUPFILE: setup.org
 #+TODO: TODO | DONE CANCELLED
 
 * DONE Fix ert/lemmax-config-staged
@@ -150,14 +151,15 @@ Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other comman
 :END:
 A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test command, and =lint --staged --no-tests= let one through on 2026-11-23 (d3e34aa fixed it). Make the staged lint refuse a second =#+LEMMAX_*= keyword in a file, or one below the first heading.
 
-* TODO Move agent1's theories into theories/
+* DONE Move agent1's theories into theories/
 :PROPERTIES:
 :ID:          01a20930-0e64-7edb-9cb9-517e282978ce
 :FOR:         01a20930-0aba-7005-8442-d1dc3269c487
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements/*.org to theories/agent1/, and skills/ishikari/requirements.org to theories/ishikari/; each gets a setup.org in place of lemmax/config.eld. Hooks, skills and links follow.
+- Done on 2026-11-24: 22 files moved; theories/lemmax/setup.org holds lemmax's settings; agent1 and ishikari files had none, so they have no setup.org yet.
 
 * TODO Move Arcadia's theory into arcadia/theories/
 :PROPERTIES:

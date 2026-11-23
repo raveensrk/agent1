@@ -6,6 +6,6 @@
 (:markers-required-from "2026-11-22"
  :coverage-required-from "2026-11-22"
  :folders
- (("lemmax/"
+ (("theories/lemmax/"
    :tests "lemmax/run_tests --addresses"
    :code ("lemmax/" "harness/checks/lemmax_lint.py"))))

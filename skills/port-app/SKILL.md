@@ -17,8 +17,8 @@ Read before asking, so no question asks what the repo already says:
 
 - The repo's `AGENTS.md` or `CLAUDE.md`, and its requirements file.
 - Every agent1 requirement the port touches, such as
-  [gui.org](../../requirements/gui.org) and
-  [architecture.org](../../requirements/architecture.org).
+  [gui.org](../../theories/agent1/gui.org) and
+  [architecture.org](../../theories/agent1/architecture.org).
 - What exists: languages, line counts, apps, CLI, data format, tests, hooks.
 - Earlier attempts at a port, such as a sibling repo.
 

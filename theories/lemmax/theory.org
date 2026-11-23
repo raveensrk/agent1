@@ -1,11 +1,10 @@
 #+title: lemmax theory
+#+SETUPFILE: setup.org
 #+STARTUP: overview
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 #+TAGS: lemmax [ cli : list trace ] lint ids hooks tests skill
-#+LEMMAX_TESTS: lemmax/run_tests --addresses
-#+LEMMAX_CODE: lemmax/ harness/checks/lemmax_lint.py
 
-Process: [[file:../requirements/requirements.org][Requirements requirements]].
+Process: [[file:../agent1/requirements.org][Requirements requirements]].
 
 * THEOREM [#A] lemmax lints and traces org theories           :lemmax:
 :PROPERTIES:
@@ -18,7 +17,7 @@ Process: [[file:../requirements/requirements.org][Requirements requirements]].
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 One command in agent1 for every repo whose theory file opts in.
-- =lemmax lint= refuses what [[file:../requirements/requirements.org][requirements.org]] forbids; =lemmax trace= shows what each statement links to.
+- =lemmax lint= refuses what [[file:../agent1/requirements.org][requirements.org]] forbids; =lemmax trace= shows what each statement links to.
 - Written in Emacs Lisp on org-element.
 - Why: 2 repos hold 8 check files, 867 lines, in Python and Babashka; 3 repos check nothing; =:VERIFY:= is written 4 ways.
 - The end-to-end test builds an invented repo with statements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
@@ -34,7 +33,7 @@ Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an in
 :IMPLEMENTED: 2026-11-22
 :END:
 - =lemmax lint [--staged] [--no-tests] [FILE...]=, =lemmax commit-msg MSGFILE=, =lemmax trace [ID]=.
-- =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../requirements/cli.org][cli.org]]); a bare call prints the main help.
+- =-h= and =--help= print the short help and =help= the long help, on the main command and on every subcommand ([[file:../agent1/cli.org][cli.org]]); a bare call prints the main help.
 - It runs from the repo root, reads, and never writes a file.
 - A finding is one line on stderr: =lemmax: <file>:<line>: <id>: <why>; <fix>=.
 - Exit 0 when clean, 1 on any finding or failure.
@@ -172,7 +171,7 @@ Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a c
 - An agent sees the finding while it edits a theory file.
 - =--no-tests=, because the test command may take 60 s, too slow for every edit.
 - An org file that does not opt in gets no finding.
-Evidence: [[file:../harness/README.md][harness/README.md]] gives the check contract: paths on stdin, =path:line: message= on stdout, exit 0.
+Evidence: [[file:../../harness/README.md][harness/README.md]] gives the check contract: paths on stdin, =path:line: message= on stdout, exit 0.
 
 ** LEMMA agent1's global hooks call lemmax                          :hooks:
 :PROPERTIES:
@@ -202,7 +201,7 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - Every test has 10 s unless it says it needs longer; a test over its time is stopped, reported as =timeout=, and the rest still run.
 - Commits in test repos skip every hook, so no global hook runs.
 - =harness/self_check= runs it.
-Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../requirements/testing.org][testing.org]] sets the timeout and invented-data rules.
+Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../agent1/testing.org][testing.org]] sets the timeout and invented-data rules.
 
 ** THEOREM list: every statement in a table                           :list:
 :PROPERTIES:
@@ -335,7 +334,7 @@ Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS
 :APPROVED:    2026-11-23
 :PROVEN:      2026-11-23
 :END:
-New statement ids are UUID v7, as [[file:../requirements/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
+New statement ids are UUID v7, as [[file:../agent1/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id
 - =lemmax new-id= prints a fresh UUID v7, and nothing else
 - =next-id= (RT-14) stays only for projects whose old ids still count up
@@ -889,7 +888,7 @@ Evidence: the release review of 2026-11-22.
 :APPROVED:    2026-11-23
 :PROVEN:      2026-11-23
 :END:
-lemmax reads the math names of [[file:../requirements/requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
+lemmax reads the math names of [[file:../agent1/requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
 - A conjecture's state is CONJECTURE, LEMMA, THEOREM or REFUTED; OPEN, DONE and DROPPED still read the same, as conjecture, lemma and refuted
 - :USES: on a theorem names the smaller lemmas it builds on, pointing from the bigger item down; :NEEDS: in an old file still reads the same, child to parent
 - A proof is a heading in a file named =*.proofs.org=, state OPEN or PASSED; :PROVES: names one or more conjecture ids, :TEST: its test addresses, quoted like :VERIFY:
@@ -1213,7 +1212,7 @@ Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TEST
 :APPROVED:    2026-11-22
 :IMPLEMENTED: 2026-11-22
 :END:
-=lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../requirements/requirements.org::*Goal][Requirements requirements]] asks.
+=lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../agent1/requirements.org::*Goal][Requirements requirements]] asks.
 - One step per LEMMA or THEOREM: its id, title, statement, the ids it =:USES:=, and each proof with its =:TEST:= addresses
 - A step comes after every lemma and axiom it uses; axioms and the environment come first
 - Steps with no order between them go higher priority first (=[#A]= before =[#B]=, none last), then older first by =:CREATED:=, then by id
@@ -1275,6 +1274,22 @@ The date a conjecture turns LEMMA or THEOREM is =:PROVEN:=, not =:IMPLEMENTED:=;
 - agent1 =requirements/requirements.org=, =requirements/components.org= and =skills/ishikari/requirements.org= are migrated
 - Asked by the owner on 2026-11-23
 Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =:USES:= (line 227), =:VERIFY:= or =:TEST:= (line 237).
+
+** LEMMA A moved link is not a text change                              :lint:
+:PROPERTIES:
+:ID:          01a20a84-971d-767f-8a26-c98f6d132b7f
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
+:END:
+A file move that rewrites a statement's link to name the same file changes no statement's text.
+- When lint --staged compares a statement's text, each relative file link, =[[file:PATH]]=, =[[PATH]]= or =](PATH)=, is read as the repo file it names, from the folder of the file that holds the statement
+- A file the staged change renames counts as its new path, as git diff -M finds renames
+- So a LEMMA or THEOREM whose links a move rewrites stays proven, and needs no new :LAST_EDITED:
+- A link to another file, a web link, an id: link and an in-file link to a heading are compared as written
+- Asked by the owner on 2026-11-24, when moving agent1's theory into theories/ rewrote links in 7 proven statements
+Evidence: git diff --cached -M --name-status gives each rename as R, old path, new path; lemmax--lint-staged already compares each statement's text, HEAD against staged.
 
 ** CONJECTURE [#B] An unrun proof is not a counterexample                   :lint:
 :PROPERTIES:
@@ -1444,7 +1459,7 @@ Evidence: org-publish publishes each file a project includes, so one entry file 
 :USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
-:APPROVED:    2026-11-23
+:APPROVED:    2026-11-24
 :END:
 A repo that follows Lemmax keeps all its Lemmax data in one theories/ folder at its root.
 - theories/ holds one subfolder per project: theories/agent1/, theories/lemmax/, theories/ishikari/
@@ -1454,9 +1469,13 @@ A repo that follows Lemmax keeps all its Lemmax data in one theories/ folder at 
 - lemmax book writes one book per project, theories/_site/PROJECT.html, and with --all one book for the whole repo, theories/_site/book.html
 - theories/_site/ holds a .gitignore of *: git never tracks what publish builds
 - Code stays where it is; a setup.org names its code folders, relative to the repo root
-- The rules hold in a repo that has a theories/ folder; a repo without one is read as before, so each repo moves when it is ready
+- The rules hold in every repo: a repo that has not moved yet fails lint until it does
+- lint, list and every command read each .org file under theories/ as a theory file, but a project's setup.org and theories/_site/
+- A #+SETUPFILE: is read from its file's folder, in every command that reads the file
+- publish --out DIR keeps the layout of theories/_site/ and writes no book
 - book --out FILE writes one book for the whole repo to FILE; the joined .org files stay under .lemmax/book/
 - Asked by the owner on 2026-11-23
+- Changed on 2026-11-24: the rules hold in every repo, not only one with theories/; the owner chose it
 Evidence: org-publish takes a :base-directory and :recursive t, so theories/ is one publishing project; #+SETUPFILE: reads a shared setup file, and Org has no project-folder convention of its own.
 
 ** CONJECTURE lemmax bible writes the design document of a finished project   :cli:

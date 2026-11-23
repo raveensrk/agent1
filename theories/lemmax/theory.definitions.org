@@ -1,6 +1,6 @@
 #+title: Definitions of lemmax theory
+#+SETUPFILE: setup.org
 #+TODO: | DEFINITION
-#+LEMMAX_TESTS: lemmax/run_tests --addresses
 
 The terms Lemmax uses, each accepted without proof. A statement may =:USES:= one.
 
@@ -18,7 +18,7 @@ Any item of a theory, whatever its state: a conjecture, lemma, theorem or refute
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
-An agent1 rule, an =AXIOM= heading in [[file:../requirements/axioms.org][axioms.org]]: accepted, never proven.
+An agent1 rule, an =AXIOM= heading in [[file:../agent1/axioms.org][axioms.org]]: accepted, never proven.
 
 * DEFINITION Definition
 :PROPERTIES:

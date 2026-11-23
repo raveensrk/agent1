@@ -5,7 +5,7 @@ lemmax was reqtrace until 2026-11-21; `#+REQTRACE_*` keywords still read.
 
 <!-- lemma: 01a20336-cc5d-70ae-878b-b241ecc9ef61 -->
 
-Theory: [theory.org](theory.org).
+Theory: [theory.org](../theories/lemmax/theory.org).
 
 <!-- lemma: 01a20336-cb25-779d-9e80-e04a22bd235d -->
 
@@ -84,9 +84,9 @@ Four kinds need no proof:
   dates, and `:FOR:` with the ids it serves. A commit may name its id.
 - A note is text in `FILE.notes.org`: an `:ID:`, no state, `:ABOUT:` any ids.
 - An `AXIOM` heading is a rule accepted without proof; agent1's are in
-  `requirements/axioms.org`. A proof may not prove one; a theorem may use one.
+  `theories/agent1/axioms.org`. A proof may not prove one; a theorem may use one.
 - A `DEFINITION` heading names a term, accepted without proof; Lemmax's are in
-  [theory.definitions.org](theory.definitions.org). A proof may not prove one; any statement
+  [theory.definitions.org](../theories/lemmax/theory.definitions.org). A proof may not prove one; any statement
   may use one.
 
 `list` groups each kind apart; lint checks their links.
@@ -165,11 +165,17 @@ image and video is packed in as a `data:` URI, so the file opens offline alone.
 
 <!-- lemma: 01a20930-0aba-7005-8442-d1dc3269c487 -->
 
-A repo with a `theories/` folder keeps all its Lemmax data there, one
-subfolder per project, as `theories/lemmax/`, each with a `setup.org` its
-files read with `#+SETUPFILE:`. Lint then refuses a theory file outside it.
+Every repo keeps all its Lemmax data in `theories/`, one subfolder per
+project, as `theories/lemmax/`, each with a `setup.org` its files read with
+`#+SETUPFILE:`. Lint refuses a theory file outside it.
 `publish` writes a page per file and a book per project under
 `theories/_site/`, which git ignores; `book --all` adds one book for the repo.
+
+<!-- lemma: 01a20a84-971d-767f-8a26-c98f6d132b7f -->
+
+A move that rewrites a statement's file link to name the same file, as moving
+a theory into `theories/` does, is no text change: `lint --staged` reads each
+relative link as the repo file it names, after the staged renames.
 
 ## SETUPFILE
 

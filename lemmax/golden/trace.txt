@@ -1,24 +1,24 @@
 RQ-1 DONE The base
-  file: requirements.org:6
+  file: theories/t/requirements.org:6
   parents: none
   children: RQ-2
   refs: https://example.invalid/1
-  linked from: RQ-2 requirements.org:27
+  linked from: RQ-2 theories/t/requirements.org:27
   verify: unit/a found
   code: src/x.clj:1
   commit: HASH 2026-01-06 build them (RQ-1 RQ-2)
 
 RQ-2 DONE Builds on it
-  file: requirements.org:17
+  file: theories/t/requirements.org:17
   parents: RQ-1
   children: none
-  linked from: notes/n.org:1
+  linked from: theories/t/notes/n.org:1
   verify: unit/a found
   code: src/x.clj:1
   commit: HASH 2026-01-06 build them (RQ-1 RQ-2)
 
 RQ-3 OPEN Not yet
-  file: requirements.org:28
+  file: theories/t/requirements.org:28
   parents: none
   children: none
   linked from: none
@@ -27,7 +27,7 @@ RQ-3 OPEN Not yet
   commits: none
 
 RQ-4 DROPPED Dropped one
-  file: requirements.org:37
+  file: theories/t/requirements.org:37
   parents: none
   children: none
   linked from: none

@@ -15,9 +15,9 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - A clickable button looks like a button
 * Buttons
 ** A reference shows one way to build them
-- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [[file:demo/cljfx/src/demo/ui.clj][ui.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/button.clj][button.clj]] is the demo's own page
-- Its window checks, [[file:demo/cljfx/test/demo/window_check.clj][window_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- [[file:../../requirements/demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:../../requirements/demo/cljfx/src/demo/ui.clj][ui.clj]], with the look in [[file:../../requirements/demo/cljfx/src/demo/glass.css][glass.css]]; [[file:../../requirements/demo/cljfx/src/demo/button.clj][button.clj]] is the demo's own page
+- Its window checks, [[file:../../requirements/demo/cljfx/test/demo/window_check.clj][window_check.clj]], are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check=, run in =demo/cljfx=
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** One tinted glass button a page, the main action; every other toolbar button is regular glass, and a button in the page is plain
@@ -89,9 +89,9 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Read: [[file:buttons.png][Button Ideas]]
 * Sliders
 ** A reference shows one way to build them
-- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [[file:demo/cljfx/src/demo/slider.clj][slider.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/slider_page.clj][slider_page.clj]] is the demo's own page
-- Its window checks, [[file:demo/cljfx/test/demo/slider_check.clj][slider_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- [[file:../../requirements/demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:../../requirements/demo/cljfx/src/demo/slider.clj][slider.clj]], with the look in [[file:../../requirements/demo/cljfx/src/demo/glass.css][glass.css]]; [[file:../../requirements/demo/cljfx/src/demo/slider_page.clj][slider_page.clj]] is the demo's own page
+- Its window checks, [[file:../../requirements/demo/cljfx/test/demo/slider_check.clj][slider_check.clj]], are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check-slider=, run in =demo/cljfx=; =clojure -M:slider= opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** A slider sets one value between two ends
@@ -191,9 +191,9 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It counts frames through three drags and three track presses: 55 a second or more
 * Time pickers
 ** A reference shows one way to build them
-- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [[file:demo/cljfx/src/demo/time_picker.clj][time_picker.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/time_picker_page.clj][time_picker_page.clj]] is the demo's own page
-- Its window checks, [[file:demo/cljfx/test/demo/time_picker_check.clj][time_picker_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- [[file:../../requirements/demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:../../requirements/demo/cljfx/src/demo/time_picker.clj][time_picker.clj]], with the look in [[file:../../requirements/demo/cljfx/src/demo/glass.css][glass.css]]; [[file:../../requirements/demo/cljfx/src/demo/time_picker_page.clj][time_picker_page.clj]] is the demo's own page
+- Its window checks, [[file:../../requirements/demo/cljfx/test/demo/time_picker_check.clj][time_picker_check.clj]], are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check-time-picker=, run in =demo/cljfx=; =clojure -M:time-picker= opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** A time picker sets one time of day
@@ -367,9 +367,9 @@ Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/Date
 :PROVEN:      2026-11-14
 :END:
 ** A reference shows one way to build them
-- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [[file:demo/cljfx/src/demo/scroll.clj][scroll.clj]], with the look in [[file:demo/cljfx/src/demo/glass.css][glass.css]]; [[file:demo/cljfx/src/demo/scroll_page.clj][scroll_page.clj]] is the demo's own page
-- Its window checks, [[file:demo/cljfx/test/demo/scroll_check.clj][scroll_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- [[file:../../requirements/demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:../../requirements/demo/cljfx/src/demo/scroll.clj][scroll.clj]], with the look in [[file:../../requirements/demo/cljfx/src/demo/glass.css][glass.css]]; [[file:../../requirements/demo/cljfx/src/demo/scroll_page.clj][scroll_page.clj]] is the demo's own page
+- Its window checks, [[file:../../requirements/demo/cljfx/test/demo/scroll_check.clj][scroll_check.clj]], are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check-scroll=, run in =demo/cljfx=; =clojure -M:scroll= opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** A scroll area shows content larger than its room

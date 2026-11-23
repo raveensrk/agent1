@@ -6,9 +6,9 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 
 * The app must have a Window
 ** A reference shows one way to build it
-- [[file:demo/cljfx/src/demo/window.clj][window.clj]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- [[file:../../requirements/demo/cljfx/src/demo/window.clj][window.clj]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
 - Its rules are plain functions, tested without a window: =step=, =clamp-float=, =session= and =restore=
-- Its window checks, [[file:demo/cljfx/test/demo/window_page_check.clj][window_page_check.clj]], are the Verification lines below as code
+- Its window checks, [[file:../../requirements/demo/cljfx/test/demo/window_page_check.clj][window_page_check.clj]], are the Verification lines below as code
 - The reference passes its own checks: =clojure -M:test= and =clojure -M:check-window=, run in =demo/cljfx=
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** A window has a size it starts at and a smallest size
@@ -65,7 +65,7 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It writes a file that cannot be read, and reads it moved aside and the session as none
 * Panes
 ** A reference shows one way to build them
-- The panes of [[file:demo/cljfx/src/demo/window.clj][window.clj]], the reference of [[*The app must have a Window][The app must have a Window]]: a sidebar, a side panel and a pane under the page
+- The panes of [[file:../../requirements/demo/cljfx/src/demo/window.clj][window.clj]], the reference of [[*The app must have a Window][The app must have a Window]]: a sidebar, a side panel and a pane under the page
 - Their rules are plain functions, tested without a window: =layout=, =fit= and =clamp-size=
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** Panes resize

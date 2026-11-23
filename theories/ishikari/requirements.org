@@ -2,7 +2,7 @@
 #+STARTUP: overview
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 
-Process: [[file:../../requirements/requirements.org][Requirements requirements]].
+Process: [[file:../agent1/requirements.org][Requirements requirements]].
 
 * LEMMA [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
 :PROPERTIES:

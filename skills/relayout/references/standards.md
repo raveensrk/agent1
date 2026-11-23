@@ -17,7 +17,7 @@ with this file. A repo's own Layout section in its `AGENTS.md` wins over it.
 5. Real user data stays out of the code repo, in a sibling data repo like
    `<app>-data`. Test data is invented and lives with the tests.
 6. Core and UI stay apart
-   ([architecture.org](../../../requirements/architecture.org)): `core/` for
+   ([architecture.org](../../../theories/agent1/architecture.org)): `core/` for
    the core, then one folder per UI, like `cli/` and `app/`.
 
 ## Clojure (`deps.edn`)

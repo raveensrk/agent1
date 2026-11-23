@@ -35,11 +35,11 @@ Read when the task touches it:
 
 - [external.md](external.md) - probing external systems, live accounts,
   credentials on disk.
-- [cli.org](../requirements/cli.org) - help shape, bare calls, short flags, one help table.
+- [cli.org](../theories/agent1/cli.org) - help shape, bare calls, short flags, one help table.
   [cli_help.py](../harness/checks/cli_help.py) decides the hard half: a
   runnable, options or not, must handle `-h` and `--help` (short help) and a
   `help` command (long help).
-- [touch.org](../requirements/touch.org) - touch and mobile web UI: layout
+- [touch.org](../theories/agent1/touch.org) - touch and mobile web UI: layout
   steps, tap targets, gestures, phone keyboards. Adds to gui.org.
 - [docs.md](docs.md) - writing docs: help output first, what else each
   program shape needs.

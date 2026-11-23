@@ -9,7 +9,7 @@ argument-hint: "[the idea]"
 # Add a requirement
 
 Never write a requirement blind. Prove it can be built and tested first.
-Format and process rules: [requirements.org](../../requirements/requirements.org).
+Format and process rules: [requirements.org](../../theories/agent1/requirements.org).
 
 ## 1. Get the idea
 

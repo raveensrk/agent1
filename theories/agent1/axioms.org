@@ -12,7 +12,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/browser.md][Browser and computer use]]
+[[file:../../rules/browser.md][Browser and computer use]]
 
 * AXIOM Docs
 :PROPERTIES:
@@ -20,7 +20,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/docs.md][Docs]]
+[[file:../../rules/docs.md][Docs]]
 
 * AXIOM External systems and accounts
 :PROPERTIES:
@@ -28,7 +28,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/external.md][External systems and accounts]]
+[[file:../../rules/external.md][External systems and accounts]]
 
 * AXIOM Git
 :PROPERTIES:
@@ -36,7 +36,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/git.md][Git]]
+[[file:../../rules/git.md][Git]]
 
 * AXIOM Harness
 :PROPERTIES:
@@ -44,7 +44,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/harness.md][Harness]]
+[[file:../../rules/harness.md][Harness]]
 
 * AXIOM Jobs
 :PROPERTIES:
@@ -52,7 +52,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/jobs.md][Jobs]]
+[[file:../../rules/jobs.md][Jobs]]
 
 * AXIOM macOS
 :PROPERTIES:
@@ -60,7 +60,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/macos.md][macOS]]
+[[file:../../rules/macos.md][macOS]]
 
 * AXIOM Markdown
 :PROPERTIES:
@@ -68,7 +68,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/markdown.md][Markdown]]
+[[file:../../rules/markdown.md][Markdown]]
 
 * AXIOM Parallel sessions
 :PROPERTIES:
@@ -76,7 +76,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/parallel_sessions.md][Parallel sessions]]
+[[file:../../rules/parallel_sessions.md][Parallel sessions]]
 
 * AXIOM Pi packages
 :PROPERTIES:
@@ -84,7 +84,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/pi.md][Pi packages]]
+[[file:../../rules/pi.md][Pi packages]]
 
 * AXIOM Removal and uninstall
 :PROPERTIES:
@@ -92,7 +92,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/removal.md][Removal and uninstall]]
+[[file:../../rules/removal.md][Removal and uninstall]]
 
 * AXIOM Repos
 :PROPERTIES:
@@ -100,7 +100,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/repos.md][Repos]]
+[[file:../../rules/repos.md][Repos]]
 
 * AXIOM Ruled out
 :PROPERTIES:
@@ -108,7 +108,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/ruled_out.md][Ruled out]]
+[[file:../../rules/ruled_out.md][Ruled out]]
 
 * AXIOM Scripts
 :PROPERTIES:
@@ -116,7 +116,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/scripts.md][Scripts]]
+[[file:../../rules/scripts.md][Scripts]]
 
 * AXIOM Theme
 :PROPERTIES:
@@ -124,7 +124,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/theme.md][Theme]]
+[[file:../../rules/theme.md][Theme]]
 
 * AXIOM Tools
 :PROPERTIES:
@@ -132,7 +132,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/tools.md][Tools]]
+[[file:../../rules/tools.md][Tools]]
 
 * AXIOM TUI
 :PROPERTIES:
@@ -140,7 +140,7 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/tui.md][TUI]]
+[[file:../../rules/tui.md][TUI]]
 
 * AXIOM Working style
 :PROPERTIES:
@@ -148,4 +148,4 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
-[[file:../rules/working_style.md][Working style]]
+[[file:../../rules/working_style.md][Working style]]

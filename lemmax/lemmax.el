@@ -1,7 +1,7 @@
 ;;; lemmax.el --- lint, trace and list org theories  -*- lexical-binding: t; -*-
 
 ;; Run through the launcher: lemmax/lemmax COMMAND ...
-;; Theory: lemmax/theory.org (RT-1 to RT-15).
+;; Theory: theories/lemmax/theory.org (RT-1 to RT-15).
 ;; It reads files and git, and writes no file but the two hooks install-hooks puts in place.
 
 ;; lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
@@ -523,9 +523,13 @@ a FOLDER that holds no tracked file."
 
 ;; lemma: 01a2058c-5dff-75bc-b089-998d5425915a
 (defun lemmax--theory-name-p (file)
-  "Whether FILE is a theory file by name: requirements.org or theory.org, or a
-file under a requirements/ or theory/ folder."
+  "Whether FILE is a theory file by name: requirements.org or theory.org, a
+file under a requirements/ or theory/ folder, or one under the repo's
+theories/ but a project's setup.org."
   (or (member (file-name-nondirectory file) '("requirements.org" "theory.org"))
+      ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+      (and (string-prefix-p "theories/" file) (not (string-prefix-p "theories/_site/" file))
+           (not (equal (file-name-nondirectory file) "setup.org")))
       (cl-intersection '("requirements" "theory")
                        (split-string (or (file-name-directory file) "") "/" t)
                        :test #'equal)))
@@ -898,10 +902,39 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                              (if (lemmax--proof-p r) ":TEST:" ":VERIFY:") a)
                                      "write the test, or fix the address"))))))))))
 
+;; lemma: 01a20a84-971d-767f-8a26-c98f6d132b7f
+(defun lemmax--staged-renames ()
+  "Files the staged change renames: a hash, HEAD path to staged path."
+  (let ((h (make-hash-table :test #'equal))
+        (parts (split-string (or (lemmax--git-out "diff" "--cached" "-M" "--name-status" "-z" "HEAD") "") "\0" t)))
+    (while parts
+      (let ((st (pop parts)))
+        (if (string-prefix-p "R" st)
+            (let ((a (pop parts)) (b (pop parts))) (puthash a b h))
+          (pop parts))))
+    h))
+
+(defun lemmax--link-norm (text file renames)
+  "TEXT with each relative file link, read from FILE's folder, written as the
+repo path it names, after RENAMES: so a move that rewrites a link to the same
+file leaves the text the same."
+  (let ((dir (or (file-name-directory file) "")))
+    (replace-regexp-in-string
+     "\\(\\[\\[\\(?:file:\\)?\\|\\](\\)\\([^]:)\n#*][^])\n]*?\\)\\([])]\\|::\\)"
+     (lambda (m)
+       (let ((pre (match-string 1 m)) (path (match-string 2 m)) (post (match-string 3 m)))
+         (if (string-match-p "\\`\\(?:[a-z]+:\\|/\\|~\\)" path)
+             m
+           (let* ((rel (file-relative-name (expand-file-name path (expand-file-name dir "/r/")) "/r/"))
+                  (rel (gethash rel renames rel)))
+             (concat pre "@" rel post)))))
+     text t t)))
+
 ;; lemma: RT-6
 (defun lemmax--lint-staged (staged head)
   "RT-6: the change rules, STAGED infos against HEAD infos."
-  (let ((before (make-hash-table :test #'equal)) (today (lemmax--today)))
+  (let ((before (make-hash-table :test #'equal)) (today (lemmax--today))
+        (renames (lemmax--staged-renames)) (none (make-hash-table :test #'equal)))
     (dolist (r (lemmax--all-statements head)) (when (plist-get r :id) (puthash (plist-get r :id) r before)))
     (dolist (r (lemmax--all-statements staged))
       (let* ((id (plist-get r :id)) (old (and id (gethash id before)))
@@ -909,7 +942,10 @@ of its own, the :TEST: addresses of its proofs as :verify."
              (done (and (lemmax--done-p (plist-get r :state)) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r)))))
         (when id
           (if old
-              (let ((changed (not (equal (plist-get old :text) (plist-get r :text)))))
+              ;; lemma: 01a20a84-971d-767f-8a26-c98f6d132b7f
+              ;; A link rewritten to name the same file, as a move does, is no change.
+              (let ((changed (not (equal (lemmax--link-norm (plist-get old :text) (plist-get old :file) renames)
+                                         (lemmax--link-norm (plist-get r :text) f none)))))
                 (when (and changed done (lemmax--done-p (plist-get old :state)))
                   (lemmax--finding f l id (format "a %s statement's text changed" (plist-get r :state))
                                      (if (lemmax--new-state-p (plist-get r :state))
@@ -1031,16 +1067,17 @@ file over 5 MB is a warning that fails nothing."
 
 ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
 (defun lemmax--lint-theories (only)
-  "In a repo with theories/, a theory file outside it: one with a Lemmax state,
-a #+LEMMAX_ keyword, or the name theory.org or requirements.org."
-  (when (lemmax--theories-p)
+  "A theory file outside theories/: one with a Lemmax state, a #+LEMMAX_
+keyword, or the name theory.org or requirements.org. Every repo keeps its
+theory there."
+  (progn
     (dolist (i (lemmax--worktree-files))
       (let ((f (plist-get i :file)))
         (when (and (not (string-prefix-p lemmax--theories f)) (or (null only) (member f only))
                    (or (member (file-name-nondirectory f) '("theory.org" "requirements.org"))
                        (cl-some (lambda (k) (string-prefix-p "LEMMAX_" (car k))) (plist-get i :keywords))
                        (cl-some (lambda (r) (plist-get r :state)) (plist-get i :statements))))
-          (lemmax--finding f 1 nil "a theory file outside theories/, and this repo keeps its theory there"
+          (lemmax--finding f 1 nil "a theory file outside theories/, and every repo keeps its theory there"
                            "move it to theories/PROJECT/"))))))
 
 ;;;; Footnotes (01a203a6-a779-73fc-8abf-99f8c8816867)
@@ -1895,6 +1932,8 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
 :props :body), one per heading under a section, in file order."
   (with-temp-buffer
     (insert text)
+    ;; A #+SETUPFILE: path is read from the file's folder, as lemmax--parse reads it.
+    (setq default-directory (file-name-as-directory (expand-file-name (or (file-name-directory file) "") default-directory)))
     (let ((org-inhibit-startup t)) (delay-mode-hooks (org-mode)))
     (let (items)
       (org-map-entries
@@ -1935,6 +1974,7 @@ and a top heading that is no section."
     (dolist (f (lemmax--env-files))
       (with-temp-buffer
         (insert (cdr f))
+        (setq default-directory (file-name-as-directory (expand-file-name (or (file-name-directory (car f)) "") default-directory)))
         (let ((org-inhibit-startup t)) (delay-mode-hooks (org-mode)))
         (org-map-entries
          (lambda ()
@@ -2454,7 +2494,7 @@ order; a parent no chunk holds is named on stderr."
     (let* ((repo (file-truename default-directory))
            ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
            ;; With theories/, pages go to theories/_site/, a folder per project.
-           (theories (and (not out) (lemmax--theories-p)))
+           (theories (lemmax--theories-p))
            (root (if theories (file-name-as-directory (expand-file-name lemmax--theories repo)) repo))
            (dir (cond (out (expand-file-name out (or lemmax--cwd default-directory)))
                       (theories (expand-file-name (lemmax--site) repo))
@@ -2475,7 +2515,9 @@ order; a parent no chunk holds is named on stderr."
                                          append (mapcar (lambda (x) (file-relative-name (expand-file-name x repo) root))
                                                         (cl-remove-if-not (lambda (x) (file-exists-p (expand-file-name x repo)))
                                                                           (plist-get r :files))))))
-           (org-export-before-parsing-functions (cons #'org-attach-expand-links org-export-before-parsing-functions))
+           (org-export-before-parsing-functions
+            (cons (lemmax--book-fix-links (lemmax--all-statements (lemmax--listed (lemmax--worktree-files))) repo nil)
+                  org-export-before-parsing-functions))
            (org-publish-project-alist
             (list (list "lemmax" :components '("lemmax-pages" "lemmax-files"))
                   (list "lemmax-pages" :base-directory root :base-extension "lemmax-none" :include files
@@ -2498,7 +2540,7 @@ order; a parent no chunk holds is named on stderr."
         (delete-directory tmp t))
       ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
       ;; And a book per project beside the pages.
-      (when theories (let ((default-directory repo)) (lemmax--books nil nil))))
+      (when (and theories (not out)) (let ((default-directory repo)) (lemmax--books nil nil))))
     (kill-emacs 0)))
 
 ;;;; book (01a20927-9aac-7817-8e46-8635aa0ae127)
@@ -2569,10 +2611,12 @@ definitions and axioms first, each theory file followed by its companions."
 (defun lemmax--book-fix-links (statements root dir)
   "A before-parsing function: in the joined book, each attachment: link and
 each #+ATTR_HTML: :src becomes a path from DIR, read from the folder of the
-statement that holds it, as Org reads it in that statement's own file."
+statement that holds it, as Org reads it in that statement's own file.
+With DIR nil, paths are from the folder of the file being exported."
   (let ((by-id (make-hash-table :test #'equal)))
     (dolist (r statements) (when (plist-get r :id) (puthash (plist-get r :id) r by-id)))
     (lambda (_backend)
+      (let ((dir (or dir default-directory)))
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward "\\[\\[attachment:\\|^[ \t]*#\\+ATTR_HTML:.*?:src[ \t]+\\([^ \t\n]+\\)" nil t)
@@ -2584,7 +2628,7 @@ statement that holds it, as Org reads it in that statement's own file."
                     (goto-char s1) (delete-region s1 e1) (insert (file-relative-name abs dir)))
                 (when (plist-get r :attach-dir)
                   (goto-char mb) (delete-region mb me)
-                  (insert "[[file:" (file-name-as-directory (file-relative-name (expand-file-name (plist-get r :attach-dir) root) dir))))))))))))
+                  (insert "[[file:" (file-name-as-directory (file-relative-name (expand-file-name (plist-get r :attach-dir) root) dir)))))))))))))
 
 
 (defun lemmax--theories-p ()

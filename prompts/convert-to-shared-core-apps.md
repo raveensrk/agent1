@@ -9,7 +9,7 @@ working.
 
 - **Targets.** CLI app and macOS GUI app. Both are mandatory and both use the
   shared core. The mandatory macOS GUI uses JavaFX, through cljfx: the toolkit
-  [gui.org](../requirements/gui.org) chose for its window checks, which run
+  [gui.org](../theories/agent1/gui.org) chose for its window checks, which run
   inside the app. Read that requirement before starting. A native macOS toolkit
   is an optional extra, not the mandatory GUI.
 - **Optional.** Any number of extra apps on the same core: a TUI, a native macOS

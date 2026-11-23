@@ -144,9 +144,9 @@ Evidence: the mockups use plain CSS keyframes and transitions, which Safari and 
 :END:
 Every GUI app does this: a hard requirement.
 ** A reference shows one way to build it
-- [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [[file:demo/cljfx/src/demo/version.clj][version.clj]], with the build step [[file:demo/cljfx/tools/stamp.clj][stamp.clj]]; [[file:demo/cljfx/src/demo/version_page.clj][version_page.clj]] is the demo's own window
-- Its window checks, [[file:demo/cljfx/test/demo/version_check.clj][version_check.clj]], are the Verification lines below as code; an app's own checks ask the same
+- [[file:../../requirements/demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [[file:../../requirements/demo/cljfx/src/demo/version.clj][version.clj]], with the build step [[file:../../requirements/demo/cljfx/tools/stamp.clj][stamp.clj]]; [[file:../../requirements/demo/cljfx/src/demo/version_page.clj][version_page.clj]] is the demo's own window
+- Its window checks, [[file:../../requirements/demo/cljfx/test/demo/version_check.clj][version_check.clj]], are the Verification lines below as code; an app's own checks ask the same
 - =clojure -M:stamp && clojure -M:version=, run in =demo/cljfx=, opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 ** The app menu has About
@@ -202,7 +202,7 @@ For example:
 - Its colour comes from the stylesheet, never from the path
 - Its licence, MIT, is kept beside the icons and goes wherever they go
 - [[https://developer.apple.com/sf-symbols/][SF Symbols]] are not used: their licence covers apps on Apple platforms, not a public repo or another platform
-- The reference is [[file:demo/cljfx/src/demo/icons.clj][icons.clj]], drawn by =icon-view= in [[file:demo/cljfx/src/demo/ui.clj][ui.clj]]
+- The reference is [[file:../../requirements/demo/cljfx/src/demo/icons.clj][icons.clj]], drawn by =icon-view= in [[file:../../requirements/demo/cljfx/src/demo/ui.clj][ui.clj]]
 - A unit test reads every icon as one path, and an unknown name as an error
 ** Lists
 - Each page remembers its view and sort between runs
@@ -300,7 +300,7 @@ Use this as a last resort.
 - A mouse or key event goes to the scene, which picks what is under it; never straight to a control
 - Sent straight to a control, an event reaches it even when something covers it, and the check passes on an app nobody can use: a divider that no real drag could move passed 83 such checks
 - A check that sends a press where a control is, and reads that the control took it, proves the control can be reached
-- A real-pointer proof exists beside the checks, [[file:demo/cljfx/tools/real_pointer.clj][real_pointer.clj]]: it moves the pointer, so it is run by hand, and after any change to what lies over what
+- A real-pointer proof exists beside the checks, [[file:../../requirements/demo/cljfx/tools/real_pointer.clj][real_pointer.clj]]: it moves the pointer, so it is run by hand, and after any change to what lies over what
 * Development
 - When applicable use REPL during development
 - Follow Mockup based development for design

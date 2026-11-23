@@ -53,9 +53,9 @@ When an approval is not on record, ask; never assume one.
 3. Work on a new branch. Commit at the end of each phase.
 4. Existing user settings and data keep working, or migrate automatically.
 5. When the repo follows agent1's requirements, read
-   [gui.org](../../requirements/gui.org),
-   [windows.org](../../requirements/windows.org) and
-   [components.org](../../requirements/components.org) too. Where they and
+   [gui.org](../../theories/agent1/gui.org),
+   [windows.org](../../theories/agent1/windows.org) and
+   [components.org](../../theories/agent1/components.org) too. Where they and
    this skill disagree, ask which wins.
 
 ## Laws of UX

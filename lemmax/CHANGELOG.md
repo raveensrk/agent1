@@ -50,5 +50,8 @@ The first public release.
 - `publish` shows images in place, copies linked files and writes video
   blocks as `<video>`.
 - `lemmax book` writes the theory as one self-contained HTML file.
-- `theories/`: a repo with the folder keeps its theory there, a subfolder per
-  project; `publish` and `book` write to `theories/_site/`.
+- `theories/`: every repo keeps its theory there, a subfolder per project;
+  lint refuses a theory file outside it; `publish` and `book` write to
+  `theories/_site/`. agent1's own theory moved there.
+- A move that rewrites a link to name the same file is no text change: a
+  proven statement stays proven.

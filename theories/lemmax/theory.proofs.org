@@ -1,7 +1,6 @@
 #+title: Proofs of lemmax theory
+#+SETUPFILE: setup.org
 #+TODO: OPEN(o) | PASSED(p)
-#+LEMMAX_TESTS: lemmax/run_tests --addresses
-#+LEMMAX_CODE: lemmax/ harness/checks/lemmax_lint.py
 
 * PASSED Proof: lemmax lints and traces org theories
 :PROPERTIES:
@@ -934,3 +933,13 @@ A repo with theories/a/ and theories/b/ lints clean; a theory file outside theor
 :LAST_EDITED: 2026-11-23
 :END:
 A finished repo gives one bible file with chapters by tag, a glossary from definitions and a packed dot diagram; an open conjecture, an untagged statement or a rule in the hand-written chapters refuses it; no Evidence line or source path reaches the page.
+
+* PASSED Proof: A moved link is not a text change
+:PROPERTIES:
+:ID:          01a20a84-972f-7273-8910-ba02b2e42ed3
+:PROVES:      01a20a84-971d-767f-8a26-c98f6d132b7f
+:TEST:        ert/lemmax-moved-link-same-text
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+A LEMMA links a doc; moving the doc and the theory and rewriting the link to the same file lints clean; pointing the link at another file is refused.
