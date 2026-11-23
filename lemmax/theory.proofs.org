@@ -845,7 +845,7 @@ Every command prints one stderr line per legacy rule and keeps its exit code; =-
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: DEFINITION headings name the terms
+* PASSED Proof: DEFINITION headings name the terms
 :PROPERTIES:
 :ID:          01a20757-979e-7823-b816-bbf93af1c379
 :PROVES:      01a20757-95c1-70d9-882a-875672207343

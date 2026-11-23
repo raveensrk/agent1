@@ -2052,6 +2052,30 @@ run of its finding's why text."
     (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 AX-1")))
     (rt-should-find (rt-run d "lint" "--no-tests") ":PROVES: names the axiom AX-1; an axiom is accepted without proof")))
 
+;; lemma: 01a20757-95c1-70d9-882a-875672207343
+(ert-deftest lemmax-definition-headings ()
+  :tags '(timeout-60)
+  (let* ((df "* DEFINITION Statement\n:PROPERTIES:\n:ID:          DF-1\n:CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\nAny item, whatever its state.\n")
+         (d (rt-repo (rt-kinds-files (cons "definitions.org" (concat "#+TODO: | DEFINITION\n#+LEMMAX_TESTS: ./tests.sh\n\n" df))))))
+    ;; A definition needs no approval, proven day, proof or code marker.
+    (rt-should-clean (rt-run d "lint"))
+    (should (string-match-p "^Definitions (1)\n  DF-1 " (nth 1 (rt-run d "list"))))
+    (should (string-match-p "DF-1" (nth 1 (rt-run d "list" "--state" "definition"))))
+    (should (string-match-p "1 definition" (nth 1 (rt-run d "list"))))
+    ;; A lemma and a theorem may use a definition, which counts as proven.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-lemma "RQ-1" :uses "DF-1")
+                                         (rt-conj "RQ-2" :state "THEOREM" :uses "DF-1 RQ-1" :implemented "2026-01-06")))
+    (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; A lemma that uses more than definitions is still a theorem.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-lemma "RQ-1" :uses "DF-1 RQ-2") (rt-lemma "RQ-2")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "a LEMMA with :USES: is a THEOREM")
+    ;; A proof never proves a definition.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-lemma "RQ-1")))
+    (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 DF-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests")
+                    ":PROVES: names the definition DF-1; a definition is accepted without proof")))
+
 (ert-deftest lemmax-commit-task-id ()
   :tags '(timeout-60)
   (let ((d (rt-repo (rt-kinds-files (cons "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1")))))))

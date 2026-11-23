@@ -29,8 +29,9 @@
 ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
 ;; lemma: 01a2038d-cc5f-7324-8de8-1b067284e640 01a2038d-cc86-72be-b225-eeff9ee2c7a6
 (defconst lemmax-states '("OPEN" "DONE" "DROPPED" "CONJECTURE" "LEMMA" "THEOREM" "REFUTED" "PASSED"
-                          "TODO" "CANCELLED" "AXIOM")
-  "Every state: the old three, a conjecture's four, a proof's PASSED, a task's and AXIOM.")
+;; lemma: 01a20757-95c1-70d9-882a-875672207343
+                          "TODO" "CANCELLED" "AXIOM" "DEFINITION")
+  "Every state: the old three, a conjecture's four, a proof's PASSED, a task's, AXIOM and DEFINITION.")
 (defun lemmax--done-p (s) "Whether S is proven: DONE, LEMMA or THEOREM." (and (member s '("DONE" "LEMMA" "THEOREM")) t))
 (defun lemmax--open-p (s) "Whether S is not yet proven: OPEN or CONJECTURE." (and (member s '("OPEN" "CONJECTURE")) t))
 (defun lemmax--dropped-p (s) "Whether S is given up: DROPPED or REFUTED." (and (member s '("DROPPED" "REFUTED")) t))
@@ -43,8 +44,10 @@
 (defun lemmax--note-p (r) "Whether R is a note: it lives in a .notes.org file."
   (string-suffix-p ".notes.org" (or (plist-get r :file) "")))
 (defun lemmax--axiom-p (r) "Whether R is an axiom." (equal (plist-get r :state) "AXIOM"))
-(defun lemmax--unproven-p (r) "Whether R needs no proof: a task, a note or an axiom."
-  (or (lemmax--task-p r) (lemmax--note-p r) (lemmax--axiom-p r)))
+;; lemma: 01a20757-95c1-70d9-882a-875672207343
+(defun lemmax--definition-p (r) "Whether R is a definition." (equal (plist-get r :state) "DEFINITION"))
+(defun lemmax--unproven-p (r) "Whether R needs no proof: a task, a note, an axiom or a definition."
+  (or (lemmax--task-p r) (lemmax--note-p r) (lemmax--axiom-p r) (lemmax--definition-p r)))
 (defun lemmax--proof-p (r) "Whether R is a proof: it has :PROVES:, or lives in a proofs file."
   (and (or (plist-get r :proves) (lemmax--proofs-file-p (plist-get r :file))) t))
 (defconst lemmax-dates '("CREATED" "LAST_EDITED" "APPROVED" "PROVEN" "IMPLEMENTED" "REVIEWED"))
@@ -257,7 +260,7 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
     (setq default-directory (file-name-as-directory (expand-file-name (or (file-name-directory file) "") default-directory)))
     (insert content)
     (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM" "REFUTED" "PASSED"
-                                         "CANCELLED" "AXIOM")))
+                                         "CANCELLED" "AXIOM" "DEFINITION")))
           (org-element-use-cache nil)
           (org-inhibit-startup t))
       (delay-mode-hooks (org-mode))
@@ -483,7 +486,7 @@ file under a requirements/ or theory/ folder."
 
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
 (defconst lemmax--candidate-re
-  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM)([^[:alnum:]_]|$)|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)([^[:alnum:]_]|$)|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*[^[:alnum:]_](OPEN|CONJECTURE)([^[:alnum:]_]|$))"
+  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED|PASSED|AXIOM|DEFINITION)([^[:alnum:]_]|$)|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|LEMMA|THEOREM|REFUTED)([^[:alnum:]_]|$)|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*[^[:alnum:]_](OPEN|CONJECTURE)([^[:alnum:]_]|$))"
   "A line only a file that may hold lemmas has, for git grep -E.")
 
 (defvar lemmax--files-cache (make-hash-table :test #'equal)
@@ -791,6 +794,10 @@ of its own, the :TEST: addresses of its proofs as :verify."
                        ;; lemma: 01a2038d-cc86-72be-b225-eeff9ee2c7a6
                        (lemmax--finding f l id (format ":PROVES: names the axiom %s; an axiom is accepted without proof" c)
                                         "remove it from :PROVES:"))
+                      ;; lemma: 01a20757-95c1-70d9-882a-875672207343
+                      ((and x (lemmax--definition-p x))
+                       (lemmax--finding f l id (format ":PROVES: names the definition %s; a definition is accepted without proof" c)
+                                        "remove it from :PROVES:"))
                       ((or (null x) (lemmax--proof-p x) (lemmax--unproven-p x))
                        (lemmax--finding f l id (format ":PROVES: names %s, which no conjecture has" c)
                                         "fix the id, or remove it"))))))
@@ -813,12 +820,15 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                  "make the proof pass, or make this CONJECTURE"))))))
       (when (and (equal state "THEOREM") (null (plist-get r :needs)))
         (lemmax--finding f l id "a THEOREM with no :USES:" "name the lemmas it uses, or make it LEMMA"))
-      (when (and (equal state "LEMMA") (plist-get r :needs))
+      ;; lemma: 01a20757-95c1-70d9-882a-875672207343
+      (when (and (equal state "LEMMA")
+                 (cl-remove-if (lambda (u) (let ((x (funcall known u))) (and x (lemmax--definition-p x))))
+                               (plist-get r :needs)))
         (lemmax--finding f l id "a LEMMA with :USES: is a THEOREM" "make it THEOREM"))
       (when (equal state "THEOREM")
         (dolist (u (plist-get r :needs))
           (let ((x (funcall known u)))
-            (when (and x (not (lemmax--done-p (plist-get x :state))) (not (lemmax--axiom-p x)))
+            (when (and x (not (lemmax--done-p (plist-get x :state))) (not (lemmax--axiom-p x)) (not (lemmax--definition-p x)))
               (lemmax--finding f l id (format "a THEOREM that uses %s, which is %s, not proven" u (or (plist-get x :state) "no state"))
                                "prove it first, or make this CONJECTURE"))))))))
 
@@ -1551,6 +1561,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
           ((lemmax--task-p r) "tasks")
           ((lemmax--note-p r) "notes")
           ((lemmax--axiom-p r) "axioms")
+          ((lemmax--definition-p r) "definitions")
           ((lemmax--done-p state) "done")
           ((lemmax--dropped-p state) "dropped")
           ((plist-get r :approved) "approved")
@@ -1559,7 +1570,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
 (defconst lemmax--group-names
   '(("waiting" . "Waiting for approval") ("approved" . "Approved and open")
     ("done" . "Done") ("dropped" . "Dropped") ("proofs" . "Proofs")
-    ("tasks" . "Tasks") ("notes" . "Notes") ("axioms" . "Axioms")))
+    ("tasks" . "Tasks") ("notes" . "Notes") ("axioms" . "Axioms")
+    ("definitions" . "Definitions")))
 
 (defun lemmax--rows (no-tests)
   "Rows for every listed requirement of the repo here."
@@ -1654,8 +1666,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
       (let ((a (pop args)))
         (pcase a
           ("--state" (let ((v (pop args)))
-                       (unless (member v '("open" "done" "dropped" "conjecture" "lemma" "theorem" "refuted" "passed" "todo" "cancelled" "axiom"))
-                         (lemmax--err "lemmax: --state takes open, done, dropped, conjecture, lemma, theorem, refuted, passed, todo, cancelled or axiom")
+                       (unless (member v '("open" "done" "dropped" "conjecture" "lemma" "theorem" "refuted" "passed" "todo" "cancelled" "axiom" "definition"))
+                         (lemmax--err "lemmax: --state takes open, done, dropped, conjecture, lemma, theorem, refuted, passed, todo, cancelled, axiom or definition")
                          (kill-emacs 1))
                        (setq opts (plist-put opts :state v))))
           ("--section" (let ((v (pop args)))
@@ -1746,7 +1758,7 @@ a list of (FILE LINE ID). :ID:, :NEEDS: and :ALIASES: lines and id: links are no
         (when (car p) (lemmax--out "")))
       (let ((all (cl-mapcan (lambda (p) (copy-sequence (cdr p))) per)))
         (let ((proofs (cl-count-if #'lemmax--proof-p all))
-              (others (cl-loop for (k . p) in '(("task" . lemmax--task-p) ("note" . lemmax--note-p) ("axiom" . lemmax--axiom-p))
+              (others (cl-loop for (k . p) in '(("task" . lemmax--task-p) ("note" . lemmax--note-p) ("axiom" . lemmax--axiom-p) ("definition" . lemmax--definition-p))
                                for n = (cl-count-if p all)
                                when (> n 0) concat (format "; %d %s%s" n k (if (= n 1) "" "s"))))
               (conj (cl-remove-if (lambda (r) (or (lemmax--proof-p r) (lemmax--unproven-p r))) all)))
@@ -2265,7 +2277,7 @@ order; a parent no chunk holds is named on stderr."
         (lemmax--err "lemmax: %s: not a readable .org file" (car files)) (kill-emacs 1))
       (with-current-buffer (find-file-noselect path)
         (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
-                                             "REFUTED" "PASSED" "CANCELLED" "AXIOM"))))
+                                             "REFUTED" "PASSED" "CANCELLED" "AXIOM" "DEFINITION"))))
           (org-mode))
         (let ((head (save-excursion
                       (goto-char (point-min))
@@ -2335,7 +2347,7 @@ order; a parent no chunk holds is named on stderr."
            (org-html-validation-link nil)
            (org-publish-cache nil)
            (org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
-                                          "REFUTED" "PASSED" "CANCELLED" "AXIOM")))
+                                          "REFUTED" "PASSED" "CANCELLED" "AXIOM" "DEFINITION")))
            (org-publish-project-alist
             (list (list "lemmax" :base-directory root :base-extension "lemmax-none" :include files
                         :publishing-directory dir :publishing-function 'org-html-publish-to-html
@@ -2396,7 +2408,8 @@ with :PROVES: IDS and :TEST: addresses. A LEMMA or THEOREM needs every proof
 of it PASSED; a THEOREM's :USES: names the lemmas it uses.
 Tasks, in FILE.tasks.org (TODO | DONE CANCELLED, :FOR: IDS), are dev chores;
 notes, in FILE.notes.org (no state, :ABOUT: IDS), are text; an AXIOM heading
-is a rule accepted without proof. None of the three needs a proof.
+is a rule accepted without proof, a DEFINITION heading a term. None of the
+four needs a proof.
 FILE.env.org says what a rebuild needs besides code: Toolchain (:VERSION:),
 Data, Setup and Secrets (:WHERE: only, never a value) headings.
 list and next-id read every requirements file: requirements.org or theory.org,

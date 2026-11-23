@@ -18,6 +18,8 @@ The first public release.
 - Today and commit days are local days; `TZ` picks the zone. They were UTC.
 - A LEMMA or THEOREM records its day in `:PROVEN:`; `:IMPLEMENTED:` is still read, and
   `migrate` renames it.
+- `DEFINITION` headings name terms, accepted without proof; `definitions.org`
+  holds Lemmax's.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
 - `#+SETUPFILE:` keywords; footnote definitions checked.
