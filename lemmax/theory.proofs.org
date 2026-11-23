@@ -822,3 +822,15 @@ When the tests in :TEST: pass, the conjecture holds.
 :LAST_EDITED: 2026-11-22
 :END:
 A repo with unmarked theory.org, theory/a.org and requirements.org: list shows all three; lint checks none of them.
+
+* OPEN Proof: Every format change migrates gracefully
+:PROPERTIES:
+:ID:          01a205c1-7a82-7edc-b2ea-89ccd0eb693e
+:PROVES:      01a205c0-8460-7fb4-8493-861352251771
+:TEST:        ert/lemmax-legacy-registry-complete ert/lemmax-legacy-golden-migrate ert/lemmax-legacy-warns-every-command
+:TEST+:       ert/lemmax-legacy-exit-code-unchanged ert/lemmax-legacy-verbose-lists-all ert/lemmax-legacy-mixed-heading-error
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Each registry entry has a reader, a migrate step and a golden file; on the golden file the old form reads the same as the new, and migrate gives the same result on a second run.
+Every command prints one stderr line per legacy rule and keeps its exit code; =-v= lists every place; old and new forms of one rule on one heading fail lint.

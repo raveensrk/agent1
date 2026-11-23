@@ -1295,3 +1295,19 @@ A corollary is suspect when its =:FOLLOWS:= target changed its text after the co
 - The owner reads the corollary again, then sets =:REVIEWED:= or makes it CONJECTURE
 - Asked by the owner on 2026-11-22
 Evidence: the suspect check for =:USES:= reads a lemma's last change from git; the same read works in the target's repo.
+
+** CONJECTURE [#A] Every format change migrates gracefully                  :lint:
+:PROPERTIES:
+:ID:          01a205c0-8460-7fb4-8493-861352251771
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Lemmax never breaks a file written in an older format; it reads the old form, warns, and =lemmax migrate= moves it.
+- One registry lists every legacy rule: the old form, the new form and its migrate step; =OPEN | DONE DROPPED=, =:NEEDS:= and =:VERIFY:= are its first entries
+- A new format change adds a registry entry with all three parts: a reader that gives the old form the same meaning as the new, a migrate step that is lossless and idempotent, and a proof that tests both against a golden file
+- Every lemmax command that reads a file with a legacy form prints a warning on stderr, one line per rule: the rule, the count, the first place and =run lemmax migrate=; =-v= lists every place
+- The warning never changes the exit code and never turns into an error; it stops only when the file is migrated
+- No keyword, flag or variable silences it
+- Old and new forms of one rule on the same heading are a lint error; across different headings they only warn
+- Asked by the owner on 2026-11-23
+Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =:USES:=, =:VERIFY:= or =:TEST:=.
