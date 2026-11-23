@@ -894,3 +894,13 @@ A PASSED proof whose linked file changes is refused until OPEN.
 :LAST_EDITED: 2026-11-23
 :END:
 publish copies the files; the HTML holds an img for a PNG and an SVG, a video tag for a video block, and a link for a PDF; a bare video link is refused.
+
+* OPEN Proof: Lemmax is an extension of Org mode
+:PROPERTIES:
+:ID:          01a2091c-4dcb-72c1-9537-b4b520bb283b
+:PROVES:      01a2091c-4bcc-7ddb-9796-619468dd401c
+:TEST:        ert/lemmax-org-extension
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Every M-x lemmax command gives the terminal command's output; dates are read from LOGBOOK and CLOSED:; each add-on in the README loads; no task to switch an invented part is left open.

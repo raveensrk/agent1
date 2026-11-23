@@ -1395,3 +1395,20 @@ Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
 - Any other file is a link
 - Asked by the owner on 2026-11-23
 Evidence: org-attach-expand-links turns attachment: into file: before export; org-html-inline-image-rules covers avif, gif, jpg, png, svg and webp; html5-fancy turns a special block named video into <video>.
+
+** CONJECTURE Lemmax is an extension of Org mode                          :lemmax:
+:PROPERTIES:
+:ID:          01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+Lemmax extends Org mode; it invents nothing Org or an Org add-on already does.
+- Where Org or an add-on has a feature, Lemmax uses it: its syntax, its properties, its commands
+- An add-on Lemmax uses is a dependency: Lemmax loads it, the README names it, and the launcher, hooks and CI install or load it
+- Where nothing in Org does a job, Lemmax may add its own; the conjecture's Evidence line names the Org manual sections and add-ons searched, and why they fall short
+- Each part Lemmax invented that Org already covers gets a task in theory.tasks.org to switch to Org's way, one task per part
+- Lemmax runs as Emacs commands, M-x lemmax-lint and the others, and as the lemmax command in the terminal, with the same results
+- Dates come from Org's log: the state-change entries Org writes in the LOGBOOK drawer and the CLOSED: line, not Lemmax's own date properties
+- Asked by the owner on 2026-11-23
+Evidence: Org already supplies TODO keywords, tags, priorities, :ID: and id: links, archiving and publishing, which Lemmax uses; org-log-done, org-log-into-drawer and state-change notes record dates; #+PROPERTY: and #+SETUPFILE: set file-wide values.

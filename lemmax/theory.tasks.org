@@ -86,3 +86,57 @@ Lemmax says "requirement" about 160 times; it speaks in maths terms instead.
 - Only =lemmax/= changes now; agent1's =requirements/requirements.org=, the add-requirement skill and the rules keep their words
 - In =definitions.org= each term is a =DEFINITION= heading with an =:ID:=, like an =AXIOM=: never proven, a statement may =:USES:= it, and lint checks the file
 - Done on 2026-11-23: d723e92 definitions.org and DEFINITION headings; cb02b33 messages, help and code names; 8f62157 and d30f2ca theory wording, 25 statements proven again.
+
+* TODO Dates come from Org's log
+:PROPERTIES:
+:ID:          01a2091c-8f79-784a-885d-00ba4cb49976
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-change entries and CLOSED:, with org-log-done and org-log-into-drawer. Org logs no approval: decide an APPROVED state or a log note. Old files keep their properties until migrate moves them.
+
+* TODO File keywords become #+PROPERTY: values
+:PROPERTIES:
+:ID:          01a2091c-9177-70fa-bee0-bb2586b6c0e0
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+#+LEMMAX_TESTS:, #+LEMMAX_CODE:, #+LEMMAX_TEST_PATHS: and #+LEMMAX_MARKERS_IN: become #+PROPERTY: lines that Org's own property inheritance reads. The old keywords still read until migrate moves them.
+
+* TODO lemmax/config.eld becomes #+SETUPFILE: or .dir-locals.el
+:PROPERTIES:
+:ID:          01a2091c-9360-799a-af76-b8d22a2d1357
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instead of Lemmax's own config file. Pick the one that keeps settings data, never run.
+
+* TODO Ids come from org-id
+:PROPERTIES:
+:ID:          01a2091c-9546-7745-9a9b-4a17dc28b44a
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+New ids come from org-id-new with org-id-method, not Lemmax's own UUID v7 code. Check that org-id's ts or uuid method keeps ids sortable by time, as v7 does, or say why it falls short.
+
+* TODO Links use an Org add-on where one fits
+:PROPERTIES:
+:ID:          01a2091c-9725-71a4-a36c-d9597a10e24b
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edna and org-roam, and switch each one an add-on already models.
+
+* TODO Lemmax runs as Emacs commands
+:PROPERTIES:
+:ID:          01a2091c-9905-7837-940b-116fa8148f3d
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other commands, giving the same results as the terminal command, in a compilation-style buffer.
