@@ -998,6 +998,24 @@ Evidence: a heading with :ID: and no state is already read as a record by =lemma
 - Asked by the owner on 2026-11-22
 Evidence: states are read through =lemmax-states=.
 
+** CONJECTURE DEFINITION headings name the terms                          :lemmax:
+:PROPERTIES:
+:ID:          01a20757-95c1-70d9-882a-875672207343
+:USES:        01a2038d-cc86-72be-b225-eeff9ee2c7a6
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+A heading in state =DEFINITION= defines one term; like an axiom it is accepted, never proven.
+- A definition has an =:ID:=, =:CREATED:= and =:LAST_EDITED:=; it needs no =:APPROVED:=, =:PROVEN:=, proof or code marker
+- lint refuses a proof whose =:PROVES:= names a definition; any statement may =:USES:= one, and it counts as proven
+- lint checks a definitions file like any opted-in file: ids, dates, tags, links
+- list puts definitions in a group of their own, Definitions; =--state= takes =definition=
+- =lemmax/definitions.org= holds Lemmax's terms, one =DEFINITION= heading each: the rows of the Mathematics/Lemmax table, plus "statement", the word for any item whatever its state
+- agent1 =requirements/requirements.org= keeps a link to =lemmax/definitions.org= where the table was
+- Asked by the owner on 2026-11-23
+Evidence: AXIOM is read through =lemmax-states= (lemmax.el:31) and the keyword lists at lines 260, 2268 and 2338; DEFINITION joins the same four.
+
 ** LEMMA A commit may name a task id                                           :cli:
 :PROPERTIES:
 :ID:          01a2038d-cc9a-7496-b943-49cb1444826d
