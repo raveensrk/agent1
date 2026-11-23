@@ -151,6 +151,16 @@ Every linked file is copied beside the pages with `org-publish-attachment`. A
 video is a `#+begin_video` block under `#+ATTR_HTML: :src FILE :controls t`;
 lint refuses a video linked any other way.
 
+## Book
+
+<!-- lemma: 01a20927-9aac-7817-8e46-8635aa0ae127 -->
+
+`lemmax book` writes the whole theory as one HTML file, `.lemmax/book.html`
+or `--out FILE`. It joins every theory file and companion with `#+INCLUDE:`
+in `.lemmax/book/book.org`, in rebuild order: definitions and axioms first,
+each lemma before what uses it. `id:` links point inside the page, and every
+image and video is packed in as a `data:` URI, so the file opens offline alone.
+
 ## SETUPFILE
 
 <!-- lemma: 01a203a6-a766-76c6-9931-753ee75e9318 -->

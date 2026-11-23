@@ -905,13 +905,13 @@ publish copies the files; the HTML holds an img for a PNG and an SVG, a video ta
 :END:
 Every M-x lemmax command gives the terminal command's output; dates are read from LOGBOOK and CLOSED:; each add-on in the README loads; no task to switch an invented part is left open.
 
-* OPEN Proof: lemmax book writes the theory as one HTML file
+* PASSED Proof: lemmax book writes the theory as one HTML file
 :PROPERTIES:
 :ID:          01a20927-9cb9-73d0-b70b-84df5088a8a5
 :PROVES:      01a20927-9aac-7817-8e46-8635aa0ae127
 :TEST:        ert/lemmax-book-one-file
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 A repo with two theories and a PNG gives one book file: definitions before lemmas, each id: link inside the page, the PNG a data: URI, nothing else written.
 

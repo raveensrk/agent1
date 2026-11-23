@@ -1417,13 +1417,14 @@ Lemmax extends Org mode; it invents nothing Org or an Org add-on already does.
 - Asked by the owner on 2026-11-23
 Evidence: Org already supplies TODO keywords, tags, priorities, :ID: and id: links, archiving and publishing, which Lemmax uses; org-log-done, org-log-into-drawer and state-change notes record dates; #+PROPERTY: and #+SETUPFILE: set file-wide values.
 
-** CONJECTURE lemmax book writes the theory as one HTML file              :cli:
+** THEOREM lemmax book writes the theory as one HTML file                :cli:
 :PROPERTIES:
 :ID:          01a20927-9aac-7817-8e46-8635aa0ae127
 :USES:        01a203a6-a752-75ed-8359-a8147e95a33d 01a2090e-8b52-7173-947b-d882b237ad05 01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-23
+:PROVEN:      2026-11-24
 :END:
 lemmax book writes the repo's theory as one self-contained HTML file, with Org's own publishing.
 - It writes .lemmax/book/book.org: the title, then one #+INCLUDE: per theory file and companion, in rebuild order
@@ -1431,7 +1432,8 @@ lemmax book writes the repo's theory as one self-contained HTML file, with Org's
 - Chapters follow the rebuild order lemmax plan gives: definitions and axioms first, then each lemma before what uses it
 - It publishes that one file with org-publish, as a project of its own: org-html-publish-to-html, html5-fancy on
 - The page goes to .lemmax/book.html, or --out FILE; it writes nothing else outside .lemmax/
-- id: links become links inside the page
+- id: links become links inside the page; the page has no table of contents and no section numbers
+- Definition files come first: a definition is no plan step, so it has no place in the plan's order
 - An export filter on org-export-filter-final-output-functions packs every linked image, SVG, GIF and video into the page as a data: URI, so the file opens offline with nothing beside it
 - Asked by the owner on 2026-11-23
 Evidence: org-publish publishes each file a project includes, so one entry file gives one page; #+INCLUDE: joins the files (org-export-expand-include-keyword); Org's final-output filters let a backend rewrite the HTML; no Org 9.8.7 file writes data: URIs, and Emacs's base64-encode-region does.

@@ -49,3 +49,4 @@ The first public release.
   `files:`, `list --json` a `files` array.
 - `publish` shows images in place, copies linked files and writes video
   blocks as `<video>`.
+- `lemmax book` writes the theory as one self-contained HTML file.

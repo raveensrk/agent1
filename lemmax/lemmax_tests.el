@@ -674,6 +674,35 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (rt-set d "requirements.org" (concat rt-math-head (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]], [[file:pics/b.svg]], [[file:docs/c.pdf]], [[file:clip.mp4]].\n")))
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: it links the video clip.mp4")))
 
+;;;; 01a20927-9aac-7817-8e46-8635aa0ae127: lemmax book writes the theory as one HTML file
+
+;; lemma: 01a20927-9aac-7817-8e46-8635aa0ae127
+(ert-deftest lemmax-book-one-file ()
+  :tags '(timeout-60)
+  (let* ((df "#+title: Terms\n#+TODO: | DEFINITION\n#+LEMMAX_TESTS: ./tests.sh\n\n* DEFINITION Word\n:PROPERTIES:\n:ID:          DF-1\n:CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\nA term.\n")
+         (d (rt-repo (append (rt-math-files (list (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]] and [[id:PR-1][its proof]].\n")
+                                                  (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))
+                                            (list (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2")))
+                             (list (cons "zz/theory.definitions.org" df)
+                                   (cons "data/RQ/-1/a.png" "PNGDATA"))))))
+    (let ((before (nth 1 (rt-git d "status" "--porcelain" "--ignored")))
+          (r (rt-run d "book")))
+      (should (= 0 (nth 0 r)))
+      (should (equal ".lemmax/book.html\n" (nth 1 r)))
+      (should (equal before (replace-regexp-in-string "^!! .lemmax/\n" "" (nth 1 (rt-git d "status" "--porcelain" "--ignored"))))))
+    (let ((org (with-temp-buffer (insert-file-contents (expand-file-name ".lemmax/book/book.org" d)) (buffer-string)))
+          (html (with-temp-buffer (insert-file-contents (expand-file-name ".lemmax/book.html" d)) (buffer-string))))
+      ;; Definitions first, then the theory, then its proofs.
+      (should (string-match-p "#\\+INCLUDE: \"../../zz/theory.definitions.org\"\n#\\+INCLUDE: \"../../requirements.org\"\n#\\+INCLUDE: \"../../requirements.proofs.org\"" org))
+      (should (< (string-match "A term" html) (string-match "Title of RQ-1" html) (string-match "Title of RQ-2" html)))
+      ;; The id: link points inside the page.
+      (should (string-match "<a href=\"#\\([^\"]+\\)\">its proof</a>" html))
+      (should (string-match-p (format "id=\"%s\"" (match-string 1 html)) html))
+      (should (string-match-p (concat "<img src=\"data:image/png;base64," (base64-encode-string "PNGDATA" t) "\"") html))
+      (should-not (string-match-p "src=\"[^d]" html)))
+    (rt-run d "book" "--out" "b.html")
+    (should (file-exists-p (expand-file-name "b.html" d)))))
+
 ;;; lemmax_tests.el ends here
 
 ;;;; RT-16
