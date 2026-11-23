@@ -5,4 +5,4 @@ Done (2)
   RQ-2                   DONE       approved found   Builds on it                                                 requirements.org:17  code:1
 Dropped (1)
   RQ-4                   DROPPED    approved none    Dropped one                                                  requirements.org:37  code:0
-Total: 4 requirements: 1 open, 2 done, 1 dropped
+Total: 4 statements: 1 open, 2 done, 1 dropped

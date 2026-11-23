@@ -213,7 +213,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
   (let* ((d (rt-repo (list (cons "requirements.org" (concat "#+TODO: OPEN | DONE\n" (rt-req "RQ-1" :approved nil))))))
          (r (rt-run d "lint")))
     (should (= 0 (nth 0 r)))
-    (should (string-match-p "no requirements file here has" (nth 2 r)))))
+    (should (string-match-p "no theory file here has" (nth 2 r)))))
 
 (ert-deftest lemmax-files-keyword-in-text ()
   (let* ((d (rt-repo (list (cons "requirements.org"
@@ -228,7 +228,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (dolist (cmd '("lint" "trace"))
       (let ((r (rt-run d cmd)))
         (should (= 0 (nth 0 r)))
-        (should (string-match-p "no requirements file here" (nth 2 r)))))))
+        (should (string-match-p "no theory file here" (nth 2 r)))))))
 
 ;;;; RT-4
 
@@ -245,7 +245,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (ert-deftest lemmax-lint-id-twice ()
   (rt-should-find (rt-lint (rt-req "RQ-1") (rt-req "RQ-1")) "used twice, first at requirements.org:6"))
 (ert-deftest lemmax-lint-needs-unknown ()
-  (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-9")) "names RQ-9, which no requirement has"))
+  (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-9")) "names RQ-9, which no statement has"))
 (ert-deftest lemmax-lint-needs-cycle ()
   (rt-should-find (rt-lint (rt-req "RQ-1" :needs "RQ-2") (rt-req "RQ-2" :needs "RQ-1")) ":NEEDS: makes a cycle back to this id"))
 (ert-deftest lemmax-lint-unapproved ()
@@ -306,7 +306,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (ert-deftest lemmax-staged-done-text ()
   (rt-should-find (rt-staged (list (rt-done "RQ-1"))
                              (list (rt-done "RQ-1" :body "New text.\n" :last "2026-02-01")))
-                  "DONE requirement's text changed; make it OPEN"))
+                  "DONE statement's text changed; make it OPEN"))
 (ert-deftest lemmax-staged-reopened-passes ()
   (rt-should-clean (rt-staged (list (rt-done "RQ-1"))
                               (list (rt-req "RQ-1" :verify "unit/a" :body "New text.\n" :last "2026-02-01")))))
@@ -315,7 +315,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
                   "LAST_EDITED: is not today; set :LAST_EDITED: 2026-02-01"))
 (ert-deftest lemmax-staged-new-dates ()
   (rt-should-find (rt-staged (list (rt-req "RQ-1")) (list (rt-req "RQ-1") (rt-req "RQ-2")))
-                  "RQ-2: a new requirement whose :CREATED:")
+                  "RQ-2: a new statement whose :CREATED:")
   (rt-should-clean (rt-staged (list (rt-req "RQ-1"))
                               (list (rt-req "RQ-1") (rt-req "RQ-2" :created "2026-02-01" :last "2026-02-01")))))
 (ert-deftest lemmax-staged-turned-done ()
@@ -340,7 +340,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 
 (ert-deftest lemmax-commit-code-needs-id ()
   (let ((d (rt-code-change (rt-req "RQ-1"))))
-    (rt-should-find (rt-commit-msg d "change it\n") "names no requirement id; name one in the message, as (RQ-1)")
+    (rt-should-find (rt-commit-msg d "change it\n") "names no statement id; name one in the message, as (RQ-1)")
     (rt-should-clean (rt-commit-msg d "change it (RQ-1)\n"))))
 (ert-deftest lemmax-commit-docs-pass ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
@@ -348,16 +348,16 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (rt-git d "add" "-A")
     (rt-should-clean (rt-commit-msg d "docs\n"))))
 (ert-deftest lemmax-commit-unknown-id ()
-  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-1")) "change (ZZ-9)\n") "names no requirement id"))
+  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-1")) "change (ZZ-9)\n") "names no statement id"))
 (ert-deftest lemmax-commit-id-in-comment ()
-  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-1")) "change\n# RQ-1\n") "names no requirement id"))
+  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-1")) "change\n# RQ-1\n") "names no statement id"))
 (ert-deftest lemmax-commit-new-id-staged ()
   (let ((d (rt-code-change (rt-req "RQ-1"))))
     (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1") (rt-req "RQ-2")))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-commit-msg d "add and build (RQ-2)\n"))))
 (ert-deftest lemmax-commit-whole-word ()
-  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-3")) "change (RQ-30)\n") "names no requirement id"))
+  (rt-should-find (rt-commit-msg (rt-code-change (rt-req "RQ-3")) "change (RQ-30)\n") "names no statement id"))
 
 ;;;; RT-8
 
@@ -543,7 +543,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (should (string-match-p "RQ-1 +DONE +approved found +Title of RQ-1 +requirements\\.org:6" out))
     (should (string-match-p "RQ-2 +OPEN +approved missing" out))
     (should (string-match-p "gui-look +OPEN +approved none +Title of gui-look +requirements/gui\\.org:1" out))
-    (should (string-match-p "^Total: 3 requirements: 2 open, 1 done, 0 dropped" out))))
+    (should (string-match-p "^Total: 3 statements: 2 open, 1 done, 0 dropped" out))))
 (ert-deftest lemmax-list-groups ()
   (let ((out (rt-list (rt-repo (rt-files (rt-req "RQ-1" :state "DROPPED") (rt-done "RQ-2")
                                          (rt-req "RQ-3") (rt-req "RQ-4" :approved nil))))))
@@ -575,7 +575,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (let ((out (rt-env (list (concat "LEMMAX_REPOS=" base)) (rt-list base "--all" "--no-tests"))))
       (should (string-match-p "^== alpha" out))
       (should (string-match-p "^== beta" out))
-      (should (string-match-p "^Total: 2 requirements in 2 repos" out)))))
+      (should (string-match-p "^Total: 2 statements in 2 repos" out)))))
 (ert-deftest lemmax-list-json ()
   (let* ((out (rt-list (rt-repo (rt-files (rt-done "RQ-1"))) "--json" "--run-tests"))
          (rows (alist-get 'rows (json-parse-string out :object-type 'alist))))
@@ -616,7 +616,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (let ((out (nth 1 (rt-run elsewhere "list" "--no-tests" "-p" a "--project" (expand-file-name "src" b)))))
       (should (string-match-p (concat "^== " (regexp-quote (file-name-nondirectory a))) out))
       (should (string-match-p (concat "^== " (regexp-quote (file-name-nondirectory b))) out))
-      (should (string-match-p "^Total: 3 requirements in 2 repos" out)))))
+      (should (string-match-p "^Total: 3 statements in 2 repos" out)))))
 (ert-deftest lemmax-project-one-command ()
   (let ((a (rt-repo (rt-files (rt-req "RQ-1") (rt-req "RQ-4"))))
         (elsewhere (rt-tmp)))
@@ -765,7 +765,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
                               (list (rt-done "RQ-1" :title "The look"))))
   (rt-should-find (rt-staged (list (rt-done "RQ-1" :title "RQ-1 The look"))
                              (list (rt-done "RQ-1" :title "The new look")))
-                  "DONE requirement's text changed")
+                  "DONE statement's text changed")
   (rt-should-clean (rt-staged (list (rt-done "RQ-1" :body "See [[*RQ-2 The base][RQ-2]] and [[file:x.org::*RQ-2 The base][it]].\n"))
                               (list (rt-done "RQ-1" :body "See [[*The base][RQ-2]] and [[file:x.org::*The base][it]].\n"))))
   (let ((d (rt-repo (rt-files (rt-req "RQ-1" :title "RQ-1 The parent") (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-05"))
@@ -816,7 +816,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (let ((tr (nth 1 (rt-run d "trace"))))
       (should (string-match-p "^RQ-1 DONE" tr))
       (should (string-match-p "^RQ-2 OPEN" tr)))
-    (should (string-match-p "Total: 2 requirements" (nth 1 (rt-run d "list"))))
+    (should (string-match-p "Total: 2 statements" (nth 1 (rt-run d "list"))))
     (rt-set d "reqs/RQ-3.org" (concat rt-plain-head (rt-req "RQ-1")))
     (rt-git d "add" "-A")
     (rt-should-find (rt-run d "lint" "--no-tests") "used twice")))
@@ -852,7 +852,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (rt-set d "reqs/RQ-1.org" (concat rt-plain-head (rt-done "RQ-1" :body "New text.\n")))
     (rt-git d "add" "-A")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))
-                    "DONE requirement's text changed")))
+                    "DONE statement's text changed")))
 
 (ert-deftest lemmax-config-never-evaluated ()
   :tags '(timeout-30)
@@ -950,7 +950,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a" :body "New.\n"))
     (rt-git d "add" "-A")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))
-                    "DONE requirement's text changed")
+                    "DONE statement's text changed")
     (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DROPPED" :verify "unit/a"))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
@@ -1116,7 +1116,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (ert-deftest lemmax-one-parser-same-ids ()
   (rt-load)
   (dolist (c rt-odd-files)
-    (let ((full (cl-loop for r in (plist-get (lemmax--parse c "f.org") :reqs)
+    (let ((full (cl-loop for r in (plist-get (lemmax--parse c "f.org") :statements)
                          when (plist-get r :id) collect (cons (plist-get r :id) (plist-get r :text))))
           (quick (lemmax--quick-ids c)))
       (should (equal full quick))))
@@ -1251,7 +1251,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (defun rt-lemmas (content)
   (mapcar (lambda (r) (list (plist-get r :id) (plist-get r :state) (plist-get r :title)
                             (plist-get r :verify) (plist-get r :text) (plist-get r :created)))
-          (plist-get (lemmax--parse content "f.org") :reqs)))
+          (plist-get (lemmax--parse content "f.org") :statements)))
 
 (ert-deftest lemmax-odd-input ()
   (rt-load)
@@ -1326,7 +1326,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
   (rt-load)
   (dotimes (seed 200)
     (let* ((g (rt-gen-file seed))
-           (got (cl-loop for r in (plist-get (lemmax--parse (car g) "g.org") :reqs)
+           (got (cl-loop for r in (plist-get (lemmax--parse (car g) "g.org") :statements)
                          when (plist-get r :id)
                          collect (list (plist-get r :id) (plist-get r :state) (plist-get r :title) (plist-get r :needs)))))
       (should (equal (cdr g) got))
@@ -1787,13 +1787,13 @@ run of its finding's why text."
       (should (string-match-p "RQ-2 +LEMMA" out))
       (should (string-match-p "RQ-3 +THEOREM" out))
       (should (string-match-p "RQ-4 +REFUTED" out))
-      (should (string-match-p "Total: 4 requirements: 1 open, 2 done, 1 dropped; 2 proofs" out)))
+      (should (string-match-p "Total: 4 statements: 1 open, 2 done, 1 dropped; 2 proofs" out)))
     (should (string-match-p "uses: RQ-2" (nth 1 (rt-run d "trace" "RQ-3"))))
     (should (string-match-p "used by: RQ-3" (nth 1 (rt-run d "trace" "RQ-2"))))
     ;; :USES: is read as :NEEDS:, unknown ids too.
     (rt-set d "requirements.org" (concat rt-math-head (rt-conj "RQ-1" :uses "RQ-9")))
     (rt-set d "requirements.proofs.org" rt-proofs-head)
-    (rt-should-find (rt-run d "lint") "names RQ-9, which no requirement has")
+    (rt-should-find (rt-run d "lint") "names RQ-9, which no statement has")
     ;; A :VERIFY: line is not a lemma's text: changing a proof leaves the lemma.
     (rt-set d "requirements.org" (concat rt-head (rt-done "RQ-1")))
     (rt-commit d "old")
@@ -1867,7 +1867,7 @@ run of its finding's why text."
     (rt-set d "requirements.org" (concat rt-math-head (replace-regexp-in-string "Statement" "Changed" (rt-lemma "RQ-1"))))
     (rt-git d "add" "-A")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-05") (rt-run d "lint" "--staged" "--no-tests"))
-                    "a LEMMA requirement's text changed; make it CONJECTURE until the change is proven")))
+                    "a LEMMA statement's text changed; make it CONJECTURE until the change is proven")))
 
 ;;;; 01a2052f-a14c-7e72-8a8f-57ab97635a10: the proven date is called PROVEN
 
@@ -2084,7 +2084,7 @@ run of its finding's why text."
     (rt-set d "msg" "refactor: tidy (TK-1)\n")
     (rt-should-clean (rt-run d "commit-msg" "msg"))
     (rt-set d "msg" "refactor: tidy\n")
-    (rt-should-find (rt-run d "commit-msg" "msg") "names no requirement id")))
+    (rt-should-find (rt-run d "commit-msg" "msg") "names no statement id")))
 
 ;;;; 01a2039c-9e67-74bb-9ac4-63eac14f1e7c: tags declared, nested, inherited
 
@@ -2262,7 +2262,7 @@ run of its finding's why text."
     (rt-set d "src/x.clj" "(ns x) ;; 2\n")
     (rt-git d "add" "-A")
     (rt-set d "msg" "fix: no id\n")
-    (rt-should-find (rt-run d "commit-msg" "msg") "names no requirement id")
+    (rt-should-find (rt-run d "commit-msg" "msg") "names no statement id")
     ;; The setup's tags are the declared list.
     (rt-set d "reqs/requirements.org" (concat "#+SETUPFILE: ../lemmax.setup\n\n" (rt-tagged "RQ-1" ":zz:")))
     (rt-should-find (rt-run d "lint" "--no-tests") "the tag zz is not declared")))

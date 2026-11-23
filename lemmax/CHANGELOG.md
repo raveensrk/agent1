@@ -20,6 +20,8 @@ The first public release.
   `migrate` renames it.
 - `DEFINITION` headings name terms, accepted without proof; `definitions.org`
   holds Lemmax's.
+- Messages, help and internal names say "statement" for an item and "theory
+  file" for a file of them, not "requirement". `requirements.org` is still read.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
 - `#+SETUPFILE:` keywords; footnote definitions checked.
