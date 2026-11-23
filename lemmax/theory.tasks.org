@@ -70,7 +70,7 @@ They were written in a session with no Emacs, so nothing checked them.
 - Their ids were made by a script, not =lemmax new-id=; check each is a valid UUID v7
 - Done on 2026-11-23: lint passes; all 7 ids are valid UUID v7; the evidence of "An unrun proof is not a counterexample" is corrected: states are also listed in lemmax.el.
 
-* TODO Speak in maths terms only, and define them in definitions.org
+* DONE Speak in maths terms only, and define them in definitions.org
 :PROPERTIES:
 :ID:          01a205ad-8750-7196-94e6-9efa11ec9c2a
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
@@ -85,3 +85,4 @@ Lemmax says "requirement" about 160 times; it speaks in maths terms instead.
 - lemmax still reads files named =requirements.org= beside =theory.org=
 - Only =lemmax/= changes now; agent1's =requirements/requirements.org=, the add-requirement skill and the rules keep their words
 - In =definitions.org= each term is a =DEFINITION= heading with an =:ID:=, like an =AXIOM=: never proven, a statement may =:USES:= it, and lint checks the file
+- Done on 2026-11-23: d723e92 definitions.org and DEFINITION headings; cb02b33 messages, help and code names; 8f62157 and d30f2ca theory wording, 25 statements proven again.
