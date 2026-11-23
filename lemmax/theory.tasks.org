@@ -176,3 +176,21 @@ Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a set
 :LAST_EDITED: 2026-11-23
 :END:
 Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms.org finds it in agent1/theories/agent1/ after the move.
+
+* TODO Make every statement language-neutral
+:PROPERTIES:
+:ID:          01a20959-999f-7021-a401-a309fb4d3d93
+:FOR:         01a20959-95da-760e-82dc-2797c5af6abc
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Statements say what, not how: move names of lemmax.el, its functions and line numbers out of statement bodies into Evidence lines. Each proven statement this rewords goes through demote and prove again.
+
+* TODO Give every statement a chapter tag
+:PROPERTIES:
+:ID:          01a20959-9b7e-75b9-8465-794c9e68f2be
+:FOR:         01a20959-95da-760e-82dc-2797c5af6abc
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+Declare the chapter tag group in setup.org and tag each statement with one chapter: map today's feature tags, :cli: to interfaces, :lint: and :trace: to behavior, and so on.

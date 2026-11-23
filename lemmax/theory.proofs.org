@@ -924,3 +924,13 @@ A repo with two theories and a PNG gives one book file: definitions before lemma
 :LAST_EDITED: 2026-11-23
 :END:
 A repo with theories/a/ and theories/b/ lints clean; a theory file outside theories/ is refused; publish writes pages and a book per project under theories/_site/, and book --all one for the repo; git tracks nothing under _site/.
+
+* OPEN Proof: lemmax bible writes the design document of a finished project
+:PROPERTIES:
+:ID:          01a20959-97ba-7bb9-87c1-008eab2d0d3a
+:PROVES:      01a20959-95da-760e-82dc-2797c5af6abc
+:TEST:        ert/lemmax-bible-finished-only
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+A finished repo gives one bible file with chapters by tag, a glossary from definitions and a packed dot diagram; an open conjecture, an untagged statement or a rule in the hand-written chapters refuses it; no Evidence line or source path reaches the page.
