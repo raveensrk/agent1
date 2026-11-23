@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# run_tests - lemmax's ERT tests, each in its own Emacs, 8 at a time (RT-12).
+# run_tests - lemmax's ERT tests, each in its own Emacs, 8 at a time (RT-12);
+# a test tagged alone runs after them, by itself.
 #
 # usage: run_tests [--addresses | --only ADDRESS] [-h|--help|help]
 #   (none)          run every test; print PASS, FAIL or TIMEOUT per test, then the totals
@@ -56,7 +57,14 @@ case "${1:-}" in
 *) echo "run_tests: unknown option $1; see run_tests --help" >&2; exit 1 ;;
 esac
 
-out="$(roster | xargs -P 8 -n 2 "$0" --one)"
+# A test tagged alone (the mutation test, which runs 8 Emacs of its own, and the
+# tests that time a run) runs
+# after the rest, by itself, so its load slows no timed test.
+list="$(roster)"
+out="$(awk '$3 != "alone" {print $1, $2}' <<<"$list" | xargs -P 8 -n 2 "$0" --one)"
+while read -r name secs _; do
+	out+=$'\n'"$(run_one "$name" "$secs")"
+done < <(awk '$3 == "alone"' <<<"$list")
 printf '%s\n' "$out"
 pass=$(grep -c '^PASS' <<<"$out"); total=$(grep -cE '^(PASS|FAIL|TIMEOUT)' <<<"$out")
 echo "lemmax tests: $pass of $total passed"

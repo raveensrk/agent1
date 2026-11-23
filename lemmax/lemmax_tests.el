@@ -1404,7 +1404,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 ;;;; 01a202f3-88bb-704d-9ea9-74714f841514: the history walk stays fast
 
 (ert-deftest lemmax-history-cache ()
-  :tags '(timeout-300)
+  :tags '(timeout-300 alone)
   (let* ((d (rt-repo (rt-files (rt-req "RQ-1")) "2026-01-01"))
          (reqs (lambda (n) (concat rt-head (rt-req "RQ-1" :body (format "Text %d.\n" (/ n 50)))
                                    (rt-done "RQ-2" :needs "RQ-1" :implemented "2026-01-02")
@@ -1559,23 +1559,36 @@ run of its finding's why text."
     (mapcar #'cdr (sort (nreverse scored) (lambda (a b) (> (car a) (car b)))))))
 
 (ert-deftest lemmax-mutation-lint-rules ()
-  :tags '(timeout-600)
+  :tags '(timeout-600 alone)
   (let ((rules (rt-lint-rules)) uncovered survived)
     (should (> (length rules) 25))
-    (dolist (key rules)
-      (let ((tests (rt-tests-naming key)))
-        (if (null tests)
-            (push key uncovered)
-          ;; With the rule off, at least one test that names it must fail.
-          (unless (cl-some (lambda (name)
-                             ;; A test that also passes with the rule on cannot show it.
-                             (/= 0 (let ((process-environment (cons (concat "LEMMAX_MUTATE=" key) process-environment)))
-                                     (call-process "emacs" nil nil nil "-Q" "--batch"
-                                                   "-l" (expand-file-name "ert_roster.el" rt-dir)
-                                                   "-l" (expand-file-name "lemmax_tests.el" rt-dir)
-                                                   "--eval" (format "(ert-run-tests-batch-and-exit '%s)" name)))))
-                           tests)
-            (push key survived)))))
+    ;; With the rule off, at least one test that names it must fail. Each
+    ;; rule tries its tests in turn; rules run 8 at a time.
+    ;; lemma: RT-12
+    (let ((queue (cl-loop for key in rules
+                          for tests = (rt-tests-naming key)
+                          if tests collect (cons key tests)
+                          else do (push key uncovered)))
+          (running nil))
+      (cl-flet ((start (job)
+                  (let ((process-environment (cons (concat "LEMMAX_MUTATE=" (car job)) process-environment)))
+                    (push (cons (make-process :name "rt-mutant" :buffer nil :noquery t
+                                              :command (list "emacs" "-Q" "--batch"
+                                                             "-l" (expand-file-name "ert_roster.el" rt-dir)
+                                                             "-l" (expand-file-name "lemmax_tests.el" rt-dir)
+                                                             "--eval" (format "(ert-run-tests-batch-and-exit '%s)" (cadr job))))
+                                job)
+                          running))))
+        (while (or queue running)
+          (while (and queue (< (length running) 8)) (start (pop queue)))
+          (accept-process-output nil 0.05)
+          (dolist (r running)
+            (let ((proc (car r)) (job (cdr r)))
+              (unless (process-live-p proc)
+                (setq running (delq r running))
+                ;; A test that passes with the rule off cannot show it: try the next.
+                (when (= 0 (process-exit-status proc))
+                  (if (cddr job) (push (cons (car job) (cddr job)) queue) (push (car job) survived)))))))))
     (should (equal (list :uncovered nil :survived nil) (list :uncovered uncovered :survived survived)))))
 
 ;;;; 01a20336-c4d6-73d3-a429-0a755d277123: read only candidate files, once
@@ -1630,7 +1643,7 @@ run of its finding's why text."
         (should (equal read '("theories/t/requirements.org" "theories/t/requirements.org" "theories/t/requirements.org")))))))
 
 (ert-deftest lemmax-big-notes-repo-time ()
-  :tags '(timeout-120)
+  :tags '(timeout-120 alone)
   (let ((d (rt-repo (append (rt-files (rt-req "RQ-1" :created "2026-11-22" :last "2026-11-22"))
                             (cl-loop for i from 1 to 1500
                                      collect (cons (format "./notes/n%d.org" i)
@@ -2457,7 +2470,7 @@ run of its finding's why text."
 ;;;; 01a203c1-983f-77e1-a367-92ea000ab72f and 01a203c1-983f-77e1-a367-92eb7cba2954: speed
 
 (ert-deftest lemmax-run-time ()
-  :tags '(timeout-60)
+  :tags '(timeout-60 alone)
   ;; One real run, launcher and all, on a small repo: well under the old 1.2 s.
   (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
          (start (float-time)) (r (rt-run-proc d "list")) (took (- (float-time) start)))
