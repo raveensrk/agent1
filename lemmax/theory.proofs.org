@@ -1,15 +1,15 @@
-#+title: Proofs of lemmax requirements
+#+title: Proofs of lemmax theory
 #+TODO: OPEN(o) | PASSED(p)
 #+LEMMAX_TESTS: lemmax/run_tests --addresses
 #+LEMMAX_CODE: lemmax/ harness/checks/lemmax_lint.py
 
-* PASSED Proof: lemmax lints and traces org requirements
+* PASSED Proof: lemmax lints and traces org theories
 :PROPERTIES:
 :ID:          01a20389-b15c-755e-930b-a202685d095f
 :PROVES:      RT-1
 :TEST:        ert/lemmax-end-to-end
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -73,13 +73,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: trace: the links of every requirement
+* PASSED Proof: trace: the links of every statement
 :PROPERTIES:
 :ID:          01a20389-b167-7d4b-930c-254e24d01dea
 :PROVES:      RT-8
 :TEST:        ert/lemmax-trace-block ert/lemmax-trace-links ert/lemmax-trace-verify-status ert/lemmax-trace-commits ert/lemmax-trace-orphans ert/lemmax-trace-one-id ert/lemmax-trace-unknown-id
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -123,13 +123,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: list: every requirement in a table
+* PASSED Proof: list: every statement in a table
 :PROPERTIES:
 :ID:          01a20389-b16f-7d76-a881-d1c7382bb94d
 :PROVES:      RT-13
 :TEST:        ert/lemmax-list-table ert/lemmax-list-groups ert/lemmax-list-filters ert/lemmax-list-no-id ert/lemmax-list-all-repos ert/lemmax-list-json
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -163,13 +163,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: trace ID prints the requirement's text
+* PASSED Proof: trace ID prints the statement's text
 :PROPERTIES:
 :ID:          01a20389-b175-7eb4-a6c5-7283f64e2ca7
 :PROVES:      RT-17
 :TEST:        ert/lemmax-trace-one-id-text
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 

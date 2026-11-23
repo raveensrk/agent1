@@ -1,6 +1,6 @@
 # lemmax
 
-Lint, trace and list a repo's org requirements.
+Lint, trace and list a repo's org theories.
 lemmax was reqtrace until 2026-11-21; `#+REQTRACE_*` keywords still read.
 
 <!-- lemma: 01a20336-cc5d-70ae-878b-b241ecc9ef61 -->
@@ -13,11 +13,11 @@ Runs on macOS and Linux; on Windows through WSL or Git Bash, not natively.
 Needs Emacs 29 or newer, git and Bash; `run_tests` also needs Perl.
 
 ```sh
-lemmax list --ready           # every requirement, grouped; only approved and open
+lemmax list --ready           # every statement, grouped; only approved and open
 lemmax list --all --json      # every repo under ~/repos, for an AI
 lemmax plan                   # the steps to rebuild the project: environment, then one lemma at a time
 lemmax next-id M              # the next free id, as M-15
-lemmax trace RT-3             # one requirement's links, tests and commits
+lemmax trace RT-3             # one statement's links, tests and commits
 lemmax trace --dot | dot -Tsvg > lemmas.svg   # the lemma graph
 lemmax list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from any folder
 lemmax lint --staged          # what the pre-commit hook runs
@@ -40,7 +40,7 @@ lemmax lint --staged          # what the pre-commit hook runs
   rule off in turn (`LEMMAX_MUTATE`) and needs a test to fail.
 - `lint`, `commit-msg` and `trace` read files whose header has `#+LEMMAX_TESTS:`,
   or that `lemmax/config.eld` names (see Config).
-  `list` and `next-id` read every requirements file.
+  `list` and `next-id` read every theory file.
 - The global hooks in `harness/githooks` call it: `pre-commit` runs
   `lint --staged --no-tests`, `commit-msg` runs `commit-msg`. A repo with no
   opted-in file never starts Emacs.
@@ -51,8 +51,8 @@ lemmax lint --staged          # what the pre-commit hook runs
 
 <!-- lemma: 01a20369-38d2-7202-8b53-6e296aaac489 -->
 
-Conjecture + proof = lemma. A requirement is a conjecture: its statement,
-ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
+Conjecture + proof = lemma. A conjecture is a statement not yet proven: what it
+says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 
 ```org
 * PASSED Proof: lint reads states

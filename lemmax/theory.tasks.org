@@ -30,14 +30,14 @@ Only the related tests ran when they were built. Run =lemmax/run_tests= once and
 :END:
 =theory.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
 
-* TODO Rebuild lemmax from its requirements alone
+* TODO Rebuild lemmax from its statements alone
 :PROPERTIES:
 :ID:          01a205a5-79e6-72b6-88e6-113ea1cc9f1e
 :FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
-A fresh agent, given only =lemmax plan=, the requirements, proofs and axioms, rebuilds lemmax in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
+A fresh agent, given only =lemmax plan=, the statements, proofs and axioms, rebuilds lemmax in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
 
 * TODO Say that a passing test is evidence, not proof
 :PROPERTIES:
