@@ -44,3 +44,6 @@ The first public release.
 - `:VERIFY:`, `:NEEDS:` and `:USES:` are no longer part of a requirement's
   text: changing them no longer reopens a DONE requirement or makes its
   children suspect.
+- Attachments: any heading's files, in the folder `org-attach-dir` gives; lint
+  checks the `:ATTACH:` tag, untracked links and orphans; `trace` shows
+  `files:`, `list --json` a `files` array.

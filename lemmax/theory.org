@@ -1333,12 +1333,13 @@ Lemmax never breaks a file written in an older format; it reads the old form, wa
 - Asked by the owner on 2026-11-23
 Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =:USES:=, =:VERIFY:= or =:TEST:=.
 
-** CONJECTURE Any heading has attachments, as org-attach keeps them       :lint:
+** LEMMA Any heading has attachments, as org-attach keeps them            :lint:
 :PROPERTIES:
 :ID:          01a2090e-8591-756c-a9f1-dd473d9c3ce4
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-23
+:PROVEN:      2026-11-24
 :END:
 - Any heading with an :ID: may have files: statements, proofs, tasks, notes, axioms and definitions; any file type
 - A heading's folder is the one org-attach-dir gives: :DIR: if set, else from :ID: under org-attach-id-dir (data/), with Org's own folder layout and inheritance
@@ -1348,7 +1349,8 @@ Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =
 - lint refuses a tracked file in an attach folder that no heading links
 - lint warns, without failing, on a linked file over 5 MB
 - trace prints each heading's files under files:; list --json gives them as "files"
-- Web links and linked .org files are references, not attachments
+- Web links, linked .org files and files outside the repo are references, not attachments
+- The :ATTACH: tag needs no #+TAGS: line: it is Org's own, org-attach-auto-tag
 - Asked by the owner on 2026-11-23
 Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id-to-path-function-list (01a2058c-… → data/01/a2058c-…); org-attach-auto-tag is "ATTACH".
 

@@ -605,6 +605,52 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (should (string-match-p "lemmax list --json" text))
     (should (string-match-p "lemmax next-id" text))))
 
+;;;; 01a2090e-8591-756c-a9f1-dd473d9c3ce4: any heading has attachments, as org-attach keeps them
+
+(defun rt-attach-conj (id tag body)
+  "A conjecture ID, tagged TAG when non-nil, whose text is BODY."
+  (replace-regexp-in-string "Statement\\.\n" body
+                            (replace-regexp-in-string (concat "Title of " id "\n")
+                                                      (concat "Title of " id (if tag (concat " :" tag ":") "") "\n")
+                                                      (rt-conj id) t t)
+                            t t))
+
+;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
+(ert-deftest lemmax-attach-links ()
+  :tags '(timeout-60)
+  (let* ((d (rt-repo (append (rt-math-files (list (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]] and [[file:docs/b.pdf]], [[file:other.org]], [[https://example.invalid/x.png]].\n")) nil)
+                             (list (cons "data/RQ/-1/a.png" "png") (cons "docs/b.pdf" "pdf"))))))
+    ;; The folder is the one org-attach-dir gives: data/ + the id split by Org.
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "^  files: data/RQ/-1/a.png docs/b.pdf$" (nth 1 (rt-run d "trace" "RQ-1"))))
+    (let* ((rows (append (cdr (assq 'rows (json-read-from-string (nth 1 (rt-run d "list" "--json"))))) nil))
+           (row (cl-find "RQ-1" rows :key (lambda (x) (cdr (assq 'id x))) :test #'equal)))
+      (should (equal ["data/RQ/-1/a.png" "docs/b.pdf"] (cdr (assq 'files row)))))
+    ;; No :ATTACH: tag.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-attach-conj "RQ-1" nil "See [[attachment:a.png]] and [[file:docs/b.pdf]].\n")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: an attachment: link, and the heading has no :ATTACH: tag")
+    ;; A file git does not track.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]], [[file:docs/b.pdf]] and [[file:docs/new.gif]].\n")))
+    (rt-set d "docs/new.gif" "gif")
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: it links docs/new.gif, which git does not track")
+    ;; An orphan: a tracked file in the attach folder that nothing links.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-attach-conj "RQ-1" "ATTACH" "See [[file:docs/b.pdf]].\n")))
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-run d "lint" "--no-tests") "data/RQ/-1/a.png:1: -: a tracked file in an attach folder that no heading links")
+    ;; :DIR: names the folder; over 5 MB warns and fails nothing.
+    (rt-set d "requirements.org"
+            (concat rt-math-head
+                    (replace-regexp-in-string ":END:" ":DIR:         pics\n:END:"
+                                              (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:big.png]] and [[attachment:a.png]].\n") t t)
+                    (rt-attach-conj "RQ-2" "ATTACH" "See [[attachment:a.png]].\n")))
+    (rt-write d (list (cons "pics/big.png" (make-string (* 6 1024 1024) ?x)) (cons "pics/a.png" "png")))
+    (rt-git d "rm" "-q" "data/RQ/-1/a.png")
+    (rt-set d "data/RQ/-2/a.png" "png")
+    (rt-git d "add" "-A")
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (should (= 0 (nth 0 r)))
+      (should (string-match-p "RQ-1: warning: pics/big.png is 6.0 MB, over 5 MB" (nth 2 r))))))
+
 ;;; lemmax_tests.el ends here
 
 ;;;; RT-16
@@ -1222,7 +1268,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
          (type (lambda (v) (cond ((eq v :null) 'null) ((memq v '(t :false)) 'bool) ((stringp v) 'string)
                                  ((numberp v) 'number) ((vectorp v) 'array) (t 'object)))))
     (should (equal '((id . string) (state . string) (group . string) (approved . string) (verify . array)
-                     (check . string) (needs . array) (refs . array) (linked_from . array) (title . string)
+                     (check . string) (needs . array) (refs . array) (files . array) (linked_from . array) (title . string)
                      (file . string) (line . number) (markers . array))
                    (mapcar (lambda (kv) (cons (car kv) (funcall type (cdr kv)))) row)))))
 
@@ -2042,7 +2088,8 @@ run of its finding's why text."
 (ert-deftest lemmax-axioms ()
   :tags '(timeout-60)
   (let* ((ax "* AXIOM Git\n:PROPERTIES:\n:ID:          AX-1\n:CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\nSee [[file:rules/git.md][Git]].\n")
-         (d (rt-repo (rt-kinds-files (cons "axioms.org" (concat "#+TODO: | AXIOM\n#+LEMMAX_TESTS: ./tests.sh\n\n" ax))))))
+         (d (rt-repo (append (rt-kinds-files (cons "axioms.org" (concat "#+TODO: | AXIOM\n#+LEMMAX_TESTS: ./tests.sh\n\n" ax)))
+                             (list (cons "rules/git.md" "# Git\n"))))))
     (rt-should-clean (rt-run d "lint"))
     (should (string-match-p "^Axioms (1)\n  AX-1 " (nth 1 (rt-run d "list"))))
     (should (string-match-p "AX-1" (nth 1 (rt-run d "list" "--state" "axiom"))))

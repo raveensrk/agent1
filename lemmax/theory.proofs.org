@@ -855,13 +855,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 A DEFINITION with no proof lints clean; a proof that proves one is refused; a LEMMA that uses one lints clean; list shows a Definitions group.
 
-* OPEN Proof: Any heading has attachments, as org-attach keeps them
+* PASSED Proof: Any heading has attachments, as org-attach keeps them
 :PROPERTIES:
 :ID:          01a2090e-8d32-7e72-b71c-fabad2c8a689
 :PROVES:      01a2090e-8591-756c-a9f1-dd473d9c3ce4
 :TEST:        ert/lemmax-attach-links
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 Attach folders come from org-attach-dir; lint refuses an untagged heading, a missing file and an orphan, and warns over 5 MB; trace and list --json show the files.
 

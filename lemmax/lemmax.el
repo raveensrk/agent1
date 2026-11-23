@@ -22,6 +22,7 @@
 (require 'cl-lib)
 (require 'json)
 (require 'time-date)
+(require 'org-attach)
 
 ;; lemma: 01a20336-c80d-733a-a251-ad26a0ebf7d3
 (defconst lemmax-version "1.0.0" "lemmax's release, semver; CHANGELOG.md names each.")
@@ -249,11 +250,38 @@ TAGS-OWN its own tags, TAGS those with the inherited and file tags."
         :text (lemmax--entry-text raw)
         :body (lemmax--entry-body raw)))
 
+;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
+(defconst lemmax--file-link-re "\\[\\[\\(attachment\\|file\\):\\([^]\n]+?\\)\\(?:::[^]\n]*\\)?\\]"
+  "An attachment: or file: link; group 1 the kind, group 2 the path.")
+
+(defun lemmax--attach-info (root raw)
+  "At a heading, its RAW text: (:attach-dir DIR :attach-links N :files PATHS).
+DIR is the folder `org-attach-dir' gives, relative to ROOT, the repo root;
+PATHS the repo files its attachment: and file: links name; a linked .org
+file is a reference and not among them."
+  (let* ((abs (let ((org-attach-id-dir (expand-file-name org-attach-id-dir)))
+                (ignore-errors (org-attach-dir nil t))))
+         (abs (and abs (expand-file-name abs)))
+         (text (lemmax--blank-verbatim raw)) (pos 0) (n 0) files)
+    (while (string-match lemmax--file-link-re text pos)
+      (setq pos (match-end 0))
+      (let* ((kind (match-string 1 text)) (name (string-trim (match-string 2 text)))
+             (path (if (equal kind "attachment")
+                       (progn (setq n (1+ n)) (and abs (expand-file-name name abs)))
+                     (expand-file-name name))))
+        ;; A file outside the repo is a reference, as a web link is.
+        (when (and path (not (string-suffix-p ".org" path)) (file-in-directory-p path root))
+          (push (file-relative-name path root) files))))
+    (list :attach-dir (and abs (file-name-as-directory (file-relative-name abs root)))
+          :attach-links n
+          :files (delete-dups (nreverse files)))))
+
 (defun lemmax--parse (content file)
   "Parse org CONTENT named FILE: plist (:file :keywords :opted :listed :statements).
 A UTF-8 BOM and CRLF line ends are read as the plain form."
   ;; lemma: 01a202f3-8964-7333-8165-dba3d86556b5
   (setq content (replace-regexp-in-string "\r$" "" (string-remove-prefix "\ufeff" content)))
+  (let ((root default-directory))
   ;; lemma: 01a203a6-a766-76c6-9931-753ee75e9318
   ;; A #+SETUPFILE: path is read from the file's folder, in the work tree.
   (with-temp-buffer
@@ -308,7 +336,10 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                                        (let ((org-use-tag-inheritance t))
                                          (delete-dups (mapcar #'substring-no-properties (org-get-tags))))
                                        (lemmax--ordered-before))
-                       statements)))))))
+                       statements)
+                 ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
+                 (setcar statements (append (car statements)
+                                            (lemmax--attach-info root (buffer-substring-no-properties beg end))))))))))
         (let* ((tests-kw (or (assoc "LEMMAX_TESTS" kw) (assoc "REQTRACE_TESTS" kw)))
                (code-kw (or (assoc "LEMMAX_CODE" kw) (assoc "REQTRACE_CODE" kw)))
                (opted (and tests-kw t)))
@@ -329,7 +360,7 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                 :listed (or opted
                             (lemmax--theory-name-p file)
                             (and todo (string-match-p "\\_<\\(?:OPEN\\|CONJECTURE\\)\\_>" todo) t))
-                :statements (nreverse statements)))))))
+                :statements (nreverse statements))))))))
 
 ;; lemma: 01a203a6-a716-738e-a95b-18086050d5eb
 (defun lemmax--ordered-before ()
@@ -916,6 +947,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
         (lemmax--lint-coverage infos only staged)
         (lemmax--lint-env only)
         (lemmax--lint-links infos only staged)
+        (lemmax--lint-attach infos only)
         (lemmax--lint-markers-in infos only)
         (dolist (i infos)
           (when (and (plist-get i :misplaced) (or (null only) (member (plist-get i :file) only)))
@@ -934,6 +966,48 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                         (cons 'findings (vconcat (reverse lemmax--json-findings)))))
                      "\n")))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
+
+;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
+(defun lemmax--lint-attach (infos only)
+  "Attachments: an attachment: link needs the :ATTACH: tag, a linked file must
+be tracked, and a tracked file in an attach folder must be linked. A linked
+file over 5 MB is a warning that fails nothing."
+  (let* ((tracked (make-hash-table :test #'equal))
+         (show (lambda (f) (or (null only) (member f only))))
+         (all (lemmax--all-statements infos))
+         (linked (make-hash-table :test #'equal))
+         roots)
+    (dolist (f (split-string (or (lemmax--git-out "ls-files" "-z") "") "\0" t)) (puthash f t tracked))
+    (dolist (i infos)
+      (push (cons (concat (or (file-name-directory (plist-get i :file)) "")
+                          (file-name-as-directory org-attach-id-dir))
+                  (plist-get i :file))
+            roots))
+    (dolist (r all)
+      (let ((f (plist-get r :file)) (l (plist-get r :line)) (id (plist-get r :id)))
+        (when (plist-get r :attach-dir) (push (cons (plist-get r :attach-dir) f) roots))
+        (dolist (x (plist-get r :files)) (puthash x t linked))
+        (when (funcall show f)
+          (when (and (> (or (plist-get r :attach-links) 0) 0)
+                     (not (member "ATTACH" (plist-get r :tags-own))))
+            (lemmax--finding f l id "an attachment: link, and the heading has no :ATTACH: tag"
+                             "tag the heading :ATTACH:, as org-attach does"))
+          (dolist (x (plist-get r :files))
+            (if (not (gethash x tracked))
+                (lemmax--finding f l id (format "it links %s, which git does not track" x)
+                                 "git add the file, or fix the link")
+              (let ((size (file-attribute-size (file-attributes x))))
+                (when (and size (> size (* 5 1024 1024)))
+                  (lemmax--err "lemmax: %s:%d: %s: warning: %s is %.1f MB, over 5 MB; keep it smaller, or link it from outside the repo"
+                               f l (or id "-") x (/ size 1048576.0)))))))))
+    (let ((seen (make-hash-table :test #'equal)))
+      (dolist (x (sort (hash-table-keys tracked) #'string<))
+        (let ((root (cl-find-if (lambda (rt) (string-prefix-p (car rt) x)) roots)))
+          (when (and root (not (gethash x linked)) (not (gethash x seen))
+                     (not (string-suffix-p ".org" x)) (funcall show (cdr root)))
+            (puthash x t seen)
+            (lemmax--finding x 1 nil "a tracked file in an attach folder that no heading links"
+                             "link it with attachment:NAME from its heading, or git rm it")))))))
 
 ;;;; Footnotes (01a203a6-a779-73fc-8abf-99f8c8816867)
 
@@ -975,7 +1049,9 @@ of its own, the :TEST: addresses of its proofs as :verify."
             (lemmax--finding f 1 nil (format "the file tag %s is not declared" tg) "add it to #+TAGS:")))
         (dolist (r (plist-get i :statements))
           (dolist (tg (plist-get r :tags-own))
-            (unless (member tg declared)
+            ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
+            ;; Org's own attach tag needs no declaring.
+            (unless (or (member tg declared) (equal tg org-attach-auto-tag))
               (lemmax--finding f (plist-get r :line) (plist-get r :id)
                                (format "the tag %s is not declared" tg) "add it to #+TAGS:, or fix the tag"))))
         (let ((groups (plist-get i :tag-groups)) (reported nil))
@@ -1368,6 +1444,8 @@ One git process reads every revision of a file; a blob seen before is skipped."
       (lemmax--out (if math "  uses: %s" "  parents: %s") (if (plist-get r :needs) (string-join (plist-get r :needs) " ") "none"))
       (lemmax--out (if math "  used by: %s" "  children: %s") (if children (string-join children " ") "none")))
     (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
+    ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
+    (when (plist-get r :files) (lemmax--out "  files: %s" (string-join (plist-get r :files) " ")))
     ;; lemma: 01a20369-393d-77bf-a35a-a1c03780a751
     (when (plist-get r :proves) (lemmax--out "  proves: %s" (string-join (plist-get r :proves) " ")))
     (when (plist-get r :for) (lemmax--out "  for: %s" (string-join (plist-get r :for) " ")))
@@ -1650,6 +1728,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
             (cons 'check (plist-get r :check))
             (cons 'needs (vconcat (plist-get r :needs)))
             (cons 'refs (vconcat (plist-get r :refs)))
+            (cons 'files (vconcat (plist-get r :files)))
             (cons 'linked_from (vconcat (mapcar (lambda (b) (list (cons 'id (or (nth 0 b) :null)) (cons 'file (nth 1 b))
                                                                   (cons 'line (nth 2 b))))
                                                 (plist-get r :linked-from))))
