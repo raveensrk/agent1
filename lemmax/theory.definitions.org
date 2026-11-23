@@ -1,4 +1,4 @@
-#+title: Definitions of lemmax
+#+title: Definitions of lemmax theory
 #+TODO: | DEFINITION
 #+LEMMAX_TESTS: lemmax/run_tests --addresses
 

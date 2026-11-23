@@ -86,7 +86,7 @@ Four kinds need no proof:
 - An `AXIOM` heading is a rule accepted without proof; agent1's are in
   `requirements/axioms.org`. A proof may not prove one; a theorem may use one.
 - A `DEFINITION` heading names a term, accepted without proof; Lemmax's are in
-  [definitions.org](definitions.org). A proof may not prove one; any statement
+  [theory.definitions.org](theory.definitions.org). A proof may not prove one; any statement
   may use one.
 
 `list` groups each kind apart; lint checks their links.

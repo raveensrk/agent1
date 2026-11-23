@@ -998,22 +998,21 @@ Evidence: a heading with :ID: and no state is already read as a record by =lemma
 - Asked by the owner on 2026-11-22
 Evidence: states are read through =lemmax-states=.
 
-** THEOREM DEFINITION headings name the terms                          :lemmax:
+** CONJECTURE DEFINITION headings name the terms                          :lemmax:
 :PROPERTIES:
 :ID:          01a20757-95c1-70d9-882a-875672207343
 :USES:        01a2038d-cc86-72be-b225-eeff9ee2c7a6
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :APPROVED:    2026-11-23
-:PROVEN:      2026-11-23
 :END:
 A heading in state =DEFINITION= defines one term; like an axiom it is accepted, never proven.
 - A definition has an =:ID:=, =:CREATED:= and =:LAST_EDITED:=; it needs no =:APPROVED:=, =:PROVEN:=, proof or code marker
 - lint refuses a proof whose =:PROVES:= names a definition; any statement may =:USES:= one, and it counts as proven
 - lint checks a definitions file like any opted-in file: ids, dates, tags, links
 - list puts definitions in a group of their own, Definitions; =--state= takes =definition=
-- =lemmax/definitions.org= holds Lemmax's terms, one =DEFINITION= heading each: the rows of the Mathematics/Lemmax table, plus "statement", the word for any item whatever its state
-- agent1 =requirements/requirements.org= keeps a link to =lemmax/definitions.org= where the table was
+- =lemmax/theory.definitions.org= holds Lemmax's terms, one =DEFINITION= heading each: the rows of the Mathematics/Lemmax table, plus "statement", the word for any item whatever its state
+- agent1 =requirements/requirements.org= keeps a link to =lemmax/theory.definitions.org= where the table was
 - Asked by the owner on 2026-11-23
 Evidence: AXIOM is read through =lemmax-states= (lemmax.el:31) and the keyword lists at lines 260, 2268 and 2338; DEFINITION joins the same four.
 
@@ -1412,3 +1411,22 @@ Lemmax extends Org mode; it invents nothing Org or an Org add-on already does.
 - Dates come from Org's log: the state-change entries Org writes in the LOGBOOK drawer and the CLOSED: line, not Lemmax's own date properties
 - Asked by the owner on 2026-11-23
 Evidence: Org already supplies TODO keywords, tags, priorities, :ID: and id: links, archiving and publishing, which Lemmax uses; org-log-done, org-log-into-drawer and state-change notes record dates; #+PROPERTY: and #+SETUPFILE: set file-wide values.
+
+** CONJECTURE lemmax book writes the theory as one HTML file              :cli:
+:PROPERTIES:
+:ID:          01a20927-9aac-7817-8e46-8635aa0ae127
+:USES:        01a203a6-a752-75ed-8359-a8147e95a33d 01a2090e-8b52-7173-947b-d882b237ad05 01a204fc-d718-7e50-95a3-4ca72898a15b
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
+:END:
+lemmax book writes the repo's theory as one self-contained HTML file, with Org's own publishing.
+- It writes .lemmax/book/book.org: the title, then one #+INCLUDE: per theory file and companion, in rebuild order
+- It holds every theory file and its companions: definitions, axioms, statements, proofs, tasks and notes
+- Chapters follow the rebuild order lemmax plan gives: definitions and axioms first, then each lemma before what uses it
+- It publishes that one file with org-publish, as a project of its own: org-html-publish-to-html, html5-fancy on
+- The page goes to .lemmax/book.html, or --out FILE; it writes nothing else outside .lemmax/
+- id: links become links inside the page
+- An export filter on org-export-filter-final-output-functions packs every linked image, SVG, GIF and video into the page as a data: URI, so the file opens offline with nothing beside it
+- Asked by the owner on 2026-11-23
+Evidence: org-publish publishes each file a project includes, so one entry file gives one page; #+INCLUDE: joins the files (org-export-expand-include-keyword); Org's final-output filters let a backend rewrite the HTML; no Org 9.8.7 file writes data: URIs, and Emacs's base64-encode-region does.
