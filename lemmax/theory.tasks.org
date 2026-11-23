@@ -103,7 +103,7 @@ Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-ch
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
-#+LEMMAX_TESTS:, #+LEMMAX_CODE:, #+LEMMAX_TEST_PATHS: and #+LEMMAX_MARKERS_IN: become #+PROPERTY: lines that Org's own property inheritance reads. The old keywords still read until migrate moves them.
+The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= and =#+LEMMAX_MARKERS_IN:= become =#+PROPERTY:= lines that Org's own property inheritance reads. The old keywords still read until migrate moves them.
 
 * TODO lemmax/config.eld becomes #+SETUPFILE: or .dir-locals.el
 :PROPERTIES:
