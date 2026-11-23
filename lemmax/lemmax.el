@@ -47,7 +47,13 @@
   (or (lemmax--task-p r) (lemmax--note-p r) (lemmax--axiom-p r)))
 (defun lemmax--proof-p (r) "Whether R is a proof: it has :PROVES:, or lives in a proofs file."
   (and (or (plist-get r :proves) (lemmax--proofs-file-p (plist-get r :file))) t))
-(defconst lemmax-dates '("CREATED" "LAST_EDITED" "APPROVED" "IMPLEMENTED" "REVIEWED"))
+(defconst lemmax-dates '("CREATED" "LAST_EDITED" "APPROVED" "PROVEN" "IMPLEMENTED" "REVIEWED"))
+;; lemma: 01a2052f-a14c-7e72-8a8f-57ab97635a10
+(defun lemmax--date-name (r)
+  "The name of R's proven day as R's file writes it: the one R has, else
+PROVEN for a math name and IMPLEMENTED for an old one."
+  (or (plist-get r :date-key)
+      (if (lemmax--new-state-p (plist-get r :state)) "PROVEN" "IMPLEMENTED")))
 (defvar lemmax--findings 0)
 ;; lemma: 01a202f3-834a-7fcc-9a94-a50f2d1ab85c
 (defvar lemmax--run-tests nil
@@ -220,7 +226,10 @@ TAGS-OWN its own tags, TAGS those with the inherited and file tags."
         :created (funcall get "CREATED")
         :last-edited (funcall get "LAST_EDITED")
         :approved (funcall get "APPROVED")
-        :implemented (funcall get "IMPLEMENTED")
+        ;; lemma: 01a2052f-a14c-7e72-8a8f-57ab97635a10
+        :implemented (or (funcall get "PROVEN") (funcall get "IMPLEMENTED"))
+        :date-key (cond ((funcall get "PROVEN") "PROVEN") ((funcall get "IMPLEMENTED") "IMPLEMENTED"))
+        :both-dates (and (funcall get "PROVEN") (funcall get "IMPLEMENTED") t)
         :reviewed (funcall get "REVIEWED")
         ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
         :needs (append (lemmax--id-list (funcall get "NEEDS")) (lemmax--id-list (funcall get "USES")))
@@ -655,12 +664,19 @@ of its own, the :TEST: addresses of its proofs as :verify."
           (unless (or (plist-get r :last-edited) (lemmax--note-p r))
             (lemmax--finding f l id "no :LAST_EDITED:" "add :LAST_EDITED: YYYY-MM-DD"))
           (when (and (lemmax--done-p state) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r)) (null (plist-get r :implemented)))
-            (lemmax--finding f l id (format "%s with no :IMPLEMENTED:" state) "add :IMPLEMENTED: with the day it was built"))
+            (lemmax--finding f l id (format "%s with no :%s:" state (lemmax--date-name r))
+                             (format "add :%s: with the day it was proven" (lemmax--date-name r))))
           (when (and (or (lemmax--open-p state) (lemmax--dropped-p state)) (not (lemmax--proof-p r))
                      (plist-get r :implemented))
-            (lemmax--finding f l id (format "%s with :IMPLEMENTED:" state)
-                               (if (lemmax--new-state-p state) "remove :IMPLEMENTED:, or prove it a LEMMA"
-                                 "remove :IMPLEMENTED:, or make it DONE")))
+            (lemmax--finding f l id (format "%s with :%s:" state (lemmax--date-name r))
+                               (if (lemmax--new-state-p state) (format "remove :%s:, or prove it a LEMMA" (lemmax--date-name r))
+                                 (format "remove :%s:, or make it DONE" (lemmax--date-name r)))))
+          ;; lemma: 01a2052f-a14c-7e72-8a8f-57ab97635a10
+          (when (plist-get r :both-dates)
+            (lemmax--finding f l id "both :PROVEN: and :IMPLEMENTED:" "keep :PROVEN: and remove :IMPLEMENTED:"))
+          (when (and (equal (plist-get r :date-key) "PROVEN") (not (lemmax--new-state-p state)) (not (lemmax--proof-p r)))
+            (lemmax--finding f l id (format "%s with :PROVEN:" (or state "no state"))
+                             "only a LEMMA or THEOREM has :PROVEN:; use :IMPLEMENTED:, or run lemmax migrate"))
           (dolist (p '(:created :last-edited :approved :implemented :reviewed))
             (let ((v (plist-get r p)))
               (when (and v (not (lemmax--day-p v)))
@@ -766,7 +782,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
             (lemmax--finding f l id (format "a proof's state is OPEN or PASSED, not %s" (or state "none"))
                              "make it OPEN, or PASSED once its tests pass"))
           (when (plist-get r :implemented)
-            (lemmax--finding f l id "a proof with :IMPLEMENTED:" "remove it; the conjecture it proves holds the day"))
+            (lemmax--finding f l id (format "a proof with :%s:" (plist-get r :date-key)) "remove it; the conjecture it proves holds the day"))
           (if (null (plist-get r :proves))
               (lemmax--finding f l id "a proof with no :PROVES:" "name the conjectures it proves in :PROVES:")
             (dolist (c (plist-get r :proves))
@@ -848,15 +864,15 @@ of its own, the :TEST: addresses of its proofs as :verify."
                                      (format "set :LAST_EDITED: %s" today)))
                 (when (and done (not (lemmax--done-p (plist-get old :state)))
                            (not (equal (plist-get r :implemented) today)))
-                  (lemmax--finding f l id "it turned DONE and :IMPLEMENTED: is not today"
-                                     (format "set :IMPLEMENTED: %s" today))))
+                  (lemmax--finding f l id (format "it turned DONE and :%s: is not today" (lemmax--date-name r))
+                                     (format "set :%s: %s" (lemmax--date-name r) today))))
             (unless (or (lemmax--note-p r)
                         (and (equal (plist-get r :created) today) (equal (plist-get r :last-edited) today)))
               (lemmax--finding f l id "a new requirement whose :CREATED: or :LAST_EDITED: is not today"
                                  (format "set both to %s" today)))
             (when (and done (not (equal (plist-get r :implemented) today)))
-              (lemmax--finding f l id "new and DONE, and :IMPLEMENTED: is not today"
-                                 (format "set :IMPLEMENTED: %s" today)))))))))
+              (lemmax--finding f l id (format "new and DONE, and :%s: is not today" (lemmax--date-name r))
+                                 (format "set :%s: %s" (lemmax--date-name r) today)))))))))
 
 (defun lemmax-lint (args)
   (setq lemmax--json-mode (and (member "--json" args) t))
@@ -2044,6 +2060,14 @@ opts in, then the hook that was there before, kept as NAME.local."
   (let ((title (and lemmax--migrate-titles (gethash id lemmax--migrate-titles))))
     (if lemmax--migrate-titles (format "[[id:%s][%s]]" id (or title id)) id)))
 
+;; lemma: 01a2052f-a14c-7e72-8a8f-57ab97635a10
+(defun lemmax--migrate-proven (text)
+  "TEXT with :IMPLEMENTED: renamed :PROVEN:, its value kept in its column."
+  (replace-regexp-in-string "^\\([ \t]*\\):IMPLEMENTED:\\([ \t]*\\)"
+                            (lambda (m) (concat (match-string 1 m) ":PROVEN:"
+                                                (make-string (+ 5 (length (match-string 2 m))) ?\s)))
+                            text t t))
+
 (defun lemmax--migrate-chunk (chunk today file-lemma title uses-of)
   "CHUNK, one heading's text (or a file lemma's, with FILE-LEMMA and TITLE), in
 the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text.
@@ -2071,7 +2095,11 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
     (when (and head (string-match "\\`\\(\\*+ +\\)\\(OPEN\\|DONE\\|DROPPED\\)\\_>\\(.*\\)\\'" head))
       (setq old-state (match-string 2 head)))
     (if (null old-state)
-        (cons chunk nil)
+        (cons (if (or (and head (string-match-p "\\`\\*+ +\\(?:LEMMA\\|THEOREM\\)\\_>" head))
+                      (and file-lemma (string-match-p "^[ \t]*:STATE:[ \t]*\\(?:LEMMA\\|THEOREM\\)\\_>" chunk)))
+                  (lemmax--migrate-proven chunk)
+                chunk)
+              nil)
       (let* ((new (or (cdr (assoc old-state lemmax--migrate-states)) (if needs "THEOREM" "LEMMA")))
              (text (if file-lemma
                        (mapconcat (lambda (l) (string-replace "@STATE@" new l)) out "\n")
@@ -2095,7 +2123,7 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
           (lemmax--err "lemmax: a heading with :VERIFY: and no :ID: keeps its :VERIFY:: %s" (or name "")))
         (when (and verify (not id))
           (setq text chunk))
-        (cons text proof)))))
+        (cons (if (member new '("LEMMA" "THEOREM")) (lemmax--migrate-proven text) text) proof)))))
 
 (defun lemmax--migrate-uses (chunks)
   "Hash: each parent id named in a :NEEDS: of CHUNKS to its children's ids, in
@@ -2381,7 +2409,7 @@ Check the requirements files' rules, in files that opt in.
 example: lemmax lint --staged --no-tests"
      "--staged    read the staged copies and refuse changes against HEAD:
             a DONE requirement whose text changed, :LAST_EDITED: not today,
-            a new requirement not dated today, a DONE one not :IMPLEMENTED: today
+            a new requirement not dated today, a DONE one not :PROVEN: today
 --no-tests  skip the test command and the :VERIFY: rule
 --json      the findings on stdout as {"version": 1, "findings": [{file, line,
             id, why, fix}]}, none on stderr; the same exit code
@@ -2400,7 +2428,7 @@ Print each requirement's parents, children, tests and commits.
 example: lemmax trace RT-3"
      "With no ID: one block per requirement, then the orphan tests, which no
 :VERIFY: names, then the suspect children: DONE requirements whose parent's
-text changed in git after their :IMPLEMENTED: or :REVIEWED: day.
+text changed in git after their :PROVEN: (or old :IMPLEMENTED:) or :REVIEWED: day.
 With an ID: that one block, and the files each of its commits touched.
 An ID not in this project is looked for in every project under the repos
 folder (the config's :repos, LEMMAX_REPOS, else ~/repos),

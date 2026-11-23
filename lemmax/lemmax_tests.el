@@ -1859,7 +1859,7 @@ run of its finding's why text."
     (funcall case d (list (rt-lemma "RQ-1" :approved nil)) (list (rt-proof "PR-1" "RQ-1"))
              "LEMMA with no :APPROVED:")
     (funcall case d (list (rt-conj "RQ-1" :state "LEMMA")) (list (rt-proof "PR-1" "RQ-1"))
-             "LEMMA with no :IMPLEMENTED:")
+             "LEMMA with no :PROVEN:")
     ;; A proven lemma whose text changes goes back to CONJECTURE.
     (rt-set d "requirements.org" (concat rt-math-head (rt-lemma "RQ-1")))
     (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1")))
@@ -1868,6 +1868,54 @@ run of its finding's why text."
     (rt-git d "add" "-A")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-05") (rt-run d "lint" "--staged" "--no-tests"))
                     "a LEMMA requirement's text changed; make it CONJECTURE until the change is proven")))
+
+;;;; 01a2052f-a14c-7e72-8a8f-57ab97635a10: the proven date is called PROVEN
+
+(defun rt-proven (text)
+  "TEXT with its :IMPLEMENTED: line named :PROVEN:."
+  (replace-regexp-in-string "^:IMPLEMENTED: " ":PROVEN:      " text t t))
+
+(ert-deftest lemmax-proven-date ()
+  :tags '(timeout-60)
+  (let ((d (rt-repo (rt-math-files (list (rt-proven (rt-lemma "RQ-1"))
+                                         (rt-proven (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))
+                                         (rt-lemma "RQ-3"))
+                                   (list (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2") (rt-proof "PR-3" "RQ-3")))))
+        (case (lambda (d reqs proofs want)
+                (rt-set d "requirements.org" (apply #'concat rt-math-head reqs))
+                (rt-set d "requirements.proofs.org" (apply #'concat rt-proofs-head proofs))
+                (rt-should-find (rt-run d "lint" "--no-tests") want))))
+    ;; :PROVEN: and the old :IMPLEMENTED: both hold a lemma's day.
+    (rt-should-clean (rt-run d "lint"))
+    (should (string-match-p "RQ-1 +LEMMA" (nth 1 (rt-run d "list"))))
+    (funcall case d (list (rt-conj "RQ-1" :state "LEMMA")) (list (rt-proof "PR-1" "RQ-1"))
+             "LEMMA with no :PROVEN:; add :PROVEN: with the day it was proven")
+    (funcall case d (list (rt-proven (rt-conj "RQ-1" :implemented "2026-01-06"))) nil
+             "CONJECTURE with :PROVEN:; remove :PROVEN:, or prove it a LEMMA")
+    (funcall case d (list (concat (string-replace ":END:" ":PROVEN:      2026-01-06\n:END:" (rt-lemma "RQ-1"))))
+             (list (rt-proof "PR-1" "RQ-1"))
+             "both :PROVEN: and :IMPLEMENTED:; keep :PROVEN: and remove :IMPLEMENTED:")
+    (funcall case d (list (rt-proven (rt-lemma "RQ-1"))) (list (rt-proven (rt-proof "PR-1" "RQ-1" :implemented "2026-01-06")))
+             "a proof with :PROVEN:")
+    ;; Only a LEMMA or THEOREM has :PROVEN:; an old DONE keeps :IMPLEMENTED:.
+    (rt-set d "requirements.org" (concat rt-head (rt-proven (rt-req "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a"))))
+    (rt-set d "requirements.proofs.org" rt-proofs-head)
+    (rt-should-find (rt-run d "lint" "--no-tests") "DONE with :PROVEN:; only a LEMMA or THEOREM has :PROVEN:")
+    ;; A conjecture proven today is told to set :PROVEN:.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-conj "RQ-1")))
+    (rt-set d "requirements.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1")))
+    (rt-commit d "conjecture")
+    (rt-set d "requirements.org" (concat rt-math-head (rt-proven (rt-lemma "RQ-1"))))
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-07") (rt-run d "lint" "--staged" "--no-tests"))
+                    "it turned DONE and :PROVEN: is not today; set :PROVEN: 2026-01-07")
+    ;; migrate renames :IMPLEMENTED: on a LEMMA or THEOREM, in a migrated file too.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2")))
+    (let ((out (nth 1 (rt-run d "migrate" "requirements.org"))))
+      (should (string-match-p "^\\+:PROVEN:      2026-01-06$" out))
+      (should-not (string-match-p "^\\+:IMPLEMENTED:" out)))
+    (rt-set d "requirements.org" (concat rt-head (rt-req "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))
+    (should (string-match-p "^\\+:PROVEN:      2026-01-06$" (nth 1 (rt-run d "migrate" "requirements.org"))))))
 
 ;;;; 01a20369-391b-768e-8c98-180facc0ff77: lemmax migrate
 

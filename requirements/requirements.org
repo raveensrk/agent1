@@ -24,7 +24,7 @@ Properties are optional for a small design. For larger design the following fiel
 ** =:CREATED:= - date
 ** =:LAST_EDITED:= - date
 ** =:APPROVED:= - date
-** =:IMPLEMENTED:= - date
+** =:PROVEN:= - date (old files: =:IMPLEMENTED:=)
 ** =:ID:= - Unique reference id of a requirement
 ** =:USES:= - the lemmas a theorem uses (old files: =:NEEDS:=)
 ** =:PROVES:= - on a proof: the conjectures it proves
@@ -41,14 +41,14 @@ A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lemmax li
 - =:USES:= names the ids of the lemmas a theorem uses, separated by spaces; nesting is layout only. Old files call it =:NEEDS:=.
 - =:TEST:= holds test addresses, quoted like shell words: =unit/store_test "process/ids are used once"=; a long list goes on =:TEST+:= lines. Old files hold them on the conjecture as =:VERIFY:= and =:VERIFY+:=.
 - Every heading may carry org tags. A file declares them in =#+TAGS:=, nests them with group tags (=[ ui : button menu ]=), and lint refuses an undeclared tag or a cycle. A heading's tags include its ancestors' and =#+FILETAGS:=; tags are not its text.
-- Dates are =:CREATED:=, =:LAST_EDITED:=, =:APPROVED:=, =:IMPLEMENTED:= and =:REVIEWED:=, as =2026-11-15=.
+- Dates are =:CREATED:=, =:LAST_EDITED:=, =:APPROVED:=, =:PROVEN:= (old files: =:IMPLEMENTED:=) and =:REVIEWED:=, as =2026-11-15=.
 - A requirement's text is its statement: heading, body and properties, all but the dates and =:VERIFY:=. A proof that changes leaves the statement as it was.
 ** The requirements file names the repo's tests and code
 - =#+LEMMAX_TESTS: <command>= prints every test address, one per line, in the words =regress --only= takes.
 - =#+LEMMAX_CODE: <paths>= names the paths whose commits must name an id, as =core/ apps/ script/=.
 - A repo without =#+LEMMAX_TESTS:= keeps its own checks until it migrates.
 ** A suspect theorem is read again
-A proven theorem is suspect when a lemma it uses changed its text after the theorem's =:IMPLEMENTED:= or =:REVIEWED:= date, whichever is later.
+A proven theorem is suspect when a lemma it uses changed its text after the theorem's =:PROVEN:= or =:REVIEWED:= date, whichever is later.
 - The owner reads the theorem against the changed lemma, then sets =:REVIEWED:= to that day, or makes it CONJECTURE when it no longer holds.
 - =lemmax trace= lists every suspect child.
 * Verification requirement item
@@ -128,8 +128,8 @@ A conjecture is a LEMMA (or THEOREM) when it is built, every proof of it is PASS
 - One commit then marks its proofs PASSED and it LEMMA.
 - A check refuses a PASSED proof whose =:TEST:= names a test the app repo does not have.
 ** Every requirement carries its dates
-Three dates, as =2026-11-09=: =:CREATED:= the day it was added, =:LAST_EDITED:= the day of its last change of any kind, =:IMPLEMENTED:= the day it turned LEMMA or THEOREM.
-- Only a LEMMA or THEOREM has =:IMPLEMENTED:=, the day it was proven; a proof never has one; a check refuses any other, and a missing date.
+Three dates, as =2026-11-09=: =:CREATED:= the day it was added, =:LAST_EDITED:= the day of its last change of any kind, =:PROVEN:= the day it turned LEMMA or THEOREM.
+- Only a LEMMA or THEOREM has =:PROVEN:=, the day it was proven (old files: =:IMPLEMENTED:= on DONE); a proof never has one; a check refuses any other, and a missing date.
 - A commit that leaves a date wrong is refused, naming the requirement and the date; nothing fills them in on its own.
 - A change to a date is a change like any other.
 ** A project maps an agent1 requirement before it builds it

@@ -834,3 +834,13 @@ A repo with unmarked theory.org, theory/a.org and requirements.org: list shows a
 :END:
 Each registry entry has a reader, a migrate step and a golden file; on the golden file the old form reads the same as the new, and migrate gives the same result on a second run.
 Every command prints one stderr line per legacy rule and keeps its exit code; =-v= lists every place; old and new forms of one rule on one heading fail lint.
+
+* PASSED Proof: The proven date is called PROVEN
+:PROPERTIES:
+:ID:          01a205c1-dc09-749a-aaaa-2a2cefe46619
+:PROVES:      01a2052f-a14c-7e72-8a8f-57ab97635a10
+:TEST:        ert/lemmax-proven-date
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+When the tests in :TEST: pass, the conjecture holds.

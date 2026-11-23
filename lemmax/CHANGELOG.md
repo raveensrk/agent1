@@ -16,6 +16,8 @@ The first public release.
 - `list` and `next-id` read `theory.org` and `theory/` by name, beside
   `requirements.org` and `requirements/`.
 - Today and commit days are local days; `TZ` picks the zone. They were UTC.
+- A LEMMA or THEOREM records its day in `:PROVEN:`; `:IMPLEMENTED:` is still read, and
+  `migrate` renames it.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
 - `#+SETUPFILE:` keywords; footnote definitions checked.

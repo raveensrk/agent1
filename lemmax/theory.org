@@ -1241,12 +1241,13 @@ Evidence: markers are read today with =git grep -n -I -E= (lemma 01a20014-e361-7
 - Asked by the owner on 2026-11-22
 Evidence: lemmax already reads =FILE.tasks.org= and =FILE.notes.org= beside a requirements file (lemmas on tasks and notes files).
 
-** CONJECTURE [#B] The proven date is called PROVEN                        :lemmax:
+** LEMMA [#B] The proven date is called PROVEN                        :lemmax:
 :PROPERTIES:
 :ID:          01a2052f-a14c-7e72-8a8f-57ab97635a10
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-23
 :APPROVED:    2026-11-23
+:PROVEN:      2026-11-23
 :END:
 The date a conjecture turns LEMMA or THEOREM is =:PROVEN:=, not =:IMPLEMENTED:=; it records the day of Q.E.D., not the day code was built.
 - Only a LEMMA or THEOREM has =:PROVEN:=; a proof never has a date of its own

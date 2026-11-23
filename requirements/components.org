@@ -295,14 +295,13 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - Why a typed field and not a dial: [[https://www.nngroup.com/articles/date-input/][NN/g on date input]], [[https://material.io/blog/24-hour-clock-design-research][Material's 24-hour clock research]], [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]
 - Why a short list and words for twelve: [[https://jan.miksovsky.com/posts/2010/10-11-reconsidering-stock-controls-to-create-an-optimized-user-experience][Miksovsky on time dropdowns]], [[https://www.timeanddate.com/time/am-and-pm.html][Time and Date on AM and PM]]
 - Why wheels: [[https://developer.apple.com/design/human-interface-guidelines/pickers][Apple's pickers guidance]]; tried against a dial in demo/cljfx, compare_page.clj
-* DONE Date pickers
+* LEMMA Date pickers
 :PROPERTIES:
 :ID: date-pickers
 :CREATED: 2026-11-15
 :LAST_EDITED: 2026-11-15
 :APPROVED: 2026-11-15
-:IMPLEMENTED: 2026-11-15
-:VERIFY: clojure -M:test (demo.date-picker-test), clojure -M:check-date-picker (demo.date-picker-check), run in demo/cljfx
+:PROVEN:      2026-11-15
 :END:
 ** A reference shows one way to build them
 - demo/cljfx gets date_picker.clj, the part worth copying, and date_picker_page.clj, the demo's page, styled in glass.css
@@ -359,14 +358,13 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 - It reads the field's height and width, the calendar's edges at the window's bottom, and the contrast of its words: 44 px, 180 px or more, inside the window, 4.5 or more
 - It opens the calendar and reads it 40 ms later: fading in; with Reduce Motion on, 20 ms later: fully there
 Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/DatePicker.class and com/sun/javafx/scene/control/DatePickerContent.class (a month grid on java.time.LocalDate and WeekFields); requirements/demo/cljfx/src/demo/time_picker.clj already builds a typed glass field with a list under it and its window checks in test/demo/time_picker_check.clj; mockup shown and approved on 2026-11-15
-* DONE Scroll areas and scroll bars
+* LEMMA Scroll areas and scroll bars
 :PROPERTIES:
 :ID: scroll-areas
 :CREATED: 2026-11-14
 :LAST_EDITED: 2026-11-14
 :APPROVED: 2026-11-14
-:IMPLEMENTED: 2026-11-14
-:VERIFY: clojure -M:test (demo.scroll-test), clojure -M:check-scroll (demo.scroll-check), run in demo/cljfx
+:PROVEN:      2026-11-14
 :END:
 ** A reference shows one way to build them
 - [[file:demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
