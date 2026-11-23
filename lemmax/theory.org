@@ -1383,18 +1383,20 @@ Evidence: lint --staged already compares each statement's text, HEAD against sta
 - Asked by the owner on 2026-11-23
 Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
 
-** CONJECTURE publish shows attachments, with Org's own export            :cli:
+** THEOREM publish shows attachments, with Org's own export                :cli:
 :PROPERTIES:
 :ID:          01a2090e-8b52-7173-947b-d882b237ad05
 :USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-23
+:PROVEN:      2026-11-24
 :END:
 - publish exports with html5-fancy and inline images on, and copies every attach folder and linked file with org-publish-attachment
 - Images, GIF and SVG, animated SVG too, show in place, as ox-html inlines them
 - A video is a #+begin_video block with #+ATTR_HTML: :src FILE :controls t, which ox-html writes as <video>; lint refuses a video file linked any other way
 - Any other file is a link
+- A video file is one named .mp4, .webm, .mov, .m4v, .ogv or .mkv
 - Asked by the owner on 2026-11-23
 Evidence: org-attach-expand-links turns attachment: into file: before export; org-html-inline-image-rules covers avif, gif, jpg, png, svg and webp; html5-fancy turns a special block named video into <video>.
 

@@ -651,6 +651,29 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
       (should (= 0 (nth 0 r)))
       (should (string-match-p "RQ-1: warning: pics/big.png is 6.0 MB, over 5 MB" (nth 2 r))))))
 
+;;;; 01a2090e-8b52-7173-947b-d882b237ad05: publish shows attachments, with Org's own export
+
+;; lemma: 01a2090e-8b52-7173-947b-d882b237ad05
+(ert-deftest lemmax-publish-attachments ()
+  :tags '(timeout-60)
+  (let* ((body (concat "A picture [[attachment:a.png]] and [[file:pics/b.svg]], a [[file:docs/c.pdf][paper]].\n"
+                       "#+ATTR_HTML: :src clip.mp4 :controls t\n#+begin_video\n#+end_video\n"))
+         (d (rt-repo (append (rt-math-files (list (rt-attach-conj "RQ-1" "ATTACH" body)) nil)
+                             (list (cons "data/RQ/-1/a.png" "png") (cons "pics/b.svg" "<svg/>")
+                                   (cons "docs/c.pdf" "pdf") (cons "clip.mp4" "mp4"))))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (= 0 (nth 0 (rt-run d "publish"))))
+    (let ((html (with-temp-buffer (insert-file-contents (expand-file-name ".lemmax/html/requirements.html" d)) (buffer-string))))
+      (should (string-match-p "<img src=\"data/RQ/-1/a.png\"" html))
+      (should (string-match-p "<img src=\"pics/b.svg\"" html))
+      (should (string-match-p "<a href=\"docs/c.pdf\">paper</a>" html))
+      (should (string-match-p "<video src=\"clip.mp4\" controls=\"t\"" html)))
+    (dolist (f '("data/RQ/-1/a.png" "pics/b.svg" "docs/c.pdf" "clip.mp4"))
+      (should (file-exists-p (expand-file-name (concat ".lemmax/html/" f) d))))
+    ;; A video linked as a plain link is refused.
+    (rt-set d "requirements.org" (concat rt-math-head (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]], [[file:pics/b.svg]], [[file:docs/c.pdf]], [[file:clip.mp4]].\n")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: it links the video clip.mp4")))
+
 ;;; lemmax_tests.el ends here
 
 ;;;; RT-16

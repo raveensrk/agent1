@@ -47,3 +47,5 @@ The first public release.
 - Attachments: any heading's files, in the folder `org-attach-dir` gives; lint
   checks the `:ATTACH:` tag, untracked links and orphans; `trace` shows
   `files:`, `list --json` a `files` array.
+- `publish` shows images in place, copies linked files and writes video
+  blocks as `<video>`.

@@ -254,6 +254,10 @@ TAGS-OWN its own tags, TAGS those with the inherited and file tags."
 (defconst lemmax--file-link-re "\\[\\[\\(attachment\\|file\\):\\([^]\n]+?\\)\\(?:::[^]\n]*\\)?\\]"
   "An attachment: or file: link; group 1 the kind, group 2 the path.")
 
+;; lemma: 01a2090e-8b52-7173-947b-d882b237ad05
+(defconst lemmax--video-re "\\.\\(?:mp4\\|webm\\|mov\\|m4v\\|ogv\\|mkv\\)\\'"
+  "A video file's name, which a #+begin_video block shows and no link may.")
+
 (defun lemmax--attach-info (root raw)
   "At a heading, its RAW text: (:attach-dir DIR :attach-links N :files PATHS).
 DIR is the folder `org-attach-dir' gives, relative to ROOT, the repo root;
@@ -262,7 +266,7 @@ file is a reference and not among them."
   (let* ((abs (let ((org-attach-id-dir (expand-file-name org-attach-id-dir)))
                 (ignore-errors (org-attach-dir nil t))))
          (abs (and abs (expand-file-name abs)))
-         (text (lemmax--blank-verbatim raw)) (pos 0) (n 0) files)
+         (text (lemmax--blank-verbatim raw)) (pos 0) (n 0) files videos)
     (while (string-match lemmax--file-link-re text pos)
       (setq pos (match-end 0))
       (let* ((kind (match-string 1 text)) (name (string-trim (match-string 2 text)))
@@ -271,8 +275,17 @@ file is a reference and not among them."
                      (expand-file-name name))))
         ;; A file outside the repo is a reference, as a web link is.
         (when (and path (not (string-suffix-p ".org" path)) (file-in-directory-p path root))
+          (when (string-match-p lemmax--video-re path) (push (file-relative-name path root) videos))
           (push (file-relative-name path root) files))))
+    ;; lemma: 01a2090e-8b52-7173-947b-d882b237ad05
+    ;; A video block names its file in #+ATTR_HTML: :src FILE.
+    (setq pos 0)
+    (while (string-match "^[ \t]*#\\+ATTR_HTML:.*?:src[ \t]+\\([^ \t\n]+\\)" text pos)
+      (setq pos (match-end 0))
+      (let ((path (expand-file-name (match-string 1 text))))
+        (when (file-in-directory-p path root) (push (file-relative-name path root) files))))
     (list :attach-dir (and abs (file-name-as-directory (file-relative-name abs root)))
+          :video-links videos
           :attach-links n
           :files (delete-dups (nreverse files)))))
 
@@ -992,6 +1005,10 @@ file over 5 MB is a warning that fails nothing."
                      (not (member "ATTACH" (plist-get r :tags-own))))
             (lemmax--finding f l id "an attachment: link, and the heading has no :ATTACH: tag"
                              "tag the heading :ATTACH:, as org-attach does"))
+          ;; lemma: 01a2090e-8b52-7173-947b-d882b237ad05
+          (dolist (x (plist-get r :video-links))
+            (lemmax--finding f l id (format "it links the video %s; publish shows a video only from a block" x)
+                             "write #+ATTR_HTML: :src FILE :controls t above a #+begin_video block"))
           (dolist (x (plist-get r :files))
             (if (not (gethash x tracked))
                 (lemmax--finding f l id (format "it links %s, which git does not track" x)
@@ -2427,10 +2444,20 @@ order; a parent no chunk holds is named on stderr."
            (org-publish-cache nil)
            (org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
                                           "REFUTED" "PASSED" "CANCELLED" "AXIOM" "DEFINITION")))
+           ;; lemma: 01a2090e-8b52-7173-947b-d882b237ad05
+           ;; Every linked file, copied beside the pages by Org's own attachment publisher.
+           (linked (delete-dups (cl-loop for r in (lemmax--all-statements (lemmax--listed (lemmax--worktree-files)))
+                                         append (cl-remove-if-not (lambda (x) (file-exists-p (expand-file-name x root)))
+                                                                  (plist-get r :files)))))
+           (org-export-before-parsing-functions (cons #'org-attach-expand-links org-export-before-parsing-functions))
            (org-publish-project-alist
-            (list (list "lemmax" :base-directory root :base-extension "lemmax-none" :include files
+            (list (list "lemmax" :components '("lemmax-pages" "lemmax-files"))
+                  (list "lemmax-pages" :base-directory root :base-extension "lemmax-none" :include files
                         :publishing-directory dir :publishing-function 'org-html-publish-to-html
-                        :with-toc nil :section-numbers nil))))
+                        :html-doctype "html5" :html-html5-fancy t :html-inline-images t
+                        :with-toc nil :section-numbers nil)
+                  (list "lemmax-files" :base-directory root :base-extension "lemmax-none" :include linked
+                        :publishing-directory dir :publishing-function 'org-publish-attachment))))
       (unwind-protect
           (progn
             (unless out

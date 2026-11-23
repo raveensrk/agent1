@@ -144,6 +144,13 @@ outside the repo are references. `trace` prints `files:`; `list --json` gives
 id: links become page links. Pages go to `.lemmax/html/` (git ignores it
 through `.lemmax/.gitignore`), or `--out DIR`.
 
+<!-- lemma: 01a2090e-8b52-7173-947b-d882b237ad05 -->
+
+Pages are HTML5 with inline images: a linked PNG, GIF or SVG shows in place.
+Every linked file is copied beside the pages with `org-publish-attachment`. A
+video is a `#+begin_video` block under `#+ATTR_HTML: :src FILE :controls t`;
+lint refuses a video linked any other way.
+
 ## SETUPFILE
 
 <!-- lemma: 01a203a6-a766-76c6-9931-753ee75e9318 -->

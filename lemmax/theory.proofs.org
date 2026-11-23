@@ -885,13 +885,13 @@ Editing, adding, removing or renaming a file two lemmas link refuses the staged 
 :END:
 A PASSED proof whose linked file changes is refused until OPEN.
 
-* OPEN Proof: publish shows attachments, with Org's own export
+* PASSED Proof: publish shows attachments, with Org's own export
 :PROPERTIES:
 :ID:          01a2090e-92c9-7194-bf91-a141fbcb1ff3
 :PROVES:      01a2090e-8b52-7173-947b-d882b237ad05
 :TEST:        ert/lemmax-publish-attachments
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 publish copies the files; the HTML holds an img for a PNG and an SVG, a video tag for a video block, and a link for a PDF; a bare video link is refused.
 
