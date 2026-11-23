@@ -140,3 +140,12 @@ Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edn
 :LAST_EDITED: 2026-11-23
 :END:
 Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other commands, giving the same results as the terminal command, in a compilation-style buffer.
+
+* TODO Staged lint catches a keyword written by mistake
+:PROPERTIES:
+:ID:          01a2091d-4fe9-7538-8b27-5ea26b99d9cc
+:FOR:         RT-4
+:CREATED:     2026-11-23
+:LAST_EDITED: 2026-11-23
+:END:
+A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test command, and =lint --staged --no-tests= let one through on 2026-11-23 (d3e34aa fixed it). Make the staged lint refuse a second =#+LEMMAX_*= keyword in a file, or one below the first heading.
