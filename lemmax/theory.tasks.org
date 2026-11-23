@@ -203,12 +203,3 @@ Declare the chapter tag group in setup.org and tag each statement with one chapt
 :LAST_EDITED: 2026-11-24
 :END:
 After a merge the docs ant runs lemmax book, not the docs skill: skills/ishikari/SKILL.md, its scripts and its tests.
-
-* TODO Delete the docs skill
-:PROPERTIES:
-:ID:          01a20a16-7d65-7a55-b198-a0bbc5a84c19
-:FOR:         01a20959-95da-760e-82dc-2797c5af6abc
-:CREATED:     2026-11-24
-:LAST_EDITED: 2026-11-24
-:END:
-Remove skills/docs/ and every pointer to it: skills/investigator-ant/SKILL.md, skills/determinize/scripts/inventory.py, harness/tests/test_lint.py. The bible holds its rules.
