@@ -1245,7 +1245,8 @@ Evidence: lemmax already reads =FILE.tasks.org= and =FILE.notes.org= beside a re
 :PROPERTIES:
 :ID:          01a2052f-a14c-7e72-8a8f-57ab97635a10
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
+:APPROVED:    2026-11-23
 :END:
 The date a conjecture turns LEMMA or THEOREM is =:PROVEN:=, not =:IMPLEMENTED:=; it records the day of Q.E.D., not the day code was built.
 - Only a LEMMA or THEOREM has =:PROVEN:=; a proof never has a date of its own
