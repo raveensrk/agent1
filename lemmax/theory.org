@@ -998,13 +998,14 @@ Evidence: a heading with :ID: and no state is already read as a record by =lemma
 - Asked by the owner on 2026-11-22
 Evidence: states are read through =lemmax-states=.
 
-** CONJECTURE DEFINITION headings name the terms                          :lemmax:
+** THEOREM DEFINITION headings name the terms                          :lemmax:
 :PROPERTIES:
 :ID:          01a20757-95c1-70d9-882a-875672207343
 :USES:        01a2038d-cc86-72be-b225-eeff9ee2c7a6
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :APPROVED:    2026-11-23
+:PROVEN:      2026-11-23
 :END:
 A heading in state =DEFINITION= defines one term; like an axiom it is accepted, never proven.
 - A definition has an =:ID:=, =:CREATED:= and =:LAST_EDITED:=; it needs no =:APPROVED:=, =:PROVEN:=, proof or code marker
