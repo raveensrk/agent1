@@ -1259,7 +1259,7 @@ Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =
 :PROPERTIES:
 :ID:          01a205a5-79df-745d-bb66-69f6cae232c6
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-23
 :END:
 A proof whose tests have not run yet and a proof whose tests failed are told apart.
 - A proof's states are =OPEN FAILED | PASSED=: =OPEN= is not yet run, =FAILED= is a counterexample
@@ -1267,7 +1267,7 @@ A proof whose tests have not run yet and a proof whose tests failed are told apa
 - A conjecture with a =FAILED= proof is CONJECTURE again, or REFUTED when the owner gives it up
 - =lemmax trace= prints the proof's state beside each test
 - Asked by the owner on 2026-11-22
-Evidence: proof states are read from the file's =#+TODO:= line in =theory.proofs.org=; adding a state is a change to that line and to the lint check.
+Evidence: proof states come from the =#+TODO:= line of =theory.proofs.org= and from =lemmax-states= and the keyword list in =lemmax.el= (lines 31 and 250); adding a state changes all three and the lint check.
 
 ** CONJECTURE [#B] lint resolves :FOLLOWS: in other projects                :lint:
 :PROPERTIES:
