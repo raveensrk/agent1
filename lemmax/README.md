@@ -376,6 +376,9 @@ A file's settings are Org `#+PROPERTY:` lines, read as Org reads them, through
 
 - The settings: `LEMMAX_TESTS` (the test command; it opts the file in),
   `LEMMAX_CODE`, `LEMMAX_TEST_PATHS` and `LEMMAX_MARKERS_IN`.
+- A setting sits at the top of its file, above the first heading, once:
+  lint refuses one below a heading, which lmx does not read, and one set
+  twice; `NAME+` adds, and a line in a `#+begin_` block is text.
 - A `#+PROPERTY:` line in a `#+SETUPFILE:` counts; `NAME+ value` adds to the
   value, Org's rule.
 - Settings are file-level only: lint refuses a `LEMMAX_` property in a

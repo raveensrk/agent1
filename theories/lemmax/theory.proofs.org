@@ -1169,3 +1169,11 @@ run_tests over a passing, a failing and a timed-out test writes one line each, R
 - State "PROOF"      from "DRAFT"      [2026-11-25 Wed 04:17]
 :END:
 Org's org-id-new, set to call lmx new-id, gives sorted UUID v7 ids; lmx new-id prints them; lint names the setting for any other new id.
+
+* DRAFT Settings sit at the top of a file, once each
+:PROPERTIES:
+:ID:          01a20fc3-ee36-7162-a377-ae977bca3b84
+:PROVES:      01a20fc1-343f-77df-b886-0048fe5c9e65
+:TEST:        ert/lemmax-settings-top-once
+:END:
+Settings quoted in a #+begin_src or #+begin_example block are text, neither read nor refused, and NAME+ adds; a #+PROPERTY: or old keyword setting below the first heading is refused, plain and staged, and is not read; a setting set twice in a file, by #+PROPERTY: or by the old keyword, is refused, a setup file too.

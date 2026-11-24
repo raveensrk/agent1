@@ -367,11 +367,46 @@ file is a reference and not among them."
 (defconst lemmax--settings '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "LEMMAX_MARKERS_IN")
   "A file's settings: Org #+PROPERTY: lines, or the old #+NAME: keywords.")
 
+;; lemma: 01a20fc1-343f-77df-b886-0048fe5c9e65
+(defvar lemmax--kprops nil
+  "While a file is parsed: its #+PROPERTY: lines as Org reads them, those
+below its first heading left out.")
+
+(defun lemmax--setting-lines (content)
+  "Each LEMMAX_ setting line of CONTENT outside a #+begin_ block, as
+\(LINE NAME KIND PLUS BELOW): KIND property or keyword, PLUS for NAME+,
+BELOW when it sits below the first heading. An old #+REQTRACE_ name reads
+as its LEMMAX_ name."
+  (let ((n 0) (block nil) (below nil) (case-fold-search t) out)
+    (dolist (l (split-string content "\n"))
+      (setq n (1+ n))
+      (cond ((and (not block) (string-match "\\`[ \t]*#\\+begin_\\(\\S-+\\)" l)) (setq block (downcase (match-string 1 l))))
+            ((and block (string-match-p (concat "\\`[ \t]*#\\+end_" (regexp-quote block) "\\b") l)) (setq block nil))
+            (block)
+            ((string-match-p "\\`\\*+ " l) (setq below t))
+            ((string-match "\\`[ \t]*#\\+property:[ \t]+\\(LEMMAX_[A-Z_]+\\)\\(\\+\\)?\\(?:[ \t]\\|$\\)" l)
+             (push (list n (match-string 1 l) 'property (and (match-string 2 l) t) below) out))
+            ((string-match "\\`[ \t]*#\\+\\(?:LEMMAX\\|REQTRACE\\)_\\([A-Z_]+\\):" l)
+             (push (list n (concat "LEMMAX_" (upcase (match-string 1 l))) 'keyword nil below) out))))
+    (nreverse out)))
+
+(defun lemmax--top-settings (content)
+  "CONTENT's settings read from its text before the first heading only, as
+\(KW . PROPS) in the shapes `org-collect-keywords' and
+`org-keyword-properties' give; in the current buffer's folder."
+  (let ((pre (if (string-match "^\\*+ " content) (substring content 0 (match-beginning 0)) content)))
+    (with-temp-buffer
+      (insert pre)
+      (let ((org-inhibit-startup t)) (delay-mode-hooks (org-mode)))
+      (cons (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "LEMMAX_MARKERS_IN"
+                                    "REQTRACE_TESTS" "REQTRACE_CODE"))
+            org-keyword-properties))))
+
 (defun lemmax--settings-props ()
   "In an Org buffer, its file-level settings as Org reads #+PROPERTY: lines,
 with those of its #+SETUPFILE: and NAME+ appending: (NAME . VALUE) pairs."
   (cl-loop for n in lemmax--settings
-           for v = (cdr (assoc n org-keyword-properties))
+           for v = (cdr (assoc n lemmax--kprops))
            when v collect (cons n (string-trim v))))
 
 (defun lemmax--settings-both (kw)
@@ -412,6 +447,14 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
       (let* ((kw (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "LEMMAX_MARKERS_IN" "TODO" "STARTUP"
                                          ;; The names before lemmax, read so older commits still match.
                                          "REQTRACE_TESTS" "REQTRACE_CODE")))
+             ;; lemma: 01a20fc1-343f-77df-b886-0048fe5c9e65
+             ;; A setting below the first heading is refused and never read.
+             (setting-lines (lemmax--setting-lines content))
+             (top (and (cl-some (lambda (x) (nth 4 x)) setting-lines) (lemmax--top-settings content)))
+             (kw (if top
+                     (append (cl-remove-if (lambda (k) (string-match-p "\\`\\(?:LEMMAX\\|REQTRACE\\)_" (car k))) kw) (car top))
+                   kw))
+             (lemmax--kprops (if top (cdr top) org-keyword-properties))
              ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
              (both (lemmax--settings-both kw))
              (kw (lemmax--settings-merge kw))
@@ -462,9 +505,11 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                 :file-state file-state
                 ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
                 :both-ways both
+                ;; lemma: 01a20fc1-343f-77df-b886-0048fe5c9e65
+                :setting-lines setting-lines
                 ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
                 :repo-settings (cl-loop for (n . _) in lemmax--repo-settings
-                                        for v = (cdr (assoc n org-keyword-properties))
+                                        for v = (cdr (assoc n lemmax--kprops))
                                         when v collect (cons n (string-trim v)))
                 ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
                 :declared (cl-loop for e in org-current-tag-alist
@@ -1322,6 +1367,7 @@ logged form set the state again so Org logs today."
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
         (lemmax--lint-settings infos only)
+        (lemmax--lint-setting-lines (if staged (lemmax--rev-files "") (lemmax--worktree-files)) only)
         (lemmax--lint-theorem infos only)
         (lemmax--lint-config-both infos staged)
         (lemmax--lint-footnotes infos only staged)
@@ -1351,6 +1397,26 @@ logged form set the state again so Org logs today."
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
 
 ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+;; lemma: 01a20fc1-343f-77df-b886-0048fe5c9e65
+(defun lemmax--lint-setting-lines (infos only)
+  "A LEMMAX_ setting sits at the top of its file, above the first heading,
+and once: NAME+ adds to it and may come again."
+  (dolist (i infos)
+    (let ((f (plist-get i :file)) (seen (make-hash-table :test #'equal)))
+      (when (or (null only) (member f only))
+        (dolist (x (plist-get i :setting-lines))
+          (let ((key (cons (nth 1 x) (nth 2 x))))
+            (cond ((nth 4 x)
+                   (lemmax--finding f (nth 0 x) nil
+                                    (format "%s sits below the file's first heading, where it is not read" (nth 1 x))
+                                    "move it to the top of the file, above the first heading"))
+                  ((nth 3 x))
+                  ((gethash key seen)
+                   (lemmax--finding f (nth 0 x) nil
+                                    (format "%s is set twice, first on line %d" (nth 1 x) (gethash key seen))
+                                    (format "keep one line; add to it with #+PROPERTY: %s+" (nth 1 x))))
+                  (t (puthash key (nth 0 x) seen)))))))))
+
 (defun lemmax--lint-settings (infos only)
   "A setting is file-level only, and set one way: a #+PROPERTY: line or an
 old keyword, never both, in a file or what its setup file brings in."

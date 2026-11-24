@@ -3606,3 +3606,35 @@ which holds the tests and code, read by theory.org with REQS."
   (rt-runner rt-small-tests "--only" "ert/x-pass")
   (should (string-match-p "\\`PASS ert/x-pass .* [0-9.]+ s\n\\'"
                           (with-temp-buffer (insert-file-contents rt-runner-log) (buffer-string)))))
+
+;;;; 01a20fc1-343f-77df-b886-0048fe5c9e65: settings sit at the top of a file, once each
+
+;; lemma: 01a20fc1-343f-77df-b886-0048fe5c9e65
+(ert-deftest lemmax-settings-top-once ()
+  :tags '(timeout-60)
+  ;; A setting below the first heading is refused and not read; one set twice
+  ;; is refused, NAME+ is not; a setting quoted in a block is text.
+  (let ((d (rt-repo (rt-prop-files (concat rt-prop-head "#+begin_src org\n#+PROPERTY: LEMMAX_CODE quoted/\n#+LEMMAX_CODE: quoted/\n#+end_src\n#+PROPERTY: LEMMAX_CODE+ lib/\n\n")
+                                   (rt-req "RQ-1") "#+begin_example\n#+PROPERTY: LEMMAX_TESTS ./x.sh\n#+end_example\n"))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (equal '("src/" "lib/") (plist-get (rt-parse-in d "theory.org") :code)))
+    ;; Below the first heading: refused, plain and staged, and not read.
+    (rt-set d "theory.org" (concat rt-prop-head (rt-req "RQ-1") "#+PROPERTY: LEMMAX_CODE+ late/\n#+LEMMAX_TEST_PATHS: spec/\n"))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "theory\\.org:14: -: LEMMAX_CODE sits below the file's first heading, where it is not read; move it to the top of the file, above the first heading")
+      (should (string-match-p "theory\\.org:15: -: LEMMAX_TEST_PATHS sits below" (nth 2 r))))
+    (let ((info (rt-parse-in d "theory.org")))
+      (should (equal '("src/") (plist-get info :code)))
+      (should (null (plist-get info :test-paths))))
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-run d "lint" "--staged" "--no-tests") "LEMMAX_CODE sits below the file's first heading")
+    ;; Twice in one file: refused; old keyword twice too.
+    (rt-set d "theory.org" (concat rt-prop-head "#+PROPERTY: LEMMAX_CODE other/\n\n" (rt-req "RQ-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "theory\\.org:6: -: LEMMAX_CODE is set twice, first on line 4; keep one line; add to it with #\\+PROPERTY: LEMMAX_CODE\\+")
+    (rt-set d "theory.org" (concat rt-head "#+LEMMAX_CODE: other/\n\n" (rt-req "RQ-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "theory\\.org:6: -: LEMMAX_CODE is set twice, first on line 4")
+    ;; A setup file is held to the same rules.
+    (rt-set d "theory.org" (concat "#+SETUPFILE: setup.org\n#+TODO: OPEN | DONE DROPPED\n\n" (rt-req "RQ-1")))
+    (rt-set d "setup.org" "#+PROPERTY: LEMMAX_TESTS ./tests.sh\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n")
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-run d "lint" "--no-tests") "setup\\.org:2: -: LEMMAX_TESTS is set twice")))

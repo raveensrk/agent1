@@ -5,6 +5,9 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- A setting sits at the top of its file, once: lint refuses a `LEMMAX_`
+  setting below the first heading, which is no longer read, and one set twice;
+  a line in a `#+begin_` block is text.
 - Org makes new ids through lmx: set `org-id-uuid-program` to `"lmx new-id"`; lint's fix for a bad id names it, not Python.
 
 - `run_tests` logs each test's result, start, end and run time to
