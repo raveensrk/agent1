@@ -1735,11 +1735,12 @@ Every statement is a heading in a theory file; lmx has no lemma files.
 - Asked by the owner on 2026-11-25
 Evidence: Org manual, "Property Syntax" and "Special Properties"; no tracked .org file in ~/repos holds :STATE:.
 
-** THESIS A log line has a date and a time                          :lint:
+** LEMMA A log line has a date and a time                          :lint:
 :PROPERTIES:
 :ID:          01a20f32-ef80-7183-a12f-26c80b01e6f1
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 03:10]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 01:45]
 :END:
 Every state change in a :LOGBOOK: carries the date and the time, as Org writes it: - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 14:32]
@@ -1749,11 +1750,12 @@ Every state change in a :LOGBOOK: carries the date and the time, as Org writes i
 - Asked by the owner on 2026-11-25
 Evidence: Org writes the time by default when a state changes (org-log-note-headings, state: %t); lemmax--log-re already reads a line with or without a time.
 
-** THESIS A proof is DRAFT, PROOF, FALLACY or MOOT                     :lint:
+** LEMMA A proof is DRAFT, PROOF, FALLACY or MOOT                     :lint:
 :PROPERTIES:
 :ID:          01a20f57-2e78-75b9-a133-53e39e2def6a
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 03:10]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 02:25]
 :END:
 A proof's state says whether it shows its statement, and Org logs each change.

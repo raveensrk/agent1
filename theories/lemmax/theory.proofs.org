@@ -1126,18 +1126,24 @@ Adding :PROVES:, :FOR:, :ABOUT:, :FOLLOWS:, :TEST:, :ALIASES:, :ROAM_REFS:, :REF
 :END:
 A file whose top drawer holds :STATE: is refused, saying to make it a heading in theory.org, and is read as no statement while its headings are; a top drawer with only :ID: is no finding.
 
-* DRAFT A proof is DRAFT, PROOF, FALLACY or MOOT
+* PROOF A proof is DRAFT, PROOF, FALLACY or MOOT
 :PROPERTIES:
 :ID:          01a20f5f-c144-70e1-b949-524e92c7a0e0
 :PROVES:      01a20f57-2e78-75b9-a133-53e39e2def6a
 :TEST:        ert/lemmax-proof-states ert/lemmax-proof-migrate ert/lemmax-math-lint ert/lemmax-migrate-dry-run
 :END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-25 Wed 03:10]
+:END:
 A PROOF proves a LEMMA with no :LAST_EDITED:; a DRAFT one is refused; a FALLACY counts neither way; a MOOT proof of an open statement and a DRAFT proof of a refuted one are refused; a PROOF whose test is gone stays PROOF and its statement is told to go back to CONJECTURE; a proof's state on a statement is refused; migrate turns OPEN into DRAFT, PASSED into PROOF with a date-only log line only from a real :LAST_EDITED: day, a refuted statement's proof into MOOT, drops "Proof: " and :LAST_EDITED:, writes the new #+TODO: and logdrawer, and the result lints clean.
 
-* DRAFT A log line has a date and a time
+* PROOF A log line has a date and a time
 :PROPERTIES:
 :ID:          01a20f5f-c15e-7519-b15e-c9f761a8c694
 :PROVES:      01a20f32-ef80-7183-a12f-26c80b01e6f1
 :TEST:        ert/lemmax-log-time ert/lemmax-thesis-logbook-not-text ert/lemmax-proof-migrate
+:END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-25 Wed 03:10]
 :END:
 lmx reads a log line's date and time, and a date-only line as having none; a new date-only log line in a staged change is refused, a timed one and the old date-only lines pass, and one moved by migrate from a day HEAD held passes; migrate --theorem writes its state change with the time.
