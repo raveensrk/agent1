@@ -44,8 +44,8 @@ lmx lint --staged          # what the pre-commit hook runs
   `golden/` pins `trace` and `list` output (`LEMMAX_UPDATE_GOLDEN=1` rewrites it);
   a seeded test parses 200 generated files; the mutation test turns each lint
   rule off in turn (`LEMMAX_MUTATE`) and needs a test to fail.
-- `lint`, `commit-msg` and `trace` read files whose header has `#+LEMMAX_TESTS:`,
-  or that `lemmax/config.eld` names (see Config).
+- `lint`, `commit-msg` and `trace` read files whose header sets `LEMMAX_TESTS`
+  (see File settings), or that `lemmax/config.eld` names (see Config).
   `list` and `next-id` read every theory file.
 - The global hooks in `harness/githooks` call it: `pre-commit` runs
   `lint --staged --no-tests`, `commit-msg` runs `commit-msg`. A repo with no
@@ -272,7 +272,7 @@ name any file: that is no text change either.
 <!-- lemma: 01a203a6-a766-76c6-9931-753ee75e9318 -->
 
 `#+SETUPFILE: lemmax.setup` brings in `#+TODO:`, `#+TAGS:`, `#+STARTUP:` and
-`#+LEMMAX_*` lines, as Org reads them; a relative path is read from the
+`#+PROPERTY:` lines, as Org reads them; a relative path is read from the
 file's folder in the work tree. `org-enforce-todo-dependencies` is an Emacs
 setting, so a setup file cannot turn it on.
 
@@ -301,8 +301,34 @@ A comment line whose first words are `lemma:` and ids links code to its lemmas.
 them, and `lmx lint` refuses a marker naming no lemma or a dropped one, and a
 lemma done from 2026-11-22 on with no code marker. `lmx list --unmarked`
 shows older done lemmas without one. Test paths default to `test/`, `tests/`,
-`e2e/`, `_test.`, `-test.`, `.spec.` and `_tests.`; `#+LEMMAX_TEST_PATHS:`
-replaces them.
+`e2e/`, `_test.`, `-test.`, `.spec.` and `_tests.`; the `LEMMAX_TEST_PATHS`
+setting replaces them.
+
+## File settings
+
+<!-- lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2 -->
+
+A file's settings are Org `#+PROPERTY:` lines, read as Org reads them, through
+`org-keyword-properties`:
+
+```org
+#+PROPERTY: LEMMAX_TESTS lemmax/run_tests --addresses
+#+PROPERTY: LEMMAX_CODE lemmax/
+#+PROPERTY: LEMMAX_CODE+ harness/checks/lemmax_lint.py
+```
+
+- The settings: `LEMMAX_TESTS` (the test command; it opts the file in),
+  `LEMMAX_CODE`, `LEMMAX_TEST_PATHS` and `LEMMAX_MARKERS_IN`.
+- A `#+PROPERTY:` line in a `#+SETUPFILE:` counts; `NAME+ value` adds to the
+  value, Org's rule.
+- Settings are file-level only: lint refuses a `LEMMAX_` property in a
+  heading's `:PROPERTIES:` drawer.
+- The old `#+LEMMAX_TESTS:` keywords still read; lint refuses a file, with what
+  its setup file brings in, that sets one setting both ways. `lmx migrate`
+  moves each keyword into a `#+PROPERTY:` line in place, in a theory file, its
+  setup file, a setup file or a proofs file given alone.
+- The hooks and `lemmax_lint.py` treat a file with a `#+PROPERTY: LEMMAX_TESTS`
+  line as opted in, as they do the old keyword.
 
 ## Config
 
@@ -322,7 +348,7 @@ may be headings in one file or one lemma per `.org` file, with no header:
   after that day (`lmx list --uncovered` lists every such file); `:repos "DIR"` is the folder `list --all` and
   cross-project `trace` read (else `LEMMAX_REPOS`, else `~/repos`).
 - A file takes the entry with the longest folder that holds it; `""` is the root.
-- A file with any `#+LEMMAX_*` line of its own uses only its header.
+- A file with any setting of its own uses only its header.
 - It is read as data with `read-eval` off and never run; `lint` reports a form
   that does not read, an unknown key, or a folder with no tracked file.
 - The hooks and `lemmax_lint.py` treat a repo with the file as opted in.

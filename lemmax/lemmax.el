@@ -332,6 +332,36 @@ file is a reference and not among them."
           :attach-links n
           :files (delete-dups (nreverse files)))))
 
+;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+(defconst lemmax--settings '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "LEMMAX_MARKERS_IN")
+  "A file's settings: Org #+PROPERTY: lines, or the old #+NAME: keywords.")
+
+(defun lemmax--settings-props ()
+  "In an Org buffer, its file-level settings as Org reads #+PROPERTY: lines,
+with those of its #+SETUPFILE: and NAME+ appending: (NAME . VALUE) pairs."
+  (cl-loop for n in lemmax--settings
+           for v = (cdr (assoc n org-keyword-properties))
+           when v collect (cons n (string-trim v))))
+
+(defun lemmax--settings-both (kw)
+  "The settings set both as an old keyword of KW and a #+PROPERTY: line."
+  (cl-loop for (n . _) in (lemmax--settings-props) when (assoc n kw) collect n))
+
+(defun lemmax--settings-merge (kw)
+  "KW, `org-collect-keywords' output, with each #+PROPERTY: setting in it as
+if a keyword, so every reader of a setting reads both forms."
+  (let ((props (lemmax--settings-props)))
+    (append (mapcar (lambda (p) (list (car p) (cdr p))) props)
+            (cl-remove-if (lambda (k) (assoc (car k) props)) kw))))
+
+(defun lemmax--drawer-settings (raw)
+  "The LEMMAX_ settings in RAW's first :PROPERTIES: drawer, a heading's."
+  (when (string-match "^[ \t]*:PROPERTIES:[ \t]*\n\\(\\(?:.*\n\\)*?\\)[ \t]*:END:" raw)
+    (let ((d (match-string 1 raw)) (pos 0) out)
+      (while (string-match "^[ \t]*:\\(LEMMAX_[A-Z_]+\\)\\+?:" d pos)
+        (push (match-string 1 d) out) (setq pos (match-end 0)))
+      (nreverse out))))
+
 (defun lemmax--parse (content file)
   "Parse org CONTENT named FILE: plist (:file :keywords :opted :listed :statements).
 A UTF-8 BOM and CRLF line ends are read as the plain form."
@@ -351,6 +381,9 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
       (let* ((kw (org-collect-keywords '("LEMMAX_TESTS" "LEMMAX_CODE" "LEMMAX_TEST_PATHS" "LEMMAX_MARKERS_IN" "TODO" "STARTUP"
                                          ;; The names before lemmax, read so older commits still match.
                                          "REQTRACE_TESTS" "REQTRACE_CODE")))
+             ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+             (both (lemmax--settings-both kw))
+             (kw (lemmax--settings-merge kw))
              (todo (cadr (assoc "TODO" kw)))
              ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
              (lemmax--file-new-form
@@ -399,6 +432,10 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                                          (delete-dups (mapcar #'substring-no-properties (org-get-tags))))
                                        (lemmax--ordered-before))
                        statements)
+                 ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+                 (setcar statements (append (car statements)
+                                            (list :drawer-settings
+                                                  (lemmax--drawer-settings (buffer-substring-no-properties beg end)))))
                  ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
                  (setcar statements (append (car statements)
                                             (lemmax--attach-info root (buffer-substring-no-properties beg end))))))))))
@@ -407,6 +444,8 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                (opted (and tests-kw t)))
           (list :file file
                 :misplaced misplaced
+                ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+                :both-ways both
                 ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
                 :declared (cl-loop for e in org-current-tag-alist
                                    when (stringp (car-safe e)) collect (substring-no-properties (car e)))
@@ -584,8 +623,11 @@ theories/ but a project's setup.org."
                        :test #'equal)))
 
 ;; lemma: 01a20336-c4d6-73d3-a429-0a755d277123
+;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+(defconst lemmax--opted-re "^#\\+(LEMMAX_TESTS:|PROPERTY:[[:space:]]+LEMMAX_TESTS\\+?([[:space:]]|$))"
+  "A line that opts a file in, for git grep -E: #+LEMMAX_TESTS: or #+PROPERTY: LEMMAX_TESTS.")
 (defconst lemmax--candidate-re
-  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|THESIS|LEMMA|THEOREM|REFUTED|PASSED|AXIOM|DEFINITION)([^[:alnum:]_]|$)|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|THESIS|LEMMA|THEOREM|REFUTED)([^[:alnum:]_]|$)|#\\+(LEMMAX|REQTRACE)_|#\\+SETUPFILE:|#\\+TODO:.*[^[:alnum:]_](OPEN|CONJECTURE|THESIS)([^[:alnum:]_]|$))"
+  "^(\\*+ +(OPEN|DONE|DROPPED|CONJECTURE|THESIS|LEMMA|THEOREM|REFUTED|PASSED|AXIOM|DEFINITION)([^[:alnum:]_]|$)|[ \t]*:STATE:[ \t]+(OPEN|DONE|DROPPED|CONJECTURE|THESIS|LEMMA|THEOREM|REFUTED)([^[:alnum:]_]|$)|#\\+(LEMMAX|REQTRACE)_|#\\+PROPERTY:[[:space:]]+LEMMAX_|#\\+SETUPFILE:|#\\+TODO:.*[^[:alnum:]_](OPEN|CONJECTURE|THESIS)([^[:alnum:]_]|$))"
   "A line only a file that may hold lemmas has, for git grep -E.")
 
 (defvar lemmax--files-cache (make-hash-table :test #'equal)
@@ -1096,6 +1138,7 @@ logged form set the state again so Org logs today."
           (lemmax--err "lmx: no theory file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
+        (lemmax--lint-settings infos only)
         (lemmax--lint-footnotes infos only staged)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-coverage infos only staged)
@@ -1125,6 +1168,22 @@ logged form set the state again so Org logs today."
                                         (cons 'findings (vconcat (reverse lemmax--json-findings)))))
                      "\n")))
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
+
+;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+(defun lemmax--lint-settings (infos only)
+  "A setting is file-level only, and set one way: a #+PROPERTY: line or an
+old keyword, never both, in a file or what its setup file brings in."
+  (dolist (i infos)
+    (let ((f (plist-get i :file)))
+      (when (or (null only) (member f only))
+        (dolist (n (plist-get i :both-ways))
+          (lemmax--finding f 1 nil (format "%s is set both as #+%s: and as #+PROPERTY: %s" n n n)
+                           "keep the #+PROPERTY: line; lmx migrate moves the keyword"))
+        (dolist (r (plist-get i :statements))
+          (dolist (n (plist-get r :drawer-settings))
+            (lemmax--finding f (plist-get r :line) (plist-get r :id)
+                             (format "%s in a heading's :PROPERTIES: drawer; a setting is file-level only" n)
+                             (format "move it to a #+PROPERTY: %s line at the top of the file" n))))))))
 
 ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
 (defun lemmax--lint-attach (infos only)
@@ -1757,7 +1816,7 @@ Only files with a lemma in the logged form are walked, one git log each."
 
 (defun lemmax--opted-here-p ()
   "Whether this repo has an opted-in file or a config; a git grep, so no parse."
-  (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" "^#\\+LEMMAX_TESTS:" "--" "*.org" "*.setup")))
+  (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" lemmax--opted-re "--" "*.org" "*.setup")))
       (zerop (car (lemmax--git "cat-file" "-e" (concat ":" lemmax-config-file))))))
 
 ;; lemma: RT-19
@@ -2380,7 +2439,7 @@ higher priority, none last, then older by :CREATED:, then by id."
 opts in, then the hook that was there before, kept as NAME.local."
   (concat "#!/usr/bin/env bash\n" lemmax--hook-mark "\n"
           "# lmx " lemmax-version "; the hook that was here first is " name ".local, run after.\n"
-          "if git grep --cached -q -E '^#\\+LEMMAX_TESTS:' -- '*.org' '*.setup' 2>/dev/null \\\n"
+          "if git grep --cached -q -E '" lemmax--opted-re "' -- '*.org' '*.setup' 2>/dev/null \\\n"
           "\t|| git cat-file -e :lemmax/config.eld 2>/dev/null; then\n"
           (if (equal name "pre-commit")
               "\tlmx lint --staged --no-tests || exit 1\n"
@@ -2566,16 +2625,37 @@ its #+STARTUP: given logdrawer, so Emacs logs each state change in :LOGBOOK:."
           (t (concat "#+STARTUP: logdrawer\n" text)))))
 
 (defun lemmax--migrate-setup (content path)
-  "The setup file CONTENT of the file at PATH reads, when CONTENT has no
-#+TODO: of conjectures itself and that file has one: (SETUP-PATH . TEXT)."
+  "The setup file CONTENT of the file at PATH reads, when it has a #+TODO: of
+conjectures CONTENT lacks, or an old settings keyword: (SETUP-PATH . TEXT)."
   (let ((case-fold-search t))
-    (when (and (not (string-match-p "^#\\+TODO:.*\\_<\\(?:OPEN\\|CONJECTURE\\|THESIS\\)\\_>" content))
-               (string-match "^#\\+SETUPFILE:[ \t]*\"?\\([^\"\n]+?\\)\"?[ \t]*$" content))
+    (when (string-match "^#\\+SETUPFILE:[ \t]*\"?\\([^\"\n]+?\\)\"?[ \t]*$" content)
       (let ((sp (expand-file-name (match-string 1 content) (file-name-directory path))))
         (when (file-readable-p sp)
           (let ((text (with-temp-buffer (insert-file-contents sp) (buffer-string))))
-            (when (let ((case-fold-search nil)) (string-match-p "^#\\+TODO:.*\\_<CONJECTURE\\_>" text))
+            (when (or (lemmax--migrate-setup-todo-p content text)
+                      ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+                      (let ((case-fold-search nil)) (string-match-p lemmax--old-setting-re text)))
               (cons sp text))))))))
+
+(defun lemmax--migrate-setup-todo-p (content text)
+  "Whether setup TEXT holds the #+TODO: of conjectures that CONTENT lacks."
+  (let ((case-fold-search nil))
+    (and (not (string-match-p "^#\\+TODO:.*\\_<\\(?:OPEN\\|CONJECTURE\\|THESIS\\)\\_>" content))
+         (string-match-p "^#\\+TODO:.*\\_<CONJECTURE\\_>" text))))
+
+;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+(defconst lemmax--old-setting-re
+  "^#\\+\\(?:LEMMAX\\|REQTRACE\\)_\\(TESTS\\|CODE\\|TEST_PATHS\\|MARKERS_IN\\):[ \t]*\\(.*?\\)[ \t]*$"
+  "An old settings keyword line, as #+LEMMAX_CODE: src/; group 1 the name, 2 the value.")
+
+(defun lemmax--migrate-settings (text)
+  "TEXT with each old settings keyword line written in place as Org's
+#+PROPERTY: line: #+LEMMAX_CODE: src/ becomes #+PROPERTY: LEMMAX_CODE src/."
+  (let ((case-fold-search nil))
+    (replace-regexp-in-string lemmax--old-setting-re
+                              (lambda (m) (string-match lemmax--old-setting-re m)
+                                (string-trim-right (format "#+PROPERTY: LEMMAX_%s %s" (match-string 1 m) (match-string 2 m))))
+                              text t t)))
 
 (defun lemmax--migrate-uses (chunks)
   "Hash: each parent id named in a :NEEDS: of CHUNKS to its children's ids, in
@@ -2636,7 +2716,7 @@ A tasks or notes file keeps its states and dates: it is returned as it is."
     (cons new
           (and proofs
                (let ((kw (cl-loop for l in (split-string pre "\n")
-                                  when (string-match-p "\\`#\\+\\(?:LEMMAX\\|REQTRACE\\)_\\(?:TESTS\\|CODE\\):" l)
+                                  when (string-match-p "\\`#\\+\\(?:\\(?:LEMMAX\\|REQTRACE\\)_\\(?:TESTS\\|CODE\\):\\|PROPERTY:[ \t]+LEMMAX_\\(?:TESTS\\|CODE\\)\\)" l)
                                   collect (concat l "\n"))))
                  (cons (concat "#+title: Proofs of " (or title (file-name-nondirectory file)) "\n"
                                "#+TODO: OPEN(o) | PASSED(p)\n"
@@ -2666,14 +2746,23 @@ A tasks or notes file keeps its states and dates: it is returned as it is."
       (lemmax--err "lmx: migrate takes one FILE; see lmx migrate --help") (kill-emacs 1))
     (let* ((path (file-truename (expand-file-name (car files) (or lemmax--cwd default-directory))))
            (rel (file-relative-name path (file-truename default-directory))))
-      (unless (and (file-readable-p path) (string-suffix-p ".org" path) (not (lemmax--proofs-file-p path)))
+      (unless (and (file-readable-p path) (string-suffix-p ".org" path))
         (lemmax--err "lmx: %s: not a readable theory .org file" (car files)) (kill-emacs 1))
       (let* ((old (with-temp-buffer (insert-file-contents path) (buffer-string)))
              ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
              (setup (lemmax--migrate-setup old path))
-             (snew (and setup (lemmax--migrate-header (cdr setup) t)))
+             ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+             (snew (and setup (lemmax--migrate-settings (lemmax--migrate-header (cdr setup) t))))
              (srel (and setup (file-relative-name (car setup) (file-truename default-directory))))
-             (res (lemmax--migrate-text old rel (lemmax--today) setup))
+             ;; A proofs file, or a setup file migrated alone, takes only the settings move
+             ;; (and a setup file its #+TODO:).
+             (res (cond ((lemmax--proofs-file-p path) (cons (lemmax--migrate-settings old) nil))
+                        ((string-match-p "\\(?:\\`\\|/\\)setup\\.org\\'\\|\\.setup\\'" path)
+                         (cons (lemmax--migrate-settings (lemmax--migrate-header old t)) nil))
+                        (t (let ((r (lemmax--migrate-text old rel (lemmax--today)
+                                                          (and setup (lemmax--migrate-setup-todo-p old (cdr setup))))))
+                             (cons (lemmax--migrate-settings (car r))
+                                   (and (cdr r) (cons (lemmax--migrate-settings (cadr r)) (cddr r))))))))
              (ppath (concat (file-name-sans-extension path) ".proofs.org"))
              (prel (file-relative-name ppath (file-truename default-directory)))
              (pold (and (file-exists-p ppath) (with-temp-buffer (insert-file-contents ppath) (buffer-string))))
@@ -2756,7 +2845,7 @@ last changed its text, read once for the file before anything moves."
         (let ((head (save-excursion
                       (goto-char (point-min))
                       (cl-loop while (and (not (eobp)) (not (looking-at-p "^\\*")))
-                               when (looking-at "^#\\+\\(TODO\\|TAGS\\|FILETAGS\\|LEMMAX_[A-Z_]+\\|REQTRACE_[A-Z_]+\\):.*$")
+                               when (looking-at "^#\\+\\(TODO\\|TAGS\\|FILETAGS\\|PROPERTY\\|LEMMAX_[A-Z_]+\\|REQTRACE_[A-Z_]+\\):.*$")
                                concat (concat (match-string 0) "\n")
                                do (forward-line 1))))
               (done nil))
@@ -3077,12 +3166,12 @@ example: lmx list --ready -p ~/repos/other-project"
 Each command takes -h, --help and help. lmx --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
 instead of the one here. list takes it more than once: one table each.
-lint, commit-msg and trace read files whose header has #+LEMMAX_TESTS:, or
+lint, commit-msg and trace read files whose header sets LEMMAX_TESTS, or
 that lemmax/config.eld names, by folder:
   (:folders ((\"requirements/\" :tests \"CMD\" :code (\"src/\")
               :test-paths (\"tests/\") :markers-in (\"../code\"))))
 A file takes the entry with the longest folder that holds it; a file with a
-#+LEMMAX_* line of its own uses only its own header. The config is read as
+setting of its own uses only its own header. The config is read as
 data and never run. So lemmas may be headings in one file, or one per file.
 A file whose top property drawer has :ID: is one lemma: #+title: is its
 title and :STATE: its OPEN, DONE or DROPPED, or CONJECTURE, THESIS, LEMMA, THEOREM or REFUTED.

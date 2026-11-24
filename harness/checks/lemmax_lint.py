@@ -18,7 +18,7 @@ import subprocess
 import sys
 
 LEMMAX = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "lemmax", "lmx")
-OPTED = re.compile(r"^#\+LEMMAX_TESTS:", re.MULTILINE)
+OPTED = re.compile(r"^#\+(?:LEMMAX_TESTS:|PROPERTY:[ \t]+LEMMAX_TESTS\+?(?:[ \t]|$))", re.MULTILINE)
 FINDING = re.compile(r"^lmx: ([^:]+):(\d+): (.*)$")
 
 files = sys.argv[1:]
@@ -44,7 +44,7 @@ def has_setup(path):
     root = repo_root(path)
     if not root:
         return False
-    return subprocess.run(["git", "-C", root, "grep", "--cached", "-q", "-E", r"^#\+LEMMAX_TESTS:", "--", "*.setup"],
+    return subprocess.run(["git", "-C", root, "grep", "--cached", "-q", "-E", r"^#\+(LEMMAX_TESTS:|PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$))", "--", "*.setup"],
                           capture_output=True).returncode == 0
 
 

@@ -2276,7 +2276,8 @@ run of its finding's why text."
     (should (string-match-p "wrote theories/t/theory.org\nwrote theories/t/theory.proofs.org"
                             (nth 1 (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "migrate" "--write" "theory.org")))))
     (let ((proofs (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.proofs.org") d)) (buffer-string))))
-      (should (string-match-p "^#\\+LEMMAX_TESTS: ./tests.sh" proofs))
+      ;; The settings move to #+PROPERTY: lines (01a20eb5-f066-7481-9fd1-9ac7705ef6b2).
+      (should (string-match-p "^#\\+PROPERTY: LEMMAX_TESTS ./tests.sh" proofs))
       (should (string-match-p "^\\* PASSED Proof: Title of RQ-1\n:PROPERTIES:\n:ID: +[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7" proofs))
       (should (string-match-p ":PROVES: +RQ-1\n" proofs))
       (should (string-match-p ":CREATED: +2026-11-22" proofs)))
@@ -2989,14 +2990,17 @@ committed on DAY, with EXTRA files."
 
 (ert-deftest lemmax-thesis-migrate-kinds ()
   :tags '(timeout-30)
-  ;; Bullet 7: a tasks or notes file keeps its states and dates; migrate changes nothing.
+  ;; Bullet 7: a tasks or notes file keeps its states and dates; migrate moves
+  ;; only its settings keywords (01a20eb5-f066-7481-9fd1-9ac7705ef6b2).
   (let ((d (rt-repo (append (rt-math-files (list (rt-conj "RQ-1")) nil)
                             (list (cons "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1" :state "DONE") (rt-task "TK-2")))
                                   (cons "dev.notes.org" (concat rt-notes-head (rt-note "NT-1"))))))))
     (dolist (f '("dev.tasks.org" "dev.notes.org"))
       (let ((r (rt-run d "migrate" f)))
         (should (= 0 (nth 0 r)))
-        (should (equal "" (nth 1 r)))))
+        (let ((changed (cl-remove-if-not (lambda (l) (string-match-p "\\`[-+][^-+]" l)) (split-string (nth 1 r) "\n"))))
+          (should changed)
+          (should (cl-every (lambda (l) (string-match-p "\\`\\(?:-#\\+LEMMAX_[A-Z_]+: \\|\\+#\\+PROPERTY: LEMMAX_\\)" l)) changed)))))
     (rt-should-clean (rt-run d "lint" "--no-tests"))))
 
 (ert-deftest lemmax-thesis-edited-day-follows-move ()
@@ -3022,3 +3026,113 @@ committed on DAY, with EXTRA files."
     (rt-commit d "edit" "2026-01-10")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-20") (rt-run d "lint" "--no-tests"))
                     "a THESIS whose text changed 2026-01-10, after it was accepted 2026-01-05")))
+
+;;;; 01a20eb5-f066-7481-9fd1-9ac7705ef6b2: file settings are Org #+PROPERTY: lines
+
+;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+(defconst rt-prop-head
+  "#+title: Invented requirements\n#+TODO: OPEN | DONE DROPPED\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n#+PROPERTY: LEMMAX_CODE src/\n\n"
+  "`rt-head' with its settings as #+PROPERTY: lines, on the same lines.")
+
+(defun rt-prop-files (head &rest reqs)
+  (list (cons "theory.org" (apply #'concat head reqs))
+        (cons "tests.sh" (rt-tests-sh "unit/a" "unit/b"))
+        (cons "src/x.clj" "(ns x)\n")))
+
+(defun rt-parse-in (d file)
+  "FILE of the test repo D, parsed as lmx parses it, in D."
+  (rt-load)
+  (let ((default-directory (file-name-as-directory d)))
+    (lemmax--parse (with-temp-buffer (insert-file-contents (rt-p file)) (buffer-string)) (rt-p file))))
+
+(ert-deftest lemmax-settings-property ()
+  :tags '(timeout-30)
+  ;; Bullet 1: #+PROPERTY: LEMMAX_TESTS and LEMMAX_CODE opt a file in and set it up.
+  (let ((d (rt-repo (rt-prop-files rt-prop-head (rt-done "RQ-1" :verify "unit/zzz")))))
+    (rt-should-find (rt-run d "lint") "theory\\.org:6: RQ-1: :VERIFY: names unit/zzz, which the test command does not list")
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-git d "add" "-A")
+    (should (= 1 (nth 0 (rt-commit-msg d "change it"))))
+    (should (= 0 (nth 0 (rt-commit-msg d "change it (RQ-1)")))))
+  (let ((info (rt-parse-in (rt-repo (rt-prop-files (concat rt-prop-head "#+PROPERTY: LEMMAX_TEST_PATHS spec/\n#+PROPERTY: LEMMAX_MARKERS_IN ../code\n")))
+                           "theory.org")))
+    (should (equal "./tests.sh" (plist-get info :tests)))
+    (should (equal '("src/") (plist-get info :code)))
+    (should (equal '("spec/") (plist-get info :test-paths)))
+    (should (equal '("../code") (plist-get info :markers-in)))))
+
+(ert-deftest lemmax-settings-setupfile-and-append ()
+  :tags '(timeout-30)
+  ;; Bullets 2 and 3: a setup file's #+PROPERTY: lines count, and NAME+ appends.
+  (let* ((d (rt-repo (list (cons "setup.org" "#+PROPERTY: LEMMAX_TESTS ./tests.sh\n#+PROPERTY: LEMMAX_CODE src/\n")
+                           (cons "theory.org" (concat "#+SETUPFILE: setup.org\n#+TODO: OPEN | DONE DROPPED\n#+PROPERTY: LEMMAX_CODE+ lib/\n\n"
+                                                      (rt-done "RQ-1" :approved nil)))
+                           (cons "tests.sh" (rt-tests-sh "unit/a"))
+                           (cons "src/x.clj" "(ns x)\n"))))
+         (info (rt-parse-in d "theory.org")))
+    (should (equal '("src/" "lib/") (plist-get info :code)))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: DONE with no :APPROVED:")))
+
+(ert-deftest lemmax-settings-file-level-only ()
+  :tags '(timeout-30)
+  ;; Bullet 4: a LEMMAX_ setting in a heading's drawer is refused.
+  (rt-should-find (rt-run (rt-repo (rt-prop-files rt-prop-head
+                                                  (replace-regexp-in-string ":END:" ":LEMMAX_CODE: lib/\n:END:" (rt-req "RQ-1"))))
+                          "lint" "--no-tests")
+                  "theory\\.org:6: RQ-1: LEMMAX_CODE in a heading's :PROPERTIES: drawer; a setting is file-level only"))
+
+(ert-deftest lemmax-settings-both-ways ()
+  :tags '(timeout-30)
+  ;; Bullet 5: old keywords still read; one setting set both ways is refused,
+  ;; also when the setup file brings one of them.
+  (rt-should-clean (rt-lint (rt-req "RQ-1")))
+  (rt-should-find (rt-run (rt-repo (rt-prop-files (concat rt-prop-head "#+LEMMAX_CODE: lib/\n") (rt-req "RQ-1")))
+                          "lint" "--no-tests")
+                  "theory\\.org:1: -: LEMMAX_CODE is set both as #\\+LEMMAX_CODE: and as #\\+PROPERTY: LEMMAX_CODE")
+  (rt-should-find (rt-run (rt-repo (list (cons "setup.org" "#+LEMMAX_TESTS: ./tests.sh\n")
+                                         (cons "theory.org" (concat "#+SETUPFILE: setup.org\n#+TODO: OPEN | DONE DROPPED\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n\n" (rt-req "RQ-1")))
+                                         (cons "tests.sh" (rt-tests-sh "unit/a"))))
+                          "lint" "--no-tests")
+                  "LEMMAX_TESTS is set both"))
+
+(ert-deftest lemmax-settings-migrate ()
+  :tags '(timeout-60)
+  ;; Bullet 6: migrate moves each old keyword into a #+PROPERTY: line, in place,
+  ;; in a theory file, its setup file, a setup file alone and a proofs file.
+  (let* ((d (rt-repo (list (cons "setup.org" "#+title: s\n#+LEMMAX_TESTS: ./tests.sh\n#+TAGS: x\n")
+                           (cons "theory.org" (concat "#+title: T\n#+SETUPFILE: setup.org\n#+TODO: CONJECTURE | LEMMA THEOREM REFUTED\n#+LEMMAX_CODE: src/\n\n" (rt-conj "RQ-1")))
+                           (cons "theory.proofs.org" rt-proofs-head)
+                           (cons "tests.sh" (rt-tests-sh "unit/a"))
+                           (cons "src/x.clj" "(ns x)\n"))))
+         (out (nth 1 (rt-run d "migrate" "theory.org"))))
+    (should (string-match-p "^-#\\+LEMMAX_CODE: src/$" out))
+    (should (string-match-p "^\\+#\\+PROPERTY: LEMMAX_CODE src/$" out))
+    (should (string-match-p "^ #\\+title: s\n-#\\+LEMMAX_TESTS: ./tests.sh\n\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh\n #\\+TAGS: x" out))
+    (should (string-match-p "^-#\\+LEMMAX_TESTS: ./tests.sh\n-#\\+LEMMAX_CODE: src/\n\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh\n\\+#\\+PROPERTY: LEMMAX_CODE src/"
+                            (nth 1 (rt-run d "migrate" "theory.proofs.org"))))
+    (rt-run d "migrate" "--write" "theory.org")
+    (rt-run d "migrate" "--write" "theory.proofs.org")
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-run d "lint" "--staged" "--no-tests"))
+    (should (equal "" (nth 1 (rt-run d "migrate" "setup.org"))))
+    (let ((e (rt-repo (list (cons "setup.org" "#+LEMMAX_TESTS: ./tests.sh\n")))))
+      (should (string-match-p "^\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh$" (nth 1 (rt-run e "migrate" "setup.org")))))))
+
+(ert-deftest lemmax-settings-opt-in ()
+  :tags '(timeout-30)
+  ;; Bullet 7: the hooks and lemmax_lint.py treat a #+PROPERTY: LEMMAX_TESTS
+  ;; line, in a file or its setup file, as opted in.
+  (let ((d (rt-hooked (rt-prop-files rt-prop-head (rt-req "RQ-1")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-sh d "git" "add" "-A")
+    (should (= 1 (nth 0 (rt-hook-commit d "change it"))))
+    (should (= 0 (nth 0 (rt-hook-commit d "change it (RQ-1)")))))
+  (should (string-match-p "^theories/t/theory\\.org:6: RQ-1: DONE with no :APPROVED:"
+                          (rt-check (rt-repo (rt-prop-files rt-prop-head (rt-done "RQ-1" :approved nil))) "theories/t/theory.org\n")))
+  (let ((d (rt-repo (list (cons "lemmax.setup" "#+TODO: OPEN | DONE DROPPED\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n")
+                          (cons "theory.org" (concat "#+SETUPFILE: lemmax.setup\n\n" (rt-done "RQ-1" :approved nil)))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))))))
+    (should (string-match-p "RQ-1: DONE with no :APPROVED:" (rt-check d "theories/t/theory.org\n"))))
+  ;; install-hooks writes the same test.
+  (rt-load)
+  (should (string-search lemmax--opted-re (lemmax--hook-text "pre-commit"))))

@@ -5,6 +5,12 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- File settings are Org `#+PROPERTY:` lines: `#+PROPERTY: LEMMAX_TESTS CMD`,
+  `LEMMAX_CODE`, `LEMMAX_TEST_PATHS` and `LEMMAX_MARKERS_IN`, read as Org reads
+  them, from a `#+SETUPFILE:` too, `NAME+` appending. Lint refuses one in a
+  heading's drawer, and a setting set both as a property and an old
+  `#+LEMMAX_*:` keyword, which still reads. `migrate` moves each keyword into
+  a `#+PROPERTY:` line; the hooks and `lemmax_lint.py` opt such a file in.
 - A new state, `THESIS`, between `CONJECTURE` and the done states: a
   conjecture the owner accepted to prove.
   `#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)` with
