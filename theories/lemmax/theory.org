@@ -1718,3 +1718,23 @@ A statement's acceptance and proof are Org TODO states, and Org's LOGBOOK dates 
 - lmx migrate --write moves :APPROVED: D and :PROVEN: D into log lines dated D, makes each approved CONJECTURE a THESIS, and deletes :LAST_EDITED:
 - Asked by the owner on 2026-11-24
 Evidence: Org's manual, "Tracking TODO state changes": a ! after a state's key logs a timestamp on entry, and org-log-into-drawer (#+STARTUP: logdrawer) puts it in :LOGBOOK:; lemmax--entry-text already skips :LOGBOOK: as history; lmx trace already reads each heading's commit days from git.
+
+** THESIS File settings are Org #+PROPERTY: lines                       :lint:
+:PROPERTIES:
+:ID:          01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+:USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-24
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
+:END:
+lmx reads a file's settings from Org's #+PROPERTY: lines, as Org reads them.
+- The settings are LEMMAX_TESTS, LEMMAX_CODE, LEMMAX_TEST_PATHS and LEMMAX_MARKERS_IN: #+PROPERTY: LEMMAX_TESTS lemmax/run_tests --addresses
+- A #+PROPERTY: line in a #+SETUPFILE: counts, as Org reads it
+- A LEMMAX_CODE+ line adds to the value, as Org's + rule does
+- Settings are file-level only: lint refuses a LEMMAX_ setting in a heading's :PROPERTIES: drawer
+- The old #+LEMMAX_TESTS: keywords still read; lint refuses a file that sets one setting both ways
+- lmx migrate --write moves each old keyword into a #+PROPERTY: line
+- The hooks and harness/checks/lemmax_lint.py treat a file with a LEMMAX_ #+PROPERTY: line as opted in, as they do the old keyword
+- Asked by the owner on 2026-11-24
+Evidence: Org manual, "Property Syntax": #+PROPERTY: sets a file-wide property and NAME+ appends to it; org-entry-get with inherit reads it.
