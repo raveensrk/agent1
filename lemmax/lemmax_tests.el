@@ -823,7 +823,9 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
 ;; lemma: 01a20d28-cb41-760a-a477-e1704807a2a8
 (ert-deftest lemmax-docs-warnings ()
   :tags '(timeout-60)
-  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1")))))
+  ;; Finished: the theory's theorem is proven (01a20f2e-b275-726f-ac83-9333aab958ba).
+  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))
+                                    (list (rt-proof "PR-1" "RQ-1 RQ-2")))))
          (bible "theories/t/t.bible.html") (manual "theories/t/t.manual.html"))
     ;; Finished, with neither: two warnings, and lint still passes.
     (let ((r (rt-run d "lint" "--no-tests")))
@@ -1222,44 +1224,21 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
                          (cons "src/x.clj" "(ns x)\n"))
                    files)))
 
-(ert-deftest lemmax-file-lemma-read ()
+;; lemma: 01a20f2e-b275-726f-ac83-9335aaf3e6e7
+(ert-deftest lemmax-statement-is-a-heading ()
   :tags '(timeout-30)
+  ;; A file whose top drawer holds :STATE: is refused, and read as no
+  ;; statement; a top drawer with only :ID:, as an org-roam file node, is fine.
   (let ((d (rt-file-lemma-repo
-            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :title "The whole file" :body "Body.\n* A heading\nMore body.\n"))
-            (cons "reqs/two.org" (rt-file-lemma "RQ-2" :needs "RQ-1")))))
-    (let ((json (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests")))))
-      (should (= 2 (length json)))
-      (let ((one (cl-find "RQ-1" json :key (lambda (r) (alist-get 'id r)) :test #'equal)))
-        (should (equal "The whole file" (alist-get 'title one)))
-        (should (equal "OPEN" (alist-get 'state one)))
-        (should (equal "theories/t/reqs/one.org" (alist-get 'file one)))))
-    (let ((tr (nth 1 (rt-run d "trace" "RQ-1"))))
-      (should (string-match-p "^RQ-1 OPEN The whole file" tr))
-      (should (string-match-p "children: RQ-2" tr))
-      (should (string-match-p "More body\\." tr)))))
-
-(ert-deftest lemmax-file-lemma-lint ()
-  :tags '(timeout-30)
-  (let ((d (rt-file-lemma-repo
-            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))))
-    (rt-should-clean (rt-run d "lint"))
-    (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :verify "unit/zz"))
-    (let ((r (rt-run d "lint")))
-      (rt-should-find r "reqs/one.org:1: RQ-1: DONE with no :IMPLEMENTED:")
-      (should (string-match-p "names unit/zz, which the test command does not list" (nth 2 r))))))
-
-(ert-deftest lemmax-file-lemma-staged ()
-  :tags '(timeout-30)
-  (let ((d (rt-file-lemma-repo
-            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))))
-    ;; Its state alone is no text change; its body is.
-    (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a" :body "New.\n"))
-    (rt-git d "add" "-A")
-    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))
-                    "DONE statement's text changed")
-    (rt-set d "reqs/one.org" (rt-file-lemma "RQ-1" :state "DROPPED" :verify "unit/a"))
-    (rt-git d "add" "-A")
-    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+            (cons "reqs/one.org" (rt-file-lemma "RQ-1" :body "Body.\n* OPEN Inside\n:PROPERTIES:\n:ID:          RQ-2\n:CREATED:     2026-01-05\n:LAST_EDITED: 2026-01-05\n:END:\nText.\n"))
+            (cons "reqs/node.org" "#+TODO: OPEN | DONE DROPPED\n:PROPERTIES:\n:ID:          NODE-1\n:END:\n#+title: Node\n"))))
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (rt-should-find r "theories/t/reqs/one\\.org:1: -: a file whose top drawer holds :STATE:; a statement is a heading, never a whole file; make it a heading in theory\\.org")
+      (should-not (string-match-p "node\\.org" (nth 2 r))))
+    (let ((ids (mapcar (lambda (r) (alist-get 'id r)) (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests"))))))
+      (should (member "RQ-2" ids))
+      (should-not (member "RQ-1" ids))
+      (should-not (member "NODE-1" ids)))))
 
 ;;;; 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0: :ALIASES:
 
@@ -1296,7 +1275,7 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
     (let ((row (aref (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests"))) 0)))
       (should (equal ["https://example.invalid/issues/4" "http://example.invalid/spec"] (alist-get 'refs row))))
     (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :refs "issue-4")))
-    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: :REFS: names issue-4, which is not an http(s) URL")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: :ROAM_REFS: names issue-4, which is not an http(s) URL")))
 
 ;;;; 01a202bc-4b52-74e6-9d78-591320edcb4f: backlinks
 
@@ -1362,9 +1341,9 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
   :tags '(timeout-30)
   (let ((d (rt-repo (append (rt-files (rt-done "RQ-1") (rt-done "RQ-2"))
                             (list (rt-config '("reqs/" :tests "./tests.sh")))))))
-    ;; RQ-2 leaves the shared file for a file of its own, as a file lemma.
+    ;; RQ-2 leaves the shared file for a file of its own, as a heading.
     (rt-set d "theory.org" (concat rt-head (rt-done "RQ-1")))
-    (rt-set d "reqs/RQ-2.org" (concat ":PROPERTIES:\n:ID: RQ-2\n:STATE: DONE\n:CREATED: 2026-01-05\n:LAST_EDITED: 2026-01-05\n:APPROVED: 2026-01-05\n:IMPLEMENTED: 2026-01-06\n:VERIFY: unit/a\n:END:\n#+title: Title of RQ-2\n\nBody text.\n"))
+    (rt-set d "reqs/RQ-2.org" (concat "#+TODO: OPEN | DONE DROPPED\n\n" (rt-done "RQ-2")))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
 
@@ -1424,23 +1403,11 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
   (dolist (c rt-odd-files)
     (let ((full (cl-loop for r in (plist-get (lemmax--parse c "f.org") :statements)
                          when (plist-get r :id) collect (cons (plist-get r :id) (plist-get r :text))))
-          (quick (lemmax--quick-ids c)))
+          (quick (mapcar (lambda (q) (cons (car q) (nth 1 q))) (lemmax--quick-ids c))))
       (should (equal full quick))))
-  (should (equal '("RQ-4") (mapcar #'car (lemmax--quick-ids (nth 1 rt-odd-files)))))
+  ;; A file's top drawer is no statement (01a20f2e-b275-726f-ac83-9335aaf3e6e7).
+  (should (equal '("NOT-1") (mapcar #'car (lemmax--quick-ids (nth 1 rt-odd-files)))))
   (should (equal '("RQ-6") (mapcar #'car (lemmax--quick-ids (nth 2 rt-odd-files))))))
-
-;;;; 01a202f3-8475-7f4f-b0e2-5cd8c782e520: a file lemma's drawer comes first
-
-(ert-deftest lemmax-file-drawer-first ()
-  :tags '(timeout-30)
-  (let ((d (rt-file-lemma-repo
-            (cons "reqs/late.org" "#+title: Late\n\n:PROPERTIES:\n:ID: RQ-5\n:END:\nBody.\n")
-            (cons "reqs/ok.org" (concat "# kept\n" (rt-file-lemma "RQ-1"))))))
-    (let ((r (rt-run d "lint" "--no-tests")))
-      (rt-should-find r "theories/t/reqs/late\\.org:3: -: a drawer with :ID: below other text is no file lemma")
-      (should-not (string-match-p "reqs/ok\\.org" (nth 2 r))))
-    (should-not (string-match-p "RQ-5" (rt-list d)))
-    (should (string-match-p "RQ-1" (rt-list d)))))
 
 ;;;; 01a202f3-850b-7e3f-93f9-655397189d53: today is the local day
 
@@ -1567,9 +1534,7 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
     (should (equal want (rt-lemmas (replace-regexp-in-string "\n" "\r\n" plain))))
     (should (equal want (rt-lemmas (concat "\ufeff" plain))))
     (should (equal want (rt-lemmas (replace-regexp-in-string "^\\(:[A-Z_]+:\\) +" "\\1\t" plain))))
-    (should (null (rt-lemmas "")))
-    (should (equal (mapcar #'car (rt-lemmas (rt-file-lemma "RQ-3")))
-                   (mapcar #'car (rt-lemmas (concat "\ufeff" (replace-regexp-in-string "\n" "\r\n" (rt-file-lemma "RQ-3")))))))))
+    (should (null (rt-lemmas "")))))
 
 (ert-deftest lemmax-odd-input-id-space ()
   (let ((d (rt-repo (rt-files (rt-req "RQ 1")))))
@@ -1885,7 +1850,7 @@ run of its finding's why text."
   :tags '(timeout-30)
   (let* ((d (rt-repo (append (rt-files (rt-req "RQ-1" :title "First") (rt-req "RQ-2"))
                              (list (rt-config '("reqs/" :tests "./tests.sh"))
-                                   (cons "reqs/again.org" (rt-file-lemma "RQ-1" :title "Second"))))))
+                                   (cons "reqs/again.org" (concat "#+TODO: OPEN | DONE DROPPED\n\n" (rt-req "RQ-1" :title "Second")))))))
          (r (rt-run d "trace" "RQ-1")))
     (should (= 1 (nth 0 r)))
     ;; File order: reqs/again.org sorts before theory.org.
@@ -2104,7 +2069,19 @@ run of its finding's why text."
                                          (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2" :implemented "2026-01-06")
                                          (rt-conj "RQ-4" :state "REFUTED"))
                                    (list (rt-proof "PR-1" "RQ-2") (rt-proof "PR-2" "RQ-3"))))))
-    (rt-should-clean (rt-run d "lint"))
+    ;; RQ-1 is outside the theorem: refused, until RQ-3 reaches it
+    ;; (01a20f2e-b275-726f-ac83-9333aab958ba).
+    (rt-should-find (rt-run d "lint") "RQ-1: the theorem RQ-3 does not reach it through :USES:")
+    (rt-set d "theory.org" (concat rt-math-head (rt-conj "RQ-1") (rt-lemma "RQ-2" :uses "RQ-1")
+                                   (rt-conj "RQ-3" :state "THESIS" :uses "RQ-2") (rt-conj "RQ-4" :state "REFUTED")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "a LEMMA that uses RQ-1, which is CONJECTURE")
+    (rt-set d "theory.org" (concat rt-math-head (rt-conj "RQ-1") (rt-lemma "RQ-2")
+                                   (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-1 RQ-2" :implemented "2026-01-06")
+                                   (rt-conj "RQ-4" :state "REFUTED")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "a THEOREM that reaches RQ-1, which is CONJECTURE, not proven")
+    (rt-set d "theory.org" (concat rt-math-head (rt-conj "RQ-1") (rt-lemma "RQ-2")
+                                   (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2" :implemented "2026-01-06")
+                                   (rt-conj "RQ-4" :state "REFUTED")))
     (let ((out (nth 1 (rt-run d "list"))))
       (should (string-match-p "RQ-1 +CONJECTURE" out))
       (should (string-match-p "RQ-2 +LEMMA" out))
@@ -2151,10 +2128,9 @@ run of its finding's why text."
     (funcall case d (list (rt-lemma "RQ-1")) nil "a LEMMA with no proof")
     (funcall case d (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1" :state "OPEN"))
              "proof PR-1 is OPEN, a counterexample until it passes")
-    (funcall case d (list (rt-conj "RQ-1" :state "THEOREM" :implemented "2026-01-06")) (list (rt-proof "PR-1" "RQ-1"))
-             "a THEOREM with no :USES:")
+    ;; A LEMMA may use others, and waits for them (01a20f2e-b275-726f-ac83-9333aab958ba).
     (funcall case d (list (rt-conj "RQ-0") (rt-lemma "RQ-1" :uses "RQ-0")) (list (rt-proof "PR-1" "RQ-1"))
-             "a LEMMA with :USES: is a THEOREM")
+             "a LEMMA that uses RQ-0, which is CONJECTURE, not proven")
     (funcall case d (list (rt-conj "RQ-0") (rt-conj "RQ-1" :state "THEOREM" :uses "RQ-0" :implemented "2026-01-06"))
              (list (rt-proof "PR-1" "RQ-1"))
              "a THEOREM that uses RQ-0, which is CONJECTURE, not proven")
@@ -2201,7 +2177,7 @@ run of its finding's why text."
 (ert-deftest lemmax-proven-date ()
   :tags '(timeout-60)
   (let ((d (rt-repo (rt-math-files (list (rt-proven (rt-lemma "RQ-1"))
-                                         (rt-proven (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))
+                                         (rt-proven (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1 RQ-3" :implemented "2026-01-06"))
                                          (rt-lemma "RQ-3"))
                                    (list (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2") (rt-proof "PR-3" "RQ-3")))))
         (case (lambda (d reqs proofs want)
@@ -2257,8 +2233,9 @@ run of its finding's why text."
          (out (nth 1 r)))
     (should (= 0 (nth 0 r)))
     (should (string-match-p "^-\\* DONE Title of RQ-1" out))
-    ;; RQ-2 needed RQ-1: inverted, RQ-1 uses RQ-2 and is the theorem.
-    (should (string-match-p "^\\+\\* THEOREM Title of RQ-1" out))
+    ;; RQ-2 needed RQ-1: inverted, RQ-1 uses RQ-2, a LEMMA; lmx migrate
+    ;; --theorem names a theory's one theorem (01a20f2e-b275-726f-ac83-9333aab958ba).
+    (should (string-match-p "^\\+\\* LEMMA Title of RQ-1" out))
     (should (string-match-p "^\\+\\*\\* LEMMA Title of RQ-2" out))
     (should (string-match-p "^-:NEEDS: +RQ-1" out))
     ;; RQ-3 was approved: a THESIS (01a20e7b-c7c0-77fc-bc53-bc963ab4843f).
@@ -2294,7 +2271,9 @@ run of its finding's why text."
     ;; The migrated file lints clean, and no lemma's text changed.
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged")))
     (rt-commit d "migrate")
-    (should (string-match-p "Suspect: none" (nth 1 (rt-run d "trace"))))
+    ;; The inverted :USES: is a change of the links: the owner reads them again
+    ;; (01a20f2e-b275-726f-ac83-9334afc8f438).
+    (should (string-match-p "Suspect: \n  RQ-1: its :USES: changed" (nth 1 (rt-run d "trace"))))
     ;; Run again it changes nothing.
     (should (equal "" (nth 1 (rt-run d "migrate" "theory.org"))))))
 
@@ -2396,9 +2375,10 @@ run of its finding's why text."
                                          (rt-conj "RQ-2" :state "THEOREM" :uses "DF-1 RQ-1" :implemented "2026-01-06")))
     (rt-set d "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2")))
     (rt-should-clean (rt-run d "lint" "--no-tests"))
-    ;; A lemma that uses more than definitions is still a theorem.
+    ;; A lemma may use other lemmas (01a20f2e-b275-726f-ac83-9333aab958ba).
     (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1" :uses "DF-1 RQ-2") (rt-lemma "RQ-2")))
-    (rt-should-find (rt-run d "lint" "--no-tests") "a LEMMA with :USES: is a THEOREM")
+    (rt-set d "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 RQ-2")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
     ;; A proof never proves a definition.
     (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1")))
     (rt-set d "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 DF-1")))
@@ -2508,12 +2488,17 @@ run of its finding's why text."
     (rt-should-clean (rt-run d "lint"))
     (rt-set d "theory.org" (concat rt-math-head parent (rt-conj "RQ-2" :level 2) (rt-lemma "RQ-1" :level 2)))
     (rt-should-find (rt-run d "lint" "--no-tests") "ORDERED: proven before its earlier sibling RQ-2, which is CONJECTURE")
+    ;; :BLOCKER: is refused, matching :USES: or not, and migrate deletes it
+    ;; (01a203a6-a716-738e-a95b-18086050d5eb).
     (rt-set d "theory.org"
             (concat rt-math-head (rt-lemma "RQ-1")
-                    (replace-regexp-in-string ":END:" ":BLOCKER:     RQ-9\n:END:"
+                    (replace-regexp-in-string ":END:" ":BLOCKER:     RQ-1\n:END:"
                                               (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))))
     (rt-set d "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1 RQ-3")))
-    (rt-should-find (rt-run d "lint" "--no-tests") ":BLOCKER: and :USES: name different ids")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-3: a :BLOCKER: property; :USES: says what a statement waits for")
+    (should (string-match-p "^-:BLOCKER: +RQ-1$" (nth 1 (rt-run d "migrate" "theory.org"))))
+    (rt-run d "migrate" "--write" "theory.org")
+    (should-not (string-match-p "BLOCKER" (nth 2 (rt-run d "lint" "--no-tests"))))))
 
 ;;;; 01a203a6-a729-7420-980a-1702a0de05ad: a LOGBOOK is not the text
 
@@ -3196,8 +3181,7 @@ which holds the tests and code, read by theory.org with REQS."
   ;; Bullets 3 and 4: with no config, a project's own #+PROPERTY: lines are its
   ;; folder's settings, and a lemma file with no header has none.
   (let ((d (rt-repo (append (rt-chain-files "" (rt-done "RQ-1" :verify "unit/zzz"))
-                            (list (cons "RQ-2.org" (concat ":PROPERTIES:\n:ID: RQ-2\n:STATE: DONE\n:CREATED: 2026-01-05\n"
-                                                           ":LAST_EDITED: 2026-01-05\n:END:\n#+title: Bare\n")))))))
+                            (list (cons "RQ-2.org" (concat "#+TODO: OPEN | DONE DROPPED\n\n" (rt-done "RQ-2" :verify "unit/zzz"))))))))
     (let ((r (rt-run d "lint")))
       (rt-should-find r "theory\\.org:[0-9]+: RQ-1: :VERIFY: names unit/zzz")
       (should-not (string-match-p "RQ-2" (nth 2 r))))))
@@ -3366,3 +3350,115 @@ which holds the tests and code, read by theory.org with REQS."
                                    (nreverse ids)))))
         (should (funcall order plan))
         (should (funcall order (nth 1 (rt-run d "plan"))))))))
+
+;;;; 01a202bc-4cc4-753e-8d51-12d8327dfd9c: :ROAM_REFS:
+
+;; lemma: 01a202bc-4cc4-753e-8d51-12d8327dfd9c
+(ert-deftest lemmax-roam-refs ()
+  :tags '(timeout-30)
+  ;; :ROAM_REFS: is read, as org-roam writes it; an old :REFS: still reads,
+  ;; and migrate renames it.
+  (let ((d (rt-repo (rt-files (replace-regexp-in-string ":END:" ":ROAM_REFS:   https://example.invalid/a \"https://example.invalid/b\"\n:END:"
+                                                        (rt-req "RQ-1") t t)
+                              (rt-req "RQ-2" :refs "https://example.invalid/old")))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "  refs: https://example.invalid/a https://example.invalid/b$" (nth 1 (rt-run d "trace" "RQ-1"))))
+    (let ((rows (rt-json-rows (nth 1 (rt-run d "list" "--json" "--no-tests")))))
+      (should (equal ["https://example.invalid/old"] (alist-get 'refs (aref rows 1)))))
+    (let ((out (nth 1 (rt-run d "migrate" "theory.org"))))
+      (should (string-match-p "^-:REFS: +https://example.invalid/old$" out))
+      (should (string-match-p "^\\+:ROAM_REFS: +https://example.invalid/old$" out)))))
+
+;;;; 01a20f2e-b275-726f-ac83-9334afc8f438: links are not a statement's text
+
+;; lemma: 01a20f2e-b275-726f-ac83-9334afc8f438
+(ert-deftest lemmax-links-not-text ()
+  :tags '(timeout-60)
+  ;; Changing a link property sends nothing back; a changed :USES: makes the
+  ;; statement suspect.
+  (rt-load)
+  (let* ((base (rt-conj "RQ-1" :state "LEMMA" :uses "RQ-2" :implemented "2026-01-06"))
+         (text (plist-get (car (plist-get (lemmax--parse base "f.org") :statements)) :text)))
+    (dolist (prop '(":PROVES:      X" ":FOR:         X" ":ABOUT:       X" ":FOLLOWS:     a.org::*X" ":TEST:        ert/x"
+                    ":ALIASES:     RQ-9" ":ROAM_REFS:   https://example.invalid/x" ":REFS:        https://example.invalid/x"
+                    ":USES:        RQ-3"))
+      (let ((changed (replace-regexp-in-string ":END:" (concat prop "\n:END:") (replace-regexp-in-string ":USES: .*\n" "" base))))
+        (should (equal text (plist-get (car (plist-get (lemmax--parse changed "f.org") :statements)) :text))))))
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1" :uses "RQ-2") (rt-lemma "RQ-2") (rt-lemma "RQ-3"))
+                                   (list (rt-proof "PR-1" "RQ-1 RQ-2 RQ-3")))
+                    "2026-01-07")))
+    (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1" :uses "RQ-2 RQ-3") (rt-lemma "RQ-2") (rt-lemma "RQ-3")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-08") (rt-run d "lint" "--staged" "--no-tests")))
+    (rt-commit d "uses" "2026-01-08")
+    (let ((tr (nth 1 (rt-run d "trace"))))
+      (should (string-match-p "suspect: its :USES: changed 2026-01-08" tr))
+      (should (string-match-p "Suspect: \n  RQ-1: its :USES: changed 2026-01-08" tr)))))
+
+;;;; 01a20f2e-b275-726f-ac83-9333aab958ba: a theory has one theorem
+
+;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
+(ert-deftest lemmax-one-theorem ()
+  :tags '(timeout-60)
+  ;; One THEOREM per theory; it reaches every statement; proven only when all
+  ;; it reaches is proven; a reopened statement under it is refused.
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-lemma "RQ-2" :uses "RQ-1")
+                                         (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2" :implemented "2026-01-06")
+                                         (rt-conj "RQ-4" :state "REFUTED"))
+                                   (list (rt-proof "PR-1" "RQ-1 RQ-2 RQ-3"))))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (let ((both (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06")
+                                     (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2" :implemented "2026-01-06"))
+                               nil)))
+      (rt-set d "theory.org" (cdr (car both))))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-3: a second THEOREM in this theory, whose theorem is RQ-2")
+    (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-lemma "RQ-2")
+                                   (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2" :implemented "2026-01-06")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: the theorem RQ-3 does not reach it through :USES:")
+    ;; A reopened statement under it: refused until the theorem is THESIS.
+    (rt-set d "theory.org" (concat rt-math-head (rt-conj "RQ-1") (rt-lemma "RQ-2" :uses "RQ-1" :approved nil)
+                                   (rt-conj "RQ-3" :state "THEOREM" :uses "RQ-2" :implemented "2026-01-06")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-3: a THEOREM that reaches RQ-1, which is CONJECTURE, not proven; make the theorem THESIS")
+    (rt-set d "theory.org" (concat rt-math-head (rt-conj "RQ-1") (rt-conj "RQ-2" :uses "RQ-1") (rt-conj "RQ-3" :state "THESIS" :uses "RQ-2")))
+    (rt-set d "theory.proofs.org" rt-proofs-head)
+    (rt-should-clean (rt-run d "lint" "--no-tests"))))
+
+(ert-deftest lemmax-one-theorem-finished ()
+  :tags '(timeout-30)
+  ;; The project is finished, the bible and manual warning applies, only when
+  ;; its theorem is proven.
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THESIS" :uses "RQ-1")) (list (rt-proof "PR-1" "RQ-1"))))))
+    (should-not (string-match-p "is finished" (nth 2 (rt-run d "lint" "--no-tests")))))
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1"))))))
+    (should-not (string-match-p "is finished" (nth 2 (rt-run d "lint" "--no-tests")))))
+  ;; A proven THEOREM that does not reach every statement: not finished.
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-lemma "RQ-3")
+                                         (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06"))
+                                   (list (rt-proof "PR-1" "RQ-1 RQ-2 RQ-3"))))))
+    (should-not (string-match-p "is finished" (nth 2 (rt-run d "lint" "--no-tests"))))
+    (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-lemma "RQ-3")
+                                   (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1 RQ-3" :implemented "2026-01-06")))
+    (should (string-match-p "project t is finished" (nth 2 (rt-run d "lint" "--no-tests"))))))
+
+(ert-deftest lemmax-migrate-theorem ()
+  :tags '(timeout-60)
+  ;; lmx migrate --theorem ID makes every other THEOREM a LEMMA and names each
+  ;; root of what ID does not reach in its :USES:; then lint is clean.
+  (let ((d (rt-repo (append (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06")
+                                                 (rt-lemma "RQ-3") (rt-lemma "RQ-4" :uses "RQ-3") (rt-conj "RQ-5" :state "THESIS"))
+                                           (list (rt-proof "PR-1" "RQ-1 RQ-2 RQ-3 RQ-4")))
+                            (list (cons "gui.org" (concat rt-math-head (rt-lemma "RQ-6")))
+                                  (cons "gui.proofs.org" (concat rt-proofs-head (rt-proof "PR-6" "RQ-6"))))))))
+    (let ((r (rt-run d "migrate" "--theorem" "RQ-5")))
+      (should (= 0 (nth 0 r)))
+      (should (string-match-p "^-\\* THEOREM Title of RQ-2\n\\+\\* LEMMA Title of RQ-2" (nth 1 r)))
+      ;; Only the roots: RQ-2 reaches RQ-1, RQ-4 reaches RQ-3; RQ-6 is in gui.org.
+      (should (string-match-p "^\\+:USES: +RQ-6 RQ-2 RQ-4$" (nth 1 r)))
+      (should (string-match-p "the theorem RQ-5 of theories/t/ now names 3 more statements" (nth 2 r))))
+    (rt-run d "migrate" "--write" "--theorem" "RQ-5")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; A proven theorem that now reaches an unproven statement goes back to THESIS.
+    (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "THEOREM" :uses "RQ-1" :implemented "2026-01-06")
+                                   (rt-conj "RQ-7")))
+    (should (string-match-p "^\\+\\* THESIS Title of RQ-2" (nth 1 (rt-run d "migrate" "--theorem" "RQ-2"))))
+    (should (= 1 (nth 0 (rt-run d "migrate" "--theorem" "RQ-99"))))))

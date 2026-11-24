@@ -236,15 +236,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: A file with :ID: at its top is one lemma
-:PROPERTIES:
-:ID:          01a20389-b183-7902-909f-3c93cff833af
-:PROVES:      01a202bc-4a88-7993-a717-e8022392b801
-:TEST:        ert/lemmax-file-lemma-read ert/lemmax-file-lemma-lint ert/lemmax-file-lemma-staged
-:LAST_EDITED: 2026-11-22
-:END:
-When the tests in :TEST: pass, the conjecture holds.
-
 * PASSED Proof: trace shows what links to a lemma
 :PROPERTIES:
 :ID:          01a20389-b185-74f8-8ac7-507f37f8e62f
@@ -263,11 +254,11 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: :REFS: names where a lemma came from
+* OPEN Proof: :REFS: names where a lemma came from
 :PROPERTIES:
 :ID:          01a20389-b188-7890-b493-2833f4b54592
 :PROVES:      01a202bc-4cc4-753e-8d51-12d8327dfd9c
-:TEST:        ert/lemmax-refs-shown
+:TEST:        ert/lemmax-refs-shown ert/lemmax-roam-refs
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -322,15 +313,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20389-b190-70c2-af32-bba56dad8834
 :PROVES:      01a202f3-83dc-76e8-b198-68db19d1e4cd
 :TEST:        ert/lemmax-one-parser-same-ids
-:LAST_EDITED: 2026-11-22
-:END:
-When the tests in :TEST: pass, the conjecture holds.
-
-* PASSED Proof: A file lemma's drawer is the file's first element
-:PROPERTIES:
-:ID:          01a20389-b192-7db6-b1d2-925e3b67317f
-:PROVES:      01a202f3-8475-7f4f-b0e2-5cd8c782e520
-:TEST:        ert/lemmax-file-drawer-first
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -623,7 +605,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: ORDERED and BLOCKER agree with lmx
+* OPEN Proof: ORDERED and BLOCKER agree with lmx
 :PROPERTIES:
 :ID:          01a203b2-01c9-7100-868f-41e1b524becb
 :PROVES:      01a203a6-a716-738e-a95b-18086050d5eb
@@ -921,3 +903,30 @@ Markers and coverage days set in theories/setup.org reach a theory file through 
 :LAST_EDITED: 2026-11-25
 :END:
 A UUIDv7's day is its first 48 bits read in TZ, and an id that is not v7 has none; another id takes its first commit's day, or today before any commit; trace prints created: and list --json gives created; plan puts older first, an old :CREATED: winning, none last; lint asks no :CREATED: of a statement, proof, task or note; migrate deletes :CREATED: from a theory, tasks and notes file, writes none in the proofs it makes, and the result lints clean with the same plan order.
+
+* OPEN Proof: A theory has one theorem
+:PROPERTIES:
+:ID:          01a20f3a-9c1f-7777-b479-840096eb5f71
+:PROVES:      01a20f2e-b275-726f-ac83-9333aab958ba
+:TEST:        ert/lemmax-one-theorem ert/lemmax-one-theorem-finished ert/lemmax-migrate-theorem ert/lemmax-math-lint ert/lemmax-definition-headings
+:LAST_EDITED: 2026-11-25
+:END:
+A second THEOREM in a theory is refused; a statement the theorem does not reach through :USES: is refused; a LEMMA may use lemmas and waits for them; a THEOREM that reaches an unproven statement is refused until it is THESIS; a THESIS theorem over conjectures lints clean; the project is finished only with its theorem proven; migrate --theorem makes the other THEOREMs LEMMAs, names the roots of what is not reached, across the theory's files, sends a proven theorem that now reaches an open statement back to THESIS, and lint is clean after.
+
+* OPEN Proof: Links are not a statement's text
+:PROPERTIES:
+:ID:          01a20f3a-9c36-7462-8959-9eb1f14a897c
+:PROVES:      01a20f2e-b275-726f-ac83-9334afc8f438
+:TEST:        ert/lemmax-links-not-text ert/lemmax-migrate-write
+:LAST_EDITED: 2026-11-25
+:END:
+Adding :PROVES:, :FOR:, :ABOUT:, :FOLLOWS:, :TEST:, :ALIASES:, :ROAM_REFS:, :REFS: or :USES: leaves a statement's text the same; a staged :USES: change of a LEMMA lints clean, and once committed trace names it suspect: its :USES: changed.
+
+* OPEN Proof: A statement is a heading, never a whole file
+:PROPERTIES:
+:ID:          01a20f3a-9c4f-7280-9bdc-72c6c03b0b21
+:PROVES:      01a20f2e-b275-726f-ac83-9335aaf3e6e7
+:TEST:        ert/lemmax-statement-is-a-heading ert/lemmax-one-parser-same-ids
+:LAST_EDITED: 2026-11-25
+:END:
+A file whose top drawer holds :STATE: is refused, saying to make it a heading in theory.org, and is read as no statement while its headings are; a top drawer with only :ID: is no finding.

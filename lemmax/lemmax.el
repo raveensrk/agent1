@@ -137,7 +137,10 @@ space after each key, and the trimmed body without #+title:."
          (head (replace-regexp-in-string "[ \t]+:[[:alnum:]_@#%:]+:[ \t]*\\'" "" head))
          ;; lemma: 01a20369-38d2-7202-8b53-6e296aaac489
          ;; A proof is not the statement, nor are links: :VERIFY:, :NEEDS: and :USES: are not the text.
-         (skip-re (concat "\\`[ \t]*:" (regexp-opt (append '("STATE" "VERIFY" "VERIFY+" "NEEDS" "USES") lemmax-dates)) ":"))
+         (skip-re (concat "\\`[ \t]*:" (regexp-opt (append '("STATE" "VERIFY" "VERIFY+" "NEEDS" "USES"
+                                                            ;; lemma: 01a20f2e-b275-726f-ac83-9334afc8f438
+                                                            "PROVES" "FOR" "ABOUT" "FOLLOWS" "TEST" "ALIASES" "ROAM_REFS" "REFS")
+                                                          lemmax-dates)) ":"))
          (in nil) props body)
     ;; lemma: 01a202f3-8216-7a1e-a34c-80c99d7bbf02
     ;; lemma: 01a203a6-a729-7420-980a-1702a0de05ad
@@ -197,7 +200,7 @@ property drawer, trimmed (RT-17)."
 
 ;; lemma: 01a202f3-88bb-704d-9ea9-74714f841514
 (defun lemmax--quick-ids (content)
-  "Alist (ID . TEXT) for each lemma of CONTENT with an :ID: (RT-9), read by
+  "List of (ID TEXT USES) for each lemma of CONTENT with an :ID: (RT-9), read by
 `lemmax--parse', so the history walk and lint never disagree on a lemma.
 A heading lemma's record depends on its entry alone, so each entry is parsed
 once a run, however many revisions hold it."
@@ -206,11 +209,11 @@ once a run, however many revisions hold it."
                      (puthash text
                               (cl-loop for r in (plist-get (lemmax--parse text "") :statements)
                                        when (plist-get r :id)
-                                       collect (cons (plist-get r :id) (plist-get r :text)))
+                                       ;; lemma: 01a20f2e-b275-726f-ac83-9334afc8f438
+                                       collect (list (plist-get r :id) (plist-get r :text) (plist-get r :needs)))
                               lemmax--entry-cache)))))
-    (if (string-match-p "\\`\\(?:#[ \t].*\n\\|#\n\\|[ \t]*\n\\)*[ \t]*:PROPERTIES:" content)
-        (funcall pairs content)
-      (cl-mapcan (lambda (e) (copy-sequence (funcall pairs e))) (lemmax--split-headings content)))))
+    ;; lemma: 01a20f2e-b275-726f-ac83-9335aaf3e6e7
+    (cl-mapcan (lambda (e) (copy-sequence (funcall pairs e))) (lemmax--split-headings content))))
 
 ;; lemma: 01a203a6-a702-71c0-8239-e0d41380d2dd
 (defun lemmax--id-list (v)
@@ -288,7 +291,8 @@ the newest log line into LEMMA or THEOREM while it is one."
         ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
         :aliases (let ((v (funcall get "ALIASES"))) (and v (split-string v)))
         ;; lemma: 01a202bc-4cc4-753e-8d51-12d8327dfd9c
-        :refs (let ((v (funcall get "REFS"))) (and v (split-string v)))
+        ;; lemma: 01a202bc-4cc4-753e-8d51-12d8327dfd9c
+        :refs (let ((v (or (funcall get "ROAM_REFS") (funcall get "REFS")))) (and v (split-string-and-unquote v)))
         :verify (let ((v (or (funcall get "VERIFY") (funcall get "TEST")))) (and v (split-string-and-unquote v)))
         :text (lemmax--entry-text raw)
         :body (lemmax--entry-body raw))))
@@ -391,27 +395,12 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                        (cl-some (lambda (v) (string-match-p "\\_<logdrawer\\_>" v))
                                 (cdr (assoc "STARTUP" kw))))
                    t))
-             ;; lemma: 01a202bc-4a88-7993-a717-e8022392b801
-             ;; lemma: 01a202f3-8475-7f4f-b0e2-5cd8c782e520
-             ;; Org's own reading: a drawer is the file's only when it comes
-             ;; first, after comment lines at most.
-             (one (save-excursion (goto-char (point-min))
-                                  (and (not (org-at-heading-p))
-                                       (let ((v (org-entry-get nil "ID"))) (and v (string-trim v))))))
-             (pre (if (string-match "^\\*+ " content) (substring content 0 (match-beginning 0)) content))
-             (misplaced (and (not one)
-                             (string-match "^[ \t]*:PROPERTIES:[ \t]*\n\\(?:.*\n\\)*?[ \t]*:ID:" pre)
-                             (1+ (cl-count ?\n (substring pre 0 (match-beginning 0))))))
+             ;; lemma: 01a20f2e-b275-726f-ac83-9335aaf3e6e7
+             ;; A statement is a heading: a file's top drawer with :STATE: is
+             ;; refused, never read as a statement.
+             (file-state (save-excursion (goto-char (point-min))
+                                         (and (not (org-at-heading-p)) (org-entry-get nil "STATE") t)))
              statements)
-        (if one
-            (let ((get (lambda (p) (let ((v (save-excursion (goto-char (point-min)) (org-entry-get nil p))))
-                                     (and v (not (string-empty-p (string-trim v))) (string-trim v)))))
-                  (title (string-trim (or (cadr (assoc "TITLE" (org-collect-keywords '("TITLE")))) ""))))
-              (push (lemmax--record get one (let ((st (funcall get "STATE"))) (and (member st lemmax-states) st))
-                                    title file 1 (count-lines (point-min) (point-max))
-                                    (concat "* " title "\n" content)
-                                    nil (mapcar #'substring-no-properties org-file-tags))
-                    statements))
         (org-map-entries
          (lambda ()
            (let ((state (org-get-todo-state))
@@ -438,12 +427,12 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                                                   (lemmax--drawer-settings (buffer-substring-no-properties beg end)))))
                  ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
                  (setcar statements (append (car statements)
-                                            (lemmax--attach-info root (buffer-substring-no-properties beg end))))))))))
+                                            (lemmax--attach-info root (buffer-substring-no-properties beg end)))))))))
         (let* ((tests-kw (or (assoc "LEMMAX_TESTS" kw) (assoc "REQTRACE_TESTS" kw)))
                (code-kw (or (assoc "LEMMAX_CODE" kw) (assoc "REQTRACE_CODE" kw)))
                (opted (and tests-kw t)))
           (list :file file
-                :misplaced misplaced
+                :file-state file-state
                 ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
                 :both-ways both
                 ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
@@ -926,11 +915,10 @@ of its own, the :TEST: addresses of its proofs as :verify."
                 (lemmax--finding f l id (format "ORDERED: proven before its earlier sibling %s, which is %s"
                                                 (or (car b) "(no id)") (or (cdr b) "no state"))
                                  "prove the earlier sibling first, or drop :ORDERED:"))))
-          (when (and (plist-get r :blocker)
-                     (not (equal (sort (copy-sequence (remove "previous-sibling" (plist-get r :blocker))) #'string<)
-                                 (sort (copy-sequence (plist-get r :needs)) #'string<))))
-            (lemmax--finding f l id ":BLOCKER: and :USES: name different ids"
-                             "make :BLOCKER: name the ids :USES: names"))
+          ;; lemma: 01a203a6-a716-738e-a95b-18086050d5eb
+          (when (plist-get r :blocker)
+            (lemmax--finding f l id "a :BLOCKER: property; :USES: says what a statement waits for"
+                             "remove :BLOCKER:; lmx migrate does it"))
           (if (lemmax--unproven-p r)
               (lemmax--lint-unproven r all f l id state)
             (lemmax--lint-math r all f l id state)))
@@ -945,7 +933,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
         (dolist (u (plist-get r :refs))
           (unless (string-match-p "\\`https?://[^ \t]+\\'" u)
             (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
-                             (format ":REFS: names %s, which is not an http(s) URL" u)
+                             (format ":ROAM_REFS: names %s, which is not an http(s) URL" u)
                              "write it as https://...")))))
     ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
     (let ((owner (make-hash-table :test #'equal)))
@@ -1050,19 +1038,84 @@ of its own, the :TEST: addresses of its proofs as :verify."
                 (lemmax--finding f l id (format "a %s whose proof %s is %s, a counterexample until it passes"
                                                 state (car p) (or (cdr p) "no state"))
                                  "make the proof pass, or make this CONJECTURE"))))))
-      (when (and (equal state "THEOREM") (null (plist-get r :needs)))
-        (lemmax--finding f l id "a THEOREM with no :USES:" "name the lemmas it uses, or make it LEMMA"))
-      ;; lemma: 01a20757-95c1-70d9-882a-875672207343
-      (when (and (equal state "LEMMA")
-                 (cl-remove-if (lambda (u) (let ((x (funcall known u))) (and x (lemmax--definition-p x))))
-                               (plist-get r :needs)))
-        (lemmax--finding f l id "a LEMMA with :USES: is a THEOREM" "make it THEOREM"))
-      (when (equal state "THEOREM")
+      ;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
+      ;; A LEMMA may use lemmas; a proven statement waits for all it uses.
+      (when (member state '("LEMMA" "THEOREM"))
         (dolist (u (plist-get r :needs))
           (let ((x (funcall known u)))
             (when (and x (not (lemmax--done-p (plist-get x :state))) (not (lemmax--axiom-p x)) (not (lemmax--definition-p x)))
-              (lemmax--finding f l id (format "a THEOREM that uses %s, which is %s, not proven" u (or (plist-get x :state) "no state"))
+              (lemmax--finding f l id (format "a %s that uses %s, which is %s, not proven" state u (or (plist-get x :state) "no state"))
                                "prove it first, or make this CONJECTURE"))))))))
+
+;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
+(defun lemmax--theory-statements (statements)
+  "Hash PROJECT -> the statements of STATEMENTS in theories/PROJECT/ a theorem
+must reach: no proof, task, note, axiom or definition, and none refuted."
+  (let ((h (make-hash-table :test #'equal)))
+    (dolist (r statements)
+      (let ((p (lemmax--theory-project (or (plist-get r :file) ""))))
+        (when (and p (plist-get r :id) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r))
+                   (not (lemmax--dropped-p (plist-get r :state))))
+          (puthash p (append (gethash p h) (list r)) h))))
+    h))
+
+(defun lemmax--reach (id statements)
+  "Hash of the ids ID reaches through :USES: among STATEMENTS, ID not in it."
+  (let ((by (make-hash-table :test #'equal)) (seen (make-hash-table :test #'equal)) (todo (list id)))
+    (dolist (r statements) (puthash (plist-get r :id) r by))
+    (while todo
+      (dolist (u (plist-get (gethash (pop todo) by) :needs))
+        (unless (gethash u seen) (puthash u t seen) (push u todo))))
+    (remhash id seen)
+    seen))
+
+(defun lemmax--theorem-of (rs)
+  "The theorem of a theory's statements RS: its THEOREM heading, else the one
+statement no other uses when there is exactly one; nil otherwise."
+  (or (cl-find "THEOREM" rs :key (lambda (r) (plist-get r :state)) :test #'equal)
+      (let* ((used (make-hash-table :test #'equal)))
+        (dolist (r rs) (dolist (u (plist-get r :needs)) (puthash u t used)))
+        (let ((roots (cl-remove-if (lambda (r) (gethash (plist-get r :id) used)) rs)))
+          (and (= 1 (length roots)) (> (length rs) 1) (car roots))))))
+
+(defun lemmax--theorem-proven-p (theorem rs)
+  "Whether THEOREM is proven: a THEOREM that reaches every statement of RS,
+each of them proven."
+  (and theorem (equal (plist-get theorem :state) "THEOREM")
+       (let ((reach (lemmax--reach (plist-get theorem :id) rs)))
+         (cl-every (lambda (r) (or (eq r theorem)
+                                   (and (gethash (plist-get r :id) reach) (lemmax--done-p (plist-get r :state)))))
+                   rs))))
+
+(defun lemmax--lint-theorem (infos only)
+  "A theory, theories/PROJECT/, has one THEOREM, which reaches every statement
+of it through :USES: and is proven only when all it reaches is proven."
+  (let ((all (lemmax--all-statements infos)))
+    (maphash
+     (lambda (_p rs)
+       (let* ((theorems (cl-remove-if-not (lambda (r) (equal (plist-get r :state) "THEOREM")) rs))
+              (show (lambda (r) (or (null only) (member (plist-get r :file) only))))
+              (theorem (car theorems)))
+         (dolist (r (cdr theorems))
+           (when (funcall show r)
+             (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
+                              (format "a second THEOREM in this theory, whose theorem is %s" (plist-get theorem :id))
+                              "make it a LEMMA; a theory has one theorem; lmx migrate --theorem does it")))
+         (when theorem
+           (let ((reach (lemmax--reach (plist-get theorem :id) rs)))
+             (dolist (r rs)
+               (unless (or (eq r theorem) (gethash (plist-get r :id) reach) (not (funcall show r)))
+                 (lemmax--finding (plist-get r :file) (plist-get r :line) (plist-get r :id)
+                                  (format "the theorem %s does not reach it through :USES:" (plist-get theorem :id))
+                                  "name it in the :USES: of the theorem or of a statement it reaches")))
+             (dolist (r rs)
+               (when (and (gethash (plist-get r :id) reach) (not (lemmax--done-p (plist-get r :state)))
+                          (funcall show theorem))
+                 (lemmax--finding (plist-get theorem :file) (plist-get theorem :line) (plist-get theorem :id)
+                                  (format "a THEOREM that reaches %s, which is %s, not proven" (plist-get r :id)
+                                          (or (plist-get r :state) "no state"))
+                                  "make the theorem THESIS until all it reaches is proven")))))))
+     (lemmax--theory-statements all))))
 
 ;; lemma: RT-5
 (defun lemmax--lint-verify (infos only)
@@ -1217,6 +1270,7 @@ logged form set the state again so Org logs today."
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
         (lemmax--lint-settings infos only)
+        (lemmax--lint-theorem infos only)
         (lemmax--lint-config-both infos staged)
         (lemmax--lint-footnotes infos only staged)
         (lemmax--lint-markers infos only staged)
@@ -1230,11 +1284,7 @@ logged form set the state again so Org logs today."
           (unless staged (lemmax--lint-sent-back infos only days))
           (unless (or only staged) (lemmax--lint-docs infos days)))
         (lemmax--lint-markers-in infos only)
-        (dolist (i infos)
-          (when (and (plist-get i :misplaced) (or (null only) (member (plist-get i :file) only)))
-            (lemmax--finding (plist-get i :file) (plist-get i :misplaced) nil
-                             "a drawer with :ID: below other text is no file lemma; Org reads only a first drawer"
-                             "move the drawer to the top of the file")))
+
         (unless no-tests (lemmax--lint-verify infos only))
         (when staged
           ;; lemma: 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
@@ -1318,6 +1368,11 @@ theory there."
   (progn
     (dolist (i (lemmax--worktree-files))
       (let ((f (plist-get i :file)))
+        ;; lemma: 01a20f2e-b275-726f-ac83-9335aaf3e6e7
+        (when (and (plist-get i :file-state) (or (null only) (member f only)))
+          (lemmax--finding f 1 nil
+                           "a file whose top drawer holds :STATE:; a statement is a heading, never a whole file"
+                           "make it a heading in theory.org"))
         (when (and (not (string-prefix-p lemmax--theories f)) (or (null only) (member f only))
                    (or (member (file-name-nondirectory f) '("theory.org" "requirements.org"))
                        (cl-some (lambda (k) (string-prefix-p "LEMMAX_" (car k))) (plist-get i :keywords))
@@ -1366,7 +1421,10 @@ its day in DAYS from git.  An agent writes them, never lmx."
         (when p (puthash p (append (gethash p projects) (plist-get i :statements)) projects))))
     (dolist (p (sort (hash-table-keys projects) #'string<))
       (let* ((rs (gethash p projects))
-             (finished (not (cl-some (lambda (r) (member (plist-get r :state) '("CONJECTURE" "THESIS" "OPEN" "FAILED" "TODO"))) rs)))
+             ;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
+             ;; Finished: the theory's theorem is proven.
+             (srs (gethash p (lemmax--theory-statements (lemmax--all-statements infos))))
+             (finished (lemmax--theorem-proven-p (lemmax--theorem-of srs) srs))
              (newest (car (sort (delq nil (mapcar (lambda (r) (lemmax--edited-day r days)) rs)) #'string>))))
         (dolist (d lemmax--docs)
           (let* ((f (format "theories/%s/%s.%s.html" p p d))
@@ -1747,15 +1805,17 @@ a list of (BLOB-ID . TEXT), or nil for a spec git does not have."
                            nil))))))
 
 ;; lemma: 01a202f3-88bb-704d-9ea9-74714f841514
-(defun lemmax--last-changes (infos &optional current first)
+(defun lemmax--last-changes (infos &optional current first uses)
   "Hash ID -> the last day its text changed in git, walking each file's revisions.
 One git process reads every revision of a file; a blob seen before is skipped.
 With CURRENT, a lemma of INFOS whose text differs from its last commit's, or
 that no commit has, changed today: INFOS are the work tree's or the index's.
-FIRST, a hash, gets each id's earliest day: the first commit that has it."
+FIRST, a hash, gets each id's earliest day: the first commit that has it.
+USES, a hash, gets the last day each id's :USES: changed, not its text."
   (let ((changed (make-hash-table :test #'equal)) (today (lemmax--today)))
     (dolist (info infos)
       (let* ((file (plist-get info :file)) (prev (make-hash-table :test #'equal))
+             (prev-uses (make-hash-table :test #'equal))
              (seen (make-hash-table :test #'equal))
              ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
              ;; --follow: a file moved, as into theories/, keeps its history;
@@ -1778,7 +1838,13 @@ FIRST, a hash, gets each id's earliest day: the first commit that has it."
                  when (and blob (not (gethash (cons (car blob) path) seen)))
                  do (puthash (cons (car blob) path) t seen)
                     (dolist (pair (lemmax--quick-ids (cdr blob)))
-                      (let ((text (funcall norm (cdr pair) path)))
+                      (let ((text (funcall norm (nth 1 pair) path)))
+                        ;; lemma: 01a20f2e-b275-726f-ac83-9334afc8f438
+                        (when uses
+                          (let ((was (gethash (car pair) prev-uses 'none)))
+                            (unless (or (eq was 'none) (equal was (nth 2 pair)))
+                              (puthash (car pair) day uses)))
+                          (puthash (car pair) (nth 2 pair) prev-uses))
                         ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
                         (when (and first (let ((d (gethash (car pair) first))) (or (null d) (string< day d))))
                           (puthash (car pair) day first))
@@ -1840,13 +1906,18 @@ Only files with a lemma in the logged form are walked, one git log each."
   (or (plist-get r :last-edited) (and (plist-get r :id) (gethash (plist-get r :id) days))))
 
 ;; lemma: RT-9
-(defun lemmax--suspects (statements changed)
-  "List of (CHILD PARENT DAY) for DONE children whose parent changed after them."
+(defun lemmax--suspects (statements changed &optional uses)
+  "List of (CHILD PARENT DAY) for DONE children whose parent changed after them;
+PARENT is nil when the child's own :USES: changed after it, by USES."
   (let (out)
     (dolist (r statements)
       (when (lemmax--done-p (plist-get r :state))
         (let ((since (car (sort (delq nil (list (plist-get r :implemented) (plist-get r :reviewed)))
                                 #'string>))))
+          ;; lemma: 01a20f2e-b275-726f-ac83-9334afc8f438
+          (let ((day (and uses (gethash (plist-get r :id) uses))))
+            (when (and day since (string> day since))
+              (push (list (plist-get r :id) nil day) out)))
           (dolist (p (plist-get r :needs))
             (let ((day (gethash p changed)))
               (when (and day since (string> day since))
@@ -1926,7 +1997,9 @@ Only files with a lemma in the logged form are walked, one git log each."
               (lemmax--out "    %s" f))))))
     (dolist (s suspects)
       (when (equal (car s) id)
-        (lemmax--out "  suspect: parent %s changed %s" (nth 1 s) (nth 2 s))))
+        (if (nth 1 s)
+            (lemmax--out "  suspect: parent %s changed %s" (nth 1 s) (nth 2 s))
+          (lemmax--out "  suspect: its :USES: changed %s" (nth 2 s)))))
     (when (and one (not (string-empty-p (or (plist-get r :body) ""))))
       (lemmax--out "  text:")
       (dolist (l (split-string (plist-get r :body) "\n"))
@@ -2042,13 +2115,15 @@ Only files with a lemma in the logged form are walked, one git log each."
   "Print the trace of INFOS, or of the one statement WANT, for the repo here."
   (progn
     (let* ((first (make-hash-table :test #'equal))
-           (changed (lemmax--last-changes infos nil first))
+           ;; lemma: 01a20f2e-b275-726f-ac83-9334afc8f438
+           (uses (make-hash-table :test #'equal))
+           (changed (lemmax--last-changes infos nil first uses))
            ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
            (statements (lemmax--fill-created (lemmax--all-statements infos) first))
            (lemmax--marks (lemmax--all-markers infos))
            (lemmax--links (lemmax--repo-links (lemmax--all-statements (lemmax--listed (lemmax--worktree-files)))))
            (commits (lemmax--commits))
-           (suspects (lemmax--suspects statements changed))
+           (suspects (lemmax--suspects statements changed uses))
            (addr-of (lambda (r) (if (not lemmax--run-tests) (cons nil "not run") (lemmax--test-addresses
                                  (plist-get (cl-find (plist-get r :file) infos
                                                      :key (lambda (i) (plist-get i :file)) :test #'equal)
@@ -2077,7 +2152,9 @@ Only files with a lemma in the logged form are walked, one git log each."
           (dolist (o (delete-dups orphans)) (lemmax--out "  %s" o)))
         (lemmax--out "Suspect: %s" (if suspects "" "none"))
         (dolist (s suspects)
-          (lemmax--out "  %s: parent %s changed %s" (nth 0 s) (nth 1 s) (nth 2 s)))))))
+          (if (nth 1 s)
+              (lemmax--out "  %s: parent %s changed %s" (nth 0 s) (nth 1 s) (nth 2 s))
+            (lemmax--out "  %s: its :USES: changed %s" (nth 0 s) (nth 2 s))))))))
 
 ;;;; list (RT-13)
 
@@ -2623,14 +2700,15 @@ opts in, then the hook that was there before, kept as NAME.local."
                                                 (make-string (+ 5 (length (match-string 2 m))) ?\s)))
                             text t t))
 
-(defun lemmax--migrate-chunk (chunk today file-lemma title uses-of)
-  "CHUNK, one heading's text (or a file lemma's, with FILE-LEMMA and TITLE), in
-the math names: (NEW-TEXT . PROOF), PROOF nil or the proof heading's text.
-USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
+(defun lemmax--migrate-chunk (chunk today uses-of)
+  "CHUNK, one heading's text, in the math names: (NEW-TEXT . PROOF), PROOF nil
+or the proof heading's text. USES-OF maps an id to the ids that named it in
+:NEEDS:, its new :USES:. A done heading becomes a LEMMA, which may use others:
+a theory's one THEOREM is named with lmx migrate --theorem."
   (let* ((lines (split-string chunk "\n"))
-         (head (if file-lemma nil (car lines)))
-         (rest (if file-lemma lines (cdr lines)))
-         (id nil) (needs nil) (verify nil) (old-state nil) (in nil) out)
+         (head (car lines))
+         (rest (cdr lines))
+         (id nil) (verify nil) (old-state nil) (in nil) out)
     (dolist (l rest)
       (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t) (push l out))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l)) (setq in nil) (push l out))
@@ -2641,26 +2719,20 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
             ((and in (string-match "\\`[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*\\'" l))
              (setq id (match-string 1 l)) (push l out)
              (let ((u (gethash id uses-of)))
-               (when u (setq needs t) (push (format ":USES:        %s" (mapconcat #'lemmax--migrate-ref u " ")) out))))
-            ((and in file-lemma (string-match "\\`\\([ \t]*:STATE:[ \t]*\\)\\([A-Z]+\\)\\(.*\\)\\'" l))
-             (setq old-state (match-string 2 l))
-             (push (concat (match-string 1 l) "@STATE@" (match-string 3 l)) out))
+               (when u (push (format ":USES:        %s" (mapconcat #'lemmax--migrate-ref u " ")) out))))
             (t (push l out))))
     (setq out (nreverse out))
     (when (and head (string-match "\\`\\(\\*+ +\\)\\(OPEN\\|DONE\\|DROPPED\\)\\_>\\(.*\\)\\'" head))
       (setq old-state (match-string 2 head)))
     (if (null old-state)
-        (cons (if (or (and head (string-match-p "\\`\\*+ +\\(?:LEMMA\\|THEOREM\\)\\_>" head))
-                      (and file-lemma (string-match-p "^[ \t]*:STATE:[ \t]*\\(?:LEMMA\\|THEOREM\\)\\_>" chunk)))
+        (cons (if (string-match-p "\\`\\*+ +\\(?:LEMMA\\|THEOREM\\)\\_>" head)
                   (lemmax--migrate-proven chunk)
                 chunk)
               nil)
-      (let* ((new (or (cdr (assoc old-state lemmax--migrate-states)) (if needs "THEOREM" "LEMMA")))
-             (text (if file-lemma
-                       (mapconcat (lambda (l) (string-replace "@STATE@" new l)) out "\n")
-                     (concat (replace-regexp-in-string "\\`\\(\\*+ +\\)[A-Z]+" (concat "\\1" new) head t)
-                             "\n" (mapconcat #'identity out "\n"))))
-             (name (or title (and head (string-trim
+      (let* ((new (or (cdr (assoc old-state lemmax--migrate-states)) "LEMMA"))
+             (text (concat (replace-regexp-in-string "\\`\\(\\*+ +\\)[A-Z]+" (concat "\\1" new) head t)
+                           "\n" (mapconcat #'identity out "\n")))
+             (name (or (and head (string-trim
                                         (replace-regexp-in-string
                                          "[ \t]+:[[:alnum:]_@#%:]+:[ \t]*\\'" ""
                                          (replace-regexp-in-string "\\`\\*+ +[A-Z]+ +\\(\\[#.\\] +\\)?" "" head))))))
@@ -2682,14 +2754,22 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
 ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
 (defun lemmax--drop-created (text)
   "TEXT with each :CREATED: line of a property drawer deleted: the created
-day comes from the id or git."
+day comes from the id or git; each :BLOCKER: deleted, :USES: says what a
+statement waits for; each :REFS: renamed org-roam's :ROAM_REFS:."
   (let ((in nil) drawer out)
     (dolist (l (split-string text "\n"))
       (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t drawer nil) (push l out))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l))
              (progn
                (dolist (d (nreverse drawer))
-                 (unless (string-match-p "\\`[ \t]*:CREATED:" d) (push d out))))
+                 ;; lemma: 01a203a6-a716-738e-a95b-18086050d5eb 01a202bc-4cc4-753e-8d51-12d8327dfd9c
+                 (cond ((string-match-p "\\`[ \t]*:\\(?:CREATED\\|BLOCKER\\):" d))
+                       ((string-match "\\`\\([ \t]*\\):REFS:\\([ \t]*\\)" d)
+                        (push (concat (match-string 1 d) ":ROAM_REFS:"
+                                      (make-string (max 1 (- (length (match-string 2 d)) 4)) ?\s)
+                                      (substring d (match-end 0)))
+                              out))
+                       (t (push d out)))))
              (setq in nil) (push l out))
             (in (push l drawer))
             (t (push l out))))
@@ -2834,12 +2914,11 @@ A tasks or notes file keeps its states and dates: it is returned as it is."
       (cons (lemmax--drop-created content) nil)
   (let* ((first (if (string-match "^\\*+ " content) (match-beginning 0) (length content)))
          (pre (substring content 0 first))
-         (file-lemma (string-match-p "\\`\\(?:#[ \t].*\n\\|#\n\\|[ \t]*\n\\)*[ \t]*:PROPERTIES:" pre))
          (title (let ((case-fold-search t))
                   (and (string-match "^#\\+title:[ \t]*\\(.*\\)$" pre) (string-trim (match-string 1 pre)))))
          (proofs nil)
          (heads (lemmax--split-headings (substring content first)))
-         (uses-of (lemmax--migrate-uses (if file-lemma (cons pre heads) heads)))
+         (uses-of (lemmax--migrate-uses heads))
          (_ (when lemmax--migrate-titles
               (dolist (c heads)
                 (when (string-match "^[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*$" c)
@@ -2850,11 +2929,8 @@ A tasks or notes file keeps its states and dates: it is returned as it is."
                                   (replace-regexp-in-string "\\`\\*+ +\\(?:[A-Z]+ +\\)?\\(\\[#.\\] +\\)?" ""
                                                             (car (split-string c "\n")))))
                              lemmax--migrate-titles))))))
-         (pre-new (let ((r (if file-lemma (lemmax--migrate-chunk pre today t (or title file) uses-of) (cons pre nil))))
-                    (when (cdr r) (push (cdr r) proofs))
-                    ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
-                    (if file-lemma (lemmax--migrate-log (car r)) (car r))))
-         (chunks (mapcar (lambda (c) (let ((r (lemmax--migrate-chunk c today nil nil uses-of)))
+         (pre-new pre)
+         (chunks (mapcar (lambda (c) (let ((r (lemmax--migrate-chunk c today uses-of)))
                                        (when (cdr r) (push (cdr r) proofs))
                                        (lemmax--migrate-log (car r))))
                          heads))
@@ -2885,6 +2961,81 @@ file, NEW nil for a file deleted."
             (call-process "diff" nil t nil "-u" "-L" (if old label "/dev/null") "-L" (if new label "/dev/null") a b)
             (buffer-string)))
       (delete-file a) (delete-file b))))
+
+;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
+(defun lemmax--edit-heading (content id fn)
+  "CONTENT with the heading whose :ID: is ID replaced by FN of its text."
+  (let ((re (concat "^[ \t]*:ID:[ \t]*" (regexp-quote id) "[ \t]*$")))
+    (if (not (string-match "^\\*+ " content))
+        content
+      (let ((first (match-beginning 0)))
+        (concat (substring content 0 first)
+                (mapconcat (lambda (c) (if (string-match-p re c) (funcall fn c) c))
+                           (lemmax--split-headings (substring content first)) ""))))))
+
+(defun lemmax--set-state (chunk state)
+  "CHUNK, a heading's text, in STATE."
+  (replace-regexp-in-string (concat "\\`\\(\\*+ +\\)" (regexp-opt lemmax-states) "\\_>") (concat "\\1" state) chunk t))
+
+(defun lemmax--add-uses (chunk ids)
+  "CHUNK, a heading's text, its :USES: given IDS at the end."
+  (if (string-match "^\\([ \t]*:USES:.*?\\)[ \t]*$" chunk)
+      (replace-match (concat (match-string 1 chunk) " " (string-join ids " ")) t t chunk)
+    (replace-regexp-in-string "^\\([ \t]*:ID:.*\\)$" (concat "\\1\n:USES:        " (string-join ids " ")) chunk t)))
+
+(defun lemmax--theorem-roots (r needs rs)
+  "The statements of RS the theorem R, using NEEDS, does not reach: the roots
+of them, those no other of them uses, or one of a cycle; nil when it reaches all."
+  (let* ((graph (cons (plist-put (copy-sequence r) :needs needs) (remq r rs)))
+         (reach (lemmax--reach (plist-get r :id) graph))
+         (left (cl-remove-if (lambda (x) (or (eq x r) (gethash (plist-get x :id) reach))) rs))
+         (used (make-hash-table :test #'equal)))
+    (dolist (x left) (dolist (u (plist-get x :needs)) (puthash u t used)))
+    (and left (or (cl-remove-if (lambda (x) (gethash (plist-get x :id) used)) left) (list (car left))))))
+
+(defun lemmax--migrate-theorem (id write)
+  "Print, or with WRITE make, statement ID its theory's one theorem: every other
+THEOREM of theories/PROJECT/ a LEMMA, and each statement ID does not reach
+named in its :USES:, the roots only, so it reaches them all. A proven theorem
+that now reaches an unproven statement goes back to THESIS."
+  (let* ((infos (lemmax--listed (lemmax--worktree-files)))
+         (all (lemmax--all-statements infos))
+         (r (cl-find id all :key (lambda (x) (plist-get x :id)) :test #'equal))
+         (p (and r (lemmax--theory-project (plist-get r :file))))
+         (rs (and p (gethash p (lemmax--theory-statements all))))
+         (edits (make-hash-table :test #'equal))
+         (edit (lambda (x fn) (puthash (plist-get x :file)
+                                       (append (gethash (plist-get x :file) edits) (list (cons (plist-get x :id) fn)))
+                                       edits)))
+         (added nil) (needs nil))
+    (unless (and r p (memq r rs))
+      (lemmax--err "lmx: %s is no statement of a theory under theories/" id) (kill-emacs 1))
+    (setq needs (plist-get r :needs))
+    (dolist (x rs)
+      (when (and (not (eq x r)) (equal (plist-get x :state) "THEOREM"))
+        (funcall edit x (lambda (c) (lemmax--set-state c "LEMMA")))))
+    (let (roots)
+      (while (setq roots (lemmax--theorem-roots r needs rs))
+        (dolist (x roots) (push (plist-get x :id) added))
+        (setq needs (append needs (mapcar (lambda (x) (plist-get x :id)) roots)))))
+    (setq added (nreverse added))
+    (let* ((reach (lemmax--reach id (cons (plist-put (copy-sequence r) :needs needs) (remq r rs))))
+           (done (cl-every (lambda (x) (or (not (gethash (plist-get x :id) reach)) (lemmax--done-p (plist-get x :state)))) rs))
+           (state (plist-get r :state))
+           (new (cond ((and (lemmax--done-p state) done) "THEOREM")
+                      ((lemmax--done-p state) "THESIS"))))
+      (funcall edit r (lambda (c)
+                        (let ((c (if added (lemmax--add-uses c added) c)))
+                          (if (and new (not (equal new state))) (lemmax--set-state c new) c)))))
+    (dolist (f (sort (hash-table-keys edits) #'string<))
+      (let* ((old (with-temp-buffer (insert-file-contents f) (buffer-string)))
+             (new old))
+        (dolist (e (gethash f edits)) (setq new (lemmax--edit-heading new (car e) (cdr e))))
+        (unless (equal old new)
+          (if write
+              (progn (with-temp-file f (insert new)) (lemmax--out "wrote %s" f))
+            (princ (lemmax--diff f old new))))))
+    (lemmax--err "lmx: the theorem %s of theories/%s/ now names %d more statements in :USES:" id p (length added))))
 
 ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
 (defun lemmax--setting-value (v)
@@ -2975,6 +3126,15 @@ in each project's setup.org, and the config deleted."
 
 (defun lemmax-migrate (args)
   "Print, or with --write make, FILE in the math names, with FILE.proofs.org."
+  ;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
+  (let ((n (cl-position "--theorem" args :test #'equal)))
+    (when n
+      (let ((id (nth (1+ n) args))
+            (rest (append (cl-subseq args 0 n) (nthcdr (+ n 2) args))))
+        (unless (and id (not (string-prefix-p "--" id)) (cl-every (lambda (a) (equal a "--write")) rest))
+          (lemmax--err "lmx: migrate --theorem takes one ID and no FILE; see lmx migrate --help") (kill-emacs 1))
+        (lemmax--migrate-theorem id (member "--write" rest))
+        (kill-emacs 0))))
   (let* ((write (member "--write" args))
          (_ (when (member "--links" args) (setq lemmax--migrate-titles (make-hash-table :test #'equal))))
          (bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (member a '("--write" "--links"))))) args))
@@ -3001,7 +3161,7 @@ in each project's setup.org, and the config deleted."
                          (cons (lemmax--migrate-settings (lemmax--migrate-header old t)) nil))
                         (t (let ((r (lemmax--migrate-text old rel (lemmax--today)
                                                           (and setup (lemmax--migrate-setup-todo-p old (cdr setup))))))
-                             (cons (lemmax--migrate-settings (car r))
+                             (cons (lemmax--drop-created (lemmax--migrate-settings (car r)))
                                    (and (cdr r) (cons (lemmax--migrate-settings (cadr r)) (cddr r))))))))
              (ppath (concat (file-name-sans-extension path) ".proofs.org"))
              (prel (file-relative-name ppath (file-truename default-directory)))
@@ -3413,8 +3573,8 @@ LEMMAX_MARKERS_REQUIRED_FROM, LEMMAX_COVERAGE_REQUIRED_FROM and LEMMAX_REPOS.
 A file gets settings only through its header. An old lemmax/config.eld still
 reads, as data, never run, by folder, until lmx migrate lemmax/config.eld
 moves it; a setting set both there and by #+PROPERTY: is refused.
-A file whose top property drawer has :ID: is one lemma: #+title: is its
-title and :STATE: its OPEN, DONE or DROPPED, or CONJECTURE, THESIS, LEMMA, THEOREM or REFUTED.
+A statement is a heading, never a whole file: a top drawer with :STATE: is refused.
+States: OPEN, DONE or DROPPED, or CONJECTURE, THESIS, LEMMA, THEOREM or REFUTED.
 A THESIS is a conjecture the owner accepted to prove. With #+TODO:
 CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!) and #+STARTUP:
 logdrawer, Org's :LOGBOOK: dates it: the accepted day is the newest log line
@@ -3423,7 +3583,10 @@ last-edited day git's, so no :LAST_EDITED: is needed. Old :APPROVED:,
 :PROVEN:, :IMPLEMENTED: and :LAST_EDITED: still read.
 A conjecture is proven by proofs: headings in FILE.proofs.org, OPEN or PASSED,
 with :PROVES: IDS and :TEST: addresses. A LEMMA or THEOREM needs every proof
-of it PASSED; a THEOREM's :USES: names the lemmas it uses.
+of it PASSED. A theory, theories/PROJECT/, has one THEOREM, which reaches
+every statement of it through :USES:; a LEMMA may use lemmas too. Link
+properties (:USES:, :PROVES:, :FOR:, :ABOUT:, :FOLLOWS:, :TEST:, :ALIASES:,
+:ROAM_REFS:) are not a statement's text; :BLOCKER: is refused.
 Tasks, in FILE.tasks.org (TODO | DONE CANCELLED, :FOR: IDS), are dev chores;
 notes, in FILE.notes.org (no state, :ABOUT: IDS), are text; an AXIOM heading
 is a rule accepted without proof, a DEFINITION heading a term. None of the
@@ -3560,15 +3723,19 @@ may move too. NAME.org archives to NAME_archive.org, NAME.tasks.org to
 NAME_archive.tasks.org; a new archive takes FILE's #+TODO:, #+TAGS: and
 #+LEMMAX_* lines, so lint reads it and its ids stay unique.")
     (migrate
-     "usage: lmx migrate [--project DIR] [--write] [--links] FILE
+     "usage: lmx migrate [--project DIR] [--write] [--links] FILE | --theorem ID
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
 With FILE lemmax/config.eld, move the old config to #+PROPERTY: lines.
+With --theorem ID, make ID its theory's one theorem.
 example: lmx migrate requirements.org"
      "Without --write it prints a unified diff and writes nothing.
-OPEN becomes CONJECTURE, DROPPED REFUTED, DONE THEOREM when it has children,
-else LEMMA. :NEEDS: is inverted: a parent gets :USES: with its former
-children, each child drops :NEEDS:, so a parent with children is a THEOREM;
-the #+TODO: line names the new states.
+OPEN becomes CONJECTURE, DROPPED REFUTED, DONE LEMMA. :NEEDS: is inverted: a
+parent gets :USES: with its former children, each child drops :NEEDS:; the
+#+TODO: line names the new states. :BLOCKER: goes and :REFS: becomes
+:ROAM_REFS:.
+--theorem ID makes every other THEOREM of ID's theory, theories/PROJECT/, a
+LEMMA, names in ID's :USES: each statement it does not reach, the roots only,
+and sends a proven ID that now reaches an unproven statement back to THESIS.
 Each :VERIFY: moves to a new proof with a UUID v7, :PROVES: the conjecture and
 :TEST: the addresses: PASSED when it was DONE, else OPEN, dated today. The
 proofs file takes FILE's #+LEMMAX_TESTS: and #+LEMMAX_CODE: lines. A lemma's

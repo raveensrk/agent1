@@ -74,10 +74,24 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
   lists them.
 - A `LEMMA` has a proof, and every proof of it is `PASSED`. An `OPEN` proof is
   a counterexample until it passes: lint refuses the lemma.
-- A `THEOREM` names the smaller lemmas it builds on in `:USES:`, from the
-  bigger item down; each must be proven. Old `:NEEDS:` pointed child to
-  parent, so `migrate` inverts it: the parent gets `:USES:`.
-- `:VERIFY:`, `:NEEDS:` and `:USES:` lines are not a lemma's text.
+- A theory, `theories/PROJECT/`, has one `THEOREM`, its whole claim; lint
+  refuses a second. It reaches every statement of the theory through
+  `:USES:`, and lint refuses one it does not reach. A `LEMMA` may `:USES:`
+  other lemmas; each it uses must be proven. A `THEOREM` that reaches an
+  unproven statement, a new or reopened one, is refused until it is `THESIS`
+  again; the project is finished only when its theorem is proven.
+  `lmx migrate --theorem ID` makes every other `THEOREM` of ID's theory a
+  `LEMMA`, names in ID's `:USES:` each statement it does not reach (the
+  roots only), and sends a proven ID that now reaches an unproven statement
+  back to `THESIS`. Old `:NEEDS:` pointed child to parent, so `migrate`
+  inverts it: the parent gets `:USES:`.
+- A statement's text is its title and body. Its link properties, `:USES:`,
+  `:PROVES:`, `:FOR:`, `:ABOUT:`, `:FOLLOWS:`, `:TEST:`, `:ALIASES:` and
+  `:ROAM_REFS:` (and the old `:VERIFY:`, `:NEEDS:` and `:REFS:`), are not:
+  changing one sends nothing back. A changed `:USES:` still makes it
+  suspect, and `trace` says so.
+- A statement is a heading, never a whole file: lint refuses a file whose top
+  drawer holds `:STATE:`.
 - A proof may prove many conjectures; a conjecture may have many proofs.
 - A passing test is evidence, not proof: tests can refute a conjecture, never
   prove it. What makes a lemma hold is the owner's or judge's review of each
@@ -190,8 +204,9 @@ Four kinds need no proof:
 <!-- lemma: 01a203a6-a716-738e-a95b-18086050d5eb -->
 
 Lint reads Org's blocking properties and stays the authority: under
-`:ORDERED: t`, a child may not be proven before an earlier sibling, and a
-`:BLOCKER:` must name the ids `:USES:` names.
+`:ORDERED: t`, a child may not be proven before an earlier sibling not yet
+proven or refuted. Lint refuses `:BLOCKER:`: `:USES:` says what a statement
+waits for; `migrate` deletes it.
 
 ## LOGBOOK
 
@@ -395,25 +410,6 @@ entry of the longest folder that holds it:
   already sets the key, each `theories/PROJECT/setup.org` gets
   `#+SETUPFILE: ../setup.org`, and the config is deleted.
 
-## Lemma files
-
-A file whose top property drawer has `:ID:` is one lemma, as an org-roam file
-node: `#+title:` is its title, `:STATE:` its state, as CONJECTURE or THESIS
-(old OPEN, DONE and DROPPED still read), and headings in it are body, not
-lemmas. Every rule for a heading lemma holds. It has settings only through
-its own header, as `#+SETUPFILE: setup.org` after the drawer.
-
-```org
-:PROPERTIES:
-:ID:          01a2...
-:STATE:       CONJECTURE
-:LAST_EDITED: 2026-11-22
-:END:
-#+title: Bar does the thing
-
-Body text.
-```
-
 ## Links
 
 `[[id:ID]]` links a lemma by its `:ID:`; lint refuses one to an unknown or
@@ -427,8 +423,9 @@ in plain text, as org-roam's unlinked references; lint never reports it.
 - `:ALIASES: ID...` keeps old ids working: markers, `:NEEDS:`, `id:` links,
   commit messages and `trace ID` that name an alias count as the lemma. lint
   refuses an alias two lemmas share, or one that is a lemma's `:ID:`.
-- `:REFS: URL...` names the issues, PRs or specs a lemma came from; `trace`
-  prints them and `list --json` gives them as `refs`.
+- `:ROAM_REFS: URL...`, as org-roam reads it, names the issues, PRs or specs
+  a lemma came from; `trace` prints them and `list --json` gives them as
+  `refs`. An old `:REFS:` still reads; `migrate` renames it.
 
 ## References and inspirations
 

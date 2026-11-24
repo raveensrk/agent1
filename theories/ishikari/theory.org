@@ -7,6 +7,7 @@ Process: [[file:../agent1/theory.org][Requirements requirements]].
 * THESIS Ishikari completes a task fast and correct, with no human after planning
 :PROPERTIES:
 :ID:          01a20f2e-b277-7698-b470-c6c32309d6c8
+:USES:        ISH-1 ISH-2 ISH-3 ISH-4 ISH-5 ISH-6 ISH-7 ISH-8 ISH-9
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
@@ -51,7 +52,7 @@ The investigator judges each task once its report is written, and a trivial task
 - The metro map shows the fast path as a chord from the product spec straight across to MAIN.
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
 
-* THEOREM [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
+* LEMMA [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
 :PROPERTIES:
 :ID:          ISH-3
 :USES:        ISH-14
@@ -65,7 +66,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Read only: its one write is <state>/plans/<run>/retrospective.md. Findings are ranked costliest first, each with category (bug, error, inefficiency, gap, missing, improvement), evidence, impact, change and where.
 - The main session saves every workflow result to the plans folder, and the final report shows the summary and top 3 findings.
 
-* THEOREM [#A] Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent  :ishikari:
+* LEMMA [#A] Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent  :ishikari:
 :PROPERTIES:
 :ID:          ISH-4
 :USES:        ISH-13
@@ -94,7 +95,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
 - A station's position code is its place in the list (s6), shown beside its name; spurs name their target by it.
 
-* THEOREM [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
+* LEMMA [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
 :PROPERTIES:
 :ID:          ISH-6
 :USES:        ISH-10
@@ -111,7 +112,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - The no-Agent-tool fallback is removed: without the Agent tool Ishikari stops at the start.
 - The map shows the two specs and the worker plans as one file station, Specs + worker plans: everything the investigator writes.
 
-* THEOREM [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
+* LEMMA [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
 :PROPERTIES:
 :ID:          ISH-7
 :USES:        ISH-12
@@ -165,7 +166,7 @@ Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows li
 - test_label_guard fails when an ant label kind in the four workflow scripts has no station rule.
 Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workflows/<wf>/agent-*.jsonl and label and phase in agent-*.meta.json (read 2026-11-20); workflow records carry workflowName and args.env.run (wf_a1f92fc9-0f4.json); researchers carry parentAgentId and spawnDepth 2; one message id appears twice with the same usage (msg_011ChCVnW8L3wgeorcjUJdsV); Claude Code 2.1.329 builds rate_limits.five_hour {used_percentage, resets_at} into the status line JSON (strings of the binary); the shell has CLAUDE_CODE_SESSION_ID; the user chose every rule above on 2026-11-20.
 
-* THEOREM [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
+* LEMMA [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
 :PROPERTIES:
 :ID:          ISH-10
 :USES:        ISH-11
@@ -229,7 +230,7 @@ The detective's checking rules go into a skill, skills/detective-ant/SKILL.md, l
 - Ishikari mode: never asks; the ants keep their prompts, git steps and JSON schema, and load /detective-ant or read the skill file.
 Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
 
-* THEOREM [#B] The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant  :ishikari:
+* LEMMA [#B] The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant  :ishikari:
 :PROPERTIES:
 :ID:          ISH-14
 :USES:        ISH-15

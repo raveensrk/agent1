@@ -6,10 +6,10 @@
 
 Process: [[file:../agent1/theory.org][Requirements requirements]].
 
-* THEOREM [#A] lmx lints and traces org theories        :lemmax:
+* THESIS [#A] lmx lints and traces org theories        :lemmax:
 :PROPERTIES:
 :ID:          RT-1
-:USES:        RT-2 RT-3 RT-4 RT-7 RT-8 RT-12 RT-13 01a1ff25-116d-73f1-a45e-dd77e482a983 01a202b0-1d09-75f3-99dc-677a4b2ec0be
+:USES:        RT-2 RT-3 RT-4 RT-7 RT-8 RT-12 RT-13 01a1ff25-116d-73f1-a45e-dd77e482a983 01a202b0-1d09-75f3-99dc-677a4b2ec0be 01a202bc-4cc4-753e-8d51-12d8327dfd9c 01a202f3-8216-7a1e-a34c-80c99d7bbf02 01a202f3-82c0-7905-9aa6-cafdcd9235e8 01a202f3-834a-7fcc-9a94-a50f2d1ab85c 01a202f3-83dc-76e8-b198-68db19d1e4cd 01a202f3-850b-7e3f-93f9-655397189d53 01a202f3-85a4-76cd-bf13-05f6e723c5b2 01a202f3-86d9-7db2-a0dc-accec28dfe29 01a202f3-878b-75cb-98e0-9d7929ef88c1 01a202f3-8822-7602-98a4-67acc268e3b0 01a202f3-88bb-704d-9ea9-74714f841514 01a202f3-8964-7333-8165-dba3d86556b5 01a20336-c4d6-73d3-a429-0a755d277123 01a20336-c583-720a-b661-c9b5a5dec1a4 01a20336-c611-73c8-bb70-4a8e70e675d1 01a20336-c6c6-7ac0-aea1-6d5ff12a8fea 01a20336-c75e-78ac-bf5e-7a72262f73e6 01a20336-c80d-733a-a251-ad26a0ebf7d3 01a20336-c953-745d-aef4-90ee2141e08d 01a20336-c9e9-7664-ba5c-e5e12d249d48 01a20336-ca8d-75bf-bedc-33da69c29468 01a20336-cb25-779d-9e80-e04a22bd235d 01a20336-cbc7-70a7-9473-18325683fba6 01a20336-cc5d-70ae-878b-b241ecc9ef61 01a20369-38d2-7202-8b53-6e296aaac489 01a2038d-cc5f-7324-8de8-1b067284e640 01a2038d-cc73-7594-9dd3-d758bee5aadc 01a20757-95c1-70d9-882a-875672207343 01a2038d-cc9a-7496-b943-49cb1444826d 01a2039c-9e67-74bb-9ac4-63eac14f1e7c 01a2039c-9e67-74bb-9ac4-63eb06d24a3f 01a203a6-a702-71c0-8239-e0d41380d2dd 01a203a6-a716-738e-a95b-18086050d5eb 01a203a6-a729-7420-980a-1702a0de05ad 01a203a6-a73d-7772-a4cb-fc4917fefd50 01a203a6-a766-76c6-9931-753ee75e9318 01a203a6-a779-73fc-8abf-99f8c8816867 01a203c1-983f-77e1-a367-92ea000ab72f 01a203c1-983f-77e1-a367-92eb7cba2954 01a203e8-0c8b-713e-8f21-ffee439bcbb0 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd 01a204fc-dec1-7ac6-8408-c3a69aedfebd 01a2052f-a14c-7e72-8a8f-57ab97635a10 01a20c8e-872d-75b3-97fe-22718d4b809b 01a205a5-79df-745d-bb66-69f6cae232c6 01a205a5-79e4-7b10-a3ec-9a86ac4d58f9 01a205c0-8460-7fb4-8493-861352251771 01a2090e-895f-7dfe-8227-1bcb9f632960 01a20caa-4660-77a9-bf48-db8448f75366 01a20d04-c038-7534-9920-23ec7679dadc 01a20d0f-f245-7678-b438-511c148c4eb7 01a20e7b-c7c0-77fc-bc53-bc963ab4843f 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e 01a20ee1-7637-7169-820a-751b3c636847 01a20f2e-b275-726f-ac83-9333aab958ba 01a20f2e-b275-726f-ac83-9334afc8f438 01a20f2e-b275-726f-ac83-9335aaf3e6e7 01a20f32-ef80-7183-a12f-26c80b01e6f1
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -23,7 +23,7 @@ One command in agent1 for every repo whose theory file opts in.
 - The end-to-end test builds an invented repo with statements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
 Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an invented file's TODO keywords, priority, tags, =:ID:=, =:NEEDS:= and =:VERIFY:= with org-element ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]).
 
-** THEOREM The command line                                            :cli:
+** LEMMA The command line                                            :cli:
 :PROPERTIES:
 :ID:          RT-2
 :USES:        RT-16
@@ -53,7 +53,7 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 - With no opted-in file, every command says so on stderr and exits 0.
 Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https://orgmode.org/worg/dev/org-element-api.html][org-element API]]); =git ls-files '*.org'= lists the tracked files.
 
-** THEOREM lint: the file rules                                       :lint:
+** LEMMA lint: the file rules                                       :lint:
 :PROPERTIES:
 :ID:          RT-4
 :USES:        RT-5 RT-6 RT-10 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490 01a20014-e361-7827-b2a8-d3b2ded3e0b1 01a202bc-49e2-7dba-94f5-0c0952fc91f0 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
@@ -90,7 +90,7 @@ Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process
 - =--no-tests= skips the command and this rule.
 Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, while org-element's =:VERIFY= held the first line only; =split-string-and-unquote= split =unit/store_test "process/ids are used once"= into 2 ([[https://orgmode.org/manual/Property-Syntax.html][Property Syntax]], [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Shell-Arguments.html][Shell Arguments]]).
 
-** THEOREM lint --staged: the change rules                            :lint:
+** LEMMA lint --staged: the change rules                            :lint:
 :PROPERTIES:
 :ID:          RT-6
 :USES:        RT-11 01a2002a-bf93-7475-94c3-d083c65a87d6 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
@@ -109,7 +109,7 @@ Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, whi
 - ~LEMMAX_TODAY=YYYY-MM-DD~ sets today, for tests.
 Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python today, reading =git show HEAD:= against =git show :=.
 
-** THEOREM commit-msg: code commits name an id                       :hooks:
+** LEMMA commit-msg: code commits name an id                       :hooks:
 :PROPERTIES:
 :ID:          RT-7
 :USES:        RT-11
@@ -126,7 +126,7 @@ Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python
 - The fix it prints: name an id in the message, as =(RF-3)=.
 Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, with =core/ apps/ script/= as its code.
 
-** THEOREM trace: the links of every statement                     :trace:
+** LEMMA trace: the links of every statement                     :trace:
 :PROPERTIES:
 :ID:          RT-8
 :USES:        RT-9 RT-17 RT-18 RT-19 01a20014-e361-7827-b2a8-d3b2ded3e0b1 01a202bc-4b52-74e6-9d78-591320edcb4f 01a202bc-4e0c-745b-9f61-980ada0f93e5
@@ -144,7 +144,7 @@ Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, w
 - =lmx trace RT-3= prints that one block, and the files each commit touched; an unknown id is a failure.
 Evidence: =git log --format= and =--name-only= give hash, date, subject and files; task-router-2's commits already name ids, as =(RF-2, RF-5)=.
 
-** THEOREM trace: suspect children                                      :trace:
+** LEMMA trace: suspect children                                      :trace:
 :PROPERTIES:
 :ID:          RT-9
 :USES:        01a2002a-bf93-7475-94c3-d083c65a87d6
@@ -203,7 +203,7 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 - =harness/self_check= runs it.
 Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual/html_node/ert/index.html][ERT manual]]); [[file:../agent1/testing.org][testing.org]] sets the timeout and invented-data rules.
 
-** THEOREM list: every statement in a table                        :list:
+** LEMMA list: every statement in a table                        :list:
 :PROPERTIES:
 :ID:          RT-13
 :USES:        RT-14 RT-15 RT-18 01a2058c-5dff-75bc-b089-998d5425915a
@@ -241,7 +241,7 @@ A theory file is a requirements file under its math name.
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el:319 and lemmax.el:498 match the name "requirements" only; spike 2026-11-22: in a throwaway repo, lmx list showed requirements.org and skipped an unmarked theory.org and theory/a.org.
 
-** THEOREM next-id: the next free id for a section                   :list:
+** LEMMA next-id: the next free id for a section                   :list:
 :PROPERTIES:
 :ID:          RT-14
 :USES:        RT-15 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
@@ -256,7 +256,7 @@ Evidence: lemmax.el:319 and lemmax.el:498 match the name "requirements" only; sp
 - Why: on 2026-11-21 a new requirement got M-11, which was already taken
 Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0.
 
-** THEOREM /add-requirement uses lmx                             :skill:
+** LEMMA /add-requirement uses lmx                             :skill:
 :PROPERTIES:
 :ID:          RT-15
 :USES:        01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
@@ -361,7 +361,7 @@ The tool takes the workflow's name, LemmaX, and moves beside the rules it checks
 - Done only after the uncommitted RT-17 work in the old file is committed, so nothing is lost
 - Asked by the owner on 2026-11-21
 
-** THEOREM Code markers link code and lemmas both ways              :trace:
+** LEMMA Code markers link code and lemmas both ways              :trace:
 :PROPERTIES:
 :ID:          01a20014-e361-7827-b2a8-d3b2ded3e0b1
 :USES:        01a2002d-fb3b-71e3-ac96-5e1dbba8226c
@@ -401,7 +401,7 @@ A project moving its ids out of its headings, as Arcadia does, changes no statem
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--entry-text= already drops the state and the dates the same way.
 
-** THEOREM Opting in, and markers in another repo                     :lint:
+** LEMMA Opting in, and markers in another repo                     :lint:
 :PROPERTIES:
 :ID:          01a2002d-fb3b-71e3-ac96-5e1dbba8226c
 :USES:        01a202b0-1d09-75f3-99dc-677a4b2ec0be
@@ -417,10 +417,9 @@ Two things a project meets when it starts to follow LemmaX, as Arcadia does.
 Evidence: Arcadia's requirements live in arcadia_docs and its code in arcadia; the first opt-in lint saw every requirement as new.
 
 
-** THEOREM Settings live in lemmax/config.eld                             :lint:
+** LEMMA Settings live in lemmax/config.eld                             :lint:
 :PROPERTIES:
 :ID:          01a202b0-1d09-75f3-99dc-677a4b2ec0be
-:USES:        01a202bc-4a88-7993-a717-e8022392b801
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -436,7 +435,7 @@ A repo's lmx settings are in one file, so lemmas may be headings in one file or 
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lemmas across files; the opt-in is per file in =lemmax--worktree-files= and =lemmax--rev-files=; Emacs 29.3 runs the tests here.
 
-** THEOREM Lemmas link by id: links, and lint checks them                 :lint:
+** LEMMA Lemmas link by id: links, and lint checks them                 :lint:
 :PROPERTIES:
 :ID:          01a202bc-49e2-7dba-94f5-0c0952fc91f0
 :USES:        01a202bc-4b52-74e6-9d78-591320edcb4f 01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5 01a202bc-4e0c-745b-9f61-980ada0f93e5
@@ -451,11 +450,12 @@ Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lem
 - Asked by the owner on 2026-11-22
 Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 uses one yet; idea from org-id.
 
-** LEMMA A file with :ID: at its top is one lemma                  :lint:
+** REFUTED A file with :ID: at its top is one lemma                  :lint:
 :PROPERTIES:
 :ID:          01a202bc-4a88-7993-a717-e8022392b801
 :END:
 :LOGBOOK:
+- State "REFUTED"    from "LEMMA"      [2026-11-25 Wed 02:00]
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
 - State "THESIS"     from "CONJECTURE" [2026-11-22 Sun]
 :END:
@@ -464,6 +464,7 @@ Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 us
 - Headings in it are part of its body, never lemmas of their own
 - Every rule for a heading lemma holds for it: dates, =:VERIFY:=, markers, staged changes
 - Asked by the owner on 2026-11-22
+- Refuted on 2026-11-25: a statement is a heading, never a whole file; the owner removed lemma files
 Evidence: org-element reads a file-level property drawer as the first child of the document; idea from org-roam file nodes.
 
 ** LEMMA trace shows what links to a lemma                        :trace:
@@ -587,17 +588,19 @@ Evidence: probe 2026-11-22: lmx list ran tests.sh.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** LEMMA A file lemma's drawer is the file's first element                :lint:
+** REFUTED A file lemma's drawer is the file's first element                :lint:
 :PROPERTIES:
 :ID:          01a202f3-8475-7f4f-b0e2-5cd8c782e520
 :END:
 :LOGBOOK:
+- State "REFUTED"    from "LEMMA"      [2026-11-25 Wed 02:00]
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
 - State "THESIS"     from "CONJECTURE" [2026-11-22 Sun]
 :END:
 - Only a property drawer before any text but comment lines makes a file a lemma, as Org and org-roam read it
 - lint reports a drawer with :ID: further down the preamble: "move the drawer to the top"
 - Asked by the owner on 2026-11-22
+- Refuted on 2026-11-25: a statement is a heading, never a whole file; the owner removed lemma files
 Evidence: the hardening review of 2026-11-22.
 
 ** LEMMA Today is the local day                                      :lint:
@@ -628,7 +631,7 @@ Evidence: lemmax.el:625 calls format-time-string with UTC set to t; with nil it 
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** THEOREM Tests run on Emacs 29 and the newest Emacs                        :tests:
+** LEMMA Tests run on Emacs 29 and the newest Emacs                        :tests:
 :PROPERTIES:
 :ID:          01a202f3-863b-7c04-9728-0c9dd9346002
 :USES:        01a20336-c8a5-702e-86c3-655c93d44c9e
@@ -642,7 +645,7 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
 
-** THEOREM CI lints and tests on every push                               :tests:
+** LEMMA CI lints and tests on every push                               :tests:
 :PROPERTIES:
 :ID:          01a202f3-86d9-7db2-a0dc-accec28dfe29
 :USES:        01a202f3-863b-7c04-9728-0c9dd9346002
@@ -882,7 +885,7 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** THEOREM Conjectures, proofs, lemmas and theorems                         :lemmax:
+** LEMMA Conjectures, proofs, lemmas and theorems                         :lemmax:
 :PROPERTIES:
 :ID:          01a20369-38d2-7202-8b53-6e296aaac489
 :USES:        01a20369-38f7-7229-8232-1b8cbb98e6bc 01a20369-391b-768e-8c98-180facc0ff77 01a20369-393d-77bf-a35a-a1c03780a751
@@ -1000,7 +1003,7 @@ Evidence: a heading with :ID: and no state is already read as a record by =lemma
 - Asked by the owner on 2026-11-22
 Evidence: states are read through =lemmax-states=.
 
-** THEOREM DEFINITION headings name the terms                       :lemmax:
+** LEMMA DEFINITION headings name the terms                       :lemmax:
 :PROPERTIES:
 :ID:          01a20757-95c1-70d9-882a-875672207343
 :USES:        01a2038d-cc86-72be-b225-eeff9ee2c7a6
@@ -1228,7 +1231,7 @@ Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TEST
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el:227 already reads =:USES:= into =:needs= for every row; org-element gives each heading's =:priority=.
 
-** THEOREM [#A] All code sits under a marker                            :lint:
+** LEMMA [#A] All code sits under a marker                            :lint:
 :PROPERTIES:
 :ID:          01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
 :USES:        01a20014-e361-7827-b2a8-d3b2ded3e0b1
@@ -1297,7 +1300,7 @@ A file move that rewrites a statement's link to name the same file changes no st
 - Asked by the owner on 2026-11-24, when moving agent1's theory into theories/ rewrote links in 7 proven statements
 Evidence: git diff --cached -M --name-status gives each rename as R, old path, new path; lemmax--lint-staged already compares each statement's text, HEAD against staged.
 
-** THEOREM A mended link is not a text change                           :lint:
+** LEMMA A mended link is not a text change                           :lint:
 :PROPERTIES:
 :ID:          01a20c8e-872d-75b3-97fe-22718d4b809b
 :USES:        01a20a84-971d-767f-8a26-c98f6d132b7f
@@ -1413,7 +1416,7 @@ Evidence: lint --staged already compares each statement's text, HEAD against sta
 - Asked by the owner on 2026-11-23
 Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
 
-** THEOREM publish shows attachments, with Org's own export                :cli:
+** LEMMA publish shows attachments, with Org's own export                :cli:
 :PROPERTIES:
 :ID:          01a2090e-8b52-7173-947b-d882b237ad05
 :USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
@@ -1449,7 +1452,7 @@ LemmaX extends Org mode; it invents nothing Org or an Org add-on already does.
 - Asked by the owner on 2026-11-23
 Evidence: Org already supplies TODO keywords, tags, priorities, :ID: and id: links, archiving and publishing, which LemmaX uses; org-log-done, org-log-into-drawer and state-change notes record dates; #+PROPERTY: and #+SETUPFILE: set file-wide values.
 
-** THEOREM lmx book writes the theory as one HTML file             :cli:
+** LEMMA lmx book writes the theory as one HTML file             :cli:
 :PROPERTIES:
 :ID:          01a20927-9aac-7817-8e46-8635aa0ae127
 :USES:        01a203a6-a752-75ed-8359-a8147e95a33d 01a2090e-8b52-7173-947b-d882b237ad05 01a204fc-d718-7e50-95a3-4ca72898a15b
@@ -1470,7 +1473,7 @@ lmx book writes the repo's theory as one self-contained HTML file, with Org's ow
 - Asked by the owner on 2026-11-23
 Evidence: org-publish publishes each file a project includes, so one entry file gives one page; #+INCLUDE: joins the files (org-export-expand-include-keyword); Org's final-output filters let a backend rewrite the HTML; no Org 9.8.7 file writes data: URIs, and Emacs's base64-encode-region does.
 
-** THEOREM A project keeps its theory in theories/                     :lemmax:
+** LEMMA A project keeps its theory in theories/                     :lemmax:
 :PROPERTIES:
 :ID:          01a20930-0aba-7005-8442-d1dc3269c487
 :USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a2091c-4bcc-7ddb-9796-619468dd401c
@@ -1563,7 +1566,7 @@ The manual is a project's user manual, beside its bible: one self-contained HTML
 - Asked by the owner on 2026-11-24
 Evidence: the owner named the GNU manuals page as the model, where GNU offers each manual as one HTML page among its formats; the bible statement already sets the finished-project gate and the hand-written rule finding.
 
-** THEOREM The program is called lmx                                     :cli:
+** LEMMA The program is called lmx                                     :cli:
 :PROPERTIES:
 :ID:          01a20d0f-f245-7678-b438-511c148c4eb7
 :USES:        01a20d0f-f245-7678-b438-511ac08c8248 01a20d0f-f245-7678-b438-511bd421cd09
@@ -1602,7 +1605,7 @@ A LemmaX project's bible and manual are written by an AI agent, never by lmx; lm
 - Asked by the owner on 2026-11-24
 Evidence: skills/docs/SKILL.md already writes a book-style design document by hand and runs only when asked; lmx already reads each statement's :LAST_EDITED: and git's commit dates.
 
-** THEOREM Thesis and proof are Org states, dated by Org's log       :lint:
+** LEMMA Thesis and proof are Org states, dated by Org's log       :lint:
 :PROPERTIES:
 :ID:          01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
@@ -1623,7 +1626,7 @@ A statement's acceptance and proof are Org TODO states, and Org's LOGBOOK dates 
 - Asked by the owner on 2026-11-24
 Evidence: Org's manual, "Tracking TODO state changes": a ! after a state's key logs a timestamp on entry, and org-log-into-drawer (#+STARTUP: logdrawer) puts it in :LOGBOOK:; lemmax--entry-text already skips :LOGBOOK: as history; lmx trace already reads each heading's commit days from git.
 
-** THEOREM File settings are Org #+PROPERTY: lines                       :lint:
+** LEMMA File settings are Org #+PROPERTY: lines                       :lint:
 :PROPERTIES:
 :ID:          01a20eb5-f066-7481-9fd1-9ac7705ef6b2
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
@@ -1643,7 +1646,7 @@ lmx reads a file's settings from Org's #+PROPERTY: lines, as Org reads them.
 - Asked by the owner on 2026-11-24
 Evidence: Org manual, "Property Syntax": #+PROPERTY: sets a file-wide property and NAME+ appends to it; org-entry-get with inherit reads it.
 
-** THEOREM Repo settings live in theories/setup.org                     :lint:
+** LEMMA Repo settings live in theories/setup.org                     :lint:
 :PROPERTIES:
 :ID:          01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
@@ -1663,7 +1666,7 @@ lmx reads repo-wide settings from #+PROPERTY: lines in theories/setup.org, not f
 - Asked by the owner on 2026-11-24
 Evidence: Org manual, "In-buffer Settings": #+SETUPFILE: reads another file's settings and may be nested; .dir-locals.el was ruled out because Emacs evaluates it.
 
-** THEOREM The created day comes from the id and git                    :lint:
+** LEMMA The created day comes from the id and git                    :lint:
 :PROPERTIES:
 :ID:          01a20ee1-7637-7169-820a-751b3c636847
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
@@ -1727,9 +1730,12 @@ Every statement is a heading in a theory file; lmx has no lemma files.
 - Asked by the owner on 2026-11-25
 Evidence: Org manual, "Property Syntax" and "Special Properties"; no tracked .org file in ~/repos holds :STATE:.
 
-** CONJECTURE A log line has a date and a time                          :lint:
+** THESIS A log line has a date and a time                          :lint:
 :PROPERTIES:
 :ID:          01a20f32-ef80-7183-a12f-26c80b01e6f1
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 01:45]
 :END:
 Every state change in a :LOGBOOK: carries the date and the time, as Org writes it: - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 14:32]
 - lint refuses a new log line with no time

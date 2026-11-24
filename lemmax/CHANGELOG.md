@@ -5,6 +5,18 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- A theory, `theories/PROJECT/`, has one `THEOREM`: lint refuses a second,
+  and a statement the theorem does not reach through `:USES:`; a `THEOREM`
+  that reaches an unproven statement is refused until it is `THESIS`. A
+  `LEMMA` may use lemmas. A project is finished when its theorem is proven.
+  `lmx migrate --theorem ID` names it.
+- Link properties are not a statement's text: `:PROVES:`, `:FOR:`, `:ABOUT:`,
+  `:FOLLOWS:`, `:TEST:`, `:ALIASES:` and `:ROAM_REFS:` join `:USES:`. A
+  changed `:USES:` makes the statement suspect in `trace`.
+- Lint refuses `:BLOCKER:`; `migrate` deletes it.
+- `:ROAM_REFS:` names where a lemma came from; `:REFS:` still reads and
+  `migrate` renames it.
+- No lemma files: lint refuses a file whose top drawer holds `:STATE:`.
 - The created day comes from the id: a UUIDv7's own time, in the local zone,
   else the first commit with the id, else today. `plan` orders by it, none
   last; `trace` prints `created:` and `list --json` gives `created`. Lint
