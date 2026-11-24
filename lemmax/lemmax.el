@@ -1026,6 +1026,7 @@ as a NUL when BROKEN and the file is gone."
         (lemmax--lint-links infos only staged)
         (lemmax--lint-attach infos only)
         (lemmax--lint-theories only)
+        (unless (or only staged) (lemmax--lint-docs infos))
         (lemmax--lint-markers-in infos only)
         (dolist (i infos)
           (when (and (plist-get i :misplaced) (or (null only) (member (plist-get i :file) only)))
@@ -1111,6 +1112,36 @@ theory there."
                      (string-match "\\`requirements\\([._].*\\)?\\.org\\'" name))
             (lemmax--finding f 1 nil "a theory file named requirements, and every theory file is named theory"
                              (format "rename it %s" (concat "theory" (substring name (length "requirements")))))))))))
+
+;;;; Agent-written documents (01a20d28-cb41-760a-a477-e1704807a2a8)
+
+(defconst lemmax--docs '("bible" "manual")
+  "The documents an agent writes for a finished project: theories/PROJECT/PROJECT.NAME.html.")
+
+;; lemma: 01a20d28-cb41-760a-a477-e1704807a2a8
+(defun lemmax--lint-docs (infos)
+  "Warn, never refuse: a finished project with no bible or manual, and a
+document older than a statement's :LAST_EDITED:.  An agent writes them, never lmx."
+  (let ((projects (make-hash-table :test #'equal)))
+    (dolist (i infos)
+      (let ((p (lemmax--theory-project (plist-get i :file))))
+        (when p (puthash p (append (gethash p projects) (plist-get i :statements)) projects))))
+    (dolist (p (sort (hash-table-keys projects) #'string<))
+      (let* ((rs (gethash p projects))
+             (finished (not (cl-some (lambda (r) (member (plist-get r :state) '("CONJECTURE" "OPEN" "FAILED" "TODO"))) rs)))
+             (newest (car (sort (delq nil (mapcar (lambda (r) (plist-get r :last-edited)) rs)) #'string>))))
+        (dolist (d lemmax--docs)
+          (let* ((f (format "theories/%s/%s.%s.html" p p d))
+                 (day (lemmax--git-out "log" "-1" "--format=%cs" "--" f))
+                 (day (and day (string-trim day))))
+            (cond
+             ((or (null day) (equal day ""))
+              (when finished
+                (lemmax--err "lmx: %s:1: -: warning: project %s is finished and has no %s; run /docs, whose agent writes it"
+                             f p d)))
+             ((and newest (string> newest day))
+              (lemmax--err "lmx: %s:1: -: warning: the %s is older than the theory, edited %s; run /docs to bring it up to date"
+                           f d newest)))))))))
 
 ;;;; Footnotes (01a203a6-a779-73fc-8abf-99f8c8816867)
 

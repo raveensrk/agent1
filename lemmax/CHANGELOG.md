@@ -61,3 +61,5 @@ The first public release.
   `theory.org`.
 - The program is `lmx`, so it is never confused with LemmaX, the workflow;
   `lemmax` stays on PATH as an alias.
+- `lint` warns when a finished project has no bible or manual, or one is
+  older than the theory; the `/docs` skill's agent writes them.

@@ -177,6 +177,13 @@ A project's main theory file is `theory.org`, with companions such as
 `theory.proofs.org`. Lint refuses any file named `requirements.org`,
 `requirements.X.org` or `requirements_X.org`, and names the file to use.
 
+<!-- lemma: 01a20d28-cb41-760a-a477-e1704807a2a8 -->
+
+A finished project's bible and manual, `theories/PROJECT/PROJECT.bible.html`
+and `PROJECT.manual.html`, are written by an agent running the `/docs` skill,
+never by lmx. `lint` warns, and never refuses, when one is missing or older than
+the theory.
+
 <!-- lemma: 01a20a84-971d-767f-8a26-c98f6d132b7f -->
 
 A move that rewrites a statement's file link to name the same file, as moving

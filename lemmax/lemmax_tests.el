@@ -156,8 +156,13 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (defmacro rt-should-find (r re)
   `(progn (should (= 1 (nth 0 ,r))) (should (string-match-p ,re (nth 2 ,r)))))
 
+(defun rt-quiet (err)
+  "ERR without the warnings that a finished sample project has no bible or
+manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
+  (replace-regexp-in-string "^lmx: [^\n]*: warning: project [^ ]+ is finished and has no \\(?:bible\\|manual\\);[^\n]*\n" "" (or err "")))
+
 (defmacro rt-should-clean (r)
-  `(progn (should (equal "" (nth 2 ,r))) (should (= 0 (nth 0 ,r)))))
+  `(progn (should (equal "" (rt-quiet (nth 2 ,r)))) (should (= 0 (nth 0 ,r)))))
 
 ;;;; RT-1
 
@@ -781,6 +786,49 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
                                         "and every theory file is named theory; rename it " (regexp-quote to) "$")
                                 (nth 2 r))))
       (should-not (string-match-p "gui\\.org" (nth 2 r))))))
+
+;;;; 01a20d28-cb41-760a-a477-e1704807a2a8: an agent writes the bible and the manual
+
+;; lemma: 01a20d28-cb41-760a-a477-e1704807a2a8
+(ert-deftest lemmax-docs-warnings ()
+  :tags '(timeout-60)
+  (let* ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1")))))
+         (bible "theories/t/t.bible.html") (manual "theories/t/t.manual.html"))
+    ;; Finished, with neither: two warnings, and lint still passes.
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (should (= 0 (nth 0 r)))
+      (should (string-match-p (concat "^lmx: " (regexp-quote bible) ":1: -: warning: project t is finished and has no bible; run /docs") (nth 2 r)))
+      (should (string-match-p (concat "^lmx: " (regexp-quote manual) ":1: -: warning: project t is finished and has no manual") (nth 2 r))))
+    ;; Written after the theory: no warning.
+    (rt-set d bible "<html></html>\n")
+    (rt-set d manual "<html></html>\n")
+    (rt-commit d "docs" "2026-02-01")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; Older than the theory: a warning naming the document.
+    (rt-set d bible "<html>old</html>\n")
+    (rt-commit d "old docs" "2025-12-01")
+    (let ((r (rt-run d "lint" "--no-tests")))
+      (should (= 0 (nth 0 r)))
+      (should (string-match-p (concat "^lmx: " (regexp-quote bible) ":1: -: warning: the bible is older than the theory, edited 2026-01-05") (nth 2 r)))
+      (should-not (string-match-p "manual is older" (nth 2 r))))
+    ;; Not finished: no missing-document warning.
+    (let ((e (rt-repo (rt-math-files (list (rt-conj "RQ-1")) (list (rt-proof "PR-1" "RQ-1" :state "OPEN"))))))
+      (should-not (string-match-p "is finished and has no" (nth 2 (rt-run e "lint" "--no-tests")))))))
+
+;; lemma: 01a20d28-cb41-760a-a477-e1704807a2a8
+(ert-deftest lemmax-docs-skill-writes-them ()
+  ;; The /docs skill, not lmx, writes both: it reads the project and researches first.
+  (let ((text (with-temp-buffer
+                (insert-file-contents (expand-file-name "skills/docs/SKILL.md" rt-agent1))
+                (buffer-string))))
+    (should (string-match-p "^## LemmaX mode" text))
+    (dolist (re '("Read the whole project" "Research the web before writing"
+                  "theories/PROJECT/PROJECT\\.bible\\.html" "theories/PROJECT/PROJECT\\.manual\\.html"
+                  "https://www\\.gnu\\.org/manual/manual\\.html" "`lmx` never does"))
+      (should (string-match-p re text))))
+  ;; lmx has no command that writes either.
+  (let ((help (nth 1 (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "help"))))
+    (should-not (string-match-p "^  \\(?:bible\\|manual\\)\\b" help))))
 
 ;;;; 01a20a84-971d-767f-8a26-c98f6d132b7f: a moved link is not a text change
 

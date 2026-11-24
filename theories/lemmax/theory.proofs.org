@@ -973,3 +973,13 @@ A repo with requirements.org, requirements.proofs.org and requirements_archive.o
 :LAST_EDITED: 2026-11-24
 :END:
 lmx --version prints "lmx VERSION"; every help names lmx in its usage and example lines; install-hooks writes hooks that call lmx.
+
+* PASSED Proof: An agent writes the bible and the manual; lmx only checks them
+:PROPERTIES:
+:ID:          01a20d32-5ee9-767f-9280-bc06521426f3
+:PROVES:      01a20d28-cb41-760a-a477-e1704807a2a8
+:TEST:        ert/lemmax-docs-warnings ert/lemmax-docs-skill-writes-them
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+A finished sample project with neither document warns twice and lint passes; both committed after the theory, no warning; the bible committed before the theory's last edit warns for the bible alone; an unfinished project gives no missing-document warning. The /docs skill holds LemmaX mode: read the whole project, research the web, write both pages; lmx's help has no bible or manual command.
