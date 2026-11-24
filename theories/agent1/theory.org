@@ -2,6 +2,16 @@
 #+STARTUP: overview logdrawer
 #+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)
 
+* THESIS Agent1 gives any agent one public set of rules, skills and checks
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1ab2ebeb2f54
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+Agent1 gives any agent, in any harness, one public set of rules, skills and checks it can follow.
+- Asked by the owner on 2026-11-25
+
 * Goal
 Any project that follows LemmaX can be rebuilt from scratch, from its requirements alone.
 - A builder reads only the requirements, their proofs and the axioms; app code and test code are both rebuilt from them.
@@ -33,7 +43,7 @@ Properties are optional for a small design. For larger design the following fiel
 * The one format
 A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lmx lint= then refuses anything this section does not allow.
 - A requirement is a conjecture: a heading with a state, =** CONJECTURE [#A] Title  :tag:=; the heading text carries no id.
-- Its states are =CONJECTURE | LEMMA THEOREM REFUTED=. Old files keep =OPEN | DONE DROPPED= until =lmx migrate= moves them.
+- Its states are =CONJECTURE THESIS | LEMMA THEOREM REFUTED=. Old files keep =OPEN | DONE DROPPED= until =lmx migrate= moves them.
 - A proof is a heading in =FILE.proofs.org=, beside the conjectures, never a child of one; its states are =OPEN | PASSED=.
 - A proof has its own =:ID:=, =:PROVES:= with the ids of the conjectures it proves, a body saying what it shows, and =:TEST:= with its test addresses.
 - A conjecture may have many proofs; one proof may prove many conjectures.

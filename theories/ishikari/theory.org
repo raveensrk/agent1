@@ -4,6 +4,16 @@
 
 Process: [[file:../agent1/theory.org][Requirements requirements]].
 
+* THESIS Ishikari completes a task fast and correct, with no human after planning
+:PROPERTIES:
+:ID:          01a20f2e-b277-7698-b470-c6c32309d6c8
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+Ishikari is a multi-agent workflow that completes a given task as fast and as correctly as possible, with no human help after planning.
+- Asked by the owner on 2026-11-25
+
 * LEMMA [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
 :PROPERTIES:
 :ID:          ISH-1

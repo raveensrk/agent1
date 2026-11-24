@@ -45,7 +45,7 @@ A conjecture whose every proof is PASSED; =LEMMA=.
 :PROPERTIES:
 :ID:          01a20759-6f35-7896-8a32-f87face561ec
 :END:
-A bigger conjecture that =:USES:= lemmas, proven too; =THEOREM=.
+A theory's one whole claim, reaching every statement through =:USES:=; proven, the project is complete; =THEOREM=.
 
 * DEFINITION Corollary
 :PROPERTIES:
@@ -81,7 +81,7 @@ Text in =FILE.notes.org=: no state, =:ABOUT:= ids, needs no proof.
 :PROPERTIES:
 :ID:          01a20759-7a0e-7391-b821-2264a3731364
 :END:
-=PASSED= on the last proof, then =LEMMA= or =THEOREM=; the day is =:PROVEN:=.
+=PASSED= on the last proof, then =LEMMA= or =THEOREM=; the day is the newest =:LOGBOOK:= line into that state.
 
 * DEFINITION LemmaX
 :PROPERTIES:
@@ -94,3 +94,51 @@ The workflow: a project's theory of statements, proofs, tests and code markers, 
 :ID:          01a20d0f-f245-7678-b438-511bd421cd09
 :END:
 The program that checks the LemmaX workflow: the =lmx= command and its Emacs code. A command written in code style, as =lmx lint=, names it. Said lmx, it means this program.
+
+* DEFINITION Uses
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1aaae5a04acb
+:END:
+A statement's =:USES:= names the smaller statements it holds because of; it points down, from the bigger to the smaller.
+
+* DEFINITION Proves
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1aab6db18bdb
+:END:
+A proof's =:PROVES:= names the statements its tests show hold.
+
+* DEFINITION Test
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1aac364a376a
+:END:
+A proof's =:TEST:= names the tests that check it.
+
+* DEFINITION For
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1aad93a26755
+:END:
+A task's =:FOR:= names the statements the chore serves.
+
+* DEFINITION About
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1aae2755b050
+:END:
+A note's =:ABOUT:= names any ids it discusses.
+
+* DEFINITION Follows
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1aaf800c0ca6
+:END:
+A project statement's =:FOLLOWS:= names the agent1 rule it obeys.
+
+* DEFINITION Aliases
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1ab045097756
+:END:
+A statement's =:ALIASES:= holds its own old ids, which still name it.
+
+* DEFINITION Roam refs
+:PROPERTIES:
+:ID:          01a20f2e-b276-7596-bddd-1ab1a078230d
+:END:
+A statement's =:ROAM_REFS:=, org-roam's property, holds the URLs it came from.

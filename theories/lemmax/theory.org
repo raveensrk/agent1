@@ -492,18 +492,21 @@ Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam bac
 - Asked by the owner on 2026-11-22
 Evidence: lmx resolves ids through one table per run; idea from org-roam's =ROAM_ALIASES=.
 
-** LEMMA :REFS: names where a lemma came from                       :ids:
+** CONJECTURE :ROAM_REFS: names where a lemma came from                       :ids:
 :PROPERTIES:
 :ID:          01a202bc-4cc4-753e-8d51-12d8327dfd9c
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
 - State "THESIS"     from "CONJECTURE" [2026-11-22 Sun]
 :END:
-- =:REFS: URL...= names issues, PRs or specs; trace prints =refs:= and =list --json= gives =refs=
+- =:ROAM_REFS: URL...= names, as org-roam reads it, issues, PRs or specs; trace prints =refs:= and =list --json= gives =refs=
 - lint reports a ref that is not an http(s) URL
 - Asked by the owner on 2026-11-22
-Evidence: idea from org-roam's =ROAM_REFS=.
+- An old =:REFS:= still reads; lmx migrate --write renames it
+- Changed on 2026-11-25: :REFS: becomes org-roam's own :ROAM_REFS:; the owner chose it
+Evidence: org-roam manual, "Refs": ROAM_REFS holds URLs and citation keys, many per node.
 
 ** LEMMA list --unlinked shows ids named without a link       :list:
 :PROPERTIES:
@@ -1071,18 +1074,20 @@ Evidence: =lemmax--filter= already filters rows by state and section.
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--id-link-re= already reads id: links in bodies.
 
-** LEMMA ORDERED and BLOCKER agree with lmx                            :lint:
+** CONJECTURE ORDERED children wait for earlier siblings                         :lint:
 :PROPERTIES:
 :ID:          01a203a6-a716-738e-a95b-18086050d5eb
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
 :END:
 - Emacs blocks by =org-enforce-todo-dependencies=, which a repo's setup file may turn on; lmx lint stays the authority and reads the same properties
 - Under a heading with =:ORDERED: t=, lint refuses a proven child that comes after an earlier sibling not yet proven or refuted: Emacs would have blocked it
-- A heading's =:BLOCKER:= ids, as org-depend reads them, must be the ids its :USES: names; lint refuses a heading where the two disagree
+- lint refuses =:BLOCKER:=: :USES: says what a statement waits for
 - Asked by the owner on 2026-11-22
+- Changed on 2026-11-25: :BLOCKER: dropped, it only repeated :USES:; the owner chose it
 Evidence: =org-entry-get= reads :ORDERED: and =org-get-last-sibling= walks siblings in batch Emacs.
 
 ** LEMMA A LOGBOOK is not the text                                             :lint:
@@ -1675,3 +1680,47 @@ A heading's created day is read from its id or from git; lmx keeps no :CREATED:.
 - An old :CREATED: still reads, and wins; lmx migrate --write deletes it from every heading, tasks and notes files included
 - Asked by the owner on 2026-11-25
 Evidence: RFC 9562 section 5.7: UUIDv7's first 48 bits are a Unix time in milliseconds; lmx trace already reads commit days from git.
+
+** THESIS A theory has one theorem                                              :lint:
+:PROPERTIES:
+:ID:          01a20f2e-b275-726f-ac83-9333aab958ba
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+Each theory has exactly one THEOREM, its whole claim; every other proven statement is a LEMMA.
+- A project's theory, theories/PROJECT/, holds one THEOREM; lint refuses a second
+- Only the owner writes or changes the theorem
+- A LEMMA may :USES: other lemmas; :USES: no longer makes a statement a THEOREM
+- The theorem reaches every statement of its theory through :USES:; lint refuses a statement it does not reach
+- The theorem is proven only when every statement it reaches is proven; then the project is complete, and the bible and manual warning applies
+- A new or reopened statement under a proven theorem reopens it: the project is no longer complete
+- lmx migrate --write makes every THEOREM but the one the owner names a LEMMA
+- Asked by the owner on 2026-11-25
+Evidence: theory.definitions.org's Theorem and Lemma definitions; lint already walks :USES: for suspects.
+
+** THESIS Links are not a statement's text                                      :lint:
+:PROPERTIES:
+:ID:          01a20f2e-b275-726f-ac83-9334afc8f438
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+A statement's text is its title and body; its link properties are not.
+- :USES:, :PROVES:, :FOR:, :ABOUT:, :FOLLOWS:, :TEST:, :ALIASES: and :ROAM_REFS: are not text: changing one sends nothing back to CONJECTURE
+- A changed :USES: still makes the statement suspect, so the owner reads it again
+- Asked by the owner on 2026-11-25
+Evidence: lemmax--entry-text already skips :USES: and the date properties.
+
+** THESIS A statement is a heading, never a whole file                          :lint:
+:PROPERTIES:
+:ID:          01a20f2e-b275-726f-ac83-9335aaf3e6e7
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+Every statement is a heading in a theory file; lmx has no lemma files.
+- lint refuses a file whose top property drawer holds :STATE:, and says to make it a heading in theory.org
+- Org has no TODO state for a whole file: a state lives on a heading line, and TODO is a special property a drawer may not hold
+- Asked by the owner on 2026-11-25
+Evidence: Org manual, "Property Syntax" and "Special Properties"; no tracked .org file in ~/repos holds :STATE:.
