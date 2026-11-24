@@ -5,6 +5,8 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- `run_tests` logs each test's result, start, end and run time to
+  `lemmax/test-times.log`, which git ignores, then the whole run's.
 - Proof states are `DRAFT | PROOF FALLACY MOOT`, logged by Org: a statement
   needs a `PROOF` and no `DRAFT`, a `FALLACY` or `MOOT` aside; a refuted
   statement's proof is `MOOT`. A failing test leaves the proof `PROOF` and

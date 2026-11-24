@@ -39,6 +39,9 @@ lmx lint --staged          # what the pre-commit hook runs
   call it. A hook already there is kept as `NAME.local` and run after.
 - `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, as many at a time as the machine has cores, at most 10
   (`LEMMAX_TEST_JOBS` sets it); a test that times itself runs alone after.
+  Each test adds a line to `lemmax/test-times.log`, which git ignores:
+  `PASS ert/lemmax-math-states 2026-11-25 14:32:05 14:32:07 2.1 s`, local
+  times; a full run then adds a `RUN run_tests` line with its own.
   A test runs lemmax in its own Emacs (`rt-run`); a few run the real launcher
   (`rt-run-proc`) for the CLI wrapper and the hooks.
 - A run sets `org-modules` to nil: Org's link modules took half a run to load.

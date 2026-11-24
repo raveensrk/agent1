@@ -525,10 +525,14 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
 
 ;;;; RT-12
 
+(defvar rt-runner-log nil "The test-times log the last `rt-runner' wrote.")
 (defun rt-runner (tests-text &rest args)
-  (let ((f (expand-file-name "tests.el" (rt-tmp))))
+  "Run run_tests on TESTS-TEXT with ARGS; its times log goes to a file of its
+own, `rt-runner-log', never to lemmax/test-times.log."
+  (let* ((dir (rt-tmp)) (f (expand-file-name "tests.el" dir)))
+    (setq rt-runner-log (expand-file-name "test-times.log" dir))
     (with-temp-file f (insert tests-text))
-    (rt-env (list (concat "LEMMAX_TESTS_FILE=" f) "LEMMAX_TEST_TIMEOUT=2")
+    (rt-env (list (concat "LEMMAX_TESTS_FILE=" f) "LEMMAX_TEST_TIMEOUT=2" (concat "LEMMAX_TEST_LOG=" rt-runner-log))
       (apply #'rt-sh rt-dir (expand-file-name "run_tests" rt-dir) args))))
 
 (defconst rt-small-tests
@@ -3563,3 +3567,26 @@ which holds the tests and code, read by theory.org with REQS."
                                   (list (rt-nproof "PR-1" "RQ-1"))))))
     (should (string-match-p "^\\+- State \"LEMMA\" +from \"THEOREM\" +\\[[0-9-]+ [A-Z][a-z][a-z] [0-9][0-9]:[0-9][0-9]\\]$"
                             (nth 1 (rt-run d "migrate" "--theorem" "RQ-2"))))))
+
+;;;; 01a20f83-6f84-71f0-93ea-566e27f59148: every test logs its start, end and run time
+
+;; lemma: 01a20f83-6f84-71f0-93ea-566e27f59148
+(ert-deftest lemmax-runner-times-log ()
+  :tags '(timeout-60)
+  ;; One line per test, then one for the run; the screen output is as before.
+  (let* ((r (rt-runner rt-small-tests))
+         (log (with-temp-buffer (insert-file-contents rt-runner-log) (buffer-string)))
+         (lines (split-string log "\n" t))
+         (re "\\`\\(PASS\\|FAIL\\|TIMEOUT\\|RUN\\) \\(\\S-+\\) [0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9] \\([0-9][0-9]:[0-9][0-9]:[0-9][0-9]\\) \\([0-9][0-9]:[0-9][0-9]:[0-9][0-9]\\) [0-9]+\\.[0-9] s\\'"))
+    (should (= 4 (length lines)))
+    (dolist (l lines) (should (string-match-p re l)))
+    (should (cl-some (lambda (l) (string-prefix-p "PASS ert/x-pass " l)) lines))
+    (should (cl-some (lambda (l) (string-prefix-p "FAIL ert/x-fail " l)) lines))
+    (should (cl-some (lambda (l) (string-prefix-p "TIMEOUT ert/x-sleep " l)) lines))
+    (should (string-prefix-p "RUN run_tests " (car (last lines))))
+    (should-not (string-match-p "[0-9] s$" (nth 1 r)))
+    (should (string-match-p "^lemmax tests: 1 of 3 passed$" (nth 1 r))))
+  ;; --only adds its line too.
+  (rt-runner rt-small-tests "--only" "ert/x-pass")
+  (should (string-match-p "\\`PASS ert/x-pass .* [0-9.]+ s\n\\'"
+                          (with-temp-buffer (insert-file-contents rt-runner-log) (buffer-string)))))

@@ -1147,3 +1147,11 @@ A PROOF proves a LEMMA with no :LAST_EDITED:; a DRAFT one is refused; a FALLACY 
 - State "PROOF"      from "DRAFT"      [2026-11-25 Wed 03:10]
 :END:
 lmx reads a log line's date and time, and a date-only line as having none; a new date-only log line in a staged change is refused, a timed one and the old date-only lines pass, and one moved by migrate from a day HEAD held passes; migrate --theorem writes its state change with the time.
+
+* DRAFT Every test logs its start, end and run time
+:PROPERTIES:
+:ID:          01a20f92-eb10-746b-97db-206a4a05edb8
+:PROVES:      01a20f83-6f84-71f0-93ea-566e27f59148
+:TEST:        ert/lemmax-runner-times-log
+:END:
+run_tests over a passing, a failing and a timed-out test writes one line each, RESULT ADDRESS DAY START END SECONDS s, then RUN run_tests with the run's own times, to the log LEMMAX_TEST_LOG names; the screen output is unchanged; --only adds its one line; the suite's own nested runs write to a file of their own, not lemmax/test-times.log, which git ignores.
