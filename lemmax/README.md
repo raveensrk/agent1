@@ -81,14 +81,14 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
   prove it. What makes a lemma hold is the owner's or judge's review of each
   conjecture and proof pair.
 
-| Term       | Meaning                                                       |
-| ---------- | ------------------------------------------------------------- |
-| Conjecture | A statement not yet proven                                    |
-| Proof      | A heading in `FILE.proofs.org` that names tests in `:TEST:`   |
-| Test       | Evidence: a failure refutes, a pass never proves              |
-| Lemma      | A conjecture whose proofs all pass and whose pair is reviewed |
-| Theorem    | A lemma built on smaller proven lemmas named in `:USES:`      |
-| Refuted    | A conjecture disproven or given up, kept with the reason      |
+| Term       | Meaning                                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Conjecture | A statement not yet proven                                                                                                            |
+| Proof      | A heading in `FILE.proofs.org` that names tests in `:TEST:`                                                                           |
+| Test       | Code that checks a conjecture. If it fails, the conjecture is wrong. If it passes, that supports the conjecture but does not prove it |
+| Lemma      | A conjecture whose proofs all pass and whose pair is reviewed                                                                         |
+| Theorem    | A lemma built on smaller proven lemmas named in `:USES:`                                                                              |
+| Refuted    | A conjecture disproven or given up, kept with the reason                                                                              |
 
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
   `lmx migrate FILE` prints the move as a diff; `--write` makes it.
