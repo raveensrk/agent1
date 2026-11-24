@@ -1807,12 +1807,13 @@ New ids are UUIDv7, so ids sort by time and hold their created day; in Emacs, Or
 - Asked by the owner on 2026-11-25
 Evidence: org-id-method's doc: uuid uses org-id-uuid-program when it is available; lmx new-id already prints a UUIDv7.
 
-** THESIS Settings sit at the top of a file, once each                 :lint:
+** LEMMA Settings sit at the top of a file, once each                 :lint:
 :PROPERTIES:
 :ID:          01a20fc1-343f-77df-b886-0048fe5c9e65
 :USES:        01a20eb5-f066-7481-9fd1-9ac7705ef6b2
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 05:04]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 04:20]
 :END:
 A file's LemmaX settings are lines at its top, each set once, so a line in a statement's text never changes them.
