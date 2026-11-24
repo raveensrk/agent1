@@ -90,14 +90,18 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 | Theorem    | A lemma built on smaller proven lemmas named in `:USES:`                                                                              |
 | Refuted    | A conjecture disproven or given up, kept with the reason                                                                              |
 
-Example. Conjecture: lint refuses a lemma when any of its proofs is `OPEN`.
-Test: a lemma with one `OPEN` proof; lint refuses it. The test passes. Now say
-lint reads only a lemma's first proof. A lemma with a `PASSED` proof then an
-`OPEN` one gets through: the conjecture is false, yet the test still passes,
-because it never tried two proofs. A failing test shows a real case where the
-conjecture breaks; a passing one shows only that the cases tried held. Review
-asks whether the tests cover the cases that matter: no proofs, two proofs, one
-`PASSED` and one `OPEN`.
+Example. The conjecture under test is a claim about lint: *lint refuses any
+lemma that has an `OPEN` proof.* Its test feeds lint a sample file with one
+lemma and one `OPEN` proof, and lint refuses it. The test passes.
+
+Now suppose lint has a bug: it reads only the first proof of each lemma. Give it
+a sample lemma whose first proof is `PASSED` and whose second is `OPEN`, and
+lint lets it through. The claim about lint is false, yet the test still passes,
+because the test never tried a lemma with two proofs.
+
+A failing test shows a real case where the claim breaks. A passing test shows
+only that the cases tried held. Review asks whether the tests cover the cases
+that matter: no proofs, two proofs, one `PASSED` and one `OPEN`.
 
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
   `lmx migrate FILE` prints the move as a diff; `--write` makes it.
