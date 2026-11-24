@@ -1726,3 +1726,14 @@ Every statement is a heading in a theory file; lmx has no lemma files.
 - Org has no TODO state for a whole file: a state lives on a heading line, and TODO is a special property a drawer may not hold
 - Asked by the owner on 2026-11-25
 Evidence: Org manual, "Property Syntax" and "Special Properties"; no tracked .org file in ~/repos holds :STATE:.
+
+** CONJECTURE A log line has a date and a time                          :lint:
+:PROPERTIES:
+:ID:          01a20f32-ef80-7183-a12f-26c80b01e6f1
+:END:
+Every state change in a :LOGBOOK: carries the date and the time, as Org writes it: - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 14:32]
+- lint refuses a new log line with no time
+- An old log line with only a date stays as it is
+- lmx reads the date and the time
+- Asked by the owner on 2026-11-25
+Evidence: Org writes the time by default when a state changes (org-log-note-headings, state: %t); lemmax--log-re already reads a line with or without a time.
