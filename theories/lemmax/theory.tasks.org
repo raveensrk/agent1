@@ -120,13 +120,14 @@ Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instea
 New ids come from org-id-new with org-id-method, not lmx's own UUID v7 code. Check that org-id's ts or uuid method keeps ids sortable by time, as v7 does, or say why it falls short.
 - Done on 2026-11-25 in 51d3494: org-id's uuid method calls lmx new-id through org-id-uuid-program; ts and v4 uuid were ruled out, the owner chose no Python.
 
-* TODO Links use an Org add-on where one fits
+* DONE Links use an Org add-on where one fits
 :PROPERTIES:
 :ID:          01a2091c-9725-71a4-a36c-d9597a10e24b
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-25
 :END:
 Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edna and org-roam, and switch each one an add-on already models.
+- Done on 2026-11-25: checked against the org, org-roam, org-edna and org-depend manuals. None models :USES:, :PROVES:, :FOR:, :ABOUT: or :FOLLOWS:; :BLOCKER: dropped; :REFS: became :ROAM_REFS:; :ROAM_ALIASES: holds names, so :ALIASES: stays. README names org-roam-db-extra-links-elements.
 
 * DONE lmx runs as Emacs commands
 :PROPERTIES:

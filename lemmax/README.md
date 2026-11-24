@@ -218,6 +218,14 @@ Four kinds need no proof:
 `:USES:`, `:PROVES:`, `:FOR:`, `:ABOUT:` and `:FOLLOWS:` take bare ids and
 `[[id:X][label]]` links, mixed. `lmx migrate --links` writes links.
 
+Org does not read links inside a property drawer as links, but org-roam can.
+To see `:USES:` and the other link properties as org-roam backlinks, add
+property drawer entries to the elements it parses:
+
+```elisp
+(add-to-list 'org-roam-db-extra-links-elements 'node-property)
+```
+
 ## ORDERED and BLOCKER
 
 <!-- lemma: 01a203a6-a716-738e-a95b-18086050d5eb -->
