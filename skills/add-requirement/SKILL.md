@@ -57,7 +57,9 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 Draft as an org heading, CONJECTURE (old files: OPEN), with:
 
 - `:ID:` - new, never reused: a UUID v7 from `lmx new-id`; a project whose old ids still count up may use `lmx next-id <LETTER>`.
-- `:CREATED:`, `:LAST_EDITED:` - today, `YYYY-MM-DD`.
+- No date properties: the id gives the created day, git the last-edited day,
+  and Org's `:LOGBOOK:` the accepted and proven days (old files: `:CREATED:`,
+  `:LAST_EDITED:` - today, `YYYY-MM-DD`).
 - `:USES:` (old files: `:NEEDS:`) if it builds on another.
 - Its proof: a heading in `FILE.proofs.org`, OPEN, with a new `:ID:`,
   `:PROVES:` the conjecture's id and `:TEST:` the named check (old files:
@@ -72,6 +74,8 @@ Show the draft. Wait for a clear yes.
 
 ## 8. Write
 
-- On yes: add `:APPROVED:` with today's date, write it into the file, commit as `docs(requirements): add <ID> <summary>`.
+- On yes: make it `THESIS` with Org (`C-c C-t h`, or write the log line
+  `- State "THESIS"     from "CONJECTURE" [YYYY-MM-DD Day]` in `:LOGBOOK:`;
+  old files: add `:APPROVED:` with today's date), write it into the file, commit as `docs(requirements): add <ID> <summary>`.
 - On no or edits: revise and show again.
 - Write no code. Building is a separate step.
