@@ -5,6 +5,9 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- The git history walk reads a mended link, from a file now gone to any file,
+  as no text change, as `lint --staged` does: no false "text changed after it
+  was accepted" or suspect.
 - A setting sits at the top of its file, once: lint refuses a `LEMMAX_`
   setting below the first heading, which is no longer read, and one set twice;
   a line in a `#+begin_` block is text.

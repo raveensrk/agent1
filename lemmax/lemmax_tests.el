@@ -3638,3 +3638,25 @@ which holds the tests and code, read by theory.org with REQS."
     (rt-set d "setup.org" "#+PROPERTY: LEMMAX_TESTS ./tests.sh\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n")
     (rt-git d "add" "-A")
     (rt-should-find (rt-run d "lint" "--no-tests") "setup\\.org:2: -: LEMMAX_TESTS is set twice")))
+
+;;;; 01a20c8e-872d-75b3-97fe-22718d4b809b: a mended link is no change in the history walk
+
+;; lemma: 01a20c8e-872d-75b3-97fe-22718d4b809b
+(ert-deftest lemmax-history-mended-link ()
+  :tags '(timeout-60)
+  ;; A THESIS accepted on D0; a later commit mends a link to a file now gone:
+  ;; no text change. A real word change after it still is.
+  (let ((d (rt-repo (append (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                           :body "See [[file:old/gone.org::*X][X]].\n"))
+                                          nil)
+                            (list (cons "old/gone.org" "* X\n") (cons "new.org" "* X\n")))
+                    "2026-01-05")))
+    (rt-git d "rm" "-q" (rt-p "old/gone.org"))
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                          :body "See [[file:new.org::*X][X]].\n")))
+    (rt-commit d "mend the link" "2026-01-09")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                          :body "See [[file:new.org::*X][X]] again.\n")))
+    (rt-commit d "edit" "2026-01-10")
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: a THESIS whose text changed 2026-01-10, after it was accepted 2026-01-05")))

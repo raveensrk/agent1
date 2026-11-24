@@ -1950,7 +1950,17 @@ USES, a hash, gets the last day each id's :USES: changed, not its text."
              (none (make-hash-table :test #'equal))
              ;; Links are read as the repo files they name, so a move that
              ;; rewrites them to the same file is no text change.
-             (norm (lambda (text path) (lemmax--link-norm text path none))))
+             (norm (lambda (text path) (lemmax--link-norm text path none)))
+             ;; lemma: 01a20c8e-872d-75b3-97fe-22718d4b809b
+             ;; As lint --staged reads them: a link to a file now gone may be
+             ;; mended to name any file, and that is no text change.
+             (prev-broken (make-hash-table :test #'equal))
+             (same (lambda (id text)
+                     (or (equal (gethash id prev) text)
+                         (let ((b (gethash id prev-broken))) (and b (lemmax--same-text-p b text))))))
+             (remember (lambda (id raw path)
+                         (puthash id (funcall norm raw path) prev)
+                         (puthash id (lemmax--link-norm raw path none t) prev-broken))))
         (cl-loop for (_rev day path) in revs
                  for blob in blobs
                  when (and blob (not (gethash (cons (car blob) path) seen)))
@@ -1967,13 +1977,14 @@ USES, a hash, gets the last day each id's :USES: changed, not its text."
                         (when (and first (let ((d (gethash (car pair) first))) (or (null d) (string< day d))))
                           (puthash (car pair) day first))
                         (unless (equal (gethash (car pair) prev) text)
-                          (puthash (car pair) day changed)
-                          (puthash (car pair) text prev)))))
+                          (unless (funcall same (car pair) text)
+                            (puthash (car pair) day changed))
+                          (funcall remember (car pair) (nth 1 pair) path)))))
         ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
         (when current
           (dolist (r (plist-get info :statements))
             (let ((id (plist-get r :id)))
-              (when (and id (not (equal (gethash id prev) (funcall norm (plist-get r :text) file))))
+              (when (and id (not (funcall same id (funcall norm (plist-get r :text) file))))
                 (puthash id today changed))
               (when (and id first (not (gethash id first)))
                 (puthash id today first)))))))
