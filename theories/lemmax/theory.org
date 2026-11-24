@@ -1538,3 +1538,26 @@ lemmax bible writes one self-contained HTML file from which a project can be reb
 - Each built bible adds a task: hand only that file to a fresh agent; it writes a rebuild plan and answers 10 to 15 questions written from the code; up to 3 rounds; every guess or gap becomes a conjecture
 - Asked by the owner on 2026-11-23
 Evidence: Org tag groups declare a tag hierarchy; org-babel runs dot blocks (ob-dot, in Org), and ob-mermaid and ob-d2 add-ons run the others; the book's export filter packs images; https://d2lang.com/tour/tala/ for TALA; https://mermaid.js.org/config/schema-docs/config.html for htmlLabels.
+
+** CONJECTURE lemmax manual writes the user manual of a finished project   :cli:
+:PROPERTIES:
+:ID:          01a20d04-c038-7534-9920-23ec7679dadc
+:USES:        01a20959-95da-760e-82dc-2797c5af6abc
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:APPROVED:    2026-11-24
+:END:
+lemmax manual writes a project's user manual, beside its bible, as one self-contained HTML page in the GNU manual format.
+- Its reader is a person who uses the app: how to install, run and use it; the bible stays the builder's document
+- The format follows GNU manuals (https://www.gnu.org/manual/manual.html): a title page with the project, version and date, a table of contents, numbered chapters and sections, 1, 1.1, 1.1.1
+- Chapters, in GNU order: Overview, the hand-written chapters, Invoking, Copying, Index
+- A statement goes in when it carries the :manual: tag; each lands in the chapter its other tags name
+- Invoking has a section per command and flag, from the statements tagged :cli:
+- Copying holds the repo's LICENSE file as written; with no LICENSE file the chapter is left out
+- Index lists each term of the definitions file and each command and flag, linked to where it is explained
+- Hand-written chapters live in theories/PROJECT/PROJECT.manual.org: tutorials, examples and walk-throughs; a rule of behaviour there is a finding, to be made a statement
+- It refuses to build until the project is finished, as the bible does, and names what is open
+- It refuses to build when no statement carries :manual:, and when a hand-written chapter states a rule
+- The page goes to theories/_site/PROJECT.manual.html, packed like the book: images inline, no outside file
+- Asked by the owner on 2026-11-24
+Evidence: the owner named the GNU manuals page as the model, where GNU offers each manual as one HTML page among its formats; the book's export filter already packs a page into one file; the bible statement already sets the finished-project gate and the hand-written rule finding.
