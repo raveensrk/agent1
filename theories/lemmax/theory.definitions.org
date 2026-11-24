@@ -2,7 +2,7 @@
 #+SETUPFILE: setup.org
 #+TODO: | DEFINITION
 
-The terms Lemmax uses, each accepted without proof. A statement may =:USES:= one.
+The terms LemmaX uses, each accepted without proof. A statement may =:USES:= one.
 
 * DEFINITION Statement
 :PROPERTIES:

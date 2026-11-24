@@ -7,9 +7,9 @@
 :ID:          01a20533-bd44-7bc9-b9bd-7c654360da9a
 :FOR:         01a202b0-1d09-75f3-99dc-677a4b2ec0be
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
-The test fails on main, before and after the plan, coverage and environment work: its first =lint --staged= reports a finding where it expects none. Find the finding and fix lemmax or the test.
+The test fails on main, before and after the plan, coverage and environment work: its first =lint --staged= reports a finding where it expects none. Find the finding and fix lmx or the test.
 - Done on 2026-11-23 in b7658d8: lemmax--candidate-re used \b, which git grep -E on macOS does not know.
 
 * DONE Run the full test suite over plan, coverage and environment
@@ -22,23 +22,23 @@ The test fails on main, before and after the plan, coverage and environment work
 Only the related tests ran when they were built. Run =lemmax/run_tests= once and fix what fails.
 - Done on 2026-11-23: lemmax/run_tests passed 192 of 192, twice.
 
-* TODO Find the oldest tool versions lemmax works with
+* TODO Find the oldest tool versions lmx works with
 :PROPERTIES:
 :ID:          01a20533-c0f2-7bf6-8090-e843103c7faa
 :FOR:         01a204fc-dec1-7ac6-8408-c3a69aedfebd
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 =theory.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
 
-* TODO Rebuild lemmax from its statements alone
+* TODO Rebuild lmx from its statements alone
 :PROPERTIES:
 :ID:          01a205a5-79e6-72b6-88e6-113ea1cc9f1e
 :FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
-A fresh agent, given only =lemmax plan=, the statements, proofs and axioms, rebuilds lemmax in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
+A fresh agent, given only =lmx plan=, the statements, proofs and axioms, rebuilds lmx in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
 
 * TODO Say that a passing test is evidence, not proof
 :PROPERTIES:
@@ -54,21 +54,21 @@ Tests can refute a conjecture but never prove it. Say so in the README and the m
 :ID:          01a205a5-79ea-7217-a6b3-12e41ea07d43
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
-For the next five small edits, note the steps Lemmax asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
+For the next five small edits, note the steps LemmaX asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
 
 * DONE Check the review's conjectures and tasks before approval
 :PROPERTIES:
 :ID:          01a205a7-f8ef-7b54-8b1b-4e602877f925
 :FOR:         01a205a5-79df-745d-bb66-69f6cae232c6 01a205a5-79e2-7959-9296-5e465af6acc7 01a205a5-79e4-7b10-a3ec-9a86ac4d58f9
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 They were written in a session with no Emacs, so nothing checked them.
-- Run =lemmax lint= on =theory.org= and =theory.tasks.org= and fix what it finds
+- Run =lmx lint= on =theory.org= and =theory.tasks.org= and fix what it finds
 - Check the evidence of "An unrun proof is not a counterexample" against =lemmax.el=: that proof states come from the =#+TODO:= line of =theory.proofs.org=; correct it if not
-- Their ids were made by a script, not =lemmax new-id=; check each is a valid UUID v7
+- Their ids were made by a script, not =lmx new-id=; check each is a valid UUID v7
 - Done on 2026-11-23: lint passes; all 7 ids are valid UUID v7; the evidence of "An unrun proof is not a counterexample" is corrected: states are also listed in lemmax.el.
 
 * DONE Speak in maths terms only, and define them in definitions.org
@@ -76,14 +76,14 @@ They were written in a session with no Emacs, so nothing checked them.
 :ID:          01a205ad-8750-7196-94e6-9efa11ec9c2a
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
-Lemmax says "requirement" about 160 times; it speaks in maths terms instead.
+lmx says "requirement" about 160 times; it speaks in maths terms instead.
 - Scope is everything in =lemmax/=: =theory*.org=, README, every message, help text and docstring in =lemmax.el=, and internal names such as =lemmax--all-reqs=; golden output is updated
 - The word for any item whatever its state (CONJECTURE, LEMMA, THEOREM, REFUTED) is "statement": "each statement has an :ID:", "names no statement id"
-- History stays as written: CHANGELOG entries, "Why: on ..." lines, the note on lemmax's old name; a new CHANGELOG entry records the rename
-- New =lemmax/definitions.org= lists each term and its definition; the Mathematics/Lemmax table in agent1 =requirements/requirements.org= moves there and requirements.org links to it
-- lemmax still reads files named =requirements.org= beside =theory.org=
+- History stays as written: CHANGELOG entries, "Why: on ..." lines, the note on lmx's old name; a new CHANGELOG entry records the rename
+- New =lemmax/definitions.org= lists each term and its definition; the Mathematics/LemmaX table in agent1 =requirements/requirements.org= moves there and requirements.org links to it
+- lmx still reads files named =requirements.org= beside =theory.org=
 - Only =lemmax/= changes now; agent1's =requirements/requirements.org=, the add-requirement skill and the rules keep their words
 - In =definitions.org= each term is a =DEFINITION= heading with an =:ID:=, like an =AXIOM=: never proven, a statement may =:USES:= it, and lint checks the file
 - Done on 2026-11-23: d723e92 definitions.org and DEFINITION headings; cb02b33 messages, help and code names; 8f62157 and d30f2ca theory wording, 25 statements proven again.
@@ -111,18 +111,18 @@ The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= an
 :ID:          01a2091c-9360-799a-af76-b8d22a2d1357
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
-Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instead of Lemmax's own config file. Pick the one that keeps settings data, never run.
+Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instead of lmx's own config file. Pick the one that keeps settings data, never run.
 
 * TODO Ids come from org-id
 :PROPERTIES:
 :ID:          01a2091c-9546-7745-9a9b-4a17dc28b44a
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
-New ids come from org-id-new with org-id-method, not Lemmax's own UUID v7 code. Check that org-id's ts or uuid method keeps ids sortable by time, as v7 does, or say why it falls short.
+New ids come from org-id-new with org-id-method, not lmx's own UUID v7 code. Check that org-id's ts or uuid method keeps ids sortable by time, as v7 does, or say why it falls short.
 
 * TODO Links use an Org add-on where one fits
 :PROPERTIES:
@@ -133,12 +133,12 @@ New ids come from org-id-new with org-id-method, not Lemmax's own UUID v7 code. 
 :END:
 Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edna and org-roam, and switch each one an add-on already models.
 
-* TODO Lemmax runs as Emacs commands
+* TODO lmx runs as Emacs commands
 :PROPERTIES:
 :ID:          01a2091c-9905-7837-940b-116fa8148f3d
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other commands, giving the same results as the terminal command, in a compilation-style buffer.
 
@@ -159,7 +159,7 @@ A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test comman
 :LAST_EDITED: 2026-11-24
 :END:
 Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements/*.org to theories/agent1/, and skills/ishikari/requirements.org to theories/ishikari/; each gets a setup.org in place of lemmax/config.eld. Hooks, skills and links follow.
-- Done on 2026-11-24: 22 files moved; theories/lemmax/setup.org holds lemmax's settings; agent1 and ishikari files had none, so they have no setup.org yet.
+- Done on 2026-11-24: 22 files moved; theories/lemmax/setup.org holds lmx's settings; agent1 and ishikari files had none, so they have no setup.org yet.
 
 * TODO Move Arcadia's theory into arcadia/theories/
 :PROPERTIES:
@@ -197,11 +197,11 @@ Statements say what, not how: move names of lemmax.el, its functions and line nu
 :END:
 Declare the chapter tag group in setup.org and tag each statement with one chapter: map today's feature tags, :cli: to interfaces, :lint: and :trace: to behavior, and so on.
 
-* TODO Ishikari's docs ant runs lemmax book
+* TODO Ishikari's docs ant runs lmx book
 :PROPERTIES:
 :ID:          01a20a16-794e-738a-8fb6-1a07dda88e1c
 :FOR:         01a20927-9aac-7817-8e46-8635aa0ae127
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
-After a merge the docs ant runs lemmax book, not the docs skill: skills/ishikari/SKILL.md, its scripts and its tests.
+After a merge the docs ant runs lmx book, not the docs skill: skills/ishikari/SKILL.md, its scripts and its tests.

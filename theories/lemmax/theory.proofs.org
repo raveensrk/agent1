@@ -2,13 +2,13 @@
 #+SETUPFILE: setup.org
 #+TODO: OPEN(o) | PASSED(p)
 
-* PASSED Proof: lemmax lints and traces org theories
+* PASSED Proof: lmx lints and traces org theories
 :PROPERTIES:
 :ID:          01a20389-b15c-755e-930b-a202685d095f
 :PROVES:      RT-1
 :TEST:        ert/lemmax-end-to-end
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -102,23 +102,23 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: agent1's global hooks call lemmax
+* PASSED Proof: agent1's global hooks call lmx
 :PROPERTIES:
 :ID:          01a20389-b16c-7b4c-a184-c2aaca7166c7
 :PROVES:      RT-11
 :TEST:        ert/lemmax-global-commit-msg ert/lemmax-global-pre-commit ert/lemmax-global-plain-repo-fast
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax's own tests
+* PASSED Proof: lmx's own tests
 :PROPERTIES:
 :ID:          01a20389-b16d-7bff-868d-0b8bffcc8aa7
 :PROVES:      RT-12
 :TEST:        ert/lemmax-runner-addresses ert/lemmax-runner-only ert/lemmax-runner-timeout
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -142,13 +142,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: /add-requirement uses lemmax
+* PASSED Proof: /add-requirement uses lmx
 :PROPERTIES:
 :ID:          01a20389-b172-70b8-bb70-61409f798ba5
 :PROVES:      RT-15
 :TEST:        ert/lemmax-skill-uses-lemmax
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -192,13 +192,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax knows UUID v7 ids
+* PASSED Proof: lmx knows UUID v7 ids
 :PROPERTIES:
 :ID:          01a20389-b179-7307-93c8-2cb7bfe44506
 :PROVES:      01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
 :TEST:        ert/lemmax-lint-id-uuid7 ert/lemmax-new-id
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -462,13 +462,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: FILE arguments are paths from where lemmax runs
+* PASSED Proof: FILE arguments are paths from where lmx runs
 :PROPERTIES:
 :ID:          01a20389-b1a0-7629-81d4-7c90353c6154
 :PROVES:      01a20336-c583-720a-b661-c9b5a5dec1a4
 :TEST:        ert/lemmax-file-arg-from-cwd ert/lemmax-file-arg-unknown
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -482,13 +482,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax install-hooks puts lemmax in a repo's hooks
+* PASSED Proof: lmx install-hooks puts lmx in a repo's hooks
 :PROPERTIES:
 :ID:          01a20389-b1a3-771d-8a69-368c6d24cf5a
 :PROVES:      01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
 :TEST:        ert/lemmax-install-hooks ert/lemmax-install-hooks-chains ert/lemmax-install-hooks-again
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -502,13 +502,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax says its version; MIT licence; a changelog
+* PASSED Proof: lmx says its version; MIT licence; a changelog
 :PROPERTIES:
 :ID:          01a20389-b1a6-7355-a926-2dbef4793099
 :PROVES:      01a20336-c80d-733a-a251-ad26a0ebf7d3
 :TEST:        ert/lemmax-version ert/lemmax-licence-and-changelog
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -552,13 +552,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: Where lemmax runs is said
+* PASSED Proof: Where lmx runs is said
 :PROPERTIES:
 :ID:          01a20389-b1ad-7999-9a67-801f57f129ac
 :PROVES:      01a20336-cb25-779d-9e80-e04a22bd235d
 :TEST:        ert/lemmax-readme-platforms
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -602,13 +602,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax migrate moves a file to the math names
+* PASSED Proof: lmx migrate moves a file to the math names
 :PROPERTIES:
 :ID:          01a20389-b1b4-78d1-b741-0a10c1ca9675
 :PROVES:      01a20369-391b-768e-8c98-180facc0ff77
 :TEST:        ert/lemmax-migrate-dry-run ert/lemmax-migrate-write
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -692,13 +692,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: ORDERED and BLOCKER agree with lemmax
+* PASSED Proof: ORDERED and BLOCKER agree with lmx
 :PROPERTIES:
 :ID:          01a203b2-01c9-7100-868f-41e1b524becb
 :PROVES:      01a203a6-a716-738e-a95b-18086050d5eb
 :TEST:        ert/lemmax-ordered-blocker
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -712,23 +712,23 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax archive moves finished headings
+* PASSED Proof: lmx archive moves finished headings
 :PROPERTIES:
 :ID:          01a203b3-82df-738f-94db-797343467999
 :PROVES:      01a203a6-a73d-7772-a4cb-fc4917fefd50
 :TEST:        ert/lemmax-archive
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax publish writes HTML
+* PASSED Proof: lmx publish writes HTML
 :PROPERTIES:
 :ID:          01a203b5-97fc-75bd-b18f-c5d4a16b589a
 :PROVES:      01a203a6-a752-75ed-8359-a8147e95a33d
 :TEST:        ert/lemmax-publish
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -752,23 +752,23 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: A lemmax run loads only the Org it needs
+* PASSED Proof: An lmx run loads only the Org it needs
 :PROPERTIES:
 :ID:          01a203c1-c398-74b3-9ac0-ff71b00ec816
 :PROVES:      01a203c1-983f-77e1-a367-92ea000ab72f
 :TEST:        ert/lemmax-golden-trace ert/lemmax-golden-list ert/lemmax-run-time
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: Tests run lemmax in their own Emacs
+* PASSED Proof: Tests run lmx in their own Emacs
 :PROPERTIES:
 :ID:          01a203c1-c3ae-7763-99e6-0ba7c87657bd
 :PROVES:      01a203c1-983f-77e1-a367-92eb7cba2954
 :TEST:        ert/lemmax-in-process ert/lemmax-cli-short-help
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -782,13 +782,13 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: lemmax plan lists the rebuild
+* PASSED Proof: lmx plan lists the rebuild
 :PROPERTIES:
 :ID:          01a204fc-d8f9-7047-b832-7401fee4a3fc
 :PROVES:      01a204fc-d718-7e50-95a3-4ca72898a15b
 :TEST:        ert/lemmax-plan-order ert/lemmax-plan-ties ert/lemmax-plan-cycle ert/lemmax-plan-json
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
@@ -894,17 +894,17 @@ A PASSED proof whose linked file changes is refused until OPEN.
 :END:
 publish copies the files; the HTML holds an img for a PNG and an SVG, a video tag for a video block, and a link for a PDF; a bare video link is refused.
 
-* OPEN Proof: Lemmax is an extension of Org mode
+* OPEN Proof: LemmaX is an extension of Org mode
 :PROPERTIES:
 :ID:          01a2091c-4dcb-72c1-9537-b4b520bb283b
 :PROVES:      01a2091c-4bcc-7ddb-9796-619468dd401c
 :TEST:        ert/lemmax-org-extension
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
-Every M-x lemmax command gives the terminal command's output; dates are read from LOGBOOK and CLOSED:; each add-on in the README loads; no task to switch an invented part is left open.
+Every M-x lmx command gives the terminal command's output; dates are read from LOGBOOK and CLOSED:; each add-on in the README loads; no task to switch an invented part is left open.
 
-* PASSED Proof: lemmax book writes the theory as one HTML file
+* PASSED Proof: lmx book writes the theory as one HTML file
 :PROPERTIES:
 :ID:          01a20927-9cb9-73d0-b70b-84df5088a8a5
 :PROVES:      01a20927-9aac-7817-8e46-8635aa0ae127
@@ -924,13 +924,13 @@ A repo with two theories and a PNG gives one book file: definitions before lemma
 :END:
 A repo with theories/a/ and theories/b/ lints clean; a theory file outside theories/ is refused; publish writes pages and a book per project under theories/_site/, and book --all one for the repo; git tracks nothing under _site/.
 
-* OPEN Proof: lemmax bible writes the design document of a finished project
+* OPEN Proof: lmx bible writes the design document of a finished project
 :PROPERTIES:
 :ID:          01a20959-97ba-7bb9-87c1-008eab2d0d3a
 :PROVES:      01a20959-95da-760e-82dc-2797c5af6abc
 :TEST:        ert/lemmax-bible-finished-only
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 A finished repo gives one bible file with chapters by tag, a glossary from definitions and a packed dot diagram; an open conjecture, an untagged statement or a rule in the hand-written chapters refuses it; no Evidence line or source path reaches the page.
 

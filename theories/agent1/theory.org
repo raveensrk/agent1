@@ -3,16 +3,16 @@
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 
 * Goal
-Any project that follows Lemmax can be rebuilt from scratch, from its requirements alone.
+Any project that follows LemmaX can be rebuilt from scratch, from its requirements alone.
 - A builder reads only the requirements, their proofs and the axioms; app code and test code are both rebuilt from them.
-- Lemmax lists the rebuild in order: one lemma at a time, each after the lemmas and axioms it =:USES:=, each with its proofs and tests. Lemmas with no order between them go higher priority first, then older first, so the list is the same every time.
+- LemmaX lists the rebuild in order: one lemma at a time, each after the lemmas and axioms it =:USES:=, each with its proofs and tests. Lemmas with no order between them go higher priority first, then older first, so the list is the same every time.
 - The list is the rebuild instructions. Each step is clear: a fresh agent can build it from its text without asking a question.
 - Look is stated in conjectures like any other behaviour; a proven conjecture reproduces it.
 - A lemma holds only when both its conjecture and its proof are correct: the conjecture says one clear, testable thing, and the proof's tests check exactly that. The owner or a judge reviews each pair.
 - The environment is captured: toolchain versions, data, setup steps; secrets are named, never stored.
-- All code in a Lemmax project is covered by Lemmax. Each implementation starts with a comment naming its id, and the code below it is that implementation: one comment per conjecture's implementation, one per proof's tests.
-- =lemmax lint= shows the project is complete: every requirement has a PASSED proof, every piece of code sits under an id comment, and nothing a rebuild needs is left unsaid.
-- Anything a rebuild needs but the files do not say is a gap, and closing it is a requirement on Lemmax.
+- All code in a LemmaX project is covered by LemmaX. Each implementation starts with a comment naming its id, and the code below it is that implementation: one comment per conjecture's implementation, one per proof's tests.
+- =lmx lint= shows the project is complete: every requirement has a PASSED proof, every piece of code sits under an id comment, and nothing a rebuild needs is left unsaid.
+- Anything a rebuild needs but the files do not say is a gap, and closing it is a requirement on LemmaX.
 
 * Each Requirement must be an org mode heading
 * A requirement file can be 1 file or multiple files
@@ -31,9 +31,9 @@ Properties are optional for a small design. For larger design the following fiel
 ** =:TEST:= - on a proof: the checks that run (old files: =:VERIFY:= on the conjecture)
 ** =:REVIEWED:= - date the owner last read a proven theorem against a lemma it uses that changed
 * The one format
-A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lemmax lint= then refuses anything this section does not allow.
+A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lmx lint= then refuses anything this section does not allow.
 - A requirement is a conjecture: a heading with a state, =** CONJECTURE [#A] Title  :tag:=; the heading text carries no id.
-- Its states are =CONJECTURE | LEMMA THEOREM REFUTED=. Old files keep =OPEN | DONE DROPPED= until =lemmax migrate= moves them.
+- Its states are =CONJECTURE | LEMMA THEOREM REFUTED=. Old files keep =OPEN | DONE DROPPED= until =lmx migrate= moves them.
 - A proof is a heading in =FILE.proofs.org=, beside the conjectures, never a child of one; its states are =OPEN | PASSED=.
 - A proof has its own =:ID:=, =:PROVES:= with the ids of the conjectures it proves, a body saying what it shows, and =:TEST:= with its test addresses.
 - A conjecture may have many proofs; one proof may prove many conjectures.
@@ -50,7 +50,7 @@ A repo opts in by putting =#+LEMMAX_TESTS:= in its requirements file; =lemmax li
 ** A suspect theorem is read again
 A proven theorem is suspect when a lemma it uses changed its text after the theorem's =:PROVEN:= or =:REVIEWED:= date, whichever is later.
 - The owner reads the theorem against the changed lemma, then sets =:REVIEWED:= to that day, or makes it CONJECTURE when it no longer holds.
-- =lemmax trace= lists every suspect child.
+- =lmx trace= lists every suspect child.
 * Verification requirement item
 This will be child of a design requirement item explaining how it is verified
 * Design requirement item
@@ -66,8 +66,8 @@ Tags: As needed
 * Process
 Every change to what the app does is a requirement first; the code follows it, and the docs follow the code.
 =Conjecture -> approved -> built -> proofs PASSED -> docs -> LEMMA=; an issue found while building goes back to approval.
-** The workflow is called Lemmax
-agent1's requirement workflow has a name: Lemmax, from "lemma". In mathematics a lemma is a small proven step used to build bigger results.
+** The workflow is called LemmaX
+agent1's requirement workflow has a name: LemmaX, from "lemma". In mathematics a lemma is a small proven step used to build bigger results.
 =Conjecture -> approved -> built -> proofs PASSED -> docs -> LEMMA=, every step traced by id.
 Conjecture + proof = lemma. The names are the files' own words, not only an explanation.
 Each term, from Axiom to Q.E.D., is a =DEFINITION= heading in [[file:../lemmax/theory.definitions.org][lemmax/theory.definitions.org]].
@@ -75,9 +75,9 @@ Each term, from Axiom to Q.E.D., is a =DEFINITION= heading in [[file:../lemmax/t
 - A theorem is proven only when its own proofs pass and every lemma it uses is proven.
 - A failing proof test is a counterexample: its proof goes OPEN, and the lemma goes back to CONJECTURE until it passes; only the owner makes a conjecture REFUTED.
 - An axiom is accepted without proof: a proof never =:PROVES:= one, and a theorem may =:USES:= one.
-- A project that follows these rules "follows Lemmax".
+- A project that follows these rules "follows LemmaX".
 - Changed on 2026-11-22: the math names are the files' own words: states CONJECTURE, LEMMA, THEOREM, REFUTED; proofs in =FILE.proofs.org=; =:USES:= for =:NEEDS:=; a proof's =:TEST:= for =:VERIFY:=.
-- Named on 2026-11-21. A web search that day found no "Lemmax"; Lemax, one m, is a travel-booking software company.
+- Named on 2026-11-21. A web search that day found no "LemmaX"; Lemax, one m, is a travel-booking software company.
 ** Every change starts as a requirement
 An idea that changes what the app does, shows or stores becomes a conjecture at once; there is no other inbox.
 - Chores that change no behaviour are tasks in a =*.tasks.org= file, with =:FOR:= naming the ids they serve; thoughts with no state are notes in a =*.notes.org= file, with =:ABOUT:=.
