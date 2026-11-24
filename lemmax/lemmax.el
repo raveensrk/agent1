@@ -2494,17 +2494,20 @@ DAY, by `org-log-note-headings': State %-12s from %-12S, then [DAY WEEKDAY]."
 (defun lemmax--migrate-log (chunk)
   "CHUNK, one heading's text or a file lemma's, dated by Org's log: its
 :APPROVED: and :PROVEN: (or :IMPLEMENTED:) days become :LOGBOOK: lines,
-newest first; an approved CONJECTURE becomes a THESIS; :LAST_EDITED: goes."
+newest first; an approved CONJECTURE becomes a THESIS; :LAST_EDITED: goes.
+An edit after approval counts as accepted: the THESIS line takes the later
+of :APPROVED: and :LAST_EDITED:."
   (let* ((lines (split-string chunk "\n"))
          (state (or (and (string-match "\\`\\*+ +\\([A-Z]+\\)\\_>" chunk) (match-string 1 chunk))
                     (and (string-match "^[ \t]*:STATE:[ \t]*\\([A-Z]+\\)" chunk) (match-string 1 chunk))))
          (math (lemmax--new-state-p state))
-         (in nil) (done-drawer nil) (end-at nil) v approved proven out)
+         (in nil) (done-drawer nil) (end-at nil) v approved proven edited out)
     (dolist (l lines)
       (cond ((and (not done-drawer) (string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l)) (setq in t) (push l out))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l))
              (setq in nil done-drawer t) (push l out) (setq end-at (length out)))
-            ((and in (string-match-p "\\`[ \t]*:LAST_EDITED:" l)))
+            ((and in (string-match "\\`[ \t]*:LAST_EDITED:[ \t]*\\(.*?\\)[ \t]*\\'" l))
+             (let ((d (match-string 1 l))) (when (lemmax--day-p d) (setq edited d))))
             ((and in math (string-match "\\`[ \t]*:APPROVED:[ \t]*\\(.*?\\)[ \t]*\\'" l)
                   (lemmax--day-p (setq v (match-string 1 l))))
              (setq approved v))
@@ -2514,6 +2517,9 @@ newest first; an approved CONJECTURE becomes a THESIS; :LAST_EDITED: goes."
              (setq proven v))
             (t (push l out))))
     (setq out (nreverse out))
+    ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
+    ;; The owner chose to keep each heading's current text accepted.
+    (when (and approved edited (string< approved edited)) (setq approved edited))
     (let ((logs (append (and proven (list (lemmax--log-line state (if approved "THESIS" "CONJECTURE") proven)))
                         (and approved (list (lemmax--log-line "THESIS" "CONJECTURE" approved))))))
       (when (and logs end-at)

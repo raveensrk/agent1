@@ -2945,7 +2945,8 @@ committed on DAY, with EXTRA files."
   ;; the file reads it, here its setup file, with #+STARTUP: logdrawer.
   (let* ((head "#+title: Invented\n#+SETUPFILE: setup.org\n#+STARTUP: overview\n\n")
          (d (rt-repo (list (cons "setup.org" "#+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n")
-                           (cons "theory.org" (concat head (rt-proven (rt-lemma "RQ-1")) (rt-conj "RQ-2") (rt-conj "RQ-3" :approved nil)))
+                           (cons "theory.org" (concat head (rt-proven (rt-lemma "RQ-1")) (rt-conj "RQ-2") (rt-conj "RQ-3" :approved nil)
+                                                       (rt-conj "RQ-4" :approved "2026-01-02")))
                            (cons "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1")))
                            (cons "tests.sh" (rt-tests-sh "unit/a"))
                            (cons "src/x.clj" "(ns x)\n"))
@@ -2958,6 +2959,10 @@ committed on DAY, with EXTRA files."
     (should-not (string-match-p "^\\+:\\(?:APPROVED\\|PROVEN\\|LAST_EDITED\\):" out))
     (should (string-match-p "^\\+\\* THESIS Title of RQ-2" out))
     (should-not (string-match-p "^\\+\\* [A-Z]+ Title of RQ-3" out))
+    ;; An edit after approval counts as accepted: RQ-4, approved 01-02 and
+    ;; edited 01-05, is accepted on 01-05.
+    (should (string-match-p "^\\+\\* THESIS Title of RQ-4" out))
+    (should-not (string-match-p "^\\+.*\\[2026-01-02" out))
     (should (string-match-p "^\\+#\\+STARTUP: overview logdrawer$" out))
     (should (string-match-p "^\\+\\+\\+ theories/t/setup.org" out))
     (should (string-match-p "^\\+#\\+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)$" out))
