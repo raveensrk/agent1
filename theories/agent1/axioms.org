@@ -1,7 +1,7 @@
 #+title: Axioms
 #+STARTUP: overview logdrawer
 #+TODO: | AXIOM
-#+LEMMAX_TESTS: true
+#+PROPERTY: LEMMAX_TESTS true
 
 One axiom per agent1 rule: accepted without proof, where every project starts.
 A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.

@@ -1,4 +1,4 @@
 #+title: lemmax settings
 # Each lmx theory file reads this with #+SETUPFILE: setup.org.
-#+LEMMAX_TESTS: lemmax/run_tests --addresses
-#+LEMMAX_CODE: lemmax/ harness/checks/lemmax_lint.py
+#+PROPERTY: LEMMAX_TESTS lemmax/run_tests --addresses
+#+PROPERTY: LEMMAX_CODE lemmax/ harness/checks/lemmax_lint.py
