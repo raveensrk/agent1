@@ -5,6 +5,14 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- Proof states are `DRAFT | PROOF FALLACY MOOT`, logged by Org: a statement
+  needs a `PROOF` and no `DRAFT`, a `FALLACY` or `MOOT` aside; a refuted
+  statement's proof is `MOOT`. A failing test leaves the proof `PROOF` and
+  sends the statement back. `migrate` turns `OPEN` into `DRAFT` and `PASSED`
+  into `PROOF`, drops the `Proof:` prefix and `:LAST_EDITED:`; old states
+  still read.
+- A new log line carries the date and the time: lint refuses one without;
+  lmx reads the time, and the lines `migrate --theorem` writes carry it.
 - A theory, `theories/PROJECT/`, has one `THEOREM`: lint refuses a second,
   and a statement the theorem does not reach through `:USES:`; a `THEOREM`
   that reaches an unproven statement is refused until it is `THESIS`. A

@@ -2145,7 +2145,7 @@ run of its finding's why text."
     (funcall case d (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1" :implemented "2026-01-06"))
              "a proof with :IMPLEMENTED:")
     (funcall case d (list (rt-lemma "RQ-1")) (list (rt-proof "PR-1" "RQ-1" :state nil))
-             "a proof's state is OPEN or PASSED, not none")
+             "a proof's state is DRAFT, PROOF, FALLACY or MOOT, not none")
     ;; Only a file whose #+TODO: names PASSED reads it as a state.
     (rt-set d "theory.org" (concat (string-replace "REFUTED" "REFUTED PASSED" rt-math-head)
                                          (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "PASSED")))
@@ -2245,7 +2245,8 @@ run of its finding's why text."
     (should (string-match-p "^\\+#\\+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)" out))
     (should (string-match-p "^\\+\\+\\+ theories/t/theory.proofs.org" out))
     (should (string-match-p "^\\+:TEST: +unit/a unit/b" out))
-    (should (string-match-p "^\\+\\* OPEN Proof: Title of RQ-4" out))
+    ;; A refuted statement's proof is MOOT (01a20f57-2e78-75b9-a133-53e39e2def6a).
+    (should (string-match-p "^\\+\\* MOOT Title of RQ-4" out))
     (should-not (file-exists-p (expand-file-name (rt-p "theory.proofs.org") d)))
     (should (equal before (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.org") d)) (buffer-string))))
     (rt-set d "other.org" (concat rt-head (rt-req "RQ-8" :needs "RQ-9")))
@@ -2263,7 +2264,7 @@ run of its finding's why text."
     (let ((proofs (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.proofs.org") d)) (buffer-string))))
       ;; The settings move to #+PROPERTY: lines (01a20eb5-f066-7481-9fd1-9ac7705ef6b2).
       (should (string-match-p "^#\\+PROPERTY: LEMMAX_TESTS ./tests.sh" proofs))
-      (should (string-match-p "^\\* PASSED Proof: Title of RQ-1\n:PROPERTIES:\n:ID: +[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7" proofs))
+      (should (string-match-p "^\\* PROOF Title of RQ-1\n:PROPERTIES:\n:ID: +[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7" proofs))
       (should (string-match-p ":PROVES: +RQ-1\n" proofs))
       ;; migrate writes no :CREATED: (01a20ee1-7637-7169-820a-751b3c636847).
       (should-not (string-match-p ":CREATED:" proofs)))
@@ -2979,7 +2980,8 @@ committed on DAY, with EXTRA files."
   (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)))
                                   (list (rt-proof "PR-1" "RQ-1")))
                     "2026-01-05")))
-    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log))))
+    ;; The new line carries its time (01a20f32-ef80-7183-a12f-26c80b01e6f1).
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA" :logs (list (rt-log "LEMMA" "THESIS" "2026-01-06 Tue 10:00") rt-thesis-log))))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-06") (rt-run d "lint" "--staged" "--no-tests")))))
 
@@ -3103,7 +3105,7 @@ committed on DAY, with EXTRA files."
     (should (string-match-p "^-#\\+LEMMAX_CODE: src/$" out))
     (should (string-match-p "^\\+#\\+PROPERTY: LEMMAX_CODE src/$" out))
     (should (string-match-p "^ #\\+title: s\n-#\\+LEMMAX_TESTS: ./tests.sh\n\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh\n #\\+TAGS: x" out))
-    (should (string-match-p "^-#\\+LEMMAX_TESTS: ./tests.sh\n-#\\+LEMMAX_CODE: src/\n\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh\n\\+#\\+PROPERTY: LEMMAX_CODE src/"
+    (should (string-match-p "^-#\\+LEMMAX_TESTS: ./tests.sh\n-#\\+LEMMAX_CODE: src/\n\\+#\\+TODO: DRAFT.*\n\\+#\\+STARTUP: logdrawer\n\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh\n\\+#\\+PROPERTY: LEMMAX_CODE src/"
                             (nth 1 (rt-run d "migrate" "theory.proofs.org"))))
     (rt-run d "migrate" "--write" "theory.org")
     (rt-run d "migrate" "--write" "theory.proofs.org")
@@ -3462,3 +3464,101 @@ which holds the tests and code, read by theory.org with REQS."
                                    (rt-conj "RQ-7")))
     (should (string-match-p "^\\+\\* THESIS Title of RQ-2" (nth 1 (rt-run d "migrate" "--theorem" "RQ-2"))))
     (should (= 1 (nth 0 (rt-run d "migrate" "--theorem" "RQ-99"))))))
+
+;;;; 01a20f57-2e78-75b9-a133-53e39e2def6a: a proof is DRAFT, PROOF, FALLACY or MOOT
+
+;; lemma: 01a20f57-2e78-75b9-a133-53e39e2def6a
+(defconst rt-new-proofs-head
+  "#+title: Proofs\n#+TODO: DRAFT(d) | PROOF(p!) FALLACY(f!) MOOT(m!)\n#+STARTUP: logdrawer\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n#+PROPERTY: LEMMAX_CODE src/\n\n")
+
+(cl-defun rt-nproof (id proves &key (state "PROOF") (test "unit/a"))
+  "A proof in the new form: no :LAST_EDITED:, no \"Proof:\" prefix."
+  (concat "* " state " Shows " id "\n:PROPERTIES:\n" (format ":ID:          %s\n" id)
+          (format ":PROVES:      %s\n" proves) (if test (format ":TEST:        %s\n" test) "") ":END:\nIt shows it.\n"))
+
+(ert-deftest lemmax-proof-states ()
+  :tags '(timeout-60)
+  (let* ((d (rt-repo (list (cons "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "REFUTED")))
+                           (cons "theory.proofs.org" (concat rt-new-proofs-head (rt-nproof "PR-1" "RQ-1") (rt-nproof "PR-2" "RQ-2" :state "MOOT")))
+                           (cons "tests.sh" (rt-tests-sh "unit/a")) (cons "src/x.clj" "(ns x)\n"))))
+         (proofs (lambda (&rest ps) (rt-set d "theory.proofs.org" (apply #'concat rt-new-proofs-head (rt-nproof "PR-2" "RQ-2" :state "MOOT") ps)))))
+    ;; PROOF proves a LEMMA; a new-form proof needs no :LAST_EDITED:.
+    (rt-should-clean (rt-run d "lint"))
+    ;; DRAFT, even with its tests passing, does not.
+    (funcall proofs (rt-nproof "PR-1" "RQ-1" :state "DRAFT"))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: a LEMMA whose proof PR-1 is DRAFT, a counterexample until it passes; make the proof PROOF once the owner approves it")
+    ;; A FALLACY counts neither way: a PROOF beside it holds; alone, no proof.
+    (funcall proofs (rt-nproof "PR-1" "RQ-1") (rt-nproof "PR-3" "RQ-1" :state "FALLACY"))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (funcall proofs (rt-nproof "PR-3" "RQ-1" :state "FALLACY"))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: a LEMMA with no proof")
+    ;; MOOT is for a refuted statement's proof, and a refuted one's proof is MOOT.
+    (funcall proofs (rt-nproof "PR-1" "RQ-1" :state "MOOT"))
+    (rt-should-find (rt-run d "lint" "--no-tests") "PR-1: a MOOT proof of a statement that is not refuted")
+    (rt-set d "theory.proofs.org" (concat rt-new-proofs-head (rt-nproof "PR-1" "RQ-1") (rt-nproof "PR-2" "RQ-2" :state "DRAFT")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "PR-2: a DRAFT proof of a refuted statement; make it MOOT")
+    ;; A PROOF whose test fails stays PROOF; its statement goes back.
+    (funcall proofs (rt-nproof "PR-1" "RQ-1" :test "unit/zzz"))
+    (rt-should-find (rt-run d "lint") "PR-1: :TEST: names unit/zzz, which the test command does not list; write the test, or fix the address; the proof stays PROOF, and RQ-1 goes back to CONJECTURE until the test passes again")
+    ;; A proof's state on a statement is refused.
+    (rt-set d "theory.org" (concat (string-replace "REFUTED" "REFUTED PROOF" rt-math-head)
+                                   (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "REFUTED") (rt-conj "RQ-3" :state "PROOF")))
+    (rt-set d "theory.proofs.org" (concat rt-new-proofs-head (rt-nproof "PR-1" "RQ-1") (rt-nproof "PR-2" "RQ-2" :state "MOOT")))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-3: PROOF is a proof's state")))
+
+(ert-deftest lemmax-proof-migrate ()
+  :tags '(timeout-60)
+  ;; migrate turns OPEN into DRAFT and PASSED into PROOF, a refuted statement's
+  ;; proof into MOOT, drops "Proof: ", writes a date-only log line only from a
+  ;; real day, and no :LAST_EDITED:; the old states still read.
+  (let ((d (rt-repo (rt-math-files (list (rt-lemma "RQ-1") (rt-conj "RQ-2") (rt-conj "RQ-3" :state "REFUTED"))
+                                   (list (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2" :state "OPEN")
+                                         (rt-proof "PR-3" "RQ-3" :state "OPEN")))
+                    "2026-01-05")))
+    (rt-should-clean (rt-run d "lint"))
+    (let ((out (nth 1 (rt-run d "migrate" "theory.proofs.org"))))
+      (should (string-match-p "^\\+#\\+TODO: DRAFT(d) | PROOF(p!) FALLACY(f!) MOOT(m!)$" out))
+      (should (string-match-p "^\\+#\\+STARTUP: logdrawer$" out))
+      (should (string-match-p (regexp-quote (concat "+* PROOF Proof PR-1\n :PROPERTIES:")) out))
+      (should (string-match-p "^\\+- State \"PROOF\" +from \"DRAFT\" +\\[2026-01-05 Mon\\]$" out))
+      (should (string-match-p "^\\+\\* DRAFT Proof PR-2$" out))
+      (should (string-match-p "^\\+\\* MOOT Proof PR-3$" out))
+      (should-not (string-match-p "^\\+:LAST_EDITED:" out))
+      (should (string-match-p "^-:LAST_EDITED: " out)))
+    (let ((proofs "* PASSED Proof: Shows it\n:PROPERTIES:\n:ID:          PR-9\n:PROVES:      RQ-1\n:TEST:        unit/a\n:END:\nNo day.\n"))
+      (rt-set d "theory.proofs.org" (concat rt-proofs-head proofs))
+      (let ((out (nth 1 (rt-run d "migrate" "theory.proofs.org"))))
+        (should (string-match-p "^\\+\\* PROOF Shows it$" out))
+        (should-not (string-match-p "State \"PROOF\"" out))))
+    (rt-set d "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1") (rt-proof "PR-2" "RQ-2" :state "OPEN")
+                                          (rt-proof "PR-3" "RQ-3" :state "OPEN")))
+    (rt-run d "migrate" "--write" "theory.proofs.org")
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-06") (rt-run d "lint" "--staged" "--no-tests")))))
+
+;;;; 01a20f32-ef80-7183-a12f-26c80b01e6f1: a log line has a date and a time
+
+;; lemma: 01a20f32-ef80-7183-a12f-26c80b01e6f1
+(ert-deftest lemmax-log-time ()
+  :tags '(timeout-60)
+  ;; lint refuses a new log line with no time; an old date-only one stays; lmx
+  ;; reads the time; lmx writes the time in the lines it adds.
+  (rt-load)
+  (should (equal '(("- State \"THESIS\"     from \"CONJECTURE\" [2026-11-25 Wed 14:32]" "2026-11-25" "14:32")
+                   ("- State \"THESIS\"     from \"CONJECTURE\" [2026-11-24 Tue]" "2026-11-24" nil))
+                 (lemmax--log-lines (concat "* T\n:LOGBOOK:\n" (rt-log "THESIS" "CONJECTURE" "2026-11-25 Wed 14:32")
+                                            (rt-log "THESIS" "CONJECTURE" "2026-11-24 Tue") ":END:\n"))))
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log))) nil) "2026-01-05")))
+    ;; Old date-only lines stay; a new one with no time is refused.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :logs (list (rt-log "CONJECTURE" "THESIS" "2026-01-07 Wed") rt-thesis-log))))
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-07") (rt-run d "lint" "--staged" "--no-tests"))
+                    "RQ-1: a new log line with no time: - State \"CONJECTURE\" from \"THESIS\" +\\[2026-01-07 Wed\\]")
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :logs (list (rt-log "CONJECTURE" "THESIS" "2026-01-07 Wed 09:15") rt-thesis-log))))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-07") (rt-run d "lint" "--staged" "--no-tests"))))
+  ;; migrate --theorem's state change carries the time.
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THEOREM" :logs (list rt-thesis-log)) (rt-logged "RQ-2" :state "THESIS"))
+                                  (list (rt-nproof "PR-1" "RQ-1"))))))
+    (should (string-match-p "^\\+- State \"LEMMA\" +from \"THEOREM\" +\\[[0-9-]+ [A-Z][a-z][a-z] [0-9][0-9]:[0-9][0-9]\\]$"
+                            (nth 1 (rt-run d "migrate" "--theorem" "RQ-2"))))))

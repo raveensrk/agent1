@@ -61,19 +61,34 @@ Conjecture + proof = lemma. A conjecture is a statement not yet proven: what it
 says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 
 ```org
-* PASSED Proof: lint reads states
+* PROOF lint reads states
 :PROPERTIES:
 :ID:          01a20369-...
 :PROVES:      01a20369-38d2-7202-8b53-6e296aaac489
 :TEST:        ert/lemmax-math-states
 :END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-25 Wed 14:32]
+:END:
 ```
 
-- Conjecture states: `CONJECTURE THESIS | LEMMA THEOREM REFUTED`; proof states: `OPEN | PASSED`.
+- Conjecture states: `CONJECTURE THESIS | LEMMA THEOREM REFUTED`; proof
+  states: `#+TODO: DRAFT(d) | PROOF(p!) FALLACY(f!) MOOT(m!)` with
+  `#+STARTUP: logdrawer`, so a proofs file keeps no `:LAST_EDITED:`. `DRAFT`
+  is being written or not yet approved, even with its tests passing; `PROOF`
+  passes and the owner approved it; `FALLACY` was found not to show the
+  claim and is kept; `MOOT` proves a refuted statement, and a refuted
+  statement's proof must be `MOOT`. Old `OPEN | PASSED` still read; `migrate`
+  turns them into `DRAFT` and `PROOF` and drops the `Proof:` title prefix.
   A `THESIS` is a conjecture the owner accepted to prove; `list --ready`
   lists them.
-- A `LEMMA` has a proof, and every proof of it is `PASSED`. An `OPEN` proof is
-  a counterexample until it passes: lint refuses the lemma.
+- A `LEMMA` has a proof, and every proof of it is `PROOF`; a `FALLACY` or
+  `MOOT` proof counts neither way. A `DRAFT` proof is a counterexample until
+  the owner approves it: lint refuses the lemma. When a `PROOF`'s test fails,
+  the proof stays `PROOF` and the statement goes back to `CONJECTURE` until
+  the test passes again.
+- Every new log line carries the date and the time, as Org writes it; lint
+  refuses a new one with only a date. Old date-only lines stay.
 - A theory, `theories/PROJECT/`, has one `THEOREM`, its whole claim; lint
   refuses a second. It reaches every statement of the theory through
   `:USES:`, and lint refuses one it does not reach. A `LEMMA` may `:USES:`
@@ -107,17 +122,17 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 | Refuted    | A conjecture disproven or given up, kept with the reason                                                                              |
 
 Example. The conjecture under test is a claim about lint: *lint refuses any
-lemma that has an `OPEN` proof.* Its test feeds lint a sample file with one
-lemma and one `OPEN` proof, and lint refuses it. The test passes.
+lemma that has a `DRAFT` proof.* Its test feeds lint a sample file with one
+lemma and one `DRAFT` proof, and lint refuses it. The test passes.
 
 Now suppose lint has a bug: it reads only the first proof of each lemma. Give it
-a sample lemma whose first proof is `PASSED` and whose second is `OPEN`, and
+a sample lemma whose first proof is `PROOF` and whose second is `DRAFT`, and
 lint lets it through. The claim about lint is false, yet the test still passes,
 because the test never tried a lemma with two proofs.
 
 A failing test shows a real case where the claim breaks. A passing test shows
 only that the cases tried held. Review asks whether the tests cover the cases
-that matter: no proofs, two proofs, one `PASSED` and one `OPEN`.
+that matter: no proofs, two proofs, one `PROOF` and one `DRAFT`.
 
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`, `:APPROVED:`,
   `:PROVEN:`, `:IMPLEMENTED:`, `:LAST_EDITED:`) still read.
