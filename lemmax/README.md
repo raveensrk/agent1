@@ -77,6 +77,18 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
   parent, so `migrate` inverts it: the parent gets `:USES:`.
 - `:VERIFY:`, `:NEEDS:` and `:USES:` lines are not a lemma's text.
 - A proof may prove many conjectures; a conjecture may have many proofs.
+- A passing test is evidence, not proof: tests can refute a conjecture, never
+  prove it. What makes a lemma hold is the owner's or judge's review of each
+  conjecture and proof pair.
+
+| Term       | Meaning                                                          |
+| ---------- | ---------------------------------------------------------------- |
+| Conjecture | A statement not yet proven                                       |
+| Proof      | A heading in `FILE.proofs.org` that names tests in `:TEST:`      |
+| Test       | Evidence: a failure refutes, a pass never proves                 |
+| Lemma      | A conjecture whose proofs all pass and whose pair is reviewed    |
+| Theorem    | A lemma built on smaller proven lemmas named in `:USES:`         |
+| Refuted    | A conjecture disproven or given up, kept with the reason         |
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
   `lmx migrate FILE` prints the move as a diff; `--write` makes it.
 
