@@ -1510,44 +1510,44 @@ Every repo names its main theory file theory.org, never requirements.org.
 - The finding names the file and the name to use: theory.org for requirements.org, theory.X for requirements.X
 - Asked by the owner on 2026-11-24, after the theories/ move left both names in use; no file is exempt
 Evidence: lemmax--lint-theories already reads each worktree file's name, so a name rule is one more test on that name; every repo in ~/repos has renamed its file, agent1's topic file included.
-** CONJECTURE lmx bible writes the design document of a finished project   :cli:
+** CONJECTURE The bible is the design document of a finished project   :skill:
 :PROPERTIES:
 :ID:          01a20959-95da-760e-82dc-2797c5af6abc
-:USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a20930-0aba-7005-8442-d1dc3269c487 01a204fc-d718-7e50-95a3-4ca72898a15b
+:USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a20930-0aba-7005-8442-d1dc3269c487 01a204fc-d718-7e50-95a3-4ca72898a15b 01a20d28-cb41-760a-a477-e1704807a2a8
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-23
 :END:
-lmx bible writes one self-contained HTML file from which a project can be rebuilt from scratch, in any programming language.
-- It refuses to build until the project is finished: its root theorem and every lemma proven, and no open conjecture, proof or task; it names what is open
+The bible is one self-contained HTML file from which a project can be rebuilt from scratch, in any programming language; an agent writes it, as the agent-written documents statement says.
+- The agent writes it only when the project is finished: its root theorem and every lemma proven, and no open conjecture, proof or task; else it names what is open and stops
 - Chapters, in order: Overview (problem, users, scope, non-goals, success), Architecture (context and container diagrams, stack with versions and why), one per major component, Data, Interfaces (exact contracts with examples), Behavior (flows, state machines, pseudocode, errors, edge cases), UI, Configuration (every key: type, default, effect), Build and run, Quality (acceptance as given/when/then from the tests), Decisions (context, decision, alternatives, consequences), Rebuild guide (milestones from an empty folder, each with its check), Glossary, Open questions
 - A fact appears once; other places link to it
 - A reason nobody gave goes to Open questions, never guessed
 - No secrets, tokens, personal data or hostnames: config keys, never values
 - A statement goes to a chapter by its Org tag, from a tag group the project's setup.org declares: =#+TAGS: [ chapter : overview architecture data interfaces behavior ui configuration build quality decisions ]=
-- It refuses to build while a statement has no chapter tag, naming each one
+- The agent stops while a statement has no chapter tag, naming each one
 - Glossary comes from the definitions, Build and run from the env file, Rebuild guide from lmx plan's order, and Quality from the proofs and their tests
 - Hand-written chapters live in theories/PROJECT/PROJECT.bible.org: reasons, history and trade-offs only; a rule of behaviour there is a finding, to be made a statement
 - Its text is language-neutral: it leaves out Evidence lines, code markers and source paths; statements say what, not how
-- Diagrams are Org source blocks (dot, mermaid, d2) in the theory, run by org-babel at export and packed into the page as SVG
+- Diagrams are Org source blocks (dot, mermaid, d2) in the theory or the hand-written chapters, rendered and put in the page as SVG
 - Diagrams wherever there is structure, flow or state; at least context, architecture, data model and each key flow
 - D2 with the TALA layout for architecture; Mermaid for flow, sequence, state, ER and class; Graphviz only for generated graphs
 - Each diagram: white background, Mermaid htmlLabels false, about 15 nodes, alt text that says what it shows
 - It adds a Documentation section to AGENTS.md, once: read the bible and the book first
-- The page goes to theories/_site/PROJECT.bible.html, packed like the book, with the same export filter
-- Each built bible adds a task: hand only that file to a fresh agent; it writes a rebuild plan and answers 10 to 15 questions written from the code; up to 3 rounds; every guess or gap becomes a conjecture
+- The page is theories/PROJECT/PROJECT.bible.html, tracked in git, with images and diagrams inline and no outside file
+- Each written bible adds a task: hand only that file to a fresh agent; it writes a rebuild plan and answers 10 to 15 questions written from the code; up to 3 rounds; every guess or gap becomes a conjecture
 - Asked by the owner on 2026-11-23
 Evidence: Org tag groups declare a tag hierarchy; org-babel runs dot blocks (ob-dot, in Org), and ob-mermaid and ob-d2 add-ons run the others; the book's export filter packs images; https://d2lang.com/tour/tala/ for TALA; https://mermaid.js.org/config/schema-docs/config.html for htmlLabels.
 
-** CONJECTURE lmx manual writes the user manual of a finished project   :cli:
+** CONJECTURE The manual is the user manual of a finished project      :skill:
 :PROPERTIES:
 :ID:          01a20d04-c038-7534-9920-23ec7679dadc
-:USES:        01a20959-95da-760e-82dc-2797c5af6abc
+:USES:        01a20959-95da-760e-82dc-2797c5af6abc 01a20d28-cb41-760a-a477-e1704807a2a8
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-24
 :END:
-lmx manual writes a project's user manual, beside its bible, as one self-contained HTML page in the GNU manual format.
+The manual is a project's user manual, beside its bible: one self-contained HTML page in the GNU manual format, which an agent writes.
 - Its reader is a person who uses the app: how to install, run and use it; the bible stays the builder's document
 - The format follows GNU manuals (https://www.gnu.org/manual/manual.html): a title page with the project, version and date, a table of contents, numbered chapters and sections, 1, 1.1, 1.1.1
 - Chapters, in GNU order: Overview, the hand-written chapters, Invoking, Copying, Index
@@ -1556,11 +1556,11 @@ lmx manual writes a project's user manual, beside its bible, as one self-contain
 - Copying holds the repo's LICENSE file as written; with no LICENSE file the chapter is left out
 - Index lists each term of the definitions file and each command and flag, linked to where it is explained
 - Hand-written chapters live in theories/PROJECT/PROJECT.manual.org: tutorials, examples and walk-throughs; a rule of behaviour there is a finding, to be made a statement
-- It refuses to build until the project is finished, as the bible does, and names what is open
-- It refuses to build when no statement carries :manual:, and when a hand-written chapter states a rule
-- The page goes to theories/_site/PROJECT.manual.html, packed like the book: images inline, no outside file
+- The agent writes it only when the project is finished, as for the bible, and else names what is open
+- The agent stops when no statement carries :manual:, and when a hand-written chapter states a rule
+- The page is theories/PROJECT/PROJECT.manual.html, tracked in git: images inline, no outside file
 - Asked by the owner on 2026-11-24
-Evidence: the owner named the GNU manuals page as the model, where GNU offers each manual as one HTML page among its formats; the book's export filter already packs a page into one file; the bible statement already sets the finished-project gate and the hand-written rule finding.
+Evidence: the owner named the GNU manuals page as the model, where GNU offers each manual as one HTML page among its formats; the bible statement already sets the finished-project gate and the hand-written rule finding.
 
 ** THEOREM The program is called lmx                                     :cli:
 :PROPERTIES:
@@ -1581,3 +1581,20 @@ The program's name is lmx, so it is never confused with LemmaX, the workflow.
 - The Emacs code keeps its lemmax- prefix, the package's name in Emacs: =M-x lemmax-lint=
 - Asked by the owner on 2026-11-24
 Evidence: no lmx is on this PATH; a web search on 2026-11-24 found one tool of the name, LocalMaxxing's benchmark lmx from npm, which this machine does not have; lex is the Unix lexer generator, /usr/bin/lex here, so it was not taken.
+
+** CONJECTURE An agent writes the bible and the manual; lmx only checks them :skill:
+:PROPERTIES:
+:ID:          01a20d28-cb41-760a-a477-e1704807a2a8
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:APPROVED:    2026-11-24
+:END:
+A LemmaX project's bible and manual are written by an AI agent, never by lmx; lmx is for the LemmaX workflow only.
+- The owner runs the /docs skill by hand; its agent writes theories/PROJECT/PROJECT.bible.html and theories/PROJECT/PROJECT.manual.html, both tracked in git
+- Before writing, the agent reads the whole project: every theory file, the code, the tests and the docs
+- Before writing, the agent researches the web: how good design documents and manuals are written, the docs of each library the project uses, and how similar tools explain the same job; each source it relies on is cited
+- lmx has no command that writes either document
+- lmx lint warns, and never refuses, when a finished project has no bible or no manual
+- lmx lint warns when a statement's :LAST_EDITED: is later than the last commit of the bible or the manual, naming the document
+- Asked by the owner on 2026-11-24
+Evidence: skills/docs/SKILL.md already writes a book-style design document by hand and runs only when asked; lmx already reads each statement's :LAST_EDITED: and git's commit dates.
