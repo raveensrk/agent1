@@ -953,3 +953,13 @@ A LEMMA links a doc; moving the doc and the theory and rewriting the link to the
 :LAST_EDITED: 2026-11-24
 :END:
 A LEMMA links a file and follows a path, both gone; mending both to name files that exist lints clean; a link to a file that exists, pointed at another, is still refused.
+
+* PASSED Proof: A theory file is named theory.org
+:PROPERTIES:
+:ID:          01a20caa-4660-77a9-bf48-db8576584af1
+:PROVES:      01a20caa-4660-77a9-bf48-db8448f75366
+:TEST:        ert/lemmax-theory-file-name
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+A repo with requirements.org, requirements.proofs.org and requirements_archive.org under theories/, and requirements.org at its root, is refused once for each, naming theory.org, theory.proofs.org and theory_archive.org; gui.org beside them passes.

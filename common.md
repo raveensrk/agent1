@@ -6,7 +6,7 @@ At session start, read [rules/index.md](rules/index.md) and follow it. It is the
 index of all the rules.
 
 Requirements follow Lemmax, agent1's requirement workflow:
-[theories/agent1/requirements.org](theories/agent1/requirements.org).
+[theories/agent1/theory.org](theories/agent1/theory.org).
 
 ## Confirmation
 

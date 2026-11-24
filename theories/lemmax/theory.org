@@ -4,7 +4,7 @@
 #+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
 #+TAGS: lemmax [ cli : list trace ] lint ids hooks tests skill
 
-Process: [[file:../agent1/requirements.org][Requirements requirements]].
+Process: [[file:../agent1/theory.org][Requirements requirements]].
 
 * THEOREM [#A] lemmax lints and traces org theories           :lemmax:
 :PROPERTIES:
@@ -17,7 +17,7 @@ Process: [[file:../agent1/requirements.org][Requirements requirements]].
 :END:
 - Changed on 2026-11-22: CONJECTURE until every conjecture it uses is proven; it was DONE, implemented 2026-11-22.
 One command in agent1 for every repo whose theory file opts in.
-- =lemmax lint= refuses what [[file:../agent1/requirements.org][requirements.org]] forbids; =lemmax trace= shows what each statement links to.
+- =lemmax lint= refuses what [[file:../agent1/theory.org][requirements.org]] forbids; =lemmax trace= shows what each statement links to.
 - Written in Emacs Lisp on org-element.
 - Why: 2 repos hold 8 check files, 867 lines, in Python and Babashka; 3 repos check nothing; =:VERIFY:= is written 4 ways.
 - The end-to-end test builds an invented repo with statements, tests and commits: lint passes, a broken copy fails, trace prints a block per id.
@@ -334,7 +334,7 @@ Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS
 :APPROVED:    2026-11-23
 :PROVEN:      2026-11-23
 :END:
-New statement ids are UUID v7, as [[file:../agent1/requirements.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
+New statement ids are UUID v7, as [[file:../agent1/theory.org::*A new requirement id is a UUID v7, unique everywhere][requirements.org]] says.
 - lint accepts a lower-case UUID v7 =:ID:= as well as =[A-Z]+-[0-9]+=; this replaces RT-4's shape bullet. Built 2026-11-21, so this file could hold its own id
 - =lemmax new-id= prints a fresh UUID v7, and nothing else
 - =next-id= (RT-14) stays only for projects whose old ids still count up
@@ -888,7 +888,7 @@ Evidence: the release review of 2026-11-22.
 :APPROVED:    2026-11-23
 :PROVEN:      2026-11-23
 :END:
-lemmax reads the math names of [[file:../agent1/requirements.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
+lemmax reads the math names of [[file:../agent1/theory.org::*The workflow is called Lemmax][Lemmax]], beside the old ones.
 - A conjecture's state is CONJECTURE, LEMMA, THEOREM or REFUTED; OPEN, DONE and DROPPED still read the same, as conjecture, lemma and refuted
 - :USES: on a theorem names the smaller lemmas it builds on, pointing from the bigger item down; :NEEDS: in an old file still reads the same, child to parent
 - A proof is a heading in a file named =*.proofs.org=, state OPEN or PASSED; :PROVES: names one or more conjecture ids, :TEST: its test addresses, quoted like :VERIFY:
@@ -1212,7 +1212,7 @@ Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TEST
 :APPROVED:    2026-11-22
 :IMPLEMENTED: 2026-11-22
 :END:
-=lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../agent1/requirements.org::*Goal][Requirements requirements]] asks.
+=lemmax plan= prints the steps to rebuild the project from scratch, as the Goal in [[file:../agent1/theory.org::*Goal][Requirements requirements]] asks.
 - One step per LEMMA or THEOREM: its id, title, statement, the ids it =:USES:=, and each proof with its =:TEST:= addresses
 - A step comes after every lemma and axiom it uses; axioms and the environment come first
 - Steps with no order between them go higher priority first (=[#A]= before =[#B]=, none last), then older first by =:CREATED:=, then by id
@@ -1495,6 +1495,21 @@ A repo that follows Lemmax keeps all its Lemmax data in one theories/ folder at 
 - Changed on 2026-11-24: the rules hold in every repo, not only one with theories/; the owner chose it
 Evidence: org-publish takes a :base-directory and :recursive t, so theories/ is one publishing project; #+SETUPFILE: reads a shared setup file, and Org has no project-folder convention of its own.
 
+** LEMMA A theory file is named theory.org                               :lint:
+:PROPERTIES:
+:ID:          01a20caa-4660-77a9-bf48-db8448f75366
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
+:END:
+Every repo names its main theory file theory.org, never requirements.org.
+- lint refuses an .org file whose name is requirements.org or starts requirements. or requirements_, as requirements.proofs.org and requirements_archive.org, in every repo and every folder
+- Its companions follow the same name: theory.proofs.org, theory.tasks.org, theory.notes.org, theory.definitions.org, theory.env.org and theory_archive.org
+- Topic files keep their own names, as theories/agent1/gui.org
+- The finding names the file and the name to use: theory.org for requirements.org, theory.X for requirements.X
+- Asked by the owner on 2026-11-24, after the theories/ move left both names in use; no file is exempt
+Evidence: lemmax--lint-theories already reads each worktree file's name, so a name rule is one more test on that name; every repo in ~/repos has renamed its file, agent1's topic file included.
 ** CONJECTURE lemmax bible writes the design document of a finished project   :cli:
 :PROPERTIES:
 :ID:          01a20959-95da-760e-82dc-2797c5af6abc

@@ -171,6 +171,12 @@ project, as `theories/lemmax/`, each with a `setup.org` its files read with
 `publish` writes a page per file and a book per project under
 `theories/_site/`, which git ignores; `book --all` adds one book for the repo.
 
+<!-- lemma: 01a20caa-4660-77a9-bf48-db8448f75366 -->
+
+A project's main theory file is `theory.org`, with companions such as
+`theory.proofs.org`. Lint refuses any file named `requirements.org`,
+`requirements.X.org` or `requirements_X.org`, and names the file to use.
+
 <!-- lemma: 01a20a84-971d-767f-8a26-c98f6d132b7f -->
 
 A move that rewrites a statement's file link to name the same file, as moving

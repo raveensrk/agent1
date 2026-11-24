@@ -1,5 +1,5 @@
 RQ-2 DONE Builds on it
-  file: theories/t/requirements.org:17
+  file: theories/t/theory.org:17
   parents: RQ-1
   children: none
   linked from: theories/t/notes/n.org:1

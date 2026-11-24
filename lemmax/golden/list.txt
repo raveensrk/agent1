@@ -1,8 +1,8 @@
 Approved and open (1)
-  RQ-3                   OPEN       approved none    Not yet                                                      theories/t/requirements.org:28  code:0
+  RQ-3                   OPEN       approved none    Not yet                                                      theories/t/theory.org:28  code:0
 Done (2)
-  RQ-1                   DONE       approved found   The base                                                     theories/t/requirements.org:6  code:1
-  RQ-2                   DONE       approved found   Builds on it                                                 theories/t/requirements.org:17  code:1
+  RQ-1                   DONE       approved found   The base                                                     theories/t/theory.org:6  code:1
+  RQ-2                   DONE       approved found   Builds on it                                                 theories/t/theory.org:17  code:1
 Dropped (1)
-  RQ-4                   DROPPED    approved none    Dropped one                                                  theories/t/requirements.org:37  code:0
+  RQ-4                   DROPPED    approved none    Dropped one                                                  theories/t/theory.org:37  code:0
 Total: 4 statements: 1 open, 2 done, 1 dropped

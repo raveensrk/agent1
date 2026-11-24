@@ -1104,7 +1104,13 @@ theory there."
                        (cl-some (lambda (k) (string-prefix-p "LEMMAX_" (car k))) (plist-get i :keywords))
                        (cl-some (lambda (r) (plist-get r :state)) (plist-get i :statements))))
           (lemmax--finding f 1 nil "a theory file outside theories/, and every repo keeps its theory there"
-                           "move it to theories/PROJECT/"))))))
+                           "move it to theories/PROJECT/"))
+        ;; lemma: 01a20caa-4660-77a9-bf48-db8448f75366
+        (let ((name (file-name-nondirectory f)))
+          (when (and (or (null only) (member f only))
+                     (string-match "\\`requirements\\([._].*\\)?\\.org\\'" name))
+            (lemmax--finding f 1 nil "a theory file named requirements, and every theory file is named theory"
+                             (format "rename it %s" (concat "theory" (substring name (length "requirements")))))))))))
 
 ;;;; Footnotes (01a203a6-a779-73fc-8abf-99f8c8816867)
 

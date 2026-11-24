@@ -57,3 +57,5 @@ The first public release.
   proven statement stays proven.
 - Mending a link, or a `:FOLLOWS:` path, to a file that is gone is no text
   change either.
+- Lint refuses a theory file named `requirements*.org`; every repo names it
+  `theory.org`.
