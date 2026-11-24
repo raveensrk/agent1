@@ -116,10 +116,10 @@ Text in =FILE.notes.org=: no state, =:ABOUT:= ids, needs no proof.
 :END:
 The workflow: a project's theory of statements, proofs, tests and code markers, kept in theories/, by the rules of this theory. Written LemmaX; a project that keeps them "follows LemmaX".
 
-* DEFINITION lemmax-cli
+* DEFINITION lmx
 :PROPERTIES:
 :ID:          01a20d0f-f245-7678-b438-511bd421cd09
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
-The program that checks the LemmaX workflow: the =lemmax-cli= command and its Emacs code. A command written in code style, as =lemmax-cli lint=, names it.
+The program that checks the LemmaX workflow: the =lmx= command and its Emacs code. A command written in code style, as =lmx lint=, names it.
