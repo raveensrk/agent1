@@ -114,7 +114,7 @@ Text in =FILE.notes.org=: no state, =:ABOUT:= ids, needs no proof.
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
-The workflow: a project's theory of statements, proofs, tests and code markers, kept in theories/, by the rules of this theory. Written LemmaX; a project that keeps them "follows LemmaX".
+The workflow: a project's theory of statements, proofs, tests and code markers, kept in theories/, by the rules of this theory. Written LemmaX; a project that keeps them "follows LemmaX". Said lemmax or LemmaX, it means the LemmaX project or the workflow, never the program.
 
 * DEFINITION lmx
 :PROPERTIES:
@@ -122,4 +122,4 @@ The workflow: a project's theory of statements, proofs, tests and code markers, 
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
-The program that checks the LemmaX workflow: the =lmx= command and its Emacs code. A command written in code style, as =lmx lint=, names it.
+The program that checks the LemmaX workflow: the =lmx= command and its Emacs code. A command written in code style, as =lmx lint=, names it. Said lmx, it means this program.
