@@ -1,6 +1,6 @@
 #+title: Requirements requirements
-#+STARTUP: overview
-#+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
+#+STARTUP: overview logdrawer
+#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)
 
 * Goal
 Any project that follows LemmaX can be rebuilt from scratch, from its requirements alone.

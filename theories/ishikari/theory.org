@@ -1,6 +1,6 @@
 #+title: Ishikari requirements
-#+STARTUP: overview
-#+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)
+#+STARTUP: overview logdrawer
+#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)
 
 Process: [[file:../agent1/theory.org][Requirements requirements]].
 
@@ -8,9 +8,10 @@ Process: [[file:../agent1/theory.org][Requirements requirements]].
 :PROPERTIES:
 :ID:          ISH-1
 :CREATED:     2026-11-18
-:LAST_EDITED: 2026-11-18
-:APPROVED:    2026-11-18
-:PROVEN:      2026-11-18
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-18 Wed]
+- State "THESIS"     from "CONJECTURE" [2026-11-18 Wed]
 :END:
 The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows the workflow exactly as ishikari-plan.js, ishikari-build.js and ishikari-finish.js run it, so a newcomer can read the whole run from it.
 - Plan-stage logging: ishikari-plan.js runs no planning ant; it logs its own check (plans checked or plans refused) in its result's log, like build and finish; `ishikari.py save` appends it. No ant writes the logbook, and a failed append never blocks or fails the run.
@@ -28,9 +29,10 @@ Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 a
 :PROPERTIES:
 :ID:          ISH-2
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-19
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-19 Thu]
 :END:
 The investigator judges each task once its report is written, and a trivial task skips every later ant.
 - Trivial means all of: small, known scope (1-2 files, easy to find); one sensible way to do it, no design choice; one task that cannot be split. Docs or config only is a plus, not a must. A task that needed any question to the user is never trivial.
@@ -46,9 +48,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :ID:          ISH-3
 :USES:        ISH-14
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-19
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-19 Thu]
 :END:
 - ishikari-retro.js runs one retrospective ant, once, as the very last step of every full run, however it ended; never after a fast path that landed.
 - It judges the Ishikari flow, not the repo's code, and reads the run's logbook entries, the plans folder (report, architecture, plans, cleanup note, stage results saved as <stage>-<n>.json), the run's git history and Ishikari's own source.
@@ -60,9 +63,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :ID:          ISH-4
 :USES:        ISH-13
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-19
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-19 Thu]
 :END:
 - Finish: main moves only to the last checked commit, never to a branch by name, and a finisher retry sees main already moved. Upkeep work (cleanup, judge fix, docs) lands only with its checks passed and its commit named; anything else is reset off the scratch copy, and a failed reset stops upkeep.
 - Finish: a base counts as in main by git cherry or the landed list, never by an ancestor check; trial-merge reuse uses git cherry; a later finish of one run uses its own upkeep branches.
@@ -76,9 +80,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-5
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-19
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-19 Thu]
 :END:
 - The main stations sit on one circle, clockwise from Task at the top to the Run report, with a gap at the top: a run ends, it does not loop.
 - Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
@@ -89,9 +94,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :ID:          ISH-6
 :USES:        ISH-10
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-20
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-20 Fri]
 :END:
 - One live investigator ant asks, proves the task can be built, and writes product_spec.md, tech_spec.md (see ISH-7) and one plan per worker ant. There is no architect ant, so no ant turns one file into another.
 - It runs on Opus at low effort, like its researcher ants and every other ant.
@@ -106,9 +112,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :ID:          ISH-7
 :USES:        ISH-12
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-19
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-19 Thu]
 :END:
 - product_spec.md replaces the investigation report. It holds two lists and nothing else: behaviours (B1, B2...), each as given / when / then, and invariants (I1, I2...), each written so an ant can check it. No goal, decisions log, facts or assumptions; the user's answers show up as the behaviours they led to.
 - tech_spec.md replaces architecture.md: the architecture and the code's shape, with every spec id mapped to the part that delivers it.
@@ -122,9 +129,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-8
 :CREATED:     2026-11-19
-:LAST_EDITED: 2026-11-19
-:APPROVED:    2026-11-19
-:PROVEN:      2026-11-19
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-19 Thu]
+- State "THESIS"     from "CONJECTURE" [2026-11-19 Thu]
 :END:
 - A plan holds only one worker's slice of the two specs: files, the spec ids it covers, the interfaces it uses by name, its tests and the test command. No prose from the specs is repeated; the worker reads the specs for the detail.
 - A run with one worker has no plan file: the plan check returns its plan with file null, and the worker and detective are told the task is the whole of the two specs.
@@ -134,9 +142,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-9
 :CREATED:     2026-11-20
-:LAST_EDITED: 2026-11-20
-:APPROVED:    2026-11-20
-:PROVEN:      2026-11-20
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-20 Fri]
+- State "THESIS"     from "CONJECTURE" [2026-11-20 Fri]
 :END:
 Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows live what a run spent: per ant, station, stage and plan task. Its purpose is to find costly ants. It is fully deterministic: it calls no model, and no AI has to remember to start any part of it.
 - Source: Claude Code's own transcripts under ~/.claude/projects. A workflow ant is agent-*.jsonl with its label in agent-*.meta.json; its run and stage come from the workflow record <session>/workflows/<wf>.json (args.env.run, workflowName ishikari-<stage>). A message is counted once per message id; a message of model <synthetic> is not counted.
@@ -160,9 +169,10 @@ Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workfl
 :ID:          ISH-10
 :USES:        ISH-11
 :CREATED:     2026-11-20
-:LAST_EDITED: 2026-11-20
-:APPROVED:    2026-11-20
-:PROVEN:      2026-11-20
+:END:
+:LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-20 Fri]
+- State "THESIS"     from "CONJECTURE" [2026-11-20 Fri]
 :END:
 The investigator's instructions move from assets/prompts/investigator.md into a skill, skills/investigator-ant/SKILL.md. It is built first, before the janitor, judge, review and retro skills.
 - Ishikari mode: Ishikari's investigator ant loads the skill with its inputs (repo, main, state, task, plans folder, test and check commands). Outputs and JSON replies stay as they are: product_spec.md, tech_spec.md, docs_brief.md, one plan per worker, and the 2a guards still check every reply.
@@ -177,9 +187,10 @@ Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari
 :PROPERTIES:
 :ID:          ISH-11
 :CREATED:     2026-11-20
-:LAST_EDITED: 2026-11-20
-:APPROVED:    2026-11-20
-:PROVEN:      2026-11-20
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-20 Fri]
+- State "THESIS"     from "CONJECTURE" [2026-11-20 Fri]
 :END:
 What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js into a skill, skills/janitor-ant/SKILL.md.
 - Scope: only the lines a change added or touched; by hand `git diff <base>...HEAD` (base main), in Ishikari the range main to the merged commit.
@@ -192,9 +203,10 @@ Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-
 :PROPERTIES:
 :ID:          ISH-12
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
-:PROVEN:      2026-11-21
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-21 Sat]
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 The scoring rules move from the judge and juror prompts in scripts/ishikari-finish.js into one skill, skills/judge-ant/SKILL.md.
 - Scores 0-10 against behaviours and invariants, id by id; extra behaviour counts against; how it was built is not scored; the score is a judgement, never an average.
@@ -208,9 +220,10 @@ Evidence: ISH-10 and ISH-11 load skills the same way from inside ants.
 :PROPERTIES:
 :ID:          ISH-13
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
-:PROVEN:      2026-11-21
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-21 Sat]
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 The detective's checking rules go into a skill, skills/detective-ant/SKILL.md, loaded by both detective ants (build check and the judge-fix check).
 - Checks a change against its ask (task, issue or plan) and a given design; runs the tests; checks the docs match.
@@ -224,9 +237,10 @@ Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
 :ID:          ISH-14
 :USES:        ISH-15
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
-:PROVEN:      2026-11-21
+:END:
+:LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-21 Sat]
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 What to look for and how to rank it go into a skill, skills/retrospective-ant/SKILL.md, loaded by Ishikari's retrospective ant.
 - Judges how the work was done, never the code; read only.
@@ -239,9 +253,10 @@ Evidence: ISH-10 to ISH-13 load skills the same way from inside ants.
 :PROPERTIES:
 :ID:          ISH-15
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
-:PROVEN:      2026-11-21
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-21 Sat]
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 scripts/ant.py does the ant skills' fixed steps in normal mode, with no model, printing JSON.
 - base: the named branch, else origin's default, main, then master; none: exit 2.

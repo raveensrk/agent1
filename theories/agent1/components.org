@@ -1,5 +1,5 @@
 #+title: Component requirements
-#+STARTUP: fold
+#+STARTUP: fold logdrawer
 
 The things a window is made of.
 Part of the [[file:gui.org][GUI requirements]], which say what holds for all of it: the toolkit, the look, motion and performance.
@@ -8,7 +8,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 :PROPERTIES:
 :ID: actable-look
 :CREATED: 2026-11-18
-:LAST_EDITED: 2026-11-18
 :END:
 - Anything clickable or actable looks it: a button, a link, a control
 - Nothing that cannot be acted on looks clickable
@@ -299,9 +298,10 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 :PROPERTIES:
 :ID: date-pickers
 :CREATED: 2026-11-15
-:LAST_EDITED: 2026-11-15
-:APPROVED: 2026-11-15
-:PROVEN:      2026-11-15
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-15 Sun]
+- State "THESIS"     from "CONJECTURE" [2026-11-15 Sun]
 :END:
 ** A reference shows one way to build them
 - demo/cljfx gets date_picker.clj, the part worth copying, and date_picker_page.clj, the demo's page, styled in glass.css
@@ -362,9 +362,10 @@ Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/Date
 :PROPERTIES:
 :ID: scroll-areas
 :CREATED: 2026-11-14
-:LAST_EDITED: 2026-11-14
-:APPROVED: 2026-11-14
-:PROVEN:      2026-11-14
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-14 Sat]
+- State "THESIS"     from "CONJECTURE" [2026-11-14 Sat]
 :END:
 ** A reference shows one way to build them
 - [[file:../../requirements/demo/cljfx/][demo/cljfx]] is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example

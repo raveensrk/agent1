@@ -1,5 +1,5 @@
 #+TITLE: Touch and mobile
-#+STARTUP: fold
+#+STARTUP: fold logdrawer
 
 What changes for a web app used by touch, on a phone or a tablet.
 Everything in [[file:gui.org][gui.org]] still applies; this file adds to it, and where the two differ for touch, this file wins.
@@ -17,12 +17,13 @@ Not all of this is applicable to all apps. Pick what the app needs.
 - Pointer events (=pointerdown=, =pointerup=) handle mouse, pen and touch in one code path; no separate touch and mouse handlers
 
 
-* OPEN What gui.org rules become on the web
+* THESIS What gui.org rules become on the web
 :PROPERTIES:
 :ID:          touch-gui-map
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 Every gui.org and components.org rule holds on the web, except as below.
 ** Changed for the web
@@ -84,13 +85,13 @@ Every gui.org and components.org rule holds on the web, except as below.
 - Pull down at the top of a list: refreshes, where the list can be refreshed
 - Drag: a long press first lifts the thing, then it moves; a plain swipe still scrolls
 - No gesture takes the screen edges: the browser and the system own them for back and home
-** OPEN Each component kind has one gesture map
+** THESIS Each component kind has one gesture map
 :PROPERTIES:
 :ID:          touch-gesture-map
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
-:VERIFY:      demo/web/e2e "gesture map"
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 What tap, hold and swipe do is set by the component's kind, the same in every app.
 Hold means 500 ms without moving more than 10 px.
@@ -146,7 +147,7 @@ Evidence: demo/web (ClojureScript + Replicant, pointer events), checked on Playw
 - Images are sized for the screen they go to, with =srcset=, and load lazily below the fold
 
 * Offline
-** OPEN The app works offline
+** CONJECTURE The app works offline
 - A service worker keeps the app shell, so it opens with no network
 - Changes made offline are kept and sent when the network comes back; nothing typed is lost
 - The app says when it is offline, in one line, without blocking work

@@ -1,4 +1,5 @@
 #+title: Testing
+#+STARTUP: logdrawer
 
 Testing requires these rules. You are allowed to bypass these rules with user permission if you want to test a feature or a fix but these rules become a bottleneck.
 
@@ -30,12 +31,13 @@ Every test has a timeout, so no test hangs a run.
 - Each suite has a default; a test that needs longer says so where it is defined, in seconds.
 - It holds however the test is run, and =--list= prints it; a test with none is a fault.
 
-* OPEN Deploy first, test alongside
+* THESIS Deploy first, test alongside
 :PROPERTIES:
 :ID:          deploy-test-alongside
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 An app may deploy before its full tests finish, when the rules below hold. It trades a short window of risk for speed.
 - A quick check runs before each deploy, under 1 minute: the app builds, starts and serves its main screens
@@ -46,12 +48,13 @@ An app may deploy before its full tests finish, when the rules below hold. It tr
 - A change that writes or migrates data never takes this path: it waits for its tests, then deploys
 - Tests run on the development machine, never on the server
 
-* OPEN One session builds, test agents run alongside
+* THESIS One session builds, test agents run alongside
 :PROPERTIES:
 :ID:          build-test-alongside
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 The main session only builds; test runs happen in separate agents at the same time, so building never waits for tests. It works with [[*Deploy first, test alongside][Deploy first, test alongside]] and [[*Every test run logs its wall clock time][Every test run logs its wall clock time]].
 - Read only: a test agent tests a git worktree of one commit, never the working tree being edited, and changes no file of the project
@@ -63,12 +66,13 @@ The main session only builds; test runs happen in separate agents at the same ti
 - While the line is stopped, the main session may keep building, but nothing deploys; the first job of its next turn is the fix
 - At most 2 test agents at once, so the machine stays usable
 
-* OPEN Every test run logs its wall clock time
+* THESIS Every test run logs its wall clock time
 :PROPERTIES:
 :ID:          test-times-log
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 Each test, and each whole run, writes how long it took by the wall clock. The log finds slow tests, shows slowdowns, and predicts how long a run will take.
 - One file per project: =tmp/test-times.tsv=, never committed (=tmp/= is in =.gitignore=)

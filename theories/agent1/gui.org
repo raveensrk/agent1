@@ -1,5 +1,5 @@
 #+TITLE: GUI
-#+STARTUP: fold
+#+STARTUP: fold logdrawer
 
 Not all of this is applicable to all apps. So pick and choose which is necessary for a well designed and performant app.
 
@@ -20,12 +20,10 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 - Given up for it: true Liquid Glass. JavaFX cannot blur or bend what is behind a control, so glass is drawn as [[*Glass shows what is behind it][Glass shows what is behind it]] says
 - Everything the system would have given is built and checked by hand: the press, the glass, Reduce Motion, Reduce Transparency and Increase Contrast
 - To be looked at again if native window checks prove to run from one command, with no pointer taken over
-*** OPEN elimination_tracker uses Tauri, not JavaFX
+*** CONJECTURE elimination_tracker uses Tauri, not JavaFX
 :PROPERTIES:
 :ID: elimination-tracker-tauri
 :CREATED: 2026-11-14
-:LAST_EDITED: 2026-11-14
-:VERIFY: cargo test -p elimination_tracker, and npm run check in app, run in elimination_tracker
 :END:
 - Decided by the owner on 2026-11-14: this repo is exempt from the JavaFX/cljfx line above; every other app keeps it
 - The window is Tauri 2 with TypeScript; the core and CLI are Rust, a separate program the window starts and talks to by JSON lines
@@ -98,13 +96,13 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 *** Button
 - See [[file:components.org::*Buttons][Buttons]]
 *** etc...
-** OPEN The motion catalogue
+** THESIS The motion catalogue
 :PROPERTIES:
 :ID:          motion-catalogue
 :CREATED:     2026-11-21
-:LAST_EDITED: 2026-11-21
-:APPROVED:    2026-11-21
-:VERIFY:      a window check reads each motion's duration and easing from the app's motion tokens
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
 :END:
 Each motion has one job. A motion is used where it fits that job, and nowhere else.
 - Enter: new items rise 14 px and fade in, 80 ms apart, 520 ms each
@@ -134,13 +132,13 @@ Evidence: the mockups use plain CSS keyframes and transitions, which Safari and 
 - Unsaved scratch work is saved first
 ** Save and restore state/session
 - See [[file:windows.org::*A window comes back as it was left][A window comes back as it was left]]
-* OPEN About shows the app's version and commit
+* THESIS About shows the app's version and commit
 :PROPERTIES:
 :ID: about-version
 :CREATED: 2026-11-14
-:LAST_EDITED: 2026-11-14
-:APPROVED: 2026-11-14
-:VERIFY: clojure -M:test (demo.version-test), clojure -M:check-version (demo.version-check), run in demo/cljfx
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-14 Sat]
 :END:
 Every GUI app does this: a hard requirement.
 ** A reference shows one way to build it
@@ -222,13 +220,13 @@ For example:
 - Undo reverses the newest change, file writes included
 - Redo makes again what undo took back, until a new change is made
 ** Text boxes need to have full featured editor support
-*** OPEN Text boxes turn off macOS autocomplete
+*** THESIS Text boxes turn off macOS autocomplete
 :PROPERTIES:
 :ID:          text-no-autocomplete
 :CREATED:     2026-11-15
-:LAST_EDITED: 2026-11-15
-:APPROVED:    2026-11-15
-:VERIFY:      window check: every input and textarea in each window and sheet has the attributes below
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-15 Sun]
 :END:
 macOS changes no text while it is typed: what is typed is what is kept.
 - No inline predictions, no autocorrect, no auto-capitals, no spelling or grammar marks, no text replacement, no browser autofill
