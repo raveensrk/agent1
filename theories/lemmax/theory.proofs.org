@@ -963,3 +963,13 @@ A LEMMA links a file and follows a path, both gone; mending both to name files t
 :LAST_EDITED: 2026-11-24
 :END:
 A repo with requirements.org, requirements.proofs.org and requirements_archive.org under theories/, and requirements.org at its root, is refused once for each, naming theory.org, theory.proofs.org and theory_archive.org; gui.org beside them passes.
+
+* PASSED Proof: The program is called lmx
+:PROPERTIES:
+:ID:          01a20d0f-f245-7678-b438-511d6d5257be
+:PROVES:      01a20d0f-f245-7678-b438-511c148c4eb7
+:TEST:        ert/lemmax-version ert/lemmax-cli-short-help ert/lemmax-install-hooks
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+lmx --version prints "lmx VERSION"; every help names lmx in its usage and example lines; install-hooks writes hooks that call lmx.

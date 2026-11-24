@@ -611,12 +611,13 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el:625 calls format-time-string with UTC set to t; with nil it gives the local day, so 23 Nov 03:46 IST reads as 2026-11-23, not 2026-11-22.
 
-** CONJECTURE Missing or old Emacs is said plainly                         :cli:
+** LEMMA Missing or old Emacs is said plainly                         :cli:
 :PROPERTIES:
 :ID:          01a202f3-85a4-76cd-bf13-05f6e723c5b2
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-22
+:PROVEN:      2026-11-24
 :END:
 - The launcher prints "lmx: needs Emacs 29 or newer; found NONE|VERSION" and exits 2
 - The pre-commit and commit-msg hooks refuse the commit with that line, in an opted-in repo
@@ -827,12 +828,13 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** CONJECTURE Output is stable, and lint speaks JSON                          :cli:
+** LEMMA Output is stable, and lint speaks JSON                          :cli:
 :PROPERTIES:
 :ID:          01a20336-ca8d-75bf-bedc-33da69c29468
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-22
+:PROVEN:      2026-11-24
 :END:
 - The README pins the finding line, "lmx: FILE:LINE: ID: WHY; FIX", and exit codes 0 clean, 1 findings or failure, 2 cannot run
 - lint --json prints {"version": 1, "findings": [{file, line, id, why, fix}]} on stdout, with the same exit code
@@ -1560,13 +1562,14 @@ lmx manual writes a project's user manual, beside its bible, as one self-contain
 - Asked by the owner on 2026-11-24
 Evidence: the owner named the GNU manuals page as the model, where GNU offers each manual as one HTML page among its formats; the book's export filter already packs a page into one file; the bible statement already sets the finished-project gate and the hand-written rule finding.
 
-** CONJECTURE The program is called lmx                                     :cli:
+** THEOREM The program is called lmx                                     :cli:
 :PROPERTIES:
 :ID:          01a20d0f-f245-7678-b438-511c148c4eb7
 :USES:        01a20d0f-f245-7678-b438-511ac08c8248 01a20d0f-f245-7678-b438-511bd421cd09
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
 :END:
 The program's name is lmx, so it is never confused with LemmaX, the workflow.
 - lemmax/install puts =lmx= on PATH, a wrapper script; lemmax/lmx is the launcher

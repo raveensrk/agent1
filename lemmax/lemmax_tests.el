@@ -1910,11 +1910,15 @@ run of its finding's why text."
   (rt-sh dir "git" "-c" "core.hooksPath=.git/hooks" "-c" "user.name=Test" "-c" "user.email=test@example.invalid"
          "-c" "commit.gpgsign=false" "commit" "-q" "-m" msg))
 
+;; lemma: 01a20d0f-f245-7678-b438-511c148c4eb7
 (ert-deftest lemmax-install-hooks ()
   :tags '(timeout-60)
   (let ((d (rt-repo (rt-files (rt-req "RQ-1"))))
         (env (rt-hook-env)))
     (should (string-match-p "pre-commit: written\ncommit-msg: written" (nth 1 (rt-run d "install-hooks"))))
+    ;; The hooks call lmx, the program's name.
+    (should (string-match-p "^\tlmx lint --staged" (with-temp-buffer (insert-file-contents (expand-file-name ".git/hooks/pre-commit" d)) (buffer-string))))
+    (should (string-match-p "^\tlmx commit-msg" (with-temp-buffer (insert-file-contents (expand-file-name ".git/hooks/commit-msg" d)) (buffer-string))))
     (rt-env env
       ;; pre-commit refuses a broken lemma.
       (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created nil)))
