@@ -201,10 +201,11 @@ After a merge the docs ant runs lmx book, not the docs skill: skills/ishikari/SK
 lmx keeps its own date properties, :CREATED: to :PROVEN:, where Org already logs dates. Read them from the LOGBOOK state-change entries and the CLOSED: line, and move the dates in every LemmaX repo with lmx migrate.
 - Cancelled on 2026-11-24: duplicate of 01a2091c-8f79-784a-885d-00ba4cb49976.
 
-* TODO Created day comes from the id and git
+* DONE Created day comes from the id and git
 :PROPERTIES:
 :ID:          01a20eb8-a22d-706e-92f4-445eef58176a
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:LAST_EDITED: 2026-11-24
+:LAST_EDITED: 2026-11-25
 :END:
 Drop :CREATED:. A UUIDv7 id holds its creation time; an older id like RT-5 takes the day of the first commit that added it. lint stops requiring :CREATED: and the new-statement-dated-today rule; plan and list keep their order. Old :CREATED: lines still read; migrate deletes them. Measure lint time. Owner chose it on 2026-11-24, to build after the #+PROPERTY: settings task.
+- Done on 2026-11-25 in 685b2f6 and caf7f73; agent1, arcadia_docs and sync2 migrated.

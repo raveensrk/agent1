@@ -913,7 +913,7 @@ A file whose four settings are #+PROPERTY: lines opts in, runs its test command 
 :END:
 Markers and coverage days set in theories/setup.org reach a theory file through its project's setup.org, nested, and a bad day is refused; list --all reads LEMMAX_REPOS from theories/setup.org; with no config a project's own lines are its settings and a bare lemma file has none; an old config still reads, and a setting set both there and by #+PROPERTY: is refused per folder and repo-wide; migrate lemmax/config.eld writes theories/setup.org, the folder lines unless already there, the #+SETUPFILE: line, deletes the config, and the markers rule still holds; the hooks and lemmax_lint.py opt a repo in by #+PROPERTY: LEMMAX_TESTS, and a config only while it names :tests.
 
-* OPEN Proof: The created day comes from the id and git
+* PASSED Proof: The created day comes from the id and git
 :PROPERTIES:
 :ID:          01a20ee6-07b8-736f-8b2d-bb5d50feffb7
 :PROVES:      01a20ee1-7637-7169-820a-751b3c636847
