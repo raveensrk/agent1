@@ -127,13 +127,14 @@ New ids come from org-id-new with org-id-method, not lmx's own UUID v7 code. Che
 :END:
 Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edna and org-roam, and switch each one an add-on already models.
 
-* TODO lmx runs as Emacs commands
+* DONE lmx runs as Emacs commands
 :PROPERTIES:
 :ID:          01a2091c-9905-7837-940b-116fa8148f3d
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:LAST_EDITED: 2026-11-24
+:LAST_EDITED: 2026-11-25
 :END:
 Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other commands, giving the same results as the terminal command, in a compilation-style buffer.
+- Done on 2026-11-24 in 835801e: all 12 commands are M-x lemmax-COMMAND, output in *lmx* in compilation-mode; tested at lemmax_tests.el:747.
 
 * TODO Staged lint catches a keyword written by mistake
 :PROPERTIES:
