@@ -3,6 +3,24 @@
 lemmax follows [semantic versioning](https://semver.org/). `list --json`
 and `lint --json` carry their own `version`, the number of their shape.
 
+## Unreleased
+
+- A new state, `THESIS`, between `CONJECTURE` and the done states: a
+  conjecture the owner accepted to prove.
+  `#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)` with
+  `#+STARTUP: logdrawer` makes Org log each change in `:LOGBOOK:`.
+  `list --ready` lists the theses.
+- The accepted day is the newest log line into `THESIS`, the proven day the
+  newest into `LEMMA` or `THEOREM`. The last-edited day is git's: the newest
+  commit that changed the text, or today for a change not committed; the
+  bible and manual warning and `archive` read it.
+- In the logged form lint needs no `:LAST_EDITED:`, refuses a text change to a
+  `THESIS`, `LEMMA` or `THEOREM` until it is `CONJECTURE` again, and refuses a
+  log line beside its `:APPROVED:` or `:PROVEN:`. Old files read as before.
+- `migrate` moves `:APPROVED:` and `:PROVEN:` into log lines, makes each
+  approved `CONJECTURE` a `THESIS`, deletes `:LAST_EDITED:`, and writes the
+  new `#+TODO:`, in a setup file when the file reads it there.
+
 ## 1.0.0 - unreleased
 
 The first public release.

@@ -749,7 +749,7 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
         (should (string-search (format "`%s`" a) readme))))
     ;; Each part lmx invented that Org covers has a task to switch to Org's way.
     (let ((tasks (with-temp-buffer (insert-file-contents (expand-file-name "../theories/lemmax/theory.tasks.org" rt-dir)) (buffer-string))))
-      (should (string-match-p "^\\* \\(TODO\\|DONE\\) Read dates from Org's log" tasks))
+      (should (string-match-p "^\\* \\(TODO\\|DONE\\) Dates come from Org's log" tasks))
       (should (string-match-p ":FOR: +01a2091c-4bcc-7ddb-9796-619468dd401c" tasks)))))
 
 (ert-deftest lemmax-theories-folder ()
@@ -2182,7 +2182,7 @@ run of its finding's why text."
     (rt-set d "theory.org" (concat rt-math-head (replace-regexp-in-string "Statement" "Changed" (rt-lemma "RQ-1"))))
     (rt-git d "add" "-A")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-05") (rt-run d "lint" "--staged" "--no-tests"))
-                    "a LEMMA statement's text changed; make it CONJECTURE until the change is proven")))
+                    "a LEMMA statement's text changed; make it CONJECTURE until the owner accepts it again")))
 
 ;;;; 01a2052f-a14c-7e72-8a8f-57ab97635a10: the proven date is called PROVEN
 
@@ -2224,13 +2224,15 @@ run of its finding's why text."
     (rt-git d "add" "-A")
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-07") (rt-run d "lint" "--staged" "--no-tests"))
                     "it turned DONE and :PROVEN: is not today; set :PROVEN: 2026-01-07")
-    ;; migrate renames :IMPLEMENTED: on a LEMMA or THEOREM, in a migrated file too.
+    ;; migrate moves :IMPLEMENTED: on a LEMMA or THEOREM into Org's log, in a
+    ;; migrated file too (01a20e7b-c7c0-77fc-bc53-bc963ab4843f).
     (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2")))
     (let ((out (nth 1 (rt-run d "migrate" "theory.org"))))
-      (should (string-match-p "^\\+:PROVEN:      2026-01-06$" out))
-      (should-not (string-match-p "^\\+:IMPLEMENTED:" out)))
+      (should (string-match-p "^\\+- State \"LEMMA\" +from \"THESIS\" +\\[2026-01-06 Tue\\]$" out))
+      (should-not (string-match-p "^\\+:IMPLEMENTED:\\|^\\+:PROVEN:" out)))
     (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))
-    (should (string-match-p "^\\+:PROVEN:      2026-01-06$" (nth 1 (rt-run d "migrate" "theory.org"))))))
+    (should (string-match-p "^\\+- State \"LEMMA\" +from \"THESIS\" +\\[2026-01-06 Tue\\]$"
+                            (nth 1 (rt-run d "migrate" "theory.org"))))))
 
 ;;;; 01a20369-391b-768e-8c98-180facc0ff77: lmx migrate
 
@@ -2251,10 +2253,11 @@ run of its finding's why text."
     (should (string-match-p "^\\+\\* THEOREM Title of RQ-1" out))
     (should (string-match-p "^\\+\\*\\* LEMMA Title of RQ-2" out))
     (should (string-match-p "^-:NEEDS: +RQ-1" out))
-    (should (string-match-p "^\\+\\* CONJECTURE Title of RQ-3" out))
+    ;; RQ-3 was approved: a THESIS (01a20e7b-c7c0-77fc-bc53-bc963ab4843f).
+    (should (string-match-p "^\\+\\* THESIS Title of RQ-3" out))
     (should (string-match-p "^\\+\\* REFUTED Title of RQ-4" out))
     (should (string-match-p "^\\+:USES: +RQ-2" out))
-    (should (string-match-p "^\\+#\\+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)" out))
+    (should (string-match-p "^\\+#\\+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)" out))
     (should (string-match-p "^\\+\\+\\+ theories/t/theory.proofs.org" out))
     (should (string-match-p "^\\+:TEST: +unit/a unit/b" out))
     (should (string-match-p "^\\+\\* OPEN Proof: Title of RQ-4" out))
@@ -2762,3 +2765,219 @@ committed on DAY, with EXTRA files."
     (should (equal "environment" (alist-get 'kind (aref steps 0))))
     (should (equal "29.4" (alist-get 'version (alist-get 'properties (aref steps 0)))))
     (should (equal "lemma" (alist-get 'kind (aref steps 2))))))
+
+;;;; 01a20e7b-c7c0-77fc-bc53-bc963ab4843f: thesis and proof are Org states, dated by Org's log
+
+;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
+(defconst rt-log-head
+  "#+title: Invented\n#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)\n#+STARTUP: logdrawer\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n\n")
+
+(defun rt-log (state from day)
+  "The line Org itself writes for a change to STATE from FROM on DAY."
+  (require 'org)
+  (concat "- " (org-replace-escapes (cdr (assq 'state org-log-note-headings))
+                                    (list (cons "%s" (format "\"%s\"" state)) (cons "%S" (format "\"%s\"" from))
+                                          (cons "%t" (format "[%s]" day))))
+          "\n"))
+
+(cl-defun rt-logged (id &key (state "CONJECTURE") logs props (body "Statement.\n"))
+  "A heading in the logged form: no :LAST_EDITED:, its LOGS in :LOGBOOK:."
+  (concat "* " state " Title of " id "\n:PROPERTIES:\n"
+          (format ":ID:          %s\n" id) ":CREATED:     2026-01-05\n" (or props "") ":END:\n"
+          (if logs (concat ":LOGBOOK:\n" (apply #'concat logs) ":END:\n") "")
+          body))
+
+(defun rt-log-files (reqs proofs)
+  (list (cons "theory.org" (apply #'concat rt-log-head reqs))
+        (cons "theory.proofs.org" (apply #'concat rt-proofs-head proofs))
+        (cons "tests.sh" (rt-tests-sh "unit/a" "unit/b"))
+        (cons "src/x.clj" "(ns x)\n")))
+
+(defconst rt-thesis-log (rt-log "THESIS" "CONJECTURE" "2026-01-05 Mon"))
+(defconst rt-lemma-log (rt-log "LEMMA" "THESIS" "2026-01-06 Tue"))
+
+(ert-deftest lemmax-thesis-ready ()
+  :tags '(timeout-30)
+  ;; Bullet 1: THESIS sits between CONJECTURE and the done states; list --ready
+  ;; lists the theses, and an old file's approved CONJECTURE still.
+  (let* ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log))
+                                         (rt-logged "RQ-2"))
+                                   nil)
+                     "2026-01-05"))
+         (out (rt-list d "--ready")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "^  RQ-1 +THESIS +approved" out))
+    (should-not (string-match-p "RQ-2" out))
+    (let ((rows (rt-json-rows (rt-list d "--json"))))
+      (should (equal "2026-01-05" (alist-get 'approved (aref rows 0))))
+      (should (equal "approved" (alist-get 'group (aref rows 0)))))
+    (let ((e (rt-repo (rt-math-files (list (rt-conj "RQ-3") (rt-conj "RQ-4" :approved nil)) nil))))
+      (should (string-match-p "RQ-3" (rt-list e "--ready")))
+      (should-not (string-match-p "RQ-4" (rt-list e "--ready"))))))
+
+(ert-deftest lemmax-thesis-log-dates ()
+  :tags '(timeout-30)
+  ;; Bullet 2: the accepted day is the newest log line into THESIS, the proven
+  ;; day the newest into LEMMA or THEOREM; no :APPROVED: or :PROVEN: is needed.
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "LEMMA"
+                                                   :logs (list rt-lemma-log (rt-log "LEMMA" "THESIS" "2026-01-02 Fri")
+                                                               rt-thesis-log)))
+                                  (list (rt-proof "PR-1" "RQ-1")))
+                    "2026-01-05")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (let ((r (car (plist-get (lemmax--parse (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.org") d))
+                                                                (buffer-string))
+                                            "theory.org")
+                             :statements))))
+      (should (equal "2026-01-05" (plist-get r :approved)))
+      (should (equal "2026-01-06" (plist-get r :implemented)))))
+  ;; Never accepted: refused, as an old LEMMA with no :APPROVED:.
+  (rt-should-find (rt-run (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log)))
+                                                 (list (rt-proof "PR-1" "RQ-1"))))
+                          "lint" "--no-tests")
+                  "LEMMA with no :APPROVED:; get the owner's approval, then make it THESIS")
+  ;; No log line into LEMMA: no proven day.
+  (rt-should-find (rt-run (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-thesis-log)))
+                                                 (list (rt-proof "PR-1" "RQ-1"))))
+                          "lint" "--no-tests")
+                  "LEMMA with no :PROVEN:; set the state LEMMA again so Org logs")
+  ;; Sent back to CONJECTURE, its old log lines are history, not dates.
+  (rt-should-clean (rt-run (rt-repo (rt-log-files (list (rt-logged "RQ-1" :logs (list rt-lemma-log rt-thesis-log))) nil))
+                           "lint" "--no-tests")))
+
+(ert-deftest lemmax-thesis-git-edited-day ()
+  :tags '(timeout-60)
+  ;; Bullet 3: the last-edited day is git's, or today for a change not committed.
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log)))
+                                  (list (rt-proof "PR-1" "RQ-1")))
+                    "2026-01-05")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; Bullet 4: a committed text change after the accepted day sends it back.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log)
+                                                          :body "New statement.\n")))
+    (rt-commit d "edit" "2026-01-10")
+    (rt-should-find (rt-run d "lint" "--no-tests")
+                    "theory\\.org:7: RQ-1: a LEMMA whose text changed 2026-01-10, after it was accepted 2026-01-05; make it CONJECTURE until the owner accepts it again")
+    ;; Accepted again: clean.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA"
+                                                          :logs (list (rt-log "LEMMA" "THESIS" "2026-01-11 Sun")
+                                                                      (rt-log "THESIS" "CONJECTURE" "2026-01-11 Sun")
+                                                                      rt-lemma-log rt-thesis-log)
+                                                          :body "New statement.\n")))
+    (rt-commit d "accept" "2026-01-11")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; A change not committed is today's.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA"
+                                                          :logs (list (rt-log "LEMMA" "THESIS" "2026-01-11 Sun")
+                                                                      (rt-log "THESIS" "CONJECTURE" "2026-01-11 Sun"))
+                                                          :body "Newer statement.\n")))
+    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--no-tests"))
+                    "a LEMMA whose text changed 2026-02-01, after it was accepted 2026-01-11")
+    ;; The bible older than the git day warns, with no :LAST_EDITED: anywhere.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA"
+                                                          :logs (list (rt-log "LEMMA" "THESIS" "2026-01-11 Sun")
+                                                                      (rt-log "THESIS" "CONJECTURE" "2026-01-11 Sun"))
+                                                          :body "New statement.\n")))
+    (rt-set d "theories/t/t.bible.html" "<html></html>\n")
+    (rt-commit d "bible" "2026-01-08")
+    (should (string-match-p "warning: the bible is older than the theory, edited 2026-01-10"
+                            (nth 2 (rt-run d "lint" "--no-tests")))))
+  ;; Archive reads git's day for a DONE task with no :LAST_EDITED:.
+  (let ((d (rt-repo (append (rt-log-files (list (rt-logged "RQ-1")) nil)
+                            (list (cons "dev.tasks.org"
+                                        (concat "#+title: Tasks\n#+TODO: TODO | DONE CANCELLED\n#+STARTUP: logdrawer\n#+LEMMAX_TESTS: ./tests.sh\n\n"
+                                                "* DONE Task TK-1\n:PROPERTIES:\n:ID:          TK-1\n:CREATED:     2026-01-05\n:END:\nTidy it.\n"))))
+                    "2026-01-05")))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "would move theories/t/dev.tasks.org:[0-9]+ TK-1 DONE"
+                            (nth 1 (rt-env '("LEMMAX_TODAY=2026-03-01") (rt-run d "archive" "dev.tasks.org")))))
+    (should (equal "" (nth 1 (rt-env '("LEMMAX_TODAY=2026-01-20") (rt-run d "archive" "dev.tasks.org")))))))
+
+(ert-deftest lemmax-thesis-staged-sent-back ()
+  :tags '(timeout-30)
+  ;; Bullet 4: a staged text change to a THESIS, LEMMA or THEOREM sends it back.
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log))) nil))))
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                          :body "New statement.\n")))
+    (rt-git d "add" "-A")
+    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests"))
+                    "RQ-1: a THESIS statement's text changed; make it CONJECTURE until the owner accepts it again")
+    ;; Back to CONJECTURE: no finding, and no :LAST_EDITED: is asked for.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :logs (list rt-thesis-log) :body "New statement.\n")))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))
+    ;; A new heading needs :CREATED: today, and no :LAST_EDITED:.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :logs (list rt-thesis-log) :body "New statement.\n")
+                                   (replace-regexp-in-string "2026-01-05" "2026-02-01" (rt-logged "RQ-2"))))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))))
+
+(ert-deftest lemmax-thesis-created-required ()
+  :tags '(timeout-30)
+  ;; Bullet 5: :CREATED: stays a property, required in the logged form too.
+  (rt-should-find (rt-run (rt-repo (rt-log-files (list (replace-regexp-in-string ":CREATED: .*\n" "" (rt-logged "RQ-1"))) nil))
+                          "lint" "--no-tests")
+                  "RQ-1: no :CREATED:")
+  ;; An old file still needs :LAST_EDITED:.
+  (rt-should-find (rt-lint (rt-req "RQ-1" :last nil)) "no :LAST_EDITED:"))
+
+(ert-deftest lemmax-thesis-old-and-both ()
+  :tags '(timeout-30)
+  ;; Bullet 6: old dates still read; both a log line and its property is refused.
+  (rt-should-clean (rt-run (rt-repo (rt-math-files (list (rt-proven (rt-lemma "RQ-1")) (rt-conj "RQ-2"))
+                                                   (list (rt-proof "PR-1" "RQ-1"))))
+                           "lint" "--no-tests"))
+  (rt-should-find (rt-run (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                                  :props ":APPROVED:    2026-01-05\n"))
+                                                 nil))
+                          "lint" "--no-tests")
+                  "RQ-1: both a log line into THESIS and :APPROVED:; keep the log line and remove :APPROVED:")
+  (rt-should-find (rt-run (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log)
+                                                                  :props ":PROVEN:      2026-01-06\n"))
+                                                 (list (rt-proof "PR-1" "RQ-1"))))
+                          "lint" "--no-tests")
+                  "RQ-1: both a log line into LEMMA or THEOREM and :PROVEN:"))
+
+(ert-deftest lemmax-thesis-migrate ()
+  :tags '(timeout-60)
+  ;; Bullet 7: migrate moves the dates into Org's log lines, makes each approved
+  ;; CONJECTURE a THESIS, deletes :LAST_EDITED:, and writes the #+TODO: where
+  ;; the file reads it, here its setup file, with #+STARTUP: logdrawer.
+  (let* ((head "#+title: Invented\n#+SETUPFILE: setup.org\n#+STARTUP: overview\n\n")
+         (d (rt-repo (list (cons "setup.org" "#+TODO: CONJECTURE(c) | LEMMA(l) THEOREM(t) REFUTED(r)\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n")
+                           (cons "theory.org" (concat head (rt-proven (rt-lemma "RQ-1")) (rt-conj "RQ-2") (rt-conj "RQ-3" :approved nil)))
+                           (cons "theory.proofs.org" (concat rt-proofs-head (rt-proof "PR-1" "RQ-1")))
+                           (cons "tests.sh" (rt-tests-sh "unit/a"))
+                           (cons "src/x.clj" "(ns x)\n"))
+                     "2026-01-05"))
+         (r (rt-run d "migrate" "theory.org"))
+         (out (nth 1 r)))
+    (should (= 0 (nth 0 r)))
+    (should (string-match-p (regexp-quote (concat "+:LOGBOOK:\n+" rt-lemma-log "+" rt-thesis-log "+:END:\n")) out))
+    (should (string-match-p "^-:APPROVED: \\|^-:PROVEN: \\|^-:LAST_EDITED: " out))
+    (should-not (string-match-p "^\\+:\\(?:APPROVED\\|PROVEN\\|LAST_EDITED\\):" out))
+    (should (string-match-p "^\\+\\* THESIS Title of RQ-2" out))
+    (should-not (string-match-p "^\\+\\* [A-Z]+ Title of RQ-3" out))
+    (should (string-match-p "^\\+#\\+STARTUP: overview logdrawer$" out))
+    (should (string-match-p "^\\+\\+\\+ theories/t/setup.org" out))
+    (should (string-match-p "^\\+#\\+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)$" out))
+    (should (string-match-p "wrote theories/t/theory.org\nwrote theories/t/setup.org"
+                            (nth 1 (rt-run d "migrate" "--write" "theory.org"))))
+    (rt-git d "add" "-A")
+    ;; No lemma's text changed, the migrated file lints clean, and run again
+    ;; migrate changes nothing.
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-06") (rt-run d "lint" "--staged" "--no-tests")))
+    (rt-commit d "migrate" "2026-01-06")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (string-match-p "RQ-2" (rt-list d "--ready")))
+    (should (equal "" (nth 1 (rt-run d "migrate" "theory.org"))))))
+
+(ert-deftest lemmax-thesis-logbook-not-text ()
+  :tags '(timeout-30)
+  ;; Bullet 8: :LOGBOOK: is not a heading's text: a new log line sends nothing back.
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)))
+                                  (list (rt-proof "PR-1" "RQ-1")))
+                    "2026-01-05")))
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log))))
+    (rt-git d "add" "-A")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-06") (rt-run d "lint" "--staged" "--no-tests")))))

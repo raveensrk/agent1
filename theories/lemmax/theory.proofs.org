@@ -983,3 +983,13 @@ lmx --version prints "lmx VERSION"; every help names lmx in its usage and exampl
 :LAST_EDITED: 2026-11-24
 :END:
 A finished sample project with neither document warns twice and lint passes; both committed after the theory, no warning; the bible committed before the theory's last edit warns for the bible alone; an unfinished project gives no missing-document warning. The /docs skill holds LemmaX mode: read the whole project, research the web, write both pages; lmx's help has no bible or manual command.
+
+* OPEN Proof: Thesis and proof are Org states, dated by Org's log
+:PROPERTIES:
+:ID:          01a20e8a-27b3-77ce-87fe-815d385b067f
+:PROVES:      01a20e7b-c7c0-77fc-bc53-bc963ab4843f
+:TEST:        ert/lemmax-thesis-ready ert/lemmax-thesis-log-dates ert/lemmax-thesis-git-edited-day ert/lemmax-thesis-staged-sent-back ert/lemmax-thesis-created-required ert/lemmax-thesis-old-and-both ert/lemmax-thesis-migrate ert/lemmax-thesis-logbook-not-text
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+A THESIS with a log line lints clean and list --ready lists it, as an old approved CONJECTURE still; a LEMMA's accepted and proven days are its newest log lines into THESIS and LEMMA, and a sent-back CONJECTURE's old lines date nothing; a text change committed after the accepted day, or not yet committed, is refused until it is CONJECTURE, and the bible and archive read git's day; a staged text change to a THESIS is refused; :CREATED: is still required, :LAST_EDITED: only in an old file; a log line beside its :APPROVED: or :PROVEN: is refused; migrate writes Org's own log lines, newest first, a THESIS, the setup file's #+TODO: and logdrawer, and the result lints clean with no text changed; a new log line changes no text.

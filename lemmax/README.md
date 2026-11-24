@@ -69,7 +69,9 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 :END:
 ```
 
-- Conjecture states: `CONJECTURE | LEMMA THEOREM REFUTED`; proof states: `OPEN | PASSED`.
+- Conjecture states: `CONJECTURE THESIS | LEMMA THEOREM REFUTED`; proof states: `OPEN | PASSED`.
+  A `THESIS` is a conjecture the owner accepted to prove; `list --ready`
+  lists them.
 - A `LEMMA` has a proof, and every proof of it is `PASSED`. An `OPEN` proof is
   a counterexample until it passes: lint refuses the lemma.
 - A `THEOREM` names the smaller lemmas it builds on in `:USES:`, from the
@@ -103,8 +105,46 @@ A failing test shows a real case where the claim breaks. A passing test shows
 only that the cases tried held. Review asks whether the tests cover the cases
 that matter: no proofs, two proofs, one `PASSED` and one `OPEN`.
 
-- Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
+- Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`, `:APPROVED:`,
+  `:PROVEN:`, `:IMPLEMENTED:`, `:LAST_EDITED:`) still read.
   `lmx migrate FILE` prints the move as a diff; `--write` makes it.
+
+## Dates
+
+<!-- lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f -->
+
+Org's log dates a statement; lmx keeps only `:CREATED:` as its own date.
+
+```org
+#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)
+#+STARTUP: logdrawer
+
+* LEMMA Lint reads states
+:PROPERTIES:
+:ID:          01a20369-38d2-7202-8b53-6e296aaac489
+:CREATED:     2026-11-20
+:END:
+:LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-24 Tue 11:00]
+- State "THESIS"     from "CONJECTURE" [2026-11-23 Mon 09:30]
+:END:
+```
+
+- The accepted day is the newest log line into `THESIS`; the proven day the
+  newest into `LEMMA` or `THEOREM`.
+- The last-edited day is the day of the newest commit that changed the
+  heading's text, or today for a staged or unstaged change: one `git log` a
+  file. The bible and manual warning and `archive` read it.
+- A text change to a `THESIS`, `LEMMA` or `THEOREM` sends it back: lint
+  refuses it until it is `CONJECTURE` and the owner accepts it again.
+- A file in this form, with `THESIS` in its `#+TODO:` or `logdrawer` in its
+  `#+STARTUP:`, needs no `:LAST_EDITED:`. Lint refuses a heading with both a
+  log line and the property it replaces, `:APPROVED:`, `:PROVEN:` or
+  `:IMPLEMENTED:`.
+- `migrate` moves `:APPROVED:` and `:PROVEN:` into log lines dated as they
+  were, newest first, makes each approved `CONJECTURE` a `THESIS`, deletes
+  `:LAST_EDITED:`, writes the `#+TODO:` where the file reads it, a setup file
+  too, and adds `logdrawer` to `#+STARTUP:`.
 
 ## Tasks, notes, axioms and definitions
 
@@ -142,9 +182,9 @@ Lint reads Org's blocking properties and stays the authority: under
 
 <!-- lemma: 01a203a6-a729-7420-980a-1702a0de05ad -->
 
-With `#+STARTUP: logdone lognotestate`, Emacs logs state changes to
-`:LOGBOOK:`. The drawer is not a heading's text, so a log makes nothing
-suspect. "Changed on" lines are still required.
+With `#+STARTUP: logdrawer`, Emacs logs state changes to `:LOGBOOK:`, and lmx
+reads its days (see Dates). The drawer is not a heading's text, so a log makes
+nothing suspect. "Changed on" lines are still required.
 
 ## Archive
 
@@ -290,13 +330,14 @@ may be headings in one file or one lemma per `.org` file, with no header:
 ## Lemma files
 
 A file whose top property drawer has `:ID:` is one lemma, as an org-roam file
-node: `#+title:` is its title, `:STATE:` its OPEN, DONE or DROPPED, and
-headings in it are body, not lemmas. Every rule for a heading lemma holds.
+node: `#+title:` is its title, `:STATE:` its state, as CONJECTURE or THESIS
+(old OPEN, DONE and DROPPED still read), and headings in it are body, not
+lemmas. Every rule for a heading lemma holds.
 
 ```org
 :PROPERTIES:
 :ID:          01a2...
-:STATE:       OPEN
+:STATE:       CONJECTURE
 :CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
