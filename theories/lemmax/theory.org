@@ -500,7 +500,7 @@ Evidence: lmx resolves ids through one table per run; idea from org-roam's =ROAM
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
-- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed 03:33]
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
 - State "THESIS"     from "CONJECTURE" [2026-11-22 Sun]
 :END:
@@ -848,15 +848,17 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** LEMMA Where lmx runs is said                                       :cli:
+** CONJECTURE Where lmx runs is said                                  :cli:
 :PROPERTIES:
 :ID:          01a20336-cb25-779d-9e80-e04a22bd235d
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed 03:33]
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
 :END:
-- The README says: macOS and Linux; Windows through WSL or Git Bash; Emacs 29 or newer, git, Bash, Perl for run_tests
+- The README says: macOS and Linux; Windows through WSL or Git Bash; Emacs 29 or newer, git, Bash; Bash 5 or newer for run_tests
+- Changed on 2026-11-25: run_tests needs Bash 5, not Perl. Asked by the owner on 2026-11-25.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
@@ -1086,7 +1088,7 @@ Evidence: =lemmax--id-link-re= already reads id: links in bodies.
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
-- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed 03:33]
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
 :END:
