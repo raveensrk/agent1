@@ -1760,3 +1760,23 @@ lmx reads repo-wide settings from #+PROPERTY: lines in theories/setup.org, not f
 - The hooks and harness/checks/lemmax_lint.py treat a repo as opted in by its #+PROPERTY: LEMMAX_TESTS lines, not by config.eld alone
 - Asked by the owner on 2026-11-24
 Evidence: Org manual, "In-buffer Settings": #+SETUPFILE: reads another file's settings and may be nested; .dir-locals.el was ruled out because Emacs evaluates it.
+
+** THESIS The created day comes from the id and git                    :lint:
+:PROPERTIES:
+:ID:          01a20ee1-7637-7169-820a-751b3c636847
+:USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
+:CREATED:     2026-11-25
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+A heading's created day is read from its id or from git; lmx keeps no :CREATED:.
+- A UUIDv7 id's first 48 bits are its creation time; lmx reads the day from them in the local zone
+- Any other id, such as RT-5, takes the day of the first commit that added it, or today when no commit has it yet
+- A heading with no day either way sorts last in plan and list
+- lint requires no :CREATED: on statements, proofs, tasks or notes, and drops the rule that a new statement's :CREATED: is today
+- lmx plan and list keep their order: older first, by this day
+- lmx trace ID prints created: DAY; list --json gives created
+- An old :CREATED: still reads, and wins; lmx migrate --write deletes it from every heading, tasks and notes files included
+- Asked by the owner on 2026-11-25
+Evidence: RFC 9562 section 5.7: UUIDv7's first 48 bits are a Unix time in milliseconds; lmx trace already reads commit days from git.
