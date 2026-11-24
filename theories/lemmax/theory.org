@@ -1770,9 +1770,12 @@ A proof's state says whether it shows its statement, and Org logs each change.
 - Asked by the owner on 2026-11-25
 Evidence: a fallacy is an argument that looks valid but is not; the owner's review, not a passing test, makes a proof (README, "A passing test is evidence, not proof").
 
-** CONJECTURE Every test logs its start, end and run time              :tests:
+** THESIS Every test logs its start, end and run time              :tests:
 :PROPERTIES:
 :ID:          01a20f83-6f84-71f0-93ea-566e27f59148
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 03:15]
 :END:
 Every lemmax test run logs, for each test, when it started, when it ended and how long it took.
 - lemmax/run_tests writes one line per test to the log file lemmax/test-times.log: its result, address, start time, end time and run time, as PASS ert/lemmax-math-states 2026-11-25 14:32:05 14:32:07 2.1 s
