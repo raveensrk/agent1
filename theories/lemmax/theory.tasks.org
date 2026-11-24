@@ -92,14 +92,15 @@ lmx says "requirement" about 160 times; it speaks in maths terms instead.
 - In =definitions.org= each term is a =DEFINITION= heading with an =:ID:=, like an =AXIOM=: never proven, a statement may =:USES:= it, and lint checks the file
 - Done on 2026-11-23: d723e92 definitions.org and DEFINITION headings; cb02b33 messages, help and code names; 8f62157 and d30f2ca theory wording, 25 statements proven again.
 
-* TODO Dates come from Org's log
+* DONE Dates come from Org's log
 :PROPERTIES:
 :ID:          01a2091c-8f79-784a-885d-00ba4cb49976
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-change entries and CLOSED:, with org-log-done and org-log-into-drawer. Org logs no approval: decide an APPROVED state or a log note. Old files keep their properties until migrate moves them.
+- Done on 2026-11-24 in 088b0cc, 4512c8b, 51d65a2 and 3fae07b: THESIS state; approved and proven days in :LOGBOOK:; last-edited day from git; :CREATED: kept.
 
 * TODO File keywords become #+PROPERTY: values
 :PROPERTIES:
