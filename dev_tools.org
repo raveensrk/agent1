@@ -584,3 +584,6 @@ Programming Languages to avoid:
 c++, go, c#, dart, kotlin
 
 racket: lack of good libraries
+
+- PULP:  https://pulp-platform.org/index.html
+  License issues
