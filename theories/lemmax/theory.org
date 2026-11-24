@@ -1748,3 +1748,22 @@ Every state change in a :LOGBOOK: carries the date and the time, as Org writes i
 - lmx reads the date and the time
 - Asked by the owner on 2026-11-25
 Evidence: Org writes the time by default when a state changes (org-log-note-headings, state: %t); lemmax--log-re already reads a line with or without a time.
+
+** THESIS A proof is DRAFT, PROOF, FALLACY or MOOT                     :lint:
+:PROPERTIES:
+:ID:          01a20f57-2e78-75b9-a133-53e39e2def6a
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 02:25]
+:END:
+A proof's state says whether it shows its statement, and Org logs each change.
+- Proof states: #+TODO: DRAFT(d) | PROOF(p!) FALLACY(f!) MOOT(m!); Org logs the date and time of each change in :LOGBOOK:
+- DRAFT: being written, or not yet approved by the owner, even when its tests pass
+- PROOF: its tests pass and the owner approved it
+- FALLACY: the owner found it does not show the claim; it is kept, marked wrong
+- MOOT: the statement it proves was refuted
+- A statement is a LEMMA only when every proof of it is PROOF
+- When a PROOF's test fails, the proof stays PROOF and the statement goes back to CONJECTURE until the test passes again
+- Proofs keep no :LAST_EDITED:; lmx migrate --write turns OPEN into DRAFT and PASSED into PROOF, and drops the "Proof:" prefix from titles
+- Asked by the owner on 2026-11-25
+Evidence: a fallacy is an argument that looks valid but is not; the owner's review, not a passing test, makes a proof (README, "A passing test is evidence, not proof").
