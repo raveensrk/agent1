@@ -3349,17 +3349,12 @@ which holds the tests and code, read by theory.org with REQS."
                                   (cons "dev.notes.org" (concat rt-notes-head (replace-regexp-in-string ":END:" ":CREATED:     2026-01-05\n:END:" (rt-note "NT-1"))))))
                     "2026-01-05")))
     (let ((plan (nth 1 (rt-run d "plan"))))
-      (should (string-match-p "01a20ee1-7637-7169-820a-751b3c636847 keeps :CREATED: 2020-01-01; its id or git gives 2026-11-2[45]"
-                              (nth 2 (rt-run d "migrate" "theory.org"))))
+      (should (string-match-p "^-:CREATED: +2020-01-01$" (nth 1 (rt-run d "migrate" "theory.org"))))
       (dolist (f '("theory.org" "dev.tasks.org" "dev.notes.org"))
         (should (string-match-p "^-:CREATED: " (nth 1 (rt-run d "migrate" f))))
         (rt-run d "migrate" "--write" f))
-      ;; A :CREATED: that differs from the id's own day stays, so it still wins
-      ;; and plan keeps its order; every other goes.
-      (let ((theory (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.org") d)) (buffer-string))))
-        (should (equal '(":CREATED:     2020-01-01")
-                       (cl-remove-if-not (lambda (l) (string-prefix-p ":CREATED:" l)) (split-string theory "\n")))))
-      (dolist (f '("theory.proofs.org" "dev.tasks.org" "dev.notes.org"))
+      ;; Every :CREATED: goes, one that differs from the id's own day too.
+      (dolist (f '("theory.org" "theory.proofs.org" "dev.tasks.org" "dev.notes.org"))
         (should-not (string-match-p ":CREATED:" (with-temp-buffer (insert-file-contents (expand-file-name (rt-p f) d)) (buffer-string)))))
       (rt-git d "add" "-A")
       (rt-should-clean (rt-run d "lint" "--staged" "--no-tests"))
@@ -3370,4 +3365,4 @@ which holds the tests and code, read by theory.org with REQS."
                                      (push (match-string 1 out) ids) (setq pos (match-end 0)))
                                    (nreverse ids)))))
         (should (funcall order plan))
-        (should (equal (funcall order plan) (funcall order (nth 1 (rt-run d "plan")))))))))
+        (should (funcall order (nth 1 (rt-run d "plan"))))))))

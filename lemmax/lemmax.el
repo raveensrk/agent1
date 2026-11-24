@@ -2680,47 +2680,21 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
         (cons (if (member new '("LEMMA" "THEOREM")) (lemmax--migrate-proven text) text) proof)))))
 
 ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
-(defvar lemmax--keep-created nil
-  "In migrate, a hash of the ids whose :CREATED: differs from the day their id
-or git gives: migrate keeps those, so the old day still wins and plan keeps
-its order.")
-
-(defun lemmax--drop-created-p (id)
-  "Whether migrate deletes the :CREATED: of the heading with ID."
-  (not (and id lemmax--keep-created (gethash id lemmax--keep-created))))
-
 (defun lemmax--drop-created (text)
   "TEXT with each :CREATED: line of a property drawer deleted: the created
-day comes from the id or git; one `lemmax--keep-created' names stays."
+day comes from the id or git."
   (let ((in nil) drawer out)
     (dolist (l (split-string text "\n"))
       (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t drawer nil) (push l out))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l))
-             (let ((id (cl-some (lambda (d) (and (string-match "\\`[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*\\'" d) (match-string 1 d)))
-                                drawer)))
+             (progn
                (dolist (d (nreverse drawer))
-                 (unless (and (string-match-p "\\`[ \t]*:CREATED:" d) (lemmax--drop-created-p id)) (push d out))))
+                 (unless (string-match-p "\\`[ \t]*:CREATED:" d) (push d out))))
              (setq in nil) (push l out))
             (in (push l drawer))
             (t (push l out))))
     (when in (setq out (append drawer out)))
     (mapconcat #'identity (nreverse out) "\n")))
-
-(defun lemmax--keep-created (content rel)
-  "The ids of CONTENT, file REL, whose :CREATED: differs from the day their
-id or git gives, as a hash; named on stderr."
-  (let* ((info (lemmax--parse content rel))
-         (first (make-hash-table :test #'equal)) (keep (make-hash-table :test #'equal)))
-    (when (cl-some (lambda (r) (and (plist-get r :created) (plist-get r :id) (not (lemmax--uuid7-p (plist-get r :id)))))
-                   (plist-get info :statements))
-      (lemmax--last-changes (list info) t first))
-    (dolist (r (plist-get info :statements))
-      (let* ((id (plist-get r :id)) (c (plist-get r :created))
-             (d (and id (or (lemmax--uuid7-day id) (gethash id first)))))
-        (when (and c d (not (equal c d)))
-          (puthash id t keep)
-          (lemmax--err "lmx: %s: %s keeps :CREATED: %s; its id or git gives %s" rel id c d))))
-    keep))
 
 ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 (defconst lemmax--todo-line "#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)"
@@ -2752,8 +2726,7 @@ of :APPROVED: and :LAST_EDITED:."
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l))
              (setq in nil done-drawer t) (push l out) (setq end-at (length out)))
             ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
-            ((and in (string-match-p "\\`[ \t]*:CREATED:" l)
-                  (lemmax--drop-created-p (and (string-match "^[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*$" chunk) (match-string 1 chunk)))))
+            ((and in (string-match-p "\\`[ \t]*:CREATED:" l)))
             ((and in (string-match "\\`[ \t]*:LAST_EDITED:[ \t]*\\(.*?\\)[ \t]*\\'" l))
              (let ((d (match-string 1 l))) (when (lemmax--day-p d) (setq edited d))))
             ((and in math (string-match "\\`[ \t]*:APPROVED:[ \t]*\\(.*?\\)[ \t]*\\'" l)
@@ -3016,8 +2989,6 @@ in each project's setup.org, and the config deleted."
       (unless (and (file-readable-p path) (string-suffix-p ".org" path))
         (lemmax--err "lmx: %s: not a readable theory .org file" (car files)) (kill-emacs 1))
       (let* ((old (with-temp-buffer (insert-file-contents path) (buffer-string)))
-             ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
-             (lemmax--keep-created (lemmax--keep-created old rel))
              ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
              (setup (lemmax--migrate-setup old path))
              ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
@@ -3613,8 +3584,7 @@ as #+PROPERTY: lines (made with a #+title: and a comment), each :folders entry
 in its folder's setup.org unless that already sets the key, adds
 #+SETUPFILE: ../setup.org to each theories/PROJECT/setup.org, and deletes the
 config.
-Every :CREATED: goes, tasks and notes files too, but one that differs from the
-day its id or git gives, which stays and is named, so plan keeps its order.
+Every :CREATED: goes, tasks and notes files too: the id or git gives the day.
 --links writes :USES: and :PROVES: as [[id:ID][title]] links, not bare ids.")
     (next-id
      "usage: lmx next-id [--project DIR] LETTER

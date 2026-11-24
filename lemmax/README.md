@@ -159,9 +159,7 @@ A heading's created day is read from its id or from git; lmx keeps no
 - `plan` puts older first by this day; a heading with no day sorts last.
   `trace` prints `created: DAY`; `list --json` gives `created`.
 - Lint requires no `:CREATED:`. An old one still reads and wins; `migrate`
-  deletes it from every heading, tasks and notes files too, but keeps one
-  that differs from the day the id or git gives, and names it, so plan keeps
-  its order.
+  deletes it from every heading, tasks and notes files too.
 
 ## Tasks, notes, axioms and definitions
 
