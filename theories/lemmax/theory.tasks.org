@@ -156,13 +156,14 @@ A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test comman
 Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements/*.org to theories/agent1/, and skills/ishikari/requirements.org to theories/ishikari/; each gets a setup.org in place of lemmax/config.eld. Hooks, skills and links follow.
 - Done on 2026-11-24: 22 files moved; theories/lemmax/setup.org holds lmx's settings; agent1 and ishikari files had none, so they have no setup.org yet.
 
-* TODO Move Arcadia's theory into arcadia/theories/
+* DONE Move Arcadia's theory into arcadia/theories/
 :PROPERTIES:
 :ID:          01a20930-1048-7afd-b607-6ad9f307c3cf
 :FOR:         01a20930-0aba-7005-8442-d1dc3269c487
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-25
 :END:
 Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a setup.org, and retire the arcadia_docs repo.
+- Done on 2026-11-25: arcadia 8ae6ffc holds the book in docs/ and the theory in theories/arcadia/, with all 309 commits; notes.org became tasks; arcadia_docs deleted locally and on the server.
 
 * TODO Point :FOLLOWS: at agent1's axioms in their new place
 :PROPERTIES:

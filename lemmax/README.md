@@ -25,7 +25,7 @@ lmx plan                   # the steps to rebuild the project: environment, then
 lmx next-id M              # the next free id, as M-15
 lmx trace RT-3             # one statement's links, tests and commits
 lmx trace --dot | dot -Tsvg > lemmas.svg   # the lemma graph
-lmx list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from any folder
+lmx list -p ~/repos/arcadia -p ~/repos/agent1   # named projects, from any folder
 lmx lint --staged          # what the pre-commit hook runs
 ```
 
