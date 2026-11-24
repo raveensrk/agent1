@@ -778,6 +778,28 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (rt-should-find (rt-env '("LEMMAX_TODAY=2026-11-24") (rt-run d "lint" "--staged" "--no-tests"))
                     "RQ-1: a LEMMA statement's text changed")))
 
+;; lemma: 01a20c8e-872d-75b3-97fe-22718d4b809b
+(ert-deftest lemmax-mended-link-same-text ()
+  :tags '(timeout-60)
+  (let* ((lemma (lambda (link follows)
+                  (replace-regexp-in-string
+                   ":END:" (format ":FOLLOWS: %s::a\n:END:" follows)
+                   (replace-regexp-in-string "Statement\\." (format "See [[file:%s][the doc]]." link) (rt-lemma "RQ-1") t t)
+                   t t)))
+         (d (rt-repo (append (rt-math-files (list (funcall lemma "gone.md" "nowhere/gone.org")) (list (rt-proof "PR-1" "RQ-1")))
+                             (list (cons "theories/t/rules/a.md" "# A\n") (cons "theories/t/rules/b.md" "# B\n")))))
+         (here (concat (file-name-nondirectory (directory-file-name d)) "/theories/t/rules/a.md"))
+         (lint (lambda (link follows)
+                 (rt-set d "theories/t/requirements.org" (concat rt-math-head (funcall lemma link follows)))
+                 (rt-git d "add" "-A")
+                 (rt-env '("LEMMAX_TODAY=2026-11-24") (rt-run d "lint" "--staged" "--no-tests")))))
+    ;; Both named files that are gone; mending them is no change.
+    (rt-should-clean (funcall lint "rules/a.md" here))
+    (rt-commit d "mend")
+    ;; A link to a file that exists, pointed at another, is a change.
+    (rt-should-find (funcall lint "rules/b.md" here) "RQ-1: a LEMMA statement's text changed")))
+
+
 ;;; lemmax_tests.el ends here
 
 ;;;; RT-16

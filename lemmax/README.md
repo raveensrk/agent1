@@ -177,6 +177,11 @@ A move that rewrites a statement's file link to name the same file, as moving
 a theory into `theories/` does, is no text change: `lint --staged` reads each
 relative link as the repo file it names, after the staged renames.
 
+<!-- lemma: 01a20c8e-872d-75b3-97fe-22718d4b809b -->
+
+A link, or a `:FOLLOWS:` path, that named a file now gone may be mended to
+name any file: that is no text change either.
+
 ## SETUPFILE
 
 <!-- lemma: 01a203a6-a766-76c6-9931-753ee75e9318 -->

@@ -55,3 +55,5 @@ The first public release.
   `theories/_site/`. agent1's own theory moved there.
 - A move that rewrites a link to name the same file is no text change: a
   proven statement stays proven.
+- Mending a link, or a `:FOLLOWS:` path, to a file that is gone is no text
+  change either.

@@ -1291,6 +1291,23 @@ A file move that rewrites a statement's link to name the same file changes no st
 - Asked by the owner on 2026-11-24, when moving agent1's theory into theories/ rewrote links in 7 proven statements
 Evidence: git diff --cached -M --name-status gives each rename as R, old path, new path; lemmax--lint-staged already compares each statement's text, HEAD against staged.
 
+** THEOREM A mended link is not a text change                           :lint:
+:PROPERTIES:
+:ID:          01a20c8e-872d-75b3-97fe-22718d4b809b
+:USES:        01a20a84-971d-767f-8a26-c98f6d132b7f
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
+:END:
+A statement's link that named a file now gone, rewritten to name a file, changes no statement's text.
+- When lint --staged compares a statement's text, a HEAD link whose file is gone from the working tree matches any link in the staged text
+- A =:FOLLOWS:= path, named from the folder above the repo, whose file is gone matches any path the same way
+- So moving a theory another repo links, and mending those links in that repo, leaves its proven statements proven
+- A link to a file that exists is compared as before
+- Asked by the owner on 2026-11-24, when moving arcadia_docs' theory met links to agent1's old requirements/ folder
+Evidence: arcadia_docs' theory links ../agent1/requirements/, gone since agent1's move; lemmax--link-norm already reads each link as a repo path.
+
 ** CONJECTURE [#B] An unrun proof is not a counterexample                   :lint:
 :PROPERTIES:
 :ID:          01a205a5-79df-745d-bb66-69f6cae232c6

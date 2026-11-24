@@ -914,10 +914,11 @@ of its own, the :TEST: addresses of its proofs as :verify."
           (pop parts))))
     h))
 
-(defun lemmax--link-norm (text file renames)
+(defun lemmax--link-norm (text file renames &optional broken)
   "TEXT with each relative file link, read from FILE's folder, written as the
 repo path it names, after RENAMES: so a move that rewrites a link to the same
-file leaves the text the same."
+file leaves the text the same.  With BROKEN, a link to a file that is gone is
+written as a NUL, which `lemmax--same-text-p' lets match any link."
   (let ((dir (or (file-name-directory file) "")))
     (replace-regexp-in-string
      "\\(\\[\\[\\(?:file:\\)?\\|\\](\\)\\([^]:)\n#*][^])\n]*?\\)\\([])]\\|::\\)"
@@ -927,8 +928,31 @@ file leaves the text the same."
              m
            (let* ((rel (file-relative-name (expand-file-name path (expand-file-name dir "/r/")) "/r/"))
                   (rel (gethash rel renames rel)))
-             (concat pre "@" rel post)))))
+             (concat pre (if (and broken (not (file-exists-p rel))) "\0" (concat "@" rel)) post)))))
+     (lemmax--follows-norm text broken) t t)))
+
+(defun lemmax--follows-norm (text broken)
+  "TEXT with each :FOLLOWS: path, named from the folder above the repo, written
+as a NUL when BROKEN and the file is gone."
+  (if (not broken)
+      text
+    (replace-regexp-in-string
+     "^:FOLLOWS:.*$"
+     (lambda (line)
+       (replace-regexp-in-string
+        "\\([^ \n:]+\\)::"
+        (lambda (m)
+          (let ((path (match-string 1 m)))
+            (if (file-exists-p (expand-file-name path "..")) m (concat "\0" "::"))))
+        line t t))
      text t t)))
+
+;; lemma: 01a20c8e-872d-75b3-97fe-22718d4b809b
+(defun lemmax--same-text-p (old new)
+  "Whether normalized NEW reads as OLD, each NUL in OLD matching any path."
+  (let ((case-fold-search nil))
+    (string-match-p (concat "\\`" (mapconcat #'regexp-quote (split-string old "\0") "@?[^])\n]*?") "\\'")
+                    new)))
 
 ;; lemma: RT-6
 (defun lemmax--lint-staged (staged head)
@@ -943,9 +967,11 @@ file leaves the text the same."
         (when id
           (if old
               ;; lemma: 01a20a84-971d-767f-8a26-c98f6d132b7f
-              ;; A link rewritten to name the same file, as a move does, is no change.
-              (let ((changed (not (equal (lemmax--link-norm (plist-get old :text) (plist-get old :file) renames)
-                                         (lemmax--link-norm (plist-get r :text) f none)))))
+              ;; A link rewritten to name the same file, as a move does, or
+              ;; mended from a file that is gone, is no change.
+              (let ((changed (not (lemmax--same-text-p
+                                   (lemmax--link-norm (plist-get old :text) (plist-get old :file) renames t)
+                                   (lemmax--link-norm (plist-get r :text) f none)))))
                 (when (and changed done (lemmax--done-p (plist-get old :state)))
                   (lemmax--finding f l id (format "a %s statement's text changed" (plist-get r :state))
                                      (if (lemmax--new-state-p (plist-get r :state))
