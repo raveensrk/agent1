@@ -492,11 +492,12 @@ Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam bac
 - Asked by the owner on 2026-11-22
 Evidence: lmx resolves ids through one table per run; idea from org-roam's =ROAM_ALIASES=.
 
-** CONJECTURE :ROAM_REFS: names where a lemma came from                       :ids:
+** THESIS :ROAM_REFS: names where a lemma came from                       :ids:
 :PROPERTIES:
 :ID:          01a202bc-4cc4-753e-8d51-12d8327dfd9c
 :END:
 :LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 - State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
 - State "THESIS"     from "CONJECTURE" [2026-11-22 Sun]
@@ -1074,11 +1075,12 @@ Evidence: =lemmax--filter= already filters rows by state and section.
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--id-link-re= already reads id: links in bodies.
 
-** CONJECTURE ORDERED children wait for earlier siblings                         :lint:
+** THESIS ORDERED children wait for earlier siblings                         :lint:
 :PROPERTIES:
 :ID:          01a203a6-a716-738e-a95b-18086050d5eb
 :END:
 :LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 - State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
