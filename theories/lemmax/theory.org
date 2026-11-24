@@ -1790,11 +1790,12 @@ Every lemmax test run logs, for each test, when it started, when it ended and ho
 - Asked by the owner on 2026-11-25
 Evidence: run_tests already runs each test in its own process, so it can time each one; the 2026-11-25 speed measurement had to time tests by hand.
 
-** THESIS Org makes new ids through lmx, as UUIDv7                        :ids:
+** LEMMA Org makes new ids through lmx, as UUIDv7                        :ids:
 :PROPERTIES:
 :ID:          01a20fbd-0c87-7750-a4c7-b7b4a65b9e2e
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 04:17]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 04:16]
 :END:
 New ids are UUIDv7, so ids sort by time and hold their created day; in Emacs, Org's own org-id makes them by calling lmx.

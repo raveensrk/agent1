@@ -111,13 +111,14 @@ The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= an
 Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instead of lmx's own config file. Pick the one that keeps settings data, never run.
 - Done on 2026-11-25 in 12c4051: #+SETUPFILE: chosen; theories/setup.org holds repo settings; agent1 migrated.
 
-* TODO Ids come from org-id
+* DONE Ids come from org-id
 :PROPERTIES:
 :ID:          01a2091c-9546-7745-9a9b-4a17dc28b44a
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:LAST_EDITED: 2026-11-24
+:LAST_EDITED: 2026-11-25
 :END:
 New ids come from org-id-new with org-id-method, not lmx's own UUID v7 code. Check that org-id's ts or uuid method keeps ids sortable by time, as v7 does, or say why it falls short.
+- Done on 2026-11-25 in 51d3494: org-id's uuid method calls lmx new-id through org-id-uuid-program; ts and v4 uuid were ruled out, the owner chose no Python.
 
 * TODO Links use an Org add-on where one fits
 :PROPERTIES:
