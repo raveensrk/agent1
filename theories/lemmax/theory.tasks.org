@@ -52,7 +52,7 @@ A fresh agent, given only =lmx plan=, the statements, proofs and axioms, rebuild
 Tests can refute a conjecture but never prove it. Say so in the README and the math table, and say that the owner's or judge's review of each conjecture and proof pair is what makes a lemma hold.
 - Done on 2026-11-24: README bullet and a math table of terms.
 
-* TODO Measure what a small change costs
+* CANCELLED Measure what a small change costs
 :PROPERTIES:
 :ID:          01a205a5-79ea-7217-a6b3-12e41ea07d43
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
@@ -60,6 +60,7 @@ Tests can refute a conjecture but never prove it. Say so in the README and the m
 :LAST_EDITED: 2026-11-24
 :END:
 For the next five small edits, note the steps LemmaX asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
+- Cancelled on 2026-11-24: owner judged it not needed.
 
 * DONE Check the review's conjectures and tasks before approval
 :PROPERTIES:
