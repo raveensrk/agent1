@@ -1445,7 +1445,8 @@ LemmaX extends Org mode; it invents nothing Org or an Org add-on already does.
 - Where nothing in Org does a job, lmx may add its own; the conjecture's Evidence line names the Org manual sections and add-ons searched, and why they fall short
 - Each part lmx invented that Org already covers gets a task in theory.tasks.org to switch to Org's way, one task per part
 - lmx runs as Emacs commands, M-x lemmax-lint and the others, and as the lmx command in the terminal, with the same results
-- Dates come from Org's log: the state-change entries Org writes in the LOGBOOK drawer and the CLOSED: line, not LemmaX's own date properties
+- LemmaX's own date properties are a part lmx invented: a task in theory.tasks.org switches them to Org's log, the LOGBOOK drawer and the CLOSED: line
+- Changed on 2026-11-24: dates move to Org's log in a task, not before this holds; the owner chose it
 - Asked by the owner on 2026-11-23
 Evidence: Org already supplies TODO keywords, tags, priorities, :ID: and id: links, archiving and publishing, which LemmaX uses; org-log-done, org-log-into-drawer and state-change notes record dates; #+PROPERTY: and #+SETUPFILE: set file-wide values.
 
