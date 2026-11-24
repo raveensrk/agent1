@@ -611,15 +611,14 @@ Evidence: the hardening review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: lemmax.el:625 calls format-time-string with UTC set to t; with nil it gives the local day, so 23 Nov 03:46 IST reads as 2026-11-23, not 2026-11-22.
 
-** LEMMA Missing or old Emacs is said plainly                              :cli:
+** CONJECTURE Missing or old Emacs is said plainly                         :cli:
 :PROPERTIES:
 :ID:          01a202f3-85a4-76cd-bf13-05f6e723c5b2
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
-- The launcher prints "lemmax: needs Emacs 29 or newer; found NONE|VERSION" and exits 2
+- The launcher prints "lmx: needs Emacs 29 or newer; found NONE|VERSION" and exits 2
 - The pre-commit and commit-msg hooks refuse the commit with that line, in an opted-in repo
 - Asked by the owner on 2026-11-22
 Evidence: the hardening review of 2026-11-22.
@@ -828,15 +827,14 @@ Evidence: the release review of 2026-11-22.
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
 
-** LEMMA Output is stable, and lint speaks JSON                               :cli:
+** CONJECTURE Output is stable, and lint speaks JSON                          :cli:
 :PROPERTIES:
 :ID:          01a20336-ca8d-75bf-bedc-33da69c29468
 :CREATED:     2026-11-22
-:LAST_EDITED: 2026-11-22
+:LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-22
-:IMPLEMENTED: 2026-11-22
 :END:
-- The README pins the finding line, "lemmax: FILE:LINE: ID: WHY; FIX", and exit codes 0 clean, 1 findings or failure, 2 cannot run
+- The README pins the finding line, "lmx: FILE:LINE: ID: WHY; FIX", and exit codes 0 clean, 1 findings or failure, 2 cannot run
 - lint --json prints {"version": 1, "findings": [{file, line, id, why, fix}]} on stdout, with the same exit code
 - Asked by the owner on 2026-11-22
 Evidence: the release review of 2026-11-22.
