@@ -149,3 +149,11 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 :LAST_EDITED: 2026-11-22
 :END:
 [[file:../../rules/working_style.md][Working style]]
+
+* AXIOM lemmax names the workflow; lmx names the program
+:PROPERTIES:
+:ID:          01a20d23-eb54-73d6-a29f-4796fa7d0327
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:END:
+When the owner says lemmax, or LemmaX, it means the LemmaX project or the workflow. When the owner says lmx, it means lmx, the program that supports the workflow. Terms: [[file:../lemmax/theory.definitions.org::*LemmaX][LemmaX]] and [[file:../lemmax/theory.definitions.org::*lmx][lmx]].
