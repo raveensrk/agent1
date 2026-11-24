@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# run_tests - lemmax's ERT tests, each in its own Emacs, 8 at a time (RT-12);
-# a test tagged alone runs after them, by itself.
+# run_tests - lemmax's ERT tests, each in its own Emacs, as many at a time as
+# the machine has cores, at most 10 (RT-12); a test tagged alone, one that
+# times itself, runs after them, by itself. LEMMAX_TEST_JOBS sets how many.
 #
 # usage: run_tests [--addresses | --only ADDRESS] [-h|--help|help]
 #   (none)          run every test; print PASS, FAIL or TIMEOUT per test, then the totals
@@ -57,11 +58,13 @@ case "${1:-}" in
 *) echo "run_tests: unknown option $1; see run_tests --help" >&2; exit 1 ;;
 esac
 
-# A test tagged alone (the mutation test, which runs 8 Emacs of its own, and the
-# tests that time a run) runs
-# after the rest, by itself, so its load slows no timed test.
+# A test tagged alone, one that times a run, runs after the rest, by itself, so
+# no load slows it. The rest start longest first, so a long one, as the
+# mutation test, does not start last.
+cores="$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 8)"
+jobs="${LEMMAX_TEST_JOBS:-$(( cores < 10 ? cores : 10 ))}"
 list="$(roster)"
-out="$(awk '$3 != "alone" {print $1, $2}' <<<"$list" | xargs -P 8 -n 2 "$0" --one)"
+out="$(awk '$3 != "alone" {print $1, $2}' <<<"$list" | sort -k2,2nr -s | xargs -P "$jobs" -n 2 "$0" --one)"
 while read -r name secs _; do
 	out+=$'\n'"$(run_one "$name" "$secs")"
 done < <(awk '$3 == "alone"' <<<"$list")

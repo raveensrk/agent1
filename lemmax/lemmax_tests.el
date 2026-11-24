@@ -1655,7 +1655,8 @@ run of its finding's why text."
     (mapcar #'cdr (sort (nreverse scored) (lambda (a b) (> (car a) (car b)))))))
 
 (ert-deftest lemmax-mutation-lint-rules ()
-  :tags '(timeout-600 alone)
+  ;; Not alone: it times nothing, so it runs in the pool (its 8 Emacs too).
+  :tags '(timeout-600)
   (let ((rules (rt-lint-rules)) uncovered survived)
     (should (> (length rules) 25))
     ;; With the rule off, at least one test that names it must fail. Each
@@ -1746,7 +1747,7 @@ run of its finding's why text."
                                                    (format "* Note %d\n:PROPERTIES:\n:ID: note-%d\n:END:\nText.\n" i i)))))))
     (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created "2026-11-22" :last "2026-11-22" :body "Changed.\n")))
     (rt-git d "add" "-A")
-    ;; The fastest of 3 runs: run_tests runs 8 tests at once, and their load
+    ;; The fastest of 3 runs: run_tests runs many tests at once, and their load
     ;; alone can push one run past 2 s on a lemmax that takes 0.3 s idle.
     (let (r took)
       (dotimes (_ 3)

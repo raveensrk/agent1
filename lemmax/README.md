@@ -37,7 +37,8 @@ lmx lint --staged          # what the pre-commit hook runs
 - `install` puts a wrapper on PATH as `~/.local/bin/lemmax`; then, in each repo,
   `lmx install-hooks` writes `.git/hooks/pre-commit` and `commit-msg` to
   call it. A hook already there is kept as `NAME.local` and run after.
-- `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, 8 at a time.
+- `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, as many at a time as the machine has cores, at most 10
+  (`LEMMAX_TEST_JOBS` sets it); a test that times itself runs alone after.
   A test runs lemmax in its own Emacs (`rt-run`); a few run the real launcher
   (`rt-run-proc`) for the CLI wrapper and the hooks.
 - A run sets `org-modules` to nil: Org's link modules took half a run to load.

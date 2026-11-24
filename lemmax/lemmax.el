@@ -333,8 +333,12 @@ the newest log line into LEMMA or THEOREM while it is one."
 DIR is the folder `org-attach-dir' gives, relative to ROOT, the repo root;
 PATHS the repo files its attachment: and file: links name; a linked .org
 file is a reference and not among them."
-  (let* ((abs (let ((org-attach-id-dir (expand-file-name org-attach-id-dir)))
-                (ignore-errors (org-attach-dir nil t))))
+  ;; org-attach-dir was 40% of a lint: ask it only of a heading that can have
+  ;; its own folder, by an attachment: link, the :ATTACH: tag or :DIR:. Any
+  ;; other's id folder lies under its file's data/, which lint reads anyway.
+  (let* ((abs (and (string-match-p "attachment:\\|\\`[^\n]*:ATTACH:[^\n]*$\\|^[ \t]*:\\(?:DIR\\|ATTACH_DIR\\):" raw)
+                   (let ((org-attach-id-dir (expand-file-name org-attach-id-dir)))
+                     (ignore-errors (org-attach-dir nil t)))))
          (abs (and abs (expand-file-name abs)))
          (text (lemmax--blank-verbatim raw)) (pos 0) (n 0) files videos)
     (while (string-match lemmax--file-link-re text pos)
