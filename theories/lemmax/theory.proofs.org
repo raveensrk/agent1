@@ -1009,9 +1009,11 @@ A LEMMA links a doc; moving the doc and the theory and rewriting the link to the
 :PROPERTIES:
 :ID:          01a20c8e-872d-75b3-97fe-22729589e39b
 :PROVES:      01a20c8e-872d-75b3-97fe-22718d4b809b
-:TEST:        ert/lemmax-mended-link-same-text
+:TEST:        ert/lemmax-mended-link-same-text ert/lemmax-history-mended-link
 :END:
 :LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-25 Wed 04:54]
+- State "DRAFT"      from "PROOF"      [2026-11-25 Wed 04:54]
 - State "PROOF"      from "DRAFT"      [2026-11-24 Tue]
 :END:
 A LEMMA links a file and follows a path, both gone; mending both to name files that exist lints clean; a link to a file that exists, pointed at another, is still refused.
