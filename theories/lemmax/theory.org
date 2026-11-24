@@ -1585,13 +1585,12 @@ The program's name is lmx, so it is never confused with LemmaX, the workflow.
 - Asked by the owner on 2026-11-24
 Evidence: no lmx is on this PATH; a web search on 2026-11-24 found one tool of the name, LocalMaxxing's benchmark lmx from npm, which this machine does not have; lex is the Unix lexer generator, /usr/bin/lex here, so it was not taken.
 
-** LEMMA An agent writes the bible and the manual; lmx only checks them :skill:
+** CONJECTURE An agent writes the bible and the manual; lmx only checks them :skill:
 :PROPERTIES:
 :ID:          01a20d28-cb41-760a-a477-e1704807a2a8
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-24
-:PROVEN:      2026-11-24
 :END:
 A LemmaX project's bible and manual are written by an AI agent, never by lmx; lmx is for the LemmaX workflow only.
 - The owner runs the /docs skill by hand; its agent writes theories/PROJECT/PROJECT.bible.html and theories/PROJECT/PROJECT.manual.html, both tracked in git
@@ -1599,17 +1598,19 @@ A LemmaX project's bible and manual are written by an AI agent, never by lmx; lm
 - Before writing, the agent researches the web: how good design documents and manuals are written, the docs of each library the project uses, and how similar tools explain the same job; each source it relies on is cited
 - lmx has no command that writes either document
 - lmx lint warns, and never refuses, when a finished project has no bible or no manual
-- lmx lint warns when a statement's :LAST_EDITED: is later than the last commit of the bible or the manual, naming the document
+- lmx lint warns when a statement's last-edited day is later than the last commit of the bible or the manual, naming the document
+- Changed on 2026-11-24: the last-edited day, from git, replaces :LAST_EDITED:
 - Asked by the owner on 2026-11-24
 Evidence: skills/docs/SKILL.md already writes a book-style design document by hand and runs only when asked; lmx already reads each statement's :LAST_EDITED: and git's commit dates.
 
-** CONJECTURE Thesis and proof are Org states, dated by Org's log       :lint:
+** THEOREM Thesis and proof are Org states, dated by Org's log       :lint:
 :PROPERTIES:
 :ID:          01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
 :END:
 A statement's acceptance and proof are Org TODO states, and Org's LOGBOOK dates them; lmx keeps only :CREATED: as its own date.
 - States: #+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!), with #+STARTUP: logdrawer; Emacs writes each change into the heading's :LOGBOOK: as - State "THESIS" from "CONJECTURE" [2026-11-24 Tue 11:00]

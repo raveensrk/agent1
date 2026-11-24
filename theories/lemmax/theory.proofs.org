@@ -984,7 +984,7 @@ lmx --version prints "lmx VERSION"; every help names lmx in its usage and exampl
 :END:
 A finished sample project with neither document warns twice and lint passes; both committed after the theory, no warning; the bible committed before the theory's last edit warns for the bible alone; an unfinished project gives no missing-document warning. The /docs skill holds LemmaX mode: read the whole project, research the web, write both pages; lmx's help has no bible or manual command.
 
-* OPEN Proof: Thesis and proof are Org states, dated by Org's log
+* PASSED Proof: Thesis and proof are Org states, dated by Org's log
 :PROPERTIES:
 :ID:          01a20e8a-27b3-77ce-87fe-815d385b067f
 :PROVES:      01a20e7b-c7c0-77fc-bc53-bc963ab4843f
