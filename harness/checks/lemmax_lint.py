@@ -5,7 +5,7 @@
 
 For each candidate .org file whose header has #+LEMMAX_TESTS:, or in a repo
 with lemmax/config.eld or a tracked *.setup file holding #+LEMMAX_TESTS:, this runs
-`lemmax lint --no-tests FILE` and turns each finding into path:line: message.
+`lmx lint --no-tests FILE` and turns each finding into path:line: message.
 --no-tests, because the test command may take 60 s, too slow for every edit.
 An org file that does not opt in gets no finding.
 
@@ -17,9 +17,9 @@ import re
 import subprocess
 import sys
 
-LEMMAX = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "lemmax", "lemmax")
+LEMMAX = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "lemmax", "lmx")
 OPTED = re.compile(r"^#\+LEMMAX_TESTS:", re.MULTILINE)
-FINDING = re.compile(r"^lemmax: ([^:]+):(\d+): (.*)$")
+FINDING = re.compile(r"^lmx: ([^:]+):(\d+): (.*)$")
 
 files = sys.argv[1:]
 if not files and not sys.stdin.isatty():

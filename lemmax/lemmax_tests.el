@@ -10,7 +10,7 @@
 (require 'json)
 
 (defconst rt-dir (file-name-directory (or load-file-name buffer-file-name)))
-(defconst rt-bin (expand-file-name "lemmax" rt-dir))
+(defconst rt-bin (expand-file-name "lmx" rt-dir))
 (defconst rt-agent1 (file-name-as-directory (expand-file-name ".." rt-dir)))
 
 ;;;; Helpers
@@ -107,7 +107,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
               (let ((standard-output out) (case-fold-search nil))
                 (condition-case e
                     (progn (lemmax-main (copy-sequence args)) 0)
-                  (error (with-current-buffer err (insert (format "lemmax: %s\n" (error-message-string e)))) 1)))))))
+                  (error (with-current-buffer err (insert (format "lmx: %s\n" (error-message-string e)))) 1)))))))
     ;; Buffers lemmax opened (archive) are not left for the next call.
     (dolist (b (buffer-list))
       (unless (or (memq b buffers) (eq b out) (eq b err))
@@ -181,8 +181,8 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
       ;; The real launcher, in a process: the CLI wrapper is part of what this shows.
       (let ((r (apply #'rt-run-proc d args)))
         (should (= 0 (nth 0 r)))
-        (should (string-match-p "^usage: lemmax" (nth 1 r)))
-        (should (string-match-p "example: lemmax" (nth 1 r)))))
+        (should (string-match-p "^usage: lmx" (nth 1 r)))
+        (should (string-match-p "example: lmx" (nth 1 r)))))
     (should-not (string-match-p "^  lint \\[" (nth 1 (rt-run d "--help"))))))
 
 (ert-deftest lemmax-cli-long-help ()
@@ -194,16 +194,16 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
 (ert-deftest lemmax-cli-bare-call ()
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))))))
     (should (= 0 (nth 0 r)))
-    (should (string-match-p "^usage: lemmax COMMAND" (nth 1 r)))))
+    (should (string-match-p "^usage: lmx COMMAND" (nth 1 r)))))
 
 (ert-deftest lemmax-cli-dashdash-help ()
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "--help")))
     (should-not (string-match-p "GNU Emacs" (nth 1 r)))
-    (should (string-match-p "^usage: lemmax" (nth 1 r)))))
+    (should (string-match-p "^usage: lmx" (nth 1 r)))))
 
 (ert-deftest lemmax-cli-finding-line ()
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1" :noid t))) "lint" "--no-tests")))
-    (should (string-match-p "^lemmax: theories/t/theory\\.org:6: -: no :ID:; add :ID:" (nth 2 r)))))
+    (should (string-match-p "^lmx: theories/t/theory\\.org:6: -: no :ID:; add :ID:" (nth 2 r)))))
 
 (ert-deftest lemmax-cli-exit-codes ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
@@ -616,8 +616,8 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
   (let ((text (with-temp-buffer
                 (insert-file-contents (expand-file-name "skills/add-requirement/SKILL.md" rt-agent1))
                 (buffer-string))))
-    (should (string-match-p "lemmax list --json" text))
-    (should (string-match-p "lemmax next-id" text))))
+    (should (string-match-p "lmx list --json" text))
+    (should (string-match-p "lmx next-id" text))))
 
 ;;;; 01a2090e-8591-756c-a9f1-dd473d9c3ce4: any heading has attachments, as org-attach keeps them
 
@@ -688,7 +688,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (rt-set d "theory.org" (concat rt-math-head (rt-attach-conj "RQ-1" "ATTACH" "See [[attachment:a.png]], [[file:pics/b.svg]], [[file:docs/c.pdf]], [[file:clip.mp4]].\n")))
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: it links the video theories/t/clip.mp4; publish shows a video only from a block")))
 
-;;;; 01a20927-9aac-7817-8e46-8635aa0ae127: lemmax book writes the theory as one HTML file
+;;;; 01a20927-9aac-7817-8e46-8635aa0ae127: lmx book writes the theory as one HTML file
 
 ;; lemma: 01a20927-9aac-7817-8e46-8635aa0ae127
 (ert-deftest lemmax-book-one-file ()
@@ -754,7 +754,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (let ((r (rt-run d "lint" "--no-tests")))
       (should (= 1 (nth 0 r)))
       (dolist (f '("notes/x.org" "theory.org" "docs/y.org"))
-        (should (string-match-p (concat "^lemmax: " (regexp-quote f) ":1: -: a theory file outside theories/, and every repo keeps its theory there") (nth 2 r)))))))
+        (should (string-match-p (concat "^lmx: " (regexp-quote f) ":1: -: a theory file outside theories/, and every repo keeps its theory there") (nth 2 r)))))))
 
 ;;;; 01a20caa-4660-77a9-bf48-db8448f75366: a theory file is named theory.org
 
@@ -777,7 +777,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
                                    ("theories/t/requirements.proofs.org" . "theory.proofs.org")
                                    ("theories/t/requirements_archive.org" . "theory_archive.org")
                                    ("requirements.org" . "theory.org")))
-        (should (string-match-p (concat "^lemmax: " (regexp-quote f) ":1: -: a theory file named requirements, "
+        (should (string-match-p (concat "^lmx: " (regexp-quote f) ":1: -: a theory file named requirements, "
                                         "and every theory file is named theory; rename it " (regexp-quote to) "$")
                                 (nth 2 r))))
       (should-not (string-match-p "gui\\.org" (nth 2 r))))))
@@ -895,7 +895,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
   (should (string-match-p "lemmax/\\'" rt-dir))
   (let ((r (rt-sh rt-dir rt-bin "--help")))
     (should (= 0 (nth 0 r)))
-    (should (string-match-p "^usage: lemmax COMMAND" (nth 1 r))))
+    (should (string-match-p "^usage: lmx COMMAND" (nth 1 r))))
   (should-not (file-exists-p (expand-file-name "harness/reqtrace" rt-agent1)))
   (dolist (f '("harness/githooks/pre-commit" "harness/githooks/commit-msg" "harness/self_check"
                "harness/checks/lemmax_lint.py" "skills/add-requirement/SKILL.md"))
@@ -922,7 +922,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (should-not (equal (nth 1 a) (nth 1 b)))
     (should-not (string> (substring (nth 1 a) 0 13) (substring (nth 1 b) 0 13)))
     (should (= 1 (nth 0 (rt-run d "new-id" "extra"))))
-    (should (string-match-p "^usage: lemmax new-id" (nth 1 (rt-run d "new-id" "--help"))))))
+    (should (string-match-p "^usage: lmx new-id" (nth 1 (rt-run d "new-id" "--help"))))))
 
 ;;;; 01a20014-e361-7827-b2a8-d3b2ded3e0b1
 
@@ -1393,7 +1393,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
          (bin (rt-bin-dir "bash" "dirname" "readlink" "git")))
     (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run-proc d "list"))))
       (should (= 2 (nth 0 r)))
-      (should (string-match-p "lemmax: needs Emacs 29 or newer; found none on PATH" (nth 2 r))))))
+      (should (string-match-p "lmx: needs Emacs 29 or newer; found none on PATH" (nth 2 r))))))
 
 (ert-deftest lemmax-launcher-old-emacs ()
   (let* ((d (rt-repo (rt-files (rt-req "RQ-1"))))
@@ -1406,7 +1406,7 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
     (set-file-modes (expand-file-name "emacs" bin) #o755)
     (let ((r (rt-env (list (concat "PATH=" bin)) (rt-run-proc d "list"))))
       (should (= 2 (nth 0 r)))
-      (should (string-match-p "lemmax: needs Emacs 29 or newer; found 28.2" (nth 2 r))))))
+      (should (string-match-p "lmx: needs Emacs 29 or newer; found 28.2" (nth 2 r))))))
 
 ;;;; 01a202f3-86d9-7db2-a0dc-accec28dfe29 and 01a202f3-863b-7c04-9728-0c9dd9346002: CI
 
@@ -1419,8 +1419,8 @@ lemmax's state is reset first; kill-emacs is caught; message goes to stderr."
   (let ((w (rt-workflow)))
     (should (string-match-p "^on:\n  push:\n  pull_request:" w))
     (should (string-match-p "run: lemmax/run_tests$" w))
-    (should (string-match-p "run: lemmax/lemmax lint$" w))
-    (should-not (string-match-p "lemmax lint --no-tests" w))))
+    (should (string-match-p "run: lemmax/lmx lint$" w))
+    (should-not (string-match-p "lmx lint --no-tests" w))))
 
 (ert-deftest lemmax-ci-matrix ()
   (let ((w (rt-workflow)))
@@ -1722,7 +1722,7 @@ run of its finding's why text."
     (dolist (f '("nope.org" "src/x.clj"))
       (let ((r (rt-run d "lint" "--no-tests" f)))
         (should (= 1 (nth 0 r)))
-        (should (string-match-p (concat "lemmax: " (regexp-quote (rt-p f)) ": not a tracked \\.org file") (nth 2 r)))))))
+        (should (string-match-p (concat "lmx: " (regexp-quote (rt-p f)) ": not a tracked \\.org file") (nth 2 r)))))))
 
 ;;;; 01a20336-c611-73c8-bb70-4a8e70e675d1: agent1's own rules are config
 
@@ -1785,7 +1785,7 @@ run of its finding's why text."
   (rt-load)
   (let ((r (rt-run (rt-tmp) "--version")))
     (should (= 0 (nth 0 r)))
-    (should (equal (format "lemmax %s\n" lemmax-version) (nth 1 r)))
+    (should (equal (format "lmx %s\n" lemmax-version) (nth 1 r)))
     (should (string-match-p "\\`[0-9]+\\.[0-9]+\\.[0-9]+\\'" lemmax-version))))
 
 (ert-deftest lemmax-licence-and-changelog ()
@@ -1808,7 +1808,7 @@ run of its finding's why text."
     ;; File order: reqs/again.org sorts before theory.org.
     (should (string-match-p "\\`RQ-1 OPEN Second\n\\(?:.*\n\\)*RQ-1 OPEN First" (nth 1 r)))
     (should-not (string-match-p "#\\+title" (nth 1 r)))
-    (should (string-match-p "lemmax: RQ-1 is used 2 times" (nth 2 r)))
+    (should (string-match-p "lmx: RQ-1 is used 2 times" (nth 2 r)))
     (should (= 0 (nth 0 (rt-run d "trace" "RQ-2"))))))
 
 (ert-deftest lemmax-list-duplicates ()
@@ -1889,20 +1889,20 @@ run of its finding's why text."
 (ert-deftest lemmax-exit-codes ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
     (should (= 0 (nth 0 (rt-run d "lint" "--no-tests"))))
-    (should (string-match-p "\\`lemmax: theories/t/theory\\.org:[0-9]+: RQ-1: [^;]+; .+\n\\'"
+    (should (string-match-p "\\`lmx: theories/t/theory\\.org:[0-9]+: RQ-1: [^;]+; .+\n\\'"
                             (progn (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created nil)))
                                    (nth 2 (rt-run d "lint" "--no-tests")))))
     (should (= 1 (nth 0 (rt-run d "lint" "--no-tests"))))
     (should (= 1 (nth 0 (rt-run d "lint" "--bogus"))))
     (should (= 1 (nth 0 (rt-run d "nonsense"))))))
 
-;;;; 01a20336-c6c6-7ac0-aea1-6d5ff12a8fea: lemmax install-hooks
+;;;; 01a20336-c6c6-7ac0-aea1-6d5ff12a8fea: lmx install-hooks
 
 (defun rt-hook-env ()
   "PATH with lemmax on it, as a user's install leaves it."
   (let ((bin (expand-file-name "bin" (rt-tmp))))
     (make-directory bin t)
-    (make-symbolic-link rt-bin (expand-file-name "lemmax" bin))
+    (make-symbolic-link rt-bin (expand-file-name "lmx" bin))
     (list (concat "PATH=" bin ":" (getenv "PATH")))))
 
 (defun rt-real-commit (dir msg)
@@ -2153,7 +2153,7 @@ run of its finding's why text."
     (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :state "DONE" :implemented "2026-01-06" :verify "unit/a")))
     (should (string-match-p "^\\+:PROVEN:      2026-01-06$" (nth 1 (rt-run d "migrate" "theory.org"))))))
 
-;;;; 01a20369-391b-768e-8c98-180facc0ff77: lemmax migrate
+;;;; 01a20369-391b-768e-8c98-180facc0ff77: lmx migrate
 
 (defun rt-old-files ()
   (rt-files (rt-done "RQ-1") (rt-req "RQ-2" :state "DONE" :implemented "2026-01-06" :needs "RQ-1"
@@ -2440,7 +2440,7 @@ run of its finding's why text."
     (should (string-match-p "Suspect: none" (nth 1 (rt-run d "trace"))))
     (should-not (string-match-p "State \"DONE\"" (nth 1 (rt-run d "trace" "RQ-1"))))))
 
-;;;; 01a203a6-a73d-7772-a4cb-fc4917fefd50: lemmax archive
+;;;; 01a203a6-a73d-7772-a4cb-fc4917fefd50: lmx archive
 
 (ert-deftest lemmax-archive ()
   :tags '(timeout-60)
@@ -2469,7 +2469,7 @@ run of its finding's why text."
     (rt-set d "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2")))
     (rt-should-find (rt-run d "lint" "--no-tests") "used twice")))
 
-;;;; 01a203a6-a752-75ed-8359-a8147e95a33d: lemmax publish
+;;;; 01a203a6-a752-75ed-8359-a8147e95a33d: lmx publish
 
 (ert-deftest lemmax-publish ()
   :tags '(timeout-60)

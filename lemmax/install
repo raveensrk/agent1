@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# install - put lemmax on PATH as ~/.local/bin/lemmax, a wrapper script, not a link.
+# install - put lmx on PATH as ~/.local/bin/lmx, a wrapper script, not a link,
+# and lemmax beside it, the old name, as an alias of the same checkout.
 # usage: lemmax/install [-h|--help]
 # example: bash lemmax/install
 # lemma: 01a1ff25-116d-73f1-a45e-dd77e482a983
+# lemma: 01a20d0f-f245-7678-b438-511c148c4eb7
 set -euo pipefail
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 mkdir -p "$HOME/.local/bin"
-printf '#!/usr/bin/env bash\n# lemmax: written by %s/install; runs that checkout.\nexec "%s/lemmax" "$@"\n' "$here" "$here" > "$HOME/.local/bin/lemmax"
-chmod +x "$HOME/.local/bin/lemmax"
+for name in lmx lemmax; do
+	printf '#!/usr/bin/env bash\n# %s: written by %s/install; runs that checkout.\nexec "%s/lmx" "$@"\n' "$name" "$here" "$here" > "$HOME/.local/bin/$name"
+	chmod +x "$HOME/.local/bin/$name"
+done
 # The old name stops working: lemmax replaced reqtrace.
 rm -f "$HOME/.local/bin/reqtrace"
-echo "installed: $HOME/.local/bin/lemmax"
+echo "installed: $HOME/.local/bin/lmx (alias: $HOME/.local/bin/lemmax)"

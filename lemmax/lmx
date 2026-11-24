@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# lemmax - lint, trace and list a repo's org requirements (RT-1).
-# usage: lemmax COMMAND [ARGS]
+# lmx - lint, trace and list a repo's org requirements (RT-1).
+# usage: lmx COMMAND [ARGS]
 # -h and --help print the short help, "help" the long one; lemmax.el answers them.
 # The work is in lemmax.el, run by Emacs in batch; this file only starts it.
-# example: lemmax list --ready
+# example: lmx list --ready
 # lemma: 01a1ff25-116d-73f1-a45e-dd77e482a983
 src="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 # lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
 # Exit 2 when Emacs is missing; lemmax.el says so for an old one.
 if ! command -v emacs >/dev/null 2>&1; then
-	echo "lemmax: needs Emacs 29 or newer; found none on PATH" >&2
+	echo "lmx: needs Emacs 29 or newer; found none on PATH" >&2
 	exit 2
 fi
 exec emacs -Q --script "$src/lemmax.el" -- "$@"

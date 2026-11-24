@@ -25,9 +25,9 @@ The first public release.
 - Reads only files that can hold lemmas, once a run.
 - `list` and `trace` run no repo command unless given `--run-tests`.
 - `#+SETUPFILE:` keywords; footnote definitions checked.
-- `lemmax publish` and `lemmax archive`; id: links in link properties and `migrate --links`;
+- `lmx publish` and `lmx archive`; id: links in link properties and `migrate --links`;
   `:ORDERED:` and `:BLOCKER:` read by lint; `:LOGBOOK:` is not text.
-- `lemmax plan` prints the steps to rebuild a project, one lemma at a time,
+- `lmx plan` prints the steps to rebuild a project, one lemma at a time,
   in `:USES:` order; ties by priority, then age, then id; `--json` too.
 - Coverage: with `:coverage-required-from DAY`, lint refuses code above a
   file's first `lemma:` marker in files changed from DAY; `list --uncovered`
@@ -40,7 +40,7 @@ The first public release.
   which need no proof; a commit may name a task id.
 - The math names: conjectures (`CONJECTURE | LEMMA THEOREM REFUTED`),
   proofs in `FILE.proofs.org` (`OPEN | PASSED`, `:PROVES:`, `:TEST:`),
-  `:USES:` for theorems, and `lemmax migrate`. Old files still read.
+  `:USES:` for theorems, and `lmx migrate`. Old files still read.
 - `:VERIFY:`, `:NEEDS:` and `:USES:` are no longer part of a requirement's
   text: changing them no longer reopens a DONE requirement or makes its
   children suspect.
@@ -49,7 +49,7 @@ The first public release.
   `files:`, `list --json` a `files` array.
 - `publish` shows images in place, copies linked files and writes video
   blocks as `<video>`.
-- `lemmax book` writes the theory as one self-contained HTML file.
+- `lmx book` writes the theory as one self-contained HTML file.
 - `theories/`: every repo keeps its theory there, a subfolder per project;
   lint refuses a theory file outside it; `publish` and `book` write to
   `theories/_site/`. agent1's own theory moved there.
@@ -59,3 +59,5 @@ The first public release.
   change either.
 - Lint refuses a theory file named `requirements*.org`; every repo names it
   `theory.org`.
+- The program is `lmx`, so it is never confused with LemmaX, the workflow;
+  `lemmax` stays on PATH as an alias.

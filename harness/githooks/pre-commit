@@ -2,10 +2,10 @@
 # pre-commit - refuse staged requirement changes that break requirements.org (RT-11).
 #
 # In a repo whose requirements opt in (#+LEMMAX_TESTS: or lemmax/config.eld), runs
-# lemmax lint --staged --no-tests. Every other repo passes at once: a
+# lmx lint --staged --no-tests. Every other repo passes at once: a
 # git grep decides, and Emacs never starts. Then it runs the repo's own
 # .git/hooks/pre-commit, which the global core.hooksPath hides.
-# LEMMAX names another lemmax, for tests.
+# LEMMAX names another lmx, for tests.
 #
 # usage: pre-commit [-h|--help|help]   (git passes no arguments)
 # Bypass once, deliberately: git commit --no-verify
@@ -15,7 +15,7 @@ case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 if git grep --cached -q -E '^#\+LEMMAX_TESTS:' -- '*.org' '*.setup' 2>/dev/null \
 	|| git cat-file -e :lemmax/config.eld 2>/dev/null; then
-	"${LEMMAX:-$here/../../lemmax/lemmax}" lint --staged --no-tests || exit 1
+	"${LEMMAX:-$here/../../lemmax/lmx}" lint --staged --no-tests || exit 1
 fi
 own="$(git rev-parse --git-dir)/hooks/pre-commit"
 if [ -x "$own" ] && [ "$(readlink -f "$own")" != "$(readlink -f "$0")" ]; then

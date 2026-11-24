@@ -35,4 +35,4 @@ jobs:
       - name: tests
         run: lemmax/run_tests
       - name: lint
-        run: lemmax/lemmax lint
+        run: lemmax/lmx lint

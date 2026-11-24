@@ -1,13 +1,13 @@
 ;;; lemmax.el --- lint, trace and list org theories  -*- lexical-binding: t; -*-
 
-;; Run through the launcher: lemmax/lemmax COMMAND ...
+;; Run through the launcher: lemmax/lmx COMMAND ...
 ;; Theory: theories/lemmax/theory.org (RT-1 to RT-15).
 ;; It reads files and git, and writes no file but the two hooks install-hooks puts in place.
 
 ;; lemma: 01a202f3-85a4-76cd-bf13-05f6e723c5b2
 ;; The floor is Emacs 29 with its Org 9.6; checked before anything else loads.
 (when (< emacs-major-version 29)
-  (message "lemmax: needs Emacs 29 or newer; found %s" emacs-version)
+  (message "lmx: needs Emacs 29 or newer; found %s" emacs-version)
   (kill-emacs 2))
 
 ;; lemma: RT-1
@@ -92,8 +92,8 @@ test turns each rule off so, to show a test fails without it."
   (if lemmax--json-mode
       (push (list (cons 'file file) (cons 'line line) (cons 'id (or id :null)) (cons 'why why) (cons 'fix fix))
             lemmax--json-findings)
-    ;; The stable line: lemmax: FILE:LINE: ID: WHY; FIX
-    (lemmax--err "lemmax: %s:%s: %s: %s; %s" file line (or id "-") why fix)))
+    ;; The stable line: lmx: FILE:LINE: ID: WHY; FIX
+    (lemmax--err "lmx: %s:%s: %s: %s; %s" file line (or id "-") why fix)))
 
 ;;;; Git
 
@@ -502,7 +502,7 @@ a FOLDER that holds no tracked file."
       (let ((res (lemmax--config-read text))
             (tracked (lemmax--lines (lemmax--git-out "ls-files"))))
         (dolist (p (cdr res))
-          (lemmax--finding lemmax-config-file 1 nil p "see lemmax help for the config's form"))
+          (lemmax--finding lemmax-config-file 1 nil p "see lmx help for the config's form"))
         (dolist (f (car res))
           (unless (or (string-empty-p (car f))
                       (cl-some (lambda (p) (string-prefix-p (car f) p)) tracked))
@@ -688,7 +688,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
 ;;;; lint (RT-4, RT-5, RT-6)
 
 (defun lemmax--uuid7-p (id)
-  "Whether ID is a lower-case UUID v7, the id lemmax new-id makes."
+  "Whether ID is a lower-case UUID v7, the id lmx new-id makes."
   (string-match-p "\\`[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7[0-9a-f]\\{3\\}-[89ab][0-9a-f]\\{3\\}-[0-9a-f]\\{12\\}\\'" id))
 
 (defun lemmax--lint-file-rules (infos only)
@@ -703,7 +703,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
           (when (string-match-p "\\`[A-Z]+-[0-9]+\\_>" (plist-get r :title))
             (lemmax--finding f l id "the heading text starts with an id"
                                "keep the id in :ID: only"))
-          (cond ((null id) (lemmax--finding f l nil "no :ID:" "add :ID:, as RQ-1 or a UUID v7 from lemmax new-id"))
+          (cond ((null id) (lemmax--finding f l nil "no :ID:" "add :ID:, as RQ-1 or a UUID v7 from lmx new-id"))
                 ((string-match-p "[ \t]" id)
                  (lemmax--finding f l id "an id has no spaces" "keep the id one word, as RQ-1 or a UUID v7"))
                 ((not (or (string-match-p "\\`[A-Z]+-[0-9]+\\'" id) (lemmax--uuid7-p id)))
@@ -729,7 +729,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
             (lemmax--finding f l id "both :PROVEN: and :IMPLEMENTED:" "keep :PROVEN: and remove :IMPLEMENTED:"))
           (when (and (equal (plist-get r :date-key) "PROVEN") (not (lemmax--new-state-p state)) (not (lemmax--proof-p r)))
             (lemmax--finding f l id (format "%s with :PROVEN:" (or state "no state"))
-                             "only a LEMMA or THEOREM has :PROVEN:; use :IMPLEMENTED:, or run lemmax migrate"))
+                             "only a LEMMA or THEOREM has :PROVEN:; use :IMPLEMENTED:, or run lmx migrate"))
           (dolist (p '(:created :last-edited :approved :implemented :reviewed))
             (let ((v (plist-get r p)))
               (when (and v (not (lemmax--day-p v)))
@@ -857,7 +857,7 @@ of its own, the :TEST: addresses of its proofs as :verify."
         (lemmax--finding f l id "PASSED is a proof's state" "make it LEMMA, or move the proof to a .proofs.org file"))
       (when (and (lemmax--new-state-p state) (plist-get r :own-verify))
         (lemmax--finding f l id (format "a %s has no :VERIFY:; its tests are in its proofs" state)
-                         "move the addresses to a proof's :TEST:; lemmax migrate does it"))
+                         "move the addresses to a proof's :TEST:; lmx migrate does it"))
       (when (member state '("LEMMA" "THEOREM"))
         (let ((proofs (plist-get r :proofs)))
           (if (null proofs)
@@ -1000,7 +1000,7 @@ as a NUL when BROKEN and the file is gone."
     (let ((bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a)
                                              (not (member a '("--staged" "--no-tests" "--json")))))
                            args)))
-      (when bad (lemmax--err "lemmax: unknown option %s; see lemmax lint --help" bad) (kill-emacs 1)))
+      (when bad (lemmax--err "lmx: unknown option %s; see lmx lint --help" bad) (kill-emacs 1)))
     (lemmax--lint-config staged)
     (let* ((infos (lemmax--opted (if staged (lemmax--rev-files "") (lemmax--worktree-files))))
            ;; lemma: 01a20336-c583-720a-b661-c9b5a5dec1a4
@@ -1011,12 +1011,12 @@ as a NUL when BROKEN and the file is gone."
                                 (let ((rel (file-relative-name (file-truename (expand-file-name f (or lemmax--cwd default-directory)))
                                                                (file-truename default-directory))))
                                   (unless (member rel tracked)
-                                    (lemmax--err "lemmax: %s: not a tracked .org file" f)
+                                    (lemmax--err "lmx: %s: not a tracked .org file" f)
                                     (kill-emacs 1))
                                   rel))
                               only))))
       (if (null infos)
-          (lemmax--err "lemmax: no theory file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
+          (lemmax--err "lmx: no theory file here has #+LEMMAX_TESTS: or an entry in lemmax/config.eld")
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
         (lemmax--lint-footnotes infos only staged)
@@ -1080,7 +1080,7 @@ file over 5 MB is a warning that fails nothing."
                                  "git add the file, or fix the link")
               (let ((size (file-attribute-size (file-attributes x))))
                 (when (and size (> size (* 5 1024 1024)))
-                  (lemmax--err "lemmax: %s:%d: %s: warning: %s is %.1f MB, over 5 MB; keep it smaller, or link it from outside the repo"
+                  (lemmax--err "lmx: %s:%d: %s: warning: %s is %.1f MB, over 5 MB; keep it smaller, or link it from outside the repo"
                                f l (or id "-") x (/ size 1048576.0)))))))))
     (let ((seen (make-hash-table :test #'equal)))
       (dolist (x (sort (hash-table-keys tracked) #'string<))
@@ -1429,7 +1429,7 @@ With CACHED, read the staged copies."
 ;; A task's id counts: the ids come from every record, tasks too.
 (defun lemmax-commit-msg (args)
   (unless (= (length args) 1)
-    (lemmax--err "lemmax: commit-msg takes one MSGFILE; see lemmax commit-msg --help")
+    (lemmax--err "lmx: commit-msg takes one MSGFILE; see lmx commit-msg --help")
     (kill-emacs 1))
   (let* ((msgfile (car args))
          (infos (lemmax--opted (lemmax--rev-files "")))
@@ -1657,18 +1657,18 @@ One git process reads every revision of a file; a blob seen before is skipped."
       (let ((a (pop args)))
         (if (equal a "--tag")
             (let ((v (pop args)))
-              (unless v (lemmax--err "lemmax: --tag takes a tag") (kill-emacs 1))
+              (unless v (lemmax--err "lmx: --tag takes a tag") (kill-emacs 1))
               (setq lemmax--trace-tags (append lemmax--trace-tags (list v))))
           (push a rest))))
     (setq args (nreverse rest)))
   (when (member "--run-tests" args)
     (setq lemmax--run-tests t args (remove "--run-tests" args)))
   (let ((bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (equal a "--dot")))) args)))
-    (when bad (lemmax--err "lemmax: unknown option %s; see lemmax trace --help" bad) (kill-emacs 1)))
+    (when bad (lemmax--err "lmx: unknown option %s; see lmx trace --help" bad) (kill-emacs 1)))
   (when (member "--dot" args)
     (let ((infos (and (lemmax--root) (lemmax--opted (lemmax--worktree-files)))))
       (unless infos
-        (lemmax--err "lemmax: no theory file here has #+LEMMAX_TESTS:; name a project with -p DIR")
+        (lemmax--err "lmx: no theory file here has #+LEMMAX_TESTS:; name a project with -p DIR")
         (kill-emacs 1))
       (lemmax--dot infos)
       (kill-emacs 0)))
@@ -1680,7 +1680,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
                (not (cl-some (lambda (r) (equal want (plist-get r :id))) (lemmax--all-statements infos))))
       (let ((hits (lemmax--projects-with want)))
         (unless hits
-          (lemmax--err "lemmax: unknown id %s, here or in any project under %s; lemmax list --all shows the ids"
+          (lemmax--err "lmx: unknown id %s, here or in any project under %s; lmx list --all shows the ids"
                          want (abbreviate-file-name (expand-file-name (lemmax--repos-dir))))
           (kill-emacs 1))
         (dolist (d hits)
@@ -1689,7 +1689,7 @@ One git process reads every revision of a file; a blob seen before is skipped."
             (lemmax--trace-in (lemmax--opted (lemmax--worktree-files)) want)))
         (kill-emacs 0)))
     (when (null infos)
-      (lemmax--err "lemmax: no theory file here has #+LEMMAX_TESTS:; name a project with -p DIR")
+      (lemmax--err "lmx: no theory file here has #+LEMMAX_TESTS:; name a project with -p DIR")
       (kill-emacs 0))
     (lemmax--trace-in infos want)
     (kill-emacs 0)))
@@ -1711,11 +1711,11 @@ One git process reads every revision of a file; a blob seen before is skipped."
           ;; lemma: RT-18
           (let ((all (cl-remove-if-not (lambda (x) (equal want (plist-get x :id))) statements)))
             (unless all
-              (lemmax--err "lemmax: unknown id %s; lemmax list shows the ids" want)
+              (lemmax--err "lmx: unknown id %s; lmx list shows the ids" want)
               (kill-emacs 1))
             (dolist (r all) (lemmax--block r statements (funcall addr-of r) commits suspects t))
             (when (cdr all)
-              (lemmax--err "lemmax: %s is used %d times" want (length all))
+              (lemmax--err "lmx: %s is used %d times" want (length all))
               (kill-emacs 1)))
         (dolist (r statements)
           (when (or (null lemmax--trace-tags) (lemmax--tags-match-p r lemmax--trace-tags infos))
@@ -1849,12 +1849,12 @@ One git process reads every revision of a file; a blob seen before is skipped."
         (pcase a
           ("--state" (let ((v (pop args)))
                        (unless (member v '("open" "done" "dropped" "conjecture" "lemma" "theorem" "refuted" "passed" "todo" "cancelled" "axiom" "definition"))
-                         (lemmax--err "lemmax: --state takes open, done, dropped, conjecture, lemma, theorem, refuted, passed, todo, cancelled, axiom or definition")
+                         (lemmax--err "lmx: --state takes open, done, dropped, conjecture, lemma, theorem, refuted, passed, todo, cancelled, axiom or definition")
                          (kill-emacs 1))
                        (setq opts (plist-put opts :state v))))
           ("--section" (let ((v (pop args)))
                          (unless (and v (string-match-p "\\`[A-Z]+\\'" v))
-                           (lemmax--err "lemmax: --section takes capital letters, as M") (kill-emacs 1))
+                           (lemmax--err "lmx: --section takes capital letters, as M") (kill-emacs 1))
                          (setq opts (plist-put opts :section v))))
           ("--unchecked" (setq opts (plist-put opts :unchecked t)))
           ("--unmarked" (setq opts (plist-put opts :unmarked t)))
@@ -1864,13 +1864,13 @@ One git process reads every revision of a file; a blob seen before is skipped."
           ("--duplicates" (setq opts (plist-put opts :duplicates t)))
           ;; lemma: 01a2039c-9e67-74bb-9ac4-63eb06d24a3f
           ("--tag" (let ((v (pop args)))
-                     (unless v (lemmax--err "lemmax: --tag takes a tag") (kill-emacs 1))
+                     (unless v (lemmax--err "lmx: --tag takes a tag") (kill-emacs 1))
                      (setq opts (plist-put opts :tags (append (plist-get opts :tags) (list v))))))
           ("--all" (setq opts (plist-put opts :all t)))
           ("--json" (setq opts (plist-put opts :json t)))
           ("--no-tests" (setq opts (plist-put opts :no-tests t)))
           ("--run-tests" (setq lemmax--run-tests t))
-          (_ (lemmax--err "lemmax: unknown option %s; see lemmax list --help" a) (kill-emacs 1)))))
+          (_ (lemmax--err "lmx: unknown option %s; see lmx list --help" a) (kill-emacs 1)))))
     opts))
 
 (defun lemmax--repos-dir ()
@@ -2096,7 +2096,7 @@ higher priority, none last, then older by :CREATED:, then by id."
     (dolist (a args)
       (pcase a
         ("--json" (setq json t))
-        (_ (lemmax--err "lemmax: unknown option %s; see lemmax plan --help" a) (kill-emacs 1))))
+        (_ (lemmax--err "lmx: unknown option %s; see lmx plan --help" a) (kill-emacs 1))))
     (let* ((rows (lemmax--rows t))
            (plan (lemmax--plan rows))
            (steps (car plan))
@@ -2181,7 +2181,7 @@ higher priority, none last, then older by :CREATED:, then by id."
 
 (defun lemmax-new-id (args)
   (when args
-    (lemmax--err "lemmax: new-id takes no arguments; see lemmax new-id --help")
+    (lemmax--err "lmx: new-id takes no arguments; see lmx new-id --help")
     (kill-emacs 1))
   (lemmax--out "%s" (lemmax-uuid7))
   (kill-emacs 0))
@@ -2192,7 +2192,7 @@ higher priority, none last, then older by :CREATED:, then by id."
 (defun lemmax-next-id (args)
   (let ((letter (car args)))
     (unless (and letter (= (length args) 1) (string-match-p "\\`[A-Z]+\\'" letter))
-      (lemmax--err "lemmax: next-id takes one section letter, as M; see lemmax next-id --help")
+      (lemmax--err "lmx: next-id takes one section letter, as M; see lmx next-id --help")
       (kill-emacs 1))
     (let ((top 0) (re (concat "\\`" (regexp-quote letter) "-\\([0-9]+\\)\\'")))
       (dolist (r (lemmax--all-statements (lemmax--listed (lemmax--worktree-files))))
@@ -2204,27 +2204,27 @@ higher priority, none last, then older by :CREATED:, then by id."
 
 ;;;; install-hooks (01a20336-c6c6-7ac0-aea1-6d5ff12a8fea)
 
-(defconst lemmax--hook-mark "# lemmax install-hooks wrote this hook."
+(defconst lemmax--hook-mark "# lmx install-hooks wrote this hook."
   "The line that marks a hook as lemmax's, so a second install changes nothing.")
 
 (defun lemmax--hook-text (name)
-  "The hook NAME (pre-commit or commit-msg): lemmax from PATH, in a repo that
+  "The hook NAME (pre-commit or commit-msg): lmx from PATH, in a repo that
 opts in, then the hook that was there before, kept as NAME.local."
   (concat "#!/usr/bin/env bash\n" lemmax--hook-mark "\n"
-          "# lemmax " lemmax-version "; the hook that was here first is " name ".local, run after.\n"
+          "# lmx " lemmax-version "; the hook that was here first is " name ".local, run after.\n"
           "if git grep --cached -q -E '^#\\+LEMMAX_TESTS:' -- '*.org' '*.setup' 2>/dev/null \\\n"
           "\t|| git cat-file -e :lemmax/config.eld 2>/dev/null; then\n"
           (if (equal name "pre-commit")
-              "\tlemmax lint --staged --no-tests || exit 1\n"
-            "\tlemmax commit-msg \"$1\" || exit 1\n")
+              "\tlmx lint --staged --no-tests || exit 1\n"
+            "\tlmx commit-msg \"$1\" || exit 1\n")
           "fi\n"
           "chained=\"$(dirname \"$0\")/" name ".local\"\n"
           "if [ -x \"$chained\" ]; then exec \"$chained\" \"$@\"; fi\n"))
 
 ;; lemma: 01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
 (defun lemmax-install-hooks (args)
-  "Write .git/hooks/pre-commit and commit-msg; the only lemmax command that writes."
-  (when args (lemmax--err "lemmax: install-hooks takes no arguments") (kill-emacs 1))
+  "Write .git/hooks/pre-commit and commit-msg; the only lmx command that writes."
+  (when args (lemmax--err "lmx: install-hooks takes no arguments") (kill-emacs 1))
   (let* ((git-dir (string-trim (or (lemmax--git-out "rev-parse" "--absolute-git-dir") "")))
          (dir (expand-file-name "hooks" git-dir)))
     (make-directory dir t)
@@ -2243,7 +2243,7 @@ opts in, then the hook that was there before, kept as NAME.local."
           (lemmax--out "%s: written" name)))))
     (let ((hp (lemmax--git-out "config" "core.hooksPath")))
       (when (and hp (not (string-empty-p (string-trim hp))))
-        (lemmax--err "lemmax: core.hooksPath is %s, so git runs those hooks, not .git/hooks" (string-trim hp))))
+        (lemmax--err "lmx: core.hooksPath is %s, so git runs those hooks, not .git/hooks" (string-trim hp))))
     (kill-emacs 0)))
 
 ;;;; migrate (01a20369-391b-768e-8c98-180facc0ff77)
@@ -2317,7 +2317,7 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
                                  ":END:\n"
                                  "When the tests in :TEST: pass, the conjecture holds.\n"))))
         (when (and verify (not id))
-          (lemmax--err "lemmax: a heading with :VERIFY: and no :ID: keeps its :VERIFY:: %s" (or name "")))
+          (lemmax--err "lmx: a heading with :VERIFY: and no :ID: keeps its :VERIFY:: %s" (or name "")))
         (when (and verify (not id))
           (setq text chunk))
         (cons (if (member new '("LEMMA" "THEOREM")) (lemmax--migrate-proven text) text) proof)))))
@@ -2336,7 +2336,7 @@ order; a parent no chunk holds is named on stderr."
     (dolist (pr (nreverse pairs))
       (if (member (car pr) ids)
           (puthash (car pr) (append (gethash (car pr) uses) (list (cdr pr))) uses)
-        (lemmax--err "lemmax: %s needs %s, which is not in this file; add :USES: %s to it by hand"
+        (lemmax--err "lmx: %s needs %s, which is not in this file; add :USES: %s to it by hand"
                      (cdr pr) (car pr) (cdr pr))))
     uses))
 
@@ -2398,13 +2398,13 @@ order; a parent no chunk holds is named on stderr."
          (_ (when (member "--links" args) (setq lemmax--migrate-titles (make-hash-table :test #'equal))))
          (bad (cl-find-if (lambda (a) (and (string-prefix-p "--" a) (not (member a '("--write" "--links"))))) args))
          (files (cl-remove-if (lambda (a) (string-prefix-p "--" a)) args)))
-    (when bad (lemmax--err "lemmax: unknown option %s; see lemmax migrate --help" bad) (kill-emacs 1))
+    (when bad (lemmax--err "lmx: unknown option %s; see lmx migrate --help" bad) (kill-emacs 1))
     (unless (= 1 (length files))
-      (lemmax--err "lemmax: migrate takes one FILE; see lemmax migrate --help") (kill-emacs 1))
+      (lemmax--err "lmx: migrate takes one FILE; see lmx migrate --help") (kill-emacs 1))
     (let* ((path (file-truename (expand-file-name (car files) (or lemmax--cwd default-directory))))
            (rel (file-relative-name path (file-truename default-directory))))
       (unless (and (file-readable-p path) (string-suffix-p ".org" path) (not (lemmax--proofs-file-p path)))
-        (lemmax--err "lemmax: %s: not a readable theory .org file" (car files)) (kill-emacs 1))
+        (lemmax--err "lmx: %s: not a readable theory .org file" (car files)) (kill-emacs 1))
       (let* ((old (with-temp-buffer (insert-file-contents path) (buffer-string)))
              (res (lemmax--migrate-text old rel (lemmax--today)))
              (ppath (concat (file-name-sans-extension path) ".proofs.org"))
@@ -2447,11 +2447,11 @@ order; a parent no chunk holds is named on stderr."
       (let ((a (pop args)))
         (cond ((equal a "--write") (setq write t))
               ((equal a "--days") (setq days (string-to-number (or (pop args) "x")))
-               (unless (> days 0) (lemmax--err "lemmax: --days takes a whole number of days") (kill-emacs 1)))
-              ((string-prefix-p "--" a) (lemmax--err "lemmax: unknown option %s; see lemmax archive --help" a) (kill-emacs 1))
+               (unless (> days 0) (lemmax--err "lmx: --days takes a whole number of days") (kill-emacs 1)))
+              ((string-prefix-p "--" a) (lemmax--err "lmx: unknown option %s; see lmx archive --help" a) (kill-emacs 1))
               (t (push a files)))))
     (unless (= 1 (length files))
-      (lemmax--err "lemmax: archive takes one FILE; see lemmax archive --help") (kill-emacs 1))
+      (lemmax--err "lmx: archive takes one FILE; see lmx archive --help") (kill-emacs 1))
     (require 'org-archive)
     (let* ((path (file-truename (expand-file-name (car files) (or lemmax--cwd default-directory))))
            (rel (file-relative-name path (file-truename default-directory)))
@@ -2459,7 +2459,7 @@ order; a parent no chunk holds is named on stderr."
            (arel (file-relative-name apath (file-truename default-directory)))
            (today (lemmax--today)) moved)
       (unless (and (file-readable-p path) (string-suffix-p ".org" path))
-        (lemmax--err "lemmax: %s: not a readable .org file" (car files)) (kill-emacs 1))
+        (lemmax--err "lmx: %s: not a readable .org file" (car files)) (kill-emacs 1))
       (with-current-buffer (find-file-noselect path)
         (let ((org-todo-keywords '((sequence "OPEN" "CONJECTURE" "TODO" "|" "DONE" "DROPPED" "LEMMA" "THEOREM"
                                              "REFUTED" "PASSED" "CANCELLED" "AXIOM" "DEFINITION"))))
@@ -2516,8 +2516,8 @@ order; a parent no chunk holds is named on stderr."
   (let ((out nil))
     (while args
       (let ((a (pop args)))
-        (cond ((equal a "--out") (setq out (or (pop args) (progn (lemmax--err "lemmax: --out takes a folder") (kill-emacs 1)))))
-              (t (lemmax--err "lemmax: unknown argument %s; see lemmax publish --help" a) (kill-emacs 1)))))
+        (cond ((equal a "--out") (setq out (or (pop args) (progn (lemmax--err "lmx: --out takes a folder") (kill-emacs 1)))))
+              (t (lemmax--err "lmx: unknown argument %s; see lmx publish --help" a) (kill-emacs 1)))))
     (require 'ox-publish)
     (require 'org-id)
     ;; Org's default link modules, which a run does not load, for exported links.
@@ -2753,9 +2753,9 @@ whole repo, theories/_site/book.html."
   (let ((out nil) (all nil))
     (while args
       (let ((a (pop args)))
-        (cond ((equal a "--out") (setq out (or (pop args) (progn (lemmax--err "lemmax: --out takes a file") (kill-emacs 1)))))
+        (cond ((equal a "--out") (setq out (or (pop args) (progn (lemmax--err "lmx: --out takes a file") (kill-emacs 1)))))
               ((equal a "--all") (setq all t))
-              (t (lemmax--err "lemmax: unknown argument %s; see lemmax book --help" a) (kill-emacs 1)))))
+              (t (lemmax--err "lmx: unknown argument %s; see lmx book --help" a) (kill-emacs 1)))))
     (lemmax--books all out)
     (kill-emacs 0)))
 
@@ -2763,14 +2763,14 @@ whole repo, theories/_site/book.html."
 
 (defconst lemmax--help
   '((main
-     "usage: lemmax COMMAND [ARGS]
+     "usage: lmx COMMAND [ARGS]
 Lint, trace and list a repo's org theories.
 Commands: lint, commit-msg, trace, list, plan, new-id, next-id, install-hooks, migrate, archive, publish, book, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and writes no file; install-hooks writes the repo's two hooks and
 migrate --write a theory file and its proofs file, archive --write a
 file and its archive, publish the HTML under .lemmax.
-example: lemmax list --ready -p ~/repos/other-project"
+example: lmx list --ready -p ~/repos/other-project"
      "Commands:
   lint [--staged] [--no-tests] [FILE...]  check the theory files' rules
   commit-msg MSGFILE                      refuse a code commit that names no id
@@ -2779,13 +2779,13 @@ example: lemmax list --ready -p ~/repos/other-project"
   plan [--json]                           the steps to rebuild the project, in order
   new-id                                  a new statement id, a UUID v7
   next-id LETTER                          the next counted id, as M-15, for old projects
-  install-hooks                           put lemmax in this repo's pre-commit and commit-msg
+  install-hooks                           put lmx in this repo's pre-commit and commit-msg
   migrate [--write] FILE                  move FILE to conjectures, proofs, lemmas and theorems
   archive [--write] FILE                  move refuted and finished headings to FILE's archive
-  publish [--out DIR]                     write the lemmax files to HTML
+  publish [--out DIR]                     write the LemmaX files to HTML
   book [--all] [--out FILE]               write the whole theory as one HTML file
   help                                    this text
-Each command takes -h, --help and help. lemmax --version prints the release.
+Each command takes -h, --help and help. lmx --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
 instead of the one here. list takes it more than once: one table each.
 lint, commit-msg and trace read files whose header has #+LEMMAX_TESTS:, or
@@ -2808,12 +2808,12 @@ FILE.env.org says what a rebuild needs besides code: Toolchain (:VERSION:),
 Data, Setup and Secrets (:WHERE: only, never a value) headings.
 list and next-id read every theory file: requirements.org or theory.org,
 files under a requirements/ or theory/ folder, and files whose #+TODO names OPEN.
-A finding is one line on stderr: lemmax: <file>:<line>: <id>: <why>; <fix>
+A finding is one line on stderr: lmx: <file>:<line>: <id>: <why>; <fix>
 Exit 0 when clean, 1 on any finding or failure.")
     (lint
-     "usage: lemmax lint [--project DIR] [--staged] [--no-tests] [--json] [FILE...]
+     "usage: lmx lint [--project DIR] [--staged] [--no-tests] [--json] [FILE...]
 Check the theory files' rules, in files that opt in.
-example: lemmax lint --staged --no-tests"
+example: lmx lint --staged --no-tests"
      "--staged    read the staged copies and refuse changes against HEAD:
             a DONE statement whose text changed, :LAST_EDITED: not today,
             a new statement not dated today, a DONE one not :PROVEN: today
@@ -2823,16 +2823,16 @@ example: lemmax lint --staged --no-tests"
 FILE...     report findings for these files only
 LEMMAX_TEST_SECONDS sets the test command's time (60 s); LEMMAX_TODAY sets today.")
     (commit-msg
-     "usage: lemmax commit-msg [--project DIR] MSGFILE
+     "usage: lmx commit-msg [--project DIR] MSGFILE
 Refuse a commit that changes code under #+LEMMAX_CODE: and names no statement id.
-example: lemmax commit-msg .git/COMMIT_EDITMSG"
+example: lmx commit-msg .git/COMMIT_EDITMSG"
      "The ids come from the staged theory files, so one commit may add a
 statement and name it. Comment lines (#) do not count. An id matches as a
 whole word: RQ-1 is not RQ-10.")
     (trace
-     "usage: lemmax trace [--project DIR] [--run-tests] [--tag T]... [ID | --dot]
+     "usage: lmx trace [--project DIR] [--run-tests] [--tag T]... [ID | --dot]
 Print each statement's parents, children, tests and commits.
-example: lemmax trace RT-3"
+example: lmx trace RT-3"
      "With no ID: one block per statement, then the orphan tests, which no
 :VERIFY: names, then the suspect children: DONE statements whose parent's
 text changed in git after their :PROVEN: (or old :IMPLEMENTED:) or :REVIEWED: day.
@@ -2843,11 +2843,11 @@ and shown under a project: line.
 --run-tests: run the repo's test command, to check :VERIFY: and find orphan
 tests; without it nothing of the repo's runs, and verify says unchecked.
 --dot: the lemma graph in Graphviz's dot language, nodes filled by state,
-:NEEDS: edges solid and id: link edges dashed: lemmax trace --dot | dot -Tsvg")
+:NEEDS: edges solid and id: link edges dashed: lmx trace --dot | dot -Tsvg")
     (plan
-     "usage: lemmax plan [--project DIR] [--json]
+     "usage: lmx plan [--project DIR] [--json]
 Print the steps to rebuild the project from scratch, one lemma at a time.
-example: lemmax plan --json"
+example: lmx plan --json"
      "First one step per item of each FILE.env.org: Toolchain, Data, Setup, then
 Secrets. Then one step per AXIOM, LEMMA or THEOREM (and old DONE): its id, state, title,
 file:line, the ids it :USES:, its statement, and each proof with its :TEST:.
@@ -2859,9 +2859,9 @@ A :USES: cycle is a finding naming its ids, and exit 1.
         section, title, file, line, properties, statement; kind lemma has id,
         state, title, file, line, uses, statement, proofs: [{id, state, test}]")
     (list
-     "usage: lemmax list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--uncovered] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
+     "usage: lmx list [--project DIR]... [--state open|done|dropped] [--section L] [--unchecked] [--unmarked] [--uncovered] [--ready] [--duplicates] [--tag T]... [--unlinked] [--all] [--json] [--run-tests]
 Print every statement in a table, grouped by state and approval.
-example: lemmax list --section M --ready"
+example: lmx list --section M --ready"
      "Columns: id, state, approved, check (found, missing, named, none), title, file:line, and
 code:N, how many code markers name it.
 Groups: waiting for approval, approved and open, done, dropped.
@@ -2888,33 +2888,33 @@ Groups: waiting for approval, approved and open, done, dropped.
               nothing of the repo's runs and the column says named
 --no-tests    the default; kept so older calls still work")
     (new-id
-     "usage: lemmax new-id
+     "usage: lmx new-id
 Print a new statement id: a UUID v7, lower case.
-example: lemmax new-id"
+example: lmx new-id"
      "The first 12 hex digits are the time in milliseconds, so ids sort by age;
 the rest is random from /dev/urandom. It needs no check against other ids.
 next-id stays for projects whose old ids still count up.")
     (install-hooks
-     "usage: lemmax install-hooks
-Write this repo's .git/hooks/pre-commit and commit-msg to call lemmax from PATH.
-example: lemmax install-hooks"
+     "usage: lmx install-hooks
+Write this repo's .git/hooks/pre-commit and commit-msg to call lmx from PATH.
+example: lmx install-hooks"
      "In a repo that opts in, pre-commit runs lint --staged --no-tests and
 commit-msg runs commit-msg. A hook already there is kept as NAME.local and
-run after lemmax's. Run again, it changes nothing. It is the one command
+run after lmx's. Run again, it changes nothing. It is the one command
 that writes, and it writes only those two files. If core.hooksPath is set,
-git runs those hooks instead, and lemmax says so.")
+git runs those hooks instead, and lmx says so.")
     (publish
-     "usage: lemmax publish [--project DIR] [--out DIR]
-Write every lemmax file the repo lists to HTML, id: links as page links.
-example: lemmax publish"
+     "usage: lmx publish [--project DIR] [--out DIR]
+Write every LemmaX file the repo lists to HTML, id: links as page links.
+example: lmx publish"
      "Pages go to .lemmax/html at the repo root, where .lemmax/.gitignore keeps
 git from tracking them, or to --out DIR. It uses Org's ox-publish, with its
 own id and timestamp caches, and prints each page it wrote. In a repo with
 theories/, pages go to theories/_site/, with a book per project beside them.")
     (book
-     "usage: lemmax book [--project DIR] [--all] [--out FILE]
+     "usage: lmx book [--project DIR] [--all] [--out FILE]
 Write the repo's whole theory as one self-contained HTML file.
-example: lemmax book"
+example: lmx book"
      "It writes .lemmax/book/book.org, one #+INCLUDE: per theory file and
 companion in rebuild order (definitions and axioms first, each lemma before
 what uses it), and publishes it with org-publish to .lemmax/book.html, or
@@ -2923,18 +2923,18 @@ video is packed in as a data: URI, so the file opens offline alone.
 In a repo with theories/, it writes one book per project instead,
 theories/_site/PROJECT.html, and with --all also theories/_site/book.html.")
     (archive
-     "usage: lemmax archive [--project DIR] [--write] [--days N] FILE
+     "usage: lmx archive [--project DIR] [--write] [--days N] FILE
 List, or with --write move, FILE's finished headings to its archive.
-example: lemmax archive --write requirements.org"
+example: lmx archive --write requirements.org"
      "It moves REFUTED conjectures, CANCELLED tasks, and DONE tasks last edited
 N days ago or more (30). A heading moves only when every heading under it
 may move too. NAME.org archives to NAME_archive.org, NAME.tasks.org to
 NAME_archive.tasks.org; a new archive takes FILE's #+TODO:, #+TAGS: and
 #+LEMMAX_* lines, so lint reads it and its ids stay unique.")
     (migrate
-     "usage: lemmax migrate [--project DIR] [--write] [--links] FILE
+     "usage: lmx migrate [--project DIR] [--write] [--links] FILE
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
-example: lemmax migrate requirements.org"
+example: lmx migrate requirements.org"
      "Without --write it prints a unified diff and writes nothing.
 OPEN becomes CONJECTURE, DROPPED REFUTED, DONE THEOREM when it has children,
 else LEMMA. :NEEDS: is inverted: a parent gets :USES: with its former
@@ -2946,9 +2946,9 @@ proofs file takes FILE's #+LEMMAX_TESTS: and #+LEMMAX_CODE: lines. A lemma's
 text, the statement, does not change, so nothing turns suspect.
 --links writes :USES: and :PROVES: as [[id:ID][title]] links, not bare ids.")
     (next-id
-     "usage: lemmax next-id [--project DIR] LETTER
+     "usage: lmx next-id [--project DIR] LETTER
 Print the next free id for a section: one more than the highest in use.
-example: lemmax next-id M"
+example: lmx next-id M"
      "A gap is never filled, so an id is never reused. A letter with no id yet prints L-1.")))
 
 (defun lemmax--help-for (cmd long)
@@ -2973,11 +2973,11 @@ example: lemmax next-id M"
           (let* ((dir (pop args))
                  (path (and dir (expand-file-name dir))))
             (unless (and path (file-directory-p path))
-              (lemmax--err "lemmax: %s: no such folder" (or dir "--project needs a folder"))
+              (lemmax--err "lmx: %s: no such folder" (or dir "--project needs a folder"))
               (kill-emacs 1))
             (let ((root (let ((default-directory (file-name-as-directory path))) (lemmax--root))))
               (unless root
-                (lemmax--err "lemmax: %s: not inside a git repo" dir)
+                (lemmax--err "lmx: %s: not inside a git repo" dir)
                 (kill-emacs 1))
               (setq lemmax--projects (append lemmax--projects (list root))))))))
     (nreverse out)))
@@ -2990,14 +2990,14 @@ example: lemmax next-id M"
   (let* ((cmd (car args))
          (rest (if (member cmd '(nil "-h" "--help" "help")) (cdr args) (lemmax--take-projects (cdr args)))))
     (when (and (cdr lemmax--projects) (not (equal cmd "list")))
-      (lemmax--err "lemmax: %s takes one --project; list takes several" cmd)
+      (lemmax--err "lmx: %s takes one --project; list takes several" cmd)
       (kill-emacs 1))
     (cond
-     ((member cmd '("--version" "-V")) (lemmax--out "lemmax %s" lemmax-version) (kill-emacs 0))
+     ((member cmd '("--version" "-V")) (lemmax--out "lmx %s" lemmax-version) (kill-emacs 0))
      ((or (null cmd) (member cmd '("-h" "--help"))) (lemmax--help-for 'main nil))
      ((equal cmd "help") (lemmax--help-for 'main t))
      ((not (assq (intern cmd) lemmax--help))
-      (lemmax--err "lemmax: unknown command %s; see lemmax --help" cmd)
+      (lemmax--err "lmx: unknown command %s; see lmx --help" cmd)
       (kill-emacs 1))
      ((member (car rest) '("-h" "--help")) (lemmax--help-for (intern cmd) nil))
      ((equal (car rest) "help") (lemmax--help-for (intern cmd) t))
@@ -3008,11 +3008,11 @@ example: lemmax next-id M"
         (when (and (equal cmd "list") lemmax--projects (not root))
           (setq root default-directory))
         (unless (or root (equal cmd "list") (and (equal cmd "trace") rest))
-          (lemmax--err "lemmax: not inside a git repo") (kill-emacs 1))
+          (lemmax--err "lmx: not inside a git repo") (kill-emacs 1))
         (let ((default-directory (or root default-directory)))
           (if (and (null root) (not (member "--all" rest)) (null lemmax--projects)
                    (not (and (equal cmd "trace") rest)))
-              (progn (lemmax--err "lemmax: not inside a git repo; use --all") (kill-emacs 1))
+              (progn (lemmax--err "lmx: not inside a git repo; use --all") (kill-emacs 1))
             (pcase cmd
               ("lint" (lemmax-lint rest))
               ("commit-msg" (lemmax-commit-msg rest))
@@ -3031,6 +3031,6 @@ example: lemmax next-id M"
 (when (and noninteractive (not (getenv "LEMMAX_LOAD_ONLY")))
   (condition-case err
       (lemmax-main (prog1 command-line-args-left (setq command-line-args-left nil)))
-    (error (lemmax--err "lemmax: %s" (error-message-string err)) (kill-emacs 1))))
+    (error (lemmax--err "lmx: %s" (error-message-string err)) (kill-emacs 1))))
 
 ;;; lemmax.el ends here

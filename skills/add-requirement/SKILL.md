@@ -42,7 +42,7 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 <!-- lemma: RT-15 -->
 
-- Run `lemmax list --json` in the repo that holds the file: `{"version": 1, "rows": [...]}`, a row per requirement with its id, state, `:NEEDS:` and aliases-resolved links.
+- Run `lmx list --json` in the repo that holds the file: `{"version": 1, "rows": [...]}`, a row per requirement with its id, state, `:NEEDS:` and aliases-resolved links.
 
 - Without lemmax on PATH, read the files instead.
 
@@ -56,12 +56,12 @@ evidence for the exact versions in use, a spike only outside the repo, never a g
 
 Draft as an org heading, CONJECTURE (old files: OPEN), with:
 
-- `:ID:` - new, never reused: a UUID v7 from `lemmax new-id`; a project whose old ids still count up may use `lemmax next-id <LETTER>`.
+- `:ID:` - new, never reused: a UUID v7 from `lmx new-id`; a project whose old ids still count up may use `lmx next-id <LETTER>`.
 - `:CREATED:`, `:LAST_EDITED:` - today, `YYYY-MM-DD`.
 - `:USES:` (old files: `:NEEDS:`) if it builds on another.
 - Its proof: a heading in `FILE.proofs.org`, OPEN, with a new `:ID:`,
   `:PROVES:` the conjecture's id and `:TEST:` the named check (old files:
-  `:VERIFY:` on the conjecture). `lemmax migrate FILE` moves an old file over.
+  `:VERIFY:` on the conjecture). `lmx migrate FILE` moves an old file over.
 - A chore that changes no behaviour is not a requirement: make it a task in
   `FILE.tasks.org` (`TODO`, `:FOR:` ids). A thought with no state is a note in
   `FILE.notes.org` (`:ABOUT:` ids).

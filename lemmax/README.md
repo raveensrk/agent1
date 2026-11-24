@@ -13,23 +13,23 @@ Runs on macOS and Linux; on Windows through WSL or Git Bash, not natively.
 Needs Emacs 29 or newer, git and Bash; `run_tests` also needs Perl.
 
 ```sh
-lemmax list --ready           # every statement, grouped; only approved and open
-lemmax list --all --json      # every repo under ~/repos, for an AI
-lemmax plan                   # the steps to rebuild the project: environment, then one lemma at a time
-lemmax next-id M              # the next free id, as M-15
-lemmax trace RT-3             # one statement's links, tests and commits
-lemmax trace --dot | dot -Tsvg > lemmas.svg   # the lemma graph
-lemmax list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from any folder
-lemmax lint --staged          # what the pre-commit hook runs
+lmx list --ready           # every statement, grouped; only approved and open
+lmx list --all --json      # every repo under ~/repos, for an AI
+lmx plan                   # the steps to rebuild the project: environment, then one lemma at a time
+lmx next-id M              # the next free id, as M-15
+lmx trace RT-3             # one statement's links, tests and commits
+lmx trace --dot | dot -Tsvg > lemmas.svg   # the lemma graph
+lmx list -p ~/repos/arcadia_docs -p ~/repos/agent1   # named projects, from any folder
+lmx lint --staged          # what the pre-commit hook runs
 ```
 
 - `list` and `trace` never run a repo's test command unless given `--run-tests`:
   the command is the repo's own code. `lint` runs it unless `--no-tests`.
 - Every day lemmax reads or writes is a local day: today, and the commit days of `trace`. `TZ` picks the zone.
-- `lemmax --help` is the short help, `lemmax help` the long one; each command takes both.
+- `lmx --help` is the short help, `lmx help` the long one; each command takes both.
 - `lemmax` is a Bash launcher for `lemmax.el`, run by `emacs -Q --script`.
 - `install` puts a wrapper on PATH as `~/.local/bin/lemmax`; then, in each repo,
-  `lemmax install-hooks` writes `.git/hooks/pre-commit` and `commit-msg` to
+  `lmx install-hooks` writes `.git/hooks/pre-commit` and `commit-msg` to
   call it. A hook already there is kept as `NAME.local` and run after.
 - `run_tests` runs the ERT tests in `lemmax_tests.el`, each in its own Emacs, 8 at a time.
   A test runs lemmax in its own Emacs (`rt-run`); a few run the real launcher
@@ -72,7 +72,7 @@ says, ideas and design. A proof is a heading in `FILE.proofs.org` beside it:
 - `:VERIFY:`, `:NEEDS:` and `:USES:` lines are not a lemma's text.
 - A proof may prove many conjectures; a conjecture may have many proofs.
 - Old files (`OPEN | DONE DROPPED`, `:NEEDS:`, `:VERIFY:`) still read.
-  `lemmax migrate FILE` prints the move as a diff; `--write` makes it.
+  `lmx migrate FILE` prints the move as a diff; `--write` makes it.
 
 ## Tasks, notes, axioms and definitions
 
@@ -96,7 +96,7 @@ Four kinds need no proof:
 <!-- lemma: 01a203a6-a702-71c0-8239-e0d41380d2dd -->
 
 `:USES:`, `:PROVES:`, `:FOR:`, `:ABOUT:` and `:FOLLOWS:` take bare ids and
-`[[id:X][label]]` links, mixed. `lemmax migrate --links` writes links.
+`[[id:X][label]]` links, mixed. `lmx migrate --links` writes links.
 
 ## ORDERED and BLOCKER
 
@@ -118,7 +118,7 @@ suspect. "Changed on" lines are still required.
 
 <!-- lemma: 01a203a6-a73d-7772-a4cb-fc4917fefd50 -->
 
-`lemmax archive FILE` lists REFUTED conjectures, CANCELLED tasks and DONE
+`lmx archive FILE` lists REFUTED conjectures, CANCELLED tasks and DONE
 tasks 30 days old (`--days N`); `--write` moves them with `org-archive-subtree`
 to `NAME_archive.org` (`NAME_archive.tasks.org` for tasks). Lint reads archives,
 so links resolve and ids stay unique.
@@ -140,7 +140,7 @@ outside the repo are references. `trace` prints `files:`; `list --json` gives
 
 <!-- lemma: 01a203a6-a752-75ed-8359-a8147e95a33d -->
 
-`lemmax publish` writes every listed lemmax file to HTML with `ox-publish`;
+`lmx publish` writes every listed lemmax file to HTML with `ox-publish`;
 id: links become page links. Pages go to `.lemmax/html/` (git ignores it
 through `.lemmax/.gitignore`), or `--out DIR`.
 
@@ -155,7 +155,7 @@ lint refuses a video linked any other way.
 
 <!-- lemma: 01a20927-9aac-7817-8e46-8635aa0ae127 -->
 
-`lemmax book` writes the whole theory as one HTML file, `.lemmax/book.html`
+`lmx book` writes the whole theory as one HTML file, `.lemmax/book.html`
 or `--out FILE`. It joins every theory file and companion with `#+INCLUDE:`
 in `.lemmax/book/book.org`, in rebuild order: definitions and axioms first,
 each lemma before what uses it. `id:` links point inside the page, and every
@@ -212,15 +212,15 @@ left to export.
 Every heading takes org tags. A file declares them in `#+TAGS:`, and lint
 refuses any other. Group tags nest them: `#+TAGS: [ cli : list trace ]`.
 A heading's tags include its ancestors' and `#+FILETAGS:`. Tags are not a
-heading's text. `lemmax list --tag cli` and `lemmax trace --tag cli` show
+heading's text. `lmx list --tag cli` and `lmx trace --tag cli` show
 headings tagged `cli` or a tag under it; `--tag` again means AND.
 
 ## Code markers
 
 A comment line whose first words are `lemma:` and ids links code to its lemmas.
-`lemmax trace ID` lists each `code:` and `test:` location, `lemmax list` counts
-them, and `lemmax lint` refuses a marker naming no lemma or a dropped one, and a
-lemma done from 2026-11-22 on with no code marker. `lemmax list --unmarked`
+`lmx trace ID` lists each `code:` and `test:` location, `lmx list` counts
+them, and `lmx lint` refuses a marker naming no lemma or a dropped one, and a
+lemma done from 2026-11-22 on with no code marker. `lmx list --unmarked`
 shows older done lemmas without one. Test paths default to `test/`, `tests/`,
 `e2e/`, `_test.`, `-test.`, `.spec.` and `_tests.`; `#+LEMMAX_TEST_PATHS:`
 replaces them.
@@ -240,7 +240,7 @@ may be headings in one file or one lemma per `.org` file, with no header:
   a DONE lemma implemented on or after that day need a `lemma:` code marker
   (no key: none needs one); `:coverage-required-from "YYYY-MM-DD"` makes lint
   refuse code above a file's first `lemma:` marker in code files changed on or
-  after that day (`lemmax list --uncovered` lists every such file); `:repos "DIR"` is the folder `list --all` and
+  after that day (`lmx list --uncovered` lists every such file); `:repos "DIR"` is the folder `list --all` and
   cross-project `trace` read (else `LEMMAX_REPOS`, else `~/repos`).
 - A file takes the entry with the longest folder that holds it; `""` is the root.
 - A file with any `#+LEMMAX_*` line of its own uses only its header.
@@ -303,7 +303,7 @@ MIT; see [LICENSE](LICENSE). Changes by release: [CHANGELOG.md](CHANGELOG.md).
 
 ## CI
 
-`.github/workflows/lemmax.yml` runs the tests and `lemmax lint` on every push
+`.github/workflows/lemmax.yml` runs the tests and `lmx lint` on every push
 and pull request, on Emacs 29.4 and 30.1. `lint` runs the repo's own test
 command, so in CI a pull request's code runs: the workflow has a read-only
 token and no secrets, as GitHub gives `pull_request` from a fork. Never run
@@ -313,7 +313,7 @@ lemmax under `pull_request_target`, which has the base repo's secrets.
 
 These are stable from 1.0.0:
 
-- A finding is one line on stderr: `lemmax: FILE:LINE: ID: WHY; FIX`, with `-`
+- A finding is one line on stderr: `lmx: FILE:LINE: ID: WHY; FIX`, with `-`
   for no id. `lint --json` prints them instead as
   `{"version": 1, "findings": [{"file", "line", "id", "why", "fix"}]}` on stdout.
 - Exit 0: clean. Exit 1: a finding, or lemmax could not do what was asked.
