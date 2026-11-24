@@ -7,7 +7,6 @@ Process: [[file:../agent1/theory.org][Requirements requirements]].
 * LEMMA [#B] The metro map matches the scripts, and every plan-stage ant writes the logbook  :ishikari:docs:
 :PROPERTIES:
 :ID:          ISH-1
-:CREATED:     2026-11-18
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-18 Wed]
@@ -28,7 +27,6 @@ Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 a
 * LEMMA [#B] A trivial task takes a fast path with no planning or build ants  :ishikari:
 :PROPERTIES:
 :ID:          ISH-2
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-19 Thu]
@@ -47,7 +45,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-3
 :USES:        ISH-14
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -62,7 +59,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-4
 :USES:        ISH-13
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -79,7 +75,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#C] The metro map is one open ring, read clockwise  :ishikari:docs:
 :PROPERTIES:
 :ID:          ISH-5
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-19 Thu]
@@ -93,7 +88,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-6
 :USES:        ISH-10
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -111,7 +105,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 :PROPERTIES:
 :ID:          ISH-7
 :USES:        ISH-12
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -128,7 +121,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#B] Plans are thin slices of the specs; a one-worker run has no plan file  :ishikari:
 :PROPERTIES:
 :ID:          ISH-8
-:CREATED:     2026-11-19
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-19 Thu]
@@ -141,7 +133,6 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#B] Ant Eater shows what each ant, station, stage and task of a run cost, with no AI  :ishikari:anteater:
 :PROPERTIES:
 :ID:          ISH-9
-:CREATED:     2026-11-20
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-20 Fri]
@@ -168,7 +159,6 @@ Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workfl
 :PROPERTIES:
 :ID:          ISH-10
 :USES:        ISH-11
-:CREATED:     2026-11-20
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-20 Fri]
@@ -186,7 +176,6 @@ Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari
 * LEMMA [#B] The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant  :ishikari:
 :PROPERTIES:
 :ID:          ISH-11
-:CREATED:     2026-11-20
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-20 Fri]
@@ -202,7 +191,6 @@ Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-
 * LEMMA [#B] The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants  :ishikari:
 :PROPERTIES:
 :ID:          ISH-12
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-21 Sat]
@@ -219,7 +207,6 @@ Evidence: ISH-10 and ISH-11 load skills the same way from inside ants.
 * LEMMA [#B] The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants  :ishikari:
 :PROPERTIES:
 :ID:          ISH-13
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-21 Sat]
@@ -236,7 +223,6 @@ Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
 :PROPERTIES:
 :ID:          ISH-14
 :USES:        ISH-15
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-21 Sat]
@@ -252,7 +238,6 @@ Evidence: ISH-10 to ISH-13 load skills the same way from inside ants.
 * LEMMA [#B] The ant skills' fixed steps run as code, not by an agent  :ishikari:
 :PROPERTIES:
 :ID:          ISH-15
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-21 Sat]

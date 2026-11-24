@@ -6,7 +6,6 @@
 :ID:          01a205c1-4a77-78d1-9b31-e4bf7b64df95
 :PROVES:      date-pickers
 :TEST:        clojure -M:test (demo.date-picker-test), clojure -M:check-date-picker (demo.date-picker-check), run in demo/cljfx
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -16,7 +15,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a205c1-4a79-73e0-83f1-c0c03b40300d
 :PROVES:      scroll-areas
 :TEST:        clojure -M:test (demo.scroll-test), clojure -M:check-scroll (demo.scroll-check), run in demo/cljfx
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 When the tests in :TEST: pass, the conjecture holds.

@@ -6,7 +6,6 @@
 :ID:          01a20384-5fda-736f-ad1b-db5593b6e453
 :PROVES:      ISH-1
 :TEST:        "tests/test_ishikari.py test_metro_map" "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -16,7 +15,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5fdf-7292-891b-c6854ccc01fc
 :PROVES:      ISH-2
 :TEST:        "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice" "tests/test_ishikari.py test_metro_map"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -26,7 +24,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5fe5-7b08-9e6b-488969b0b599
 :PROVES:      ISH-3
 :TEST:        "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings" "tests/test_workflows.mjs retro: a dead or shapeless retrospective ant is an error, never a silent pass" "tests/test_ishikari.py test_metro_map"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -36,7 +33,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5fe9-79cb-bfba-99dfa88ea039
 :PROVES:      ISH-4
 :TEST:        "tests/test_workflows.mjs finish: main moves to the checked commit, never to a branch name, and a retry sees it already moved" "tests/test_workflows.mjs finish: a docs update that is not accepted is put back, its branch kept, and main moves without it" "tests/test_workflows.mjs finish: a later round uses its own upkeep branches and counts earlier landed tasks as in main" "tests/test_workflows.mjs build: an ant call that throws is a dead ant, never a lost stage" "tests/test_workflows.mjs build: clash fixes run one at a time, and tasks built on a fixed task take it in and are checked again" "tests/test_workflows.mjs every script refuses paths, branches and commands the ants' shell cannot carry" "tests/test_ishikari.py test_hardening"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -46,7 +42,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5fec-7260-b153-8508f75fa9ad
 :PROVES:      ISH-5
 :TEST:        "tests/test_ishikari.py test_metro_map"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -56,7 +51,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5fee-7894-ae94-6ac11c677613
 :PROVES:      ISH-6
 :TEST:        "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands" "tests/test_workflows.mjs plan: plans that would clash or leave the repo come back as problems, never as an error or a pass" "tests/test_workflows.mjs plan: bad arguments are an error" "tests/test_ishikari.py test_metro_map"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -66,7 +60,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5ff4-76f4-86c3-b98c619487cc
 :PROVES:      ISH-7
 :TEST:        "tests/test_workflows.mjs plan: every behaviour and invariant needs a worker, and no plan may claim an unknown one" "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids" "tests/test_workflows.mjs finish: the judge and jurors score against the product spec, id by id" "tests/test_ishikari.py test_metro_map"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -76,7 +69,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5ff7-7b91-89dd-dd858293207f
 :PROVES:      ISH-8
 :TEST:        "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands" "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -86,7 +78,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5ffc-72ac-ac97-81c85985fae9
 :PROVES:      ISH-9
 :TEST:        "tests/test_anteater.py test_counts" "tests/test_anteater.py test_label_guard" "tests/test_anteater.py test_ishikari_hooks" "tests/test_anteater.py test_limit" "tests/test_anteater.py test_server_and_help"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -96,7 +87,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-5fff-7994-befe-234c51cb920d
 :PROVES:      ISH-10
 :TEST:        "tests/test_ishikari.py test_investigator_skill" "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -106,7 +96,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-6002-788f-8df0-7b7ca5d00693
 :PROVES:      ISH-11
 :TEST:        "tests/test_workflows.mjs finish: the janitor cleans, tests, commits and lands its cleanup alone, judge after it"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -116,7 +105,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-6007-7b36-87d2-b3e09533abdb
 :PROVES:      ISH-12
 :TEST:        "tests/test_workflows.mjs finish: many tasks, one juror per task, at most parallel at once, judge sees their reports"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -126,7 +114,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-600c-70f9-b46e-294fcd7bd061
 :PROVES:      ISH-13
 :TEST:        "tests/test_workflows.mjs finish: a low judge score gets one fix round, then a second score"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -136,7 +123,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-6012-7cbe-a3df-36fcc53f1024
 :PROVES:      ISH-14
 :TEST:        "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.
@@ -146,7 +132,6 @@ When the tests in :TEST: pass, the conjecture holds.
 :ID:          01a20384-6018-7cf9-b368-33a2d5a82478
 :PROVES:      ISH-15
 :TEST:        "tests/test_ant.py test_tests_verdicts" "tests/test_ant.py test_scope" "tests/test_ant.py test_session" "tests/test_ant.py test_skills_share_mode_rules_and_point_to_ant"
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 When the tests in :TEST: pass, the conjecture holds.

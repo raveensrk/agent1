@@ -6,7 +6,6 @@
 :PROPERTIES:
 :ID:          01a20533-bd44-7bc9-b9bd-7c654360da9a
 :FOR:         01a202b0-1d09-75f3-99dc-677a4b2ec0be
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 The test fails on main, before and after the plan, coverage and environment work: its first =lint --staged= reports a finding where it expects none. Find the finding and fix lmx or the test.
@@ -16,7 +15,6 @@ The test fails on main, before and after the plan, coverage and environment work
 :PROPERTIES:
 :ID:          01a20533-bf1e-79be-a76f-0c9bf0092624
 :FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b 01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd 01a204fc-dec1-7ac6-8408-c3a69aedfebd
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-23
 :END:
 Only the related tests ran when they were built. Run =lemmax/run_tests= once and fix what fails.
@@ -26,7 +24,6 @@ Only the related tests ran when they were built. Run =lemmax/run_tests= once and
 :PROPERTIES:
 :ID:          01a20533-c0f2-7bf6-8090-e843103c7faa
 :FOR:         01a204fc-dec1-7ac6-8408-c3a69aedfebd
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 =theory.env.org= holds this machine's versions; only Emacs has a tested lower bound (29). Find and test the oldest git, bash, perl and python3 that work, and write those.
@@ -36,7 +33,6 @@ Only the related tests ran when they were built. Run =lemmax/run_tests= once and
 :PROPERTIES:
 :ID:          01a205a5-79e6-72b6-88e6-113ea1cc9f1e
 :FOR:         01a204fc-d718-7e50-95a3-4ca72898a15b
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 A fresh agent, given only =lmx plan=, the statements, proofs and axioms, rebuilds lmx in an empty folder. Each question it has to ask is a gap; file each as a conjecture. Then run the real test suite against the rebuild.
@@ -46,7 +42,6 @@ A fresh agent, given only =lmx plan=, the statements, proofs and axioms, rebuild
 :PROPERTIES:
 :ID:          01a205a5-79e8-76df-8569-07f88a824da2
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 Tests can refute a conjecture but never prove it. Say so in the README and the math table, and say that the owner's or judge's review of each conjecture and proof pair is what makes a lemma hold.
@@ -56,7 +51,6 @@ Tests can refute a conjecture but never prove it. Say so in the README and the m
 :PROPERTIES:
 :ID:          01a205a5-79ea-7217-a6b3-12e41ea07d43
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 For the next five small edits, note the steps LemmaX asks for: ids, markers, proofs, migrate. Decide whether small changes need a lighter path.
@@ -66,7 +60,6 @@ For the next five small edits, note the steps LemmaX asks for: ids, markers, pro
 :PROPERTIES:
 :ID:          01a205a7-f8ef-7b54-8b1b-4e602877f925
 :FOR:         01a205a5-79df-745d-bb66-69f6cae232c6 01a205a5-79e2-7959-9296-5e465af6acc7 01a205a5-79e4-7b10-a3ec-9a86ac4d58f9
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 They were written in a session with no Emacs, so nothing checked them.
@@ -79,7 +72,6 @@ They were written in a session with no Emacs, so nothing checked them.
 :PROPERTIES:
 :ID:          01a205ad-8750-7196-94e6-9efa11ec9c2a
 :FOR:         01a20369-38d2-7202-8b53-6e296aaac489
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-24
 :END:
 lmx says "requirement" about 160 times; it speaks in maths terms instead.
@@ -96,7 +88,6 @@ lmx says "requirement" about 160 times; it speaks in maths terms instead.
 :PROPERTIES:
 :ID:          01a2091c-8f79-784a-885d-00ba4cb49976
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :END:
 Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-change entries and CLOSED:, with org-log-done and org-log-into-drawer. Org logs no approval: decide an APPROVED state or a log note. Old files keep their properties until migrate moves them.
@@ -106,7 +97,6 @@ Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-ch
 :PROPERTIES:
 :ID:          01a2091c-9177-70fa-bee0-bb2586b6c0e0
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :END:
 The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= and =#+LEMMAX_MARKERS_IN:= become =#+PROPERTY:= lines that Org's own property inheritance reads. The old keywords still read until migrate moves them.
@@ -116,7 +106,6 @@ The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= an
 :PROPERTIES:
 :ID:          01a2091c-9360-799a-af76-b8d22a2d1357
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-25
 :END:
 Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instead of lmx's own config file. Pick the one that keeps settings data, never run.
@@ -126,7 +115,6 @@ Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instea
 :PROPERTIES:
 :ID:          01a2091c-9546-7745-9a9b-4a17dc28b44a
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :END:
 New ids come from org-id-new with org-id-method, not lmx's own UUID v7 code. Check that org-id's ts or uuid method keeps ids sortable by time, as v7 does, or say why it falls short.
@@ -135,7 +123,6 @@ New ids come from org-id-new with org-id-method, not lmx's own UUID v7 code. Che
 :PROPERTIES:
 :ID:          01a2091c-9725-71a4-a36c-d9597a10e24b
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edna and org-roam, and switch each one an add-on already models.
@@ -144,7 +131,6 @@ Check :USES:, :PROVES:, :FOR:, :ABOUT: and :FOLLOWS: against org-depend, org-edn
 :PROPERTIES:
 :ID:          01a2091c-9905-7837-940b-116fa8148f3d
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :END:
 Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other commands, giving the same results as the terminal command, in a compilation-style buffer.
@@ -153,7 +139,6 @@ Add M-x lemmax-lint, lemmax-trace, lemmax-list, lemmax-plan and the other comman
 :PROPERTIES:
 :ID:          01a2091d-4fe9-7538-8b27-5ea26b99d9cc
 :FOR:         RT-4
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test command, and =lint --staged --no-tests= let one through on 2026-11-23 (d3e34aa fixed it). Make the staged lint refuse a second =#+LEMMAX_*= keyword in a file, or one below the first heading.
@@ -162,7 +147,6 @@ A body line that starts with =#+LEMMAX_TESTS:= is read as the file's test comman
 :PROPERTIES:
 :ID:          01a20930-0e64-7edb-9cb9-517e282978ce
 :FOR:         01a20930-0aba-7005-8442-d1dc3269c487
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :END:
 Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements/*.org to theories/agent1/, and skills/ishikari/requirements.org to theories/ishikari/; each gets a setup.org in place of lemmax/config.eld. Hooks, skills and links follow.
@@ -172,7 +156,6 @@ Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements
 :PROPERTIES:
 :ID:          01a20930-1048-7afd-b607-6ad9f307c3cf
 :FOR:         01a20930-0aba-7005-8442-d1dc3269c487
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a setup.org, and retire the arcadia_docs repo.
@@ -181,7 +164,6 @@ Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a set
 :PROPERTIES:
 :ID:          01a20930-1223-7e4e-b706-90c4c0451e1f
 :FOR:         01a20930-0aba-7005-8442-d1dc3269c487
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms.org finds it in agent1/theories/agent1/ after the move.
@@ -190,7 +172,6 @@ Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms
 :PROPERTIES:
 :ID:          01a20959-999f-7021-a401-a309fb4d3d93
 :FOR:         01a20959-95da-760e-82dc-2797c5af6abc
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 Statements say what, not how: move names of lemmax.el, its functions and line numbers out of statement bodies into Evidence lines. Each proven statement this rewords goes through demote and prove again.
@@ -199,7 +180,6 @@ Statements say what, not how: move names of lemmax.el, its functions and line nu
 :PROPERTIES:
 :ID:          01a20959-9b7e-75b9-8465-794c9e68f2be
 :FOR:         01a20959-95da-760e-82dc-2797c5af6abc
-:CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-23
 :END:
 Declare the chapter tag group in setup.org and tag each statement with one chapter: map today's feature tags, :cli: to interfaces, :lint: and :trace: to behavior, and so on.
@@ -208,7 +188,6 @@ Declare the chapter tag group in setup.org and tag each statement with one chapt
 :PROPERTIES:
 :ID:          01a20a16-794e-738a-8fb6-1a07dda88e1c
 :FOR:         01a20927-9aac-7817-8e46-8635aa0ae127
-:CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
 After a merge the docs ant runs lmx book, not the docs skill: skills/ishikari/SKILL.md, its scripts and its tests.
@@ -217,7 +196,6 @@ After a merge the docs ant runs lmx book, not the docs skill: skills/ishikari/SK
 :PROPERTIES:
 :ID:          01a20e2a-ec68-71de-b43e-a3441825ab18
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
 lmx keeps its own date properties, :CREATED: to :PROVEN:, where Org already logs dates. Read them from the LOGBOOK state-change entries and the CLOSED: line, and move the dates in every LemmaX repo with lmx migrate.
@@ -227,7 +205,6 @@ lmx keeps its own date properties, :CREATED: to :PROVEN:, where Org already logs
 :PROPERTIES:
 :ID:          01a20eb8-a22d-706e-92f4-445eef58176a
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
 Drop :CREATED:. A UUIDv7 id holds its creation time; an older id like RT-5 takes the day of the first commit that added it. lint stops requiring :CREATED: and the new-statement-dated-today rule; plan and list keep their order. Old :CREATED: lines still read; migrate deletes them. Measure lint time. Owner chose it on 2026-11-24, to build after the #+PROPERTY: settings task.

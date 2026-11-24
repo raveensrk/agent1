@@ -6,7 +6,6 @@
 :ID:          01a20ea2-00da-76b0-ae6c-6da1259c357f
 :PROVES:      touch-gesture-map
 :TEST:        demo/web/e2e "gesture map"
-:CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.

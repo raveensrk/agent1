@@ -34,7 +34,6 @@ Every test has a timeout, so no test hangs a run.
 * THESIS Deploy first, test alongside
 :PROPERTIES:
 :ID:          deploy-test-alongside
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
@@ -51,7 +50,6 @@ An app may deploy before its full tests finish, when the rules below hold. It tr
 * THESIS One session builds, test agents run alongside
 :PROPERTIES:
 :ID:          build-test-alongside
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
@@ -69,7 +67,6 @@ The main session only builds; test runs happen in separate agents at the same ti
 * THESIS Every test run logs its wall clock time
 :PROPERTIES:
 :ID:          test-times-log
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]

@@ -23,7 +23,6 @@ Before starting UI/UX design follow the principles mentioned in this book - [[fi
 *** CONJECTURE elimination_tracker uses Tauri, not JavaFX
 :PROPERTIES:
 :ID: elimination-tracker-tauri
-:CREATED: 2026-11-14
 :END:
 - Decided by the owner on 2026-11-14: this repo is exempt from the JavaFX/cljfx line above; every other app keeps it
 - The window is Tauri 2 with TypeScript; the core and CLI are Rust, a separate program the window starts and talks to by JSON lines
@@ -99,7 +98,6 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 ** THESIS The motion catalogue
 :PROPERTIES:
 :ID:          motion-catalogue
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
@@ -135,7 +133,6 @@ Evidence: the mockups use plain CSS keyframes and transitions, which Safari and 
 * THESIS About shows the app's version and commit
 :PROPERTIES:
 :ID: about-version
-:CREATED: 2026-11-14
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-14 Sat]
@@ -223,7 +220,6 @@ For example:
 *** THESIS Text boxes turn off macOS autocomplete
 :PROPERTIES:
 :ID:          text-no-autocomplete
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-15 Sun]

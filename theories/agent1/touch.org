@@ -20,7 +20,6 @@ Not all of this is applicable to all apps. Pick what the app needs.
 * THESIS What gui.org rules become on the web
 :PROPERTIES:
 :ID:          touch-gui-map
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]
@@ -88,7 +87,6 @@ Every gui.org and components.org rule holds on the web, except as below.
 ** THESIS Each component kind has one gesture map
 :PROPERTIES:
 :ID:          touch-gesture-map
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-21 Sat]

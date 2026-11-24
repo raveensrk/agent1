@@ -8,104 +8,89 @@ The terms LemmaX uses, each accepted without proof. A statement may =:USES:= one
 * DEFINITION Statement
 :PROPERTIES:
 :ID:          01a20759-6445-7d71-b4e4-07002ba0f9f0
-:CREATED:     2026-11-23
 :END:
 Any item of a theory, whatever its state: a conjecture, lemma, theorem or refuted one; the word for each where its state does not matter.
 
 * DEFINITION Axiom
 :PROPERTIES:
 :ID:          01a20759-6615-75b0-b9fb-c74ca4d10974
-:CREATED:     2026-11-23
 :END:
 An agent1 rule, an =AXIOM= heading in [[file:../agent1/axioms.org][axioms.org]]: accepted, never proven.
 
 * DEFINITION Definition
 :PROPERTIES:
 :ID:          01a20759-67e2-7dbf-acd8-253ddb303cc4
-:CREATED:     2026-11-23
 :END:
 A term a statement uses, a =DEFINITION= heading in this file: accepted, never proven.
 
 * DEFINITION Conjecture
 :PROPERTIES:
 :ID:          01a20759-69b3-7f01-9520-f7b3b8b4a326
-:CREATED:     2026-11-23
 :END:
 A statement not yet proven: what it says, ideas, design; =CONJECTURE=.
 
 * DEFINITION Proof
 :PROPERTIES:
 :ID:          01a20759-6b86-7ef2-8141-a9b182c58f3e
-:CREATED:     2026-11-23
 :END:
 A heading in =FILE.proofs.org=: =:PROVES:= ids, =:TEST:= its tests.
 
 * DEFINITION Lemma
 :PROPERTIES:
 :ID:          01a20759-6d60-7737-bf79-31a35980700d
-:CREATED:     2026-11-23
 :END:
 A conjecture whose every proof is PASSED; =LEMMA=.
 
 * DEFINITION Theorem
 :PROPERTIES:
 :ID:          01a20759-6f35-7896-8a32-f87face561ec
-:CREATED:     2026-11-23
 :END:
 A bigger conjecture that =:USES:= lemmas, proven too; =THEOREM=.
 
 * DEFINITION Corollary
 :PROPERTIES:
 :ID:          01a20759-70fe-7c1a-91f6-a52f558ef121
-:CREATED:     2026-11-23
 :END:
 A project's statement that =:FOLLOWS:= an agent1 rule.
 
 * DEFINITION Counterexample
 :PROPERTIES:
 :ID:          01a20759-72d0-74b0-9f0d-bd11d4b3b7d8
-:CREATED:     2026-11-23
 :END:
 A failing proof test: the proof is OPEN, its lemma CONJECTURE again.
 
 * DEFINITION Refuted
 :PROPERTIES:
 :ID:          01a20759-749c-7f74-a470-a27214916c5b
-:CREATED:     2026-11-23
 :END:
 A conjecture disproven or given up, kept saying why; =REFUTED=.
 
 * DEFINITION Task
 :PROPERTIES:
 :ID:          01a20759-7667-7370-80fa-d7a4d52a56d4
-:CREATED:     2026-11-23
 :END:
 A dev chore in =FILE.tasks.org=: =TODO | DONE CANCELLED=, needs no proof.
 
 * DEFINITION Note
 :PROPERTIES:
 :ID:          01a20759-783d-748b-8dbb-374e42bc2860
-:CREATED:     2026-11-23
 :END:
 Text in =FILE.notes.org=: no state, =:ABOUT:= ids, needs no proof.
 
 * DEFINITION Q.E.D.
 :PROPERTIES:
 :ID:          01a20759-7a0e-7391-b821-2264a3731364
-:CREATED:     2026-11-23
 :END:
 =PASSED= on the last proof, then =LEMMA= or =THEOREM=; the day is =:PROVEN:=.
 
 * DEFINITION LemmaX
 :PROPERTIES:
 :ID:          01a20d0f-f245-7678-b438-511ac08c8248
-:CREATED:     2026-11-24
 :END:
 The workflow: a project's theory of statements, proofs, tests and code markers, kept in theories/, by the rules of this theory. Written LemmaX; a project that keeps them "follows LemmaX". Said lemmax or LemmaX, it means the LemmaX project or the workflow, never the program.
 
 * DEFINITION lmx
 :PROPERTIES:
 :ID:          01a20d0f-f245-7678-b438-511bd421cd09
-:CREATED:     2026-11-24
 :END:
 The program that checks the LemmaX workflow: the =lmx= command and its Emacs code. A command written in code style, as =lmx lint=, names it. Said lmx, it means this program.

@@ -10,7 +10,6 @@ Process: [[file:../agent1/theory.org][Requirements requirements]].
 :PROPERTIES:
 :ID:          RT-1
 :USES:        RT-2 RT-3 RT-4 RT-7 RT-8 RT-12 RT-13 01a1ff25-116d-73f1-a45e-dd77e482a983 01a202b0-1d09-75f3-99dc-677a4b2ec0be
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -28,7 +27,6 @@ Evidence: Emacs 31.1 and org 9.8.7 at =/usr/local/bin/emacs=; a spike read an in
 :PROPERTIES:
 :ID:          RT-2
 :USES:        RT-16
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -45,7 +43,6 @@ Evidence: spike: Emacs answered a bare =--help= with its own usage but passed =-
 ** LEMMA Which files it reads
 :PROPERTIES:
 :ID:          RT-3
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -60,7 +57,6 @@ Evidence: org-element parses =#+KEY: value= lines as keyword elements ([[https:/
 :PROPERTIES:
 :ID:          RT-4
 :USES:        RT-5 RT-6 RT-10 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490 01a20014-e361-7827-b2a8-d3b2ded3e0b1 01a202bc-49e2-7dba-94f5-0c0952fc91f0 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -82,7 +78,6 @@ Evidence: arcadia_docs' =check_verify.bb= and symptoms_tracker's =script/process
 ** LEMMA lint: VERIFY names tests that exist                           :lint:
 :PROPERTIES:
 :ID:          RT-5
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-23 Mon]
@@ -99,7 +94,6 @@ Evidence: spike: =org-entry-get= returned =:VERIFY:= and =:VERIFY+:= joined, whi
 :PROPERTIES:
 :ID:          RT-6
 :USES:        RT-11 01a2002a-bf93-7475-94c3-d083c65a87d6 01a2002d-fb3b-71e3-ac96-5e1dbba8226c
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -119,7 +113,6 @@ Evidence: symptoms_tracker's =.githooks/requirements-check= does these in Python
 :PROPERTIES:
 :ID:          RT-7
 :USES:        RT-11
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -137,7 +130,6 @@ Evidence: symptoms_tracker's =.githooks/commit-msg= does this in Python today, w
 :PROPERTIES:
 :ID:          RT-8
 :USES:        RT-9 RT-17 RT-18 RT-19 01a20014-e361-7827-b2a8-d3b2ded3e0b1 01a202bc-4b52-74e6-9d78-591320edcb4f 01a202bc-4e0c-745b-9f61-980ada0f93e5
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -156,7 +148,6 @@ Evidence: =git log --format= and =--name-only= give hash, date, subject and file
 :PROPERTIES:
 :ID:          RT-9
 :USES:        01a2002a-bf93-7475-94c3-d083c65a87d6
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -171,7 +162,6 @@ Evidence: spike: in an invented repo, a parent changed on 2026-01-09 flagged a c
 ** LEMMA The harness check                                       :hooks:
 :PROPERTIES:
 :ID:          RT-10
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -186,7 +176,6 @@ Evidence: [[file:../../harness/README.md][harness/README.md]] gives the check co
 ** LEMMA agent1's global hooks call lmx                     :hooks:
 :PROPERTIES:
 :ID:          RT-11
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -202,7 +191,6 @@ Evidence: =git config --global core.hooksPath= is =~/repos/agent1/harness/githoo
 ** LEMMA lmx's own tests                                    :tests:
 :PROPERTIES:
 :ID:          RT-12
-:CREATED:     2026-11-15
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -219,7 +207,6 @@ Evidence: ERT ships with Emacs 31.1 ([[https://www.gnu.org/software/emacs/manual
 :PROPERTIES:
 :ID:          RT-13
 :USES:        RT-14 RT-15 RT-18 01a2058c-5dff-75bc-b089-998d5425915a
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -241,7 +228,6 @@ Evidence: org-element reads TODO state, =:ID:=, =:APPROVED:= and =:VERIFY:= (RT-
 ** LEMMA list and next-id read theory files by name       :list:
 :PROPERTIES:
 :ID:          01a2058c-5dff-75bc-b089-998d5425915a
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -259,7 +245,6 @@ Evidence: lemmax.el:319 and lemmax.el:498 match the name "requirements" only; sp
 :PROPERTIES:
 :ID:          RT-14
 :USES:        RT-15 01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -275,7 +260,6 @@ Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0
 :PROPERTIES:
 :ID:          RT-15
 :USES:        01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -288,7 +272,6 @@ Evidence: Arcadia's requirements.org held two M-11 headings until commit 7bf63c0
 ** LEMMA --project names the repo to read                              :cli:
 :PROPERTIES:
 :ID:          RT-16
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -304,7 +287,6 @@ Evidence: =git rev-parse --show-toplevel= run in =DIR= finds its repo; =list --a
 ** LEMMA trace ID prints the statement's text                 :trace:
 :PROPERTIES:
 :ID:          RT-17
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -318,7 +300,6 @@ Evidence: the body is the entry's lines after the heading, read from the same re
 ** LEMMA A duplicate id is shown, never hidden                  :trace:
 :PROPERTIES:
 :ID:          RT-18
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -333,7 +314,6 @@ Evidence: =trace= finds its block with =cl-find=, which stops at the first match
 ** LEMMA trace finds an id in another project                   :trace:
 :PROPERTIES:
 :ID:          RT-19
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -349,7 +329,6 @@ Evidence: =list --all= already walks =~/repos=; a =git grep= for =#+LEMMAX_TESTS
 ** LEMMA lmx knows UUID v7 ids                               :ids:
 :PROPERTIES:
 :ID:          01a1fe0c-9c5c-7057-8edc-bc68ccfa0490
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -366,7 +345,6 @@ Evidence: Python 3.15.2's =uuid.uuid7()= printed =01a1fe0c-9c5c-7057-8edc-bc68cc
 ** LEMMA reqtrace becomes lemmax, in lemmax/                   :cli:
 :PROPERTIES:
 :ID:          01a1ff25-116d-73f1-a45e-dd77e482a983
-:CREATED:     2026-11-21
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -387,7 +365,6 @@ The tool takes the workflow's name, LemmaX, and moves beside the rules it checks
 :PROPERTIES:
 :ID:          01a20014-e361-7827-b2a8-d3b2ded3e0b1
 :USES:        01a2002d-fb3b-71e3-ac96-5e1dbba8226c
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -411,7 +388,6 @@ Evidence: =git grep -n -I -E= prints file:line:text for every tracked match; lmx
 ** LEMMA An id at the start of a heading is not text            :lint:
 :PROPERTIES:
 :ID:          01a2002a-bf93-7475-94c3-d083c65a87d6
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -429,7 +405,6 @@ Evidence: =lemmax--entry-text= already drops the state and the dates the same wa
 :PROPERTIES:
 :ID:          01a2002d-fb3b-71e3-ac96-5e1dbba8226c
 :USES:        01a202b0-1d09-75f3-99dc-677a4b2ec0be
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -446,7 +421,6 @@ Evidence: Arcadia's requirements live in arcadia_docs and its code in arcadia; t
 :PROPERTIES:
 :ID:          01a202b0-1d09-75f3-99dc-677a4b2ec0be
 :USES:        01a202bc-4a88-7993-a717-e8022392b801
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -466,7 +440,6 @@ Evidence: =lemmax--parse= reads each file alone and =lemmax--all-reqs= pools lem
 :PROPERTIES:
 :ID:          01a202bc-49e2-7dba-94f5-0c0952fc91f0
 :USES:        01a202bc-4b52-74e6-9d78-591320edcb4f 01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5 01a202bc-4e0c-745b-9f61-980ada0f93e5
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -481,7 +454,6 @@ Evidence: org-element parses =id:= links as type "id"; no .org file in agent1 us
 ** LEMMA A file with :ID: at its top is one lemma                  :lint:
 :PROPERTIES:
 :ID:          01a202bc-4a88-7993-a717-e8022392b801
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -497,7 +469,6 @@ Evidence: org-element reads a file-level property drawer as the first child of t
 ** LEMMA trace shows what links to a lemma                        :trace:
 :PROPERTIES:
 :ID:          01a202bc-4b52-74e6-9d78-591320edcb4f
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -511,7 +482,6 @@ Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam bac
 ** LEMMA :ALIASES: keeps old ids working                       :ids:
 :PROPERTIES:
 :ID:          01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -525,7 +495,6 @@ Evidence: lmx resolves ids through one table per run; idea from org-roam's =ROAM
 ** LEMMA :REFS: names where a lemma came from                       :ids:
 :PROPERTIES:
 :ID:          01a202bc-4cc4-753e-8d51-12d8327dfd9c
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -539,7 +508,6 @@ Evidence: idea from org-roam's =ROAM_REFS=.
 ** LEMMA list --unlinked shows ids named without a link       :list:
 :PROPERTIES:
 :ID:          01a202bc-4d72-7f9e-8e2d-6f8ae9b27ed5
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -553,7 +521,6 @@ Evidence: idea from org-roam's unlinked references.
 ** LEMMA trace --dot prints the lemma graph                       :trace:
 :PROPERTIES:
 :ID:          01a202bc-4e0c-745b-9f61-980ada0f93e5
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -567,7 +534,6 @@ Evidence: Graphviz's dot language is plain text; idea from org-roam-ui.
 ** LEMMA A lemma moved to another file keeps its history                 :lint:
 :PROPERTIES:
 :ID:          01a202f3-8216-7a1e-a34c-80c99d7bbf02
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-23 Mon]
@@ -581,7 +547,6 @@ Evidence: probe 2026-11-22: git mv requirements.org requirements/moved.org gave 
 ** LEMMA Paths with colons are read whole                                 :lint:
 :PROPERTIES:
 :ID:          01a202f3-82c0-7905-9aa6-cafdcd9235e8
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -594,7 +559,6 @@ Evidence: probe 2026-11-22: a marker naming an unknown id in a:b.el gave no find
 ** LEMMA list and trace run no test command unless asked            :cli:
 :PROPERTIES:
 :ID:          01a202f3-834a-7fcc-9a94-a50f2d1ab85c
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -609,7 +573,6 @@ Evidence: probe 2026-11-22: lmx list ran tests.sh.
 ** LEMMA One parser for every reader                                       :lint:
 :PROPERTIES:
 :ID:          01a202f3-83dc-76e8-b198-68db19d1e4cd
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -623,7 +586,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA A file lemma's drawer is the file's first element                :lint:
 :PROPERTIES:
 :ID:          01a202f3-8475-7f4f-b0e2-5cd8c782e520
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -637,7 +599,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA Today is the local day                                      :lint:
 :PROPERTIES:
 :ID:          01a202f3-850b-7e3f-93f9-655397189d53
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-23 Mon]
@@ -653,7 +614,6 @@ Evidence: lemmax.el:625 calls format-time-string with UTC set to t; with nil it 
 ** LEMMA Missing or old Emacs is said plainly                         :cli:
 :PROPERTIES:
 :ID:          01a202f3-85a4-76cd-bf13-05f6e723c5b2
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -668,7 +628,6 @@ Evidence: the hardening review of 2026-11-22.
 :PROPERTIES:
 :ID:          01a202f3-863b-7c04-9728-0c9dd9346002
 :USES:        01a20336-c8a5-702e-86c3-655c93d44c9e
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-22 Sun]
@@ -683,7 +642,6 @@ Evidence: the hardening review of 2026-11-22.
 :PROPERTIES:
 :ID:          01a202f3-86d9-7db2-a0dc-accec28dfe29
 :USES:        01a202f3-863b-7c04-9728-0c9dd9346002
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -697,7 +655,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA --json says its version                                           :list:
 :PROPERTIES:
 :ID:          01a202f3-878b-75cb-98e0-9d7929ef88c1
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -712,7 +669,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA Golden, generated and mutation tests                              :tests:
 :PROPERTIES:
 :ID:          01a202f3-8822-7602-98a4-67acc268e3b0
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -727,7 +683,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA The history walk stays fast                                       :trace:
 :PROPERTIES:
 :ID:          01a202f3-88bb-704d-9ea9-74714f841514
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -740,7 +695,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA Odd input reads as plain input                                    :lint:
 :PROPERTIES:
 :ID:          01a202f3-8964-7333-8165-dba3d86556b5
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -754,7 +708,6 @@ Evidence: the hardening review of 2026-11-22.
 ** LEMMA lint reads only files that can hold lemmas, once                  :lint:
 :PROPERTIES:
 :ID:          01a20336-c4d6-73d3-a429-0a755d277123
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-23 Mon]
@@ -769,7 +722,6 @@ Evidence: probe 2026-11-22: 16 s for that repo; lemmax.el reads every tracked .o
 ** LEMMA FILE arguments are paths from where lmx runs               :cli:
 :PROPERTIES:
 :ID:          01a20336-c583-720a-b661-c9b5a5dec1a4
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -783,7 +735,6 @@ Evidence: probe 2026-11-22: lmx lint ../requirements.org from a subfolder passed
 ** LEMMA agent1's own rules are config, with neutral defaults                :lint:
 :PROPERTIES:
 :ID:          01a20336-c611-73c8-bb70-4a8e70e675d1
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -799,7 +750,6 @@ Evidence: lemmax.el holds 2026-11-22, RF-3, "agent1's id rule" and "what require
 ** LEMMA lmx install-hooks puts lmx in a repo's hooks          :cli:
 :PROPERTIES:
 :ID:          01a20336-c6c6-7ac0-aea1-6d5ff12a8fea
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -815,7 +765,6 @@ Evidence: harness/githooks/pre-commit finds lmx at ../../lemmax.
 ** LEMMA Tests clean up after themselves                                     :tests:
 :PROPERTIES:
 :ID:          01a20336-c75e-78ac-bf5e-7a72262f73e6
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -829,7 +778,6 @@ Evidence: 6538 folders, 1.4 GB, under ~/tmp after this session's runs.
 ** LEMMA lmx says its version; MIT licence; a changelog               :cli:
 :PROPERTIES:
 :ID:          01a20336-c80d-733a-a251-ad26a0ebf7d3
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -844,7 +792,6 @@ Evidence: the release review of 2026-11-22.
 ** LEMMA CI passes on every Emacs of its matrix                               :tests:
 :PROPERTIES:
 :ID:          01a20336-c8a5-702e-86c3-655c93d44c9e
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -857,7 +804,6 @@ Evidence: run 1 failed in setup-emacs: Nix flakes off on the runner.
 ** LEMMA Markers come only from sibling repos                                 :lint:
 :PROPERTIES:
 :ID:          01a20336-c953-745d-aef4-90ee2141e08d
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -871,7 +817,6 @@ Evidence: the release review of 2026-11-22.
 ** LEMMA Fork pull requests are safe in the shipped workflow             :tests:
 :PROPERTIES:
 :ID:          01a20336-c9e9-7664-ba5c-e5e12d249d48
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -885,7 +830,6 @@ Evidence: the release review of 2026-11-22.
 ** LEMMA Output is stable, and lint speaks JSON                          :cli:
 :PROPERTIES:
 :ID:          01a20336-ca8d-75bf-bedc-33da69c29468
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -899,7 +843,6 @@ Evidence: the release review of 2026-11-22.
 ** LEMMA Where lmx runs is said                                       :cli:
 :PROPERTIES:
 :ID:          01a20336-cb25-779d-9e80-e04a22bd235d
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -912,7 +855,6 @@ Evidence: the release review of 2026-11-22.
 ** LEMMA Config checks every path it names                                    :lint:
 :PROPERTIES:
 :ID:          01a20336-cbc7-70a7-9473-18325683fba6
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -925,7 +867,6 @@ Evidence: the release review of 2026-11-22.
 ** LEMMA The name is lemmax everywhere                                        :tests:
 :PROPERTIES:
 :ID:          01a20336-cc5d-70ae-878b-b241ecc9ef61
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -941,7 +882,6 @@ Evidence: the release review of 2026-11-22.
 :PROPERTIES:
 :ID:          01a20369-38d2-7202-8b53-6e296aaac489
 :USES:        01a20369-38f7-7229-8232-1b8cbb98e6bc 01a20369-391b-768e-8c98-180facc0ff77 01a20369-393d-77bf-a35a-a1c03780a751
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -961,7 +901,6 @@ Evidence: lemmax.el reads states through =lemmax-states= and properties through 
 ** LEMMA Lint proves a lemma from its proofs                                 :lint:
 :PROPERTIES:
 :ID:          01a20369-38f7-7229-8232-1b8cbb98e6bc
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -978,7 +917,6 @@ Evidence: =lemmax--lint-file-rules= and =lemmax--lint-verify= hold the rules thi
 ** LEMMA lmx migrate moves a file to the math names                  :cli:
 :PROPERTIES:
 :ID:          01a20369-391b-768e-8c98-180facc0ff77
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -999,7 +937,6 @@ Evidence: =lemmax-uuid7= makes ids; =git diff --no-index= makes the diff.
 ** LEMMA trace and list show proofs                                          :cli:
 :PROPERTIES:
 :ID:          01a20369-393d-77bf-a35a-a1c03780a751
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1016,7 +953,6 @@ Evidence: =lemmax--block=, =lemmax--group= and =lemmax--dot= print these today.
 ** LEMMA Tasks files hold dev chores                                           :lemmax:
 :PROPERTIES:
 :ID:          01a2038d-cc5f-7324-8de8-1b067284e640
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1034,7 +970,6 @@ Evidence: =lemmax--proof-p= picks proofs by file name; tasks use the same way.
 ** LEMMA Notes files hold text that needs no state                             :lemmax:
 :PROPERTIES:
 :ID:          01a2038d-cc73-7594-9dd3-d758bee5aadc
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1049,7 +984,6 @@ Evidence: a heading with :ID: and no state is already read as a record by =lemma
 ** LEMMA AXIOM headings are accepted without proof                             :lemmax:
 :PROPERTIES:
 :ID:          01a2038d-cc86-72be-b225-eeff9ee2c7a6
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1066,7 +1000,6 @@ Evidence: states are read through =lemmax-states=.
 :PROPERTIES:
 :ID:          01a20757-95c1-70d9-882a-875672207343
 :USES:        01a2038d-cc86-72be-b225-eeff9ee2c7a6
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1085,7 +1018,6 @@ Evidence: AXIOM is read through =lemmax-states= (lemmax.el:31) and the keyword l
 ** LEMMA A commit may name a task id                                      :cli:
 :PROPERTIES:
 :ID:          01a2038d-cc9a-7496-b943-49cb1444826d
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1099,7 +1031,6 @@ Evidence: =lemmax-commit-msg= takes its ids from =lemmax--all-reqs=, which holds
 ** LEMMA Tags are declared, nested and inherited                               :lint:
 :PROPERTIES:
 :ID:          01a2039c-9e67-74bb-9ac4-63eac14f1e7c
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1116,7 +1047,6 @@ Evidence: Org's =org-tag-alist-to-groups= and =org-get-tags= read groups and inh
 ** LEMMA list and trace filter by tag                                     :cli:
 :PROPERTIES:
 :ID:          01a2039c-9e67-74bb-9ac4-63eb06d24a3f
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1130,7 +1060,6 @@ Evidence: =lemmax--filter= already filters rows by state and section.
 ** LEMMA Link properties take id: links                                   :lint:
 :PROPERTIES:
 :ID:          01a203a6-a702-71c0-8239-e0d41380d2dd
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1145,7 +1074,6 @@ Evidence: =lemmax--id-link-re= already reads id: links in bodies.
 ** LEMMA ORDERED and BLOCKER agree with lmx                            :lint:
 :PROPERTIES:
 :ID:          01a203a6-a716-738e-a95b-18086050d5eb
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1160,7 +1088,6 @@ Evidence: =org-entry-get= reads :ORDERED: and =org-get-last-sibling= walks sibli
 ** LEMMA A LOGBOOK is not the text                                             :lint:
 :PROPERTIES:
 :ID:          01a203a6-a729-7420-980a-1702a0de05ad
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1175,7 +1102,6 @@ Evidence: =lemmax--entry-text= reads the property drawer by its =:PROPERTIES:= a
 ** LEMMA lmx archive moves finished headings                           :cli:
 :PROPERTIES:
 :ID:          01a203a6-a73d-7772-a4cb-fc4917fefd50
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1193,7 +1119,6 @@ Evidence: a spike ran =org-archive-subtree= in batch Emacs and moved a REFUTED h
 ** LEMMA lmx publish writes HTML                                       :cli:
 :PROPERTIES:
 :ID:          01a203a6-a752-75ed-8359-a8147e95a33d
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1209,7 +1134,6 @@ Evidence: a spike in batch Emacs ran =org-publish= after =org-id-update-id-locat
 ** LEMMA SETUPFILE carries a file's keywords                              :lint:
 :PROPERTIES:
 :ID:          01a203a6-a766-76c6-9931-753ee75e9318
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1225,7 +1149,6 @@ Evidence: a spike in batch Emacs read =#+LEMMAX_TESTS:=, =#+TODO:= and =#+TAGS:=
 ** LEMMA Every footnote has a definition                                       :lint:
 :PROPERTIES:
 :ID:          01a203a6-a779-73fc-8abf-99f8c8816867
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1240,7 +1163,6 @@ Evidence: Org footnote syntax: https://orgmode.org/manual/Creating-Footnotes.htm
 ** LEMMA An lmx run loads only the Org it needs                         :tests:
 :PROPERTIES:
 :ID:          01a203c1-983f-77e1-a367-92ea000ab72f
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1256,7 +1178,6 @@ Evidence: =emacs -Q --batch= with =org-modules= nil ran =(org-mode)= in 0.48 s, 
 ** LEMMA Tests run lmx in their own Emacs                              :tests:
 :PROPERTIES:
 :ID:          01a203c1-983f-77e1-a367-92eb7cba2954
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1271,7 +1192,6 @@ Evidence: lmx ends each command with =kill-emacs=, which a test can catch by bin
 ** LEMMA The edit check opts in as the hooks do                           :hooks:
 :PROPERTIES:
 :ID:          01a203e8-0c8b-713e-8f21-ffee439bcbb0
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1286,7 +1206,6 @@ Evidence: the global =pre-commit= runs =git grep --cached -q -E '^#\+LEMMAX_TEST
 ** LEMMA [#A] lmx plan lists the rebuild, one lemma at a time      :cli:
 :PROPERTIES:
 :ID:          01a204fc-d718-7e50-95a3-4ca72898a15b
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1306,7 +1225,6 @@ Evidence: lemmax.el:227 already reads =:USES:= into =:needs= for every row; org-
 :PROPERTIES:
 :ID:          01a204fc-dadb-7a6d-bef9-7ebadcbfc6cd
 :USES:        01a20014-e361-7827-b2a8-d3b2ded3e0b1
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1324,7 +1242,6 @@ Evidence: markers are read today with =git grep -n -I -E= (lemma 01a20014-e361-7
 ** LEMMA [#B] The environment is captured                             :lemmax:
 :PROPERTIES:
 :ID:          01a204fc-dec1-7ac6-8408-c3a69aedfebd
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1344,7 +1261,6 @@ Evidence: lmx already reads =FILE.tasks.org= and =FILE.notes.org= beside a requi
 ** LEMMA [#B] The proven date is called PROVEN                   :lemmax:
 :PROPERTIES:
 :ID:          01a2052f-a14c-7e72-8a8f-57ab97635a10
-:CREATED:     2026-11-22
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1361,7 +1277,6 @@ Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =
 ** LEMMA A moved link is not a text change                              :lint:
 :PROPERTIES:
 :ID:          01a20a84-971d-767f-8a26-c98f6d132b7f
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1379,7 +1294,6 @@ Evidence: git diff --cached -M --name-status gives each rename as R, old path, n
 :PROPERTIES:
 :ID:          01a20c8e-872d-75b3-97fe-22718d4b809b
 :USES:        01a20a84-971d-767f-8a26-c98f6d132b7f
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1396,7 +1310,6 @@ Evidence: arcadia_docs' theory links ../agent1/requirements/, gone since agent1'
 ** CONJECTURE [#B] An unrun proof is not a counterexample                   :lint:
 :PROPERTIES:
 :ID:          01a205a5-79df-745d-bb66-69f6cae232c6
-:CREATED:     2026-11-22
 :END:
 A proof whose tests have not run yet and a proof whose tests failed are told apart.
 - A proof's states are =OPEN FAILED | PASSED=: =OPEN= is not yet run, =FAILED= is a counterexample
@@ -1409,7 +1322,6 @@ Evidence: proof states come from the =#+TODO:= line of =theory.proofs.org= and f
 ** CONJECTURE [#B] lint resolves :FOLLOWS: in other projects                :lint:
 :PROPERTIES:
 :ID:          01a205a5-79e2-7959-9296-5e465af6acc7
-:CREATED:     2026-11-22
 :END:
 A =:FOLLOWS:= target in another repo is found, as =trace= finds an id in another project (RT-19).
 - =lmx lint= looks up each =:FOLLOWS:= id in the git repos under =~/repos= that opt in
@@ -1422,7 +1334,6 @@ Evidence: =lemmax.el= already parses =:FOLLOWS:= (line 230), and RT-19 already w
 :PROPERTIES:
 :ID:          01a205a5-79e4-7b10-a3ec-9a86ac4d58f9
 :USES:        01a205a5-79e2-7959-9296-5e465af6acc7
-:CREATED:     2026-11-22
 :END:
 A corollary is suspect when its =:FOLLOWS:= target changed its text after the corollary's =:IMPLEMENTED:= or =:REVIEWED:= date, whichever is later, as a suspect theorem is for =:USES:=.
 - The target may be in this repo or another one
@@ -1434,7 +1345,6 @@ Evidence: the suspect check for =:USES:= reads a lemma's last change from git; t
 ** CONJECTURE [#A] Every format change migrates gracefully                  :lint:
 :PROPERTIES:
 :ID:          01a205c0-8460-7fb4-8493-861352251771
-:CREATED:     2026-11-23
 :END:
 lmx never breaks a file written in an older format; it reads the old form, warns, and =lmx migrate= moves it.
 - One registry lists every legacy rule: the old form, the new form and its migrate step; =OPEN | DONE DROPPED=, =:NEEDS:= and =:VERIFY:= are its first entries
@@ -1449,7 +1359,6 @@ Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =
 ** LEMMA Any heading has attachments, as org-attach keeps them            :lint:
 :PROPERTIES:
 :ID:          01a2090e-8591-756c-a9f1-dd473d9c3ce4
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1472,7 +1381,6 @@ Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id
 :PROPERTIES:
 :ID:          01a2090e-8781-768e-86aa-fbfa698d41f9
 :USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-23 Mon]
@@ -1489,7 +1397,6 @@ Evidence: lint --staged already compares each statement's text, HEAD against sta
 :PROPERTIES:
 :ID:          01a2090e-895f-7dfe-8227-1bcb9f632960
 :USES:        01a2090e-8781-768e-86aa-fbfa698d41f9
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-23 Mon]
@@ -1503,7 +1410,6 @@ Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
 :PROPERTIES:
 :ID:          01a2090e-8b52-7173-947b-d882b237ad05
 :USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1520,7 +1426,6 @@ Evidence: org-attach-expand-links turns attachment: into file: before export; or
 ** LEMMA LemmaX is an extension of Org mode                          :lemmax:
 :PROPERTIES:
 :ID:          01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1541,7 +1446,6 @@ Evidence: Org already supplies TODO keywords, tags, priorities, :ID: and id: lin
 :PROPERTIES:
 :ID:          01a20927-9aac-7817-8e46-8635aa0ae127
 :USES:        01a203a6-a752-75ed-8359-a8147e95a33d 01a2090e-8b52-7173-947b-d882b237ad05 01a204fc-d718-7e50-95a3-4ca72898a15b
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1563,7 +1467,6 @@ Evidence: org-publish publishes each file a project includes, so one entry file 
 :PROPERTIES:
 :ID:          01a20930-0aba-7005-8442-d1dc3269c487
 :USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1589,7 +1492,6 @@ Evidence: org-publish takes a :base-directory and :recursive t, so theories/ is 
 ** LEMMA A theory file is named theory.org                               :lint:
 :PROPERTIES:
 :ID:          01a20caa-4660-77a9-bf48-db8448f75366
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1606,7 +1508,6 @@ Evidence: lemmax--lint-theories already reads each worktree file's name, so a na
 :PROPERTIES:
 :ID:          01a20959-95da-760e-82dc-2797c5af6abc
 :USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a20930-0aba-7005-8442-d1dc3269c487 01a204fc-d718-7e50-95a3-4ca72898a15b 01a20d28-cb41-760a-a477-e1704807a2a8
-:CREATED:     2026-11-23
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
@@ -1636,7 +1537,6 @@ Evidence: Org tag groups declare a tag hierarchy; org-babel runs dot blocks (ob-
 :PROPERTIES:
 :ID:          01a20d04-c038-7534-9920-23ec7679dadc
 :USES:        01a20959-95da-760e-82dc-2797c5af6abc 01a20d28-cb41-760a-a477-e1704807a2a8
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
@@ -1660,7 +1560,6 @@ Evidence: the owner named the GNU manuals page as the model, where GNU offers ea
 :PROPERTIES:
 :ID:          01a20d0f-f245-7678-b438-511c148c4eb7
 :USES:        01a20d0f-f245-7678-b438-511ac08c8248 01a20d0f-f245-7678-b438-511bd421cd09
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1680,7 +1579,6 @@ Evidence: no lmx is on this PATH; a web search on 2026-11-24 found one tool of t
 ** LEMMA An agent writes the bible and the manual; lmx only checks them :skill:
 :PROPERTIES:
 :ID:          01a20d28-cb41-760a-a477-e1704807a2a8
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1701,7 +1599,6 @@ Evidence: skills/docs/SKILL.md already writes a book-style design document by ha
 :PROPERTIES:
 :ID:          01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1723,7 +1620,6 @@ Evidence: Org's manual, "Tracking TODO state changes": a ! after a state's key l
 :PROPERTIES:
 :ID:          01a20eb5-f066-7481-9fd1-9ac7705ef6b2
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-24
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
@@ -1744,7 +1640,6 @@ Evidence: Org manual, "Property Syntax": #+PROPERTY: sets a file-wide property a
 :PROPERTIES:
 :ID:          01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
-:CREATED:     2026-11-25
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-25 Wed]
@@ -1765,7 +1660,6 @@ Evidence: Org manual, "In-buffer Settings": #+SETUPFILE: reads another file's se
 :PROPERTIES:
 :ID:          01a20ee1-7637-7169-820a-751b3c636847
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
-:CREATED:     2026-11-25
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]

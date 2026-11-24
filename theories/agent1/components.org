@@ -7,7 +7,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 * Things I can act on look different from things I cannot
 :PROPERTIES:
 :ID: actable-look
-:CREATED: 2026-11-18
 :END:
 - Anything clickable or actable looks it: a button, a link, a control
 - Nothing that cannot be acted on looks clickable
@@ -297,7 +296,6 @@ Part of the [[file:gui.org][GUI requirements]], which say what holds for all of 
 * LEMMA Date pickers
 :PROPERTIES:
 :ID: date-pickers
-:CREATED: 2026-11-15
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-15 Sun]
@@ -361,7 +359,6 @@ Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/Date
 * LEMMA Scroll areas and scroll bars
 :PROPERTIES:
 :ID: scroll-areas
-:CREATED: 2026-11-14
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-14 Sat]

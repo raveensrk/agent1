@@ -9,125 +9,107 @@ A project's corollary names one in =:FOLLOWS:=. The rule's file holds its text.
 * AXIOM Browser and computer use
 :PROPERTIES:
 :ID:          01a2038f-c6a9-7692-a02a-f1ccb0d26345
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/browser.md][Browser and computer use]]
 
 * AXIOM Docs
 :PROPERTIES:
 :ID:          01a2038f-c6a9-7692-a02a-f1cd0b3ab5a5
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/docs.md][Docs]]
 
 * AXIOM External systems and accounts
 :PROPERTIES:
 :ID:          01a2038f-c6a9-7692-a02a-f1cee2ca762c
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/external.md][External systems and accounts]]
 
 * AXIOM Git
 :PROPERTIES:
 :ID:          01a2038f-c6a9-7692-a02a-f1cff2994913
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/git.md][Git]]
 
 * AXIOM Harness
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d75ba5805473
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/harness.md][Harness]]
 
 * AXIOM Jobs
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d75c8a770126
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/jobs.md][Jobs]]
 
 * AXIOM macOS
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d75dbc0ded83
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/macos.md][macOS]]
 
 * AXIOM Markdown
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d75eddf29f7a
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/markdown.md][Markdown]]
 
 * AXIOM Parallel sessions
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d75f4496f54a
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/parallel_sessions.md][Parallel sessions]]
 
 * AXIOM Pi packages
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d7602267e721
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/pi.md][Pi packages]]
 
 * AXIOM Removal and uninstall
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d76148718b93
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/removal.md][Removal and uninstall]]
 
 * AXIOM Repos
 :PROPERTIES:
 :ID:          01a2038f-c6aa-77e8-ab4d-d762c72774a0
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/repos.md][Repos]]
 
 * AXIOM Ruled out
 :PROPERTIES:
 :ID:          01a2038f-c6ab-7304-8b20-2cf83dfebf3e
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/ruled_out.md][Ruled out]]
 
 * AXIOM Scripts
 :PROPERTIES:
 :ID:          01a2038f-c6ab-7304-8b20-2cf9594dafa4
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/scripts.md][Scripts]]
 
 * AXIOM Theme
 :PROPERTIES:
 :ID:          01a2038f-c6ab-7304-8b20-2cfaa48deeb1
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/theme.md][Theme]]
 
 * AXIOM Tools
 :PROPERTIES:
 :ID:          01a2038f-c6ab-7304-8b20-2cfbae13780d
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/tools.md][Tools]]
 
 * AXIOM TUI
 :PROPERTIES:
 :ID:          01a2038f-c6ab-7304-8b20-2cfc7a77f28b
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/tui.md][TUI]]
 
 * AXIOM Working style
 :PROPERTIES:
 :ID:          01a2038f-c6ac-756d-819c-5bffb76d0d1b
-:CREATED:     2026-11-22
 :END:
 [[file:../../rules/working_style.md][Working style]]
