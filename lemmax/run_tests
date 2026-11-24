@@ -16,6 +16,7 @@
 # Exit 0 when every test passed, 1 otherwise.
 # example: lemmax/run_tests --only ert/lemmax-list-table
 set -uo pipefail
+[ "${BASH_VERSINFO[0]}" -ge 5 ] || { echo "run_tests: needs Bash 5 or newer, this is $BASH_VERSION" >&2; exit 1; }
 # lemma: 01a203c1-983f-77e1-a367-92eb7cba2954
 # Each test runs lemmax in its own Emacs (rt-run); rt-run-proc runs the launcher.
 # lemma: RT-12
@@ -32,11 +33,21 @@ roster() {
 	emacs -Q --batch -l "$here/ert_roster.el" -l "$tests" --eval "(lemmax-tests-roster $default)" 2>/dev/null
 }
 
+# Run a command for at most SECONDS; kill it and return 142 when it runs over.
+with_timeout() { # seconds command...
+	local secs="$1" pid watcher rc; shift
+	"$@" & pid=$!
+	( sleep "$secs" & s=$!; trap 'kill $s 2>/dev/null; exit 0' TERM; wait $s; kill -9 $pid 2>/dev/null ) >/dev/null 2>&1 &
+	watcher=$!
+	wait $pid; rc=$?
+	if kill -0 $watcher 2>/dev/null; then kill $watcher 2>/dev/null; wait $watcher 2>/dev/null
+	else rc=142; fi
+	return $rc
+}
+
 run_one() { # name seconds
 	local log
-	log="$(perl -e 'my $s = shift; my $pid = fork // die; if (!$pid) { exec @ARGV or exit 127 }
-		local $SIG{ALRM} = sub { kill 9, $pid; waitpid $pid, 0; exit 142 }; alarm $s;
-		waitpid $pid, 0; exit($? >> 8)' "$2" emacs -Q --batch -l "$here/ert_roster.el" -l "$tests" \
+	log="$(with_timeout "$2" emacs -Q --batch -l "$here/ert_roster.el" -l "$tests" \
 		--eval "(ert-run-tests-batch-and-exit '$1)" 2>&1)"
 	case $? in
 	0) echo "PASS ert/$1" ;;

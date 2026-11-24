@@ -1901,7 +1901,7 @@ run of its finding's why text."
 
 (ert-deftest lemmax-readme-platforms ()
   (let ((readme (with-temp-buffer (insert-file-contents (expand-file-name "README.md" rt-dir)) (buffer-string))))
-    (dolist (w '("macOS and Linux" "WSL or Git Bash" "Emacs 29 or newer" "git and Bash" "Perl"))
+    (dolist (w '("macOS and Linux" "WSL or Git Bash" "Emacs 29 or newer" "git and Bash" "Bash 5 or newer"))
       (should (string-search w readme)))))
 
 ;;;; 01a20336-cbc7-70a7-9473-18325683fba6: config checks every path it names
