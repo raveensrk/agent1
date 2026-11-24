@@ -165,13 +165,14 @@ Move lemmax/theory*.org and its attach folders to theories/lemmax/, requirements
 Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a setup.org, and retire the arcadia_docs repo.
 - Done on 2026-11-25: arcadia 8ae6ffc holds the book in docs/ and the theory in theories/arcadia/, with all 309 commits; notes.org became tasks; arcadia_docs deleted locally and on the server.
 
-* TODO Point :FOLLOWS: at agent1's axioms in their new place
+* DONE Point :FOLLOWS: at agent1's axioms in their new place
 :PROPERTIES:
 :ID:          01a20930-1223-7e4e-b706-90c4c0451e1f
 :FOR:         01a20930-0aba-7005-8442-d1dc3269c487
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-25
 :END:
 Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms.org finds it in agent1/theories/agent1/ after the move.
+- Done on 2026-11-25: only arcadia uses :FOLLOWS:, 3 times, all pointing at agent1/theories/agent1/; lint finds none broken.
 
 * CANCELLED Make every statement language-neutral
 :PROPERTIES:
