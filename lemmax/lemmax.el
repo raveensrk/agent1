@@ -3059,6 +3059,40 @@ example: lmx next-id M"
               ("book" (lemmax-book rest))
               (_ (lemmax--help-for 'main nil))))))))))
 
+;;;; M-x commands
+
+(defconst lemmax--here (file-name-directory (or load-file-name buffer-file-name default-directory))
+  "The folder lemmax.el was loaded from; the lmx launcher sits beside it.")
+
+(defconst lemmax-addons '(org org-element org-attach org-archive org-id ox-publish)
+  "The Org parts lmx loads.  Each ships with Emacs; the README names them.")
+
+;; lemma: 01a2091c-4bcc-7ddb-9796-619468dd401c
+(defun lemmax--interactive (cmd &optional args)
+  "Run lmx CMD with ARGS, a string of words, as the terminal does; show it in *lmx*.
+Returns the exit code."
+  (let* ((buf (get-buffer-create "*lmx*"))
+         (dir default-directory)
+         (code (with-current-buffer buf
+                 (let ((inhibit-read-only t))
+                   (erase-buffer)
+                   (setq default-directory dir)
+                   (apply #'call-process (expand-file-name "lmx" lemmax--here) nil t nil
+                          cmd (split-string-and-unquote (or args "")))))))
+    (with-current-buffer buf (compilation-mode))
+    (unless noninteractive (display-buffer buf))
+    code))
+
+(dolist (c '("lint" "commit-msg" "trace" "list" "plan" "new-id" "next-id"
+             "install-hooks" "migrate" "archive" "publish" "book"))
+  (advice-add (intern (concat "lemmax-" c)) :around
+              (lambda (orig &rest a)
+                (interactive (list 'interactive))
+                (if (equal a '(interactive))
+                    (lemmax--interactive c (read-string (format "lmx %s " c)))
+                  (apply orig a)))
+              (list (cons 'name 'lemmax-command))))
+
 (when (and noninteractive (not (getenv "LEMMAX_LOAD_ONLY")))
   (condition-case err
       (lemmax-main (prog1 command-line-args-left (setq command-line-args-left nil)))

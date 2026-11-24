@@ -894,7 +894,7 @@ A PASSED proof whose linked file changes is refused until OPEN.
 :END:
 publish copies the files; the HTML holds an img for a PNG and an SVG, a video tag for a video block, and a link for a PDF; a bare video link is refused.
 
-* OPEN Proof: LemmaX is an extension of Org mode
+* PASSED Proof: LemmaX is an extension of Org mode
 :PROPERTIES:
 :ID:          01a2091c-4dcb-72c1-9537-b4b520bb283b
 :PROVES:      01a2091c-4bcc-7ddb-9796-619468dd401c
@@ -902,7 +902,7 @@ publish copies the files; the HTML holds an img for a PNG and an SVG, a video ta
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :END:
-Every M-x lmx command gives the terminal command's output; dates are read from LOGBOOK and CLOSED:; each add-on in the README loads; no task to switch an invented part is left open.
+Every lmx command is an M-x command; M-x lemmax-lint gives the terminal's exit code and lines in *lmx*; each Org part lmx loads loads and the README names it; the task to read dates from Org's log exists.
 
 * PASSED Proof: lmx book writes the theory as one HTML file
 :PROPERTIES:

@@ -725,6 +725,33 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
 ;;;; 01a20930-0aba-7005-8442-d1dc3269c487: a project keeps its theory in theories/
 
 ;; lemma: 01a20930-0aba-7005-8442-d1dc3269c487
+;; lemma: 01a2091c-4bcc-7ddb-9796-619468dd401c
+(ert-deftest lemmax-org-extension ()
+  :tags '(timeout-60)
+  (let* ((d (rt-repo (list (cons (rt-p "theory.org") (concat "#+LEMMAX_TESTS: ./tests.sh\n\n" (rt-conj "RQ-1" :state "LEMMA")))
+                           (cons "tests.sh" (rt-tests-sh "unit/a")))))
+         (cli (rt-run d "lint" "--no-tests")))
+    ;; Every command is an M-x command, and gives the terminal's output.
+    (dolist (c '("lint" "commit-msg" "trace" "list" "plan" "new-id" "next-id"
+                 "install-hooks" "migrate" "archive" "publish" "book"))
+      (should (commandp (intern (concat "lemmax-" c)))))
+    (let ((default-directory (file-name-as-directory d)))
+      (should (= (nth 0 cli) (lemmax--interactive "lint" "--no-tests"))))
+    (let ((shown (with-current-buffer "*lmx*"
+                   (should (derived-mode-p 'compilation-mode))
+                   (buffer-string))))
+      (dolist (l (split-string (concat (nth 1 cli) (nth 2 cli)) "\n" t))
+        (should (string-search l shown))))
+    ;; Each add-on loads, and the README names it.
+    (let ((readme (with-temp-buffer (insert-file-contents (expand-file-name "README.md" rt-dir)) (buffer-string))))
+      (dolist (a lemmax-addons)
+        (should (require a))
+        (should (string-search (format "`%s`" a) readme))))
+    ;; Each part lmx invented that Org covers has a task to switch to Org's way.
+    (let ((tasks (with-temp-buffer (insert-file-contents (expand-file-name "../theories/lemmax/theory.tasks.org" rt-dir)) (buffer-string))))
+      (should (string-match-p "^\\* \\(TODO\\|DONE\\) Read dates from Org's log" tasks))
+      (should (string-match-p ":FOR: +01a2091c-4bcc-7ddb-9796-619468dd401c" tasks)))))
+
 (ert-deftest lemmax-theories-folder ()
   :tags '(timeout-60)
   (let* ((setup "#+TODO: CONJECTURE | LEMMA THEOREM REFUTED\n#+LEMMAX_TESTS: ./tests.sh\n#+LEMMAX_CODE: src/\n")

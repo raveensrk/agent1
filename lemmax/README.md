@@ -11,6 +11,12 @@ Theory: [theory.org](../theories/lemmax/theory.org).
 
 Runs on macOS and Linux; on Windows through WSL or Git Bash, not natively.
 Needs Emacs 29 or newer, git and Bash; `run_tests` also needs Perl.
+The Org parts it loads all ship with Emacs: `org`, `org-element`, `org-attach`,
+`org-archive`, `org-id` and `ox-publish`.
+
+In Emacs, load `lemmax.el` and run `M-x lemmax-lint`, or any command as
+`M-x lemmax-COMMAND`. It runs `lmx` in the buffer's folder and shows the same
+output in `*lmx*`, where each finding links to its line.
 
 ```sh
 lmx list --ready           # every statement, grouped; only approved and open

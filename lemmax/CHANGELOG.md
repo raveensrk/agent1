@@ -7,6 +7,8 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 The first public release.
 
+- Every command is an M-x command, `M-x lemmax-lint` and the others; each
+  runs `lmx` and shows its output in `*lmx*`.
 - `lint`, `commit-msg`, `trace`, `list`, `new-id`, `next-id` over org
   requirements ("lemmas"), as headings or one lemma per file.
 - Settings in `lemmax/config.eld`, by folder, read as data and never run.

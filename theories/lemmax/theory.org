@@ -1432,12 +1432,13 @@ Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
 - Asked by the owner on 2026-11-23
 Evidence: org-attach-expand-links turns attachment: into file: before export; org-html-inline-image-rules covers avif, gif, jpg, png, svg and webp; html5-fancy turns a special block named video into <video>.
 
-** CONJECTURE LemmaX is an extension of Org mode                          :lemmax:
+** LEMMA LemmaX is an extension of Org mode                          :lemmax:
 :PROPERTIES:
 :ID:          01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-23
+:PROVEN:      2026-11-24
 :END:
 LemmaX extends Org mode; it invents nothing Org or an Org add-on already does.
 - Where Org or an add-on has a feature, LemmaX uses it: its syntax, its properties, its commands
@@ -1471,13 +1472,14 @@ lmx book writes the repo's theory as one self-contained HTML file, with Org's ow
 - Asked by the owner on 2026-11-23
 Evidence: org-publish publishes each file a project includes, so one entry file gives one page; #+INCLUDE: joins the files (org-export-expand-include-keyword); Org's final-output filters let a backend rewrite the HTML; no Org 9.8.7 file writes data: URIs, and Emacs's base64-encode-region does.
 
-** CONJECTURE A project keeps its theory in theories/                     :lemmax:
+** THEOREM A project keeps its theory in theories/                     :lemmax:
 :PROPERTIES:
 :ID:          01a20930-0aba-7005-8442-d1dc3269c487
 :USES:        01a20927-9aac-7817-8e46-8635aa0ae127 01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
 :END:
 A repo that follows LemmaX keeps all its LemmaX data in one theories/ folder at its root.
 - theories/ holds one subfolder per project: theories/agent1/, theories/lemmax/, theories/ishikari/
