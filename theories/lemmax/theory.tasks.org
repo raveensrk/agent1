@@ -112,14 +112,15 @@ Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-ch
 The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= and =#+LEMMAX_MARKERS_IN:= become =#+PROPERTY:= lines that Org's own property inheritance reads. The old keywords still read until migrate moves them.
 - Done on 2026-11-24 in bdee2ad; agent1, arcadia_docs and sync2 migrated.
 
-* TODO lemmax/config.eld becomes #+SETUPFILE: or .dir-locals.el
+* DONE lemmax/config.eld becomes #+SETUPFILE: or .dir-locals.el
 :PROPERTIES:
 :ID:          01a2091c-9360-799a-af76-b8d22a2d1357
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-24
+:LAST_EDITED: 2026-11-25
 :END:
 Settings by folder come from Org's #+SETUPFILE: or Emacs's .dir-locals.el instead of lmx's own config file. Pick the one that keeps settings data, never run.
+- Done on 2026-11-25 in 12c4051: #+SETUPFILE: chosen; theories/setup.org holds repo settings; agent1 migrated.
 
 * TODO Ids come from org-id
 :PROPERTIES:

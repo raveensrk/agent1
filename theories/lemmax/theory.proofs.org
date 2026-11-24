@@ -1004,7 +1004,7 @@ A THESIS with a log line lints clean and list --ready lists it, as an old approv
 :END:
 A file whose four settings are #+PROPERTY: lines opts in, runs its test command and holds its code paths; a setup file's lines count and LEMMAX_CODE+ appends; a LEMMAX_ setting in a heading's drawer is refused; old keywords still read, and a setting set both ways, in the file or through its setup file, is refused; migrate moves each keyword in place in a theory file, its setup file, a setup file alone and a proofs file, and the result lints clean; the global hooks, lemmax_lint.py and install-hooks' hooks opt such a file in.
 
-* OPEN Proof: Repo settings live in theories/setup.org
+* PASSED Proof: Repo settings live in theories/setup.org
 :PROPERTIES:
 :ID:          01a20ed9-a8ac-7659-bb5c-bc67a74e1367
 :PROVES:      01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e

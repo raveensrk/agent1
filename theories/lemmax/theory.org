@@ -1740,13 +1740,14 @@ lmx reads a file's settings from Org's #+PROPERTY: lines, as Org reads them.
 - Asked by the owner on 2026-11-24
 Evidence: Org manual, "Property Syntax": #+PROPERTY: sets a file-wide property and NAME+ appends to it; org-entry-get with inherit reads it.
 
-** THESIS Repo settings live in theories/setup.org                     :lint:
+** THEOREM Repo settings live in theories/setup.org                     :lint:
 :PROPERTIES:
 :ID:          01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
 :CREATED:     2026-11-25
 :END:
 :LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-25 Wed]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 :END:
 lmx reads repo-wide settings from #+PROPERTY: lines in theories/setup.org, not from lmx's own lemmax/config.eld.
