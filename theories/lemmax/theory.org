@@ -1739,3 +1739,23 @@ lmx reads a file's settings from Org's #+PROPERTY: lines, as Org reads them.
 - The hooks and harness/checks/lemmax_lint.py treat a file with a LEMMAX_ #+PROPERTY: line as opted in, as they do the old keyword
 - Asked by the owner on 2026-11-24
 Evidence: Org manual, "Property Syntax": #+PROPERTY: sets a file-wide property and NAME+ appends to it; org-entry-get with inherit reads it.
+
+** THESIS Repo settings live in theories/setup.org                     :lint:
+:PROPERTIES:
+:ID:          01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+:USES:        01a2091c-4bcc-7ddb-9796-619468dd401c 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+:CREATED:     2026-11-25
+:END:
+:LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
+:END:
+lmx reads repo-wide settings from #+PROPERTY: lines in theories/setup.org, not from lmx's own lemmax/config.eld.
+- theories/setup.org holds the repo-wide settings: #+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 2026-11-22, LEMMAX_COVERAGE_REQUIRED_FROM and LEMMAX_REPOS
+- Each project's setup.org reads it with #+SETUPFILE: ../setup.org; Org brings its lines in, as it does any setup file
+- Per-folder settings are the project's own #+PROPERTY: lines; config.eld's :folders entries are not needed
+- A theory file gets settings only through its header: a lemma file with no header and no #+SETUPFILE: has none
+- An old lemmax/config.eld still reads; lint refuses a repo that sets one setting both there and in a setup file
+- lmx migrate --write turns config.eld into theories/setup.org and #+PROPERTY: lines, adds the #+SETUPFILE: line to each project's setup.org, and deletes config.eld
+- The hooks and harness/checks/lemmax_lint.py treat a repo as opted in by its #+PROPERTY: LEMMAX_TESTS lines, not by config.eld alone
+- Asked by the owner on 2026-11-24
+Evidence: Org manual, "In-buffer Settings": #+SETUPFILE: reads another file's settings and may be nested; .dir-locals.el was ruled out because Emacs evaluates it.
