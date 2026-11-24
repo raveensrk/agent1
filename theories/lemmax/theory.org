@@ -1561,3 +1561,22 @@ lemmax manual writes a project's user manual, beside its bible, as one self-cont
 - The page goes to theories/_site/PROJECT.manual.html, packed like the book: images inline, no outside file
 - Asked by the owner on 2026-11-24
 Evidence: the owner named the GNU manuals page as the model, where GNU offers each manual as one HTML page among its formats; the book's export filter already packs a page into one file; the bible statement already sets the finished-project gate and the hand-written rule finding.
+
+** CONJECTURE The program is called lemmax-cli                              :cli:
+:PROPERTIES:
+:ID:          01a20d0f-f245-7678-b438-511c148c4eb7
+:USES:        01a20d0f-f245-7678-b438-511ac08c8248 01a20d0f-f245-7678-b438-511bd421cd09
+:CREATED:     2026-11-24
+:LAST_EDITED: 2026-11-24
+:APPROVED:    2026-11-24
+:END:
+The program's name is lemmax-cli, so it is never confused with LemmaX, the workflow.
+- lemmax/install puts =lemmax-cli= on PATH, a wrapper script; lemmax/lemmax-cli is the launcher
+- =lemmax= stays on PATH as an alias that runs the same checkout, until the owner drops it
+- The program names itself lemmax-cli: its help, its usage lines, its findings and its errors start =lemmax-cli:=
+- agent1's global hooks and the hooks install-hooks writes call =lemmax-cli=
+- The theory says LemmaX where it means the workflow and lemmax-cli where it means the program; a command in code style, as =lemmax-cli lint=, is the program
+- What belongs to the workflow keeps its name: the =#+LEMMAX_= keywords, the =LEMMAX_= variables, theories/, the lemmax/ folder and theories/lemmax/
+- The Emacs code keeps its lemmax- prefix, the package's name in Emacs: =M-x lemmax-lint=
+- Asked by the owner on 2026-11-24
+Evidence: a web search on 2026-11-24 found no tool or package named lemmax-cli, and none is on this PATH; lex is the Unix lexer generator, /usr/bin/lex here; lmx is LocalMaxxing's benchmark tool.
