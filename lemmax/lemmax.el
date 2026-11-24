@@ -1618,23 +1618,36 @@ that no commit has, changed today: INFOS are the work tree's or the index's."
     (dolist (info infos)
       (let* ((file (plist-get info :file)) (prev (make-hash-table :test #'equal))
              (seen (make-hash-table :test #'equal))
-             (revs (mapcar (lambda (l) (split-string l " "))
-                           (lemmax--lines (lemmax--git-out "log" "--reverse" "--date=format-local:%Y-%m-%d"
-                                                           "--format=%H %cd" "--" file))))
-             (blobs (lemmax--blobs (mapcar (lambda (r) (concat (car r) ":" file)) revs))))
-        (cl-loop for (_rev day) in revs
+             ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
+             ;; --follow: a file moved, as into theories/, keeps its history;
+             ;; each revision is read at the path it had then.
+             (revs (nreverse
+                    (cl-loop for rec in (split-string (or (lemmax--git-out "log" "--follow" "--date=format-local:%Y-%m-%d"
+                                                                           "--format=%x1e%H %cd" "--name-only" "--" file)
+                                                          "")
+                                                      "\x1e" t)
+                             for ls = (lemmax--lines rec)
+                             for hd = (split-string (car ls) " ")
+                             when (cadr ls) collect (list (car hd) (cadr hd) (cadr ls)))))
+             (blobs (lemmax--blobs (mapcar (lambda (r) (concat (car r) ":" (nth 2 r))) revs)))
+             (none (make-hash-table :test #'equal))
+             ;; Links are read as the repo files they name, so a move that
+             ;; rewrites them to the same file is no text change.
+             (norm (lambda (text path) (lemmax--link-norm text path none))))
+        (cl-loop for (_rev day path) in revs
                  for blob in blobs
-                 when (and blob (not (gethash (car blob) seen)))
-                 do (puthash (car blob) t seen)
+                 when (and blob (not (gethash (cons (car blob) path) seen)))
+                 do (puthash (cons (car blob) path) t seen)
                     (dolist (pair (lemmax--quick-ids (cdr blob)))
-                      (unless (equal (gethash (car pair) prev) (cdr pair))
-                        (puthash (car pair) day changed)
-                        (puthash (car pair) (cdr pair) prev))))
+                      (let ((text (funcall norm (cdr pair) path)))
+                        (unless (equal (gethash (car pair) prev) text)
+                          (puthash (car pair) day changed)
+                          (puthash (car pair) text prev)))))
         ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
         (when current
           (dolist (r (plist-get info :statements))
             (let ((id (plist-get r :id)))
-              (when (and id (not (equal (gethash id prev) (plist-get r :text))))
+              (when (and id (not (equal (gethash id prev) (funcall norm (plist-get r :text) file))))
                 (puthash id today changed)))))))
     changed))
 
@@ -2584,7 +2597,11 @@ order; a parent no chunk holds is named on stderr."
 
 (defun lemmax--migrate-text (content file today &optional setup)
   "CONTENT of FILE in the math names: (NEW-CONTENT . PROOFS-TEXT-or-nil).
-SETUP: FILE's setup file holds its #+TODO: of conjectures."
+SETUP: FILE's setup file holds its #+TODO: of conjectures.
+A tasks or notes file keeps its states and dates: it is returned as it is."
+  ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
+  (if (string-match-p "\\.\\(?:tasks\\|notes\\)\\.org\\'" (or file ""))
+      (cons content nil)
   (let* ((first (if (string-match "^\\*+ " content) (match-beginning 0) (length content)))
          (pre (substring content 0 first))
          (file-lemma (string-match-p "\\`\\(?:#[ \t].*\n\\|#\n\\|[ \t]*\n\\)*[ \t]*:PROPERTIES:" pre))
@@ -2624,7 +2641,7 @@ SETUP: FILE's setup file holds its #+TODO: of conjectures."
                  (cons (concat "#+title: Proofs of " (or title (file-name-nondirectory file)) "\n"
                                "#+TODO: OPEN(o) | PASSED(p)\n"
                                (apply #'concat kw) "\n")
-                       (string-join (nreverse proofs) "\n")))))))
+                       (string-join (nreverse proofs) "\n"))))))))
 
 (defun lemmax--diff (label old new)
   "A unified diff of OLD to NEW, both strings, under LABEL; OLD nil for a new file."

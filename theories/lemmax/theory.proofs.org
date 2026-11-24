@@ -988,7 +988,7 @@ A finished sample project with neither document warns twice and lint passes; bot
 :PROPERTIES:
 :ID:          01a20e8a-27b3-77ce-87fe-815d385b067f
 :PROVES:      01a20e7b-c7c0-77fc-bc53-bc963ab4843f
-:TEST:        ert/lemmax-thesis-ready ert/lemmax-thesis-log-dates ert/lemmax-thesis-git-edited-day ert/lemmax-thesis-staged-sent-back ert/lemmax-thesis-created-required ert/lemmax-thesis-old-and-both ert/lemmax-thesis-migrate ert/lemmax-thesis-logbook-not-text
+:TEST:        ert/lemmax-thesis-ready ert/lemmax-thesis-log-dates ert/lemmax-thesis-git-edited-day ert/lemmax-thesis-staged-sent-back ert/lemmax-thesis-created-required ert/lemmax-thesis-old-and-both ert/lemmax-thesis-migrate ert/lemmax-thesis-logbook-not-text ert/lemmax-thesis-migrate-kinds ert/lemmax-thesis-edited-day-follows-move
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :END:

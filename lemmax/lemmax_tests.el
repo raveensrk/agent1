@@ -2986,3 +2986,39 @@ committed on DAY, with EXTRA files."
     (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log))))
     (rt-git d "add" "-A")
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-06") (rt-run d "lint" "--staged" "--no-tests")))))
+
+(ert-deftest lemmax-thesis-migrate-kinds ()
+  :tags '(timeout-30)
+  ;; Bullet 7: a tasks or notes file keeps its states and dates; migrate changes nothing.
+  (let ((d (rt-repo (append (rt-math-files (list (rt-conj "RQ-1")) nil)
+                            (list (cons "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1" :state "DONE") (rt-task "TK-2")))
+                                  (cons "dev.notes.org" (concat rt-notes-head (rt-note "NT-1"))))))))
+    (dolist (f '("dev.tasks.org" "dev.notes.org"))
+      (let ((r (rt-run d "migrate" f)))
+        (should (= 0 (nth 0 r)))
+        (should (equal "" (nth 1 r)))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))))
+
+(ert-deftest lemmax-thesis-edited-day-follows-move ()
+  :tags '(timeout-30)
+  ;; Bullet 3: the last-edited day follows a file's move, and a link the move
+  ;; rewrites to name the same file is no text change.
+  (let ((d (rt-repo (list (cons "./old/theory.org"
+                                (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                               :body "See [[file:../src/x.clj][x]].\n")))
+                          (cons "tests.sh" (rt-tests-sh "unit/a"))
+                          (cons "src/x.clj" "(ns x)\n"))
+                    "2026-01-05")))
+    (rt-git d "mv" "old/theory.org" "theory.org")
+    (make-directory (expand-file-name "theories/t" d) t)
+    (rt-git d "mv" "theory.org" "theories/t/theory.org")
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                          :body "See [[file:../../src/x.clj][x]].\n")))
+    (rt-commit d "move" "2026-01-09")
+    (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-01-20") (rt-run d "lint" "--no-tests")))
+    ;; A real edit after the move still counts.
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                          :body "See [[file:../../src/x.clj][x]] now.\n")))
+    (rt-commit d "edit" "2026-01-10")
+    (rt-should-find (rt-env '("LEMMAX_TODAY=2026-01-20") (rt-run d "lint" "--no-tests"))
+                    "a THESIS whose text changed 2026-01-10, after it was accepted 2026-01-05")))
