@@ -5,58 +5,74 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- Org makes new ids through lmx: set `org-id-uuid-program` to `"lmx new-id"`; lint's fix for a bad id names it, not Python.
+
 - `run_tests` logs each test's result, start, end and run time to
   `lemmax/test-times.log`, which git ignores, then the whole run's.
+
 - Proof states are `DRAFT | PROOF FALLACY MOOT`, logged by Org: a statement
   needs a `PROOF` and no `DRAFT`, a `FALLACY` or `MOOT` aside; a refuted
   statement's proof is `MOOT`. A failing test leaves the proof `PROOF` and
   sends the statement back. `migrate` turns `OPEN` into `DRAFT` and `PASSED`
   into `PROOF`, drops the `Proof:` prefix and `:LAST_EDITED:`; old states
   still read.
+
 - A new log line carries the date and the time: lint refuses one without;
   lmx reads the time, and the lines `migrate --theorem` writes carry it.
+
 - A theory, `theories/PROJECT/`, has one `THEOREM`: lint refuses a second,
   and a statement the theorem does not reach through `:USES:`; a `THEOREM`
   that reaches an unproven statement is refused until it is `THESIS`. A
   `LEMMA` may use lemmas. A project is finished when its theorem is proven.
   `lmx migrate --theorem ID` names it.
+
 - Link properties are not a statement's text: `:PROVES:`, `:FOR:`, `:ABOUT:`,
   `:FOLLOWS:`, `:TEST:`, `:ALIASES:` and `:ROAM_REFS:` join `:USES:`. A
   changed `:USES:` makes the statement suspect in `trace`.
+
 - Lint refuses `:BLOCKER:`; `migrate` deletes it.
+
 - `:ROAM_REFS:` names where a lemma came from; `:REFS:` still reads and
   `migrate` renames it.
+
 - No lemma files: lint refuses a file whose top drawer holds `:STATE:`.
+
 - The created day comes from the id: a UUIDv7's own time, in the local zone,
   else the first commit with the id, else today. `plan` orders by it, none
   last; `trace` prints `created:` and `list --json` gives `created`. Lint
   needs no `:CREATED:` and no longer asks a new statement for today's; an old
   one still reads and wins, and `migrate` deletes it, from tasks and notes
   files too.
+
 - Repo-wide settings are `#+PROPERTY:` lines in `theories/setup.org`:
   `LEMMAX_MARKERS_REQUIRED_FROM`, `LEMMAX_COVERAGE_REQUIRED_FROM` and
   `LEMMAX_REPOS`, read through each project's `#+SETUPFILE: ../setup.org`.
   An old `lemmax/config.eld` still reads; lint refuses a setting set both
   there and by `#+PROPERTY:`. `lmx migrate lemmax/config.eld` moves it and
   deletes it. A config opts a repo in only while it names `:tests`.
+
 - File settings are Org `#+PROPERTY:` lines: `#+PROPERTY: LEMMAX_TESTS CMD`,
   `LEMMAX_CODE`, `LEMMAX_TEST_PATHS` and `LEMMAX_MARKERS_IN`, read as Org reads
   them, from a `#+SETUPFILE:` too, `NAME+` appending. Lint refuses one in a
   heading's drawer, and a setting set both as a property and an old
   `#+LEMMAX_*:` keyword, which still reads. `migrate` moves each keyword into
   a `#+PROPERTY:` line; the hooks and `lemmax_lint.py` opt such a file in.
+
 - A new state, `THESIS`, between `CONJECTURE` and the done states: a
   conjecture the owner accepted to prove.
   `#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)` with
   `#+STARTUP: logdrawer` makes Org log each change in `:LOGBOOK:`.
   `list --ready` lists the theses.
+
 - The accepted day is the newest log line into `THESIS`, the proven day the
   newest into `LEMMA` or `THEOREM`. The last-edited day is git's: the newest
   commit that changed the text, or today for a change not committed; the
   bible and manual warning and `archive` read it.
+
 - In the logged form lint needs no `:LAST_EDITED:`, refuses a text change to a
   `THESIS`, `LEMMA` or `THEOREM` until it is `CONJECTURE` again, and refuses a
   log line beside its `:APPROVED:` or `:PROVEN:`. Old files read as before.
+
 - `migrate` moves `:APPROVED:` and `:PROVEN:` into log lines, makes each
   approved `CONJECTURE` a `THESIS`, deletes `:LAST_EDITED:`, and writes the
   new `#+TODO:`, in a setup file when the file reads it there.

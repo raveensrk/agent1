@@ -1158,3 +1158,11 @@ lmx reads a log line's date and time, and a date-only line as having none; a new
 - State "PROOF"      from "DRAFT"      [2026-11-25 Wed 03:39]
 :END:
 run_tests over a passing, a failing and a timed-out test writes one line each, RESULT ADDRESS DAY START END SECONDS s, then RUN run_tests with the run's own times, to the log LEMMAX_TEST_LOG names; the screen output is unchanged; --only adds its one line; the suite's own nested runs write to a file of their own, not lemmax/test-times.log, which git ignores.
+
+* DRAFT Org makes new ids through lmx, as UUIDv7
+:PROPERTIES:
+:ID:          01a20fbd-c2e2-74d6-a615-90fe91ccb231
+:PROVES:      01a20fbd-0c87-7750-a4c7-b7b4a65b9e2e
+:TEST:        ert/lemmax-org-id-through-lmx ert/lemmax-new-id
+:END:
+Org's org-id-new, set to call lmx new-id, gives sorted UUID v7 ids; lmx new-id prints them; lint names the setting for any other new id.

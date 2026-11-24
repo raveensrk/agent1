@@ -1009,6 +1009,22 @@ own, `rt-runner-log', never to lemmax/test-times.log."
     (should (= 1 (nth 0 (rt-run d "new-id" "extra"))))
     (should (string-match-p "^usage: lmx new-id" (nth 1 (rt-run d "new-id" "--help"))))))
 
+;; lemma: 01a20fbd-0c87-7750-a4c7-b7b4a65b9e2e
+(ert-deftest lemmax-org-id-through-lmx ()
+  ;; Org's own org-id-new, set to call lmx new-id, gives a UUID v7; lint names
+  ;; that setting when an id is neither a UUID v7 nor RT-5 shaped.
+  (require 'org-id)
+  (let* ((re "\\`[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7[0-9a-f]\\{3\\}-[89ab][0-9a-f]\\{3\\}-[0-9a-f]\\{12\\}\\'")
+         (org-id-method 'uuid)
+         (org-id-uuid-program (concat (shell-quote-argument rt-bin) " new-id"))
+         (a (org-id-new)) (b (org-id-new)))
+    (should (string-match-p re a))
+    (should (string-match-p re b))
+    (should-not (string> a b)))
+  (let* ((d (rt-repo (rt-files (rt-req "5C85D594-4633-483A-BDAA-F3792748558F")))))
+    (should (string-match-p "org-id-uuid-program to \"lmx new-id\""
+                            (nth 2 (rt-run d "lint" "--no-tests"))))))
+
 ;;;; 01a20014-e361-7827-b2a8-d3b2ded3e0b1
 
 (defun rt-marked (code &rest reqs)

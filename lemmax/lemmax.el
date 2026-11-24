@@ -891,9 +891,10 @@ of its own, the :TEST: addresses of its proofs as :verify."
           (cond ((null id) (lemmax--finding f l nil "no :ID:" "add :ID:, as RQ-1 or a UUID v7 from lmx new-id"))
                 ((string-match-p "[ \t]" id)
                  (lemmax--finding f l id "an id has no spaces" "keep the id one word, as RQ-1 or a UUID v7"))
+                ;; lemma: 01a20fbd-0c87-7750-a4c7-b7b4a65b9e2e
                 ((not (or (string-match-p "\\`[A-Z]+-[0-9]+\\'" id) (lemmax--uuid7-p id)))
                  (lemmax--finding f l id "the id is neither a UUID v7 nor shaped [A-Z]+-[0-9]+"
-                                    "make a new one with python3 -c 'import uuid; print(uuid.uuid7())'")))
+                                    "make a new one with lmx new-id, or in Emacs set org-id-method to uuid and org-id-uuid-program to \"lmx new-id\"")))
           ;; lemma: RT-4
           (when (and (lemmax--done-p state) (not (lemmax--proof-p r)) (not (lemmax--unproven-p r)) (null (plist-get r :approved)))
             (lemmax--finding f l id (format "%s with no :APPROVED:" state)

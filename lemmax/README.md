@@ -429,6 +429,22 @@ entry of the longest folder that holds it:
   already sets the key, each `theories/PROJECT/setup.org` gets
   `#+SETUPFILE: ../setup.org`, and the config is deleted.
 
+## Ids
+
+<!-- lemma: 01a20fbd-0c87-7750-a4c7-b7b4a65b9e2e -->
+
+A new id is a UUID v7, so ids sort by time and hold their created day.
+`lmx new-id` prints one. In Emacs, let Org's own id commands make them through
+lmx:
+
+```elisp
+(setq org-id-method 'uuid
+      org-id-uuid-program "lmx new-id")
+```
+
+Then `org-id-get-create` gives a UUID v7. lint refuses a new id that is neither
+a UUID v7 nor an old `RT-5`-style id. No Python or other program is needed.
+
 ## Links
 
 `[[id:ID]]` links a lemma by its `:ID:`; lint refuses one to an unknown or
