@@ -1,0 +1,4 @@
+#+title: Repo settings
+# Repo-wide lmx settings; each project's setup.org reads this with #+SETUPFILE: ../setup.org.
+#+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 2026-11-22
+#+PROPERTY: LEMMAX_COVERAGE_REQUIRED_FROM 2026-11-22

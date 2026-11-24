@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # pre-commit - refuse staged requirement changes that break requirements.org (RT-11).
 #
-# In a repo whose requirements opt in (#+LEMMAX_TESTS:, #+PROPERTY: LEMMAX_TESTS or lemmax/config.eld), runs
+# In a repo whose requirements opt in (#+PROPERTY: LEMMAX_TESTS, the old #+LEMMAX_TESTS:, or an old
+# lemmax/config.eld that names :tests), runs
 # lmx lint --staged --no-tests. Every other repo passes at once: a
 # git grep decides, and Emacs never starts. Then it runs the repo's own
 # .git/hooks/pre-commit, which the global core.hooksPath hides.
@@ -14,7 +15,7 @@ set -uo pipefail
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 if git grep --cached -q -E '^#\+(LEMMAX_TESTS:|PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$))' -- '*.org' '*.setup' 2>/dev/null \
-	|| git cat-file -e :lemmax/config.eld 2>/dev/null; then
+	|| git grep --cached -q -F ':tests' -- lemmax/config.eld 2>/dev/null; then
 	"${LEMMAX:-$here/../../lemmax/lmx}" lint --staged --no-tests || exit 1
 fi
 own="$(git rev-parse --git-dir)/hooks/pre-commit"

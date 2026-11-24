@@ -3,8 +3,9 @@
 # lemma: RT-10
 """A requirements file that opts in keeps requirements.org's format (RT-10).
 
-For each candidate .org file whose header has #+LEMMAX_TESTS:, or in a repo
-with lemmax/config.eld or a tracked *.setup file holding #+LEMMAX_TESTS:, this runs
+For each candidate .org file whose header sets LEMMAX_TESTS, or in a repo with
+a tracked setup or .org file that sets it (#+PROPERTY: LEMMAX_TESTS, or the old
+#+LEMMAX_TESTS:), or an old lemmax/config.eld that names :tests, this runs
 `lmx lint --no-tests FILE` and turns each finding into path:line: message.
 --no-tests, because the test command may take 60 s, too slow for every edit.
 An org file that does not opt in gets no finding.
@@ -39,21 +40,27 @@ def repo_root(path):
 
 # lemma: 01a203e8-0c8b-713e-8f21-ffee439bcbb0
 def has_setup(path):
-    """Whether PATH's repo has a tracked *.setup file holding #+LEMMAX_TESTS:,
+    """Whether PATH's repo has a tracked *.setup or .org file setting LEMMAX_TESTS,
     as the global hooks decide: a file may opt in through #+SETUPFILE:."""
+    # lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
     root = repo_root(path)
     if not root:
         return False
-    return subprocess.run(["git", "-C", root, "grep", "--cached", "-q", "-E", r"^#\+(LEMMAX_TESTS:|PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$))", "--", "*.setup"],
+    return subprocess.run(["git", "-C", root, "grep", "--cached", "-q", "-E", r"^#\+(LEMMAX_TESTS:|PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$))", "--", "*.setup", "*.org"],
                           capture_output=True).returncode == 0
 
 
 def has_config(path):
-    """Whether the git repo that holds PATH has lemmax/config.eld."""
+    """Whether the git repo that holds PATH has an old lemmax/config.eld that
+    names :tests; a config alone opts nothing in."""
     d = os.path.dirname(os.path.abspath(path))
     while True:
         if os.path.exists(os.path.join(d, ".git")):
-            return os.path.isfile(os.path.join(d, "lemmax", "config.eld"))
+            cfg = os.path.join(d, "lemmax", "config.eld")
+            if not os.path.isfile(cfg):
+                return False
+            with open(cfg, encoding="utf-8", errors="replace") as fh:
+                return ":tests" in fh.read()
         parent = os.path.dirname(d)
         if parent == d:
             return False

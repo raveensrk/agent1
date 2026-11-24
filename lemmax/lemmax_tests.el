@@ -1126,7 +1126,11 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
                           (cons "tests.sh" (rt-tests-sh "unit/a"))
                           (cons "bad.sh" "#!/bin/sh\nexit 3\n")))))
     (set-file-modes (expand-file-name "bad.sh" d) #o755)
-    (rt-should-clean (rt-run d "lint"))))
+    ;; The header wins: bad.sh never runs. Set both ways, it is refused
+    ;; (01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e).
+    (let ((r (rt-run d "lint")))
+      (rt-should-find r "LEMMAX_TESTS is set both in lemmax/config.eld for the root and in theories/t/theory.org's header")
+      (should-not (string-match-p "exit 3" (nth 2 r))))))
 
 (ert-deftest lemmax-config-longest-folder ()
   :tags '(timeout-30)
@@ -3136,3 +3140,127 @@ committed on DAY, with EXTRA files."
   ;; install-hooks writes the same test.
   (rt-load)
   (should (string-search lemmax--opted-re (lemmax--hook-text "pre-commit"))))
+
+;;;; 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e: repo settings live in theories/setup.org
+
+;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+(defun rt-chain-files (root &rest reqs)
+  "A repo whose theories/setup.org holds ROOT, read by theories/t/setup.org,
+which holds the tests and code, read by theory.org with REQS."
+  (list (cons "theories/setup.org" (concat "#+title: Repo settings\n" root))
+        (cons "setup.org" "#+title: t settings\n#+SETUPFILE: ../setup.org\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n#+PROPERTY: LEMMAX_CODE src/\n")
+        (cons "theory.org" (apply #'concat "#+title: T\n#+SETUPFILE: setup.org\n#+TODO: OPEN | DONE DROPPED\n\n" reqs))
+        (cons "tests.sh" (rt-tests-sh "unit/a"))
+        (cons "src/x.clj" "(ns x)\n")))
+
+(ert-deftest lemmax-repo-settings-chain ()
+  :tags '(timeout-30)
+  ;; Bullets 1 and 2: the repo-wide settings reach a file through a nested
+  ;; #+SETUPFILE: chain, theories/setup.org read by the project's setup.org.
+  (let ((d (rt-repo (rt-chain-files "#+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 2026-11-22\n"
+                                    (rt-done "RQ-1" :implemented "2026-11-22")))))
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: DONE with no code marker")
+    (rt-set d "src/x.clj" "(ns x)\n;; lemma: RQ-1\n")
+    (rt-should-clean (rt-run d "lint" "--no-tests")))
+  (rt-should-find (rt-run (rt-repo (rt-chain-files "#+PROPERTY: LEMMAX_COVERAGE_REQUIRED_FROM 2026-01-01\n"
+                                                   (rt-done "RQ-1")))
+                          "lint" "--no-tests")
+                  "src/x\\.clj:1: -: code above the file's first lemma: marker")
+  (rt-should-find (rt-run (rt-repo (rt-chain-files "#+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 22 Nov\n" (rt-done "RQ-1")))
+                          "lint" "--no-tests")
+                  "LEMMAX_MARKERS_REQUIRED_FROM is not a day: 22 Nov"))
+
+(ert-deftest lemmax-repo-settings-repos ()
+  :tags '(timeout-30)
+  ;; Bullet 1: list --all reads LEMMAX_REPOS from theories/setup.org at the root.
+  (let* ((base (rt-tmp)) (here (expand-file-name "here" base)) (far (expand-file-name "far" base)))
+    (make-directory (expand-file-name "other" far) t)
+    (make-directory here)
+    (dolist (d (list here (expand-file-name "other" far))) (rt-git d "init" "-q" "-b" "main"))
+    (rt-write (expand-file-name "other" far) (rt-files (rt-req "OT-1")))
+    (rt-commit (expand-file-name "other" far) "start")
+    (rt-write here (rt-chain-files (format "#+PROPERTY: LEMMAX_REPOS %s\n" far) (rt-req "RQ-1")))
+    (rt-commit here "start")
+    (let ((out (nth 1 (rt-env '("LEMMAX_REPOS=/nonexistent") (rt-run here "list" "--all")))))
+      (should (string-match-p "== other" out))
+      (should (string-match-p "OT-1" out)))))
+
+(ert-deftest lemmax-repo-settings-no-folders ()
+  :tags '(timeout-30)
+  ;; Bullets 3 and 4: with no config, a project's own #+PROPERTY: lines are its
+  ;; folder's settings, and a lemma file with no header has none.
+  (let ((d (rt-repo (append (rt-chain-files "" (rt-done "RQ-1" :verify "unit/zzz"))
+                            (list (cons "RQ-2.org" (concat ":PROPERTIES:\n:ID: RQ-2\n:STATE: DONE\n:CREATED: 2026-01-05\n"
+                                                           ":LAST_EDITED: 2026-01-05\n:END:\n#+title: Bare\n")))))))
+    (let ((r (rt-run d "lint")))
+      (rt-should-find r "theory\\.org:[0-9]+: RQ-1: :VERIFY: names unit/zzz")
+      (should-not (string-match-p "RQ-2" (nth 2 r))))))
+
+(ert-deftest lemmax-repo-settings-both-ways ()
+  :tags '(timeout-30)
+  ;; Bullet 5: an old config still reads; a setting set both there and by a
+  ;; #+PROPERTY: line is refused, per folder and repo-wide.
+  (rt-should-find (rt-run (rt-repo (append (rt-files (rt-done "RQ-1" :implemented "2026-11-22"))
+                                           (list (cons "lemmax/config.eld" "(:markers-required-from \"2026-11-22\")\n"))))
+                          "lint" "--no-tests")
+                  "RQ-1: DONE with no code marker")
+  (rt-should-find (rt-run (rt-repo (append (rt-chain-files "#+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 2026-11-22\n" (rt-req "RQ-1"))
+                                           (list (cons "lemmax/config.eld" "(:markers-required-from \"2026-11-22\")\n"))))
+                          "lint" "--no-tests")
+                  "lemmax/config\\.eld:1: -: LEMMAX_MARKERS_REQUIRED_FROM is set both as :markers-required-from in lemmax/config.eld and as #\\+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM")
+  (rt-should-find (rt-run (rt-repo (append (rt-chain-files "" (rt-req "RQ-1"))
+                                           (list (rt-config '("" :code ("src/"))))))
+                          "lint" "--no-tests")
+                  "LEMMAX_CODE is set both in lemmax/config.eld for the root and in theories/t/"))
+
+(ert-deftest lemmax-repo-settings-migrate ()
+  :tags '(timeout-60)
+  ;; Bullet 6: lmx migrate lemmax/config.eld writes theories/setup.org, moves
+  ;; each folder entry to its setup.org unless already there, adds
+  ;; #+SETUPFILE: ../setup.org to each project's setup.org, deletes the config.
+  (let* ((d (rt-repo (list (cons "lemmax/config.eld"
+                                 (format "(:markers-required-from \"2026-11-22\" :repos \"~/r\" :folders ((%S :tests \"./tests.sh\" :code (\"src/\" \"lib/\")) (%S :tests \"./tests.sh\")))\n"
+                                         "theories/t/" "theories/u/"))
+                           (cons "setup.org" "#+title: t settings\n#+PROPERTY: LEMMAX_TESTS ./tests.sh\n")
+                           (cons "theory.org" (concat "#+SETUPFILE: setup.org\n#+TODO: OPEN | DONE DROPPED\n\n" (rt-done "RQ-1" :implemented "2026-11-22")))
+                           (cons "theories/u/theory.org" (concat "#+TODO: OPEN | DONE DROPPED\n\n" (rt-req "RQ-2")))
+                           (cons "tests.sh" (rt-tests-sh "unit/a"))
+                           (cons "src/x.clj" "(ns x)\n"))))
+         (r (rt-run d "migrate" "lemmax/config.eld"))
+         (out (nth 1 r)))
+    (should (= 0 (nth 0 r)))
+    (should (string-match-p "^\\+\\+\\+ theories/setup\\.org\n@@ -0,0 \\+1,4 @@\n\\+#\\+title: Repo settings\n\\+# .*\n\\+#\\+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 2026-11-22\n\\+#\\+PROPERTY: LEMMAX_REPOS ~/r\n" out))
+    (should (string-match-p "^ #\\+title: t settings\n\\+#\\+SETUPFILE: \\.\\./setup\\.org\n #\\+PROPERTY: LEMMAX_TESTS ./tests.sh\n\\+#\\+PROPERTY: LEMMAX_CODE src/ lib/" out))
+    (should-not (string-match-p "^\\+#\\+PROPERTY: LEMMAX_TESTS" (car (split-string out "theories/u/"))))
+    (should (string-match-p "^\\+\\+\\+ theories/u/setup\\.org\n@@ -0,0 \\+1,3 @@\n\\+#\\+title: u settings\n\\+#\\+SETUPFILE: \\.\\./setup\\.org\n\\+#\\+PROPERTY: LEMMAX_TESTS ./tests.sh" out))
+    (should (string-match-p "^--- lemmax/config\\.eld\n\\+\\+\\+ /dev/null" out))
+    (should (file-exists-p (expand-file-name "lemmax/config.eld" d)))
+    (should (string-match-p "deleted lemmax/config.eld" (nth 1 (rt-run d "migrate" "--write" "lemmax/config.eld"))))
+    (should-not (file-exists-p (expand-file-name "lemmax/config.eld" d)))
+    (rt-git d "add" "-A")
+    ;; The markers rule still holds, now from theories/setup.org.
+    (rt-should-find (rt-run d "lint" "--staged" "--no-tests") "RQ-1: DONE with no code marker")))
+
+(ert-deftest lemmax-repo-settings-opt-in ()
+  :tags '(timeout-30)
+  ;; Bullet 7: #+PROPERTY: LEMMAX_TESTS opts a repo in; an old config opts in
+  ;; only while it names :tests; a config with none opts nothing in.
+  (let ((d (rt-hooked (rt-chain-files "" (rt-req "RQ-1")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-sh d "git" "add" "-A")
+    (should (= 1 (nth 0 (rt-hook-commit d "change it"))))
+    (should (string-match-p "RQ-1: DONE with no :APPROVED:"
+                            (progn (rt-set d "theory.org" (concat "#+title: T\n#+SETUPFILE: setup.org\n#+TODO: OPEN | DONE DROPPED\n\n" (rt-done "RQ-1" :approved nil)))
+                                   (rt-check d "theories/t/theory.org\n")))))
+  (let ((d (rt-hooked (list (cons "lemmax/config.eld" "(:markers-required-from \"2026-11-22\")\n")
+                            (cons "notes.org" "* x\n") (cons "src/x.clj" "(ns x)\n")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-sh d "git" "add" "-A")
+    (should (= 0 (nth 0 (rt-hook-commit d "change it")))))
+  (let ((d (rt-hooked (list (rt-config '("" :tests "./tests.sh" :code ("src/"))) (cons "theory.org" (rt-req "RQ-1"))
+                            (cons "tests.sh" (rt-tests-sh "unit/a")) (cons "src/x.clj" "(ns x)\n")))))
+    (rt-set d "src/x.clj" "(ns x) ;; 2\n")
+    (rt-sh d "git" "add" "-A")
+    (should (= 1 (nth 0 (rt-hook-commit d "change it")))))
+  (rt-load)
+  (should (string-search "-F ':tests' -- lemmax/config.eld" (lemmax--hook-text "pre-commit"))))

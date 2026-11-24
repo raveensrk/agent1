@@ -446,6 +446,10 @@ A UTF-8 BOM and CRLF line ends are read as the plain form."
                 :misplaced misplaced
                 ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
                 :both-ways both
+                ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+                :repo-settings (cl-loop for (n . _) in lemmax--repo-settings
+                                        for v = (cdr (assoc n org-keyword-properties))
+                                        when v collect (cons n (string-trim v)))
                 ;; lemma: 01a2039c-9e67-74bb-9ac4-63eac14f1e7c
                 :declared (cl-loop for e in org-current-tag-alist
                                    when (stringp (car-safe e)) collect (substring-no-properties (car e)))
@@ -545,11 +549,42 @@ It is read with `read' and `read-eval' off, so nothing in it ever runs."
               (when ok (push (cons folder plist) folders)))))))
     (cons (nreverse folders) (nreverse problems))))
 
-(defun lemmax--config-setting (key)
-  "The top-level setting KEY of the work tree's config, or nil."
+(defun lemmax--config-setting (key &optional infos)
+  "The repo-wide setting KEY, as :markers-required-from: the #+PROPERTY: line
+that reaches INFOS through their #+SETUPFILE: chain, else theories/setup.org's,
+else the old config's top-level KEY; nil when none sets it."
+  ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+  (let ((name (car (rassq key lemmax--repo-settings))))
+    (or (and name (cl-some (lambda (i) (cdr (assoc name (plist-get i :repo-settings)))) infos))
+        (and name (cdr (assoc name (plist-get (lemmax--root-setup) :repo-settings))))
+        (lemmax--config-top key))))
+
+(defun lemmax--config-top (key)
+  "The top-level setting KEY of the work tree's old config, or nil."
   (let ((text (lemmax--config-text nil)))
     (and text (null (cdr (lemmax--config-read text)))
          (let ((read-eval nil)) (plist-get (car (read-from-string text)) key)))))
+
+;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+(defconst lemmax--root-setup-file "theories/setup.org" "The repo-wide settings file at the repo root.")
+(defconst lemmax--repo-settings
+  '(("LEMMAX_MARKERS_REQUIRED_FROM" . :markers-required-from)
+    ("LEMMAX_COVERAGE_REQUIRED_FROM" . :coverage-required-from)
+    ("LEMMAX_REPOS" . :repos))
+  "The repo-wide settings, #+PROPERTY: names to the old config's top keys.")
+
+(defun lemmax--root-setup ()
+  "theories/setup.org of the repo here, parsed once a run, its own
+#+SETUPFILE: chain read as Org reads it; nil when there is none. Commands
+with no file at hand, as list --all, read :repos from it."
+  (let ((key (cons default-directory 'root-setup)))
+    (let ((v (gethash key lemmax--files-cache 'none)))
+      (if (not (eq v 'none))
+          v
+        (puthash key (and (file-readable-p lemmax--root-setup-file)
+                          (lemmax--parse (with-temp-buffer (insert-file-contents lemmax--root-setup-file) (buffer-string))
+                                         lemmax--root-setup-file))
+                 lemmax--files-cache)))))
 
 (defun lemmax--config (rev)
   "The config's folder entries at REV (see `lemmax--config-text'); nil when none."
@@ -608,6 +643,49 @@ a FOLDER that holds no tracked file."
               (lemmax--finding lemmax-config-file 1 nil
                                (format "%s: :test-paths names %s, which no tracked file matches" (car f) tp)
                                "fix the pattern, or remove it"))))))))
+
+;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+(defun lemmax--setting-name (key)
+  "The #+PROPERTY: name of the old config key KEY: :code is LEMMAX_CODE."
+  (or (car (rassq key lemmax--repo-settings))
+      (concat "LEMMAX_" (upcase (replace-regexp-in-string "-" "_" (substring (symbol-name key) 1))))))
+
+(defun lemmax--lint-config-both (infos staged)
+  "A setting set both in the old config and by a #+PROPERTY: line: a folder
+entry's key and a file's header there, or a top key and a repo-wide line;
+and a repo-wide day that is no day."
+  (let* ((text (lemmax--config-text (and staged "")))
+         (res (and text (lemmax--config-read text)))
+         (seen (make-hash-table :test #'equal)))
+    (when (and res (null (cdr res)))
+      (dolist (i infos)
+        (let* ((file (plist-get i :file))
+               (best (car (sort (cl-remove-if-not (lambda (f) (string-prefix-p (car f) file)) (copy-sequence (car res)))
+                                (lambda (a b) (> (length (car a)) (length (car b))))))))
+          (when best
+            (cl-loop for (k _v) on (cdr best) by #'cddr
+                     for n = (lemmax--setting-name k)
+                     when (and (assoc n (plist-get i :keywords)) (not (gethash (cons (car best) n) seen)))
+                     do (puthash (cons (car best) n) t seen)
+                        (lemmax--finding lemmax-config-file 1 nil
+                                         (format "%s is set both in %s for %s and in %s's header" n lemmax-config-file
+                                                 (if (string-empty-p (car best)) "the root" (car best)) file)
+                                         "keep the #+PROPERTY: line; lmx migrate lemmax/config.eld moves the rest")))))
+      (let ((top (let ((read-eval nil)) (car (read-from-string text)))))
+        (dolist (rs lemmax--repo-settings)
+          (when (and (plist-get top (cdr rs))
+                     (or (cl-some (lambda (i) (assoc (car rs) (plist-get i :repo-settings))) infos)
+                         (assoc (car rs) (plist-get (lemmax--root-setup) :repo-settings))))
+            (lemmax--finding lemmax-config-file 1 nil
+                             (format "%s is set both as %S in %s and as #+PROPERTY: %s" (car rs) (cdr rs) lemmax-config-file (car rs))
+                             "keep the #+PROPERTY: line; lmx migrate lemmax/config.eld moves the rest")))))
+    (let ((root (lemmax--root-setup)) (done (make-hash-table :test #'equal)))
+      (dolist (i (if root (cons root infos) infos))
+        (dolist (n '("LEMMAX_MARKERS_REQUIRED_FROM" "LEMMAX_COVERAGE_REQUIRED_FROM"))
+          (let ((v (cdr (assoc n (plist-get i :repo-settings)))))
+            (when (and v (not (lemmax--day-p v)) (not (gethash (cons n v) done)))
+              (puthash (cons n v) t done)
+              (lemmax--finding (plist-get i :file) 1 nil (format "%s is not a day: %s" n v) "write it as YYYY-MM-DD"))))))))
 
 ;; lemma: 01a2058c-5dff-75bc-b089-998d5425915a
 (defun lemmax--theory-name-p (file)
@@ -1139,6 +1217,7 @@ logged form set the state again so Org logs today."
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
         (lemmax--lint-settings infos only)
+        (lemmax--lint-config-both infos staged)
         (lemmax--lint-footnotes infos only staged)
         (lemmax--lint-markers infos only staged)
         (lemmax--lint-coverage infos only staged)
@@ -1458,7 +1537,7 @@ With CACHED, read the staged copies."
   "Markers that name no lemma or a DROPPED one; DONE lemmas implemented on or
 after the config's :markers-required-from with no code marker."
   (let* ((known (make-hash-table :test #'equal))
-         (from (lemmax--config-setting :markers-required-from))
+         (from (lemmax--config-setting :markers-required-from infos))
          (markers (lemmax--all-markers infos cached))
          (statements (lemmax--all-statements infos)))
     (setq known (lemmax--known (lemmax--all-statements (lemmax--listed (if cached (lemmax--rev-files "") (lemmax--worktree-files))))))
@@ -1547,7 +1626,7 @@ With CACHED, the staged copies."
 (defun lemmax--lint-coverage (infos only cached)
   "Code above a file's first marker, in files changed on or after the config's
 :coverage-required-from; none when the key is not set."
-  (let ((from (lemmax--config-setting :coverage-required-from)))
+  (let ((from (lemmax--config-setting :coverage-required-from infos)))
     (when (and from (null only) (not (string< (lemmax--today) from)))
       (let ((changed (lemmax--changed-since from)))
         (dolist (u (lemmax--uncovered infos cached))
@@ -1817,7 +1896,9 @@ Only files with a lemma in the logged form are walked, one git log each."
 (defun lemmax--opted-here-p ()
   "Whether this repo has an opted-in file or a config; a git grep, so no parse."
   (or (zerop (car (lemmax--git "grep" "--cached" "-q" "-E" lemmax--opted-re "--" "*.org" "*.setup")))
-      (zerop (car (lemmax--git "cat-file" "-e" (concat ":" lemmax-config-file))))))
+      ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+      ;; An old config opts in only while it names a test command.
+      (zerop (car (lemmax--git "grep" "--cached" "-q" "-F" ":tests" "--" lemmax-config-file)))))
 
 ;; lemma: RT-19
 (defun lemmax--projects-with (id)
@@ -2440,7 +2521,7 @@ opts in, then the hook that was there before, kept as NAME.local."
   (concat "#!/usr/bin/env bash\n" lemmax--hook-mark "\n"
           "# lmx " lemmax-version "; the hook that was here first is " name ".local, run after.\n"
           "if git grep --cached -q -E '" lemmax--opted-re "' -- '*.org' '*.setup' 2>/dev/null \\\n"
-          "\t|| git cat-file -e :lemmax/config.eld 2>/dev/null; then\n"
+          "\t|| git grep --cached -q -F ':tests' -- lemmax/config.eld 2>/dev/null; then\n"
           (if (equal name "pre-commit")
               "\tlmx lint --staged --no-tests || exit 1\n"
             "\tlmx commit-msg \"$1\" || exit 1\n")
@@ -2724,16 +2805,104 @@ A tasks or notes file keeps its states and dates: it is returned as it is."
                        (string-join (nreverse proofs) "\n"))))))))
 
 (defun lemmax--diff (label old new)
-  "A unified diff of OLD to NEW, both strings, under LABEL; OLD nil for a new file."
+  "A unified diff of OLD to NEW, both strings, under LABEL; OLD nil for a new
+file, NEW nil for a file deleted."
   (let ((a (make-temp-file "lemmax-a")) (b (make-temp-file "lemmax-b")))
     (unwind-protect
         (progn
           (with-temp-file a (insert (or old "")))
-          (with-temp-file b (insert new))
+          (with-temp-file b (insert (or new "")))
           (with-temp-buffer
-            (call-process "diff" nil t nil "-u" "-L" (if old label "/dev/null") "-L" label a b)
+            (call-process "diff" nil t nil "-u" "-L" (if old label "/dev/null") "-L" (if new label "/dev/null") a b)
             (buffer-string)))
       (delete-file a) (delete-file b))))
+
+;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+(defun lemmax--setting-value (v)
+  "An old config value V as a #+PROPERTY: value: a list joined by spaces."
+  (if (listp v) (mapconcat #'identity v " ") v))
+
+(defun lemmax--add-header-lines (text lines)
+  "TEXT with LINES put after its first block of #+ and # lines."
+  (if (null lines)
+      text
+    (let ((pos 0))
+      (while (and (< pos (length text)) (eq (aref text pos) ?#))
+        (setq pos (let ((nl (string-search "\n" text pos))) (if nl (1+ nl) (length text)))))
+      (concat (substring text 0 pos) (if (and (> pos 0) (not (eq (aref text (1- pos)) ?\n))) "\n" "")
+              (mapconcat (lambda (l) (concat l "\n")) lines "") (substring text pos)))))
+
+(defun lemmax--add-setupfile (text)
+  "TEXT, a project's setup.org, reading ../setup.org: the line goes after its
+#+title:, or first."
+  (if (string-match-p "^#\\+SETUPFILE:[ \t]*\"?\\.\\./setup\\.org\"?[ \t]*$" text)
+      text
+    (let ((case-fold-search t))
+      (if (string-match "^#\\+title:.*\n" text)
+          (concat (substring text 0 (match-end 0)) "#+SETUPFILE: ../setup.org\n" (substring text (match-end 0)))
+        (concat "#+SETUPFILE: ../setup.org\n" text)))))
+
+(defun lemmax--migrate-config (write)
+  "Print, or with WRITE make, the move of lemmax/config.eld to #+PROPERTY:
+lines: its top keys into theories/setup.org, each :folders entry into its
+folder's setup.org unless that already sets the key, #+SETUPFILE: ../setup.org
+in each project's setup.org, and the config deleted."
+  (let* ((text (or (lemmax--config-text nil)
+                   (progn (lemmax--err "lmx: no %s here" lemmax-config-file) (kill-emacs 1))))
+         (res (lemmax--config-read text))
+         (top (let ((read-eval nil)) (car (read-from-string text))))
+         (files (make-hash-table :test #'equal)) order
+         (get (lambda (f) (let ((v (gethash f files 'none)))
+                            (if (not (eq v 'none)) v
+                              (push f order)
+                              (puthash f (and (file-readable-p f) (with-temp-buffer (insert-file-contents f) (buffer-string)))
+                                       files)))))
+         (set (lambda (f v) (funcall get f) (puthash f v files)))
+         (props-of (lambda (f) (let ((c (funcall get f)))
+                                 (and c (plist-get (lemmax--parse c f) :keywords)))))
+         (add (lambda (f pairs)
+                ;; PAIRS: (NAME . VALUE); one already set to VALUE is skipped, one set otherwise kept and named.
+                (let* ((have (funcall props-of f))
+                       (lines (cl-loop for (n . v) in pairs
+                                       for old = (cadr (assoc n have))
+                                       if (null old) collect (format "#+PROPERTY: %s %s" n v)
+                                       else if (not (equal (string-trim old) v))
+                                       do (lemmax--err "lmx: %s already sets %s %s; the config's %s is dropped" f n old v))))
+                  (when lines
+                    (funcall set f (lemmax--add-header-lines
+                                    (or (funcall get f)
+                                        (if (equal f lemmax--root-setup-file)
+                                            "#+title: Repo settings\n# Repo-wide lmx settings; each project's setup.org reads this with #+SETUPFILE: ../setup.org.\n"
+                                          (concat "#+title: " (file-name-nondirectory (directory-file-name (file-name-directory f)))
+                                                  " settings\n"
+                                                  (if (string-match-p "\\`theories/[^/]+/setup\\.org\\'" f) "#+SETUPFILE: ../setup.org\n" ""))))
+                                    lines)))))))
+    (when (cdr res)
+      (dolist (p (cdr res)) (lemmax--err "lmx: %s: %s" lemmax-config-file p))
+      (kill-emacs 1))
+    (funcall add lemmax--root-setup-file
+             (cl-loop for (n . k) in lemmax--repo-settings
+                      when (plist-get top k) collect (cons n (plist-get top k))))
+    (dolist (e (car res))
+      (let ((f (if (string-empty-p (car e)) lemmax--root-setup-file (concat (car e) "setup.org"))))
+        (unless (or (string-empty-p (car e)) (string-prefix-p lemmax--theories (car e)))
+          (lemmax--err "lmx: %s is outside theories/; its files read %s only through #+SETUPFILE: setup.org" (car e) f))
+        (funcall add f (cl-loop for (k v) on (cdr e) by #'cddr
+                                collect (cons (lemmax--setting-name k) (lemmax--setting-value v))))))
+    (dolist (f (lemmax--lines (lemmax--git-out "ls-files" "theories/*/setup.org")))
+      (when (string-match-p "\\`theories/[^/]+/setup\\.org\\'" f)
+        (let ((c (funcall get f))) (when c (funcall set f (lemmax--add-setupfile c))))))
+    (dolist (f (reverse order))
+      (let* ((old (and (file-readable-p f) (with-temp-buffer (insert-file-contents f) (buffer-string))))
+             (new (gethash f files)))
+        (unless (equal old new)
+          (if write
+              (progn (make-directory (file-name-directory (expand-file-name f)) t)
+                     (with-temp-file f (insert new)) (lemmax--out "wrote %s" f))
+            (princ (lemmax--diff f old new))))))
+    (if write
+        (progn (delete-file lemmax-config-file) (lemmax--out "deleted %s" lemmax-config-file))
+      (princ (lemmax--diff lemmax-config-file text nil)))))
 
 (defun lemmax-migrate (args)
   "Print, or with --write make, FILE in the math names, with FILE.proofs.org."
@@ -2746,6 +2915,8 @@ A tasks or notes file keeps its states and dates: it is returned as it is."
       (lemmax--err "lmx: migrate takes one FILE; see lmx migrate --help") (kill-emacs 1))
     (let* ((path (file-truename (expand-file-name (car files) (or lemmax--cwd default-directory))))
            (rel (file-relative-name path (file-truename default-directory))))
+      ;; lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e
+      (when (equal rel lemmax-config-file) (lemmax--migrate-config write) (kill-emacs 0))
       (unless (and (file-readable-p path) (string-suffix-p ".org" path))
         (lemmax--err "lmx: %s: not a readable theory .org file" (car files)) (kill-emacs 1))
       (let* ((old (with-temp-buffer (insert-file-contents path) (buffer-string)))
@@ -3166,13 +3337,13 @@ example: lmx list --ready -p ~/repos/other-project"
 Each command takes -h, --help and help. lmx --version prints the release.
 Each command takes --project DIR (-p DIR): run on the git repo that holds DIR,
 instead of the one here. list takes it more than once: one table each.
-lint, commit-msg and trace read files whose header sets LEMMAX_TESTS, or
-that lemmax/config.eld names, by folder:
-  (:folders ((\"requirements/\" :tests \"CMD\" :code (\"src/\")
-              :test-paths (\"tests/\") :markers-in (\"../code\"))))
-A file takes the entry with the longest folder that holds it; a file with a
-setting of its own uses only its own header. The config is read as
-data and never run. So lemmas may be headings in one file, or one per file.
+lint, commit-msg and trace read files whose header sets LEMMAX_TESTS.
+Repo-wide settings are #+PROPERTY: lines in theories/setup.org, which each
+project's setup.org reads with #+SETUPFILE: ../setup.org:
+LEMMAX_MARKERS_REQUIRED_FROM, LEMMAX_COVERAGE_REQUIRED_FROM and LEMMAX_REPOS.
+A file gets settings only through its header. An old lemmax/config.eld still
+reads, as data, never run, by folder, until lmx migrate lemmax/config.eld
+moves it; a setting set both there and by #+PROPERTY: is refused.
 A file whose top property drawer has :ID: is one lemma: #+title: is its
 title and :STATE: its OPEN, DONE or DROPPED, or CONJECTURE, THESIS, LEMMA, THEOREM or REFUTED.
 A THESIS is a conjecture the owner accepted to prove. With #+TODO:
@@ -3318,6 +3489,7 @@ NAME_archive.tasks.org; a new archive takes FILE's #+TODO:, #+TAGS: and
     (migrate
      "usage: lmx migrate [--project DIR] [--write] [--links] FILE
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
+With FILE lemmax/config.eld, move the old config to #+PROPERTY: lines.
 example: lmx migrate requirements.org"
      "Without --write it prints a unified diff and writes nothing.
 OPEN becomes CONJECTURE, DROPPED REFUTED, DONE THEOREM when it has children,
@@ -3332,6 +3504,13 @@ text, the statement, does not change, so nothing turns suspect.
 writes them, dated as they were, newest first; an approved CONJECTURE becomes
 a THESIS; :LAST_EDITED: goes; the #+TODO:, in FILE or the setup file it
 reads, names THESIS, and FILE's #+STARTUP: gets logdrawer.
+Each old #+LEMMAX_NAME: keyword becomes #+PROPERTY: LEMMAX_NAME in place, in
+FILE and its setup file; a setup or proofs file given alone takes only that.
+lmx migrate lemmax/config.eld puts the config's top keys in theories/setup.org
+as #+PROPERTY: lines (made with a #+title: and a comment), each :folders entry
+in its folder's setup.org unless that already sets the key, adds
+#+SETUPFILE: ../setup.org to each theories/PROJECT/setup.org, and deletes the
+config.
 --links writes :USES: and :PROVES: as [[id:ID][title]] links, not bare ids.")
     (next-id
      "usage: lmx next-id [--project DIR] LETTER

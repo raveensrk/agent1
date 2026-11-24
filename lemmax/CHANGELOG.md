@@ -5,6 +5,12 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- Repo-wide settings are `#+PROPERTY:` lines in `theories/setup.org`:
+  `LEMMAX_MARKERS_REQUIRED_FROM`, `LEMMAX_COVERAGE_REQUIRED_FROM` and
+  `LEMMAX_REPOS`, read through each project's `#+SETUPFILE: ../setup.org`.
+  An old `lemmax/config.eld` still reads; lint refuses a setting set both
+  there and by `#+PROPERTY:`. `lmx migrate lemmax/config.eld` moves it and
+  deletes it. A config opts a repo in only while it names `:tests`.
 - File settings are Org `#+PROPERTY:` lines: `#+PROPERTY: LEMMAX_TESTS CMD`,
   `LEMMAX_CODE`, `LEMMAX_TEST_PATHS` and `LEMMAX_MARKERS_IN`, read as Org reads
   them, from a `#+SETUPFILE:` too, `NAME+` appending. Lint refuses one in a

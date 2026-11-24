@@ -45,7 +45,7 @@ lmx lint --staged          # what the pre-commit hook runs
   a seeded test parses 200 generated files; the mutation test turns each lint
   rule off in turn (`LEMMAX_MUTATE`) and needs a test to fail.
 - `lint`, `commit-msg` and `trace` read files whose header sets `LEMMAX_TESTS`
-  (see File settings), or that `lemmax/config.eld` names (see Config).
+  (see File settings), or that an old `lemmax/config.eld` names (see Config).
   `list` and `next-id` read every theory file.
 - The global hooks in `harness/githooks` call it: `pre-commit` runs
   `lint --staged --no-tests`, `commit-msg` runs `commit-msg`. A repo with no
@@ -332,33 +332,61 @@ A file's settings are Org `#+PROPERTY:` lines, read as Org reads them, through
 
 ## Config
 
-`lemmax/config.eld` at a repo's root holds its settings by folder, so lemmas
-may be headings in one file or one lemma per `.org` file, with no header:
+<!-- lemma: 01a20ed2-d34b-71f9-a19a-04bb7cc6cf6e -->
 
-```elisp
-(:folders
- (("requirements/" :tests "./run_tests --addresses" :code ("src/")
-   :test-paths ("tests/") :markers-in ("../code"))))
+Repo-wide settings are `#+PROPERTY:` lines in `theories/setup.org`, and each
+project's `setup.org` reads it with `#+SETUPFILE: ../setup.org`; Org brings
+its lines in, as it does any setup file, nested too:
+
+```org
+#+title: Repo settings
+# Repo-wide lmx settings; each project's setup.org reads this with #+SETUPFILE: ../setup.org.
+#+PROPERTY: LEMMAX_MARKERS_REQUIRED_FROM 2026-11-22
+#+PROPERTY: LEMMAX_COVERAGE_REQUIRED_FROM 2026-11-22
+#+PROPERTY: LEMMAX_REPOS ~/repos
 ```
 
-- Top-level keys, beside `:folders`: `:markers-required-from "YYYY-MM-DD"` makes
-  a DONE lemma implemented on or after that day need a `lemma:` code marker
-  (no key: none needs one); `:coverage-required-from "YYYY-MM-DD"` makes lint
-  refuse code above a file's first `lemma:` marker in code files changed on or
-  after that day (`lmx list --uncovered` lists every such file); `:repos "DIR"` is the folder `list --all` and
-  cross-project `trace` read (else `LEMMAX_REPOS`, else `~/repos`).
-- A file takes the entry with the longest folder that holds it; `""` is the root.
-- A file with any setting of its own uses only its header.
-- It is read as data with `read-eval` off and never run; `lint` reports a form
-  that does not read, an unknown key, or a folder with no tracked file.
-- The hooks and `lemmax_lint.py` treat a repo with the file as opted in.
+- `LEMMAX_MARKERS_REQUIRED_FROM YYYY-MM-DD` makes a done lemma proven on or
+  after that day need a `lemma:` code marker (none set: none needs one).
+- `LEMMAX_COVERAGE_REQUIRED_FROM YYYY-MM-DD` makes lint refuse code above a
+  file's first `lemma:` marker in code files changed on or after that day
+  (`lmx list --uncovered` lists every such file).
+- `LEMMAX_REPOS DIR` is the folder `list --all` and cross-project `trace`
+  read (else the `LEMMAX_REPOS` variable, else `~/repos`); they read it from
+  `theories/setup.org` at the repo root, with no file at hand.
+- A folder's settings are its project's own `#+PROPERTY:` lines (see File
+  settings). A theory file gets settings only through its header: a lemma
+  file with no header and no `#+SETUPFILE:` has none.
+- The hooks and `lemmax_lint.py` treat a repo as opted in by a
+  `#+PROPERTY: LEMMAX_TESTS` line.
+
+An old `lemmax/config.eld` still reads, as data with `read-eval` off, never
+run, until it is migrated; while it names a `:tests` it opts the repo in, and
+its `:folders` entries still give a file with no settings of its own the
+entry of the longest folder that holds it:
+
+```elisp
+(:markers-required-from "2026-11-22"
+ :folders (("theories/lemmax/" :tests "lemmax/run_tests --addresses" :code ("lemmax/"))))
+```
+
+- Lint reports a form that does not read, an unknown key, or a folder with no
+  tracked file, and refuses a setting set both there and by a `#+PROPERTY:`
+  line: a folder entry's key and a file's header, or a top key and a
+  repo-wide line.
+- `lmx migrate lemmax/config.eld` prints the move as a diff; `--write` makes
+  it: the top keys go to `theories/setup.org` (made with a `#+title:` and a
+  comment), each `:folders` entry to its folder's `setup.org` unless that
+  already sets the key, each `theories/PROJECT/setup.org` gets
+  `#+SETUPFILE: ../setup.org`, and the config is deleted.
 
 ## Lemma files
 
 A file whose top property drawer has `:ID:` is one lemma, as an org-roam file
 node: `#+title:` is its title, `:STATE:` its state, as CONJECTURE or THESIS
 (old OPEN, DONE and DROPPED still read), and headings in it are body, not
-lemmas. Every rule for a heading lemma holds.
+lemmas. Every rule for a heading lemma holds. It has settings only through
+its own header, as `#+SETUPFILE: setup.org` after the drawer.
 
 ```org
 :PROPERTIES:
