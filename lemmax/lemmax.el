@@ -885,7 +885,8 @@ of its own, the :TEST: addresses of its proofs as :verify."
                              (if (plist-get r :new-form)
                                  "get the owner's approval, then make it THESIS so Org logs the day, and prove it again"
                                "get the owner's approval, then add :APPROVED: with its day")))
-          (unless (or (plist-get r :created) (lemmax--note-p r)) (lemmax--finding f l id "no :CREATED:" "add :CREATED: YYYY-MM-DD"))
+          ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+          ;; The created day comes from the id or git: no :CREATED: is needed.
           ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
           ;; In the logged form git dates the last edit, so no :LAST_EDITED: is needed.
           (unless (or (plist-get r :last-edited) (lemmax--note-p r) (plist-get r :new-form))
@@ -1170,13 +1171,12 @@ as a NUL when BROKEN and the file is gone."
                            (not (equal (plist-get r :implemented) today)))
                   (lemmax--finding f l id (format "it turned DONE and :%s: is not today" (lemmax--date-name r))
                                      (lemmax--set-proven-fix r today))))
-            (unless (or (lemmax--note-p r)
-                        (and (equal (plist-get r :created) today)
-                             ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
-                             (or (equal (plist-get r :last-edited) today)
-                                 (and (null (plist-get r :last-edited)) (plist-get r :new-form)))))
-              (lemmax--finding f l id "a new statement whose :CREATED: or :LAST_EDITED: is not today"
-                                 (format "set both to %s" today)))
+            ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+            ;; Its created day is the id's or git's; only an old :LAST_EDITED: is checked.
+            (when (and (not (lemmax--note-p r)) (plist-get r :last-edited)
+                       (not (equal (plist-get r :last-edited) today)))
+              (lemmax--finding f l id "a new statement whose :LAST_EDITED: is not today"
+                                 (format "set :LAST_EDITED: %s" today)))
             (when (and done (not (equal (plist-get r :implemented) today)))
               (lemmax--finding f l id (format "new and DONE, and :%s: is not today" (lemmax--date-name r))
                                  (lemmax--set-proven-fix r today)))))))))
@@ -1747,11 +1747,12 @@ a list of (BLOB-ID . TEXT), or nil for a spec git does not have."
                            nil))))))
 
 ;; lemma: 01a202f3-88bb-704d-9ea9-74714f841514
-(defun lemmax--last-changes (infos &optional current)
+(defun lemmax--last-changes (infos &optional current first)
   "Hash ID -> the last day its text changed in git, walking each file's revisions.
 One git process reads every revision of a file; a blob seen before is skipped.
 With CURRENT, a lemma of INFOS whose text differs from its last commit's, or
-that no commit has, changed today: INFOS are the work tree's or the index's."
+that no commit has, changed today: INFOS are the work tree's or the index's.
+FIRST, a hash, gets each id's earliest day: the first commit that has it."
   (let ((changed (make-hash-table :test #'equal)) (today (lemmax--today)))
     (dolist (info infos)
       (let* ((file (plist-get info :file)) (prev (make-hash-table :test #'equal))
@@ -1778,6 +1779,9 @@ that no commit has, changed today: INFOS are the work tree's or the index's."
                  do (puthash (cons (car blob) path) t seen)
                     (dolist (pair (lemmax--quick-ids (cdr blob)))
                       (let ((text (funcall norm (cdr pair) path)))
+                        ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+                        (when (and first (let ((d (gethash (car pair) first))) (or (null d) (string< day d))))
+                          (puthash (car pair) day first))
                         (unless (equal (gethash (car pair) prev) text)
                           (puthash (car pair) day changed)
                           (puthash (car pair) text prev)))))
@@ -1786,8 +1790,41 @@ that no commit has, changed today: INFOS are the work tree's or the index's."
           (dolist (r (plist-get info :statements))
             (let ((id (plist-get r :id)))
               (when (and id (not (equal (gethash id prev) (funcall norm (plist-get r :text) file))))
-                (puthash id today changed)))))))
+                (puthash id today changed))
+              (when (and id first (not (gethash id first)))
+                (puthash id today first)))))))
     changed))
+
+;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+(defun lemmax--uuid7-day (id)
+  "The local day a UUIDv7 ID was made: its first 48 bits, Unix milliseconds,
+in TZ; nil for any other id."
+  (when (and id (lemmax--uuid7-p id))
+    (let ((ms (string-to-number (concat (substring id 0 8) (substring id 9 13)) 16)))
+      (format-time-string "%F" (/ ms 1000) (getenv "TZ")))))
+
+(defun lemmax--with-created (statements infos)
+  "STATEMENTS with :created set: an old :CREATED:, else a UUIDv7 id's day, else
+the day of the first commit of INFOS that has the id, else today when none
+has it yet. One git log per file, and only when some id needs git."
+  (let* ((need (cl-some (lambda (r) (and (plist-get r :id) (not (plist-get r :created))
+                                         (not (lemmax--uuid7-p (plist-get r :id)))))
+                        statements))
+         (first (make-hash-table :test #'equal)))
+    (when need (lemmax--last-changes infos t first))
+    (lemmax--fill-created statements first)))
+
+(defun lemmax--fill-created (statements first)
+  "STATEMENTS, each with no :CREATED: given its id's day: a UUIDv7's, else
+its day in FIRST, else today for an id no commit has; none with no id."
+  (let ((today (lemmax--today)))
+    (mapcar (lambda (r)
+              (let ((id (plist-get r :id)))
+                (if (or (plist-get r :created) (null id))
+                    r
+                  (plist-put (copy-sequence r) :created
+                             (or (lemmax--uuid7-day id) (gethash id first) today)))))
+            statements)))
 
 ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 (defun lemmax--edited-days (infos)
@@ -1849,6 +1886,8 @@ Only files with a lemma in the logged form are walked, one git log each."
     (let ((math (or (lemmax--new-state-p (plist-get r :state)) (lemmax--proof-p r))))
       (lemmax--out (if math "  uses: %s" "  parents: %s") (if (plist-get r :needs) (string-join (plist-get r :needs) " ") "none"))
       (lemmax--out (if math "  used by: %s" "  children: %s") (if children (string-join children " ") "none")))
+    ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+    (when (plist-get r :created) (lemmax--out "  created: %s" (plist-get r :created)))
     (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
     ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
     (when (plist-get r :files) (lemmax--out "  files: %s" (string-join (plist-get r :files) " ")))
@@ -2002,11 +2041,13 @@ Only files with a lemma in the logged form are walked, one git log each."
 (defun lemmax--trace-in (infos want)
   "Print the trace of INFOS, or of the one statement WANT, for the repo here."
   (progn
-    (let* ((statements (lemmax--all-statements infos))
+    (let* ((first (make-hash-table :test #'equal))
+           (changed (lemmax--last-changes infos nil first))
+           ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+           (statements (lemmax--fill-created (lemmax--all-statements infos) first))
            (lemmax--marks (lemmax--all-markers infos))
            (lemmax--links (lemmax--repo-links (lemmax--all-statements (lemmax--listed (lemmax--worktree-files)))))
            (commits (lemmax--commits))
-           (changed (lemmax--last-changes infos))
            (suspects (lemmax--suspects statements changed))
            (addr-of (lambda (r) (if (not lemmax--run-tests) (cons nil "not run") (lemmax--test-addresses
                                  (plist-get (cl-find (plist-get r :file) infos
@@ -2065,12 +2106,19 @@ Only files with a lemma in the logged form are walked, one git log each."
   (let* ((infos (lemmax--listed (lemmax--worktree-files)))
          (marks (lemmax--all-markers infos))
          (all (lemmax--all-statements infos))
-         (links (lemmax--repo-links all)))
+         (links (lemmax--repo-links all))
+         ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+         (created (let ((h (make-hash-table :test #'equal)))
+                    (dolist (r (lemmax--with-created (cl-mapcan (lambda (i) (copy-sequence (plist-get i :statements))) infos) infos))
+                      (when (plist-get r :id) (puthash (cons (plist-get r :file) (plist-get r :line)) (plist-get r :created) h)))
+                    h)))
     (cl-loop for info in infos
              for addr = (and (plist-get info :opted) (not no-tests) lemmax--run-tests
                              (lemmax--test-addresses (plist-get info :tests)))
              append (cl-loop for r in (plist-get info :statements)
-                             collect (let ((v (plist-get r :verify)))
+                             collect (let ((v (plist-get r :verify))
+                                           (r (let ((c (gethash (cons (plist-get r :file) (plist-get r :line)) created)))
+                                                (if c (plist-put (copy-sequence r) :created c) r))))
                                        (append r (list :group (lemmax--group r)
                                                        :linked-from (lemmax--backlinks (plist-get r :id) all links)
                                                        :markers (cl-loop for m in marks
@@ -2135,6 +2183,8 @@ Only files with a lemma in the logged form are walked, one git log each."
             (cons 'state (or (plist-get r :state) :null))
             (cons 'group (plist-get r :group))
             (cons 'approved (or (plist-get r :approved) :null))
+            ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+            (cons 'created (or (plist-get r :created) :null))
             (cons 'verify (vconcat (plist-get r :verify)))
             (cons 'check (plist-get r :check))
             (cons 'needs (vconcat (plist-get r :needs)))
@@ -2341,7 +2391,7 @@ and a top heading that is no section."
 ;; lemma: 01a204fc-d718-7e50-95a3-4ca72898a15b
 (defun lemmax--plan-key (r)
   "R's place among steps with no order between them: axioms first, then
-higher priority, none last, then older by :CREATED:, then by id."
+higher priority, none last, then older by the created day, none last, then by id."
   (let ((text (or (plist-get r :text) "")))
     (list (if (lemmax--axiom-p r) 0 1)
           (if (string-match "\\`\\[#\\([A-Z0-9]\\)\\]" text) (aref (match-string 1 text) 0) 1000)
@@ -2620,7 +2670,6 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
                                  (format ":ID:          %s\n" (lemmax-uuid7))
                                  (format ":PROVES:      %s\n" (lemmax--migrate-ref id))
                                  (format ":TEST:        %s\n" (string-join verify " "))
-                                 (format ":CREATED:     %s\n" today)
                                  (format ":LAST_EDITED: %s\n" today)
                                  ":END:\n"
                                  "When the tests in :TEST: pass, the conjecture holds.\n"))))
@@ -2629,6 +2678,49 @@ USES-OF maps an id to the ids that named it in :NEEDS:, its new :USES:."
         (when (and verify (not id))
           (setq text chunk))
         (cons (if (member new '("LEMMA" "THEOREM")) (lemmax--migrate-proven text) text) proof)))))
+
+;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+(defvar lemmax--keep-created nil
+  "In migrate, a hash of the ids whose :CREATED: differs from the day their id
+or git gives: migrate keeps those, so the old day still wins and plan keeps
+its order.")
+
+(defun lemmax--drop-created-p (id)
+  "Whether migrate deletes the :CREATED: of the heading with ID."
+  (not (and id lemmax--keep-created (gethash id lemmax--keep-created))))
+
+(defun lemmax--drop-created (text)
+  "TEXT with each :CREATED: line of a property drawer deleted: the created
+day comes from the id or git; one `lemmax--keep-created' names stays."
+  (let ((in nil) drawer out)
+    (dolist (l (split-string text "\n"))
+      (cond ((string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l) (setq in t drawer nil) (push l out))
+            ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l))
+             (let ((id (cl-some (lambda (d) (and (string-match "\\`[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*\\'" d) (match-string 1 d)))
+                                drawer)))
+               (dolist (d (nreverse drawer))
+                 (unless (and (string-match-p "\\`[ \t]*:CREATED:" d) (lemmax--drop-created-p id)) (push d out))))
+             (setq in nil) (push l out))
+            (in (push l drawer))
+            (t (push l out))))
+    (when in (setq out (append drawer out)))
+    (mapconcat #'identity (nreverse out) "\n")))
+
+(defun lemmax--keep-created (content rel)
+  "The ids of CONTENT, file REL, whose :CREATED: differs from the day their
+id or git gives, as a hash; named on stderr."
+  (let* ((info (lemmax--parse content rel))
+         (first (make-hash-table :test #'equal)) (keep (make-hash-table :test #'equal)))
+    (when (cl-some (lambda (r) (and (plist-get r :created) (plist-get r :id) (not (lemmax--uuid7-p (plist-get r :id)))))
+                   (plist-get info :statements))
+      (lemmax--last-changes (list info) t first))
+    (dolist (r (plist-get info :statements))
+      (let* ((id (plist-get r :id)) (c (plist-get r :created))
+             (d (and id (or (lemmax--uuid7-day id) (gethash id first)))))
+        (when (and c d (not (equal c d)))
+          (puthash id t keep)
+          (lemmax--err "lmx: %s: %s keeps :CREATED: %s; its id or git gives %s" rel id c d))))
+    keep))
 
 ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 (defconst lemmax--todo-line "#+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)"
@@ -2659,6 +2751,9 @@ of :APPROVED: and :LAST_EDITED:."
       (cond ((and (not done-drawer) (string-match-p "\\`[ \t]*:PROPERTIES:[ \t]*\\'" l)) (setq in t) (push l out))
             ((and in (string-match-p "\\`[ \t]*:END:[ \t]*\\'" l))
              (setq in nil done-drawer t) (push l out) (setq end-at (length out)))
+            ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+            ((and in (string-match-p "\\`[ \t]*:CREATED:" l)
+                  (lemmax--drop-created-p (and (string-match "^[ \t]*:ID:[ \t]*\\(.*?\\)[ \t]*$" chunk) (match-string 1 chunk)))))
             ((and in (string-match "\\`[ \t]*:LAST_EDITED:[ \t]*\\(.*?\\)[ \t]*\\'" l))
              (let ((d (match-string 1 l))) (when (lemmax--day-p d) (setq edited d))))
             ((and in math (string-match "\\`[ \t]*:APPROVED:[ \t]*\\(.*?\\)[ \t]*\\'" l)
@@ -2762,7 +2857,8 @@ SETUP: FILE's setup file holds its #+TODO: of conjectures.
 A tasks or notes file keeps its states and dates: it is returned as it is."
   ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
   (if (string-match-p "\\.\\(?:tasks\\|notes\\)\\.org\\'" (or file ""))
-      (cons content nil)
+      ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+      (cons (lemmax--drop-created content) nil)
   (let* ((first (if (string-match "^\\*+ " content) (match-beginning 0) (length content)))
          (pre (substring content 0 first))
          (file-lemma (string-match-p "\\`\\(?:#[ \t].*\n\\|#\n\\|[ \t]*\n\\)*[ \t]*:PROPERTIES:" pre))
@@ -2920,6 +3016,8 @@ in each project's setup.org, and the config deleted."
       (unless (and (file-readable-p path) (string-suffix-p ".org" path))
         (lemmax--err "lmx: %s: not a readable theory .org file" (car files)) (kill-emacs 1))
       (let* ((old (with-temp-buffer (insert-file-contents path) (buffer-string)))
+             ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+             (lemmax--keep-created (lemmax--keep-created old rel))
              ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
              (setup (lemmax--migrate-setup old path))
              ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
@@ -2927,7 +3025,7 @@ in each project's setup.org, and the config deleted."
              (srel (and setup (file-relative-name (car setup) (file-truename default-directory))))
              ;; A proofs file, or a setup file migrated alone, takes only the settings move
              ;; (and a setup file its #+TODO:).
-             (res (cond ((lemmax--proofs-file-p path) (cons (lemmax--migrate-settings old) nil))
+             (res (cond ((lemmax--proofs-file-p path) (cons (lemmax--drop-created (lemmax--migrate-settings old)) nil))
                         ((string-match-p "\\(?:\\`\\|/\\)setup\\.org\\'\\|\\.setup\\'" path)
                          (cons (lemmax--migrate-settings (lemmax--migrate-header old t)) nil))
                         (t (let ((r (lemmax--migrate-text old rel (lemmax--today)
@@ -3392,6 +3490,8 @@ example: lmx trace RT-3"
 :VERIFY: names, then the suspect children: DONE statements whose parent's
 text changed in git after their :PROVEN: (or old :IMPLEMENTED:) or :REVIEWED: day.
 With an ID: that one block, and the files each of its commits touched.
+Each block's created: is the statement's day: an old :CREATED:, else a UUIDv7
+id's own day, else the first commit with the id, else today.
 An ID not in this project is looked for in every project under the repos
 folder (the config's :repos, LEMMAX_REPOS, else ~/repos),
 and shown under a project: line.
@@ -3408,7 +3508,9 @@ Secrets. Then one step per AXIOM, LEMMA or THEOREM (and old DONE): its id, state
 file:line, the ids it :USES:, its statement, and each proof with its :TEST:.
 A step comes after every step it uses; axioms come first. Steps with no
 order between them go higher priority first ([#A] before [#B], none last),
-then older by :CREATED:, then by id. The same files print the same plan.
+then older by the created day (an old :CREATED:, a UUIDv7 id's day, else the
+day of the first commit with the id), none last, then by id. The same files
+print the same plan.
 A :USES: cycle is a finding naming its ids, and exit 1.
 --json  {\"version\": 1, \"steps\": [{step, kind, ...}]}: kind environment has
         section, title, file, line, properties, statement; kind lemma has id,
@@ -3511,6 +3613,8 @@ as #+PROPERTY: lines (made with a #+title: and a comment), each :folders entry
 in its folder's setup.org unless that already sets the key, adds
 #+SETUPFILE: ../setup.org to each theories/PROJECT/setup.org, and deletes the
 config.
+Every :CREATED: goes, tasks and notes files too, but one that differs from the
+day its id or git gives, which stays and is named, so plan keeps its order.
 --links writes :USES: and :PROVES: as [[id:ID][title]] links, not bare ids.")
     (next-id
      "usage: lmx next-id [--project DIR] LETTER

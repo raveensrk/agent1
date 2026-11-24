@@ -2,6 +2,7 @@ RQ-2 DONE Builds on it
   file: theories/t/theory.org:17
   parents: RQ-1
   children: none
+  created: 2026-01-05
   linked from: theories/t/notes/n.org:1
   verify: unit/a found
   code: src/x.clj:1

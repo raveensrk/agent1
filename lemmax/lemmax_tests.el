@@ -272,7 +272,8 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
   (rt-should-clean (rt-lint (rt-req "RQ-1" :approved nil))))
 (ert-deftest lemmax-lint-dates-missing ()
   (let ((r (rt-lint (rt-req "RQ-1" :created nil :last nil))))
-    (rt-should-find r "no :CREATED:")
+    ;; No :CREATED: is needed (01a20ee1-7637-7169-820a-751b3c636847).
+    (should-not (string-match-p "no :CREATED:" (nth 2 r)))
     (should (string-match-p "no :LAST_EDITED:" (nth 2 r)))))
 (ert-deftest lemmax-lint-implemented-state ()
   :tags (quote (timeout-30))
@@ -334,9 +335,12 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
                   "LAST_EDITED: is not today; set :LAST_EDITED: 2026-02-01"))
 (ert-deftest lemmax-staged-new-dates ()
   (rt-should-find (rt-staged (list (rt-req "RQ-1")) (list (rt-req "RQ-1") (rt-req "RQ-2")))
-                  "RQ-2: a new statement whose :CREATED:")
+                  "RQ-2: a new statement whose :LAST_EDITED: is not today")
+  ;; Its :CREATED: is not checked (01a20ee1-7637-7169-820a-751b3c636847).
   (rt-should-clean (rt-staged (list (rt-req "RQ-1"))
-                              (list (rt-req "RQ-1") (rt-req "RQ-2" :created "2026-02-01" :last "2026-02-01")))))
+                              (list (rt-req "RQ-1") (rt-req "RQ-2" :last "2026-02-01"))))
+  (rt-should-clean (rt-staged (list (rt-req "RQ-1"))
+                              (list (rt-req "RQ-1") (rt-req "RQ-2" :created nil :last "2026-02-01")))))
 (ert-deftest lemmax-staged-turned-done ()
   (rt-should-find (rt-staged (list (rt-req "RQ-1" :verify "unit/a")) (list (rt-done "RQ-1")))
                   "turned DONE and :IMPLEMENTED: is not today")
@@ -1456,7 +1460,7 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
     (dolist (tz '("Pacific/Kiritimati" "Pacific/Pago_Pago"))
       (let ((day (format-time-string "%F" nil tz))
             (r (rt-env (list (concat "TZ=" tz)) (rt-run d "lint" "--staged" "--no-tests"))))
-        (should (string-match-p (concat "set both to " day) (nth 2 r)))))))
+        (should (string-match-p (concat "set :LAST_EDITED: " day) (nth 2 r)))))))
 
 ;;;; 01a202f3-85a4-76cd-bf13-05f6e723c5b2: missing or old Emacs
 
@@ -1523,7 +1527,7 @@ manual (01a20d28-cb41-760a-a477-e1704807a2a8): most samples are finished."
          (row (aref (alist-get 'rows j) 0))
          (type (lambda (v) (cond ((eq v :null) 'null) ((memq v '(t :false)) 'bool) ((stringp v) 'string)
                                  ((numberp v) 'number) ((vectorp v) 'array) (t 'object)))))
-    (should (equal '((id . string) (state . string) (group . string) (approved . string) (verify . array)
+    (should (equal '((id . string) (state . string) (group . string) (approved . string) (created . string) (verify . array)
                      (check . string) (needs . array) (refs . array) (files . array) (linked_from . array) (title . string)
                      (file . string) (line . number) (markers . array))
                    (mapcar (lambda (kv) (cons (car kv) (funcall type (cdr kv)))) row)))))
@@ -1790,11 +1794,11 @@ run of its finding's why text."
 ;;;; 01a20336-c583-720a-b661-c9b5a5dec1a4: FILE arguments are paths from where lemmax runs
 
 (ert-deftest lemmax-file-arg-from-cwd ()
-  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil)))))
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :last nil)))))
     (make-directory (expand-file-name "sub" d))
     (rt-should-find (rt-run (expand-file-name "sub" d) "lint" "--no-tests" "../theories/t/theory.org")
-                    "theory.org:[0-9]+: RQ-1: no :CREATED:")
-    (rt-should-find (rt-run d "lint" "--no-tests" "./theories/t/theory.org") "no :CREATED:")))
+                    "theory.org:[0-9]+: RQ-1: no :LAST_EDITED:")
+    (rt-should-find (rt-run d "lint" "--no-tests" "./theories/t/theory.org") "no :LAST_EDITED:")))
 
 (ert-deftest lemmax-file-arg-unknown ()
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
@@ -1951,7 +1955,7 @@ run of its finding's why text."
 ;;;; 01a20336-ca8d-75bf-bedc-33da69c29468: stable output, lint speaks JSON
 
 (ert-deftest lemmax-lint-json ()
-  (let* ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil) (rt-req "RQ-2"))))
+  (let* ((d (rt-repo (rt-files (rt-req "RQ-1" :last nil) (rt-req "RQ-2"))))
          (r (rt-run d "lint" "--no-tests" "--json"))
          (j (json-parse-string (nth 1 r) :object-type 'alist :null-object nil)))
     (should (= 1 (nth 0 r)))
@@ -1960,7 +1964,7 @@ run of its finding's why text."
     (let ((f (aref (alist-get 'findings j) 0)))
       (should (equal '(file line id why fix) (mapcar #'car f)))
       (should (equal "RQ-1" (alist-get 'id f)))
-      (should (equal "no :CREATED:" (alist-get 'why f)))))
+      (should (equal "no :LAST_EDITED:" (alist-get 'why f)))))
   (let ((r (rt-run (rt-repo (rt-files (rt-req "RQ-1"))) "lint" "--no-tests" "--json")))
     (should (= 0 (nth 0 r)))
     (should (equal "{\"version\":1,\"findings\":[]}\n" (nth 1 r)))))
@@ -1969,7 +1973,7 @@ run of its finding's why text."
   (let ((d (rt-repo (rt-files (rt-req "RQ-1")))))
     (should (= 0 (nth 0 (rt-run d "lint" "--no-tests"))))
     (should (string-match-p "\\`lmx: theories/t/theory\\.org:[0-9]+: RQ-1: [^;]+; .+\n\\'"
-                            (progn (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created nil)))
+                            (progn (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :last nil)))
                                    (nth 2 (rt-run d "lint" "--no-tests")))))
     (should (= 1 (nth 0 (rt-run d "lint" "--no-tests"))))
     (should (= 1 (nth 0 (rt-run d "lint" "--bogus"))))
@@ -2000,11 +2004,11 @@ run of its finding's why text."
     (should (string-match-p "^\tlmx commit-msg" (with-temp-buffer (insert-file-contents (expand-file-name ".git/hooks/commit-msg" d)) (buffer-string))))
     (rt-env env
       ;; pre-commit refuses a broken lemma.
-      (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created nil)))
+      (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :last nil)))
       (rt-git d "add" "-A")
       (let ((r (rt-real-commit d "docs: break it")))
         (should (/= 0 (nth 0 r)))
-        (should (string-match-p "no :CREATED:" (nth 2 r))))
+        (should (string-match-p "no :LAST_EDITED:" (nth 2 r))))
       ;; commit-msg refuses a code commit that names no id.
       (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1")))
       (rt-set d "src/x.clj" "(ns x) ;; 2\n")
@@ -2284,7 +2288,8 @@ run of its finding's why text."
       (should (string-match-p "^#\\+PROPERTY: LEMMAX_TESTS ./tests.sh" proofs))
       (should (string-match-p "^\\* PASSED Proof: Title of RQ-1\n:PROPERTIES:\n:ID: +[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7" proofs))
       (should (string-match-p ":PROVES: +RQ-1\n" proofs))
-      (should (string-match-p ":CREATED: +2026-11-22" proofs)))
+      ;; migrate writes no :CREATED: (01a20ee1-7637-7169-820a-751b3c636847).
+      (should-not (string-match-p ":CREATED:" proofs)))
     (rt-git d "add" "-A")
     ;; The migrated file lints clean, and no lemma's text changed.
     (rt-should-clean (rt-env '("LEMMAX_TODAY=2026-11-22") (rt-run d "lint" "--staged")))
@@ -2614,7 +2619,7 @@ run of its finding's why text."
 
 (ert-deftest lemmax-in-process ()
   ;; rt-run gives what the launcher gives: output, findings and exit code.
-  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil)))))
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :last nil)))))
     (let ((a (rt-run d "lint" "--no-tests")) (b (rt-run-proc d "lint" "--no-tests")))
       (should (equal a b))
       (should (= 1 (nth 0 a))))
@@ -2919,10 +2924,11 @@ committed on DAY, with EXTRA files."
 
 (ert-deftest lemmax-thesis-created-required ()
   :tags '(timeout-30)
-  ;; Bullet 5: :CREATED: stays a property, required in the logged form too.
-  (rt-should-find (rt-run (rt-repo (rt-log-files (list (replace-regexp-in-string ":CREATED: .*\n" "" (rt-logged "RQ-1"))) nil))
-                          "lint" "--no-tests")
-                  "RQ-1: no :CREATED:")
+  ;; Bullet 5 was :CREATED: required; 01a20ee1-7637-7169-820a-751b3c636847
+  ;; dropped it: none is asked for.
+  (should-not (string-match-p "no :CREATED:"
+                              (nth 2 (rt-run (rt-repo (rt-log-files (list (replace-regexp-in-string ":CREATED: .*\n" "" (rt-logged "RQ-1"))) nil))
+                                             "lint" "--no-tests"))))
   ;; An old file still needs :LAST_EDITED:.
   (rt-should-find (rt-lint (rt-req "RQ-1" :last nil)) "no :LAST_EDITED:"))
 
@@ -3004,7 +3010,7 @@ committed on DAY, with EXTRA files."
         (should (= 0 (nth 0 r)))
         (let ((changed (cl-remove-if-not (lambda (l) (string-match-p "\\`[-+][^-+]" l)) (split-string (nth 1 r) "\n"))))
           (should changed)
-          (should (cl-every (lambda (l) (string-match-p "\\`\\(?:-#\\+LEMMAX_[A-Z_]+: \\|\\+#\\+PROPERTY: LEMMAX_\\)" l)) changed)))))
+          (should (cl-every (lambda (l) (string-match-p "\\`\\(?:-#\\+LEMMAX_[A-Z_]+: \\|\\+#\\+PROPERTY: LEMMAX_\\|-:CREATED: \\)" l)) changed)))))
     (rt-should-clean (rt-run d "lint" "--no-tests"))))
 
 (ert-deftest lemmax-thesis-edited-day-follows-move ()
@@ -3264,3 +3270,104 @@ which holds the tests and code, read by theory.org with REQS."
     (should (= 1 (nth 0 (rt-hook-commit d "change it")))))
   (rt-load)
   (should (string-search "-F ':tests' -- lemmax/config.eld" (lemmax--hook-text "pre-commit"))))
+
+;;;; 01a20ee1-7637-7169-820a-751b3c636847: the created day comes from the id and git
+
+;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
+(ert-deftest lemmax-created-uuid7-day ()
+  ;; Bullet 1: a UUIDv7's first 48 bits are Unix milliseconds, read in TZ; only
+  ;; a real v7 counts.
+  (rt-load)
+  (let ((id "01a20ee1-7637-7169-820a-751b3c636847"))
+    (should (equal (format-time-string "%F" (/ (string-to-number "01a20ee17637" 16) 1000) "UTC")
+                   (rt-env '("TZ=UTC") (lemmax--uuid7-day id))))
+    ;; 2026-11-25 00:30 UTC is still 2026-11-24 in New York.
+    (let ((late (format "%012x" (* 1000 (truncate (float-time (encode-time (list 0 30 0 25 11 2026 nil nil t))))))))
+      (let ((v7 (format "%s-%s-7000-8000-000000000000" (substring late 0 8) (substring late 8 12))))
+        (should (equal "2026-11-25" (rt-env '("TZ=UTC") (lemmax--uuid7-day v7))))
+        (should (equal "2026-11-24" (rt-env '("TZ=America/New_York") (lemmax--uuid7-day v7))))
+        (should-not (lemmax--uuid7-day (concat (substring v7 0 14) "4" (substring v7 15))))
+        (should-not (lemmax--uuid7-day (concat (substring v7 0 19) "c" (substring v7 20))))))
+    (should-not (lemmax--uuid7-day "RT-5"))))
+
+(ert-deftest lemmax-created-git-day ()
+  :tags '(timeout-30)
+  ;; Bullets 2 and 6: another id takes the day of the first commit that has
+  ;; it, today when none has it yet; trace prints created: and list --json
+  ;; gives created.
+  (let ((d (rt-repo (rt-files (rt-req "RQ-1" :created nil)) "2026-01-03")))
+    (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created nil :body "Edited.\n")))
+    (rt-commit d "edit" "2026-01-09")
+    (rt-set d "theory.org" (concat rt-head (rt-req "RQ-1" :created nil :body "Edited.\n") (rt-req "RQ-2" :created nil)))
+    (rt-env '("LEMMAX_TODAY=2026-02-01")
+      (should (string-match-p "^RQ-1 OPEN .*\n  file: .*\n.*\n.*\n  created: 2026-01-03$" (nth 1 (rt-run d "trace" "RQ-1"))))
+      (should (string-match-p "^RQ-2 OPEN .*\n  file: .*\n.*\n.*\n  created: 2026-02-01$" (nth 1 (rt-run d "trace"))))
+      (let ((rows (rt-json-rows (rt-list d "--json"))))
+        (should (equal "2026-01-03" (alist-get 'created (aref rows 0))))
+        (should (equal "2026-02-01" (alist-get 'created (aref rows 1))))))))
+
+(ert-deftest lemmax-created-plan-order ()
+  :tags '(timeout-30)
+  ;; Bullets 3, 5 and 7: plan puts older first by this day, an old :CREATED:
+  ;; winning, and a step with no day last.
+  (let* ((no-created (lambda (x) (replace-regexp-in-string ":CREATED: .*\n" "" x)))
+         (v7 "01a20ee1-7637-7169-820a-751b3c636847")
+         (d (rt-repo (rt-math-files (list (funcall no-created (rt-lemma "RQ-3"))
+                                          (funcall no-created (rt-lemma v7))
+                                          (replace-regexp-in-string "2026-01-05" "2030-01-01" (rt-lemma "RQ-1")))
+                                    (list (rt-proof "PR-1" (concat "RQ-3 " v7 " RQ-1"))))
+                     "2026-01-05")))
+    ;; RQ-3's git day, 2026-01-05, is older than the v7's, 2026-11-25; RQ-1's
+    ;; :CREATED: 2030-01-01 wins over its git day.
+    (let ((out (nth 1 (rt-run d "plan"))))
+      (should (< (string-search "RQ-3" out) (string-search v7 out) (string-search "RQ-1 " out))))
+    (rt-load)
+    (should (lemmax--plan-less (list :id "B" :created "2026-01-01") (list :id "A")))
+    (should-not (lemmax--plan-less (list :id "A") (list :id "B" :created "2026-01-01")))))
+
+(ert-deftest lemmax-created-not-required ()
+  :tags '(timeout-30)
+  ;; Bullet 4: no :CREATED: is required on a statement, a proof, a task or a
+  ;; note, and a new one is not asked for today's.
+  (rt-should-clean (rt-run (rt-repo (rt-kinds-files
+                                     (cons "dev.tasks.org" (concat rt-tasks-head (replace-regexp-in-string ":CREATED: .*\n" "" (rt-task "TK-1" :for "RQ-1")))))
+                                    "2026-01-05")
+                           "lint" "--no-tests"))
+  (rt-should-clean (rt-run (rt-repo (rt-math-files (list (replace-regexp-in-string ":CREATED: .*\n" "" (rt-lemma "RQ-1")))
+                                                   (list (replace-regexp-in-string ":CREATED: .*\n" "" (rt-proof "PR-1" "RQ-1")))))
+                           "lint" "--no-tests"))
+  (rt-should-clean (rt-staged (list (rt-req "RQ-1")) (list (rt-req "RQ-1") (rt-req "RQ-2" :created nil :last "2026-02-01")))))
+
+(ert-deftest lemmax-created-migrate ()
+  :tags '(timeout-60)
+  ;; Bullet 7: an old :CREATED: still reads; migrate --write deletes it from
+  ;; every heading, a tasks and a notes file too, and the result lints clean
+  ;; with the same plan; migrate writes no :CREATED: in the proofs it makes.
+  (let ((d (rt-repo (append (rt-files (rt-done "RQ-1") (rt-req "RQ-2")
+                                     (rt-req "01a20ee1-7637-7169-820a-751b3c636847" :created "2020-01-01"))
+                            (list (cons "dev.tasks.org" (concat rt-tasks-head (rt-task "TK-1" :state "DONE")))
+                                  (cons "dev.notes.org" (concat rt-notes-head (replace-regexp-in-string ":END:" ":CREATED:     2026-01-05\n:END:" (rt-note "NT-1"))))))
+                    "2026-01-05")))
+    (let ((plan (nth 1 (rt-run d "plan"))))
+      (should (string-match-p "01a20ee1-7637-7169-820a-751b3c636847 keeps :CREATED: 2020-01-01; its id or git gives 2026-11-2[45]"
+                              (nth 2 (rt-run d "migrate" "theory.org"))))
+      (dolist (f '("theory.org" "dev.tasks.org" "dev.notes.org"))
+        (should (string-match-p "^-:CREATED: " (nth 1 (rt-run d "migrate" f))))
+        (rt-run d "migrate" "--write" f))
+      ;; A :CREATED: that differs from the id's own day stays, so it still wins
+      ;; and plan keeps its order; every other goes.
+      (let ((theory (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.org") d)) (buffer-string))))
+        (should (equal '(":CREATED:     2020-01-01")
+                       (cl-remove-if-not (lambda (l) (string-prefix-p ":CREATED:" l)) (split-string theory "\n")))))
+      (dolist (f '("theory.proofs.org" "dev.tasks.org" "dev.notes.org"))
+        (should-not (string-match-p ":CREATED:" (with-temp-buffer (insert-file-contents (expand-file-name (rt-p f) d)) (buffer-string)))))
+      (rt-git d "add" "-A")
+      (rt-should-clean (rt-run d "lint" "--staged" "--no-tests"))
+      (rt-commit d "migrate" "2026-01-06")
+      (rt-should-clean (rt-run d "lint" "--no-tests"))
+      (let ((order (lambda (out) (let ((pos 0) ids)
+                                   (while (string-match "^Step [0-9]+: \\([^ \n]+\\)" out pos)
+                                     (push (match-string 1 out) ids) (setq pos (match-end 0)))
+                                   (nreverse ids)))))
+        (should (funcall order plan))
+        (should (equal (funcall order plan) (funcall order (nth 1 (rt-run d "plan")))))))))

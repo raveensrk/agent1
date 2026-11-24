@@ -113,7 +113,7 @@ that matter: no proofs, two proofs, one `PASSED` and one `OPEN`.
 
 <!-- lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f -->
 
-Org's log dates a statement; lmx keeps only `:CREATED:` as its own date.
+Org's log dates a statement; lmx keeps no date of its own (see Created day).
 
 ```org
 #+TODO: CONJECTURE(c) THESIS(h!) | LEMMA(l!) THEOREM(t!) REFUTED(r!)
@@ -122,7 +122,6 @@ Org's log dates a statement; lmx keeps only `:CREATED:` as its own date.
 * LEMMA Lint reads states
 :PROPERTIES:
 :ID:          01a20369-38d2-7202-8b53-6e296aaac489
-:CREATED:     2026-11-20
 :END:
 :LOGBOOK:
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue 11:00]
@@ -145,6 +144,24 @@ Org's log dates a statement; lmx keeps only `:CREATED:` as its own date.
   were, newest first, makes each approved `CONJECTURE` a `THESIS`, deletes
   `:LAST_EDITED:`, writes the `#+TODO:` where the file reads it, a setup file
   too, and adds `logdrawer` to `#+STARTUP:`.
+
+## Created day
+
+<!-- lemma: 01a20ee1-7637-7169-820a-751b3c636847 -->
+
+A heading's created day is read from its id or from git; lmx keeps no
+`:CREATED:`.
+
+- A UUIDv7 id's first 48 bits are its creation time, Unix milliseconds; lmx
+  reads the day in the local zone (`TZ`).
+- Any other id, as `RT-5`, takes the day of the first commit that has it, or
+  today when no commit has it yet.
+- `plan` puts older first by this day; a heading with no day sorts last.
+  `trace` prints `created: DAY`; `list --json` gives `created`.
+- Lint requires no `:CREATED:`. An old one still reads and wins; `migrate`
+  deletes it from every heading, tasks and notes files too, but keeps one
+  that differs from the day the id or git gives, and names it, so plan keeps
+  its order.
 
 ## Tasks, notes, axioms and definitions
 
@@ -392,7 +409,6 @@ its own header, as `#+SETUPFILE: setup.org` after the drawer.
 :PROPERTIES:
 :ID:          01a2...
 :STATE:       CONJECTURE
-:CREATED:     2026-11-22
 :LAST_EDITED: 2026-11-22
 :END:
 #+title: Bar does the thing

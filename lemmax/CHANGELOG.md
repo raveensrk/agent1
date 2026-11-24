@@ -5,6 +5,12 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- The created day comes from the id: a UUIDv7's own time, in the local zone,
+  else the first commit with the id, else today. `plan` orders by it, none
+  last; `trace` prints `created:` and `list --json` gives `created`. Lint
+  needs no `:CREATED:` and no longer asks a new statement for today's; an old
+  one still reads and wins, and `migrate` deletes it, from tasks and notes
+  files too.
 - Repo-wide settings are `#+PROPERTY:` lines in `theories/setup.org`:
   `LEMMAX_MARKERS_REQUIRED_FROM`, `LEMMAX_COVERAGE_REQUIRED_FROM` and
   `LEMMAX_REPOS`, read through each project's `#+SETUPFILE: ../setup.org`.

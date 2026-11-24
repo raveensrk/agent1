@@ -1013,3 +1013,12 @@ A file whose four settings are #+PROPERTY: lines opts in, runs its test command 
 :LAST_EDITED: 2026-11-25
 :END:
 Markers and coverage days set in theories/setup.org reach a theory file through its project's setup.org, nested, and a bad day is refused; list --all reads LEMMAX_REPOS from theories/setup.org; with no config a project's own lines are its settings and a bare lemma file has none; an old config still reads, and a setting set both there and by #+PROPERTY: is refused per folder and repo-wide; migrate lemmax/config.eld writes theories/setup.org, the folder lines unless already there, the #+SETUPFILE: line, deletes the config, and the markers rule still holds; the hooks and lemmax_lint.py opt a repo in by #+PROPERTY: LEMMAX_TESTS, and a config only while it names :tests.
+
+* OPEN Proof: The created day comes from the id and git
+:PROPERTIES:
+:ID:          01a20ee6-07b8-736f-8b2d-bb5d50feffb7
+:PROVES:      01a20ee1-7637-7169-820a-751b3c636847
+:TEST:        ert/lemmax-created-uuid7-day ert/lemmax-created-git-day ert/lemmax-created-plan-order ert/lemmax-created-not-required ert/lemmax-created-migrate
+:LAST_EDITED: 2026-11-25
+:END:
+A UUIDv7's day is its first 48 bits read in TZ, and an id that is not v7 has none; another id takes its first commit's day, or today before any commit; trace prints created: and list --json gives created; plan puts older first, an old :CREATED: winning, none last; lint asks no :CREATED: of a statement, proof, task or note; migrate deletes :CREATED: from a theory, tasks and notes file, writes none in the proofs it makes, and the result lints clean with the same plan order.
