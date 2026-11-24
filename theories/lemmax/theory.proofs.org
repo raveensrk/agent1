@@ -994,7 +994,7 @@ A finished sample project with neither document warns twice and lint passes; bot
 :END:
 A THESIS with a log line lints clean and list --ready lists it, as an old approved CONJECTURE still; a LEMMA's accepted and proven days are its newest log lines into THESIS and LEMMA, and a sent-back CONJECTURE's old lines date nothing; a text change committed after the accepted day, or not yet committed, is refused until it is CONJECTURE, and the bible and archive read git's day; a staged text change to a THESIS is refused; :CREATED: is still required, :LAST_EDITED: only in an old file; a log line beside its :APPROVED: or :PROVEN: is refused; migrate writes Org's own log lines, newest first, a THESIS, the setup file's #+TODO: and logdrawer, and the result lints clean with no text changed; a new log line changes no text.
 
-* OPEN Proof: File settings are Org #+PROPERTY: lines
+* PASSED Proof: File settings are Org #+PROPERTY: lines
 :PROPERTIES:
 :ID:          01a20eb9-e99d-764b-8906-3dce0c8f518b
 :PROVES:      01a20eb5-f066-7481-9fd1-9ac7705ef6b2

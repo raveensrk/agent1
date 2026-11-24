@@ -102,14 +102,15 @@ lmx says "requirement" about 160 times; it speaks in maths terms instead.
 Move :CREATED:, :APPROVED:, :PROVEN: and :LAST_EDITED: to Org's LOGBOOK state-change entries and CLOSED:, with org-log-done and org-log-into-drawer. Org logs no approval: decide an APPROVED state or a log note. Old files keep their properties until migrate moves them.
 - Done on 2026-11-24 in 088b0cc, 4512c8b, 51d65a2 and 3fae07b: THESIS state; approved and proven days in :LOGBOOK:; last-edited day from git; :CREATED: kept.
 
-* TODO File keywords become #+PROPERTY: values
+* DONE File keywords become #+PROPERTY: values
 :PROPERTIES:
 :ID:          01a2091c-9177-70fa-bee0-bb2586b6c0e0
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-23
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-24
 :END:
 The file keywords =#+LEMMAX_TESTS:=, =#+LEMMAX_CODE:=, =#+LEMMAX_TEST_PATHS:= and =#+LEMMAX_MARKERS_IN:= become =#+PROPERTY:= lines that Org's own property inheritance reads. The old keywords still read until migrate moves them.
+- Done on 2026-11-24 in bdee2ad; agent1, arcadia_docs and sync2 migrated.
 
 * TODO lemmax/config.eld becomes #+SETUPFILE: or .dir-locals.el
 :PROPERTIES:

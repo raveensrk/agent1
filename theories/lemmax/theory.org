@@ -1719,13 +1719,14 @@ A statement's acceptance and proof are Org TODO states, and Org's LOGBOOK dates 
 - Asked by the owner on 2026-11-24
 Evidence: Org's manual, "Tracking TODO state changes": a ! after a state's key logs a timestamp on entry, and org-log-into-drawer (#+STARTUP: logdrawer) puts it in :LOGBOOK:; lemmax--entry-text already skips :LOGBOOK: as history; lmx trace already reads each heading's commit days from git.
 
-** THESIS File settings are Org #+PROPERTY: lines                       :lint:
+** THEOREM File settings are Org #+PROPERTY: lines                       :lint:
 :PROPERTIES:
 :ID:          01a20eb5-f066-7481-9fd1-9ac7705ef6b2
 :USES:        01a2091c-4bcc-7ddb-9796-619468dd401c
 :CREATED:     2026-11-24
 :END:
 :LOGBOOK:
+- State "THEOREM"    from "THESIS"     [2026-11-24 Tue]
 - State "THESIS"     from "CONJECTURE" [2026-11-24 Tue]
 :END:
 lmx reads a file's settings from Org's #+PROPERTY: lines, as Org reads them.
