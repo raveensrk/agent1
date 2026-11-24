@@ -179,6 +179,7 @@ Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms
 :LAST_EDITED: 2026-11-25
 :END:
 Statements say what, not how: move names of lemmax.el, its functions and line numbers out of statement bodies into Evidence lines. Each proven statement this rewords goes through demote and prove again.
+- Cancelled on 2026-11-25: owner judged the task invalid.
 
 * TODO Give every statement a chapter tag
 :PROPERTIES:
