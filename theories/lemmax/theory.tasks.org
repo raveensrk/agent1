@@ -210,7 +210,7 @@ Declare the chapter tag group in setup.org and tag each statement with one chapt
 :END:
 After a merge the docs ant runs lmx book, not the docs skill: skills/ishikari/SKILL.md, its scripts and its tests.
 
-* TODO Read dates from Org's log
+* CANCELLED Read dates from Org's log
 :PROPERTIES:
 :ID:          01a20e2a-ec68-71de-b43e-a3441825ab18
 :FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
@@ -218,3 +218,4 @@ After a merge the docs ant runs lmx book, not the docs skill: skills/ishikari/SK
 :LAST_EDITED: 2026-11-24
 :END:
 lmx keeps its own date properties, :CREATED: to :PROVEN:, where Org already logs dates. Read them from the LOGBOOK state-change entries and the CLOSED: line, and move the dates in every LemmaX repo with lmx migrate.
+- Cancelled on 2026-11-24: duplicate of 01a2091c-8f79-784a-885d-00ba4cb49976.
