@@ -254,7 +254,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: :REFS: names where a lemma came from
+* PASSED Proof: :REFS: names where a lemma came from
 :PROPERTIES:
 :ID:          01a20389-b188-7890-b493-2833f4b54592
 :PROVES:      01a202bc-4cc4-753e-8d51-12d8327dfd9c
@@ -605,7 +605,7 @@ When the tests in :TEST: pass, the conjecture holds.
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* OPEN Proof: ORDERED and BLOCKER agree with lmx
+* PASSED Proof: ORDERED and BLOCKER agree with lmx
 :PROPERTIES:
 :ID:          01a203b2-01c9-7100-868f-41e1b524becb
 :PROVES:      01a203a6-a716-738e-a95b-18086050d5eb
@@ -904,7 +904,7 @@ Markers and coverage days set in theories/setup.org reach a theory file through 
 :END:
 A UUIDv7's day is its first 48 bits read in TZ, and an id that is not v7 has none; another id takes its first commit's day, or today before any commit; trace prints created: and list --json gives created; plan puts older first, an old :CREATED: winning, none last; lint asks no :CREATED: of a statement, proof, task or note; migrate deletes :CREATED: from a theory, tasks and notes file, writes none in the proofs it makes, and the result lints clean with the same plan order.
 
-* OPEN Proof: A theory has one theorem
+* PASSED Proof: A theory has one theorem
 :PROPERTIES:
 :ID:          01a20f3a-9c1f-7777-b479-840096eb5f71
 :PROVES:      01a20f2e-b275-726f-ac83-9333aab958ba
@@ -913,7 +913,7 @@ A UUIDv7's day is its first 48 bits read in TZ, and an id that is not v7 has non
 :END:
 A second THEOREM in a theory is refused; a statement the theorem does not reach through :USES: is refused; a LEMMA may use lemmas and waits for them; a THEOREM that reaches an unproven statement is refused until it is THESIS; a THESIS theorem over conjectures lints clean; the project is finished only with its theorem proven; migrate --theorem makes the other THEOREMs LEMMAs, names the roots of what is not reached, across the theory's files, sends a proven theorem that now reaches an open statement back to THESIS, and lint is clean after.
 
-* OPEN Proof: Links are not a statement's text
+* PASSED Proof: Links are not a statement's text
 :PROPERTIES:
 :ID:          01a20f3a-9c36-7462-8959-9eb1f14a897c
 :PROVES:      01a20f2e-b275-726f-ac83-9334afc8f438
@@ -922,7 +922,7 @@ A second THEOREM in a theory is refused; a statement the theorem does not reach 
 :END:
 Adding :PROVES:, :FOR:, :ABOUT:, :FOLLOWS:, :TEST:, :ALIASES:, :ROAM_REFS:, :REFS: or :USES: leaves a statement's text the same; a staged :USES: change of a LEMMA lints clean, and once committed trace names it suspect: its :USES: changed.
 
-* OPEN Proof: A statement is a heading, never a whole file
+* PASSED Proof: A statement is a heading, never a whole file
 :PROPERTIES:
 :ID:          01a20f3a-9c4f-7280-9bdc-72c6c03b0b21
 :PROVES:      01a20f2e-b275-726f-ac83-9335aaf3e6e7

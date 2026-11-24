@@ -493,11 +493,12 @@ Evidence: =git grep= finds =[[id:= in tracked .org files; idea from org-roam bac
 - Asked by the owner on 2026-11-22
 Evidence: lmx resolves ids through one table per run; idea from org-roam's =ROAM_ALIASES=.
 
-** THESIS :ROAM_REFS: names where a lemma came from                       :ids:
+** LEMMA :ROAM_REFS: names where a lemma came from                       :ids:
 :PROPERTIES:
 :ID:          01a202bc-4cc4-753e-8d51-12d8327dfd9c
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 - State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
 - State "LEMMA"      from "THESIS"     [2026-11-22 Sun]
@@ -1078,11 +1079,12 @@ Evidence: =lemmax--filter= already filters rows by state and section.
 - Asked by the owner on 2026-11-22
 Evidence: =lemmax--id-link-re= already reads id: links in bodies.
 
-** THESIS ORDERED children wait for earlier siblings                         :lint:
+** LEMMA ORDERED children wait for earlier siblings                         :lint:
 :PROPERTIES:
 :ID:          01a203a6-a716-738e-a95b-18086050d5eb
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 - State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed]
 - State "LEMMA"      from "THESIS"     [2026-11-24 Tue]
@@ -1686,11 +1688,12 @@ A heading's created day is read from its id or from git; lmx keeps no :CREATED:.
 - Asked by the owner on 2026-11-25
 Evidence: RFC 9562 section 5.7: UUIDv7's first 48 bits are a Unix time in milliseconds; lmx trace already reads commit days from git.
 
-** THESIS A theory has one theorem                                              :lint:
+** LEMMA A theory has one theorem                                              :lint:
 :PROPERTIES:
 :ID:          01a20f2e-b275-726f-ac83-9333aab958ba
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 :END:
 Each theory has exactly one THEOREM, its whole claim; every other proven statement is a LEMMA.
@@ -1704,11 +1707,12 @@ Each theory has exactly one THEOREM, its whole claim; every other proven stateme
 - Asked by the owner on 2026-11-25
 Evidence: theory.definitions.org's Theorem and Lemma definitions; lint already walks :USES: for suspects.
 
-** THESIS Links are not a statement's text                                      :lint:
+** LEMMA Links are not a statement's text                                      :lint:
 :PROPERTIES:
 :ID:          01a20f2e-b275-726f-ac83-9334afc8f438
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 :END:
 A statement's text is its title and body; its link properties are not.
@@ -1717,11 +1721,12 @@ A statement's text is its title and body; its link properties are not.
 - Asked by the owner on 2026-11-25
 Evidence: lemmax--entry-text already skips :USES: and the date properties.
 
-** THESIS A statement is a heading, never a whole file                          :lint:
+** LEMMA A statement is a heading, never a whole file                          :lint:
 :PROPERTIES:
 :ID:          01a20f2e-b275-726f-ac83-9335aaf3e6e7
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 02:05]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
 :END:
 Every statement is a heading in a theory file; lmx has no lemma files.

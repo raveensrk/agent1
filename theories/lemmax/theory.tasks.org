@@ -209,3 +209,15 @@ lmx keeps its own date properties, :CREATED: to :PROVEN:, where Org already logs
 :END:
 Drop :CREATED:. A UUIDv7 id holds its creation time; an older id like RT-5 takes the day of the first commit that added it. lint stops requiring :CREATED: and the new-statement-dated-today rule; plan and list keep their order. Old :CREATED: lines still read; migrate deletes them. Measure lint time. Owner chose it on 2026-11-24, to build after the #+PROPERTY: settings task.
 - Done on 2026-11-25 in 685b2f6 and caf7f73; agent1, arcadia_docs and sync2 migrated.
+
+* TODO Make lint and the tests faster
+:PROPERTIES:
+:ID:          01a20f45-75a8-7414-a9ac-e5e25d25b1f1
+:FOR:         RT-12
+:LAST_EDITED: 2026-11-25
+:END:
+Measured on 2026-11-25: the suite takes 164 s (231 tests), lint 2.3-2.9 s.
+- lint: 41% of its own work is org-attach-dir run for every heading; work out attachment folders only for headings with :ATTACH: or an attachment: link (about 0.45 s saved)
+- Tests: the 4 tests tagged alone run one by one at the end, 63 s; run all but the timed one with the rest (about 50 s saved)
+- Tests: run 10 at a time, one per core, not 8 (about 15 s saved)
+- Measure again after; the goal is about 100 s for the suite
