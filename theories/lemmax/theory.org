@@ -1769,3 +1769,14 @@ A proof's state says whether it shows its statement, and Org logs each change.
 - Proofs keep no :LAST_EDITED:; lmx migrate --write turns OPEN into DRAFT and PASSED into PROOF, and drops the "Proof:" prefix from titles
 - Asked by the owner on 2026-11-25
 Evidence: a fallacy is an argument that looks valid but is not; the owner's review, not a passing test, makes a proof (README, "A passing test is evidence, not proof").
+
+** CONJECTURE Every test logs its start, end and run time              :tests:
+:PROPERTIES:
+:ID:          01a20f83-6f84-71f0-93ea-566e27f59148
+:END:
+Every lemmax test run logs, for each test, when it started, when it ended and how long it took.
+- lemmax/run_tests prints one line per test: its result, address, start time, end time and run time, as PASS ert/lemmax-math-states 14:32:05 14:32:07 2.1 s
+- Times are local, to the second; the run time is in seconds, to a tenth
+- The last line also gives the whole run's start, end and run time
+- Asked by the owner on 2026-11-25
+Evidence: run_tests already runs each test in its own process, so it can time each one; the 2026-11-25 speed measurement had to time tests by hand.
