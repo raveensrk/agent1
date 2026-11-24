@@ -172,11 +172,11 @@ Move arcadia_docs into arcadia/theories/arcadia/ with its history, give it a set
 :END:
 Every project whose corollaries :FOLLOWS: an axiom in agent1/requirements/axioms.org finds it in agent1/theories/agent1/ after the move.
 
-* TODO Make every statement language-neutral
+* CANCELLED Make every statement language-neutral
 :PROPERTIES:
 :ID:          01a20959-999f-7021-a401-a309fb4d3d93
 :FOR:         01a20959-95da-760e-82dc-2797c5af6abc
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-25
 :END:
 Statements say what, not how: move names of lemmax.el, its functions and line numbers out of statement bodies into Evidence lines. Each proven statement this rewords goes through demote and prove again.
 
@@ -240,3 +240,4 @@ Make the LemmaX workflow work with only Org files; git becomes an optional extra
 - Files: scan theories/ instead of git ls-files; attachments must exist, not be tracked
 - Measure lint without the git walk
 - Owner asked on 2026-11-25
+- Cancelled on 2026-11-25: owner judged the task invalid.
