@@ -222,3 +222,17 @@ Measured on 2026-11-25: the suite takes 164 s (231 tests), lint 2.3-2.9 s.
 - Tests: run 10 at a time, one per core, not 8 (about 15 s saved)
 - Measure again after; the goal is about 100 s for the suite
 - Done on 2026-11-25: lint 2.85 s to 2.72 s, suite 131.7 s to 121.5 s; most of the rest is lemmax-history-cache building 500 commits.
+
+* TODO LemmaX works on Org files alone, git optional
+:PROPERTIES:
+:ID:          01a20f9c-f175-758d-8923-048996164c14
+:FOR:         01a2091c-4bcc-7ddb-9796-619468dd401c
+:LAST_EDITED: 2026-11-25
+:END:
+Make the LemmaX workflow work with only Org files; git becomes an optional extra. Write the design as a conjecture first.
+- Change after approval: on accept or prove, lmx writes a fingerprint (hash) of the statement's text as a note under the log line; lint recomputes it and sends a changed statement back to CONJECTURE. Needs an lmx command (M-x lemmax-accept) or lint adding missing fingerprints; plain C-c C-t writes none
+- Dates: created day from the UUIDv7 id; last-edited day no longer needed; old ids without git sort last
+- Commit links (commit-msg hook, trace commits) run only when git is there
+- Files: scan theories/ instead of git ls-files; attachments must exist, not be tracked
+- Measure lint without the git walk
+- Owner asked on 2026-11-25
