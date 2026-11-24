@@ -1585,12 +1585,13 @@ The program's name is lmx, so it is never confused with LemmaX, the workflow.
 - Asked by the owner on 2026-11-24
 Evidence: no lmx is on this PATH; a web search on 2026-11-24 found one tool of the name, LocalMaxxing's benchmark lmx from npm, which this machine does not have; lex is the Unix lexer generator, /usr/bin/lex here, so it was not taken.
 
-** CONJECTURE An agent writes the bible and the manual; lmx only checks them :skill:
+** LEMMA An agent writes the bible and the manual; lmx only checks them :skill:
 :PROPERTIES:
 :ID:          01a20d28-cb41-760a-a477-e1704807a2a8
 :CREATED:     2026-11-24
 :LAST_EDITED: 2026-11-24
 :APPROVED:    2026-11-24
+:PROVEN:      2026-11-24
 :END:
 A LemmaX project's bible and manual are written by an AI agent, never by lmx; lmx is for the LemmaX workflow only.
 - The owner runs the /docs skill by hand; its agent writes theories/PROJECT/PROJECT.bible.html and theories/PROJECT/PROJECT.manual.html, both tracked in git
