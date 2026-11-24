@@ -1,11 +1,11 @@
 #+title: Proofs of Touch and mobile
-#+TODO: OPEN(o) | PASSED(p)
+#+TODO: DRAFT(d) | PROOF(p!) FALLACY(f!) MOOT(m!)
+#+STARTUP: logdrawer
 
-* OPEN Proof: Each component kind has one gesture map
+* DRAFT Each component kind has one gesture map
 :PROPERTIES:
 :ID:          01a20ea2-00da-76b0-ae6c-6da1259c357f
 :PROVES:      touch-gesture-map
 :TEST:        demo/web/e2e "gesture map"
-:LAST_EDITED: 2026-11-24
 :END:
 When the tests in :TEST: pass, the conjecture holds.

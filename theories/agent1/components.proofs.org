@@ -1,20 +1,25 @@
 #+title: Proofs of Component requirements
-#+TODO: OPEN(o) | PASSED(p)
+#+TODO: DRAFT(d) | PROOF(p!) FALLACY(f!) MOOT(m!)
+#+STARTUP: logdrawer
 
-* PASSED Proof: Date pickers
+* PROOF Date pickers
 :PROPERTIES:
 :ID:          01a205c1-4a77-78d1-9b31-e4bf7b64df95
 :PROVES:      date-pickers
 :TEST:        clojure -M:test (demo.date-picker-test), clojure -M:check-date-picker (demo.date-picker-check), run in demo/cljfx
-:LAST_EDITED: 2026-11-23
+:END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-23 Mon]
 :END:
 When the tests in :TEST: pass, the conjecture holds.
 
-* PASSED Proof: Scroll areas and scroll bars
+* PROOF Scroll areas and scroll bars
 :PROPERTIES:
 :ID:          01a205c1-4a79-73e0-83f1-c0c03b40300d
 :PROVES:      scroll-areas
 :TEST:        clojure -M:test (demo.scroll-test), clojure -M:check-scroll (demo.scroll-check), run in demo/cljfx
-:LAST_EDITED: 2026-11-23
+:END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-23 Mon]
 :END:
 When the tests in :TEST: pass, the conjecture holds.

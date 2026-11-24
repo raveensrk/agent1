@@ -61,7 +61,7 @@ Draft as an org heading, CONJECTURE (old files: OPEN), with:
   and Org's `:LOGBOOK:` the accepted and proven days (old files: `:CREATED:`,
   `:LAST_EDITED:` - today, `YYYY-MM-DD`).
 - `:USES:` (old files: `:NEEDS:`) if it builds on another.
-- Its proof: a heading in `FILE.proofs.org`, OPEN, with a new `:ID:`,
+- Its proof: a heading in `FILE.proofs.org`, DRAFT (old files: OPEN), with a new `:ID:`,
   `:PROVES:` the conjecture's id and `:TEST:` the named check (old files:
   `:VERIFY:` on the conjecture). `lmx migrate FILE` moves an old file over.
 - A chore that changes no behaviour is not a requirement: make it a task in
