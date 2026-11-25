@@ -1827,21 +1827,24 @@ A file's LemmaX settings are lines at its top, each set once, so a line in a sta
 - Asked by the owner on 2026-11-23
 Evidence: Org reads a #+PROPERTY: line anywhere in a buffer; on 2026-11-23 a body line starting #+LEMMAX_TESTS: became the file's test command (fixed by hand in d3e34aa).
 
-** THESIS A link pins the text it was checked against with @hash          :trace:
+** CONJECTURE A link pins the text it was checked against with @hash      :trace:
 :PROPERTIES:
 :ID:          01a20fec-4f90-7a8d-9062-c1253205f5e9
 :USES:        RT-9
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "THESIS"     [2026-11-25 Wed 11:04]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 11:01]
 :END:
-A statement that uses another names it as =ID@HASH=: HASH is the first 8 hex characters of the SHA-256 of the used statement's text when it was last checked. A statement is suspect when a hash it pins no longer matches, with no git history needed.
+A heading that links a statement names it as =ID@HASH=: HASH is the first 8 hex characters of the SHA-256 of the used statement's text when it was last checked. A statement is suspect when a hash it pins no longer matches, with no git history needed.
 - The id stays the full id, never shortened; =@= and 8 lower-case hex characters follow it, as =:USES: 01a203a6-a729-7420-980a-1702a0de05ad@f00d42c9=
 - HASH is =(secure-hash 'sha256 TEXT)=, cut to 8 characters; TEXT is the statement's text as lemmax--entry-text reads it, with runs of whitespace made one space
 - So a change of state, dates, the =:LOGBOOK:= or the links changes no hash, and marks nothing suspect
 - The pin sits only in the link that uses the statement; the used statement holds no hash
 - =lmx lint= and =lmx trace= name each pin whose hash no longer matches: the id, the pinned hash and the hash now
-- Every :USES: link carries a pin: lint refuses a :USES: link with none, and lmx migrate pins every existing one with its hash now
+- Every id in :USES:, :PROVES:, :FOLLOWS:, :FOR: and :ABOUT: carries a pin: lint refuses one with none, and lmx migrate pins every existing one with its hash now
+- A stale pin in :PROVES: makes the proof a DRAFT again; in :FOR: or :ABOUT: it asks the task or note to be read again
+- :ALIASES:, :TEST: and :ROAM_REFS: hold no pin: they name the statement itself, tests or outside sources
 - A pin is part of the link, not the text, so adding or updating one reopens nothing
 - The owner reads the statement again, then writes the hash now into the pin
 - Why 8 characters: the hash only tells one statement's old text from its new; an edit hides behind an 8-character pin 1 time in 4.3 billion
