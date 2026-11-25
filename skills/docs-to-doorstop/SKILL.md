@@ -2,7 +2,7 @@
 name: docs-to-doorstop
 metadata:
   scope: global
-description: Turn a directory of docs and specs into a Doorstop requirements tree in ASPICE 4.0 form - SYS.1, SYS.2, SYS.3 and HWE.1 to HWE.4 - written in short, simple YAML items with D2, Mermaid or animated SVG diagrams where a picture explains it more simply. Scans the input first and asks every doubt before writing. Use when the user says convert docs to doorstop, make requirements from these specs, ASPICE requirements, doorstop tree, or runs /docs-to-doorstop.
+description: Turn a directory of docs and specs into a Doorstop requirements tree in ASPICE 4.0 form - SYS.1, SYS.2, SYS.3 and HWE.1 to HWE.4 - written in short, simple YAML items with D2, Mermaid or animated SVG diagrams where a picture explains it more simply. Scans the input first and asks every doubt before writing. After each run it reviews the run and suggests improvements to itself, applied after a yes. Use when the user says convert docs to doorstop, make requirements from these specs, ASPICE requirements, doorstop tree, or runs /docs-to-doorstop.
 argument-hint: "<input directory>"
 ---
 
@@ -132,3 +132,33 @@ When `reqs/` exists:
 - Check each item text is 5 lines or fewer.
 - Check the behaviour map: every behaviour has an item. List any gap and fix.
 - Report: items per document, diagrams made, doubts resolved, gaps left.
+
+## 8. Review the run and improve this skill
+
+After every run, before ending, look back on how the run went. Judge the
+skill, not the requirements.
+
+Before step 1 of any run, read [lessons.md](lessons.md) and follow it.
+
+Look for:
+
+- doubts the user had to answer that a rule here could have settled,
+- user corrections to items, wording, levels or links,
+- Doorstop errors or warnings that took more than one fix,
+- diagrams that failed to render or were not simpler than text,
+- items that broke the 5-line limit or held implementation details,
+- behaviours missed in step 1 and found later,
+- steps that were slow, repeated or skipped.
+
+Then:
+
+1. List up to 5 suggestions, costliest problem first. Each one gives what
+   went wrong (with evidence from this run), the exact change to this
+   `SKILL.md` or to `lessons.md`, and why it helps next time.
+2. Ask the user which to apply. Change nothing without a yes.
+3. Apply the chosen ones. A rule change goes in `SKILL.md`. A narrow lesson
+   (one tool quirk, one wording fix) goes in `lessons.md` as one dated line.
+4. Commit the change to the agent1 repo.
+
+Keep `lessons.md` short. When a lesson has held for 3 runs, suggest moving it
+into `SKILL.md`. When a lesson is wrong or stale, suggest deleting it.
