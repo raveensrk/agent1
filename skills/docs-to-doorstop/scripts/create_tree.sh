@@ -14,14 +14,15 @@ cd "$reqs"
 if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
   git init -q
 fi
+here=$(pwd -P)
 root=$(git rev-parse --show-toplevel)
-if find "$root" -name .doorstop.yml -not -path "$PWD/*" 2>/dev/null | grep -q .; then
-  echo "ERROR: $root already holds a Doorstop tree outside $PWD." >&2
-  echo "Doorstop allows one root document per repo. Ask the user." >&2
+if [ -e SYS1/.doorstop.yml ]; then
+  echo "ERROR: tree already exists in $here. This is an update run." >&2
   exit 1
 fi
-if [ -e SYS1/.doorstop.yml ]; then
-  echo "ERROR: tree already exists in $PWD. This is an update run." >&2
+if find "$root" -name .git -prune -o -name .doorstop.yml -not -path "$here/*" -print 2>/dev/null | grep -q .; then
+  echo "ERROR: $root already holds a Doorstop tree outside $here." >&2
+  echo "Doorstop allows one root document per repo. Ask the user." >&2
   exit 1
 fi
 
@@ -48,4 +49,4 @@ attributes:
   - source
 EOF
 done
-echo "created 15 documents in $PWD (git root: $root)"
+echo "created 15 documents in $here (git root: $root)"

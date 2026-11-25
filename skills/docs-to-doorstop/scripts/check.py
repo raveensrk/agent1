@@ -4,10 +4,23 @@
 Usage: check.py REQS_DIR
 Exit 0 when clean, 1 when any ERROR is printed.
 """
+import os
 import pathlib
+import re
+import shutil
 import sys
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    # Doorstop needs PyYAML, so its own Python has it. Re-run under that one.
+    exe = shutil.which("doorstop")
+    head = open(exe).read(400) if exe else ""
+    m = re.search(r'"([^"]*python[^"]*)"', head) or re.search(r"^#!(\S*python\S*)", head)
+    if not m or os.environ.get("CHECK_PY_REEXEC"):
+        sys.exit("check.py needs PyYAML: pip install pyyaml")
+    os.environ["CHECK_PY_REEXEC"] = "1"
+    os.execv(m.group(1), [m.group(1), *sys.argv])
 
 REQUIREMENT_DOCS = {"SYS1", "SYS2", "HWE1", "SWE1"}
 DESIGN_DOCS = {"SYS3", "HWE2", "SWE2", "SWE3"}
@@ -92,7 +105,7 @@ def main():
             err(uid, f"status must be one of {sorted(STATUS)}")
         if data.get("priority") not in PRIORITY:
             err(uid, f"priority must be one of {sorted(PRIORITY)}")
-        if doc in REQUIREMENT_DOCS and " shall " not in f" {text} ":
+        if doc in REQUIREMENT_DOCS and not re.search(r"\bshall\b", text, re.I):
             err(uid, "requirement text needs 'shall'")
         if doc in TEST_DOCS:
             v = str(data.get("verification") or "")
@@ -105,8 +118,8 @@ def main():
                 err(uid, f"must also link to a {want} item")
 
         waived = bool(str(data.get("trace_exception") or "").strip())
-        if waived and doc not in COVERAGE:
-            err(uid, "trace_exception only allowed on items with a design child")
+        if waived and not any(w for _, w in COVERAGE.get(doc, [])):
+            err(uid, "trace_exception only allowed on SYS2, HWE1, SWE1 and SWE2 items")
         have = children.get(uid, set())
         for child, waivable in COVERAGE.get(doc, []):
             if child not in have and not (waivable and waived):

@@ -121,7 +121,7 @@ Doorstop facts that shape the work:
   it as 1.1.
 - A heading is an item with `normative: false` and a level ending in `.0`.
   Use headings to group items by function (ASPICE BP2: structure).
-  A heading has no links and no custom fields.
+  A heading has no links. `check.py` skips it.
 - A requirement with no parent that is still needed is `derived: true`. It
   still needs a rationale. Ask the user before making one.
 
@@ -222,12 +222,13 @@ Add a diagram only when it explains something more simply than text.
 - Store it at `reqs/<PREFIX>/diagrams/<UID>.<ext>`.
 
 - Link it from the item with `references`. The path is relative to the git
-  root that `create_tree.sh` printed. Doorstop then fails if the file is
-  missing.
+  root that `create_tree.sh` printed, not to `reqs/`. Doorstop then fails if
+  the file is missing.
 
   ```yaml
   references:
-  - path: SYS3/diagrams/SYS3-003.d2
+  - path: SYS3/diagrams/SYS3-003.d2        # git root is reqs/
+  # - path: reqs/SYS3/diagrams/SYS3-003.d2 # reqs/ inside a bigger repo
     type: file
   ```
 
@@ -267,6 +268,10 @@ doorstop -W                         # Doorstop's own validation
 SKILL_DIR/scripts/check.py .        # ASPICE rules Doorstop does not check
 ```
 
+- `WARNING: <DOC>: no items` is allowed only for a whole domain the product
+  does not have: all SWE documents when no SYS3 element is `software`, all
+  HWE documents when none is `hardware`. Confirm it with the user and list it
+  in the report. Any other empty document is a gap to fix.
 - Always pass `-W`. Plain `doorstop` marks every new item as reviewed by
   itself (`REVIEW_NEW_ITEMS`). Review is the user's sign-off, not the
   skill's.
