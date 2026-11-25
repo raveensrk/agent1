@@ -1277,10 +1277,32 @@ as a NUL when BROKEN and the file is gone."
                     new)))
 
 ;; lemma: RT-6
+;; lemma: 01a2090e-8781-768e-86aa-fbfa698d41f9
+(defun lemmax--staged-blobs ()
+  "(HEAD . INDEX): hashes, each tracked path to its git blob, in HEAD and staged."
+  (let ((head (make-hash-table :test #'equal)) (index (make-hash-table :test #'equal)))
+    (dolist (l (split-string (or (lemmax--git-out "ls-tree" "-r" "-z" "HEAD") "") "\0" t))
+      (when (string-match "\\`[0-9]+ blob \\([0-9a-f]+\\)\t\\(.*\\)\\'" l)
+        (puthash (match-string 2 l) (match-string 1 l) head)))
+    (dolist (l (split-string (or (lemmax--git-out "ls-files" "-s" "-z") "") "\0" t))
+      (when (string-match "\\`[0-9]+ \\([0-9a-f]+\\) [0-9]+\t\\(.*\\)\\'" l)
+        (puthash (match-string 2 l) (match-string 1 l) index)))
+    (cons head index)))
+
+(defun lemmax--linked-file-change (old new blobs)
+  "The first linked file that changed from OLD paths at HEAD to NEW paths
+staged, by BLOBS from `lemmax--staged-blobs': one added, removed or renamed,
+or whose blob differs; nil when none did."
+  (or (cl-find-if-not (lambda (p) (member p old)) new)
+      (cl-find-if-not (lambda (p) (member p new)) old)
+      (cl-find-if (lambda (p) (not (equal (gethash p (car blobs)) (gethash p (cdr blobs))))) new)))
+
 (defun lemmax--lint-staged (staged head)
   "RT-6: the change rules, STAGED infos against HEAD infos."
   (let ((before (make-hash-table :test #'equal)) (today (lemmax--today))
-        (renames (lemmax--staged-renames)) (none (make-hash-table :test #'equal)))
+        (renames (lemmax--staged-renames)) (none (make-hash-table :test #'equal))
+        ;; lemma: 01a2090e-8781-768e-86aa-fbfa698d41f9
+        (blobs (lemmax--staged-blobs)))
     (dolist (r (lemmax--all-statements head)) (when (plist-get r :id) (puthash (plist-get r :id) r before)))
     (dolist (r (lemmax--all-statements staged))
       (let* ((id (plist-get r :id)) (old (and id (gethash id before)))
@@ -1313,6 +1335,14 @@ as a NUL when BROKEN and the file is gone."
                                      (if (lemmax--new-state-p (plist-get r :state))
                                          "make it CONJECTURE until the owner accepts it again"
                                        "make it OPEN until the change is built")))
+                ;; lemma: 01a2090e-8781-768e-86aa-fbfa698d41f9
+                ;; A file a LEMMA or THEOREM links is part of its text.
+                (when (and (not changed) (member (plist-get r :state) '("LEMMA" "THEOREM"))
+                           (member (plist-get old :state) lemmax--accepted-states))
+                  (let ((x (lemmax--linked-file-change (plist-get old :files) (plist-get r :files) blobs)))
+                    (when x
+                      (lemmax--finding f l id (format "a %s statement's linked file %s changed" (plist-get r :state) x)
+                                       "make it CONJECTURE until the owner accepts it again"))))
                 (when (and changed (not (lemmax--note-p r)) (plist-get r :last-edited)
                            (not (equal (plist-get r :last-edited) today)))
                   (lemmax--finding f l id "its text changed and :LAST_EDITED: is not today"

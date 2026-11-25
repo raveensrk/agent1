@@ -3660,3 +3660,51 @@ which holds the tests and code, read by theory.org with REQS."
                                                           :body "See [[file:new.org::*X][X]] again.\n")))
     (rt-commit d "edit" "2026-01-10")
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: a THESIS whose text changed 2026-01-10, after it was accepted 2026-01-05")))
+
+;;;; 01a2090e-8781-768e-86aa-fbfa698d41f9: a changed attachment reopens what links it
+
+;; lemma: 01a2090e-8781-768e-86aa-fbfa698d41f9
+(defun rt-linking (id link &rest kv)
+  "A LEMMA ID whose body links LINK."
+  (replace-regexp-in-string "^Statement\\.$" (concat "See " link ".") (apply #'rt-lemma id kv) t t))
+
+(defun rt-link-repo (&rest lemmas)
+  (rt-repo (append (rt-math-files lemmas (list (rt-proof "PR-1" "RQ-1 RQ-2")))
+                   (list (cons "docs/b.pdf" "pdf 1") (cons "other.org" "* X\n")))))
+
+(defun rt-staged-lint (d)
+  (rt-git d "add" "-A")
+  (rt-env '("LEMMAX_TODAY=2026-02-01") (rt-run d "lint" "--staged" "--no-tests")))
+
+(ert-deftest lemmax-attach-change-edited ()
+  :tags '(timeout-30)
+  ;; Editing a linked file reopens the LEMMA; made CONJECTURE, it passes.
+  (let ((d (rt-link-repo (rt-linking "RQ-1" "[[file:docs/b.pdf]]"))))
+    (rt-set d "docs/b.pdf" "pdf 2")
+    (rt-should-find (rt-staged-lint d) "RQ-1: a LEMMA statement's linked file theories/t/docs/b\\.pdf changed; make it CONJECTURE until the owner accepts it again")
+    (rt-set d "theory.org" (concat rt-math-head (replace-regexp-in-string "^\\* LEMMA" "* CONJECTURE" (rt-linking "RQ-1" "[[file:docs/b.pdf]]"))))
+    (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))))
+
+(ert-deftest lemmax-attach-change-renamed ()
+  :tags '(timeout-30)
+  ;; Renaming a linked file, the link rewritten with it, reopens it too.
+  (let ((d (rt-link-repo (rt-linking "RQ-1" "[[file:docs/b.pdf]]"))))
+    (rt-git d "mv" (rt-p "docs/b.pdf") (rt-p "docs/c.pdf"))
+    (rt-set d "theory.org" (concat rt-math-head (rt-linking "RQ-1" "[[file:docs/c.pdf]]")))
+    (rt-should-find (rt-staged-lint d) "RQ-1: a LEMMA statement's linked file theories/t/docs/c\\.pdf changed")))
+
+(ert-deftest lemmax-attach-change-shared ()
+  :tags '(timeout-30)
+  ;; Two statements that link one file both reopen.
+  (let ((d (rt-link-repo (rt-linking "RQ-1" "[[file:docs/b.pdf]]") (rt-linking "RQ-2" "[[file:docs/b.pdf]]"))))
+    (rt-set d "docs/b.pdf" "pdf 2")
+    (let ((r (rt-staged-lint d)))
+      (rt-should-find r "RQ-1: a LEMMA statement's linked file theories/t/docs/b\\.pdf changed")
+      (should (string-match-p "RQ-2: a LEMMA statement's linked file theories/t/docs/b\\.pdf changed" (nth 2 r))))))
+
+(ert-deftest lemmax-attach-change-org-ignored ()
+  :tags '(timeout-30)
+  ;; A linked .org file is a reference: changing it reopens nothing.
+  (let ((d (rt-link-repo (rt-linking "RQ-1" "[[file:other.org]]"))))
+    (rt-set d "other.org" "* X changed\n")
+    (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))))

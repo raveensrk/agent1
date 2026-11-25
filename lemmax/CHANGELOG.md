@@ -5,6 +5,9 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- A file a `LEMMA` or `THEOREM` links is part of its text: `lint --staged`
+  refuses an edited, added, removed or renamed one, by its git blob, until the
+  statement is `CONJECTURE`; linked `.org` files are references.
 - The git history walk reads a mended link, from a file now gone to any file,
   as no text change, as `lint --staged` does: no false "text changed after it
   was accepted" or suspect.

@@ -1182,3 +1182,11 @@ Org's org-id-new, set to call lmx new-id, gives sorted UUID v7 ids; lmx new-id p
 - State "PROOF"      from "DRAFT"      [2026-11-25 Wed 05:04]
 :END:
 Settings quoted in a #+begin_src or #+begin_example block are text, neither read nor refused, and NAME+ adds; a #+PROPERTY: or old keyword setting below the first heading is refused, plain and staged, and is not read; a setting set twice in a file, by #+PROPERTY: or by the old keyword, is refused, a setup file too.
+
+* DRAFT A changed attachment reopens what links it
+:PROPERTIES:
+:ID:          01a21126-310a-7104-99d1-b2ac4edadaff
+:PROVES:      01a2090e-8781-768e-86aa-fbfa698d41f9
+:TEST:        ert/lemmax-attach-change-edited ert/lemmax-attach-change-renamed ert/lemmax-attach-change-shared ert/lemmax-attach-change-org-ignored
+:END:
+lint --staged refuses a LEMMA whose linked file's blob changed, HEAD against staged, and passes once it is CONJECTURE; a linked file renamed with its link rewritten is refused too; two LEMMAs linking one file are both refused; a linked .org file changes nothing.
