@@ -41,6 +41,34 @@ Read these when a rule here is unclear. Do not guess past them.
   SVG SMIL animation
   <https://developer.mozilla.org/en-US/docs/Web/SVG/Element/animate>.
 
+## 0. Dependencies
+
+This skill must work on any computer. Before anything else, run:
+
+```sh
+SKILL_DIR/scripts/deps.sh
+```
+
+It installs nothing. It prints `ok` or `MISSING` for each tool, with the
+install command for this computer.
+
+- Required: `git`, `python3`, `doorstop`, and PyYAML (`check.py` uses it;
+  installing Doorstop brings it).
+- Optional, for diagrams only: `d2`, `mmdc` with a headless Chrome, `xmllint`.
+
+When anything is `MISSING`:
+
+1. Show the user the list and the exact install commands.
+2. Ask before installing. Install only what the user says yes to. Never use
+   `sudo` without a yes for that command.
+3. Run `deps.sh` again. Go on only when every required tool is `ok`.
+4. If the user declines a required tool, stop and say why the skill cannot
+   run without it.
+5. If the user declines an optional tool, go on without that diagram type.
+   With no diagram tool at all, write text only and say so in the report.
+
+The scripts are bash. On Windows, run the skill in WSL or Git Bash.
+
 ## 1. Scan
 
 - Input: the directory given as the argument. With no argument, ask for it.
@@ -236,13 +264,15 @@ Add a diagram only when it explains something more simply than text.
   `d2 fmt <file>` and `d2 <file> <file>.svg`.
 
 - Mermaid (`.mmd`): sequences, flows, states. Check with
-  `mmdc -i <file> -o <file>.svg`. `mmdc` needs a headless Chrome. If it
-  fails to launch, draw the diagram in D2 instead and tell the user.
+  `mmdc -i <file> -o <file>.svg`. `mmdc` needs a headless Chrome. If
+  `deps.sh` did not show `mmdc` as `ok`, draw the diagram in D2 instead and
+  tell the user.
 
 - Animated SVG (`.svg`): only for behaviour over time, such as sequences and
   state changes, where motion makes the order clear. Use SMIL or CSS
   animation, with no scripts. It must have a `<title>` and be readable when
-  paused. Check with `xmllint --noout <file>`.
+  paused. Check with `xmllint --noout <file>`. Without `xmllint`, check with
+  `python3 -c "import sys, xml.dom.minidom as m; m.parse(sys.argv[1])" <file>`.
 
 A diagram that fails its check is fixed or removed before finishing.
 
