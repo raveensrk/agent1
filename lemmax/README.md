@@ -226,6 +226,21 @@ property drawer entries to the elements it parses:
 (add-to-list 'org-roam-db-extra-links-elements 'node-property)
 ```
 
+## Pins
+
+<!-- lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9 -->
+
+Every id in `:USES:`, `:PROVES:`, `:FOLLOWS:`, `:FOR:` and `:ABOUT:` carries a
+pin, `ID@HASH`, as `:USES: RT-9@1a2b3c4d`: the first 8 hex characters of the
+SHA-256 of the used statement's text, whitespace runs one space, when it was
+last checked. `lint` and `trace` name a pin that no longer matches: the id,
+the pinned hash and the hash now. Lint refuses an id with no pin in a logged
+file; a stale `:PROVES:` pin asks the proof to be `DRAFT` again, one in
+`:FOR:` or `:ABOUT:` asks the task or note to be read again. Once the owner
+has read it again, `lmx pin ID` writes the hash now into every link to it.
+`lmx migrate` pins every unpinned id. A pin is part of the link, not the text:
+it reopens nothing. `:ALIASES:`, `:TEST:` and `:ROAM_REFS:` hold no pin.
+
 ## ORDERED and BLOCKER
 
 <!-- lemma: 01a203a6-a716-738e-a95b-18086050d5eb -->

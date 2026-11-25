@@ -227,14 +227,35 @@ once a run, however many revisions hold it."
 ;; lemma: 01a203a6-a702-71c0-8239-e0d41380d2dd
 (defun lemmax--id-list (v)
   "The ids of V, a link property's value: [[id:X]] and [[id:X][label]] links,
-then the bare words left."
+then the bare words left; a pin, @HASH, is not part of the id."
+  (mapcar #'car (lemmax--pin-list v)))
+
+;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+(defconst lemmax--link-id-re "\\[\\[id:\\([^]\n]+\\)\\]\\(?:\\[[^]\n]*\\]\\)?\\]\\(?:@\\([0-9a-f]\\{8\\}\\)\\)?"
+  "An id: link, group 1 its id, group 2 the pin after it, when it has one.")
+
+(defun lemmax--pin-list (v)
+  "The (ID . HASH) of each id V names, as `lemmax--id-list' reads them: HASH
+the 8 hex characters of its pin, ID@HASH or [[id:ID][label]]@HASH, else nil."
   (when v
-    (let ((ids nil) (pos 0))
-      (while (string-match "\\[\\[id:\\([^]\n]+\\)\\]\\(?:\\[[^]\n]*\\]\\)?\\]" v pos)
-        (push (string-trim (match-string 1 v)) ids)
+    (let ((out nil) (pos 0))
+      (while (string-match lemmax--link-id-re v pos)
+        (let ((id (string-trim (match-string 1 v))) (h (match-string 2 v)))
+          (push (if (string-match "\\`\\(.*\\)@\\([0-9a-f]\\{8\\}\\)\\'" id) (cons (match-string 1 id) (match-string 2 id)) (cons id h)) out))
         (setq pos (match-end 0)))
-      (append (nreverse ids)
-              (split-string (replace-regexp-in-string "\\[\\[id:[^]\n]+\\]\\(?:\\[[^]\n]*\\]\\)?\\]" " " v))))))
+      (append (nreverse out)
+              (mapcar (lambda (w) (if (string-match "\\`\\(.+\\)@\\([0-9a-f]\\{8\\}\\)\\'" w)
+                                      (cons (match-string 1 w) (match-string 2 w))
+                                    (cons w nil)))
+                      (split-string (replace-regexp-in-string lemmax--link-id-re " " v)))))))
+
+(defconst lemmax--pinned-props '("USES" "PROVES" "FOLLOWS" "FOR" "ABOUT")
+  "The link properties whose every id carries a pin, ID@HASH.")
+
+(defun lemmax--text-hash (text)
+  "The pin of TEXT, a statement's text: the first 8 hex characters of the
+SHA-256 of TEXT with each run of whitespace made one space."
+  (substring (secure-hash 'sha256 (replace-regexp-in-string "[ \t\n\r]+" " " (string-trim text))) 0 8))
 
 ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
 (defconst lemmax--log-re
@@ -310,6 +331,9 @@ the newest log line into LEMMA or THEOREM while it is one."
         :for (lemmax--id-list (funcall get "FOR"))
         :about (lemmax--id-list (funcall get "ABOUT"))
         :follows (lemmax--id-list (funcall get "FOLLOWS"))
+        ;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+        :pins (cl-loop for p in lemmax--pinned-props
+                       append (mapcar (lambda (x) (list p (car x) (cdr x))) (lemmax--pin-list (funcall get p))))
         :own-verify (and (funcall get "VERIFY") t)
         ;; lemma: 01a202bc-4bf0-7fd3-a92c-204eb9fa96f0
         :aliases (let ((v (funcall get "ALIASES"))) (and v (split-string v)))
@@ -1289,13 +1313,19 @@ as a NUL when BROKEN and the file is gone."
         (puthash (match-string 2 l) (match-string 1 l) index)))
     (cons head index)))
 
-(defun lemmax--linked-file-change (old new blobs)
+(defun lemmax--linked-file-change (old new blobs &optional renames)
   "The first linked file that changed from OLD paths at HEAD to NEW paths
-staged, by BLOBS from `lemmax--staged-blobs': one added, removed or renamed,
-or whose blob differs; nil when none did."
-  (or (cl-find-if-not (lambda (p) (member p old)) new)
-      (cl-find-if-not (lambda (p) (member p new)) old)
-      (cl-find-if (lambda (p) (not (equal (gethash p (car blobs)) (gethash p (cdr blobs))))) new)))
+staged, by BLOBS from `lemmax--staged-blobs': one added, removed, or whose blob
+differs; nil when none did. A file git saw RENAMES, its link rewritten to
+follow it with its blob the same, is no change (01a20a84-971d-767f-8a26-c98f6d132b7f);
+nor is a link to a file now gone mended to name any file (01a20c8e-872d-75b3-97fe-22718d4b809b)."
+  (let* ((renames (or renames (make-hash-table :test #'equal)))
+         (moved (mapcar (lambda (p) (cons (gethash p renames p) p)) old))
+         (gone (cl-remove-if (lambda (m) (gethash (car m) (cdr blobs))) moved))
+         (kept (cl-set-difference moved gone)))
+    (or (and (null gone) (cl-find-if-not (lambda (p) (assoc p kept)) new))
+        (car (cl-find-if-not (lambda (m) (member (car m) new)) kept))
+        (car (cl-find-if (lambda (m) (not (equal (gethash (cdr m) (car blobs)) (gethash (car m) (cdr blobs))))) kept)))))
 
 (defun lemmax--lint-staged (staged head)
   "RT-6: the change rules, STAGED infos against HEAD infos."
@@ -1339,7 +1369,7 @@ or whose blob differs; nil when none did."
                 ;; A file a LEMMA or THEOREM links is part of its text.
                 (when (and (not changed) (member (plist-get r :state) '("LEMMA" "THEOREM"))
                            (member (plist-get old :state) lemmax--accepted-states))
-                  (let ((x (lemmax--linked-file-change (plist-get old :files) (plist-get r :files) blobs)))
+                  (let ((x (lemmax--linked-file-change (plist-get old :files) (plist-get r :files) blobs renames)))
                     (when x
                       (lemmax--finding f l id (format "a %s statement's linked file %s changed" (plist-get r :state) x)
                                        "make it CONJECTURE until the owner accepts it again"))))
@@ -1347,7 +1377,7 @@ or whose blob differs; nil when none did."
                 ;; A file a PROOF links is its evidence: a change makes it DRAFT.
                 (when (and (lemmax--proof-p r) (lemmax--proof-holds-p (plist-get r :state))
                            (lemmax--proof-holds-p (plist-get old :state)))
-                  (let ((x (lemmax--linked-file-change (plist-get old :files) (plist-get r :files) blobs)))
+                  (let ((x (lemmax--linked-file-change (plist-get old :files) (plist-get r :files) blobs renames)))
                     (when x
                       (lemmax--finding f l id (format "a %s proof's linked file %s changed" (plist-get r :state) x)
                                        "make it DRAFT until the owner approves it again"))))
@@ -1405,6 +1435,7 @@ logged form set the state again so Org logs today."
         (lemmax--lint-file-rules infos only)
         (lemmax--lint-tags infos only)
         (lemmax--lint-settings infos only)
+        (lemmax--lint-pins infos only)
         (lemmax--lint-setting-lines (if staged (lemmax--rev-files "") (lemmax--worktree-files)) only)
         (lemmax--lint-theorem infos only)
         (lemmax--lint-config-both infos staged)
@@ -1435,6 +1466,40 @@ logged form set the state again so Org logs today."
     (kill-emacs (if (> lemmax--findings 0) 1 0))))
 
 ;; lemma: 01a20eb5-f066-7481-9fd1-9ac7705ef6b2
+;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+(defun lemmax--stale-pins (r known)
+  "R's pins that no longer match, as (PROP ID PINNED NOW); KNOW, from
+`lemmax--known', resolves ids and aliases. An unpinned id is (PROP ID nil NOW)."
+  (cl-loop for (prop id hash) in (plist-get r :pins)
+           for x = (gethash id known)
+           for now = (and x (lemmax--text-hash (plist-get x :text)))
+           when (and now (not (equal hash now))) collect (list prop id hash now)))
+
+(defun lemmax--lint-pins (infos only)
+  "Every id in a pinned link property carries its pin, ID@HASH, and the pin
+matches the text now; in a file in the logged form, where Org dates states."
+  (let* ((all (lemmax--all-statements (lemmax--listed (lemmax--worktree-files))))
+         (known (lemmax--known all)))
+    (dolist (i infos)
+      (let ((f (plist-get i :file)))
+        (when (or (null only) (member f only))
+          (dolist (r (plist-get i :statements))
+            (when (plist-get r :new-form)
+              (dolist (s (lemmax--stale-pins r known))
+                (cl-destructuring-bind (prop id hash now) s
+                  (if (null hash)
+                      (lemmax--finding f (plist-get r :line) (plist-get r :id)
+                                       (format ":%s: names %s with no pin" prop id)
+                                       (format "write it %s@%s; lmx migrate pins every one" id now))
+                    (lemmax--finding f (plist-get r :line) (plist-get r :id)
+                                     (format ":%s: pins %s@%s, and its text is now %s" prop id hash now)
+                                     (cond ((and (equal prop "PROVES") (lemmax--proof-holds-p (plist-get r :state)))
+                                            (format "make the proof DRAFT, read %s again, then lmx pin %s" id id))
+                                           ((member prop '("FOR" "ABOUT"))
+                                            (format "read this %s again against %s, then lmx pin %s"
+                                                    (if (equal prop "FOR") "task" "note") id id))
+                                           (t (format "read %s again, then lmx pin %s" id id))))))))))))))
+
 ;; lemma: 01a20fc1-343f-77df-b886-0048fe5c9e65
 (defun lemmax--lint-setting-lines (infos only)
   "A LEMMAX_ setting sits at the top of its file, above the first heading,
@@ -2129,6 +2194,10 @@ PARENT is nil when the child's own :USES: changed after it, by USES."
       (lemmax--out (if math "  used by: %s" "  children: %s") (if children (string-join children " ") "none")))
     ;; lemma: 01a20ee1-7637-7169-820a-751b3c636847
     (when (plist-get r :created) (lemmax--out "  created: %s" (plist-get r :created)))
+    ;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+    (dolist (s (lemmax--stale-pins r (lemmax--known statements)))
+      (when (nth 2 s)
+        (lemmax--out "  stale pin: :%s: %s@%s, now %s" (nth 0 s) (nth 1 s) (nth 2 s) (nth 3 s))))
     (when (plist-get r :refs) (lemmax--out "  refs: %s" (string-join (plist-get r :refs) " ")))
     ;; lemma: 01a2090e-8591-756c-a9f1-dd473d9c3ce4
     (when (plist-get r :files) (lemmax--out "  files: %s" (string-join (plist-get r :files) " ")))
@@ -3354,6 +3423,63 @@ in each project's setup.org, and the config deleted."
         (progn (delete-file lemmax-config-file) (lemmax--out "deleted %s" lemmax-config-file))
       (princ (lemmax--diff lemmax-config-file text nil)))))
 
+;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+(defun lemmax--hashes ()
+  "Hash: each id and alias of the repo's statements to the pin of its text now."
+  (let ((h (make-hash-table :test #'equal)))
+    (maphash (lambda (k r) (puthash k (lemmax--text-hash (plist-get r :text)) h))
+             (lemmax--known (lemmax--all-statements (lemmax--listed (lemmax--worktree-files)))))
+    h))
+
+(defun lemmax--rewrite-pins (text fn)
+  "TEXT with each id of a pinned link property line rewritten: FN takes the
+id and its pin, or nil, and gives the pin to write, or nil to leave it."
+  (let ((case-fold-search nil)
+        (prop-re (concat "^\\([ \t]*:" (regexp-opt lemmax--pinned-props) ":[ \t]+\\)\\(.*\\)$")))
+    (replace-regexp-in-string
+     prop-re
+     (lambda (line)
+       (string-match prop-re line)
+       (let ((head (match-string 1 line)) (v (match-string 2 line)))
+         (concat head
+                 (replace-regexp-in-string
+                  "\\(\\[\\[id:\\([^]\n]+\\)\\]\\(?:\\[[^]\n]*\\]\\)?\\]\\)\\(?:@\\([0-9a-f]\\{8\\}\\)\\)?\\|\\([^][ \t]+\\)"
+                  (lambda (m)
+                    (let* ((link (match-string 1 m))
+                           (word (match-string 4 m))
+                           (pair (if link (cons (match-string 2 m) (match-string 3 m)) (car (lemmax--pin-list word))))
+                           (new (funcall fn (car pair) (cdr pair))))
+                      (cond ((null new) m)
+                            (link (concat link "@" new))
+                            (t (concat (car pair) "@" new)))))
+                  v t t))))
+     text t t)))
+
+(defun lemmax--migrate-pins (text hashes)
+  "TEXT with each unpinned id of a pinned link property given its pin now,
+from HASHES; an id HASHES lacks is left as it is."
+  (lemmax--rewrite-pins text (lambda (id pin) (and (null pin) (gethash id hashes)))))
+
+(defun lemmax-pin (args)
+  "Rewrite every pin of the links to ID with the hash of its text now, once the
+owner has read it again."
+  (let ((id (car args)))
+    (unless (and id (null (cdr args)) (not (string-prefix-p "-" id)))
+      (lemmax--err "lmx: pin takes one ID; see lmx pin --help") (kill-emacs 1))
+    (let* ((hashes (lemmax--hashes)) (now (gethash id hashes)) (n 0))
+      (unless now (lemmax--err "lmx: %s: no statement has this id" id) (kill-emacs 1))
+      (dolist (i (lemmax--listed (lemmax--worktree-files)))
+        (let* ((f (plist-get i :file))
+               (old (with-temp-buffer (insert-file-contents f) (buffer-string)))
+               (k 0)
+               (new (lemmax--rewrite-pins old (lambda (x pin) (when (and (equal x id) (not (equal pin now))) (setq k (1+ k)) now)))))
+          (unless (equal old new)
+            (with-temp-file f (insert new))
+            (setq n (+ n k))
+            (lemmax--out "pinned %d link%s to %s@%s in %s" k (if (= k 1) "" "s") id now f))))
+      (when (zerop n) (lemmax--out "every link to %s is pinned %s already" id now))
+      (kill-emacs 0))))
+
 (defun lemmax-migrate (args)
   "Print, or with --write make, FILE in the math names, with FILE.proofs.org."
   ;; lemma: 01a20f2e-b275-726f-ac83-9333aab958ba
@@ -3398,10 +3524,13 @@ in each project's setup.org, and the config deleted."
                                                           (and setup (lemmax--migrate-setup-todo-p old (cdr setup))))))
                              (cons (lemmax--drop-created (lemmax--migrate-settings (car r)))
                                    (and (cdr r) (cons (lemmax--migrate-settings (cadr r)) (cddr r))))))))
+             ;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+             (hashes (lemmax--hashes))
+             (res (cons (lemmax--migrate-pins (car res) hashes) (cdr res)))
              (ppath (concat (file-name-sans-extension path) ".proofs.org"))
              (prel (file-relative-name ppath (file-truename default-directory)))
              (pold (and (file-exists-p ppath) (with-temp-buffer (insert-file-contents ppath) (buffer-string))))
-             (pnew (and (cdr res) (concat (or pold (car (cdr res))) (if pold "\n" "") (cdr (cdr res))))))
+             (pnew (and (cdr res) (lemmax--migrate-pins (concat (or pold (car (cdr res))) (if pold "\n" "") (cdr (cdr res))) hashes))))
         (if (not write)
             (progn
               (unless (equal old (car res)) (princ (lemmax--diff rel old (car res))))
@@ -3778,7 +3907,7 @@ whole repo, theories/_site/book.html."
   '((main
      "usage: lmx COMMAND [ARGS]
 Lint, trace and list a repo's org theories.
-Commands: lint, commit-msg, trace, list, plan, new-id, next-id, install-hooks, migrate, archive, publish, book, help
+Commands: lint, commit-msg, trace, list, plan, new-id, next-id, install-hooks, migrate, pin, archive, publish, book, help
 Run it inside a git repo, or name one with --project DIR (-p DIR).
 It reads, and writes no file; install-hooks writes the repo's two hooks and
 migrate --write a theory file and its proofs file, archive --write a
@@ -3794,6 +3923,7 @@ example: lmx list --ready -p ~/repos/other-project"
   next-id LETTER                          the next counted id, as M-15, for old projects
   install-hooks                           put lmx in this repo's pre-commit and commit-msg
   migrate [--write] FILE                  move FILE to conjectures, proofs, lemmas and theorems
+  pin ID                                  write the hash of ID's text now into every link to it
   archive [--write] FILE                  move refuted and finished headings to FILE's archive
   publish [--out DIR]                     write the LemmaX files to HTML
   book [--all] [--out FILE]               write the whole theory as one HTML file
@@ -3959,6 +4089,18 @@ N days ago or more (30). A heading moves only when every heading under it
 may move too. NAME.org archives to NAME_archive.org, NAME.tasks.org to
 NAME_archive.tasks.org; a new archive takes FILE's #+TODO:, #+TAGS: and
 #+LEMMAX_* lines, so lint reads it and its ids stay unique.")
+    ;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+    (pin
+     "usage: lmx pin [--project DIR] ID
+Write the hash of ID's text now into every pin of a link to ID, after the owner read it again.
+example: lmx pin RT-5"
+     "A link in :USES:, :PROVES:, :FOLLOWS:, :FOR: or :ABOUT: names a statement as
+ID@HASH: HASH is the first 8 hex characters of the SHA-256 of its text, with
+each run of whitespace made one space, as it was when the link was checked.
+lint and trace name a pin that no longer matches; lint refuses an id with no
+pin, in a file in the logged form. pin rewrites the pins of ID in every theory
+file, and writes them. A pin is part of the link, not the text: it reopens
+nothing. lmx migrate pins every unpinned id with its hash now.")
     (migrate
      "usage: lmx migrate [--project DIR] [--write] [--links] FILE | --theorem ID
 Move FILE to the math names: conjectures in FILE, proofs in FILE.proofs.org.
@@ -4071,6 +4213,8 @@ example: lmx next-id M"
               ("next-id" (lemmax-next-id rest))
               ("install-hooks" (lemmax-install-hooks rest))
               ("migrate" (lemmax-migrate rest))
+              ;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+              ("pin" (lemmax-pin rest))
               ("archive" (lemmax-archive rest))
               ("publish" (lemmax-publish rest))
               ("book" (lemmax-book rest))
@@ -4101,7 +4245,7 @@ Returns the exit code."
     code))
 
 (dolist (c '("lint" "commit-msg" "trace" "list" "plan" "new-id" "next-id"
-             "install-hooks" "migrate" "archive" "publish" "book"))
+             "install-hooks" "migrate" "pin" "archive" "publish" "book"))
   (advice-add (intern (concat "lemmax-" c)) :around
               (lambda (orig &rest a)
                 (interactive (list 'interactive))

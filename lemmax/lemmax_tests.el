@@ -2286,7 +2286,8 @@ run of its finding's why text."
       ;; The settings move to #+PROPERTY: lines (01a20eb5-f066-7481-9fd1-9ac7705ef6b2).
       (should (string-match-p "^#\\+PROPERTY: LEMMAX_TESTS ./tests.sh" proofs))
       (should (string-match-p "^\\* PROOF Title of RQ-1\n:PROPERTIES:\n:ID: +[0-9a-f]\\{8\\}-[0-9a-f]\\{4\\}-7" proofs))
-      (should (string-match-p ":PROVES: +RQ-1\n" proofs))
+      ;; Its link is pinned (01a20fec-4f90-7a8d-9062-c1253205f5e9).
+      (should (string-match-p ":PROVES: +RQ-1@[0-9a-f]\\{8\\}\n" proofs))
       ;; migrate writes no :CREATED: (01a20ee1-7637-7169-820a-751b3c636847).
       (should-not (string-match-p ":CREATED:" proofs)))
     (rt-git d "add" "-A")
@@ -3497,13 +3498,26 @@ which holds the tests and code, read by theory.org with REQS."
   (concat "* " state " Shows " id "\n:PROPERTIES:\n" (format ":ID:          %s\n" id)
           (format ":PROVES:      %s\n" proves) (if test (format ":TEST:        %s\n" test) "") ":END:\nIt shows it.\n"))
 
+(defun rt-pin-all (d file)
+  "FILE of the test repo D with every unpinned link pinned with its hash now,
+as lmx migrate pins it (01a20fec-4f90-7a8d-9062-c1253205f5e9)."
+  (rt-load)
+  (dolist (h (list lemmax--files-cache lemmax--entry-cache)) (clrhash h))
+  (let* ((default-directory (file-name-as-directory d))
+         (path (rt-p file))
+         (text (with-temp-buffer (insert-file-contents path) (buffer-string))))
+    (with-temp-file path (insert (lemmax--migrate-pins text (lemmax--hashes))))
+    (clrhash lemmax--files-cache)))
+
 (ert-deftest lemmax-proof-states ()
   :tags '(timeout-60)
   (let* ((d (rt-repo (list (cons "theory.org" (concat rt-math-head (rt-lemma "RQ-1") (rt-conj "RQ-2" :state "REFUTED")))
                            (cons "theory.proofs.org" (concat rt-new-proofs-head (rt-nproof "PR-1" "RQ-1") (rt-nproof "PR-2" "RQ-2" :state "MOOT")))
                            (cons "tests.sh" (rt-tests-sh "unit/a")) (cons "src/x.clj" "(ns x)\n"))))
-         (proofs (lambda (&rest ps) (rt-set d "theory.proofs.org" (apply #'concat rt-new-proofs-head (rt-nproof "PR-2" "RQ-2" :state "MOOT") ps)))))
+         (proofs (lambda (&rest ps) (rt-set d "theory.proofs.org" (apply #'concat rt-new-proofs-head (rt-nproof "PR-2" "RQ-2" :state "MOOT") ps))
+                   (rt-pin-all d "theory.proofs.org"))))
     ;; PROOF proves a LEMMA; a new-form proof needs no :LAST_EDITED:.
+    (rt-pin-all d "theory.proofs.org")
     (rt-should-clean (rt-run d "lint"))
     ;; DRAFT, even with its tests passing, does not.
     (funcall proofs (rt-nproof "PR-1" "RQ-1" :state "DRAFT"))
@@ -3670,7 +3684,7 @@ which holds the tests and code, read by theory.org with REQS."
 
 (defun rt-link-repo (&rest lemmas)
   (rt-repo (append (rt-math-files lemmas (list (rt-proof "PR-1" "RQ-1 RQ-2")))
-                   (list (cons "docs/b.pdf" "pdf 1") (cons "other.org" "* X\n")))))
+                   (list (cons "docs/b.pdf" (concat (make-string 200 ?x) " 1")) (cons "other.org" "* X\n")))))
 
 (defun rt-staged-lint (d)
   (rt-git d "add" "-A")
@@ -3687,10 +3701,14 @@ which holds the tests and code, read by theory.org with REQS."
 
 (ert-deftest lemmax-attach-change-renamed ()
   :tags '(timeout-30)
-  ;; Renaming a linked file, the link rewritten with it, reopens it too.
+  ;; A rename the link follows, the file the same, is no change, as a move is
+  ;; (01a20a84-971d-767f-8a26-c98f6d132b7f); renamed and edited, it is one.
   (let ((d (rt-link-repo (rt-linking "RQ-1" "[[file:docs/b.pdf]]"))))
     (rt-git d "mv" (rt-p "docs/b.pdf") (rt-p "docs/c.pdf"))
     (rt-set d "theory.org" (concat rt-math-head (rt-linking "RQ-1" "[[file:docs/c.pdf]]")))
+    (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))
+    ;; Most of the file kept, so git still sees the rename.
+    (rt-set d "docs/c.pdf" (concat (make-string 200 ?x) " 2"))
     (rt-should-find (rt-staged-lint d) "RQ-1: a LEMMA statement's linked file theories/t/docs/c\\.pdf changed")))
 
 (ert-deftest lemmax-attach-change-shared ()
@@ -3757,7 +3775,7 @@ which holds the tests and code, read by theory.org with REQS."
                                                    (replace-regexp-in-string "^It shows it\\.$" (concat "See " link ".")
                                                                              (rt-nproof "PR-1" "RQ-1" :state state) t t)))
                  (cons "tests.sh" (rt-tests-sh "unit/a")) (cons "src/x.clj" "(ns x)\n")
-                 (cons "docs/run.pdf" "log 1"))))
+                 (cons "docs/run.pdf" (concat (make-string 200 ?x) " 1")))))
 
 (ert-deftest lemmax-proof-attach-edited ()
   :tags '(timeout-30)
@@ -3768,12 +3786,14 @@ which holds the tests and code, read by theory.org with REQS."
 
 (ert-deftest lemmax-proof-attach-renamed ()
   :tags '(timeout-30)
-  ;; Renaming it, the link rewritten with it, does too.
+  ;; Renamed and edited, it does too; a bare rename the link follows is no change.
   (let ((d (rt-proof-link-repo "PROOF" "[[file:docs/run.pdf]]")))
     (rt-git d "mv" (rt-p "docs/run.pdf") (rt-p "docs/run2.pdf"))
     (rt-set d "theory.proofs.org" (concat rt-new-proofs-head
                                           (replace-regexp-in-string "^It shows it\\.$" "See [[file:docs/run2.pdf]]."
                                                                     (rt-nproof "PR-1" "RQ-1") t t)))
+    (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))
+    (rt-set d "docs/run2.pdf" (concat (make-string 200 ?x) " 2"))
     (rt-should-find (rt-staged-lint d) "PR-1: a PROOF proof's linked file theories/t/docs/run2\\.pdf changed")))
 
 (ert-deftest lemmax-proof-attach-draft-passes ()
@@ -3788,3 +3808,94 @@ which holds the tests and code, read by theory.org with REQS."
                                           (replace-regexp-in-string "^It shows it\\.$" "See [[file:docs/run.pdf]]."
                                                                     (rt-nproof "PR-1" "RQ-1" :state "DRAFT") t t)))
     (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))))
+
+;;;; 01a20fec-4f90-7a8d-9062-c1253205f5e9: a link pins the text it was checked against
+
+;; lemma: 01a20fec-4f90-7a8d-9062-c1253205f5e9
+(defun rt-hash (text)
+  "The pin of a statement whose text is TEXT."
+  (rt-load) (lemmax--text-hash text))
+
+(defun rt-text-of (d file id)
+  (plist-get (cl-find id (plist-get (rt-parse-in d file) :statements) :key (lambda (r) (plist-get r :id)) :test #'equal) :text))
+
+(defun rt-pin-repo (uses)
+  "A logged-form theory: RQ-2 uses RQ-1 as USES, its :USES: value."
+  (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log))
+                               (rt-logged "RQ-2" :state "THESIS" :logs (list rt-thesis-log) :props (format ":USES:        %s\n" uses)))
+                         nil)
+           "2026-01-05"))
+
+(ert-deftest lemmax-pin-match ()
+  :tags '(timeout-30)
+  ;; A pin that matches is clean; the hash is the text's, whitespace runs one space.
+  (let* ((d (rt-pin-repo "RQ-1"))
+         (h (rt-hash (rt-text-of d "theory.org" "RQ-1"))))
+    (should (equal h (rt-hash (replace-regexp-in-string " " "  \n " (rt-text-of d "theory.org" "RQ-1")))))
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log))
+                                   (rt-logged "RQ-2" :state "THESIS" :logs (list rt-thesis-log) :props (format ":USES:        RQ-1@%s\n" h))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    (should (equal '("RQ-1") (plist-get (cl-find "RQ-2" (plist-get (rt-parse-in d "theory.org") :statements)
+                                                 :key (lambda (r) (plist-get r :id)) :test #'equal)
+                                        :needs)))))
+
+(ert-deftest lemmax-pin-stale ()
+  :tags '(timeout-30)
+  ;; lint and trace name a stale pin: the id, the pinned hash and the hash now.
+  (let ((d (rt-pin-repo "RQ-1@00000000")))
+    (let ((now (rt-hash (rt-text-of d "theory.org" "RQ-1"))))
+      (rt-should-find (rt-run d "lint" "--no-tests")
+                      (format "RQ-2: :USES: pins RQ-1@00000000, and its text is now %s; read RQ-1 again, then lmx pin RQ-1" now))
+      (should (string-match-p (format "  stale pin: :USES: RQ-1@00000000, now %s" now) (nth 1 (rt-run d "trace" "RQ-2"))))
+      ;; lmx pin writes the hash now; then lint is clean.
+      (should (string-match-p (format "pinned 1 link to RQ-1@%s in theories/t/theory.org" now) (nth 1 (rt-run d "pin" "RQ-1"))))
+      (rt-should-clean (rt-run d "lint" "--no-tests")))))
+
+(ert-deftest lemmax-pin-missing ()
+  :tags '(timeout-30)
+  ;; An id with no pin is refused, in a logged-form file; an old file still reads.
+  (let ((d (rt-pin-repo "RQ-1")))
+    (rt-should-find (rt-run d "lint" "--no-tests")
+                    (format "RQ-2: :USES: names RQ-1 with no pin; write it RQ-1@%s; lmx migrate pins every one"
+                            (rt-hash (rt-text-of d "theory.org" "RQ-1")))))
+  (rt-should-clean (rt-lint (rt-req "RQ-1") (rt-req "RQ-2" :needs "RQ-1"))))
+
+(ert-deftest lemmax-pin-stale-proves ()
+  :tags '(timeout-30)
+  ;; A stale pin in a PROOF's :PROVES: asks for the proof to be DRAFT again.
+  (let ((d (rt-repo (list (cons "theory.org" (concat rt-math-head (rt-lemma "RQ-1")))
+                          (cons "theory.proofs.org" (concat rt-new-proofs-head (rt-nproof "PR-1" "RQ-1@00000000")))
+                          (cons "tests.sh" (rt-tests-sh "unit/a")) (cons "src/x.clj" "(ns x)\n")))))
+    (rt-should-find (rt-run d "lint" "--no-tests") "PR-1: :PROVES: pins RQ-1@00000000, and its text is now [0-9a-f]\\{8\\}; make the proof DRAFT, read RQ-1 again, then lmx pin RQ-1")))
+
+(ert-deftest lemmax-pin-migrate ()
+  :tags '(timeout-30)
+  ;; migrate pins every unpinned id in the five link properties with its hash
+  ;; now; :ALIASES: and :TEST: stay as they are.
+  (let* ((d (rt-pin-repo "RQ-1 [[id:RQ-9][gone]]"))
+         (h (rt-hash (rt-text-of d "theory.org" "RQ-1"))))
+    (rt-set d "theory.org" (concat rt-log-head (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log) :props ":ALIASES:     RQ-0\n")
+                                   (rt-logged "RQ-2" :state "THESIS" :logs (list rt-thesis-log) :props ":USES:        RQ-1 [[id:RQ-0][old]]\n")))
+    (let ((out (nth 1 (rt-run d "migrate" "theory.org"))))
+      (should (string-match-p (format "^\\+:USES: +RQ-1@%s \\[\\[id:RQ-0\\]\\[old\\]\\]@%s$" h h) out))
+      (should-not (string-match-p "^\\+:ALIASES:" out)))
+    (rt-run d "migrate" "--write" "theory.org")
+    (should-not (string-match-p "pin" (nth 2 (rt-run d "lint" "--no-tests"))))))
+
+(ert-deftest lemmax-pin-state-keeps-hash ()
+  ;; A change of state, dates, :LOGBOOK: or links changes no hash.
+  (rt-load)
+  (let ((hash (lambda (c) (lemmax--text-hash (plist-get (car (plist-get (lemmax--parse c "f.org") :statements)) :text)))))
+    (should (equal (funcall hash (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)))
+                   (funcall hash (rt-logged "RQ-1" :state "LEMMA" :logs (list rt-lemma-log rt-thesis-log)
+                                            :props ":USES:        RQ-3@0badc0de\n:ROAM_REFS:   https://example.invalid/x\n"))))
+    (should-not (equal (funcall hash (rt-logged "RQ-1")) (funcall hash (rt-logged "RQ-1" :body "Other.\n"))))))
+
+(ert-deftest lemmax-pin-aliases-not-pinned ()
+  :tags '(timeout-30)
+  ;; :ALIASES:, :TEST: and :ROAM_REFS: hold no pin: nothing asks for one.
+  (let ((d (rt-repo (rt-log-files (list (rt-logged "RQ-1" :state "THESIS" :logs (list rt-thesis-log)
+                                                   :props ":ALIASES:     RQ-0\n:ROAM_REFS:   https://example.invalid/x\n"))
+                                  nil)
+                    "2026-01-05")))
+    (should-not (string-match-p "pin" (nth 2 (rt-run d "lint" "--no-tests"))))))

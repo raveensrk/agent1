@@ -5,6 +5,12 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- A link pins the text it was checked against: `ID@HASH` in `:USES:`,
+  `:PROVES:`, `:FOLLOWS:`, `:FOR:` and `:ABOUT:`. lint and trace name a stale
+  pin; lint refuses an unpinned id in a logged file; `lmx pin ID` repins;
+  `migrate` pins every id.
+- A linked file git renamed, its link following it with the file the same,
+  and a link mended from a file now gone are no change of the file either.
 - A file a `PROOF` links is its evidence: `lint --staged` refuses an edited,
   added, removed or renamed one until the proof is `DRAFT`.
 - The history walk reads a branch's own history, `--first-parent`, a merge as
