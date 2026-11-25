@@ -13,6 +13,8 @@ Every behaviour the docs describe becomes a requirement.
 
 Separate from Lemmax. Do not use the Lemmax workflow or its files here.
 
+Before step 1, read [lessons.md](lessons.md) and follow it.
+
 ## 1. Scan
 
 - Input: the directory given as argument. No argument: ask for it.
@@ -50,15 +52,31 @@ Create documents with the `doorstop` CLI, inside `reqs/`:
 | HWE4 | HWE.4 | Hardware requirements verification tests | HWE1 |
 
 ```sh
-cd <parent>/reqs && git init -q 2>/dev/null   # doorstop needs a VCS root
-doorstop create SYS1 ./SYS1
-doorstop create SYS2 ./SYS2 --parent SYS1
+cd <parent>/reqs && git init -q   # only if not already inside a git repo
+doorstop create SYS1 ./SYS1 --sep -
+doorstop create SYS2 ./SYS2 --sep - --parent SYS1
 # ... and so on for each row
-doorstop add SYS2
+doorstop add -c 5 SYS2              # creates SYS2-001 to SYS2-005
 doorstop link SYS2-001 SYS1-001
 ```
 
-If `reqs/` sits inside an existing git repo, skip `git init`.
+- Always pass `--sep -`. The prefixes end in a digit, and Doorstop's default
+  empty separator gives broken UIDs (`SYS1001`, then `SYS11002`).
+
+- Doorstop has no command to set item fields (`doorstop edit` opens an
+  editor). Create items and links with the CLI, then fill the other fields
+  by editing the YAML files.
+
+- Add to each `.doorstop.yml`, so new items get default fields:
+
+  ```yaml
+  attributes:
+    defaults: {status: draft, priority: must}
+  ```
+
+- Never run `doorstop review` or `doorstop clear`. Review is the user's
+  sign-off, not the skill's.
+
 No software levels (SWE). The tree is system and hardware only.
 
 ## 4. Items
@@ -92,15 +110,22 @@ Text rules:
   For HWE1 "The hardware shall ...". For SYS1 the stakeholder may be named:
   "The driver shall be able to ...".
 - No implementation details in SYS1, SYS2, HWE1: say what, never how.
+- Each requirement is verifiable and has measurable limits: number and unit.
+  Cover functional and non-functional needs (timing, power, accuracy).
 - SYS3 and HWE2 hold design, as ASPICE 4.0 expects: elements, interfaces,
   allocation. Still 5 lines, still plain words.
 - Plain, short words. One idea per sentence. No jargon the docs do not use.
-- Tests (HWE3, HWE4): text is the test; `verification` holds pass criteria;
-  link to the item it verifies.
+- Tests (HWE3, HWE4) are ASPICE verification measures: test, measurement,
+  analysis or review. Text is the measure. `verification` holds pass/fail
+  criteria, plus entry and exit criteria and the setup needed. Link to the
+  item it verifies.
+- SYS3 elements that are not hardware (software, mechanics) have no HWE1
+  child, and Doorstop warns about it. List them in the report as known
+  gaps, outside this tree's scope. Never invent hardware for them.
 - Each requirement keeps its own `verification` field AND has a linked test
   item in HWE3 or HWE4 where it is hardware.
 - Every listed behaviour from step 1 maps to at least one item. Keep the map
-  until step 5.
+  until step 7.
 
 ## 5. Diagrams
 
@@ -110,10 +135,12 @@ Store it as a file in `reqs/<PREFIX>/diagrams/<UID>.<ext>` and set `diagram:`.
 - D2 (`.d2`): structure, architecture, data flow. Check with `d2 fmt` and
   render `d2 <file> <file>.svg`.
 - Mermaid (`.mmd`): sequences, flows, states. Check with
-  `mmdc -i <file> -o <file>.svg`.
+  `mmdc -i <file> -o <file>.svg`. `mmdc` needs a headless Chrome. If it
+  fails to launch, draw the diagram in D2 instead and tell the user.
 - Animated SVG (`.svg`): only behaviour over time - sequences and state
   changes where motion makes the order clear. SMIL or CSS animation, no
-  scripts, readable when paused.
+  scripts, readable when paused, with a `<title>`. Check with
+  `xmllint --noout <file>`.
 
 A diagram that fails to render is fixed or removed before finishing.
 
@@ -124,11 +151,16 @@ When `reqs/` exists:
 - Keep every UID. Never renumber.
 - Add new items for new behaviours.
 - Set `active: false` on items whose source is gone. Do not delete.
+  Doorstop fails (`no item with UID`) when an active item links to an
+  inactive one. Show the user each child that still links to it, and ask:
+  make the child inactive too, or move its link to another parent.
 - Before changing an existing item's text, show old and new and ask.
 
 ## 7. Check and finish
 
 - Run `doorstop` in `reqs/`. Fix every error and warning, then run again.
+  Known gaps from step 4 stay and are listed.
+  `unreviewed changes` warnings stay: they clear only when the user reviews.
 - Check each item text is 5 lines or fewer.
 - Check the behaviour map: every behaviour has an item. List any gap and fix.
 - Report: items per document, diagrams made, doubts resolved, gaps left.
@@ -137,8 +169,6 @@ When `reqs/` exists:
 
 After every run, before ending, look back on how the run went. Judge the
 skill, not the requirements.
-
-Before step 1 of any run, read [lessons.md](lessons.md) and follow it.
 
 Look for:
 
