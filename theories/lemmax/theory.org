@@ -1827,12 +1827,13 @@ A file's LemmaX settings are lines at its top, each set once, so a line in a sta
 - Asked by the owner on 2026-11-23
 Evidence: Org reads a #+PROPERTY: line anywhere in a buffer; on 2026-11-23 a body line starting #+LEMMAX_TESTS: became the file's test command (fixed by hand in d3e34aa).
 
-** CONJECTURE A link pins the text it was checked against with @hash      :trace:
+** THESIS A link pins the text it was checked against with @hash          :trace:
 :PROPERTIES:
 :ID:          01a20fec-4f90-7a8d-9062-c1253205f5e9
 :USES:        RT-9
 :END:
 :LOGBOOK:
+- State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 11:04]
 - State "CONJECTURE" from "THESIS"     [2026-11-25 Wed 11:04]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 11:01]
 :END:
