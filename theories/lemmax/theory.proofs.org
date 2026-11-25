@@ -926,14 +926,6 @@ A DEFINITION with no proof lints clean; a proof that proves one is refused; a LE
 :END:
 Attach folders come from org-attach-dir; lint refuses an untagged heading, a missing file and an orphan, and warns over 5 MB; trace and list --json show the files.
 
-* DRAFT A changed attachment reopens what links it
-:PROPERTIES:
-:ID:          01a2090e-8f15-7ac0-9085-ab67984c75dd
-:PROVES:      01a2090e-8781-768e-86aa-fbfa698d41f9
-:TEST:        ert/lemmax-attach-reopens
-:END:
-Editing, adding, removing or renaming a file two lemmas link refuses the staged commit for both; a linked .org file does not.
-
 * DRAFT A changed proof attachment reopens the proof
 :PROPERTIES:
 :ID:          01a2090e-90e9-770f-80a2-4c66f0c2c5d9
@@ -1183,10 +1175,13 @@ Org's org-id-new, set to call lmx new-id, gives sorted UUID v7 ids; lmx new-id p
 :END:
 Settings quoted in a #+begin_src or #+begin_example block are text, neither read nor refused, and NAME+ adds; a #+PROPERTY: or old keyword setting below the first heading is refused, plain and staged, and is not read; a setting set twice in a file, by #+PROPERTY: or by the old keyword, is refused, a setup file too.
 
-* DRAFT A changed attachment reopens what links it
+* PROOF A changed attachment reopens what links it
 :PROPERTIES:
 :ID:          01a21126-310a-7104-99d1-b2ac4edadaff
 :PROVES:      01a2090e-8781-768e-86aa-fbfa698d41f9
 :TEST:        ert/lemmax-attach-change-edited ert/lemmax-attach-change-renamed ert/lemmax-attach-change-shared ert/lemmax-attach-change-org-ignored
+:END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-25 Wed 10:53]
 :END:
 lint --staged refuses a LEMMA whose linked file's blob changed, HEAD against staged, and passes once it is CONJECTURE; a linked file renamed with its link rewritten is refused too; two LEMMAs linking one file are both refused; a linked .org file changes nothing.

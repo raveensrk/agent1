@@ -1393,12 +1393,13 @@ Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =
 - Asked by the owner on 2026-11-23
 Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id-to-path-function-list (01a2058c-… → data/01/a2058c-…); org-attach-auto-tag is "ATTACH".
 
-** THESIS A changed attachment reopens what links it                  :lint:
+** LEMMA A changed attachment reopens what links it                   :lint:
 :PROPERTIES:
 :ID:          01a2090e-8781-768e-86aa-fbfa698d41f9
 :USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 10:53]
 - State "THESIS"     from "CONJECTURE" [2026-11-23 Mon]
 :END:
 - A file a LEMMA or THEOREM links is part of its text: editing, adding, removing or renaming one is a text change
