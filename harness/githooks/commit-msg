@@ -4,9 +4,8 @@
 rules/git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
 off (2026-10-08), but pi and other harnesses can still write one, so git
 itself refuses it. A human co-author passes. Comment lines (#) are ignored.
-In a repo whose requirements opt in (#+PROPERTY: LEMMAX_TESTS, the old #+LEMMAX_TESTS:, or an old
-lemmax/config.eld that names :tests), it then runs
-lmx commit-msg: a code commit names a requirement id (RT-11).
+Then it runs lemmax's commit-msg, lmx hook commit-msg, when lmx is on PATH:
+in a repo whose theories opt in, a code commit names a statement id.
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks
@@ -17,9 +16,9 @@ A global hooksPath hides each repo's .git/hooks, so a repo's own
   commit-msg -h | --help | help
 Bypass once, deliberately: git commit --no-verify
 """
-# lemma: RT-11
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -61,15 +60,11 @@ def main(argv):
         print("fix: delete that line, then commit again:", file=sys.stderr)
         print("  git commit -F <message without the line>", file=sys.stderr)
         return 1
-    # RT-11: in a repo whose requirements opt in, a code commit names an id.
-    # The grep keeps every other repo fast: Emacs never starts there.
-    opted = subprocess.run(["git", "grep", "--cached", "-q", "-E", r"^#\+(LEMMAX_TESTS:|PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$))", "--", "*.org", "*.setup"],
-                           capture_output=True).returncode == 0 or subprocess.run(
-        ["git", "grep", "--cached", "-q", "-F", ":tests", "--", "lemmax/config.eld"], capture_output=True).returncode == 0
-    if opted:
-        lemmax = os.environ.get("LEMMAX") or os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "lemmax", "lmx")
-        if subprocess.run([lemmax, "commit-msg", argv[0]]).returncode != 0:
+    # lemmax (its own repo now): in a repo whose theories opt in, a code commit
+    # names a statement id. lmx hook commit-msg decides the opt-in itself.
+    if shutil.which("lmx"):
+        env = dict(os.environ, LEMMAX_NO_CHAIN="1")
+        if subprocess.run(["lmx", "hook", "commit-msg", argv[0]], env=env).returncode != 0:
             return 1
     # Chain to the repo's own commit-msg hook, which the global path hides.
     git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()

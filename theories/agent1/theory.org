@@ -81,7 +81,7 @@ Every change to what the app does is a requirement first; the code follows it, a
 agent1's requirement workflow has a name: LemmaX, from "lemma". In mathematics a lemma is a small proven step used to build bigger results.
 =Conjecture -> approved -> built -> proofs PASSED -> docs -> LEMMA=, every step traced by id.
 Conjecture + proof = lemma. The names are the files' own words, not only an explanation.
-Each term, from Axiom to Q.E.D., is a =DEFINITION= heading in [[file:../lemmax/theory.definitions.org][lemmax/theory.definitions.org]].
+Each term, from Axiom to Q.E.D., is a =DEFINITION= heading in [[https://github.com/raveensrk/lemmax/blob/main/theories/lemmax/theory.definitions.org][lemmax/theory.definitions.org]].
 - A conjecture becomes a lemma only when it has a proof and every proof of it is PASSED.
 - A theorem is proven only when its own proofs pass and every lemma it uses is proven.
 - A failing proof test is a counterexample: its proof goes OPEN, and the lemma goes back to CONJECTURE until it passes; only the owner makes a conjecture REFUTED.

@@ -1,9 +1,0 @@
-digraph lemmax {
-  node [shape=box style=filled fontname=Helvetica];
-  "RQ-1" [label="RQ-1\nThe base" fillcolor=palegreen];
-  "RQ-2" [label="RQ-2\nBuilds on it" fillcolor=palegreen];
-  "RQ-3" [label="RQ-3\nNot yet" fillcolor=lightyellow];
-  "RQ-4" [label="RQ-4\nDropped one" fillcolor=lightgray];
-  "RQ-2" -> "RQ-1";
-  "RQ-2" -> "RQ-1" [style=dashed];
-}

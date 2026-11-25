@@ -228,14 +228,14 @@ Nothing changed and the docs match the code: say so and stop.
 
 ## LemmaX mode
 
-<!-- lemma: 01a20d28-cb41-760a-a477-e1704807a2a8 -->
+<!-- built for lemmax 01a20d28-cb41-760a-a477-e1704807a2a8, in ~/repos/lemmax -->
 
 Picked when the repo has a `theories/` folder of LemmaX files, or by the
 `lemmax` argument. You, the agent, write both documents; `lmx` never does,
 and only warns when one is missing or older than the theory.
 
 The rules of each document are statements in
-[theories/lemmax/theory.org](../../theories/lemmax/theory.org):
+[theories/lemmax/theory.org](https://github.com/raveensrk/lemmax/blob/main/theories/lemmax/theory.org):
 "The bible is the design document of a finished project" and "The manual is
 the user manual of a finished project". Read both first and follow them; this
 section only orders the work.
