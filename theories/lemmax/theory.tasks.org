@@ -187,9 +187,10 @@ Statements say what, not how: move names of lemmax.el, its functions and line nu
 :PROPERTIES:
 :ID:          01a20959-9b7e-75b9-8465-794c9e68f2be
 :FOR:         01a20959-95da-760e-82dc-2797c5af6abc
-:LAST_EDITED: 2026-11-23
+:LAST_EDITED: 2026-11-25
 :END:
 Declare the chapter tag group in setup.org and tag each statement with one chapter: map today's feature tags, :cli: to interfaces, :lint: and :trace: to behavior, and so on.
+- Do it together with building the bible, 01a20959-95da-760e-82dc-2797c5af6abc: only the book needs chapters. Org's CATEGORY property may set a chapter for a whole subtree. Owner chose this on 2026-11-25.
 
 * TODO Ishikari's docs ant runs lmx book
 :PROPERTIES:
