@@ -3708,3 +3708,41 @@ which holds the tests and code, read by theory.org with REQS."
   (let ((d (rt-link-repo (rt-linking "RQ-1" "[[file:other.org]]"))))
     (rt-set d "other.org" "* X changed\n")
     (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))))
+
+;;;; 01a20e7b-c7c0-77fc-bc53-bc963ab4843f: the history walk reads only text changes
+
+;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
+(ert-deftest lemmax-history-property-drop ()
+  :tags '(timeout-60)
+  ;; Dropping a :CREATED: line, or adding a log line, is no text change; nor is
+  ;; a side branch's older copy, merged later: the walk reads the branch's own
+  ;; history, a merge as one revision.
+  (let* ((accepted (list (rt-log "THESIS" "CONJECTURE" "2026-01-09 Fri 10:00") rt-thesis-log))
+         (file (lambda (body &optional created logs top)
+                 (concat (or top rt-log-head)
+                         (rt-logged "RQ-1" :state "THESIS" :logs (or logs (list rt-thesis-log))
+                                    :props (if created ":CREATED:     2026-01-05\n" "") :body body))))
+         (d (rt-repo (rt-log-files nil nil) "2026-01-05")))
+    (rt-set d "theory.org" (funcall file "Statement.\n" t))
+    (rt-commit d "accept" "2026-01-05")
+    (rt-git d "branch" "side")
+    ;; Main: the text changes and is accepted again; :CREATED: goes, a log line comes.
+    (rt-set d "theory.org" (funcall file "Statement, reworded.\n" t))
+    (rt-commit d "reword" "2026-01-08")
+    (rt-set d "theory.org" (funcall file "Statement, reworded.\n" nil accepted))
+    (rt-commit d "drop :CREATED:, accept again" "2026-01-09")
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; A side branch, its older copy of the text, touches the file and is merged.
+    (rt-git d "checkout" "-q" "side")
+    (rt-set d "theory.org" (funcall file "Statement.\n" t nil (concat "# a side note\n" rt-log-head)))
+    (rt-commit d "side" "2026-01-10")
+    (rt-git d "checkout" "-q" "main")
+    (rt-env '("GIT_COMMITTER_DATE=2026-01-11T12:00:00" "GIT_AUTHOR_DATE=2026-01-11T12:00:00")
+      (rt-git d "merge" "-q" "--no-edit" "side"))
+    (should (string-match-p "# a side note\nStatement\\|# a side note" (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.org") d)) (buffer-string))))
+    (should (string-match-p "reworded" (with-temp-buffer (insert-file-contents (expand-file-name (rt-p "theory.org") d)) (buffer-string))))
+    (rt-should-clean (rt-run d "lint" "--no-tests"))
+    ;; A real word change still counts.
+    (rt-set d "theory.org" (concat "# a side note\n" (funcall file "Statement, reworded again.\n" nil accepted)))
+    (rt-commit d "edit" "2026-01-12")
+    (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: a THESIS whose text changed 2026-01-12")))

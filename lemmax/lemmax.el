@@ -1968,8 +1968,11 @@ USES, a hash, gets the last day each id's :USES: changed, not its text."
              ;; lemma: 01a20e7b-c7c0-77fc-bc53-bc963ab4843f
              ;; --follow: a file moved, as into theories/, keeps its history;
              ;; each revision is read at the path it had then.
+             ;; --first-parent -m: the history of the branch itself, a merge
+             ;; read as one revision; a side branch's older text, interleaved by
+             ;; date, would read as a change back and forth.
              (revs (nreverse
-                    (cl-loop for rec in (split-string (or (lemmax--git-out "log" "--follow" "--date=format-local:%Y-%m-%d"
+                    (cl-loop for rec in (split-string (or (lemmax--git-out "log" "--follow" "--first-parent" "-m" "--date=format-local:%Y-%m-%d"
                                                                            "--format=%x1e%H %cd" "--name-only" "--" file)
                                                           "")
                                                       "\x1e" t)
