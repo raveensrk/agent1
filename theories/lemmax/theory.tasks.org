@@ -245,3 +245,14 @@ Make the LemmaX workflow work with only Org files; git becomes an optional extra
 - Measure lint without the git walk
 - Owner asked on 2026-11-25
 - Cancelled on 2026-11-25: owner judged the task invalid.
+
+* TODO Write a conjecture: how a project includes headings from other projects
+:PROPERTIES:
+:ID:          01a211f1-9f41-7e7b-8a7e-3aa33387f91a
+:FOR:         01a205a5-79e2-7959-9296-5e465af6acc7@414c6606
+:LAST_EDITED: 2026-11-25
+:END:
+Decide how one project's theory brings in statements written in another project, then write it as a conjecture.
+- Start from what exists: :FOLLOWS: and the conjecture that lint resolves :FOLLOWS: in other projects
+- Answer: copy, link, or Org's #+INCLUDE:; how a pin tracks the other project's text; what lint and trace show
+- Owner asked on 2026-11-25
