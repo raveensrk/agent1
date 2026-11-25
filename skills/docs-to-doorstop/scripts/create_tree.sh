@@ -2,6 +2,10 @@
 # Create the ASPICE 4.0 Doorstop tree in REQS_DIR. Safe to run once only.
 # Usage: create_tree.sh REQS_DIR
 set -euo pipefail
+case "${1:-}" in
+  -h|--help) sed -n '2s/^# \{0,1\}//p' "$0"; exit 0;;
+  help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0"; exit 0;;
+esac
 
 reqs=${1:?usage: create_tree.sh REQS_DIR}
 mkdir -p "$reqs"

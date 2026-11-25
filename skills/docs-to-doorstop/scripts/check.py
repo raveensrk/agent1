@@ -66,6 +66,9 @@ def load(reqs):
 
 
 def main():
+    if sys.argv[1:2] in (["-h"], ["--help"], ["help"]):
+        print(__doc__ if sys.argv[1] == "help" else __doc__.split("\n\n")[0])
+        return 0
     reqs = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "reqs")
     items, inactive = load(reqs)
     children = {}
