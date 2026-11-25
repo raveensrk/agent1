@@ -7,7 +7,7 @@ Process: [[file:../agent1/theory.org][Requirements requirements]].
 * THESIS Ishikari completes a task fast and correct, with no human after planning
 :PROPERTIES:
 :ID:          01a20f2e-b277-7698-b470-c6c32309d6c8
-:USES:        ISH-1 ISH-2 ISH-3 ISH-4 ISH-5 ISH-6 ISH-7 ISH-8 ISH-9
+:USES:        ISH-1@e99d7851 ISH-2@322b8222 ISH-3@2a5bd8c1 ISH-4@7875c055 ISH-5@21ffacf4 ISH-6@b359cc59 ISH-7@511583b7 ISH-8@7c74d087 ISH-9@33706f2e
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]
@@ -55,7 +55,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#B] A read-only retrospective ant reviews each full run and reports ranked improvements to the flow  :ishikari:
 :PROPERTIES:
 :ID:          ISH-3
-:USES:        ISH-14
+:USES:        ISH-14@582dd49c
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -69,7 +69,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#A] Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent  :ishikari:
 :PROPERTIES:
 :ID:          ISH-4
-:USES:        ISH-13
+:USES:        ISH-13@93159934
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -98,7 +98,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#A] The investigator does all the planning; the plan stage only checks  :ishikari:
 :PROPERTIES:
 :ID:          ISH-6
-:USES:        ISH-10
+:USES:        ISH-10@7ed0e894
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -115,7 +115,7 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 * LEMMA [#A] The investigator writes a product spec and a tech spec; every spec id has a worker  :ishikari:
 :PROPERTIES:
 :ID:          ISH-7
-:USES:        ISH-12
+:USES:        ISH-12@4d2bb7f7
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-19 Thu]
@@ -169,7 +169,7 @@ Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workfl
 * LEMMA [#B] The investigator is a skill: it plans for Ishikari, or answers in the session on its own  :ishikari:
 :PROPERTIES:
 :ID:          ISH-10
-:USES:        ISH-11
+:USES:        ISH-11@8890b243
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-20 Fri]
@@ -233,7 +233,7 @@ Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
 * LEMMA [#B] The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant  :ishikari:
 :PROPERTIES:
 :ID:          ISH-14
-:USES:        ISH-15
+:USES:        ISH-15@16a4caa0
 :END:
 :LOGBOOK:
 - State "THEOREM"    from "THESIS"     [2026-11-21 Sat]
