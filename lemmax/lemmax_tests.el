@@ -3746,3 +3746,45 @@ which holds the tests and code, read by theory.org with REQS."
     (rt-set d "theory.org" (concat "# a side note\n" (funcall file "Statement, reworded again.\n" nil accepted)))
     (rt-commit d "edit" "2026-01-12")
     (rt-should-find (rt-run d "lint" "--no-tests") "RQ-1: a THESIS whose text changed 2026-01-12")))
+
+;;;; 01a2090e-895f-7dfe-8227-1bcb9f632960: a changed proof attachment reopens the proof
+
+;; lemma: 01a2090e-895f-7dfe-8227-1bcb9f632960
+(defun rt-proof-link-repo (state link)
+  "A LEMMA with one proof in STATE whose body links LINK, committed."
+  (rt-repo (list (cons "theory.org" (concat rt-math-head (rt-lemma "RQ-1")))
+                 (cons "theory.proofs.org" (concat rt-new-proofs-head
+                                                   (replace-regexp-in-string "^It shows it\\.$" (concat "See " link ".")
+                                                                             (rt-nproof "PR-1" "RQ-1" :state state) t t)))
+                 (cons "tests.sh" (rt-tests-sh "unit/a")) (cons "src/x.clj" "(ns x)\n")
+                 (cons "docs/run.pdf" "log 1"))))
+
+(ert-deftest lemmax-proof-attach-edited ()
+  :tags '(timeout-30)
+  ;; Editing a file a PROOF links refuses the change until the proof is DRAFT.
+  (let ((d (rt-proof-link-repo "PROOF" "[[file:docs/run.pdf]]")))
+    (rt-set d "docs/run.pdf" "log 2")
+    (rt-should-find (rt-staged-lint d) "PR-1: a PROOF proof's linked file theories/t/docs/run\\.pdf changed; make it DRAFT until the owner approves it again")))
+
+(ert-deftest lemmax-proof-attach-renamed ()
+  :tags '(timeout-30)
+  ;; Renaming it, the link rewritten with it, does too.
+  (let ((d (rt-proof-link-repo "PROOF" "[[file:docs/run.pdf]]")))
+    (rt-git d "mv" (rt-p "docs/run.pdf") (rt-p "docs/run2.pdf"))
+    (rt-set d "theory.proofs.org" (concat rt-new-proofs-head
+                                          (replace-regexp-in-string "^It shows it\\.$" "See [[file:docs/run2.pdf]]."
+                                                                    (rt-nproof "PR-1" "RQ-1") t t)))
+    (rt-should-find (rt-staged-lint d) "PR-1: a PROOF proof's linked file theories/t/docs/run2\\.pdf changed")))
+
+(ert-deftest lemmax-proof-attach-draft-passes ()
+  :tags '(timeout-30)
+  ;; A DRAFT proof's file may change freely; a PROOF made DRAFT in the same change passes.
+  (let ((d (rt-proof-link-repo "DRAFT" "[[file:docs/run.pdf]]")))
+    (rt-set d "docs/run.pdf" "log 2")
+    (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d)))))
+  (let ((d (rt-proof-link-repo "PROOF" "[[file:docs/run.pdf]]")))
+    (rt-set d "docs/run.pdf" "log 2")
+    (rt-set d "theory.proofs.org" (concat rt-new-proofs-head
+                                          (replace-regexp-in-string "^It shows it\\.$" "See [[file:docs/run.pdf]]."
+                                                                    (rt-nproof "PR-1" "RQ-1" :state "DRAFT") t t)))
+    (should-not (string-match-p "linked file" (nth 2 (rt-staged-lint d))))))

@@ -5,6 +5,8 @@ and `lint --json` carry their own `version`, the number of their shape.
 
 ## Unreleased
 
+- A file a `PROOF` links is its evidence: `lint --staged` refuses an edited,
+  added, removed or renamed one until the proof is `DRAFT`.
 - The history walk reads a branch's own history, `--first-parent`, a merge as
   one revision: a side branch's older copy of a statement no longer reads as a
   text change.

@@ -1343,6 +1343,14 @@ or whose blob differs; nil when none did."
                     (when x
                       (lemmax--finding f l id (format "a %s statement's linked file %s changed" (plist-get r :state) x)
                                        "make it CONJECTURE until the owner accepts it again"))))
+                ;; lemma: 01a2090e-895f-7dfe-8227-1bcb9f632960
+                ;; A file a PROOF links is its evidence: a change makes it DRAFT.
+                (when (and (lemmax--proof-p r) (lemmax--proof-holds-p (plist-get r :state))
+                           (lemmax--proof-holds-p (plist-get old :state)))
+                  (let ((x (lemmax--linked-file-change (plist-get old :files) (plist-get r :files) blobs)))
+                    (when x
+                      (lemmax--finding f l id (format "a %s proof's linked file %s changed" (plist-get r :state) x)
+                                       "make it DRAFT until the owner approves it again"))))
                 (when (and changed (not (lemmax--note-p r)) (plist-get r :last-edited)
                            (not (equal (plist-get r :last-edited) today)))
                   (lemmax--finding f l id "its text changed and :LAST_EDITED: is not today"

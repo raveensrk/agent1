@@ -930,9 +930,9 @@ Attach folders come from org-attach-dir; lint refuses an untagged heading, a mis
 :PROPERTIES:
 :ID:          01a2090e-90e9-770f-80a2-4c66f0c2c5d9
 :PROVES:      01a2090e-895f-7dfe-8227-1bcb9f632960
-:TEST:        ert/lemmax-attach-proof-reopens
+:TEST:        ert/lemmax-proof-attach-edited ert/lemmax-proof-attach-renamed ert/lemmax-proof-attach-draft-passes
 :END:
-A PASSED proof whose linked file changes is refused until OPEN.
+lint --staged refuses a PROOF whose linked file is edited, or renamed with its link, until it is DRAFT; a DRAFT proof's file changes freely, and a PROOF made DRAFT in the same change passes.
 
 * PROOF publish shows attachments, with Org's own export
 :PROPERTIES:
