@@ -5,7 +5,7 @@
 * THESIS Agent1 gives any agent one public set of rules, skills and checks
 :PROPERTIES:
 :ID:          01a20f2e-b276-7596-bddd-1ab2ebeb2f54
-:USES:        actable-look date-pickers scroll-areas elimination-tracker-tauri motion-catalogue about-version text-no-autocomplete deploy-test-alongside build-test-alongside test-times-log touch-gui-map touch-gesture-map
+:USES:        actable-look@a32b6958 date-pickers@ff0d34cd scroll-areas@4b735cc0 elimination-tracker-tauri@076de576 motion-catalogue@979ee3f6 about-version@2edb8c2d text-no-autocomplete@e1ad9e99 deploy-test-alongside@20503fc7 build-test-alongside@2b9cd30c test-times-log@f761a64e touch-gui-map@018fb913 touch-gesture-map@c8bfec65
 :END:
 :LOGBOOK:
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed]

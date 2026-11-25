@@ -5,7 +5,7 @@
 * DRAFT Each component kind has one gesture map
 :PROPERTIES:
 :ID:          01a20ea2-00da-76b0-ae6c-6da1259c357f
-:PROVES:      touch-gesture-map
+:PROVES:      touch-gesture-map@c8bfec65
 :TEST:        demo/web/e2e "gesture map"
 :END:
 When the tests in :TEST: pass, the conjecture holds.
