@@ -1189,10 +1189,13 @@ Settings quoted in a #+begin_src or #+begin_example block are text, neither read
 :END:
 lint --staged refuses a LEMMA whose linked file's blob changed, HEAD against staged, and passes once it is CONJECTURE; a linked file renamed with its link rewritten is refused too; two LEMMAs linking one file are both refused; a linked .org file changes nothing.
 
-* DRAFT A link pins the text it was checked against with @hash
+* PROOF A link pins the text it was checked against with @hash
 :PROPERTIES:
 :ID:          01a2113d-ce15-7554-a9b9-187efc008051
 :PROVES:      01a20fec-4f90-7a8d-9062-c1253205f5e9@32eee48c
 :TEST:        ert/lemmax-pin-match ert/lemmax-pin-stale ert/lemmax-pin-missing ert/lemmax-pin-stale-proves ert/lemmax-pin-migrate ert/lemmax-pin-state-keeps-hash ert/lemmax-pin-aliases-not-pinned
+:END:
+:LOGBOOK:
+- State "PROOF"      from "DRAFT"      [2026-11-25 Wed 11:56]
 :END:
 A pin that matches the used statement's text, whitespace runs one space, is clean and the id reads without it; a stale pin is named by lint and trace with the id, the pinned hash and the hash now, and lmx pin writes the hash now; an unpinned id is refused in a logged-form file and an old file still reads; a stale :PROVES: pin asks the PROOF to be DRAFT; migrate pins every unpinned id, links too, and leaves :ALIASES: alone; a change of state, log or links changes no hash; :ALIASES: and :ROAM_REFS: ask for no pin.

@@ -1393,12 +1393,13 @@ Evidence: lemmax.el already reads an old name beside its new one: =:NEEDS:= or =
 - Asked by the owner on 2026-11-23
 Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id-to-path-function-list (01a2058c-… → data/01/a2058c-…); org-attach-auto-tag is "ATTACH".
 
-** LEMMA A changed attachment reopens what links it                   :lint:
+** CONJECTURE A changed attachment reopens what links it                   :lint:
 :PROPERTIES:
 :ID:          01a2090e-8781-768e-86aa-fbfa698d41f9
 :USES:        01a2090e-8591-756c-a9f1-dd473d9c3ce4@e579592b
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed 11:56]
 - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 10:53]
 - State "THESIS"     from "CONJECTURE" [2026-11-23 Mon]
 :END:
@@ -1410,12 +1411,13 @@ Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id
 - Asked by the owner on 2026-11-23
 Evidence: lint --staged already compares each statement's text, HEAD against staged; git ls-files -s gives each file's blob id.
 
-** LEMMA A changed proof attachment reopens the proof                 :lint:
+** CONJECTURE A changed proof attachment reopens the proof                 :lint:
 :PROPERTIES:
 :ID:          01a2090e-895f-7dfe-8227-1bcb9f632960
 :USES:        01a2090e-8781-768e-86aa-fbfa698d41f9@ed48bfc4
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "LEMMA"      [2026-11-25 Wed 11:56]
 - State "LEMMA"      from "THESIS"     [2026-11-25 Wed 10:59]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 10:57]
 - State "CONJECTURE" from "THESIS"     [2026-11-25 Wed 10:57]
@@ -1827,12 +1829,13 @@ A file's LemmaX settings are lines at its top, each set once, so a line in a sta
 - Asked by the owner on 2026-11-23
 Evidence: Org reads a #+PROPERTY: line anywhere in a buffer; on 2026-11-23 a body line starting #+LEMMAX_TESTS: became the file's test command (fixed by hand in d3e34aa).
 
-** THESIS A link pins the text it was checked against with @hash          :trace:
+** LEMMA A link pins the text it was checked against with @hash          :trace:
 :PROPERTIES:
 :ID:          01a20fec-4f90-7a8d-9062-c1253205f5e9
 :USES:        RT-9@cdf6cfbf
 :END:
 :LOGBOOK:
+- State "LEMMA"      from "THESIS"     [2026-11-25 Wed 11:56]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 11:04]
 - State "CONJECTURE" from "THESIS"     [2026-11-25 Wed 11:04]
 - State "THESIS"     from "CONJECTURE" [2026-11-25 Wed 11:01]
