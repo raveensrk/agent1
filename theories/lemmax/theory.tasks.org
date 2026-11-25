@@ -256,3 +256,15 @@ Decide how one project's theory brings in statements written in another project,
 - Start from what exists: :FOLLOWS: and the conjecture that lint resolves :FOLLOWS: in other projects
 - Answer: copy, link, or Org's #+INCLUDE:; how a pin tracks the other project's text; what lint and trace show
 - Owner asked on 2026-11-25
+
+* TODO Write a conjecture: the bible and the manual show every state change in a D2 diagram
+:PROPERTIES:
+:ID:          01a211f2-7a27-7036-94a4-d6d962ea3949
+:FOR:         01a20959-95da-760e-82dc-2797c5af6abc@90a95095 01a20d04-c038-7534-9920-23ec7679dadc@497bf965
+:LAST_EDITED: 2026-11-25
+:END:
+Write a conjecture that the design document and the user manual each carry a D2 diagram of every state transition.
+- Statements: CONJECTURE, THESIS, LEMMA, THEOREM, REFUTED, and what moves each one (accept, prove, text change, stale pin, failing test)
+- Proofs: DRAFT, PROOF, FALLACY, MOOT, and what moves each one
+- Decide: one diagram or two; drawn from the #+TODO lines so it never drifts; how lint checks it is there
+- Owner asked on 2026-11-25
