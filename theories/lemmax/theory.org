@@ -1410,18 +1410,19 @@ Evidence: Org 9.8.7: org-attach-dir reads :DIR:, then :ID: through org-attach-id
 - Asked by the owner on 2026-11-23
 Evidence: lint --staged already compares each statement's text, HEAD against staged; git ls-files -s gives each file's blob id.
 
-** THESIS A changed proof attachment reopens the proof                :lint:
+** CONJECTURE A changed proof attachment reopens the proof             :lint:
 :PROPERTIES:
 :ID:          01a2090e-895f-7dfe-8227-1bcb9f632960
 :USES:        01a2090e-8781-768e-86aa-fbfa698d41f9
 :END:
 :LOGBOOK:
+- State "CONJECTURE" from "THESIS"     [2026-11-25 Wed 10:57]
 - State "THESIS"     from "CONJECTURE" [2026-11-23 Mon]
 :END:
-- A file a PASSED proof links is its evidence; changing, adding, removing or renaming one refuses the commit until the proof is OPEN
-- The statement the proof proves then goes back to CONJECTURE, as for any OPEN proof
-- Asked by the owner on 2026-11-23
-Evidence: lint already refuses a LEMMA or THEOREM with an OPEN proof.
+- A file a PROOF links is its evidence; changing, adding, removing or renaming one refuses the commit until the proof is DRAFT
+- The statement the proof proves then goes back to CONJECTURE, as for any DRAFT proof
+- Asked by the owner on 2026-11-23; reworded to the new proof states and accepted again on 2026-11-25
+Evidence: lint already refuses a LEMMA or THEOREM with a DRAFT proof.
 
 ** LEMMA publish shows attachments, with Org's own export                :cli:
 :PROPERTIES:
