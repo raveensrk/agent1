@@ -7,7 +7,7 @@ by registering this repo with [install.py](../install.py).
 - [ask-simple](./ask-simple/SKILL.md) - Asks the user clear questions in simple language, as if they are new to the topic.
 - [determinize](./determinize/SKILL.md) - Turns a directory's agent rules into checks, guards and git hooks, then thins the instructions to decisions and routing.
 - [detective-ant](./detective-ant/SKILL.md) - Checks a change against its task, issue or plan and finds real bugs, each with a cause and fix plan: by hand, or as Ishikari's detective ants.
-- [docs-to-doorstop](./docs-to-doorstop/SKILL.md) - Turns a folder of docs and specs into an ASPICE 4.0 Doorstop tree, asking every doubt first.
+- [docs-to-doorstop](./docs-to-doorstop/SKILL.md) - Turns a folder of docs and specs into a full ASPICE 4.0 V-model Doorstop tree (SYS, HWE, SWE), asking every doubt first and proving it with a checker.
 - [docs](./docs/SKILL.md) - Creates or updates `docs/`, run by hand after a task: a book-style design doc complete enough to rebuild the repo from.
 - [investigator-ant](./investigator-ant/SKILL.md) - Investigates a task, proves it can be built, then plans it: in the session by hand, or as specs and plans for Ishikari.
 - [ishikari](./ishikari/SKILL.md) - Runs the Ishikari ant workflow on a task: review, plan, parallel build, check, fix, test together and merge, stopping only to ask.
