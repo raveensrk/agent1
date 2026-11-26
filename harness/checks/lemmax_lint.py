@@ -1,17 +1,48 @@
 #!/usr/bin/env python3
 # harness-check: {"id": "lemmax_lint", "applies": ["*.org"], "quadrant": "feedback/computational"}
-"""Run lemmax's harness check on the edited .org files.
+"""Lint each edited .org file of a repo whose theories opt in.
 
-lemmax lives in its own repo now (~/repos/lemmax); the check is its
-lemmax/hooks/lemmax_lint.py, reached as `lmx hook lemmax_lint.py`. It prints
-path:line: message for each finding in a theory file that opts in.
-With no lmx on PATH there is nothing to check.
+A repo opts in with a tracked .org file holding #+PROPERTY: LEMMAX_TESTS.
+For each such file it runs lmx lint --no-tests FILE and prints each finding
+as path:line: message. With no lmx on PATH there is nothing to check. Exit 0.
 
     lemmax_lint.py FILE...      (or paths on stdin)
 """
 import os
+import re
 import shutil
+import subprocess
 import sys
 
-if shutil.which("lmx"):
-    os.execvp("lmx", ["lmx", "hook", "lemmax_lint.py", *sys.argv[1:]])
+OPT_IN = r"^#\+PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$)"
+FINDING = re.compile(r"^lmx: ([^:]*):([0-9]*): (.*)$")
+
+
+def opted_in(root):
+    r = subprocess.run(["git", "-C", root, "grep", "--cached", "-q", "-E", OPT_IN, "--", "*.org"],
+                       capture_output=True)
+    return r.returncode == 0
+
+
+def main(files):
+    if not shutil.which("lmx"):
+        return 0
+    if not files and not sys.stdin.isatty():
+        files = [l.strip() for l in sys.stdin if l.strip()]
+    for f in files:
+        if not os.path.isfile(f):
+            continue
+        top = subprocess.run(["git", "-C", os.path.dirname(os.path.abspath(f)), "rev-parse", "--show-toplevel"],
+                             capture_output=True, text=True)
+        if top.returncode != 0 or not opted_in(top.stdout.strip()):
+            continue
+        r = subprocess.run(["lmx", "lint", "--no-tests", f], capture_output=True, text=True)
+        for line in r.stderr.splitlines():
+            m = FINDING.match(line)
+            if m:
+                print(f"{m.group(1)}:{m.group(2)}: {m.group(3)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

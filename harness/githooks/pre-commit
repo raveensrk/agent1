@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # pre-commit - run lemmax's pre-commit, then the repo's own hook.
 #
-# lemmax lives in its own repo now (~/repos/lemmax). Its hook refuses staged theory
-# changes that break the theory's rules, in repos that opt in; every other repo
-# passes at once. Then this runs the repo's own .git/hooks/pre-commit, which the
-# global core.hooksPath hides. With no lmx on PATH, the lemmax step is skipped.
+# In a repo whose theories opt in (a tracked .org file with #+PROPERTY: LEMMAX_TESTS)
+# it runs lmx lint --no-tests and refuses the commit on a finding; every other repo
+# passes at once, without starting Emacs. Then this runs the repo's own
+# .git/hooks/pre-commit, which the global core.hooksPath hides. With no lmx on PATH,
+# the lemmax step is skipped.
 #
 # usage: pre-commit [-h|--help|help]   (git passes no arguments)
 # Bypass once, deliberately: git commit --no-verify
 set -uo pipefail
 case "${1:-}" in -h|--help|help) sed -n '2,/^[^#]/s/^# \{0,1\}//p' "$0" | sed '/^set /d'; exit 0;; esac
-if command -v lmx >/dev/null 2>&1; then
-	LEMMAX_NO_CHAIN=1 lmx hook pre-commit || exit 1
+if command -v lmx >/dev/null 2>&1 &&
+	git grep --cached -q -E '^#\+PROPERTY:[[:space:]]+LEMMAX_TESTS\+?([[:space:]]|$)' -- '*.org' 2>/dev/null; then
+	lmx lint --no-tests || exit 1
 fi
 own="$(git rev-parse --git-dir)/hooks/pre-commit"
 if [ -x "$own" ] && [ "$(readlink -f "$own")" != "$(readlink -f "$0")" ]; then

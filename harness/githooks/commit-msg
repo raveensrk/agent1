@@ -4,8 +4,6 @@
 rules/git.md: "Never add an AI co-author trailer." Claude Code's own attribution is
 off (2026-10-08), but pi and other harnesses can still write one, so git
 itself refuses it. A human co-author passes. Comment lines (#) are ignored.
-Then it runs lemmax's commit-msg, lmx hook commit-msg, when lmx is on PATH:
-in a repo whose theories opt in, a code commit names a statement id.
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks
@@ -18,7 +16,6 @@ Bypass once, deliberately: git commit --no-verify
 """
 import os
 import re
-import shutil
 import subprocess
 import sys
 
@@ -60,12 +57,6 @@ def main(argv):
         print("fix: delete that line, then commit again:", file=sys.stderr)
         print("  git commit -F <message without the line>", file=sys.stderr)
         return 1
-    # lemmax (its own repo now): in a repo whose theories opt in, a code commit
-    # names a statement id. lmx hook commit-msg decides the opt-in itself.
-    if shutil.which("lmx"):
-        env = dict(os.environ, LEMMAX_NO_CHAIN="1")
-        if subprocess.run(["lmx", "hook", "commit-msg", argv[0]], env=env).returncode != 0:
-            return 1
     # Chain to the repo's own commit-msg hook, which the global path hides.
     git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
     local = os.path.join(git_dir, "hooks", "commit-msg") if git_dir else ""
