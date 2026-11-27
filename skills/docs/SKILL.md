@@ -3,7 +3,7 @@ name: docs
 metadata:
   scope: global
 description: Create or update docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, or by Ishikari's docs ant after a merge; never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing; called by an ant it takes its answers from the ant's docs brief and asks nothing. Update mode brings the docs in line with what changed and what was learned.
-argument-hint: "create|update|lemmax [repo path]"
+argument-hint: "create|update [repo path]"
 ---
 
 # Create or update docs: the book of this repository
@@ -19,10 +19,6 @@ Take every answer from the brief, decide the outline yourself and go straight on
 Work on the branch the ant was given, not `docs-book`.
 Install nothing, and move or delete a root file only where the brief says yes; name each skipped step in the report.
 Never start on your own, before a task or in the middle of one.
-
-A LemmaX project, one with a `theories/` folder of LemmaX files, gets
-[LemmaX mode](#lemmax-mode) instead of `docs/`: the bible and the manual of
-each finished project.
 
 Two modes, picked by the first argument:
 
@@ -225,40 +221,3 @@ No new branch: commit on the current branch, never push.
 11. Commit and report in a few lines: what was removed, fixed and added, training data updated, check results, open questions and the commits.
 
 Nothing changed and the docs match the code: say so and stop.
-
-## LemmaX mode
-
-Picked when the repo has a `theories/` folder of LemmaX files, or by the
-`lemmax` argument. You, the agent, write both documents; `lmx` never does,
-and only warns when one is missing or older than the theory.
-
-The rules of each document are statements in
-[theories/lemmax/theory.org](https://github.com/raveensrk/lemmax/blob/main/theories/lemmax/theory.org):
-"The bible is the design document of a finished project" and "The manual is
-the user manual of a finished project". Read both first and follow them; this
-section only orders the work.
-
-For each project, a folder `theories/PROJECT/`:
-
-1. Finished check. Run `lmx list` and `lmx lint`. When a conjecture, an open
-   or failed proof, or a task is still open, name each one and stop.
-2. Read the whole project: every file under `theories/PROJECT/`, then the code,
-   the tests and the docs. Read; never guess what the code does.
-3. Research the web before writing a line:
-   - how good design documents and manuals are written, the GNU manual format
-     (<https://www.gnu.org/manual/manual.html>) for the manual;
-   - the docs of each library and tool the project uses, at the versions in its
-     env file;
-   - how similar tools explain the same job.
-   Cite each source you rely on, in the document's References.
-4. Write `theories/PROJECT/PROJECT.bible.html`, one self-contained page:
-   chapters by the bible statement, images and diagrams inline.
-5. Write `theories/PROJECT/PROJECT.manual.html`, one self-contained page in the
-   GNU format: title page, contents, numbered chapters, Overview, the
-   hand-written chapters of `PROJECT.manual.org`, Invoking, Copying, Index.
-6. Run `lmx lint` again: no warning names either document. Commit both, never
-   push.
-
-A rule of behaviour you find only in a hand-written chapter, or in the code, is
-a gap: write it down as a conjecture for the owner, never into the documents
-alone.
