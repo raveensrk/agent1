@@ -64,3 +64,14 @@ closing:
 Best Regards,
 Raveen Kumar
 ```
+
+## Lemmax trial
+
+From 2026-11-28 to 2026-12-12, requirements are plain org files with no
+Lemmax: no IDs, states, dates or lint. When a session or I hit something
+Lemmax would have caught or made easier, append one dated line below:
+what happened, in which project, and what would have helped. Never add
+Lemmax pieces back during the trial. On 2026-12-12 I decide from this log
+(task-router-2 task `az29`).
+
+Log:
