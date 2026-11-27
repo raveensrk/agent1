@@ -1,5 +1,0 @@
-Extendable Rules Notation (ERN) moved to its own repo.
-
-Repo:        ~/repos/ern
-Design doc:  ~/repos/ern/docs/design.txt
-Example:     ~/repos/ern/examples/library/project.ern.edn
