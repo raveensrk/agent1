@@ -158,3 +158,6 @@ a `git pull` updates every harness on its next start.
 
 Verify: start a new session and ask "what git work did I do in the last 24
 hours?". The agent should run `scripts/git_report.py`.
+
+
+hello world.
