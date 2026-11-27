@@ -5,8 +5,9 @@ Agent1 is for everyone. Public rules, written for any agent and any harness.
 At session start, read [rules/index.md](rules/index.md) and follow it. It is the
 index of all the rules.
 
-Requirements follow Lemmax, agent1's requirement workflow:
-[theories/agent1/theory.org](theories/agent1/theory.org).
+Requirements are plain rules files, one per project:
+[rules/agent1.txt](rules/agent1.txt) and [rules/ishikari.txt](rules/ishikari.txt).
+Read only the part a task needs, e.g. part CLI for a CLI app.
 
 ## Confirmation
 

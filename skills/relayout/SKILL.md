@@ -45,7 +45,7 @@ Compare the layout with:
 1. The language's usual layout, in
    [references/standards.md](references/standards.md).
 2. The user's rules: the repo's Layout section, its requirements, and
-   [architecture.org](../../theories/agent1/architecture.org) - core and UI
+   [agent1.txt](../../rules/agent1.txt) part Architecture - core and UI
    apart.
 
 Signs of a poor layout. Each finding names the path and the evidence:
