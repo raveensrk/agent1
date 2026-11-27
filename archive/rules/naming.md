@@ -12,7 +12,7 @@ Former status: alpha. These rules change as I work. Follow them for new names, b
 2. Read the name alone, without its help or context: if it could mean two things, rename it.
 3. A name is easy to say and easy to read.
 4. Any abbreviation is allowed (`pdf`, `ls`, `cmds`, `cfg`), as long as rule 2 still holds.
-5. Join words with underscores: `code_style.md`, `,ls_comma_cmds`. No hyphens, no camelCase.
+5. Join words with underscores: `code_style.md`, `ls_my_cmds`. No hyphens, no camelCase.
 
 ## Programs, commands, skills and functions
 
@@ -40,8 +40,8 @@ New names follow these rules. Rename an old name that breaks them only when you 
 
 | Bad                     | Good                       | Why                                       |
 | ----------------------- | -------------------------- | ----------------------------------------- |
-| `,mutt_spam_add_sender` | `,mutt_add_sender_to_spam` | Tool first, then verb + object.           |
-| `,comma_cmds_ls`        | `,ls_comma_cmds`           | No tool, so the verb comes first.         |
+| `,mutt_spam_add_sender` | `mutt_add_sender_to_spam` | Tool first, then verb + object.           |
+| `,comma_cmds_ls`        | `ls_my_cmds`           | No tool, so the verb comes first.         |
 | `,convert_md_pdf`       | `,convert_md_to_pdf`       | `to` shows the direction.                 |
 | `,update`               | `,update_brew_packages`    | A generic verb alone could mean anything. |
 | `define_naming.md`      | `naming.md`                | A file holds something; it does not act.  |
