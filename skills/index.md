@@ -3,7 +3,6 @@
 Agent skills in the [Agent Skills](https://agentskills.io) format. Install them
 by registering this repo with [install.py](../install.py).
 
-- [add-requirement](https://github.com/raveensrk/lemmax/blob/main/skills/add-requirement/SKILL.md), in the lemmax repo - Adds a requirement only after proving it can be built and tested, offering alternatives when it cannot.
 - [ask-simple](./ask-simple/SKILL.md) - Asks the user clear questions in simple language, as if they are new to the topic.
 - [determinize](./determinize/SKILL.md) - Turns a directory's agent rules into checks, guards and git hooks, then thins the instructions to decisions and routing.
 - [detective-ant](./detective-ant/SKILL.md) - Checks a change against its task, issue or plan and finds real bugs, each with a cause and fix plan: by hand, or as Ishikari's detective ants.

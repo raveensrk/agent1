@@ -180,9 +180,8 @@ The investigator's instructions move from assets/prompts/investigator.md into a 
 - Standalone mode: run by hand, the skill writes no files. It ends in the current session with findings and a short plan: what to build, whether it can be built, how, and the risks.
 - Proof: both modes prove the task can be built with throwaway code in a scratch folder. The project stays untouched. No plan comes before the proof passes.
 - Questions: every question goes through /ask-simple, with no limit: ask until every detail is gathered.
-- Shared proof: /add-requirement step 3 uses the investigator skill's proof step instead of its own text.
-- test_investigator_skill checks that the skill has both modes and the proof rule, that Ishikari's investigator prompt loads it, and that add-requirement points to its proof step.
-Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari/SKILL.md, step "docs ant runs /docs"); the investigator prompt is one file, skills/ishikari/assets/prompts/investigator.md (130 lines); proof steps at skills/add-requirement/SKILL.md section 3.
+- test_investigator_skill checks that the skill has both modes and the proof rule and that Ishikari's investigator prompt loads it.
+Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari/SKILL.md, step "docs ant runs /docs"); the investigator prompt is one file, skills/ishikari/assets/prompts/investigator.md (130 lines).
 
 * LEMMA [#B] The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant  :ishikari:
 :PROPERTIES:
