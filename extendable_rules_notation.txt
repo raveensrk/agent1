@@ -1,0 +1,229 @@
+Extendable Rules Notation (ERN)
+Design document and bible
+Status: draft, pre-trial
+Last updated: 2026-11-28
+
+======================================================================
+1. Purpose
+======================================================================
+
+ERN is a notation and a small tool for designing anything with clear
+definitions, rules, features and tests, all linked and traced.
+
+Goals:
+- One dependency graph per project: definitions -> rules -> features ->
+  tests, plus notes, ideas, tasks and attachments hanging off it.
+- Change detection: when an item changes, every item that depends on it
+  directly becomes "suspect" and must be reviewed.
+- Reuse across repos: rules and definitions are shared between repos by
+  pinned import.
+- Project task tracking lives next to the design it serves.
+
+Aspiration (not a tested goal): a project should be rebuildable from its
+ERN file. ERN describes intent and traces; code stays the source of
+truth for how. Nothing checks the rebuild claim today.
+
+Why not Doorstop: Doorstop is too heavy (one YAML file per item plus a
+Python toolchain), models only requirements, and has no cross-repo
+reuse. ERN takes its best idea, hash-based suspect links.
+
+======================================================================
+2. Format and runtime
+======================================================================
+
+- Format: EDN.
+- Tool: a babashka CLI named `ern`. No JVM. Each repo needs only `bb`.
+- Layout: one file per project, `project.ern.edn`. It may split later
+  with `:include` of further EDN files; the tool loads them as one model.
+
+======================================================================
+3. Item kinds
+======================================================================
+
+Every item has an :id, a :kind, a :text and optional :links.
+
+Kind         ID prefix  Binding?  States
+-----------  ---------  --------  -------------------------------------
+Definition   D          yes       (none)
+Rule         R          yes       (none)
+Feature      F          yes       draft -> designed -> tested (derived)
+Test         T          yes       draft -> written -> completed
+Task         K          no        todo -> done
+Idea         I          no        (none; promoted to Rule or Feature)
+Note         N          no        (none)
+Attachment   A          -         (none)
+
+Kinds are told apart by how binding they are:
+- Rule: must be followed, can be linked and checked.
+  Example: "Prefer babashka over the JVM" is a Rule once accepted.
+- Idea: a proposal. Not binding until promoted to a Rule or Feature.
+- Note: context only. Never binding.
+
+Archive is not a kind. Any item can carry :archived true (see 7).
+
+======================================================================
+4. IDs
+======================================================================
+
+- Form: kind prefix plus number, e.g. :F12, :R3, :T40.
+- The `ern` CLI hands out the next number.
+- A number is never reused, not even after archive.
+- Imported items are namespaced by their source: :agent1/R3.
+
+======================================================================
+5. Links and suspect detection
+======================================================================
+
+- A link points from a child to the parent it depends on, and stores the
+  content hash of the parent at the time it was last reviewed:
+    :links [{:to :R1 :hash "sha256:..."}]
+- Suspect: a link whose stored hash differs from the parent's current
+  hash. The child is suspect until reviewed.
+- Review: a person or agent checks the child, edits it if needed, and
+  runs `ern review :F1`, which stores the new parent hashes.
+- Spread: direct only. Changing D1 makes R1 suspect. F1 (which links to
+  R1) turns suspect only once R1 is reviewed and its own hash changes.
+  Review happens one layer at a time.
+- Notes and Ideas may link to any item as children. They turn suspect
+  when what they explain changes. Nothing may link to a Note or Idea as
+  a parent, so they never make other items suspect.
+
+======================================================================
+6. Features and tests
+======================================================================
+
+- Feature states stored in the file: draft, designed.
+- "tested" is derived, never stored: a designed Feature is tested when
+  it has at least one linked Test and every linked Test passed in the
+  latest results. A failing test drops it back to designed on its own.
+- Binding tests to code: real test code carries the ERN ID as a tag,
+  e.g. (deftest ^{:ern :T1} login-redirect ...) or a "@T1" tag in other
+  languages. The results report carries the ID back to `ern`. This works
+  in any language and survives test renames.
+- A Test ID tag in code with no matching Test item is a lint error.
+
+======================================================================
+7. Archive
+======================================================================
+
+- Archiving sets :archived true. The item stays in the file for history.
+- `ern` refuses to archive an item that still has live dependents. It
+  lists them; relink or archive them first. No dangling links, ever.
+
+======================================================================
+8. Attachments
+======================================================================
+
+- Stored as a repo-relative path plus a content hash:
+    {:id :A1 :kind :attachment :path "docs/flow.svg" :hash "sha256:..."}
+- File changes make linked items suspect, as with any parent.
+- A missing file is a lint error.
+- Never embedded in the EDN.
+
+======================================================================
+9. Reuse across repos
+======================================================================
+
+- A repo imports another repo's ERN file pinned to a git commit:
+    :imports [{:as agent1 :repo "~/repos/agent1"
+               :file "project.ern.edn" :rev "e1b147b"}]
+- Imported items are read-only and namespaced (:agent1/R3).
+- Nothing changes under a repo until someone moves the pin. Moving the
+  pin re-hashes imported items, so local items linked to changed ones
+  turn suspect.
+
+======================================================================
+10. Tasks
+======================================================================
+
+- Project tasks (tied to a feature, test or rule) live in ERN as Task
+  items, states todo -> done, linked by ID.
+- Personal and routine tasks stay in task-router-2.
+- No task lives in both.
+
+======================================================================
+11. Scope boundaries
+======================================================================
+
+- Lemmax (theories/agent1/theory.org) stays separate. Decide after the
+  trial whether ERN replaces it, sits under it, or neither.
+- agent1's rules/*.md and rules/experimental.md stay as they are.
+
+======================================================================
+12. Example
+======================================================================
+
+{:ern/version 1
+ :project "ern"
+ :imports []
+ :items
+ [{:id :D1 :kind :definition
+   :text "Suspect: a link whose stored hash differs from the parent's."}
+  {:id :R1 :kind :rule
+   :text "A change to an item makes its direct children suspect."
+   :links [{:to :D1 :hash "sha256:..."}]}
+  {:id :F1 :kind :feature :state :designed
+   :text "`ern check` lists every suspect item and why."
+   :links [{:to :R1 :hash "sha256:..."}]}
+  {:id :T1 :kind :test :state :written
+   :text "Editing D1 makes exactly R1 suspect."
+   :links [{:to :F1 :hash "sha256:..."}]}
+  {:id :K1 :kind :task :state :todo
+   :text "Write the hash function."
+   :links [{:to :F1 :hash "sha256:..."}]}
+  {:id :N1 :kind :note
+   :text "Direct-only spread keeps the review queue small."
+   :links [{:to :R1 :hash "sha256:..."}]}]}
+
+======================================================================
+13. CLI sketch
+======================================================================
+
+ern new <kind> "<text>"   add an item with the next ID
+ern check                 lint, list suspects, derive feature states
+ern review <id>           mark the item reviewed, store parent hashes
+ern archive <id>          archive; refused while dependents exist
+ern graph [<id>]          print the dependency tree
+ern import --update <as>  move an import pin to a new rev
+
+======================================================================
+14. Trial and proof
+======================================================================
+
+The first ERN project is the `ern` CLI repo itself. It passes when:
+- Editing one Definition marks exactly its direct children suspect.
+- Tagged tests correctly derive which Features are tested, and a failing
+  test drops a Feature back to designed.
+
+======================================================================
+15. Open questions
+======================================================================
+
+- Hash input: which fields are hashed (text only, or text plus links)?
+- Results report format the tool reads (JUnit XML, EDN, both).
+- When the single file splits, by kind or by feature area.
+- Whether the rebuild-from-ERN aspiration ever becomes a tested goal.
+
+======================================================================
+16. Decision log (grilling, 2026-11-28)
+======================================================================
+
+1.  Purpose: linked, traced design with suspect detection and reuse.
+2.  Not Doorstop: too heavy, requirements only, no cross-repo reuse.
+3.  Change detection: content hash stored in each link.
+4.  Suspect spread: direct dependents only.
+5.  Reuse: pinned import at a git commit.
+6.  Feature "tested": derived from latest test results, never stored.
+7.  Test binding: ERN ID tags in real test code.
+8.  Layout: one file, :include to split later.
+9.  Tasks: project tasks in ERN, personal in task-router-2.
+10. Rebuild from scratch: aspiration, not tested.
+11. Runtime: babashka CLI `ern`.
+12. Lemmax: separate for now.
+13. Kinds split by bindingness (Rule / Idea / Note).
+14. Notes and Ideas link as children only.
+15. Attachments: path plus hash.
+16. agent1 rules: stay as they are.
+17. IDs: kind prefix plus number, never reused, namespaced on import.
+18. Archive: blocked while live dependents exist.
+19. Trial: ERN specifies the `ern` CLI repo itself.
