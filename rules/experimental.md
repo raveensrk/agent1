@@ -54,3 +54,13 @@ Example: task-router-2's
 In every repo, never ask whether to commit. When a change is done, its checks
 pass and you judge it good, commit it yourself, following [git.md](git.md).
 Pushing is still only on request.
+
+## Email signature
+
+End every email written for me with exactly this signature, and no other
+closing:
+
+```text
+Best Regards,
+Raveen Kumar
+```
