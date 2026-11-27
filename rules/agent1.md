@@ -231,7 +231,7 @@ Every GUI app does this: a hard requirement.
 
 #### The app menu has About
 
-- The first item of the app menu, the one named for the app left of File, is "About \<app name\>", with a separator under it, as on every Mac app
+- The first item of the app menu, the one named for the app left of File, is "About \<app name>", with a separator under it, as on every Mac app
 - It opens the About window; chosen again while it is open, it brings that window to the front, and never opens a second
 - No window of the app shows the version anywhere else
 
@@ -258,7 +258,7 @@ Every GUI app does this: a hard requirement.
 #### Verification
 
 - A unit test reads the build's facts: the release version and the commit's first 7 characters, and the words Copy puts on the clipboard
-- A window check reads the app menu: "About \<app name\>" first, a separator under it
+- A window check reads the app menu: "About \<app name>" first, a separator under it
 - It chooses About: one About window, with the name, the version and the commit; chosen again, still one
 - It presses Copy and reads the clipboard: `v<version> · <hash>`
 - It presses Escape: the About window is gone
@@ -476,7 +476,7 @@ Use this as a last resort.
 - When applicable use REPL during development
 - Follow Mockup based development for design
 
-Design Idea -\> Design Requirement -\> Code Design Mockup -\> Code Deisgn Approval -\> Approve Requirement -\> Start Implementation -\> Review and Confirm if the output matches the mockups
+Design Idea -> Design Requirement -> Code Design Mockup -> Code Deisgn Approval -> Approve Requirement -> Start Implementation -> Review and Confirm if the output matches the mockups
 
 ## Touch and mobile
 
@@ -1548,38 +1548,38 @@ When a repo has a requirements file, it says what must be true and how it is ver
 
 Official sources for the rules in this document.
 
-| Read | For |
-|----|----|
-| [CommonMark spec](https://spec.commonmark.org/) | Base Markdown syntax |
-| [GFM spec](https://github.github.com/gfm/) | Tables, task lists, strikethrough, autolinks |
-| [GitHub alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) | Callout syntax |
-| [GitLab alerts](https://docs.gitlab.com/user/markdown/#alerts) | How GitLab renders callouts |
-| [Mermaid docs](https://mermaid.js.org/intro/) | Diagram syntax |
-| [Mermaid config schema](https://mermaid.js.org/config/schema-docs/config.html) | `htmlLabels` and theming |
-| [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) | `mmdc` options: background, config file |
-| [D2 tour](https://d2lang.com/tour/intro) | D2 language |
-| [D2 CLI manual](https://d2lang.com/tour/man/) | Flags, themes, layout engines |
-| [D2 layout engines](https://d2lang.com/tour/layouts/) | ELK, the fallback when TALA isn't available |
-| [TALA layout engine](https://d2lang.com/tour/tala/) | What TALA supports: position locking, per-container direction, `near` |
-| [TALA is open source](https://d2lang.com/blog/tala-is-open-source/) | Bundled since D2 v0.9.0; seeds and trade-offs |
-| [Graphviz docs](https://graphviz.org/documentation/) | DOT language, `dot -Tsvg` |
-| [librsvg](https://gitlab.gnome.org/GNOME/librsvg) | `rsvg-convert`, used to check diagram labels |
-| [C4 model](https://c4model.com/) | System context and container diagrams |
-| [MADR](https://adr.github.io/madr/) | Decision record format |
-| [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) | Lint config and rules |
-| [lychee](https://github.com/lycheeverse/lychee) | Link checking, including anchors |
-| [pandoc manual](https://pandoc.org/MANUAL.html) | `--file-scope`, `--pdf-engine`, GFM input |
-| [Typst docs](https://typst.app/docs/) | PDF engine for pandoc |
-| [AGENTS.md](https://agents.md/) | Agent instruction file format |
-| [Claude Code and AGENTS.md](https://code.claude.com/docs/en/memory#agents-md) | When Claude Code reads `AGENTS.md`, and the `@AGENTS.md` import |
+| Read                                                                                                                                                                       | For                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [CommonMark spec](https://spec.commonmark.org/)                                                                                                                            | Base Markdown syntax                                                  |
+| [GFM spec](https://github.github.com/gfm/)                                                                                                                                 | Tables, task lists, strikethrough, autolinks                          |
+| [GitHub alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) | Callout syntax                                                        |
+| [GitLab alerts](https://docs.gitlab.com/user/markdown/#alerts)                                                                                                             | How GitLab renders callouts                                           |
+| [Mermaid docs](https://mermaid.js.org/intro/)                                                                                                                              | Diagram syntax                                                        |
+| [Mermaid config schema](https://mermaid.js.org/config/schema-docs/config.html)                                                                                             | `htmlLabels` and theming                                              |
+| [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli)                                                                                                                   | `mmdc` options: background, config file                               |
+| [D2 tour](https://d2lang.com/tour/intro)                                                                                                                                   | D2 language                                                           |
+| [D2 CLI manual](https://d2lang.com/tour/man/)                                                                                                                              | Flags, themes, layout engines                                         |
+| [D2 layout engines](https://d2lang.com/tour/layouts/)                                                                                                                      | ELK, the fallback when TALA isn't available                           |
+| [TALA layout engine](https://d2lang.com/tour/tala/)                                                                                                                        | What TALA supports: position locking, per-container direction, `near` |
+| [TALA is open source](https://d2lang.com/blog/tala-is-open-source/)                                                                                                        | Bundled since D2 v0.9.0; seeds and trade-offs                         |
+| [Graphviz docs](https://graphviz.org/documentation/)                                                                                                                       | DOT language, `dot -Tsvg`                                             |
+| [librsvg](https://gitlab.gnome.org/GNOME/librsvg)                                                                                                                          | `rsvg-convert`, used to check diagram labels                          |
+| [C4 model](https://c4model.com/)                                                                                                                                           | System context and container diagrams                                 |
+| [MADR](https://adr.github.io/madr/)                                                                                                                                        | Decision record format                                                |
+| [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)                                                                                                       | Lint config and rules                                                 |
+| [lychee](https://github.com/lycheeverse/lychee)                                                                                                                            | Link checking, including anchors                                      |
+| [pandoc manual](https://pandoc.org/MANUAL.html)                                                                                                                            | `--file-scope`, `--pdf-engine`, GFM input                             |
+| [Typst docs](https://typst.app/docs/)                                                                                                                                      | PDF engine for pandoc                                                 |
+| [AGENTS.md](https://agents.md/)                                                                                                                                            | Agent instruction file format                                         |
+| [Claude Code and AGENTS.md](https://code.claude.com/docs/en/memory#agents-md)                                                                                              | When Claude Code reads `AGENTS.md`, and the `@AGENTS.md` import       |
 
 ### Read, explore and research (write nothing yet)
 
-1.  Follow every URL in [References](#references) and read it.
-2.  Map the whole repo and read everything that defines behavior: code, config, build and CI files, tests, git history, existing docs and notes.
-3.  Research from official sources: current versions and docs of the repo's languages, frameworks and key dependencies, the external services and APIs it uses, and its domain terms. Also check whether anything in References has changed since this document was written.
-4.  Check for `d2` v0.9.0 or later (it bundles TALA), Mermaid CLI (`mmdc`, or `npx -p @mermaid-js/mermaid-cli mmdc`), `markdownlint-cli2`, `lychee` or another link checker, `pandoc` with a PDF engine such as `typst`, `rsvg-convert`, and Graphviz `dot` if you'll need it. For anything missing, note an install command; prefer no-install runners (`npx`, `uvx`).
-5.  List the docs and notes in the repo root, for the root-file decisions in [Outline](#outline-checkpoint).
+1. Follow every URL in [References](#references) and read it.
+2. Map the whole repo and read everything that defines behavior: code, config, build and CI files, tests, git history, existing docs and notes.
+3. Research from official sources: current versions and docs of the repo's languages, frameworks and key dependencies, the external services and APIs it uses, and its domain terms. Also check whether anything in References has changed since this document was written.
+4. Check for `d2` v0.9.0 or later (it bundles TALA), Mermaid CLI (`mmdc`, or `npx -p @mermaid-js/mermaid-cli mmdc`), `markdownlint-cli2`, `lychee` or another link checker, `pandoc` with a PDF engine such as `typst`, `rsvg-convert`, and Graphviz `dot` if you'll need it. For anything missing, note an install command; prefer no-install runners (`npx`, `uvx`).
+5. List the docs and notes in the repo root, for the root-file decisions in [Outline](#outline-checkpoint).
 
 If you can't reach the web or a URL, say which, use the closest official source, and note what you assumed.
 
@@ -1596,23 +1596,23 @@ Drop what doesn't apply, split what's too big (for example, one chapter per pack
 Name chapters `NN-kebab-name.md`, numbered in reading order, for example `03-architecture.md`.
 The cover is the one exception: it is `docs/README.md`.
 
-| Chapter | Covers |
-|----|----|
-| Cover (`README.md`) | What this is, reading order, conventions, how to render diagrams and run checks |
-| Overview | Problem, users, scope, non-goals, success criteria |
-| Architecture | System context and container diagrams, components, tech stack with versions and why |
-| One per major component | Responsibility, interfaces, internals, failure modes |
-| Data | Data model (ER diagram), schemas, invariants, storage, migrations |
-| Interfaces | Exact contracts with examples: APIs, CLI, events, file formats, external services used |
-| Behavior | Key flows (sequence diagrams), state machines, algorithms in pseudocode, errors, edge cases |
-| UI, if any | Screens, navigation map, layout rules |
-| Configuration | Every config key and environment variable: type, default, effect |
-| Build, run, deploy | Toolchain and dependency versions with their purpose, exact commands, deployment, operations |
-| Quality | Testing approach, acceptance criteria taken from the tests (given / when / then), performance, security |
-| Decisions | One ADR per significant decision: context, decision, alternatives, consequences |
-| Rebuild guide | Ordered milestones from an empty folder, each with the chapters it needs and how to verify it |
-| Glossary | Domain terms |
-| Open questions | Unknowns awaiting an answer |
+| Chapter                 | Covers                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| Cover (`README.md`)     | What this is, reading order, conventions, how to render diagrams and run checks                         |
+| Overview                | Problem, users, scope, non-goals, success criteria                                                      |
+| Architecture            | System context and container diagrams, components, tech stack with versions and why                     |
+| One per major component | Responsibility, interfaces, internals, failure modes                                                    |
+| Data                    | Data model (ER diagram), schemas, invariants, storage, migrations                                       |
+| Interfaces              | Exact contracts with examples: APIs, CLI, events, file formats, external services used                  |
+| Behavior                | Key flows (sequence diagrams), state machines, algorithms in pseudocode, errors, edge cases             |
+| UI, if any              | Screens, navigation map, layout rules                                                                   |
+| Configuration           | Every config key and environment variable: type, default, effect                                        |
+| Build, run, deploy      | Toolchain and dependency versions with their purpose, exact commands, deployment, operations            |
+| Quality                 | Testing approach, acceptance criteria taken from the tests (given / when / then), performance, security |
+| Decisions               | One ADR per significant decision: context, decision, alternatives, consequences                         |
+| Rebuild guide           | Ordered milestones from an empty folder, each with the chapters it needs and how to verify it           |
+| Glossary                | Domain terms                                                                                            |
+| Open questions          | Unknowns awaiting an answer                                                                             |
 
 Stop here and wait for approval before writing.
 
@@ -1656,19 +1656,19 @@ Commit one POSIX shell script, `docs/build.sh`, pinning tool versions where the 
 
 ### AI instructions and root cleanup
 
-1.  Create or update the root `AGENTS.md` with this section, merged with any existing content rather than duplicating it:
+1. Create or update the root `AGENTS.md` with this section, merged with any existing content rather than duplicating it:
 
-    ``` markdown
-    ## Documentation
+   ```markdown
+   ## Documentation
 
-    - Read `docs/README.md` first; `docs/` is the design source of truth.
-    - If a change affects behavior, interfaces, data, configuration or dependencies, update the affected chapters and diagram sources in the same change, then run `docs/build.sh diagrams` and `docs/build.sh check`.
-    - Follow the conventions in `docs/README.md`. Link to facts; never restate them.
-    ```
+   - Read `docs/README.md` first; `docs/` is the design source of truth.
+   - If a change affects behavior, interfaces, data, configuration or dependencies, update the affected chapters and diagram sources in the same change, then run `docs/build.sh diagrams` and `docs/build.sh check`.
+   - Follow the conventions in `docs/README.md`. Link to facts; never restate them.
+   ```
 
-2.  Existing agent-specific files (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, Cursor rules in `.cursor/rules/`) get a pointer to `AGENTS.md`, not copied rules. In `CLAUDE.md`, that's the line `@AGENTS.md`, because Claude Code reads `AGENTS.md` only when no `CLAUDE.md` exists. Don't create agent-specific files that aren't there.
+2. Existing agent-specific files (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, Cursor rules in `.cursor/rules/`) get a pointer to `AGENTS.md`, not copied rules. In `CLAUDE.md`, that's the line `@AGENTS.md`, because Claude Code reads `AGENTS.md` only when no `CLAUDE.md` exists. Don't create agent-specific files that aren't there.
 
-3.  Apply the approved root-file decisions from [Outline](#outline-checkpoint), and trim the root `README.md` to what the project is plus a link to `docs/README.md`.
+3. Apply the approved root-file decisions from [Outline](#outline-checkpoint), and trim the root `README.md` to what the project is plus a link to `docs/README.md`.
 
 ### Verify (definition of done)
 
@@ -1744,7 +1744,7 @@ Commit one POSIX shell script, `docs/build.sh`, pinning tool versions where the 
   Exit 0, and nothing else runs - a help call never writes, never starts a daemon, never asks a question.
   argparse's default `add_help` gives both, and gives them per subcommand; a script that parses options by hand has to handle the pair itself.
 - `<program> help` is the long help, and `-h=/`–help= the short one - the split and what each carries live in [rules/docs.md](docs.md).
-  argparse gives no `help` command: add `sub.add_parser("help")`, or test `sys.argv[1:2] =` \["help"\]= before `parse_args`.
+  argparse gives no `help` command: add `sub.add_parser("help")`, or test `sys.argv[1:2] =` ["help"]= before `parse_args`.
 - A bare call prints the main help too, unless a bare call is itself a real command (`bookmark2` with no arguments opens its window).
 
 ### Flags
@@ -1771,12 +1771,12 @@ Which letter a short flag takes, and how a subcommand's help reads, stay prose: 
 Real details about real people never go into anything committed, shared or printed.
 Use invented data instead.
 
-| Where | Bad | Good |
-|----|----|----|
-| Test | `name = "Priya Raman"` (a real person) | `name = "Test Person 1"` (invented) |
-| Log | `Saved Priya Raman, phone 98765 43210` | `Saved record 42` |
+| Where  | Bad                                    | Good                                                 |
+| ------ | -------------------------------------- | ---------------------------------------------------- |
+| Test   | `name = "Priya Raman"` (a real person) | `name = "Test Person 1"` (invented)                  |
+| Log    | `Saved Priya Raman, phone 98765 43210` | `Saved record 42`                                    |
 | Commit | `fix: Priya's birth date parsed wrong` | `fix: birth dates with a two-digit year parse wrong` |
-| Docs | A screenshot showing real records | A screenshot of the example data |
+| Docs   | A screenshot showing real records      | A screenshot of the example data                     |
 
 ## Axioms
 
