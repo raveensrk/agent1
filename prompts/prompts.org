@@ -65,7 +65,7 @@ Based on this session,
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
 ** Review requirements
-Read the [[file:~/repos/agent1/rules/agent1.txt][Requirements]] throughly and report me if anything can be improved from this repo based on it.
+Read the [[file:~/repos/agent1/rules/agent1.org][Requirements]] throughly and report me if anything can be improved from this repo based on it.
 ** Critic
 - Critic this project/repo/app.
 - Categories

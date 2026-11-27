@@ -87,7 +87,7 @@ answer means the import did not load.
 | `rules/tui.md`                                                   | TUI help keybind and help page                                                                                                           |
 | `rules/working_style.md`                                         | How to work with the user                                                                                                                |
 | `rules/browser.md`                                               | Browser and computer use rules                                                                                                           |
-| `rules/agent1.txt`                                               | agent1 requirements; part CLI: help, flags, one help table                                                                               |
+| `rules/agent1.org`                                               | agent1 requirements; section CLI: help, flags, one help table                                                                               |
 | `archive/rules/code_style.md`                                    | How to write code                                                                                                                        |
 | `common.md`                                                      | Session start: routes to `rules/index.md`, plus Confirmation                                                                             |
 | `archive/rules/emoji_legend.md`                                  | Status emoji vocabulary for agent reports                                                                                                |

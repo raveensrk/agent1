@@ -19,7 +19,7 @@ prints help, exits 0 and does nothing else.
 | `x help`   | Long help  |
 
 - Short help: usage line, one line on what it does, the options.
-- Long help: everything in [agent1.txt](agent1.txt) part CLI, plus env vars read, files read
+- Long help: everything in [agent1.org](agent1.org) section CLI, plus env vars read, files read
   and written, exit codes.
 
 Usage is written only in help. Docs link to `x --help` and never copy options or

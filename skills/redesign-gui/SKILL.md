@@ -53,7 +53,7 @@ When an approval is not on record, ask; never assume one.
 3. Work on a new branch. Commit at the end of each phase.
 4. Existing user settings and data keep working, or migrate automatically.
 5. When the repo follows agent1's requirements, read
-   [agent1.txt](../../rules/agent1.txt) parts GUI, Window and Component
+   [agent1.org](../../rules/agent1.org) sections GUI, Window and Component
    too. Where they and this skill disagree, ask which wins.
 
 ## Laws of UX
