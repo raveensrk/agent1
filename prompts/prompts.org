@@ -223,5 +223,5 @@ when it's done.
 
 ## Generate an image and create a video
 
-Create a video about `<topic>` by generating image frames. 24 fps. Stitch the images and create a video using `ffmpeg`.
+Create a 24 fps video about `<topic>` by generating image frames. Stitch the images and create a video using `ffmpeg`.
 
