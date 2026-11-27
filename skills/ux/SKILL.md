@@ -27,7 +27,7 @@ scratch, use `redesign-gui` instead.
 - CLI: Command Line Interface Guidelines, https://clig.dev/ - help, output,
   errors, arguments and flags, interactivity, config, env vars, robustness,
   naming, future-proofing.
-- The project's own rules (`rules/agent1.org`, section CLI, for CLIs in agent1) win over
+- The project's own rules (`rules/agent1.md`, section CLI, for CLIs in agent1) win over
   both.
 
 Cite the exact law or guideline section on every finding and every plan choice.

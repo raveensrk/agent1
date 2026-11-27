@@ -5,8 +5,8 @@ Agent1 is for everyone. Public rules, written for any agent and any harness.
 At session start, read [rules/index.md](rules/index.md) and follow it. It is the
 index of all the rules.
 
-Requirements are plain org files, one per project:
-[rules/agent1.org](rules/agent1.org) and [rules/ishikari.org](rules/ishikari.org).
+Requirements are plain Markdown files, one per project:
+[rules/agent1.md](rules/agent1.md) and [rules/ishikari.md](rules/ishikari.md).
 Read only the section a task needs, e.g. section CLI for a CLI app.
 
 ## Confirmation

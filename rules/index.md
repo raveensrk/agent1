@@ -35,11 +35,11 @@ Read when the task touches it:
 
 - [external.md](external.md) - probing external systems, live accounts,
   credentials on disk.
-- [agent1.org](agent1.org), section CLI - help shape, bare calls, short flags, one help table.
+- [agent1.md](agent1.md), section CLI - help shape, bare calls, short flags, one help table.
   [cli_help.py](../harness/checks/cli_help.py) decides the hard half: a
   runnable, options or not, must handle `-h` and `--help` (short help) and a
   `help` command (long help).
-- [agent1.org](agent1.org), section Touch and mobile - touch and mobile web UI: layout
+- [agent1.md](agent1.md), section Touch and mobile - touch and mobile web UI: layout
   steps, tap targets, gestures, phone keyboards. Adds to section GUI.
 - [docs.md](docs.md) - writing docs: help output first, what else each
   program shape needs.

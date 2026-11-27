@@ -1,45 +1,61 @@
-#+title: Ishikari requirements
+# Ishikari requirements
 
-A heading that starts with =planned:= is not proven yet.
-A =Proof:= item under a rule says how it is checked;
-=Proof (draft):= is one not passing yet.
+A heading that starts with `planned:` is not proven yet.
+A `Proof:` item under a rule says how it is checked;
+`Proof (draft):` is one not passing yet.
 
-* planned: Ishikari completes a task fast and correct, with no human after planning
+## planned: Ishikari completes a task fast and correct, with no human after planning
+
 Ishikari is a multi-agent workflow that completes a given task as fast and as correctly as possible, with no human help after planning.
+
 - Asked by the owner on 2026-11-25
-* The metro map matches the scripts, and every plan-stage ant writes the logbook
+
+## The metro map matches the scripts, and every plan-stage ant writes the logbook
+
 The metro map (design/metro.clj, which writes design/ishikari-metro.svg) shows the workflow exactly as ishikari-plan.js, ishikari-build.js and ishikari-finish.js run it, so a newcomer can read the whole run from it.
-- Plan-stage logging: ishikari-plan.js runs no planning ant; it logs its own check (plans checked or plans refused) in its result's log, like build and finish; `ishikari.py save` appends it. No ant writes the logbook, and a failed append never blocks or fails the run.
+
+- Plan-stage logging: ishikari-plan.js runs no planning ant; it logs its own check (plans checked or plans refused) in its result's log, like build and finish; \`ishikari.py save\` appends it. No ant writes the logbook, and a failed append never blocks or fails the run.
 - The live investigator runs outside any workflow and the main session writes the logbook only through ishikari.py, so it does not log its own replies. ishikari-plan.js logs one entry for it instead: who "investigator ant", event "investigated", detail the report path. Its researcher Agent-tool agents are not logged.
 - Every agent label in the four scripts has a station on the map. The judge-fix worker and detective ants and the juror ants each get their own station with the ant hexagon. The juror ants are a stacked ∥ station. The judge ant is a single station, not ∥.
 - The logbook writer is named once, in the Logbook station's panel: "ishikari.py save: appends each stage's log". It is not drawn on every line.
 - The map draws names only; descriptions and short notes live in each item's tooltip and click panel. Short notes name each skipped step: fewer than 2 passing tasks skips the combined test; a cleanup run has no janitor; the judge fix runs only with a score below 7 and gaps; the check runs only when main moved and checkCommand is set; jurors run only with 3+ merged tasks; a plan may run a saved workflow in place of a worker ant.
-- Wrong notes are fixed. "max 2 extra build rounds" sits on the merge-failed spur, not the fix loop. The judge fix lands only through the detective's fast-forward before the second score. Ant names use one style: "<Role> ant", with lowercase "ant".
+- Wrong notes are fixed. "max 2 extra build rounds" sits on the merge-failed spur, not the fix loop. The judge fix lands only through the detective's fast-forward before the second score. Ant names use one style: "\<Role\> ant", with lowercase "ant".
 - No two text labels on the map overlap. The map is one open ring read clockwise from Task: stations on the ring, their names outside it, loops and spurs inside it.
 - Drifted docs match the build. Each SKILL.md Limits row has 3 cells, separator included. The index.md Diagram, Rules and Flow say the logbook behaviour as built, including that the live investigator gets only the investigated entry, in the same words as the map's Logbook note. The ishikari-build.js Logbook phase detail no longer says "one logbook append at the end".
 - test_metro_map runs metro.clj (with bb) to a temporary path and checks four things in the SVG: every agent label kind from the four scripts has a station; the named stations and notes are there; no old wrong note is left; no two text boxes overlap, measured from each text element's x, y, font size and length.
-Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 and ishikari-build.js:160-180; plan agent labels at ishikari-plan.js:155,191,227,262; the test stand-in already swallows 'logbook-clerk:now' (tests/test_workflows.mjs:19); metro.py is a 140-line stdlib Python script writing plain <text class="h" x y font-size> elements that xml.etree can parse; ishikari.py log append accepts run, who, event, task, detail, score (design/index.md Rules); investigation report /Users/raveen_kumar_personal/.ishikari/agent1-997906a8/plans/20261118-225807-5c22/investigation_report.md (D1-D4, F1-F10).
+
+Evidence: logging pattern at skills/ishikari/scripts/ishikari-finish.js:77-113 and ishikari-build.js:160-180; plan agent labels at ishikari-plan.js:155,191,227,262; the test stand-in already swallows 'logbook-clerk:now' (tests/test_workflows.mjs:19); metro.py is a 140-line stdlib Python script writing plain \<text class="h" x y font-size\> elements that xml.etree can parse; ishikari.py log append accepts run, who, event, task, detail, score (design/index.md Rules); investigation report *Users/raveen_kumar_personal*.ishikari/agent1-997906a8/plans/20261118-225807-5c22/investigation_report.md (D1-D4, F1-F10).
+
 - Proof: The metro map matches the scripts, and every plan-stage ant writes the logbook
   - Tests: "tests/test_ishikari.py test_metro_map" "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice"
-* A trivial task takes a fast path with no planning or build ants
+
+## A trivial task takes a fast path with no planning or build ants
+
 The investigator judges each task once its report is written, and a trivial task skips every later ant.
+
 - Trivial means all of: small, known scope (1-2 files, easy to find); one sensible way to do it, no design choice; one task that cannot be split. Docs or config only is a plus, not a must. A task that needed any question to the user is never trivial.
 - The live investigator replies with trivial and trivialWhy. It gives the verdict once the report is written, before it designs or plans.
 - The skill asks the user once to confirm the fast path. No runs the full plan with investigated set.
-- On the fast path the main session edits on branch ishikari/<run>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It checks first that the main checkout is on main and clean, never lands untested, and logs one "fast path landed" entry through ishikari.py.
+- On the fast path the main session edits on branch ishikari/\<run\>/fast in a worktree under the state folder, runs testCommand then checkCommand there, and fast-forwards main only when both pass. It checks first that the main checkout is on main and clean, never lands untested, and logs one "fast path landed" entry through ishikari.py.
 - Escalation: more than 2 files, a design choice, more than one task, or a failing test or check a small fix does not clear. The edits are thrown away and the same investigator is told why and goes on to design and plan; ishikari-plan.js is passed escalated and logs a "fast path escalated" entry. The run then carries on without asking.
 - The metro map shows the fast path as a chord from the product spec straight across to MAIN.
+
 Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishikari-plan.js and assets/prompts/investigator.md; the logbook accepts any who and event (ishikari.py log append); the user chose the design on 2026-11-19 (trivial rule, investigator decides, user confirms, main session does the work, escalation carries the investigator's notes and why).
+
 - Proof: A trivial task takes a fast path with no planning or build ants
   - Tests: "tests/test_workflows.mjs plan: the investigator gets its one logbook entry, the escalation is logged, and a recheck logs neither twice" "tests/test_ishikari.py test_metro_map"
-* A read-only retrospective ant reviews each full run and reports ranked improvements to the flow
+
+## A read-only retrospective ant reviews each full run and reports ranked improvements to the flow
+
 - ishikari-retro.js runs one retrospective ant, once, as the very last step of every full run, however it ended; never after a fast path that landed.
-- It judges the Ishikari flow, not the repo's code, and reads the run's logbook entries, the plans folder (report, architecture, plans, cleanup note, stage results saved as <stage>-<n>.json), the run's git history and Ishikari's own source.
-- Read only: its one write is <state>/plans/<run>/retrospective.md. Findings are ranked costliest first, each with category (bug, error, inefficiency, gap, missing, improvement), evidence, impact, change and where.
+- It judges the Ishikari flow, not the repo's code, and reads the run's logbook entries, the plans folder (report, architecture, plans, cleanup note, stage results saved as \<stage\>-\<n\>.json), the run's git history and Ishikari's own source.
+- Read only: its one write is \<state\>/plans/\<run\>/retrospective.md. Findings are ranked costliest first, each with category (bug, error, inefficiency, gap, missing, improvement), evidence, impact, change and where.
 - The main session saves every workflow result to the plans folder, and the final report shows the summary and top 3 findings.
 - Proof: A read-only retrospective ant reviews each full run and reports ranked improvements to the flow
   - Tests: "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings" "tests/test_workflows.mjs retro: a dead or shapeless retrospective ant is an error, never a silent pass" "tests/test_ishikari.py test_metro_map"
-* Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent
+
+## Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent
+
 - Finish: main moves only to the last checked commit, never to a branch by name, and a finisher retry sees main already moved. Upkeep work (cleanup, judge fix, docs) lands only with its checks passed and its commit named; anything else is reset off the scratch copy, and a failed reset stops upkeep.
 - Finish: a base counts as in main by git cherry or the landed list, never by an ancestor check; trial-merge reuse uses git cherry; a later finish of one run uses its own upkeep branches.
 - The docs ant runs last, after the judge, and may land docs files only: the script reads its changed-file list.
@@ -49,13 +65,17 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - The retrospective's read-only promise is checked with a before and after digest of the repo's refs, worktrees and status.
 - Proof: Nothing unchecked reaches main, no ant reply is trusted blindly, and no failure is silent
   - Tests: "tests/test_workflows.mjs finish: main moves to the checked commit, never to a branch name, and a retry sees it already moved" "tests/test_workflows.mjs finish: a docs update that is not accepted is put back, its branch kept, and main moves without it" "tests/test_workflows.mjs finish: a later round uses its own upkeep branches and counts earlier landed tasks as in main" "tests/test_workflows.mjs build: an ant call that throws is a dead ant, never a lost stage" "tests/test_workflows.mjs build: clash fixes run one at a time, and tasks built on a fixed task take it in and are checked again" "tests/test_workflows.mjs every script refuses paths, branches and commands the ants' shell cannot carry" "tests/test_ishikari.py test_hardening"
-* The metro map is one open ring, read clockwise
+
+## The metro map is one open ring, read clockwise
+
 - The main stations sit on one circle, clockwise from Task at the top to the Run report, with a gap at the top: a run ends, it does not loop.
 - Loops and spurs bend inside the ring; the fast path is a chord straight across to MAIN. Station names sit outside the ring; the title and the key sit in the middle; the three parts are named in the corners.
 - A station's position code is its place in the list (s6), shown beside its name; spurs name their target by it.
 - Proof: The metro map is one open ring, read clockwise
   - Tests: "tests/test_ishikari.py test_metro_map"
-* The investigator does all the planning; the plan stage only checks
+
+## The investigator does all the planning; the plan stage only checks
+
 - One live investigator ant asks, proves the task can be built, and writes product_spec.md, tech_spec.md (see ISH-7) and one plan per worker ant. There is no architect ant, so no ant turns one file into another.
 - It runs on Opus at low effort, like its researcher ants and every other ant.
 - It works in two parts: the report and the trivial verdict, then, told to go on, the design and plans. While designing it may ask again, with no limit on questions; the run stops as blocked only when no answer can fix it.
@@ -65,8 +85,10 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - The map shows the two specs and the worker plans as one file station, Specs + worker plans: everything the investigator writes.
 - Proof: The investigator does all the planning; the plan stage only checks
   - Tests: "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands" "tests/test_workflows.mjs plan: plans that would clash or leave the repo come back as problems, never as an error or a pass" "tests/test_workflows.mjs plan: bad arguments are an error" "tests/test_ishikari.py test_metro_map"
-* The investigator writes a product spec and a tech spec; every spec id has a worker
-- product_spec.md replaces the investigation report. It holds two lists and nothing else: behaviours (B1, B2...), each as given / when / then, and invariants (I1, I2...), each written so an ant can check it. No goal, decisions log, facts or assumptions; the user's answers show up as the behaviours they led to.
+
+## The investigator writes a product spec and a tech spec; every spec id has a worker
+
+- product_spec.md replaces the investigation report. It holds two lists and nothing else: behaviours (B1, B2…), each as given / when / then, and invariants (I1, I2…), each written so an ant can check it. No goal, decisions log, facts or assumptions; the user's answers show up as the behaviours they led to.
 - tech_spec.md replaces architecture.md: the architecture and the code's shape, with every spec id mapped to the part that delivers it.
 - Both are for this task only, in the run's plans folder, never in the repo.
 - Each worker plan names the spec ids it covers. ishikari-plan.js refuses the plans when an id has no plan, a plan covers none, or a plan names an id the product spec does not have.
@@ -75,80 +97,115 @@ Evidence: plan Review and the live investigator at skills/ishikari/scripts/ishik
 - Detectives check a task against its plan and the tech spec. The judge and jurors score the merged code against the product spec, id by id.
 - Proof: The investigator writes a product spec and a tech spec; every spec id has a worker
   - Tests: "tests/test_workflows.mjs plan: every behaviour and invariant needs a worker, and no plan may claim an unknown one" "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids" "tests/test_workflows.mjs finish: the judge and jurors score against the product spec, id by id" "tests/test_ishikari.py test_metro_map"
-* Plans are thin slices of the specs; a one-worker run has no plan file
+
+## Plans are thin slices of the specs; a one-worker run has no plan file
+
 - A plan holds only one worker's slice of the two specs: files, the spec ids it covers, the interfaces it uses by name, its tests and the test command. No prose from the specs is repeated; the worker reads the specs for the detail.
 - A run with one worker has no plan file: the plan check returns its plan with file null, and the worker and detective are told the task is the whole of the two specs.
 - The specs stay the shared source: one place for the interfaces between parallel workers and the full list of behaviours and invariants.
 - Proof: Plans are thin slices of the specs; a one-worker run has no plan file
   - Tests: "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands" "tests/test_workflows.mjs build: workers and detectives get the tech spec, and workers the product spec for their ids"
-* Ant Eater shows what each ant, station, stage and task of a run cost, with no AI
+
+## Ant Eater shows what each ant, station, stage and task of a run cost, with no AI
+
 Ant Eater (scripts/anteater.py) is a local web page, on 127.0.0.1, that shows live what a run spent: per ant, station, stage and plan task. Its purpose is to find costly ants. It is fully deterministic: it calls no model, and no AI has to remember to start any part of it.
-- Source: Claude Code's own transcripts under ~/.claude/projects. A workflow ant is agent-*.jsonl with its label in agent-*.meta.json; its run and stage come from the workflow record <session>/workflows/<wf>.json (args.env.run, workflowName ishikari-<stage>). A message is counted once per message id; a message of model <synthetic> is not counted.
+
+- Source: Claude Code's own transcripts under ~/.claude/projects. A workflow ant is agent-**.jsonl with its label in agent-**.meta.json; its run and stage come from the workflow record \<session\>/workflows/\<wf\>.json (args.env.run, workflowName ishikari-\<stage\>). A message is counted once per message id; a message of model \<synthetic\> is not counted.
 - Scope: workflow ants, the investigator, its researchers and the main session. An Agent-tool ant started by the main session inside the run's window is the investigator; an ant whose parent is the investigator is a researcher; an ant whose parent is a workflow ant counts under that ant's station. The free-text name of an Agent-tool ant is shown, never used to sort.
 - Station is the label's kind (the part before the first colon), task the plan task in the label; tries are counted from same-station, same-task ants in start order.
 - Main session cut: its messages from the run's setup time to its last save. A message that falls in two runs of one session belongs to the run with the newest setup at or before it. A run that is still live also shows the tail after its last save.
 - Every run id is unique on the machine: setup claims it under a lock and refuses one that any state folder already holds.
-- Run link: setup writes <state>/plans/<run>/run.json with the setup time and CLAUDE_CODE_SESSION_ID; every save adds its session id and the save time. A run with no recorded session is found by scanning transcripts for its env ("run": "<id>", as setup prints it and every workflow call passes it); a bare mention of the id is not a link.
-- Snapshot: ishikari.py save runs `anteater.py snapshot <state> <run>` in code after every save. It writes <state>/plans/<run>/tokens.json: token counts per ant and model, never dollars, no write time; the same transcripts give a byte-identical file. A failed snapshot prints a warning and the save still succeeds. A snapshot never replaces a saved file with one that has fewer ants.
+- Run link: setup writes \<state\>/plans/\<run\>/run.json with the setup time and CLAUDE_CODE_SESSION_ID; every save adds its session id and the save time. A run with no recorded session is found by scanning transcripts for its env ("run": "\<id\>", as setup prints it and every workflow call passes it); a bare mention of the id is not a link.
+- Snapshot: ishikari.py save runs \`anteater.py snapshot \<state\> \<run\>\` in code after every save. It writes \<state\>/plans/\<run\>/tokens.json: token counts per ant and model, never dollars, no write time; the same transcripts give a byte-identical file. A failed snapshot prints a warning and the save still succeeds. A snapshot never replaces a saved file with one that has fewer ants.
 - Cost is US dollars at API list price, worked out at view time from assets/prices.json (input, output, 5-minute and 1-hour cache write, cache read per model). The page says it is not a subscription bill.
-- Percent of the 5-hour limit: the status line logs Claude Code's rate_limits.five_hour.used_percentage and the session cost to ~/.ishikari/anteater/limit.log; Ant Eater fits dollars per percent from that log (sum of cost rises over sum of percent rises, inside one limit window) and shows each ant's cost as a percent of the window. five_hour_usd in prices.json overrides it. Fewer than 5 logged points and no override: the percent shows `?`.
-- Unknowns are counted and shown, never guessed or hidden: an unknown label goes to station `unknown`, an unknown model shows tokens with cost `?` and marks the total incomplete, an unreadable line is listed with its file and line.
-- Page: dark, no libraries, refreshed every 2 s. Run total, one bar per stage, stations ranked by cost with each station's usual cost per ant (the median over the repo's past saved runs, flagged at 2 times it once 3 runs exist), and a sortable tree table stage > station > ant with a second view by task. A click on an ant shows model, effort, start, duration, turns, peak context, the cost split and the transcript path; no transcript text.
+- Percent of the 5-hour limit: the status line logs Claude Code's rate_limits.five_hour.used_percentage and the session cost to ~/.ishikari/anteater/limit.log; Ant Eater fits dollars per percent from that log (sum of cost rises over sum of percent rises, inside one limit window) and shows each ant's cost as a percent of the window. five_hour_usd in prices.json overrides it. Fewer than 5 logged points and no override: the percent shows \`?\`.
+- Unknowns are counted and shown, never guessed or hidden: an unknown label goes to station \`unknown\`, an unknown model shows tokens with cost \`?\` and marks the total incomplete, an unreadable line is listed with its file and line.
+- Page: dark, no libraries, refreshed every 2 s. Run total, one bar per stage, stations ranked by cost with each station's usual cost per ant (the median over the repo's past saved runs, flagged at 2 times it once 3 runs exist), and a sortable tree table stage \> station \> ant with a second view by task. A click on an ant shows model, effort, start, duration, turns, peak context, the cost split and the transcript path; no transcript text.
 - Runs: one page covers every repo under ~/.ishikari, newest run first, with a picker. A run whose transcripts are gone is shown from tokens.json. A fast-path run shows as a normal run with the main session and the investigator.
-- Started by hand: `anteater.py` serves until Ctrl-C and prints the URL.
+- Started by hand: \`anteater.py\` serves until Ctrl-C and prints the URL.
 - test_label_guard fails when an ant label kind in the four workflow scripts has no station rule.
-Evidence: usage per message at ~/.claude/projects/<p>/<session>/subagents/workflows/<wf>/agent-*.jsonl and label and phase in agent-*.meta.json (read 2026-11-20); workflow records carry workflowName and args.env.run (wf_a1f92fc9-0f4.json); researchers carry parentAgentId and spawnDepth 2; one message id appears twice with the same usage (msg_011ChCVnW8L3wgeorcjUJdsV); Claude Code 2.1.329 builds rate_limits.five_hour {used_percentage, resets_at} into the status line JSON (strings of the binary); the shell has CLAUDE_CODE_SESSION_ID; the user chose every rule above on 2026-11-20.
+
+Evidence: usage per message at ~/.claude/projects/\<p\>/\<session\>/subagents/workflows/\<wf\>/agent-**.jsonl and label and phase in agent-**.meta.json (read 2026-11-20); workflow records carry workflowName and args.env.run (wf_a1f92fc9-0f4.json); researchers carry parentAgentId and spawnDepth 2; one message id appears twice with the same usage (msg_011ChCVnW8L3wgeorcjUJdsV); Claude Code 2.1.329 builds rate_limits.five_hour {used_percentage, resets_at} into the status line JSON (strings of the binary); the shell has CLAUDE_CODE_SESSION_ID; the user chose every rule above on 2026-11-20.
+
 - Proof: Ant Eater shows what each ant, station, stage and task of a run cost, with no AI
   - Tests: "tests/test_anteater.py test_counts" "tests/test_anteater.py test_label_guard" "tests/test_anteater.py test_ishikari_hooks" "tests/test_anteater.py test_limit" "tests/test_anteater.py test_server_and_help"
-* The investigator is a skill: it plans for Ishikari, or answers in the session on its own
+
+## The investigator is a skill: it plans for Ishikari, or answers in the session on its own
+
 The investigator's instructions move from assets/prompts/investigator.md into a skill, skills/investigator-ant/SKILL.md. It is built first, before the janitor, judge, review and retro skills.
+
 - Ishikari mode: Ishikari's investigator ant loads the skill with its inputs (repo, main, state, task, plans folder, test and check commands). Outputs and JSON replies stay as they are: product_spec.md, tech_spec.md, docs_brief.md, one plan per worker, and the 2a guards still check every reply.
 - Standalone mode: run by hand, the skill writes no files. It ends in the current session with findings and a short plan: what to build, whether it can be built, how, and the risks.
 - Proof: both modes prove the task can be built with throwaway code in a scratch folder. The project stays untouched. No plan comes before the proof passes.
 - Questions: every question goes through /ask-simple, with no limit: ask until every detail is gathered.
 - test_investigator_skill checks that the skill has both modes and the proof rule and that Ishikari's investigator prompt loads it.
+
 Evidence: the docs ant already loads a skill from inside an ant (skills/ishikari/SKILL.md, step "docs ant runs /docs"); the investigator prompt is one file, skills/ishikari/assets/prompts/investigator.md (130 lines).
+
 - Proof: The investigator is a skill: it plans for Ishikari, or answers in the session on its own
   - Tests: "tests/test_ishikari.py test_investigator_skill" "tests/test_workflows.mjs plan: a good plan list passes, with each plan file and the commands"
-* The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant
+
+## The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant
+
 What to clean moves from the janitor ant's prompt in scripts/ishikari-finish.js into a skill, skills/janitor-ant/SKILL.md.
-- Scope: only the lines a change added or touched; by hand `git diff <base>...HEAD` (base main), in Ishikari the range main to the merged commit.
+
+- Scope: only the lines a change added or touched; by hand \`git diff \<base\>…HEAD\` (base main), in Ishikari the range main to the merged commit.
 - Cleans dead code, duplication, bloat and mess; changes no behaviour; tests run after, and a failing cleanup is undone.
 - By hand: shows the cleanup, applies and commits after a yes.
 - Ishikari mode: never asks; the ant keeps its git steps, note file, reply schema and JANITOR_MIN_LINES skip. The ant loads /janitor-ant, or reads the skill file when it is unavailable.
+
 Evidence: the docs ant already loads /docs from inside an ant (scripts/ishikari-finish.js docsChain); ISH-10 did the same for the investigator.
+
 - Proof: The janitor is a skill: it cleans a change's lines by hand or as Ishikari's ant
   - Tests: "tests/test_workflows.mjs finish: the janitor cleans, tests, commits and lands its cleanup alone, judge after it"
-* The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants
+
+## The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants
+
 The scoring rules move from the judge and juror prompts in scripts/ishikari-finish.js into one skill, skills/judge-ant/SKILL.md.
+
 - Scores 0-10 against behaviours and invariants, id by id; extra behaviour counts against; how it was built is not scored; the score is a judgement, never an average.
 - Gaps are concrete fixes naming the id and file; bugs repeat the gaps where code behaves wrongly; a missing test is never a bug.
 - Scope: whole (judge) or one task (juror); the judge weighs juror reports and decides itself.
 - By hand: scores the current branch against a spec file or task text, splitting text without ids into numbered behaviours and invariants, and answers in the session. Read only.
 - Ishikari mode: never asks; the ants keep their paths, jury text, parallel rule and JSON schema, and load /judge-ant or read the skill file.
+
 Evidence: ISH-10 and ISH-11 load skills the same way from inside ants.
+
 - Proof: The judge is a skill: it scores code against a spec by hand, or as Ishikari's judge and juror ants
   - Tests: "tests/test_workflows.mjs finish: many tasks, one juror per task, at most parallel at once, judge sees their reports"
-* The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants
+
+## The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants
+
 The detective's checking rules go into a skill, skills/detective-ant/SKILL.md, loaded by both detective ants (build check and the judge-fix check).
+
 - Checks a change against its ask (task, issue or plan) and a given design; runs the tests; checks the docs match.
 - Real bugs only, each with its cause and a fix plan a worker can build; style and doubts go in nits; a re-check says what is fixed, lists only new bugs and never repeats a failed plan. Never edits code.
 - By hand: checks the current branch against main and the given text, and answers Pass or Fail in the session.
 - Ishikari mode: never asks; the ants keep their prompts, git steps and JSON schema, and load /detective-ant or read the skill file.
+
 Evidence: ISH-10 to ISH-12 load skills the same way from inside ants.
+
 - Proof: The detective is a skill: it checks a change against its ask, by hand or as Ishikari's detective ants
   - Tests: "tests/test_workflows.mjs finish: a low judge score gets one fix round, then a second score"
-* The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant
+
+## The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant
+
 What to look for and how to rank it go into a skill, skills/retrospective-ant/SKILL.md, loaded by Ishikari's retrospective ant.
+
 - Judges how the work was done, never the code; read only.
 - Findings need evidence, each with category, title, evidence, impact, change and where, ranked costliest first.
 - By hand: reviews the current chat session (or a given path or range) and answers in the session.
 - Ishikari mode: never asks; the ant keeps its reading list, digest check, one report file, categories and JSON schema, and loads /retrospective-ant or reads the skill file.
+
 Evidence: ISH-10 to ISH-13 load skills the same way from inside ants.
+
 - Proof: The retrospective is a skill: it reviews this session by hand, or an Ishikari run as its ant
   - Tests: "tests/test_workflows.mjs retro: one read-only ant writes only retrospective.md and returns ranked findings"
-* The ant skills' fixed steps run as code, not by an agent
+
+## The ant skills' fixed steps run as code, not by an agent
+
 scripts/ant.py does the ant skills' fixed steps in normal mode, with no model, printing JSON.
+
 - base: the named branch, else origin's default, main, then master; none: exit 2.
 - scope: changed files and new-side line ranges from the merge base to HEAD, deleted files and the line count.
 - tests: runs the test command in a throwaway worktree at the merge base and in the repo; verdict pass, new-failure, already-failing or fixed; the worktree is always removed.
