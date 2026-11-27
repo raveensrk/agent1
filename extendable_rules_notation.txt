@@ -110,7 +110,8 @@ Archive is not a kind. Any item can carry :archived true (see 7).
   in any language and survives test renames.
 - Results format: JUnit XML. The ERN ID is read from the test name or a
   test property. No custom reporter per language.
-- Staleness: config lists watched source globs. When results are read
+- Staleness: a top-level :watch key in the ERN file lists source globs,
+  e.g. :watch ["src/**" "test/**"]. No separate config file. When results are read
   in, `ern` saves a hash of the watched files plus the ERN file. If the
   current hash differs, features show "tested (stale)", never "tested".
 - A Test ID tag in code with no matching Test item is a lint error.
@@ -143,6 +144,9 @@ Archive is not a kind. Any item can carry :archived true (see 7).
 - Imported items are read-only and namespaced (:agent1/R3).
 - If the source file changes, `ern check` reports "import moved" and
   keeps using nothing new until someone re-pins.
+- A missing source file is an error: `ern check` fails with
+  "import agent1 missing at <path>". Items linking to :agent1/* show
+  unknown, never passed. Fix the path or remove the import.
 - `ern import --update agent1` re-pins to the current hash. Local items
   linked to imported items whose meaning changed turn suspect.
 
@@ -213,9 +217,7 @@ The first ERN project is the `ern` CLI repo itself. It passes when:
 15. Open questions
 ======================================================================
 
-- Which tool owns the watched-files config (inside the ERN file or a
-  separate `ern.config.edn`).
-- What `ern check` does when an imported source file is missing.
+- None right now.
 
 ======================================================================
 16. Decision log (grilling, 2026-11-28)
@@ -247,3 +249,5 @@ The first ERN project is the `ern` CLI repo itself. It passes when:
 23. Import pin: path plus content hash; `ern import --update` re-pins.
 24. File split: by feature area.
 25. Rebuild from ERN: stays an aspiration.
+26. Watched files: :watch key inside the ERN file.
+27. Missing import source: hard error; linked items show unknown.
