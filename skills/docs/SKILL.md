@@ -228,8 +228,6 @@ Nothing changed and the docs match the code: say so and stop.
 
 ## LemmaX mode
 
-<!-- built for lemmax 01a20d28-cb41-760a-a477-e1704807a2a8, in ~/repos/lemmax -->
-
 Picked when the repo has a `theories/` folder of LemmaX files, or by the
 `lemmax` argument. You, the agent, write both documents; `lmx` never does,
 and only warns when one is missing or older than the theory.
