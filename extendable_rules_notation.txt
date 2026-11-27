@@ -33,8 +33,12 @@ reuse. ERN takes its best idea, hash-based suspect links.
 
 - Format: EDN.
 - Tool: a babashka CLI named `ern`. No JVM. Each repo needs only `bb`.
+- Standalone: ERN never depends on git or any version control. All
+  change detection uses content hashes of files on disk.
 - Layout: one file per project, `project.ern.edn`. It may split later
   with `:include` of further EDN files; the tool loads them as one model.
+  Split by feature area (e.g. `auth.ern.edn` holds that area's
+  definitions, rules, features, tests and tasks), not by kind.
 
 ======================================================================
 3. Item kinds
@@ -77,12 +81,16 @@ Archive is not a kind. Any item can carry :archived true (see 7).
 - A link points from a child to the parent it depends on, and stores the
   content hash of the parent at the time it was last reviewed:
     :links [{:to :R1 :hash "sha256:..."}]
+- Hash input: meaning fields only. That is :text plus kind-specific
+  meaning fields (for an attachment, its file hash). Excluded: :links,
+  :state, :archived and whitespace. A state move or a re-review never
+  makes children suspect; only a change in meaning does.
 - Suspect: a link whose stored hash differs from the parent's current
   hash. The child is suspect until reviewed.
 - Review: a person or agent checks the child, edits it if needed, and
   runs `ern review :F1`, which stores the new parent hashes.
 - Spread: direct only. Changing D1 makes R1 suspect. F1 (which links to
-  R1) turns suspect only once R1 is reviewed and its own hash changes.
+  R1) turns suspect only once R1's own meaning (and so its hash) changes.
   Review happens one layer at a time.
 - Notes and Ideas may link to any item as children. They turn suspect
   when what they explain changes. Nothing may link to a Note or Idea as
@@ -100,6 +108,11 @@ Archive is not a kind. Any item can carry :archived true (see 7).
   e.g. (deftest ^{:ern :T1} login-redirect ...) or a "@T1" tag in other
   languages. The results report carries the ID back to `ern`. This works
   in any language and survives test renames.
+- Results format: JUnit XML. The ERN ID is read from the test name or a
+  test property. No custom reporter per language.
+- Staleness: config lists watched source globs. When results are read
+  in, `ern` saves a hash of the watched files plus the ERN file. If the
+  current hash differs, features show "tested (stale)", never "tested".
 - A Test ID tag in code with no matching Test item is a lint error.
 
 ======================================================================
@@ -124,13 +137,14 @@ Archive is not a kind. Any item can carry :archived true (see 7).
 9. Reuse across repos
 ======================================================================
 
-- A repo imports another repo's ERN file pinned to a git commit:
-    :imports [{:as agent1 :repo "~/repos/agent1"
-               :file "project.ern.edn" :rev "e1b147b"}]
+- A project imports another project's ERN file pinned by content hash:
+    :imports [{:as agent1 :path "~/repos/agent1/project.ern.edn"
+               :hash "sha256:..."}]
 - Imported items are read-only and namespaced (:agent1/R3).
-- Nothing changes under a repo until someone moves the pin. Moving the
-  pin re-hashes imported items, so local items linked to changed ones
-  turn suspect.
+- If the source file changes, `ern check` reports "import moved" and
+  keeps using nothing new until someone re-pins.
+- `ern import --update agent1` re-pins to the current hash. Local items
+  linked to imported items whose meaning changed turn suspect.
 
 ======================================================================
 10. Tasks
@@ -199,10 +213,9 @@ The first ERN project is the `ern` CLI repo itself. It passes when:
 15. Open questions
 ======================================================================
 
-- Hash input: which fields are hashed (text only, or text plus links)?
-- Results report format the tool reads (JUnit XML, EDN, both).
-- When the single file splits, by kind or by feature area.
-- Whether the rebuild-from-ERN aspiration ever becomes a tested goal.
+- Which tool owns the watched-files config (inside the ERN file or a
+  separate `ern.config.edn`).
+- What `ern check` does when an imported source file is missing.
 
 ======================================================================
 16. Decision log (grilling, 2026-11-28)
@@ -212,7 +225,7 @@ The first ERN project is the `ern` CLI repo itself. It passes when:
 2.  Not Doorstop: too heavy, requirements only, no cross-repo reuse.
 3.  Change detection: content hash stored in each link.
 4.  Suspect spread: direct dependents only.
-5.  Reuse: pinned import at a git commit.
+5.  Reuse: pinned import (now by content hash, see 23).
 6.  Feature "tested": derived from latest test results, never stored.
 7.  Test binding: ERN ID tags in real test code.
 8.  Layout: one file, :include to split later.
@@ -227,3 +240,10 @@ The first ERN project is the `ern` CLI repo itself. It passes when:
 17. IDs: kind prefix plus number, never reused, namespaced on import.
 18. Archive: blocked while live dependents exist.
 19. Trial: ERN specifies the `ern` CLI repo itself.
+20. Hash input: meaning fields only; not links, state or archive flag.
+21. Results format: JUnit XML.
+22. Stale results: hash of watched files plus ERN file.
+    ERN is standalone and never depends on git.
+23. Import pin: path plus content hash; `ern import --update` re-pins.
+24. File split: by feature area.
+25. Rebuild from ERN: stays an aspiration.
