@@ -219,3 +219,9 @@ Cover:
 Keep it under ~200 lines, prose and short lists, no filler. If AGENTS.md already
 exists, update it in place rather than rewriting from scratch. Show me the file
 when it's done.
+
+
+## Generate an image and create a video
+
+Create a video about `<topic>` by generating image frames. 24 fps. Stitch the images and create a video using `ffmpeg`.
+
