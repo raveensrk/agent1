@@ -1747,8 +1747,8 @@ Commit one POSIX shell script, `docs/build.sh`, pinning tool versions where the 
   Usage line, what the app does, every option, one runnable example.
   Exit 0, and nothing else runs - a help call never writes, never starts a daemon, never asks a question.
   argparse's default `add_help` gives both, and gives them per subcommand; a script that parses options by hand has to handle the pair itself.
-- `<program> help` is the long help, and `-h=/`–help= the short one - the split and what each carries live in [rules/docs.md](docs.md).
-  argparse gives no `help` command: add `sub.add_parser("help")`, or test `sys.argv[1:2] =` ["help"]= before `parse_args`.
+- `<program> help` is the long help, and `-h`/`--help` the short one - the split and what each carries live in [rules/docs.md](docs.md).
+  argparse gives no `help` command: add `sub.add_parser("help")`, or test `sys.argv[1:2] == ["help"]` before `parse_args`.
 - A bare call prints the main help too, unless a bare call is itself a real command (`bookmark2` with no arguments opens its window).
 
 ### Flags
