@@ -1463,9 +1463,9 @@ When a GUI app is opened for an automated test or check, it is always launched i
 
 - It does not come to the front, and it does not take the keyboard or the pointer from what the owner is doing.
 
-### The commit hook runs related tests only
+### No git hook runs tests
 
-The commit hook runs the tests related to the staged files, never the full suite.
+No git hook runs a test; tests run only when the owner asks ([git.md](git.md): Git hooks lint only). Asked for a simple fix, run only the tests related to it, never the full suite.
 
 ### One command runs every test, in parallel, each suite in a clean room
 
