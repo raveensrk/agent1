@@ -2,13 +2,13 @@
 name: docs
 metadata:
   scope: global
-description: Create or update design_docs/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from design_docs/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, or by Ishikari's docs ant after a merge; never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing; called by an ant it takes its answers from the ant's docs brief and asks nothing. Update mode brings the docs in line with what changed and what was learned.
+description: Create or update docs/design/ as a book-style design doc and repo bible, complete enough that an engineer can rebuild the project from docs/design/ alone - with D2/TALA and Mermaid diagrams, a build script for checks and PDF/EPUB export, an AGENTS.md pointer and a docs-only rebuild test. Use when the user says create docs, write the docs, document this repo, write a design doc or repo bible, docs book, update the docs, sync the docs, docs are stale or runs /docs. Run by hand after a task is done, or by Ishikari's docs ant after a merge; never on its own. Create mode researches first, interviews the user, waits for an OK on the outline, and works on a docs-book branch without pushing; called by an ant it takes its answers from the ant's docs brief and asks nothing. Update mode brings the docs in line with what changed and what was learned.
 argument-hint: "create|update [repo path]"
 ---
 
 # Create or update docs: the book of this repository
 
-Use the repo's existing design book in `design_docs/`, `docs/` or `doc/`; with none, create `design_docs/`. A root `<repo>.md` holding the project rules may be folded into the book (see [rules/docs.md](../../rules/docs.md), The bible).
+Write the book in `docs/design/` (see [rules/docs.md](../../rules/docs.md), The bible and the manual). An old book in `docs/design/`, `docs/` or `doc/`, or a root `<repo>.md`, moves there with `git mv`. `docs/manual/` is the user manual, not this book.
 
 ## Modes
 
@@ -25,17 +25,17 @@ Two modes, picked by the first argument:
 - `create` - write the book from scratch, or rebuild a docs folder that is not yet a book. Runs Phases 1-7.
 - `update` - bring the docs in line with what changed and what was learned. Runs [Update mode](#update-mode).
 
-No mode given: `update` if `design_docs/` (or an old `docs/` or `doc/`) exists, `create` otherwise.
+No mode given: `update` if `docs/design/` (or an old `docs/design/`, `docs/` or `doc/` book) exists, `create` otherwise.
 Say which mode was picked in the first line.
 
 ## Goal
 
-Create `design_docs/`: a book-style design doc and repo bible for this repository.
+Create `docs/design/`: a book-style design doc and repo bible for this repository.
 
 Done means:
 
-- A software engineer who has never seen this repo can rebuild an equivalent project from `design_docs/` alone, without the source code. The book is language agnostic: no source paths, line numbers, test or function names; those go in `AGENTS.md`.
-- Every fact lives in exactly one place and can be reached from `design_docs/README.md`.
+- A software engineer who has never seen this repo can rebuild an equivalent project from `docs/design/` alone, without the source code. The book is language agnostic: no source paths, line numbers, test or function names; those go in `AGENTS.md`.
+- Every fact lives in exactly one place and can be reached from `docs/design/README.md`.
 - It reads well on GitHub, on GitLab, in local editors, and printed as PDF or EPUB.
 
 Write for humans first.
@@ -43,7 +43,7 @@ AI agents get a short section in `AGENTS.md` that points here.
 
 ## Ground rules
 
-- All documentation goes in `design_docs/`. Create it if it's missing. If it exists, build on it: keep what's correct, fix what's stale, fold in the rest.
+- All documentation goes in `docs/design/`. Create it if it's missing. If it exists, build on it: keep what's correct, fix what's stale, fold in the rest.
 - Git: work on a new branch `docs-book`, commit at the end of every phase that changes files, and never push. If the working tree has uncommitted changes, stop and ask first. Skip git steps if this isn't a git repo.
 - Questions: batch them, and give each one your recommended answer with a one-line reason. Outside the Phase 2 interview, ask at most one batch per phase. If the user doesn't answer, use your recommendation for wording choices only; never move, delete or install anything without a yes.
 - Requirement traces: requirements files (`requirements.org`, `requirements/*.org`, `REQUIREMENTS.md`, `requirements/*.md`), entries with `:ID:` or OPEN/TODO/DONE or Lemmax CONJECTURE/LEMMA/THEOREM/REFUTED headings, Lemmax proofs files (`*.proofs.org`, `:PROVES:`/`:TEST:`), Lemmax tasks and notes files (`*.tasks.org`, `*.notes.org`), axioms (`AXIOM` headings), user stories, PRDs, specs and acceptance-criteria lists. Never convert or delete them on your own: ask the user, per trace, whether to convert it into the docs (its facts go into the chapters that own them: goals into Overview, acceptance criteria into Quality, decisions into ADRs, open items into Open questions, then the source is removed), keep it as is and link to it, or leave it out. Recommend converting. Called by an ant: never ask; leave them and list them in the report.
@@ -98,12 +98,12 @@ In the first round, also ask:
 
 - which missing tools to install;
 - whether to convert each requirement trace into the docs (see Ground rules);
-- what to do with each root doc or note: merge it into a chapter, move it into `design_docs/` unchanged, or leave it. Content that moves is not kept in two places. These always stay in the root: `README.md` (to be trimmed to a short pitch plus a link to `design_docs/README.md`), `LICENSE`, `CHANGELOG*` and `AGENTS.md`.
+- what to do with each root doc or note: merge it into a chapter, move it into `docs/design/` unchanged, or leave it. Content that moves is not kept in two places. These always stay in the root: `README.md` (to be trimmed to a short pitch plus a link to `docs/design/README.md`), `LICENSE`, `CHANGELOG*` and `AGENTS.md`.
 
 ## Phase 3: Outline (checkpoint)
 
 Propose the chapter list (file name, one-line purpose) and the diagram list (chapter, type, tool, what it shows).
-Wait for the user's OK, then write `design_docs/README.md` with the table of contents and commit.
+Wait for the user's OK, then write `docs/design/README.md` with the table of contents and commit.
 
 Start from this skeleton.
 Drop what doesn't apply, split what's too big (for example, one chapter per package in a monorepo), and never pad: a small repo may need four chapters.
@@ -133,7 +133,7 @@ Name chapters `NN-kebab-name.md`, numbered in reading order.
 
 - Rebuildable: specify behavior, contracts, data shapes, configuration, versions and decisions precisely enough to reimplement. Name the source paths a section describes, for maintainers, but never rely on them.
 - Prefer a diagram, then a table, then a list. Use prose only for reasons and trade-offs, at most three sentences per paragraph.
-- One fact, one place: state it once and link to it everywhere else. No previews, recaps or filler. `README.md` and `AGENTS.md` link into `design_docs/`; they never restate it.
+- One fact, one place: state it once and link to it everywhere else. No previews, recaps or filler. `README.md` and `AGENTS.md` link into `docs/design/`; they never restate it.
 - Don't re-teach third-party tools; link to their official docs.
 - No implementation code. Signatures, schemas and examples are fine where they are the contract; prefer neutral forms (JSON Schema, OpenAPI, SQL DDL, pseudocode).
 - Each chapter: H1 title, one-line purpose, body, then previous / next links.
@@ -152,17 +152,17 @@ Name chapters `NN-kebab-name.md`, numbered in reading order.
 - Prefer D2 with the TALA layout engine for software architecture diagrams (system context, containers, components, deployment). TALA draws orthogonal, whiteboard-style layouts made for architecture, unlike DAG layouts that grow in one direction. Set it inside each source with `vars: { d2-config: { layout-engine: tala } }`; if TALA isn't available, use ELK and say so.
 - TALA can rearrange a whole diagram after a small edit. When a layout must stay recognizable across edits, lock key shapes with `top` and `left`.
 - Mermaid for flowcharts, sequence, state, ER and class diagrams. Graphviz only for graphs a tool generates as DOT, such as dependency graphs.
-- Sources live in `design_docs/diagrams/`, named `<chapter>-<name>.mmd`, `.d2` or `.dot`. Commit the rendered `.svg` next to each source and embed it as an image whose alt text says what it shows.
+- Sources live in `docs/design/diagrams/`, named `<chapter>-<name>.mmd`, `.d2` or `.dot`. Commit the rendered `.svg` next to each source and embed it as an image whose alt text says what it shows.
 - Render on an opaque white background, so diagrams print well and stay readable in dark mode. Set Mermaid's root-level `htmlLabels: false` (the per-diagram setting is deprecated): labels inside `<foreignObject>` vanish in editors, PDF and EPUB.
 - Keep each diagram to about 15 nodes; split bigger ones.
 
 ### Build script
 
-Commit one POSIX shell script, `design_docs/build.sh`, pinning tool versions where the runner allows (e.g. `npx pkg@x.y.z`):
+Commit one POSIX shell script, `docs/design/build.sh`, pinning tool versions where the runner allows (e.g. `npx pkg@x.y.z`):
 
-- `diagrams`: render every source in `design_docs/diagrams/` to SVG, with Mermaid settings in a committed `design_docs/diagrams/mermaid.json`;
+- `diagrams`: render every source in `docs/design/diagrams/` to SVG, with Mermaid settings in a committed `docs/design/diagrams/mermaid.json`;
 - `check`: markdownlint, link check including anchors, and a full re-render, failing on any error;
-- `export`: PDF and EPUB of the whole book into `design_docs/_build/` (ignored via `design_docs/.gitignore`); run pandoc from inside `design_docs/` with `--file-scope` so cross-chapter links become internal anchors.
+- `export`: PDF and EPUB of the whole book into `docs/design/_build/` (ignored via `docs/design/.gitignore`); run pandoc from inside `docs/design/` with `--file-scope` so cross-chapter links become internal anchors.
 
 ## Phase 5: AI instructions and root cleanup
 
@@ -171,9 +171,9 @@ Commit one POSIX shell script, `design_docs/build.sh`, pinning tool versions whe
    ```markdown
    ## Documentation
 
-   - Read `design_docs/README.md` first; `design_docs/` is the design source of truth.
-   - If a change affects behavior, interfaces, data, configuration or dependencies, update the affected chapters and diagram sources in the same change, then run `design_docs/build.sh diagrams` and `design_docs/build.sh check`.
-   - Follow the conventions in `design_docs/README.md`. Link to facts; never restate them.
+   - Read `docs/design/README.md` first; `docs/design/` is the design source of truth.
+   - If a change affects behavior, interfaces, data, configuration or dependencies, update the affected chapters and diagram sources in the same change, then run `docs/design/build.sh diagrams` and `docs/design/build.sh check`.
+   - Follow the conventions in `docs/design/README.md`. Link to facts; never restate them.
    ```
 
 2. Existing agent-specific files (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, Cursor rules) get a pointer to `AGENTS.md`, not copied rules. In `CLAUDE.md`, that's the line `@AGENTS.md`, because Claude Code ignores `AGENTS.md` when a `CLAUDE.md` exists. Don't create agent-specific files that aren't there.
@@ -182,15 +182,15 @@ Commit one POSIX shell script, `design_docs/build.sh`, pinning tool versions whe
 
 ## Phase 6: Verify (definition of done)
 
-- [ ] `design_docs/build.sh diagrams` and `design_docs/build.sh check` pass.
+- [ ] `docs/design/build.sh diagrams` and `docs/design/build.sh check` pass.
 - [ ] Every SVG still shows its labels when rasterized with `rsvg-convert`.
-- [ ] `design_docs/build.sh export` produces a PDF and an EPUB you have inspected: diagrams visible, callouts and links intact.
+- [ ] `docs/design/build.sh export` produces a PDF and an EPUB you have inspected: diagrams visible, callouts and links intact.
 - [ ] Build, test and run commands in the docs were executed successfully, or are marked unverified. Never run deploys.
 - [ ] No fact appears twice: scan for repeated sentences, lists and tables, including in `README.md` and `AGENTS.md`.
-- [ ] Every chapter is reachable from `design_docs/README.md`, and the previous / next links form one chain.
+- [ ] Every chapter is reachable from `docs/design/README.md`, and the previous / next links form one chain.
 - [ ] The docs-only rebuild test passes.
 
-Docs-only rebuild test: copy `design_docs/` alone into an empty folder and hand it to a fresh agent with no access to the repo (a sub-agent if you can restrict its access, otherwise ask the user to run it in a new session).
+Docs-only rebuild test: copy `docs/design/` alone into an empty folder and hand it to a fresh agent with no access to the repo (a sub-agent if you can restrict its access, otherwise ask the user to run it in a new session).
 Ask it to:
 
 1. write a rebuild plan detailed enough to start coding;
@@ -210,14 +210,14 @@ No new branch: commit on the current branch, never push.
 
 1. Find what changed: this session's edits and commits, commits since the last commit that touched the docs, and uncommitted changes the user points to. With no clear baseline, compare every chapter against the code.
 2. List what was learned: facts, causes, decisions and gotchas the docs don't hold.
-3. Map each change and lesson to the chapter, diagram, ADR or glossary entry that owns it. Also check `AGENTS.md`, the root `README.md` and `design_docs/build.sh`.
+3. Map each change and lesson to the chapter, diagram, ADR or glossary entry that owns it. Also check `AGENTS.md`, the root `README.md` and `docs/design/build.sh`.
 4. Remove stale docs: anything now untrue, obsolete or gone. Answered open questions leave the Open questions chapter.
 5. Reconcile docs and code: where they disagree, the code wins unless the session showed the code is the bug.
-6. Add what is missing, in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one, and keep `design_docs/README.md` and the previous / next chain in step.
+6. Add what is missing, in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one, and keep `docs/design/README.md` and the previous / next chain in step.
 7. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the changes affect.
 8. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
 9. Ask at most one batch of questions, only for intent or rationale the code can't tell, plus whether to convert each requirement trace not yet decided (see Ground rules). Unanswered ones go in Open questions.
-10. With `design_docs/build.sh`, run `design_docs/build.sh diagrams` and `design_docs/build.sh check`. In a book, rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
+10. With `docs/design/build.sh`, run `docs/design/build.sh diagrams` and `docs/design/build.sh check`. In a book, rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
 11. Commit and report in a few lines: what was removed, fixed and added, training data updated, check results, open questions and the commits.
 
 Nothing changed and the docs match the code: say so and stop.

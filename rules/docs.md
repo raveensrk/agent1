@@ -34,7 +34,7 @@ Pick the row that matches what you are building.
 | -------- | --------------------------- | ---------------- |
 | Script   | Header comment or docstring | Any separate doc |
 | Program  | `README.md`                 | Usage            |
-| Project  | `README.md` and the bible   | Usage            |
+| Project  | `README.md` and `docs/`     | Usage            |
 
 What each one means:
 
@@ -53,19 +53,19 @@ What each doc holds:
 - The bible: see below.
 
 When you create a program or project, or change one missing its `README.md` or
-bible, create the missing file without asking and tell me you did.
+`docs/`, create the missing file without asking and tell me you did.
 
-## The bible
+## The bible and the manual
 
-Every app repo has a design document, its bible. Its project rules live in
-one of three places; pick the one that fits and say which:
+Every app repo has the same two folders of Markdown:
 
-- `<repo>.md` at the root, for a small project.
+- `docs/design/`, the bible: the design document. Entry page
+  `docs/design/README.md`; a big project splits it into chapters.
+- `docs/manual/`, the user manual: how a person installs and uses the app,
+  every screen and command. Entry page `docs/manual/README.md`.
 
-- `design_docs/`, a folder of Markdown chapters, for a big one.
-
-- `docs/`, folded into its chapters, when the repo already keeps a design book
-  there. `docs/` may also hold general docs that are not the bible.
+No `<repo>.md` at the root, no `design_docs/`. `README.md` stays short: what it
+is, install, and links to both.
 
 - From the bible alone, any AI agent can rebuild the project from scratch.
 
@@ -73,7 +73,8 @@ one of three places; pick the one that fits and say which:
   screens, commands and design decisions. No source paths, line numbers,
   test names, function names or language-specific build steps.
 
-- `README.md` holds what a person needs: what it is, install, run.
+- The manual is for people; it may show how to run a command, but usage itself
+  stays in `--help`, and the manual links to it.
 
 - `AGENTS.md` holds the code details: layout, build and test commands, test
   names and which rule each checks, evidence with file and line.
