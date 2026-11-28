@@ -1,72 +1,108 @@
-#+title: Prompts
-#+STARTUP: fold
+# Prompts
 
 Personal paste-bin. Copy a prompt into chat. Agents do not treat this file as rules.
 
-* Prepare the repo (Manual)
-** Add AGENTS.md
-** Create Git hooks and Harness hooks if any
-* Planning
-** Interview/Grill
+## Prepare the repo (Manual)
+
+### Add AGENTS.md
+
+### Create Git hooks and Harness hooks if any
+
+## Planning
+
+### Interview/Grill
+
 - Grill me until you uncover the goal of this project.
 - Grill me until you understand the goal.
 - Interview me and expand this idea
 - Before starting research the web for all the required information and grill me until you understand the goal.
-** I am thinking to `do this thing`. Brainstorm with me until we uncover the goal.
-** Does a project already exist for this?
+
+### I am thinking to `do this thing`. Brainstorm with me until we uncover the goal.
+
+### Does a project already exist for this?
+
 Is there a project in the internet available that does this exactly? Or any alternative. I dont want to implement a new project if there is something that exists online.
-** Refactor
-*** Go over this entire project and critic it.
-*** Tell me which parts of the project we can refactor.
-*** Should we replace the backend or frontend?
+
+### Refactor
+
+#### Go over this entire project and critic it.
+
+#### Tell me which parts of the project we can refactor.
+
+#### Should we replace the backend or frontend?
+
 - Should we replace the backend or frontend or both?
 - The codebase of the project must align with the docs.
 - Which framework would be be suited for this kind of work?
 - I want the project to be highly expressive so the programming languages used must also be highly expressive.
 
-** Improve these prompts. Make them concise without losing information.
-* Vibe Coding
-** TODOs/FIXMEs comments
+### Improve these prompts. Make them concise without losing information.
+
+## Vibe Coding
+
+### TODOs/FIXMEs comments
+
 - Review all TODO and FIXME in the codebase
-** Follow these conventions <https://www.conventionalcommits.org/en/v1.0.0/>
-** Follow up 
+
+### Follow these conventions <https://www.conventionalcommits.org/en/v1.0.0/>
+
+### Follow up
+
 - What do do next?
 - Tell me next steps.
-** Visual Explanation
+
+### Visual Explanation
 
 I don't understand. Explain in a simple and clear way.
 
-Create a presentation and draw an animated diagram and visually explain. Use https://github.com/juliangarnier/anime. Don't use any skills or my custom configs and instructions. Open in default web browser.
+Create a presentation and draw an animated diagram and visually explain. Use <https://github.com/juliangarnier/anime>. Don't use any skills or my custom configs and instructions. Open in default web browser.
 
 Dark theme
-** Design Workflow
+
+### Design Workflow
+
 - Prompt -> Design mockup with SVG (Animated if needed) -> Review and Approve -> Design mockup with code -> Review and Approve -> Next
 - Ask questions like,
   - Is this good?
   - How can we improve this?
   - Did we miss anything?
   - Review and uncover any gaps
-** Import @file
 
-** Redesign
+### Import @file
+
+### Redesign
+
 I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
-** [[../skills/redesign-gui/SKILL.md][Redesign full]]
-** [[auto_install_git_hook.md][Auto-Install Git Hook]]
 
-* Review
-** Review the gui app visually
+### [Redesign full](../skills/redesign-gui/SKILL.md)
+
+### [Auto-Install Git Hook](auto_install_git_hook.md)
+
+## Review
+
+### Review the gui app visually
+
 Can you record a video of yourself using the app with example data. Try out all the app. The analyse the video. Then report your findings.
-** Review and verify everything
+
+### Review and verify everything
+
 - Review everything.
 - Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
-** Review this session's work
+
+### Review this session's work
+
 Based on this session,
+
 - Go back and verify all your work so far. Make sure you used best practices, were efficient, and didn't introduce any issues.
 - If you can verify the work so far with a test, create it.
-** Review requirements
-Read the [[file:~/repos/agent1/rules/agent1.org][Requirements]] throughly and report me if anything can be improved from this repo based on it.
-** Critic
+
+### Review requirements
+
+Read the [Requirements](~/repos/agent1/rules/agent1.md) throughly and report me if anything can be improved from this repo based on it.
+
+### Critic
+
 - Critic this project/repo/app.
 - Categories
   - Requirements
@@ -80,25 +116,32 @@ Read the [[file:~/repos/agent1/rules/agent1.org][Requirements]] throughly and re
   - Gaps if any
   - Simplicity and Ease of Use
   - Conclusion
-** Critic this project fast and suggest me a quick improvement or fix.
 
-* Performance
-** Make performance improvements to the project.
+### Critic this project fast and suggest me a quick improvement or fix.
 
-* Maintenance
-** [[../skills/maintain/SKILL.md][Perform maintenance for this project]]
-** Skills
+## Performance
+
+### Make performance improvements to the project.
+
+## Maintenance
+
+### [Perform maintenance for this project](../skills/maintain/SKILL.md)
+
+### Skills
+
 - List all installed skills in this computer for all AI Agent Harnesses.
 - List all installed skills in this computer for this current AI Agent Harness.
-- List all installed ai related apps / skills / configs / ai agent harness / data in this computer for all AI Agent Harnesses. 
-** AI data scrub
+- List all installed ai related apps / skills / configs / ai agent harness / data in this computer for all AI Agent Harnesses.
+
+### AI data scrub
+
 Scrub what AI agent harnesses leave on this Mac: sessions, caches, telemetry,
 logs and memories. Keep configs and logins unless I pick a bigger tier.
 
 1. Scan. Look in each harness's folders and list what exists, with size:
-   - Claude Code: `~/.claude`, `~/.claude.json`, `~/.claude.json.tmp.*`
+   - Claude Code: `~/.claude`, `~/.claude.json`, `~/.claude.json.tmp.\*`
    - Claude Desktop: `~/Library/Application Support/Claude`,
-     `~/Library/Caches/com.anthropic.claudefordesktop*`,
+     `~/Library/Caches/com.anthropic.claudefordesktop\*`,
      `~/Library/Caches/claude-cli-nodejs`
    - Codex: `~/.codex`, `~/Library/Caches/com.openai.codex`; CodexBar:
      `~/.codexbar`, `com.steipete.codexbar`
@@ -123,7 +166,7 @@ logs and memories. Keep configs and logins unless I pick a bigger tier.
    - Keep: settings and config files, `AGENTS.md`, rules, hooks, skills,
      plugins, extensions, automations, `auth.json`, OAuth/identity files and
      Claude Desktop's `Cookies` (keeps me signed in), and Codex's
-     `chrome-native-hosts*.json` (deleting it breaks the browser extension).
+     `chrome-native-hosts\*.json` (deleting it breaks the browser extension).
    - Keep and flag for me to review: Ollama model weights (huge, a re-download),
      opencode `repos` (may hold unpushed work), and Hermes/OpenClaw agent
      installs, tools and workspaces.
@@ -139,14 +182,16 @@ Bigger tiers, only when I ask, per harness:
 
 - All: also configs, skills, plugins and auth.
 - Be gone: also the app bundle, its `~/Library` leftovers, its keychain items
-  (`security delete-generic-password -l <name>`), LaunchAgents that mention
-  it, `defaults delete <bundle id>`, and its CLI (`npm uninstall -g` or `brew uninstall`, whichever installed it).
+  (`security delete-generic-password -l \<name>`), LaunchAgents that mention
+  it, `defaults delete \<bundle id>`, and its CLI (`npm uninstall -g` or `brew uninstall`, whichever installed it).
 
 Never touch `~/dot` or `~/.dot`, in any tier. Never touch a path you did not
 list in the plan.
 
-* Publish
-** Publish a website with pandoc
+## Publish
+
+### Publish a website with pandoc
+
 - Create a script called `publish.py` in `scripts/` directory.
 - It must read the entire project and create a website using pandoc. It must also support mermaid diagram rendering. The website must be published under a directory called `publish/`.
 - The website must be dark mode.
@@ -154,32 +199,45 @@ list in the plan.
 - Keep the website simple, minimal and functional. No bloat. KISS Philosophy.
 - One page html document with all assets under `assets` directory.
 
-* Release
-** Commit with a sensible message. Tag. Push the changes to the repository.
-** Prepare repo for public release
+## Release
+
+### Commit with a sensible message. Tag. Push the changes to the repository.
+
+### Prepare repo for public release
+
 Prepare this repo for public release. Refactor and organize and rewrite the repo in a way that it is ready to go public at any time. But keep the repo private. I will want to review before making public.
 
 After that scrub this repo of any private data.
 
 Private data must be handled by moving it into a different location.
-** Refactor this repo if needed
+
+### Refactor this repo if needed
+
 Refactor this repo: reorganize the layout and rename files and symbols so they read clearly.
 Delete dead code. That means unused files, functions, exports, deps and commented-out blocks.
 Keep behavior the same. Run the tests and build before and after, and both must pass.
 Print the planned moves, renames and deletions first. Wait for my yes before applying.
 Commit one logical step at a time, and summarize what changed and why at the end.
-* Archive chat
-** Archive chat
 
-* General
-** Remove dead code with regression tests
+## Archive chat
+
+### Archive chat
+
+## General
+
+### Remove dead code with regression tests
+
 Find dead code, explain why, ask the user to remove it, then run regression tests to confirm.
-** I want to install and try out this app privately, anonymously and securly.
 
-* Skills
-** Based on the project I'm working on, what Claude Skills should I create?
-** Self-updating skill
-Create a skill for `<task>`. Write `SKILL.md` with the goal, the steps, and the
+### I want to install and try out this app privately, anonymously and securly.
+
+## Skills
+
+### Based on the project I'm working on, what Claude Skills should I create?
+
+### Self-updating skill
+
+Create a skill for `\<task>`. Write `SKILL.md` with the goal, the steps, and the
 criteria for a good result.
 
 The skill must maintain itself as I use it:
@@ -195,8 +253,10 @@ The skill must maintain itself as I use it:
 - Never widen the scope on your own. A deviation changes the skill only after I
   confirm it.
 
-* Init
-** Write an AGENTS.md for a fresh session
+## Init
+
+### Write an AGENTS.md for a fresh session
+
 Write an AGENTS.md in the repo root that lets a fresh agent session (Claude Code
 or Codex) pick up this project with no other context.
 
@@ -220,8 +280,6 @@ Keep it under ~200 lines, prose and short lists, no filler. If AGENTS.md already
 exists, update it in place rather than rewriting from scratch. Show me the file
 when it's done.
 
+\## Generate an image and create a video
 
-## Generate an image and create a video
-
-Create a 24 fps video about `<topic>` by generating image frames. Stitch the images and create a video using `ffmpeg`.
-
+Create a 24 fps video about `\<topic>` by generating image frames. Stitch the images and create a video using `ffmpeg`.

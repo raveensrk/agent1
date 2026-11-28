@@ -103,7 +103,7 @@ answer means the import did not load.
 | [`notes/model_usage_history.md`](./notes/model_usage_history.md) | Historical model usage across agent harnesses                                                                                            |
 | `archive/rules/naming.md`                                        | Naming rules, disabled                                                                                                                   |
 | `rules/pi.md`                                                    | pi package management                                                                                                                    |
-| `prompts/prompts.org`                                            | Personal paste-bin of chat prompts                                                                                                       |
+| `prompts/prompts.md`                                            | Personal paste-bin of chat prompts                                                                                                       |
 | [`notes/question_types.md`](./notes/question_types.md)           | Question formats grouped into AI and non-AI categories for vibe coding                                                                   |
 | `rules/removal.md`                                               | Removing apps, packages and harnesses                                                                                                    |
 | `rules/repos.md`                                                 | Nested git repo policy for `~/repos`                                                                                                     |
