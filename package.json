@@ -17,7 +17,8 @@
       "!skills/index.md"
     ],
     "prompts": [
-      "docs/prompts"
+      "docs/prompts",
+      "!docs/prompts/README.md"
     ]
   }
 }
