@@ -8,7 +8,7 @@ argument-hint: "create|update [repo path]"
 
 # Create or update docs: the book of this repository
 
-Write the book in `docs/design/` (see [rules/docs.md](../../rules/docs.md), The bible and the manual). An old book in `docs/design/`, `docs/` or `doc/`, or a root `<repo>.md`, moves there with `git mv`. `docs/manual/` is the user manual, not this book.
+Write the book in `docs/design/` (see [rules/docs.md](../../rules/docs.md), The bible, the manual and the notes). An old book in `docs/design/`, `docs/` or `doc/`, or a root `<repo>.md`, moves there with `git mv`. `docs/manual/` is the user manual, not this book.
 
 ## Modes
 

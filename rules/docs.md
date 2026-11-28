@@ -55,17 +55,20 @@ What each doc holds:
 When you create a program or project, or change one missing its `README.md` or
 `docs/`, create the missing file without asking and tell me you did.
 
-## The bible and the manual
+## The bible, the manual and the notes
 
-Every app repo has the same two folders of Markdown:
+Every app repo has the same three folders of Markdown:
 
 - `docs/design/`, the bible: the design document. Entry page
   `docs/design/README.md`; a big project splits it into chapters.
 - `docs/manual/`, the user manual: how a person installs and uses the app,
   every screen and command. Entry page `docs/manual/README.md`.
+- `docs/notes/`, the notes: research, history, plans, measurements and other
+  working notes that are neither design nor manual. Entry page
+  `docs/notes/README.md` lists them.
 
 No `<repo>.md` at the root, no `design_docs/`. `README.md` stays short: what it
-is, install, and links to both.
+is, install, and links to all three.
 
 - From the bible alone, any AI agent can rebuild the project from scratch.
 
