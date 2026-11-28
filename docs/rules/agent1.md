@@ -45,22 +45,6 @@ Before starting UI/UX design follow the principles mentioned in this book - Laws
 - Not in the owner's use case, decided on 2026-11-14: no control is built, named or checked for a screen reader, and no code tells macOS what a control is for one
 - Reduce Motion, Reduce Transparency, Increase Contrast and the contrast of words stay: they are for the eye
 
-#### The GUI toolkit is JavaFX, through cljfx
-
-- Chosen on 2026-11-13 over a native SwiftUI window, for its checks: a window check runs inside the app, reads any control mid-animation and sends clicks and keys without moving the pointer
-- Given up for it: true Liquid Glass. JavaFX cannot blur or bend what is behind a control, so glass is drawn as [Glass shows what is behind it](#glass-shows-what-is-behind-it) says
-- Everything the system would have given is built and checked by hand: the press, the glass, Reduce Motion, Reduce Transparency and Increase Contrast
-- To be looked at again if native window checks prove to run from one command, with no pointer taken over
-
-##### planned: elimination_tracker uses Tauri, not JavaFX
-
-- Decided by the owner on 2026-11-14: this repo is exempt from the JavaFX/cljfx line above; every other app keeps it
-- The window is Tauri 2 with TypeScript; the core and CLI are Rust, a separate program the window starts and talks to by JSON lines
-- Given up: the checks run inside the app. Window checks drive the real window code in jsdom over the real core, and a webview run is by hand with a screenshot
-- Glass, Reduce Motion, Reduce Transparency and Increase Contrast, where an app wants them, are drawn in CSS and checked by hand
-- Proof (draft): elimination_tracker uses Tauri, not JavaFX
-  - Tests: cargo test -p elimination_tracker, and npm run check in app, run in elimination_tracker
-
 ### Coding Guidelines
 
 - Follow KISS (Keep it simple stupid) philosophy
