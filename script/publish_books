@@ -6,8 +6,10 @@ agent1/books/<repo>/, one page per chapter, with GNU's Next / Previous / Up
 links and the gnu.org manual stylesheet (a local copy, gnu_manual.css).
 books/index.html lists every book. books/ is git ignored.
 
-A repo with docs/manual, docs/design and docs/notes gets a book in three
-parts: Manual, Design, Notes. A repo with a flat docs/ gets a one-part book.
+A repo with docs/manual, docs/design and docs/notes gets a book in parts:
+Manual, Design, Notes, then Rules (docs/rules) and Prompts (docs/prompts) when
+those folders exist, as in agent1. A repo with a flat docs/ gets a one-part
+book.
 In each folder README.md comes first, then the other .md files by name,
 then its subfolders the same way.
 
@@ -45,7 +47,8 @@ AGENT1 = HERE.parent
 LUA = HERE / "publish_books.lua"
 CSS = HERE / "gnu_manual.css"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-PARTS = [("manual", "Manual"), ("design", "Design"), ("notes", "Notes")]
+PARTS = [("manual", "Manual"), ("design", "Design"), ("notes", "Notes"),
+         ("rules", "Rules"), ("prompts", "Prompts")]
 
 SHORT = """usage: publish_books [--repos DIR] [--out DIR] [REPO...]
 Publish each repo's docs/ as an HTML book in the GNU manual style, into agent1/books/.
@@ -62,7 +65,7 @@ def die(msg, code=1):
 
 def chapters(folder, top=True):
     """README.md, then the other .md files by name, then each subfolder the same way.
-    At the top of a three-part docs/, the part folders are not subfolders."""
+    At the top of a docs/ in parts, the part folders are not subfolders."""
     files = sorted(p for p in folder.glob("*.md") if p.name != "README.md")
     readme = folder / "README.md"
     out = ([readme] if readme.exists() else []) + files
