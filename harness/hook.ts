@@ -3,7 +3,7 @@
  * hook: agent1's harness for Claude Code, through the hook contract.
  *
  * pi runs harness/extensions/*.ts in process. Claude Code runs this file once
- * per hook event, wired in hooks/hooks.json, and it calls the same exported
+ * per hook event, wired in harness/claude_hooks.json (named by .claude-plugin/plugin.json), and it calls the same exported
  * functions - so a rule lives in one place and both harnesses enforce it.
  *
  *   guard      PreToolUse         command_guard on Bash, edit_guard on Edit;

@@ -35,7 +35,9 @@ so a plugin root is kept small (measured with claude 2.1.293 and 2.1.294,
 
 ## The hook wiring
 
-Claude Code does not run pi extensions. Instead the plugin's hook file wires
+Claude Code does not run pi extensions. Instead the plugin's hook file, which
+the plugin manifest names (it sits beside the entry point in the harness, not
+in a `hooks/` folder at the root), wires
 each Claude hook event to one command-line entry point, which reads the event
 JSON on stdin and calls the same exported functions the pi extensions use:
 
