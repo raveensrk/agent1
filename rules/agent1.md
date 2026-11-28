@@ -1,3 +1,7 @@
+---
+last_reviewed: 2026-11-28
+---
+
 # Agent1 requirements
 
 A heading that starts with `planned:` is not proven yet.
@@ -116,7 +120,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 - Tinted glass lightens only as far as its words stay at 4.5:1; past that a press brightens its rim
 - Glass that holds one button answers as one piece: all of it lightens, sinks and fills, and no smaller shape or edge shows inside it
 - Glass that several buttons share lightens only under the button the pointer is on, a capsule on the same centre
-- It sinks and springs back as [Buttons answer a press](#component) says
+- It sinks and springs back as [Buttons answer a press](#buttons-answer-a-press) says
 
 ##### The system's settings are respected
 
@@ -163,7 +167,7 @@ The look follows Apple's Liquid Glass design language, the native style of macOS
 
 ##### Button
 
-- See [Buttons](#component)
+- See [Buttons](#buttons)
 
 ##### etc…
 
@@ -212,7 +216,7 @@ Evidence: the mockups use plain CSS keyframes and transitions, which Safari and 
 
 #### Save and restore state/session
 
-- See [A window comes back as it was left](#window)
+- See [A window comes back as it was left](#a-window-comes-back-as-it-was-left)
 
 ### planned: About shows the app's version and commit
 
@@ -296,7 +300,7 @@ Every GUI app does this: a hard requirement.
 
 For example:
 
-- Between panes, as [Panes resize](#window) says
+- Between panes, as [Panes resize](#panes-resize) says
 - Between sections
 
 #### Use icons when possible
@@ -481,7 +485,7 @@ Design Idea -> Design Requirement -> Code Design Mockup -> Code Deisgn Approval 
 ## Touch and mobile
 
 What changes for a web app used by touch, on a phone or a tablet.
-Everything in [gui.org](#gui) still applies; this file adds to it, and where the two differ for touch, this file wins.
+Everything in [GUI](#gui) still applies; this section adds to it, and where the two differ for touch, this section wins.
 
 Not all of this is applicable to all apps. Pick what the app needs.
 
@@ -491,7 +495,7 @@ Not all of this is applicable to all apps. Pick what the app needs.
 
 - One code base serves phone, tablet and desktop; no separate mobile site
 - It runs in Safari on iOS and iPadOS and in Chrome on Android, the two latest major versions of each
-- Follow Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/) for iOS, as gui.org follows Apple Design for macOS
+- Follow Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/) for iOS, as the GUI section follows Apple Design for macOS
 
 #### Touch is told apart from the mouse by what the device can do, never by its name
 
@@ -499,9 +503,9 @@ Not all of this is applicable to all apps. Pick what the app needs.
 - A device with both, a tablet with a trackpad, gets both: each input answers in its own way
 - Pointer events (`pointerdown`, `pointerup`) handle mouse, pen and touch in one code path; no separate touch and mouse handlers
 
-### planned: What gui.org rules become on the web
+### planned: What GUI rules become on the web
 
-Every gui.org and components.org rule holds on the web, except as below.
+Every GUI and Component rule holds on the web, except as below.
 
 #### Changed for the web
 
@@ -529,14 +533,14 @@ Every gui.org and components.org rule holds on the web, except as below.
 #### The page fits the screen
 
 - The viewport meta tag is `width=device-width, initial-scale=1, viewport-fit=cover`
-- No page scrolls sideways at any width from 320 px up; a wide table scrolls in its own area, as gui.org says
+- No page scrolls sideways at any width from 320 px up; a wide table scrolls in its own area, as the GUI section says
 - Pinch zoom is never turned off: no `maximum-scale` or `user-scalable=no`
 
 #### Layout follows the width, in three steps
 
 - Phone: below 600 px, one column
 - Tablet: 600 px to 1023 px, a sidebar that folds away into a menu button
-- Desktop: 1024 px and up, the desktop layout from gui.org
+- Desktop: 1024 px and up, the desktop layout from the GUI section
 - A step is chosen by the width the app has, so a split screen or a rotated phone gets the right one
 
 #### Content stays out of the notch and the home bar
@@ -584,7 +588,7 @@ Every gui.org and components.org rule holds on the web, except as below.
 #### Gestures follow the platform
 
 - Swipe a row sideways: shows its actions, as in iOS Mail; a full swipe does the first one, unless it deletes
-- Long press: opens the context menu that gui.org gives a right click
+- Long press: opens the context menu that the GUI section gives a right click
 - Pull down at the top of a list: refreshes, where the list can be refreshed
 - Drag: a long press first lifts the thing, then it moves; a plain swipe still scrolls
 - No gesture takes the screen edges: the browser and the system own them for back and home
@@ -594,7 +598,7 @@ Every gui.org and components.org rule holds on the web, except as below.
 What tap, hold and swipe do is set by the component's kind, the same in every app.
 Hold means 500 ms without moving more than 10 px.
 
-- Button: tap runs it; hold runs its second action, with a fill that shows it coming, as components.org says; sliding off before lifting fires nothing
+- Button: tap runs it; hold runs its second action, with a fill that shows it coming, as the Component section says; sliding off before lifting fires nothing
 - Icon button: tap runs it; hold names it
 - List row: tap opens it; swipe left shows its actions, a full swipe archives and never deletes; swipe right pins; hold lifts it, then a drag moves it
 - List top: pull down refreshes, and a Refresh button does the same
@@ -636,37 +640,37 @@ Evidence: demo/web (ClojureScript + Replicant, pointer events), checked on Playw
 
 #### Autocomplete stays off
 
-- As gui.org's "Text boxes turn off macOS autocomplete" says, and that covers the phone keyboards too
+- As the GUI section's "Text boxes turn off macOS autocomplete" says, and that covers the phone keyboards too
 
 ### Feedback
 
 #### A press always shows
 
-- A tapped control darkens or sinks, as gui.org's buttons do, and never only on hover
+- A tapped control darkens or sinks, as the GUI section's buttons do, and never only on hover
 - `-webkit-tap-highlight-color: transparent`, so the browser's grey flash never doubles the app's own press
 
 #### Loading never blocks the screen
 
-- A slow network shows a spinner beside the words, as gui.org says, and the rest of the page stays usable
+- A slow network shows a spinner beside the words, as the GUI section says, and the rest of the page stays usable
 
 ### Navigation
 
 #### Back works the platform's way
 
-- The browser's back, the iOS edge swipe and the Android back button all go back one page, as gui.org's back does
+- The browser's back, the iOS edge swipe and the Android back button all go back one page, as the GUI section's back does
 - Opening a sheet or a menu adds a history step, so back closes it first
 
 #### Sheets come from the bottom on a phone
 
 - A dialog on a phone is a sheet that slides up and can be swiped down to close
-- On a tablet and on desktop it is the dialog gui.org gives
+- On a tablet and on desktop it is the dialog the GUI section gives
 
 ### Performance
 
 #### The page is usable fast on a mid-range phone
 
 - First load usable in 3 s or less over a slow 4G network, on a mid-range Android phone
-- Taps answer, and scrolling runs, at 60 fps, as gui.org asks
+- Taps answer, and scrolling runs, at 60 fps, as the GUI section asks
 - Images are sized for the screen they go to, with `srcset`, and load lazily below the fold
 
 ### Offline
@@ -695,7 +699,7 @@ Evidence: demo/web (ClojureScript + Replicant, pointer events), checked on Playw
 #### Gestures are checked as touches
 
 - A check taps with `page.touchscreen.tap`, never a mouse click, on the touch profiles
-- A swipe or long press is sent as touch events, the way a finger would, as gui.org's "A window check sends its events the way a pointer does" says
+- A swipe or long press is sent as touch events, the way a finger would, as the GUI section's "A window check sends its events the way a pointer does" says
 
 #### A real device is checked by hand
 
@@ -1280,7 +1284,7 @@ Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/Date
 - It scrolls only along an axis where the content is larger than the room; along the other it does not move, and shows no bar
 - Content never draws outside its scroll area, over a sidebar, a toolbar or another panel
 - The window scrolls nothing as a whole: each panel that can overflow is its own scroll area, and the sidebar, the toolbar and the page each scroll on their own
-- [A wide table scrolls sideways in its own area](#gui) is one of these, and holds to all of this
+- [A wide table scrolls sideways in its own area](#a-wide-table-scrolls-sideways-in-its-own-area) is one of these, and holds to all of this
 
 #### macOS's scroll settings are followed
 
@@ -1518,7 +1522,7 @@ Each test, and each whole run, writes how long it took by the wall clock. The lo
 - Before a run starts, it prints an estimate from past lines: the sum of each test's last 5 times, as "about 2 min 10 s"; a test with no past line counts its timeout
 - After a run, a test that took more than 2 times its usual (the median of its last 5) gets a warning line naming it and both times; nothing fails
 - A failed or timed-out test is logged like a passing one, so estimates stay honest
-- The log is written by the one command that runs the tests (testing.org's "One command runs every test"), so every suite gets it without code of its own
+- The log is written by the one command that runs the tests (the Testing section's "One command runs every test"), so every suite gets it without code of its own
 
 Evidence: `tmp/` is already ignored in Arcadia; `date +%s.%N` or the test runner's own timer gives wall clock seconds; a TSV appends with one `printf` per line, and `awk -F'\t'` reads it.
 
@@ -1762,7 +1766,7 @@ Commit one POSIX shell script, `docs/build.sh`, pinning tool versions where the 
 ### Checks
 
 `harness/checks/cli_help.py` decides the hard half: a runnable - options or not, per [rules/docs.md](docs.md) - must handle `-h`, `--help` and a `help` command, and the finding names the ones that are missing.
-Which letter a short flag takes, and how a subcommand's help reads, stay prose: this file.
+Which letter a short flag takes, and how a subcommand's help reads, stay prose: this section.
 
 ## Privacy
 
