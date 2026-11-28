@@ -2,7 +2,7 @@
 last_reviewed: 2026-11-02
 ---
 
-# Rules
+# Start here
 
 Agent1 is for everyone. Public rules, written for any agent and any harness.
 
