@@ -70,6 +70,22 @@ Every app repo has the same three folders of Markdown:
 No `<repo>.md` at the root, no `design_docs/`. `README.md` stays short: what it
 is, install, and links to all three.
 
+Write `docs/` like a book, all three folders:
+
+- Each folder's `README.md` is its title page and table of contents, in
+  reading order.
+
+- Chapters are numbered files (`01_install.md`, `02_the_app.md`) and read
+  front to back: each starts from what the ones before it said.
+
+- Every chapter ends with previous and next links; the first links back to the
+  table of contents.
+
+- Prose first, in plain words: a chapter explains, then lists. One fact lives
+  in one place; other chapters link to it.
+
+What goes where:
+
 - From the bible alone, any AI agent can rebuild the project from scratch.
 
 - It is language agnostic: what the project does, its rules, data, behaviour,
