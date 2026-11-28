@@ -8,7 +8,7 @@ argument-hint: "create|update [repo path]"
 
 # Create or update docs: the book of this repository
 
-Use `design_docs/`. An old `docs/` or `doc/` book is renamed to `design_docs/` with `git mv`; a root `<repo>.md` bible is merged into it (see [rules/docs.md](../../rules/docs.md), The bible).
+Use the repo's existing design book in `design_docs/`, `docs/` or `doc/`; with none, create `design_docs/`. A root `<repo>.md` holding the project rules may be folded into the book (see [rules/docs.md](../../rules/docs.md), The bible).
 
 ## Modes
 

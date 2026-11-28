@@ -57,15 +57,24 @@ bible, create the missing file without asking and tell me you did.
 
 ## The bible
 
-Every app repo has one design document, its bible: either `<repo>.md` at the
-root, or a `design_docs/` folder of Markdown chapters for a big project. Never
-both, and never `docs/`.
+Every app repo has a design document, its bible. Its project rules live in
+one of three places; pick the one that fits and say which:
+
+- `<repo>.md` at the root, for a small project.
+
+- `design_docs/`, a folder of Markdown chapters, for a big one.
+
+- `docs/`, folded into its chapters, when the repo already keeps a design book
+  there. `docs/` may also hold general docs that are not the bible.
 
 - From the bible alone, any AI agent can rebuild the project from scratch.
+
 - It is language agnostic: what the project does, its rules, data, behaviour,
   screens, commands and design decisions. No source paths, line numbers,
   test names, function names or language-specific build steps.
+
 - `README.md` holds what a person needs: what it is, install, run.
+
 - `AGENTS.md` holds the code details: layout, build and test commands, test
   names and which rule each checks, evidence with file and line.
 
