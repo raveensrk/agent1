@@ -1,0 +1,13 @@
+# Ai Starter Pack
+
+## Basics
+
+- Git
+- Github
+- Github style workflow
+- Linux / Unix
+
+## Coding agent
+
+- <https://code.claude.com/docs/en/overview>
+- <https://www.anthropic.com/research/building-effective-agents>

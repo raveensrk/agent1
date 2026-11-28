@@ -6,7 +6,7 @@
 - [Model Usage History](model_usage_history.md) - Recorded models across agent
   harnesses.
 - [Subscription Plan](subscription_plan.md) - Plans, prices and measured spend.
-- [Dev Tools](../dev_tools.org) - Preferred dev tools, in order, with tags and a
+- [Dev Tools](../dev_tools.md) - Preferred dev tools, in order, with tags and a
   learning path (the NEEDS property); read before choosing a tool. An org
   outline, edited in Emacs.
 - [WireGuard VPN on Vultr](wireguard_vpn_on_vultr.md) - Set up a personal
