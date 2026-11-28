@@ -15,6 +15,9 @@
     "skills": [
       "skills",
       "!skills/index.md"
+    ],
+    "prompts": [
+      "docs/prompts"
     ]
   }
 }

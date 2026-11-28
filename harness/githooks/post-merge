@@ -2,7 +2,7 @@
 """post-merge: run the repo's own post-merge hook, which the global path hides.
 
 Nothing of its own: hooks only lint, never build, install or test
-(rules/git.md: Git hooks lint only). Apps install by hand with
+(docs/rules/git.md: Git hooks lint only). Apps install by hand with
 ~/dot/script/install_all_my_apps_from_repos.sh.
 
 Runs for every repo through the global core.hooksPath, which points here:

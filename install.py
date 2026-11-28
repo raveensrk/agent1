@@ -4,7 +4,7 @@
 Nothing is copied or linked: each harness loads the repo in place.
 
   pi      ~/.pi/agent/settings.json `packages` lists ~/repos/agent1, and
-          package.json `pi` declares skills/, prompts/ and harness/extensions/.
+          package.json `pi` declares skills/, docs/prompts/ and harness/extensions/.
   claude  ~/.claude/settings.json enables plugin agents@raveen-agents, a
           directory marketplace read live from .claude-plugin/.
 

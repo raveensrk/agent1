@@ -11,13 +11,13 @@ with this file. A repo's own Layout section in its `AGENTS.md` wins over it.
 2. Helper scripts live in one folder, `script/` or `scripts/`; the repo's own
    choice wins. Two folders doing that one job is a finding.
 3. Docs beyond the README live in `docs/`, as
-   [rules/docs.md](../../../rules/docs.md) names it.
+   [docs/rules/docs.md](../../../docs/rules/docs.md) names it.
 4. Generated output (`target/`, `dist/`, `build/`, `.build/`) is gitignored,
    never tracked.
 5. Real user data stays out of the code repo, in a sibling data repo like
    `<app>-data`. Test data is invented and lives with the tests.
 6. Core and UI stay apart
-   ([agent1.md](../../../rules/agent1.md) section Architecture): `core/` for
+   ([agent1.md](../../../docs/rules/agent1.md) section Architecture): `core/` for
    the core, then one folder per UI, like `cli/` and `app/`.
 
 ## Clojure (`deps.edn`)
@@ -66,7 +66,7 @@ with this file. A repo's own Layout section in its `AGENTS.md` wins over it.
 2. Tests in `tests/`, named `test_*.py`.
 3. A module's path is its file path. A move rewrites the imports.
 4. A script meant to be run has a shebang and the exec bit
-   ([rules/scripts.md](../../../rules/scripts.md)).
+   ([docs/rules/scripts.md](../../../docs/rules/scripts.md)).
 
 ## TypeScript and JavaScript
 
@@ -81,7 +81,7 @@ with this file. A repo's own Layout section in its `AGENTS.md` wins over it.
    `index.md`.
 2. Images sit next to the doc that shows them, or in `assets/`.
 3. A move breaks relative links. Fix them
-   ([rules/markdown.md](../../../rules/markdown.md)).
+   ([docs/rules/markdown.md](../../../docs/rules/markdown.md)).
 
 ## Agent skills
 

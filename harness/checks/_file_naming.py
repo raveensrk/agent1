@@ -2,7 +2,7 @@
 # harness-check: {"id": "file_naming", "applies": ["*"], "quadrant": "feedback/computational"}
 """Files and directories use snake_case - lowercase words joined by underscores.
 
-common.md's Naming rule, decided. A basename passes when every character is a
+docs/rules/README.md's Naming rule, decided. A basename passes when every character is a
 lowercase letter, digit, underscore or dot, so no uppercase, no spaces, no
 hyphens.
 
@@ -27,7 +27,7 @@ directory name to match the skill name (README.md: "Skill directories use
 hyphens"), and skill_frontmatter.py already decides that pair. Anywhere else, a
 directory holding a SKILL.md may carry a kebab-case name for the same reason;
 the files inside it are still checked. Pi package prompt templates under
-prompts/ may use hyphens: Pi turns the filename into the slash-command name.
+docs/prompts/ may use hyphens: Pi turns the filename into the slash-command name.
 In a Swift package (Package.swift at the repo root), Swift's own convention
 wins for its sources: UpperCamelCase .swift files, UpperCamelCase directories
 that hold them, and target directories under Sources/ and Tests/. Svelte's
@@ -276,7 +276,7 @@ def check(path: str) -> list[str]:
 		)
 		break
 	# Pi package prompt filenames become slash commands, such as /estimate-cost.
-	if dirs == ["prompts"] and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md", name):
+	if dirs[-1:] == ["prompts"] and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md", name):
 		return findings
 	# a leading comma marks a personal command (,sync.py): it never collides with a
 	# system tool and `,<Tab>` lists them all; 11 in ~/dot/script on 2026-10-11

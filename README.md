@@ -27,7 +27,7 @@ Any path works. The rest of this file assumes `~/repos/agent1`.
 Claude Code expands `@` imports, so one line pulls the whole file in:
 
 ```markdown
-@~/repos/agent1/common.md
+@~/repos/agent1/docs/rules/README.md
 ```
 
 ### Codex
@@ -36,7 +36,7 @@ Codex has no import syntax - it reads `AGENTS.md` verbatim. Give it an
 instruction it can act on instead:
 
 ```markdown
-At session start, read `~/repos/agent1/common.md` and follow it.
+At session start, read `~/repos/agent1/docs/rules/README.md` and follow it.
 ```
 
 ### Both in one project
@@ -56,7 +56,7 @@ two agents never drift apart:
 - Confirm it resolves before you rely on it:
 
   ```bash
-  ls ~/repos/agent1/common.md
+  ls ~/repos/agent1/docs/rules/README.md
   ```
 
   A wrong path fails silently. The agent told to read a missing file just
@@ -73,44 +73,44 @@ answer means the import did not load.
 
 ## Files
 
-| File                                                             | What it covers                                                                                                                           |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `rules/docs.md`                                                  | Where a program's docs live: help output first                                                                                           |
-| `rules/harness.md`                                               | Checks over prose, deterministic first                                                                                                   |
-| `rules/index.md`                                                 | Index of all the rules, and when to read each                                                                                            |
-| `rules/markdown.md`                                              | File links, link paths, 80 columns, aligned tables                                                                                       |
-| `rules/parallel_sessions.md`                                     | One worktree and branch per concurrent session                                                                                           |
-| `rules/ruled_out.md`                                             | Stop and ask before tools on the Avoid card                                                                                              |
-| `rules/scripts.md`                                               | Executable scripts, shebang, interpreter                                                                                                 |
-| `rules/theme.md`                                                 | Dark theme by default                                                                                                                    |
-| `rules/tools.md`                                                 | Repo layout, tool configs, the tool list, org-mode                                                                                       |
-| `rules/tui.md`                                                   | TUI help keybind and help page                                                                                                           |
-| `rules/working_style.md`                                         | How to work with the user                                                                                                                |
-| `rules/browser.md`                                               | Browser and computer use rules                                                                                                           |
-| `rules/agent1.md`                                                | agent1 requirements; section CLI: help, flags, one help table                                                                            |
-| `archive/rules/code_style.md`                                    | How to write code                                                                                                                        |
-| `common.md`                                                      | Session start: routes to `rules/index.md`, plus Confirmation                                                                             |
-| `archive/rules/emoji_legend.md`                                  | Status emoji vocabulary for agent reports                                                                                                |
-| `rules/external.md`                                              | Probes, live external accounts, credentials                                                                                              |
-| `rules/git.md`                                                   | Commits and pull requests                                                                                                                |
-| `harness/`                                                       | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](./harness/README.md)) |
-| [`notes/index.md`](./notes/index.md)                             | Index of model reviews, harness reviews, and usage records                                                                               |
-| `install.py`                                                     | Registers this repo with pi (package) and Claude Code (plugin) so both load it in place                                                  |
-| `rules/jobs.md`                                                  | ETA rules for long-running jobs                                                                                                          |
-| `rules/macos.md`                                                 | macOS command traps                                                                                                                      |
-| `Makefile`                                                       | Builds the shareable one-page HTML export                                                                                                |
-| [`notes/model_and_harness.yaml`](./notes/model_and_harness.yaml) | Model and harness recommendations and dated reviews                                                                                      |
-| [`notes/model_usage_history.md`](./notes/model_usage_history.md) | Historical model usage across agent harnesses                                                                                            |
-| `archive/rules/naming.md`                                        | Naming rules, disabled                                                                                                                   |
-| `rules/pi.md`                                                    | pi package management                                                                                                                    |
-| `prompts/prompts.md`                                             | Personal paste-bin of chat prompts                                                                                                       |
-| [`notes/question_types.md`](./notes/question_types.md)           | Question formats grouped into AI and non-AI categories for vibe coding                                                                   |
-| `rules/removal.md`                                               | Removing apps, packages and harnesses                                                                                                    |
-| `rules/repos.md`                                                 | Nested git repo policy for `~/repos`                                                                                                     |
-| `skills/`                                                        | Installable agent skills (see [Skills](#skills))                                                                                         |
-| `archive/`                                                       | Uninstalled skills and commands, kept out of the load paths                                                                              |
-| `notes/terminologies.md`                                         | Personal prompt-vocab notes                                                                                                              |
-| `notes/use_case.md`                                              | Personal notes: what I use agents for                                                                                                    |
+| File                                                                     | What it covers                                                                                                                         |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/rules/docs.md`                                                     | Where a program's docs live: help output first                                                                                         |
+| `docs/rules/harness.md`                                                  | Checks over prose, deterministic first                                                                                                 |
+| `docs/rules/README.md`                                                   | Index of all the rules, and when to read each                                                                                          |
+| `docs/rules/markdown.md`                                                 | File links, link paths, 80 columns, aligned tables                                                                                     |
+| `docs/rules/parallel_sessions.md`                                        | One worktree and branch per concurrent session                                                                                         |
+| `docs/rules/ruled_out.md`                                                | Stop and ask before tools on the Avoid card                                                                                            |
+| `docs/rules/scripts.md`                                                  | Executable scripts, shebang, interpreter                                                                                               |
+| `docs/rules/theme.md`                                                    | Dark theme by default                                                                                                                  |
+| `docs/rules/tools.md`                                                    | Repo layout, tool configs, the tool list, org-mode                                                                                     |
+| `docs/rules/tui.md`                                                      | TUI help keybind and help page                                                                                                         |
+| `docs/rules/working_style.md`                                            | How to work with the user                                                                                                              |
+| `docs/rules/browser.md`                                                  | Browser and computer use rules                                                                                                         |
+| `docs/rules/agent1.md`                                                   | agent1 requirements; section CLI: help, flags, one help table                                                                          |
+| `archive/rules/code_style.md`                                            | How to write code                                                                                                                      |
+| `docs/rules/README.md`                                                   | Session start: routes to `docs/rules/README.md`, plus Confirmation                                                                     |
+| `archive/rules/emoji_legend.md`                                          | Status emoji vocabulary for agent reports                                                                                              |
+| `docs/rules/external.md`                                                 | Probes, live external accounts, credentials                                                                                            |
+| `docs/rules/git.md`                                                      | Commits and pull requests                                                                                                              |
+| `harness/`                                                               | Deterministic checks, one command to run them, and the pi trigger that reacts to findings (see [harness/README.md](harness/README.md)) |
+| [`notes/index.md`](docs/notes/README.md)                                 | Index of model reviews, harness reviews, and usage records                                                                             |
+| `install.py`                                                             | Registers this repo with pi (package) and Claude Code (plugin) so both load it in place                                                |
+| `docs/rules/jobs.md`                                                     | ETA rules for long-running jobs                                                                                                        |
+| `docs/rules/macos.md`                                                    | macOS command traps                                                                                                                    |
+| `Makefile`                                                               | Builds the shareable one-page HTML export                                                                                              |
+| [`docs/notes/model_and_harness.yaml`](docs/notes/model_and_harness.yaml) | Model and harness recommendations and dated reviews                                                                                    |
+| [`notes/model_usage_history.md`](docs/notes/model_usage_history.md)      | Historical model usage across agent harnesses                                                                                          |
+| `archive/rules/naming.md`                                                | Naming rules, disabled                                                                                                                 |
+| `docs/rules/pi.md`                                                       | pi package management                                                                                                                  |
+| `prompts/prompts.md`                                                     | Personal paste-bin of chat prompts                                                                                                     |
+| [`notes/question_types.md`](docs/notes/question_types.md)                | Question formats grouped into AI and non-AI categories for vibe coding                                                                 |
+| `docs/rules/removal.md`                                                  | Removing apps, packages and harnesses                                                                                                  |
+| `docs/rules/repos.md`                                                    | Nested git repo policy for `~/repos`                                                                                                   |
+| `skills/`                                                                | Installable agent skills (see [Skills](#skills))                                                                                       |
+| `archive/`                                                               | Uninstalled skills and commands, kept out of the load paths                                                                            |
+| `notes/terminologies.md`                                                 | Personal prompt-vocab notes                                                                                                            |
+| `notes/use_case.md`                                                      | Personal notes: what I use agents for                                                                                                  |
 
 ## Shareable HTML
 
@@ -154,7 +154,7 @@ a `git pull` updates every harness on its next start.
 - Links that the older symlink installer made into this clone are moved to
   the Trash.
 - Other repos that ship skills use the same code: their `install.py` calls
-  [harness/install_lib.py](./harness/install_lib.py).
+  [harness/install_lib.py](harness/install_lib.py).
 
 Verify: start a new session and ask "what git work did I do in the last 24
 hours?". The agent should run `scripts/git_report.py`.

@@ -2,14 +2,14 @@
 # harness-check: {"id": "cli_help", "applies": ["*"], "quadrant": "feedback/computational"}
 """Every CLI app carries -h, --help and a `help` command. That rule is hard.
 
-rules/docs.md: -h and --help print the short help, `<program> help` the long
+docs/rules/docs.md: -h and --help print the short help, `<program> help` the long
 help. The check decides presence only - all three must be handled - and never
 reads what they print. argparse binds -h and --help but no `help` command, so
 an argparse file owes that one by hand: `sub.add_parser("help")`, or a
 `sys.argv[1:2] == ["help"]` test before parse_args. `action="help"` is the
 -h/--help binding, not the command, and does not count.
 
-common.md: "The --help|-h is a hard rule. Every CLI program/app must have these
+docs/rules/README.md: "The --help|-h is a hard rule. Every CLI program/app must have these
 two flags. The long/short pairing is optional: when possible add a short flag,
 the long flag is the default."
 
@@ -24,7 +24,7 @@ So this check decides the hard half only:
     both spellings, and the finding names the one that is missing. Option
     parsing is read from code, never from a string or a comment: a test that
     writes a fake CLI into a fixture owns no flags.
-  * A runnable that takes no options owes the pair too: rules/docs.md puts a
+  * A runnable that takes no options owes the pair too: docs/rules/docs.md puts a
     program's docs inside it, behind -h and --help. Exempt from that branch
     only: a script under a hooks dir (`hooks/`, `.githooks/`, `githooks/`,
     `git_hooks/`) and a file a test runner collects (`test_*.py`, `*_test.py`,
@@ -241,12 +241,12 @@ def findings(rel: str, text: str) -> list[str]:
     parts += ["no `help` command"] if "help" in missing else []
     lacks = ", and ".join(parts)
 
-    # A no-arg runnable owes all three too: its docs live inside it (rules/docs.md).
+    # A no-arg runnable owes all three too: its docs live inside it (docs/rules/docs.md).
     if not takes:
         return [
             f"{rel}:1: runnable mentions {lacks} - fix: every runnable answers -h "
             "and --help with short help and `help` with its full docs (content: "
-            "~/repos/agent1/rules/agent1.md, section CLI), exits 0 and does nothing else; python, from "
+            "~/repos/agent1/docs/rules/agent1.md, section CLI), exits 0 and does nothing else; python, from "
             "the module docstring: `if sys.argv[1:2] in ([\"-h\"], [\"--help\"], "
             "[\"help\"]): print(__doc__ if sys.argv[1] == \"help\" else "
             "__doc__.split(\"\\n\\n\")[0]); sys.exit(0)`, shell, from the header "

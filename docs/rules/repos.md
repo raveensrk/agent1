@@ -4,7 +4,7 @@ last_reviewed: 2026-11-02
 
 # Repos
 
-Loaded only when `~/repos` exists - the condition is a filesystem test decided in [rules_context.ts](../harness/extensions/rules_context.ts).
+Loaded only when `~/repos` exists - the condition is a filesystem test decided in [rules_context.ts](../../harness/extensions/rules_context.ts).
 
 Never use a nested git repo for my projects, and never a symlink to one. A clone from the internet is the
 exception: it goes in the allowlist that [nested_git_repo](~/repos/agent1/harness/checks/nested_git_repo.py)

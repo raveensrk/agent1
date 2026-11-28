@@ -52,7 +52,7 @@ No installer touches the Dock: no pinning, no repointing, no `killall Dock`,
 and on Linux no GNOME favourites. The user pins an app by hand if they want it
 there.
 
-[app_install_dir.py](../harness/checks/app_install_dir.py) decides the folder and
+[app_install_dir.py](../../harness/checks/app_install_dir.py) decides the folder and
 the Dock half. What it cannot see: an install replaces the bundle at its own
 path - rsync over it in place, or build beside it and swap the new one in after
 deleting the old one. It never moves the old bundle somewhere else first, such

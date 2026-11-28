@@ -227,9 +227,9 @@ Every GUI app does this: a hard requirement.
 
 #### A reference shows one way to build it
 
-- [demo/cljfx](../requirements/demo/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [version.clj](../requirements/demo/cljfx/src/demo/version.clj), with the build step [stamp.clj](../requirements/demo/cljfx/tools/stamp.clj); [version_page.clj](../requirements/demo/cljfx/src/demo/version_page.clj) is the demo's own window
-- Its window checks, [version_check.clj](../requirements/demo/cljfx/test/demo/version_check.clj), are the Verification lines below as code; an app's own checks ask the same
+- [demo/cljfx](examples/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [version.clj](examples/cljfx/src/demo/version.clj), with the build step [stamp.clj](examples/cljfx/tools/stamp.clj); [version_page.clj](examples/cljfx/src/demo/version_page.clj) is the demo's own window
+- Its window checks, [version_check.clj](examples/cljfx/test/demo/version_check.clj), are the Verification lines below as code; an app's own checks ask the same
 - `clojure -M:stamp && clojure -M:version`, run in `demo/cljfx`, opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 
@@ -310,7 +310,7 @@ For example:
 - Its colour comes from the stylesheet, never from the path
 - Its licence, MIT, is kept beside the icons and goes wherever they go
 - [SF Symbols](https://developer.apple.com/sf-symbols/) are not used: their licence covers apps on Apple platforms, not a public repo or another platform
-- The reference is [icons.clj](../requirements/demo/cljfx/src/demo/icons.clj), drawn by `icon-view` in [ui.clj](../requirements/demo/cljfx/src/demo/ui.clj)
+- The reference is [icons.clj](examples/cljfx/src/demo/icons.clj), drawn by `icon-view` in [ui.clj](examples/cljfx/src/demo/ui.clj)
 - A unit test reads every icon as one path, and an unknown name as an error
 
 #### Lists
@@ -473,7 +473,7 @@ Use this as a last resort.
 - A mouse or key event goes to the scene, which picks what is under it; never straight to a control
 - Sent straight to a control, an event reaches it even when something covers it, and the check passes on an app nobody can use: a divider that no real drag could move passed 83 such checks
 - A check that sends a press where a control is, and reads that the control took it, proves the control can be reached
-- A real-pointer proof exists beside the checks, [real_pointer.clj](../requirements/demo/cljfx/tools/real_pointer.clj): it moves the pointer, so it is run by hand, and after any change to what lies over what
+- A real-pointer proof exists beside the checks, [real_pointer.clj](examples/cljfx/tools/real_pointer.clj): it moves the pointer, so it is run by hand, and after any change to what lies over what
 
 ### Development
 
@@ -609,7 +609,7 @@ Hold means 500 ms without moving more than 10 px.
 - Page: swipe sideways goes to the next tab, only where nothing under the finger takes the swipe
 - Never: double tap, or pinch on anything but the whole page
 - An app maps each of its own elements to one of these kinds, in its own requirements
-- Reference: [demo/web](../requirements/demo/web/src/touchdemo/core.cljs); run `npx shadow-cljs watch app` there, open <http://localhost:8030>
+- Reference: [demo/web](examples/web/src/touchdemo/core.cljs); run `npx shadow-cljs watch app` there, open <http://localhost:8030>
 
 Evidence: demo/web (ClojureScript + Replicant, pointer events), checked on Playwright's Pixel 7 profile with touch events: tap, hold and swipe-left logged right, no page errors.
 
@@ -714,9 +714,9 @@ Part of the [GUI requirements](#gui), which say what holds for all of it: the to
 
 #### A reference shows one way to build it
 
-- [window.clj](../requirements/demo/cljfx/src/demo/window.clj) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- [window.clj](examples/cljfx/src/demo/window.clj) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
 - Its rules are plain functions, tested without a window: `step`, `clamp-float`, `session` and `restore`
-- Its window checks, [window_page_check.clj](../requirements/demo/cljfx/test/demo/window_page_check.clj), are the Verification lines below as code
+- Its window checks, [window_page_check.clj](examples/cljfx/test/demo/window_page_check.clj), are the Verification lines below as code
 - The reference passes its own checks: `clojure -M:test` and `clojure -M:check-window`, run in `demo/cljfx`
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 
@@ -790,7 +790,7 @@ Part of the [GUI requirements](#gui), which say what holds for all of it: the to
 
 #### A reference shows one way to build them
 
-- The panes of [window.clj](../requirements/demo/cljfx/src/demo/window.clj), the reference of [The app must have a Window](#the-app-must-have-a-window): a sidebar, a side panel and a pane under the page
+- The panes of [window.clj](examples/cljfx/src/demo/window.clj), the reference of [The app must have a Window](#the-app-must-have-a-window): a sidebar, a side panel and a pane under the page
 - Their rules are plain functions, tested without a window: `layout`, `fit` and `clamp-size`
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 
@@ -848,9 +848,9 @@ Part of the [GUI requirements](#gui), which say what holds for all of it: the to
 
 #### A reference shows one way to build them
 
-- [demo/cljfx](../requirements/demo/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [ui.clj](../requirements/demo/cljfx/src/demo/ui.clj), with the look in [glass.css](../requirements/demo/cljfx/src/demo/glass.css); [button.clj](../requirements/demo/cljfx/src/demo/button.clj) is the demo's own page
-- Its window checks, [window_check.clj](../requirements/demo/cljfx/test/demo/window_check.clj), are the Verification lines below as code; an app's own checks ask the same
+- [demo/cljfx](examples/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [ui.clj](examples/cljfx/src/demo/ui.clj), with the look in [glass.css](examples/cljfx/src/demo/glass.css); [button.clj](examples/cljfx/src/demo/button.clj) is the demo's own page
+- Its window checks, [window_check.clj](examples/cljfx/test/demo/window_check.clj), are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: `clojure -M:test` and `clojure -M:check`, run in `demo/cljfx`
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 
@@ -940,9 +940,9 @@ Part of the [GUI requirements](#gui), which say what holds for all of it: the to
 
 #### A reference shows one way to build them
 
-- [demo/cljfx](../requirements/demo/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [slider.clj](../requirements/demo/cljfx/src/demo/slider.clj), with the look in [glass.css](../requirements/demo/cljfx/src/demo/glass.css); [slider_page.clj](../requirements/demo/cljfx/src/demo/slider_page.clj) is the demo's own page
-- Its window checks, [slider_check.clj](../requirements/demo/cljfx/test/demo/slider_check.clj), are the Verification lines below as code; an app's own checks ask the same
+- [demo/cljfx](examples/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [slider.clj](examples/cljfx/src/demo/slider.clj), with the look in [glass.css](examples/cljfx/src/demo/glass.css); [slider_page.clj](examples/cljfx/src/demo/slider_page.clj) is the demo's own page
+- Its window checks, [slider_check.clj](examples/cljfx/test/demo/slider_check.clj), are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: `clojure -M:test` and `clojure -M:check-slider`, run in `demo/cljfx`; `clojure -M:slider` opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 
@@ -1065,9 +1065,9 @@ Part of the [GUI requirements](#gui), which say what holds for all of it: the to
 
 #### A reference shows one way to build them
 
-- [demo/cljfx](../requirements/demo/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [time_picker.clj](../requirements/demo/cljfx/src/demo/time_picker.clj), with the look in [glass.css](../requirements/demo/cljfx/src/demo/glass.css); [time_picker_page.clj](../requirements/demo/cljfx/src/demo/time_picker_page.clj) is the demo's own page
-- Its window checks, [time_picker_check.clj](../requirements/demo/cljfx/test/demo/time_picker_check.clj), are the Verification lines below as code; an app's own checks ask the same
+- [demo/cljfx](examples/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [time_picker.clj](examples/cljfx/src/demo/time_picker.clj), with the look in [glass.css](examples/cljfx/src/demo/glass.css); [time_picker_page.clj](examples/cljfx/src/demo/time_picker_page.clj) is the demo's own page
+- Its window checks, [time_picker_check.clj](examples/cljfx/test/demo/time_picker_check.clj), are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: `clojure -M:test` and `clojure -M:check-time-picker`, run in `demo/cljfx`; `clojure -M:time-picker` opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 
@@ -1272,9 +1272,9 @@ Evidence: JavaFX 27.0.1, in demo/cljfx/deps.edn, ships javafx/scene/control/Date
 
 #### A reference shows one way to build them
 
-- [demo/cljfx](../requirements/demo/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
-- The part worth copying is [scroll.clj](../requirements/demo/cljfx/src/demo/scroll.clj), with the look in [glass.css](../requirements/demo/cljfx/src/demo/glass.css); [scroll_page.clj](../requirements/demo/cljfx/src/demo/scroll_page.clj) is the demo's own page
-- Its window checks, [scroll_check.clj](../requirements/demo/cljfx/test/demo/scroll_check.clj), are the Verification lines below as code; an app's own checks ask the same
+- [demo/cljfx](examples/cljfx/) is a working reference in cljfx, not a library: an app follows what it does, and takes its code as an example
+- The part worth copying is [scroll.clj](examples/cljfx/src/demo/scroll.clj), with the look in [glass.css](examples/cljfx/src/demo/glass.css); [scroll_page.clj](examples/cljfx/src/demo/scroll_page.clj) is the demo's own page
+- Its window checks, [scroll_check.clj](examples/cljfx/test/demo/scroll_check.clj), are the Verification lines below as code; an app's own checks ask the same
 - The reference passes its own checks: `clojure -M:test` and `clojure -M:check-scroll`, run in `demo/cljfx`; `clojure -M:scroll` opens it
 - This requirement decides, not the reference: where the two differ, the reference is wrong
 

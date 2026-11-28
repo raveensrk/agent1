@@ -7,7 +7,7 @@ or Others.
 
 Felis is the one exception: ~/Applications/MosaixDesign_Apps/Felis.
 
-rules/macos.md: not ~/Applications itself, not /Applications, no pinning, no
+docs/rules/macos.md: not ~/Applications itself, not /Applications, no pinning, no
 `killall Dock`. A line is an install when it copies, moves or assigns an app
 folder (cp, ditto, rsync, mv, copytree, an `app`/`dest` variable) and names an
 Applications folder that is not a group folder; a lookup such as finding Chrome in
@@ -37,9 +37,9 @@ INSTALL = re.compile(
 )
 FIX_DIR = ('installs a Mac app outside ~/Applications/My_Apps; install into '
            '"$HOME/Applications/My_Apps/<Category>/<Name>.app", Category one of '
-           'Journals, Tools, Media_Editor, Others (agent1 rules/macos.md)')
+           'Journals, Tools, Media_Editor, Others (agent1 docs/rules/macos.md)')
 FIX_DOCK = ("touches the Dock; drop it - apps from ~/repos are never pinned, "
-            "the user pins one by hand (agent1 rules/macos.md)")
+            "the user pins one by hand (agent1 docs/rules/macos.md)")
 MAX_BYTES = 1_000_000
 
 

@@ -57,7 +57,7 @@ const BLOCKED = [
 	"cp ~/Library/Application Support/Firefox/Profiles/x/cookies.sqlite ~/tmp/ff_cookies.sqlite 2>/dev/null && sqlite3 ~/tmp/ff_cookies.sqlite 'select 1'",
 	"cp ~/Library/Application Support/Google/Chrome/Default/Cookies ~/tmp/chrome_cookies.sqlite",
 	'cp /Users/raveen/Library/Application Support/Firefox/Profiles/x/cookies.sqlite "/tmp/cookies.sqlite"',
-	// a symlink: never create one (common.md); 8 installer links in dot, 2026-10-06
+	// a symlink: never create one (docs/rules/README.md); 8 installer links in dot, 2026-10-06
 	"ln -s ~/repos/agent1/skills/x ~/.agents/skills/x",
 	"ln -sf src dest",
 	"ln -sfn src dest",

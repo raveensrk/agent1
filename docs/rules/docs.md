@@ -84,7 +84,7 @@ Write `docs/` like a book, all three folders:
 - Prose first, in plain words: a chapter explains, then lists. One fact lives
   in one place; other chapters link to it.
 
-[publish_books](../script/publish_books) publishes every repo's `docs/` as an
+[publish_books](../../script/publish_books) publishes every repo's `docs/` as an
 HTML book in the GNU manual style, into `agent1/books/` (git ignored).
 
 What goes where:
@@ -104,7 +104,7 @@ What goes where:
 ## What is exempt from help
 
 - No-arg scripts under a hooks directory, and test files a runner collects.
-  Exact patterns are in [cli_help.py](../harness/checks/cli_help.py).
+  Exact patterns are in [cli_help.py](../../harness/checks/cli_help.py).
 - Sourced files (no exec bit).
 - Callbacks listed by repo-relative path in
   [cli_help_allow.txt](~/repos/agent2/harness/data/cli_help_allow.txt).
@@ -112,6 +112,6 @@ What goes where:
 
 ## What is checked
 
-[cli_help.py](../harness/checks/cli_help.py) reports any runnable missing `-h`,
+[cli_help.py](../../harness/checks/cli_help.py) reports any runnable missing `-h`,
 `--help` or `help`. Nothing checks the rest: what help says, or which docs
 exist.

@@ -166,7 +166,7 @@ export function guardHit(command: string): Hit | null {
 				"Measured 2026-10-04: 4 of 4612 agent bash commands had this shape, and one aborted a per-file plan mid-command.",
 			fix: [
 				"A missing path fails the ls, and the && then skips the print, so the",
-				"call exits 1 having printed nothing (common.md):",
+				"call exits 1 having printed nothing (docs/rules/README.md):",
 				"  ls A B 2>/dev/null || true      # a listing that may be empty",
 				"  if [ -d A ]; then cd A; fi      # act only when it exists",
 			].join("\n"),
@@ -220,13 +220,13 @@ export function guardHit(command: string): Hit | null {
 				name: "cat -A, which BSD cat does not have",
 				measured: "macOS ships BSD cat, which rejects -A and fails the call.",
 				fix: [
-					"common.md: BSD cat has no -A, and the flag aborts the call:",
+					"docs/rules/README.md: BSD cat has no -A, and the flag aborts the call:",
 					"  cat -v -e FILE",
 					"  sed -n l FILE",
 				].join("\n"),
 			};
 		}
-		// A symlink: common.md forbids creating one, and no_symlinks.py only
+		// A symlink: docs/rules/README.md forbids creating one, and no_symlinks.py only
 		// catches it after the fact. The 8 installer links in dot/config/pi
 		// (deleted 2026-10-06) were each one `ln -s`.
 		const lnAt = names.findIndex((name) => name === "ln");
@@ -238,7 +238,7 @@ export function guardHit(command: string): Hit | null {
 				name: "ln -s, which creates a symlink",
 				measured: "The 8 installer symlinks in dot/config/pi, deleted 2026-10-06, were each one ln -s.",
 				fix: [
-					"common.md: never create a symlink. Pick the real alternative and say which:",
+					"docs/rules/README.md: never create a symlink. Pick the real alternative and say which:",
 					"  cp SRC DEST                      # a real file; an installer re-copies it",
 					'  "packages": ["~/repos/x"]        # pi loads a package in place',
 					"  use the real path                # point the caller at SRC itself",
@@ -253,9 +253,9 @@ export function guardHit(command: string): Hit | null {
 		if (tmpAt !== -1) {
 			return {
 				name: "a temp file written under /tmp",
-				measured: "common.md keeps temp files in ~/tmp, where they are found and cleaned up.",
+				measured: "docs/rules/README.md keeps temp files in ~/tmp, where they are found and cleaned up.",
 				fix: [
-					"Temp files go under ~/tmp, never /tmp (common.md):",
+					"Temp files go under ~/tmp, never /tmp (docs/rules/README.md):",
 					"  mkdir -p ~/tmp/review && cmd 2> ~/tmp/review/err.txt",
 				].join("\n"),
 			};
@@ -268,7 +268,7 @@ export function guardHit(command: string): Hit | null {
 			measured:
 				"Measured 2026-10-03: one unbounded ert test run hung for the full 300s tool timeout plus 194s to abort; healthy, it takes 5s.",
 			fix: [
-				"Bound it, and state the ETA before starting it (rules/jobs.md):",
+				"Bound it, and state the ETA before starting it (docs/rules/jobs.md):",
 				"  timeout 180 bun test",
 				"  timeout 900 swift test",
 			].join("\n"),

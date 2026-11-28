@@ -6,7 +6,7 @@
 - [Model Usage History](model_usage_history.md) - Recorded models across agent
   harnesses.
 - [Subscription Plan](subscription_plan.md) - Plans, prices and measured spend.
-- [Dev Tools](../dev_tools.md) - Preferred dev tools, in order, with tags and a
+- [Dev Tools](dev_tools.md) - Preferred dev tools, in order, with tags and a
   learning path (the Needs lines); read before choosing a tool.
 - [Self improvement](self_improvement.md) - One line per way to improve agent1,
   found by Optimus Prime at the end of a task.

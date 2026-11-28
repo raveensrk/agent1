@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# harness-check: {"id": "rule_review", "applies": ["rules/*.md"], "quadrant": "feedback/computational"}
+# harness-check: {"id": "rule_review", "applies": ["docs/rules/*.md"], "quadrant": "feedback/computational"}
 """Every rule file under rules/ records its last review, at most 30 days ago.
 
 A rule file opens with YAML frontmatter carrying last_reviewed: YYYY-MM-DD. The

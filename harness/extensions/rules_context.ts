@@ -2,20 +2,20 @@
  * rules context: the durable rules are in the prompt, not in a read the agent
  * can skip.
  *
- * Measured 2026-10-03: of the six files common.md names for session start, two
- * were never read (code_style.md and rules/jobs.md) and rules/git.md only when the first
+ * Measured 2026-10-03: of the six files docs/rules/README.md names for session start, two
+ * were never read (code_style.md and docs/rules/jobs.md) and docs/rules/git.md only when the first
  * commit came up. The misses line up with the session's costs: a 300s unbounded
- * suite run with no ETA (rules/jobs.md) and ad-hoc probe scripts (code_style.md).
+ * suite run with no ETA (docs/rules/jobs.md) and ad-hoc probe scripts (code_style.md).
  *
  * pi reads AGENTS.md verbatim and does not expand `@path` imports - verified in
  * dist/core/resource-loader.js, and the docs never mention imports - so a file
- * that is only *named* stays optional. This hook appends common.md itself, and
+ * that is only *named* stays optional. This hook appends docs/rules/README.md itself, and
  * names the topic files with what each is for, so a skipped read is a decision
  * rather than an oversight.
  *
  * Measured 2026-10-04: a fresh session asked to name itself answered "I am Pi",
  * because experimental.md was only *named*. A trial rule a session may skip is
- * not being trialled, so rules/experimental.md is appended too - after common.md, so
+ * not being trialled, so docs/rules/experimental.md is appended too - after docs/rules/README.md, so
  * the precedence reads in order.
  *
  * ponytail: the whole file on every run, ~270 lines. Trim it to the rules that
@@ -27,8 +27,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 
-const COMMON = join(homedir(), "repos/agent1/common.md");
-const EXPERIMENTAL = join(homedir(), "repos/agent1/rules/experimental.md");
+const COMMON = join(homedir(), "repos/agent1/docs/rules/README.md");
+const EXPERIMENTAL = join(homedir(), "repos/agent1/docs/rules/experimental.md");
 
 /** A rule file that may not exist yet. A missing file is not an error here. */
 function readIfPresent(path: string): string {
@@ -39,23 +39,23 @@ function readIfPresent(path: string): string {
 	}
 }
 
-/** Topic files rules/index.md points at, with the reason to read each one. */
+/** Topic files docs/rules/README.md points at, with the reason to read each one. */
 const TOPICS: [string, string][] = [
-	["rules/git.md", "commits and pull requests"],
-	["rules/jobs.md", "ETA rules for long-running jobs"],
-	["rules/external.md", "probing external systems, live accounts, credentials on disk"],
-	["rules/browser.md", "browser and computer use rules"],
-	["rules/macos.md", "macOS command traps"],
-	["rules/agent1.md", "writing a CLI app (read section CLI)"],
-	["rules/markdown.md", "writing Markdown"],
-	["rules/pi.md", "pi package management"],
-	["rules/removal.md", "removing apps, packages and harnesses"],
+	["docs/rules/git.md", "commits and pull requests"],
+	["docs/rules/jobs.md", "ETA rules for long-running jobs"],
+	["docs/rules/external.md", "probing external systems, live accounts, credentials on disk"],
+	["docs/rules/browser.md", "browser and computer use rules"],
+	["docs/rules/macos.md", "macOS command traps"],
+	["docs/rules/agent1.md", "writing a CLI app (read section CLI)"],
+	["docs/rules/markdown.md", "writing Markdown"],
+	["docs/rules/pi.md", "pi package management"],
+	["docs/rules/removal.md", "removing apps, packages and harnesses"],
 ];
 
-/** rules/repos.md matters only where ~/repos exists - the user asked for that gate,
+/** docs/rules/repos.md matters only where ~/repos exists - the user asked for that gate,
  * and it is a pure filesystem test, decided here not by the model. */
 const REPOS_TOPIC: [string, string] = [
-	"rules/repos.md",
+	"docs/rules/repos.md",
 	"nested git repo policy for ~/repos (loaded only when ~/repos exists)",
 ];
 
@@ -70,7 +70,7 @@ export function rulesSection(
 ): string {
 	if (!text.trim()) return "";
 	const lines = [
-		"## Rules (loaded from ~/repos/agent1/common.md)",
+		"## Rules (loaded from ~/repos/agent1/docs/rules/README.md)",
 		"",
 		text.trim(),
 		"",
@@ -80,7 +80,7 @@ export function rulesSection(
 	if (experimental.trim()) {
 		lines.push(
 			"",
-			"## Experimental rules (loaded from ~/repos/agent1/rules/experimental.md)",
+			"## Experimental rules (loaded from ~/repos/agent1/docs/rules/experimental.md)",
 			"",
 			"Live trial rules. They win over anything above that conflicts, until the",
 			"user promotes one into rules/ or deletes it.",
@@ -96,7 +96,7 @@ export function currentRules(): string {
 	try {
 		return rulesSection(readFileSync(COMMON, "utf8"), topics(), readIfPresent(EXPERIMENTAL));
 	} catch {
-		return "## Rules\n\n~/repos/agent1/common.md is missing, so the session-start rules did not load. Read the topic files under ~/repos/agent1/ before starting.";
+		return "## Rules\n\n~/repos/agent1/docs/rules/README.md is missing, so the session-start rules did not load. Read the topic files under ~/repos/agent1/ before starting.";
 	}
 }
 

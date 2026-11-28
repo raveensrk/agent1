@@ -8,7 +8,7 @@ Rules I am trying out.
 
 A rule lands here when I ask for one, or when a session proposes one and I say
 yes. It leaves when it holds up, promoted into a file under
-[rules/](index.md), or when it does not, and then it is deleted. Git keeps
+[rules/](README.md), or when it does not, and then it is deleted. Git keeps
 the record either way. Only I move a rule out of this file: a session may
 propose, and may write one here when I ask for it, but never promotes its own
 rule.

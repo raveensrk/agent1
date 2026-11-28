@@ -83,9 +83,9 @@ const crashed = run(["lint"], crash, dir).stdout;
 assert.ok(crashed.includes(`lint: check lint.py failed in ${dir}: exit 1: KeyError: 'x'`), crashed);
 assert.equal(run(["lint"], crash, dir).stdout, "", "a crash already reported must not block again");
 
-// rules: the SessionStart context carries common.md
+// rules: the SessionStart context carries docs/rules/README.md
 const rules = JSON.parse(run(["rules"], {}).stdout);
-assert.match(rules.hookSpecificOutput.additionalContext, /common\.md/);
+assert.match(rules.hookSpecificOutput.additionalContext, /docs\/rules\/README\.md/);
 
 rmSync(dir, { recursive: true, force: true });
 console.log("ok - hook");

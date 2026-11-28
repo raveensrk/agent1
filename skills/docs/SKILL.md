@@ -8,7 +8,7 @@ argument-hint: "create|update [repo path]"
 
 # Create or update docs: the book of this repository
 
-Write the book in `docs/design/` (see [rules/docs.md](../../rules/docs.md), The bible, the manual and the notes). An old book in `docs/design/`, `docs/` or `doc/`, or a root `<repo>.md`, moves there with `git mv`. `docs/manual/` is the user manual, not this book.
+Write the book in `docs/design/` (see [docs/rules/docs.md](../../docs/rules/docs.md), The bible, the manual and the notes). An old book in `docs/design/`, `docs/` or `doc/`, or a root `<repo>.md`, moves there with `git mv`. `docs/manual/` is the user manual, not this book.
 
 ## Modes
 
@@ -54,28 +54,28 @@ AI agents get a short section in `AGENTS.md` that points here.
 
 Official sources for the rules in this skill.
 
-| Read | For |
-| ---- | ---- |
-| [CommonMark spec](https://spec.commonmark.org/) | Base Markdown syntax; latest is 0.31.2 |
-| [GFM spec](https://github.github.com/gfm/) | Tables, task lists, strikethrough, autolinks |
-| [GitHub alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) | Callout syntax |
-| [GitLab alerts](https://docs.gitlab.com/user/markdown/#alerts) | How GitLab renders callouts |
-| [Mermaid docs](https://mermaid.js.org/intro/) | Diagram syntax |
-| [Mermaid config schema](https://mermaid.js.org/config/schema-docs/config.html) | `htmlLabels` and theming |
-| [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) | `mmdc` options: background, config file |
-| [D2 tour](https://d2lang.com/tour/intro) | D2 language |
-| [D2 CLI manual](https://d2lang.com/tour/man/) | Flags, themes, layout engines |
-| [TALA layout engine](https://d2lang.com/tour/tala/) | What TALA supports: position locking, per-container direction, `near` |
-| [TALA is open source](https://d2lang.com/blog/tala-is-open-source/) | Bundled since D2 v0.9.0; seeds and trade-offs |
-| [Graphviz docs](https://graphviz.org/documentation/) | DOT language, `dot -Tsvg` |
-| [librsvg](https://gitlab.gnome.org/GNOME/librsvg) | `rsvg-convert`, used to check diagram labels |
-| [C4 model](https://c4model.com/) | System context and container diagrams |
-| [MADR](https://adr.github.io/madr/) | Decision record format |
-| [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) | Lint config and rules |
-| [lychee](https://github.com/lycheeverse/lychee) | Link checking, including anchors |
-| [pandoc manual](https://pandoc.org/MANUAL.html) | `--file-scope`, `--pdf-engine`, GFM input |
-| [AGENTS.md](https://agents.md/) | Agent instruction file format |
-| [Claude Code and AGENTS.md](https://code.claude.com/docs/en/memory#agents-md) | When Claude Code reads `AGENTS.md`, and the `@AGENTS.md` import |
+| Read                                                                                                                                                                       | For                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [CommonMark spec](https://spec.commonmark.org/)                                                                                                                            | Base Markdown syntax; latest is 0.31.2                                |
+| [GFM spec](https://github.github.com/gfm/)                                                                                                                                 | Tables, task lists, strikethrough, autolinks                          |
+| [GitHub alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) | Callout syntax                                                        |
+| [GitLab alerts](https://docs.gitlab.com/user/markdown/#alerts)                                                                                                             | How GitLab renders callouts                                           |
+| [Mermaid docs](https://mermaid.js.org/intro/)                                                                                                                              | Diagram syntax                                                        |
+| [Mermaid config schema](https://mermaid.js.org/config/schema-docs/config.html)                                                                                             | `htmlLabels` and theming                                              |
+| [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli)                                                                                                                   | `mmdc` options: background, config file                               |
+| [D2 tour](https://d2lang.com/tour/intro)                                                                                                                                   | D2 language                                                           |
+| [D2 CLI manual](https://d2lang.com/tour/man/)                                                                                                                              | Flags, themes, layout engines                                         |
+| [TALA layout engine](https://d2lang.com/tour/tala/)                                                                                                                        | What TALA supports: position locking, per-container direction, `near` |
+| [TALA is open source](https://d2lang.com/blog/tala-is-open-source/)                                                                                                        | Bundled since D2 v0.9.0; seeds and trade-offs                         |
+| [Graphviz docs](https://graphviz.org/documentation/)                                                                                                                       | DOT language, `dot -Tsvg`                                             |
+| [librsvg](https://gitlab.gnome.org/GNOME/librsvg)                                                                                                                          | `rsvg-convert`, used to check diagram labels                          |
+| [C4 model](https://c4model.com/)                                                                                                                                           | System context and container diagrams                                 |
+| [MADR](https://adr.github.io/madr/)                                                                                                                                        | Decision record format                                                |
+| [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)                                                                                                       | Lint config and rules                                                 |
+| [lychee](https://github.com/lycheeverse/lychee)                                                                                                                            | Link checking, including anchors                                      |
+| [pandoc manual](https://pandoc.org/MANUAL.html)                                                                                                                            | `--file-scope`, `--pdf-engine`, GFM input                             |
+| [AGENTS.md](https://agents.md/)                                                                                                                                            | Agent instruction file format                                         |
+| [Claude Code and AGENTS.md](https://code.claude.com/docs/en/memory#agents-md)                                                                                              | When Claude Code reads `AGENTS.md`, and the `@AGENTS.md` import       |
 
 ## Phase 1: Read, explore and research (write nothing yet)
 
@@ -109,23 +109,23 @@ Start from this skeleton.
 Drop what doesn't apply, split what's too big (for example, one chapter per package in a monorepo), and never pad: a small repo may need four chapters.
 Name chapters `NN-kebab-name.md`, numbered in reading order.
 
-| Chapter | Covers |
-| ---- | ---- |
-| Cover (`README.md`) | What this is, reading order, conventions, how to render diagrams and run checks |
-| Overview | Problem, users, scope, non-goals, success criteria |
-| Architecture | System context and container diagrams, components, tech stack with versions and why |
-| One per major component | Responsibility, interfaces, internals, failure modes |
-| Data | Data model (ER diagram), schemas, invariants, storage, migrations |
-| Interfaces | Exact contracts with examples: APIs, CLI, events, file formats, external services used |
-| Behavior | Key flows (sequence diagrams), state machines, algorithms in pseudocode, errors, edge cases |
-| UI, if any | Screens, navigation map, layout rules |
-| Configuration | Every config key and environment variable: type, default, effect |
-| Build, run, deploy | Toolchain and dependency versions with their purpose, exact commands, deployment, operations |
-| Quality | Testing approach, acceptance criteria taken from the tests (given / when / then), performance, security |
-| Decisions | One ADR per significant decision: context, decision, alternatives, consequences |
-| Rebuild guide | Ordered milestones from an empty folder, each with the chapters it needs and how to verify it |
-| Glossary | Domain terms |
-| Open questions | Unknowns awaiting an answer |
+| Chapter                 | Covers                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| Cover (`README.md`)     | What this is, reading order, conventions, how to render diagrams and run checks                         |
+| Overview                | Problem, users, scope, non-goals, success criteria                                                      |
+| Architecture            | System context and container diagrams, components, tech stack with versions and why                     |
+| One per major component | Responsibility, interfaces, internals, failure modes                                                    |
+| Data                    | Data model (ER diagram), schemas, invariants, storage, migrations                                       |
+| Interfaces              | Exact contracts with examples: APIs, CLI, events, file formats, external services used                  |
+| Behavior                | Key flows (sequence diagrams), state machines, algorithms in pseudocode, errors, edge cases             |
+| UI, if any              | Screens, navigation map, layout rules                                                                   |
+| Configuration           | Every config key and environment variable: type, default, effect                                        |
+| Build, run, deploy      | Toolchain and dependency versions with their purpose, exact commands, deployment, operations            |
+| Quality                 | Testing approach, acceptance criteria taken from the tests (given / when / then), performance, security |
+| Decisions               | One ADR per significant decision: context, decision, alternatives, consequences                         |
+| Rebuild guide           | Ordered milestones from an empty folder, each with the chapters it needs and how to verify it           |
+| Glossary                | Domain terms                                                                                            |
+| Open questions          | Unknowns awaiting an answer                                                                             |
 
 ## Phase 4: Write
 
@@ -208,15 +208,15 @@ In a few lines: chapters and diagrams written, files moved or merged, check resu
 Keep the docs true after a task. Works with any docs, book or not; a book also follows Ground rules, Phase 4 and Phase 6.
 No new branch: commit on the current branch, never push.
 
-1. Find what changed: this session's edits and commits, commits since the last commit that touched the docs, and uncommitted changes the user points to. With no clear baseline, compare every chapter against the code.
-2. List what was learned: facts, causes, decisions and gotchas the docs don't hold.
-3. Map each change and lesson to the chapter, diagram, ADR or glossary entry that owns it. Also check `AGENTS.md`, the root `README.md` and `docs/design/build.sh`.
-4. Remove stale docs: anything now untrue, obsolete or gone. Answered open questions leave the Open questions chapter.
-5. Reconcile docs and code: where they disagree, the code wins unless the session showed the code is the bug.
-6. Add what is missing, in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one, and keep `docs/design/README.md` and the previous / next chain in step.
-7. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the changes affect.
-8. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
-9. Ask at most one batch of questions, only for intent or rationale the code can't tell, plus whether to convert each requirement trace not yet decided (see Ground rules). Unanswered ones go in Open questions.
+01. Find what changed: this session's edits and commits, commits since the last commit that touched the docs, and uncommitted changes the user points to. With no clear baseline, compare every chapter against the code.
+02. List what was learned: facts, causes, decisions and gotchas the docs don't hold.
+03. Map each change and lesson to the chapter, diagram, ADR or glossary entry that owns it. Also check `AGENTS.md`, the root `README.md` and `docs/design/build.sh`.
+04. Remove stale docs: anything now untrue, obsolete or gone. Answered open questions leave the Open questions chapter.
+05. Reconcile docs and code: where they disagree, the code wins unless the session showed the code is the bug.
+06. Add what is missing, in the one place that owns it. Add a chapter, diagram or ADR only when new structure needs one, and keep `docs/design/README.md` and the previous / next chain in step.
+07. Update training data if the repo has any (examples, fixtures, eval sets, sample prompts) the changes affect.
+08. Keep it minimal and unique: no duplicates, no recaps. Link to a fact instead of restating it; delete a copy when one is found.
+09. Ask at most one batch of questions, only for intent or rationale the code can't tell, plus whether to convert each requirement trace not yet decided (see Ground rules). Unanswered ones go in Open questions.
 10. With `docs/design/build.sh`, run `docs/design/build.sh diagrams` and `docs/design/build.sh check`. In a book, rerun the docs-only rebuild test when a contract, data shape, config key or flow changed, with questions about the changed parts.
 11. Commit and report in a few lines: what was removed, fixed and added, training data updated, check results, open questions and the commits.
 

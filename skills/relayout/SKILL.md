@@ -45,7 +45,7 @@ Compare the layout with:
 1. The language's usual layout, in
    [references/standards.md](references/standards.md).
 2. The user's rules: the repo's Layout section, its requirements, and
-   [agent1.md](../../rules/agent1.md) section Architecture - core and UI
+   [agent1.md](../../docs/rules/agent1.md) section Architecture - core and UI
    apart.
 
 Signs of a poor layout. Each finding names the path and the evidence:
@@ -113,7 +113,7 @@ scope, ask before moving anything.
 - Pinned paths, and the big reshapes and fixes not picked.
 - Files moved, files renamed and references fixed, as exact numbers.
 - The branch, and the landing step from
-  [git.md](../../rules/git.md#landing-a-branch). Wait for a yes.
+  [git.md](../../docs/rules/git.md#landing-a-branch). Wait for a yes.
 - Next: run `/determinize` on the Layout section, so a check keeps it tidy.
 
 ## Rules

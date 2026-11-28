@@ -55,7 +55,7 @@ reads its header and decides which files it sees.
 - End the message with the fix, as a command when there is one. A signal that
   does not steer sends the next attempt down the same dead end.
 
-Check the same mistake by hand first: a rule in `common.md` plus a violation
+Check the same mistake by hand first: a rule in `docs/rules/README.md` plus a violation
 that exists today. A check nobody has seen fire is a guess.
 
 ## Trigger
@@ -150,7 +150,7 @@ to a check's message, and to a guard's.
 
 Checks that encode machine-specific rules belong in `~/repos/agent2/harness/checks/`
 (private repo), not here. The dispatcher picks that directory up only when it
-exists, the same conditional rule `rules/index.md` uses for `agent2/AGENTS.md`.
+exists, the same conditional rule `docs/rules/README.md` uses for `agent2/AGENTS.md`.
 
 The reverse split is `nested_git_repo.py`: the rule is general, so the check is
 public here, while the allowlist of internet clones it reads names this

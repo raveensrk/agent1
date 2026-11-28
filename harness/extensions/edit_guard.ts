@@ -7,7 +7,7 @@
  * rewrite and a retry, and the 2-occurrence failure only surfaced after the
  * other edits in the same call were already matched.
  *
- * common.md has the rule: "Read the exact region before an edit when this
+ * docs/rules/README.md has the rule: "Read the exact region before an edit when this
  * session has not shown that text - one guessed oldText aborts the whole batch
  * and costs a retry." A rule a check can decide belongs in a check, so this one
  * decides it: the block prints the nearest text with line numbers, which is the

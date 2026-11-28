@@ -45,7 +45,7 @@ ______________________________________________________________________
 
 A bulk or destructive change prints a per-file plan first, then applies, and a formatter or rewriter is proven on copies before it sweeps: run it on one or two representative files in `~/tmp`, diff the result, then apply it across the tree. The sweep that skipped that step rewrote 15 `SKILL.md` frontmatter blocks on 04 Oct 2026.
 
------------------------------------------------------------------------------- 
+______________________________________________________________________
 
 Temporary files go in `~/tmp`. Do not write them under `/tmp` or into a repo.
 
@@ -87,6 +87,6 @@ An ambiguous request that follows unrelated work and could target either the har
 
 ______________________________________________________________________
 
-Symlinks: never create one, never commit one. Warn me first and name the alternative you chose instead - [no_symlinks.py](../harness/checks/no_symlinks.py) decides it.
+Symlinks: never create one, never commit one. Warn me first and name the alternative you chose instead - [no_symlinks.py](../../harness/checks/no_symlinks.py) decides it.
 
 ______________________________________________________________________

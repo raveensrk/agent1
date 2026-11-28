@@ -603,7 +603,7 @@ def test_interpreter_check_reads_a_rule_and_a_shebang():
 
 
 def test_interpreter_check_reads_a_bare_code_span():
-    """rules/scripts.md names interpreters as bare spans: (`python3` is 3.14; `python3.15` ...)."""
+    """docs/rules/scripts.md names interpreters as bare spans: (`python3` is 3.14; `python3.15` ...)."""
     check = os.path.join(CHECKS, "interpreter_resolves.py")
     with tempfile.TemporaryDirectory() as tmp:
         assert shutil.which("python3.99") is None, "python3.99 is installed; pick another made-up name"
@@ -701,7 +701,7 @@ def test_markdown_check_skips_a_code_span_that_wraps_a_line():
 
 
 def test_markdown_check_leaves_at_imports_alone():
-    """rules/markdown.md sanctions `@~/path` in AGENTS.md; a link there stops being an import."""
+    """docs/rules/markdown.md sanctions `@~/path` in AGENTS.md; a link there stops being an import."""
     check = os.path.join(CHECKS, "markdown_bare_path.py")
     with tempfile.TemporaryDirectory() as tmp:
         doc = os.path.join(tmp, "AGENTS.md")
@@ -913,7 +913,7 @@ def test_cli_help_check_wants_both_flags_and_names_the_missing_one():
 
 
 def test_cli_help_check_wants_help_from_a_no_arg_runnable_but_not_a_hook_or_test():
-    """rules/docs.md: a program's docs live inside it, behind -h and --help,
+    """docs/rules/docs.md: a program's docs live inside it, behind -h and --help,
     options or not. A no-arg git hook or test is called, not typed."""
     check = os.path.join(CHECKS, "cli_help.py")
     with tempfile.TemporaryDirectory() as tmp:
@@ -1003,7 +1003,7 @@ def test_cli_help_check_leaves_argparse_alone_unless_add_help_is_off():
 
 
 def test_cli_help_check_wants_a_help_command():
-    """rules/docs.md: -h and --help print short help, `<program> help` the long
+    """docs/rules/docs.md: -h and --help print short help, `<program> help` the long
     help. argparse's action="help" is the flag binding, not the command."""
     check = os.path.join(CHECKS, "cli_help.py")
     with tempfile.TemporaryDirectory() as tmp:

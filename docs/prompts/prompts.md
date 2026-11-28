@@ -74,7 +74,7 @@ Dark theme
 
 I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
 
-### [Redesign full](../skills/redesign-gui/SKILL.md)
+### [Redesign full](../../skills/redesign-gui/SKILL.md)
 
 ### [Auto-Install Git Hook](auto_install_git_hook.md)
 
@@ -125,7 +125,7 @@ Read the [Requirements](~/repos/agent1/rules/agent1.md) throughly and report me 
 
 ## Maintenance
 
-### [Perform maintenance for this project](../skills/maintain/SKILL.md)
+### [Perform maintenance for this project](../../skills/maintain/SKILL.md)
 
 ### Skills
 

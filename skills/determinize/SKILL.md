@@ -12,7 +12,7 @@ A rule a program can decide is the program, not prose. This skill scans one
 directory's instruction files, classifies every rule, builds what is missing,
 and leaves the prose carrying only decisions and routing.
 
-The rule itself lives in [rules/harness.md](../../rules/harness.md). The check and guard
+The rule itself lives in [docs/rules/harness.md](../../docs/rules/harness.md). The check and guard
 contracts, and the wiring for every harness, live in
 [harness/README.md](../../harness/README.md) and
 [references/harness_wiring.md](references/harness_wiring.md).
