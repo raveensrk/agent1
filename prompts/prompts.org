@@ -51,7 +51,7 @@ Dark theme
 ** Redesign
 I want to redesign the gui of this app. Previously it was ported from a tui app so it contains tui app design. I want a completely new design for this gui app. Lets brainstorm. Grill me until you understand the goal. Make this a proper gui app.
 ** [[../skills/redesign-gui/SKILL.md][Redesign full]]
-** [[auto_install_git_hook.org][Auto-Install Git Hook]]
+** [[auto_install_git_hook.md][Auto-Install Git Hook]]
 
 * Review
 ** Review the gui app visually
