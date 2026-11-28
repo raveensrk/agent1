@@ -18,7 +18,8 @@ At session start, Read these files
 - [Jobs](jobs.md) - ETA rules for long-running jobs
 - [Harness](harness.md) - checks over prose, deterministic first, guards that
   steer
-- [Markdown](markdown.md) - file links, link paths, 80 columns, aligned tables
+- [Markdown](markdown.md) - file links, link paths, 80 columns, aligned tables,
+  Pandoc Markdown default
 - [Parallel sessions](parallel_sessions.md) - a second session on one repo takes
   its own worktree and branch
 - [Theme](theme.md) - dark by default

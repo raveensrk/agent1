@@ -18,6 +18,11 @@ last_reviewed: 2026-11-02
    token, such as a URL or a link. Do not rewrap lines you did not otherwise
    change.
 5. Always align Markdown tables: pad cells so every column lines up.
+6. Pandoc Markdown is the default dialect. Use its extensions when a
+   document needs them: footnotes, citations, fenced divs, attributes, math,
+   definition lists, figure captions. Fill a gap with a Pandoc Lua filter,
+   not with a new syntax or a new dialect. A file GitHub renders, such as a
+   README, still reads cleanly as GFM: prefer syntax both dialects share.
 
 Do : `[File Name](/path/to/file_name.md)`
 Don't : `/path/to/file_name.md`
