@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""publish_books - publish each repo's docs/ as an HTML book in the GNU manual style.
+
+Every repo under the repos folder that has a docs/ folder becomes one book in
+agent1/books/<repo>/, one page per chapter, with GNU's Next / Previous / Up
+links and the gnu.org manual stylesheet (a local copy, gnu_manual.css).
+books/index.html lists every book. books/ is git ignored.
+
+A repo with docs/manual, docs/design and docs/notes gets a book in three
+parts: Manual, Design, Notes. A repo with a flat docs/ gets a one-part book.
+In each folder README.md comes first, then the other .md files by name,
+then its subfolders the same way.
+
+How: pandoc reads each chapter (publish_books.lua) and writes one Texinfo
+file, books/<repo>.texi; GNU texi2any turns it into HTML. The first error
+(a broken link, a missing image, a texi2any error) stops the run.
+
+Usage:
+  publish_books [REPO...]     build every repo, or only the named ones
+  publish_books -h | --help   short help
+  publish_books help          this text
+
+Options:
+  --repos DIR   where the repos live (default ~/repos)
+  --out DIR     where the books go (default agent1/books)
+
+Needs pandoc 3 and texi2any 7 (GNU Texinfo) on PATH.
+Exit codes: 0 built, 1 a build failed, 2 usage error.
+"""
+import argparse
+import html
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+AGENT1 = HERE.parent
+LUA = HERE / "publish_books.lua"
+CSS = HERE / "gnu_manual.css"
+PARTS = [("manual", "Manual"), ("design", "Design"), ("notes", "Notes")]
+
+SHORT = """usage: publish_books [--repos DIR] [--out DIR] [REPO...]
+Publish each repo's docs/ as an HTML book in the GNU manual style, into agent1/books/.
+  REPO          only these repos (default: every repo under --repos with docs/)
+  --repos DIR   where the repos live (default ~/repos)
+  --out DIR     where the books go (default agent1/books)
+  -h, --help    this help;  publish_books help: the long help"""
+
+
+def die(msg, code=1):
+    print(f"publish_books: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def chapters(folder, top=True):
+    """README.md, then the other .md files by name, then each subfolder the same way.
+    At the top of a three-part docs/, the part folders are not subfolders."""
+    files = sorted(p for p in folder.glob("*.md") if p.name != "README.md")
+    readme = folder / "README.md"
+    out = ([readme] if readme.exists() else []) + files
+    for sub in sorted(p for p in folder.iterdir() if p.is_dir() and not p.name.startswith(".")):
+        if top and folder.name == "docs" and sub.name in dict(PARTS):
+            continue
+        out += chapters(sub, False)
+    return out
+
+
+def plan_for(docs):
+    parts = []
+    for sub, name in PARTS:
+        if (docs / sub).is_dir() and chapters(docs / sub):
+            parts.append({"name": name, "files": [str(p) for p in chapters(docs / sub)]})
+    if not parts:
+        files = chapters(docs)
+        if files:
+            parts.append({"name": "", "files": [str(p) for p in files]})
+    return {"docs": str(docs) + os.sep, "parts": parts}
+
+
+def book_title(repo):
+    readme = repo / "README.md"
+    if readme.exists():
+        for line in readme.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"^#\s+(.+?)\s*#*\s*$", line)
+            if m:
+                return re.sub(r"[`*_\[\]]", "", m.group(1))
+    return repo.name
+
+
+def tex(s):
+    return re.sub(r"([@{}])", r"@\1", s)
+
+
+def build(repo, out):
+    docs = repo / "docs"
+    plan = plan_for(docs)
+    if not plan["parts"]:
+        print(f"{repo.name}: docs/ has no Markdown, skipped")
+        return None
+    title = book_title(repo)
+    dest = out / repo.name
+    if dest.exists():
+        shutil.rmtree(dest)
+    (dest / "img").mkdir(parents=True)
+    plan_file = out / f"{repo.name}.plan.json"
+    plan_file.write_text(json.dumps(plan), encoding="utf-8")
+
+    run = subprocess.run(
+        ["pandoc", "-f", "markdown", "-t", "texinfo", "--lua-filter", str(LUA),
+         "-M", f"plan={plan_file}", "-M", f"images={dest / 'img'}", "/dev/null"],
+        capture_output=True, text=True)
+    if run.returncode:
+        err = run.stderr.split("stack traceback")[0].strip()
+        msg = err.splitlines()[-1] if err else "pandoc failed"
+        die(f"{repo.name}: {msg.removeprefix('publish_books: ')}")
+    body = re.sub(r"\A\s*@node Top\n@top [^\n]*\n", "", run.stdout)
+    texi = out / f"{repo.name}.texi"
+    texi.write_text(
+        "\\input texinfo\n"
+        f"@setfilename {repo.name}.info\n"
+        f"@settitle {tex(title)}\n"
+        "@documentencoding UTF-8\n\n"
+        "@node Top\n"
+        f"@top {tex(title)}\n\n"
+        f"The {tex(repo.name)} book, made from its @file{{docs/}} folder.\n\n"
+        "@contents\n\n"
+        + body + "\n@bye\n", encoding="utf-8")
+
+    run = subprocess.run(
+        ["texi2any", "--html", "--split=chapter", f"--css-include={CSS}",
+         "-c", "FORMAT_MENU=nomenu", "-c", "NODE_FILES=0", "-c", "CONTENTS_OUTPUT_LOCATION=inline",
+         "-I", str(dest), "-o", str(dest) + "/", str(texi)],
+        capture_output=True, text=True)
+    if run.returncode:
+        die(f"{repo.name}: texi2any failed ({texi}):\n{run.stderr.strip()}")
+    if not any((dest / "img").iterdir()):
+        (dest / "img").rmdir()
+    pages = len(list(dest.glob("*.html")))
+    print(f"{repo.name}: {pages} pages -> {dest}/index.html")
+    return title
+
+
+def write_index(out, books):
+    css = CSS.read_text(encoding="utf-8")
+    rows = "\n".join(
+        f'<li><a href="{html.escape(name)}/index.html">{html.escape(title)}</a>'
+        f" <span class=\"repo\">({html.escape(name)})</span></li>"
+        for name, title in sorted(books.items(), key=lambda kv: kv[0].lower()))
+    (out / "index.html").write_text(
+        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
+        "<title>Books</title>\n"
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
+        f"<style>\n{css}\n</style>\n</head>\n<body>\n"
+        "<h1 class=\"settitle\">Books</h1>\n"
+        "<p>Each repo's <code>docs/</code> folder, published as a book.</p>\n"
+        f"<ul>\n{rows}\n</ul>\n</body>\n</html>\n", encoding="utf-8")
+
+
+def main():
+    if sys.argv[1:2] == ["help"]:
+        print(__doc__.strip())
+        return 0
+    ap = argparse.ArgumentParser(prog="publish_books", add_help=False)
+    ap.add_argument("-h", "--help", action="store_true")
+    ap.add_argument("--repos", default=str(Path.home() / "repos"))
+    ap.add_argument("--out", default=str(AGENT1 / "books"))
+    ap.add_argument("repo", nargs="*")
+    try:
+        a = ap.parse_args()
+    except SystemExit:
+        print(SHORT, file=sys.stderr)
+        return 2
+    if a.help:
+        print(SHORT)
+        return 0
+    for tool in ("pandoc", "texi2any"):
+        if not shutil.which(tool):
+            die(f"{tool} not found on PATH")
+    repos_dir = Path(a.repos).expanduser().resolve()
+    out = Path(a.out).expanduser().resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    if a.repo:
+        repos = [repos_dir / r for r in a.repo]
+        for r in repos:
+            if not (r / "docs").is_dir():
+                die(f"{r}: no docs/ folder", 2)
+    else:
+        repos = sorted((p for p in repos_dir.iterdir() if (p / "docs").is_dir()),
+                       key=lambda p: p.name.lower())
+
+    books = {}
+    index = out / "books.json"  # titles of books built before, so a partial run keeps the full list
+    if index.exists():
+        books = {k: v for k, v in json.loads(index.read_text()).items() if (out / k).is_dir()}
+    for repo in repos:
+        title = build(repo, out)
+        if title:
+            books[repo.name] = title
+    index.write_text(json.dumps(books, indent=1), encoding="utf-8")
+    write_index(out, books)
+    print(f"{len(books)} books -> {out}/index.html")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
