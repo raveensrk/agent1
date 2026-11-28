@@ -87,7 +87,7 @@ answer means the import did not load.
 | `rules/tui.md`                                                   | TUI help keybind and help page                                                                                                           |
 | `rules/working_style.md`                                         | How to work with the user                                                                                                                |
 | `rules/browser.md`                                               | Browser and computer use rules                                                                                                           |
-| `rules/agent1.md`                                               | agent1 requirements; section CLI: help, flags, one help table                                                                               |
+| `rules/agent1.md`                                                | agent1 requirements; section CLI: help, flags, one help table                                                                            |
 | `archive/rules/code_style.md`                                    | How to write code                                                                                                                        |
 | `common.md`                                                      | Session start: routes to `rules/index.md`, plus Confirmation                                                                             |
 | `archive/rules/emoji_legend.md`                                  | Status emoji vocabulary for agent reports                                                                                                |
@@ -103,7 +103,7 @@ answer means the import did not load.
 | [`notes/model_usage_history.md`](./notes/model_usage_history.md) | Historical model usage across agent harnesses                                                                                            |
 | `archive/rules/naming.md`                                        | Naming rules, disabled                                                                                                                   |
 | `rules/pi.md`                                                    | pi package management                                                                                                                    |
-| `prompts/prompts.md`                                            | Personal paste-bin of chat prompts                                                                                                       |
+| `prompts/prompts.md`                                             | Personal paste-bin of chat prompts                                                                                                       |
 | [`notes/question_types.md`](./notes/question_types.md)           | Question formats grouped into AI and non-AI categories for vibe coding                                                                   |
 | `rules/removal.md`                                               | Removing apps, packages and harnesses                                                                                                    |
 | `rules/repos.md`                                                 | Nested git repo policy for `~/repos`                                                                                                     |
@@ -158,6 +158,5 @@ a `git pull` updates every harness on its next start.
 
 Verify: start a new session and ask "what git work did I do in the last 24
 hours?". The agent should run `scripts/git_report.py`.
-
 
 hello world.
