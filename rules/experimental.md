@@ -43,6 +43,16 @@ Best Regards,
 Raveen Kumar
 ```
 
+## Pandoc Markdown by default
+
+Pandoc Markdown is the default Markdown dialect. Use its extensions when
+a document needs them: footnotes, citations, fenced divs, attributes, math,
+definition lists, figure captions. Fill a gap with a Pandoc Lua filter, not
+with a new syntax or a new dialect.
+
+A file GitHub renders, such as a README, still reads cleanly as GFM: prefer
+syntax both dialects share there.
+
 ## Lemmax trial
 
 From 2026-11-28 to 2026-12-12, requirements are plain Markdown files with no
