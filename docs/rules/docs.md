@@ -67,6 +67,11 @@ Every app repo has the same three folders of Markdown:
   working notes that are neither design nor manual. Entry page
   `docs/notes/README.md` lists them.
 
+agent1 itself has two more: `docs/rules/` (the rules every session loads;
+`README.md` is the entry, and rule files keep topic names such as `git.md`, not
+numbers, because they are looked up and linked by topic) and `docs/prompts/`
+(the prompt templates pi loads).
+
 No `<repo>.md` at the root, no `design_docs/`. `README.md` stays short: what it
 is, install, and links to all three.
 
