@@ -126,6 +126,40 @@ local function fix_inlines(file, inl)
   })
 end
 
+-- Diagram code blocks are drawn to SVG; a cache keyed by the source's hash
+-- keeps a rebuild from drawing them again.
+local RENDER = {
+  mermaid = function(src, out) return { "mmdc", "-q", "-b", "white", "-i", src, "-o", out } end,
+  d2 = function(src, out) return { "d2", src, out } end,
+  dot = function(src, out) return { "dot", "-Tsvg", src, "-o", out } end,
+}
+RENDER.graphviz = RENDER.dot
+
+local function diagram(file, b)
+  local kind = b.classes[1]
+  local render = kind and RENDER[kind]
+  if not render then return nil end
+  local cache = stringify(plan.cache)
+  local key = pandoc.utils.sha1(kind .. "\0" .. b.text)
+  local svg = P.join({ cache, key .. ".svg" })
+  local f = io.open(svg, "rb")
+  if not f then
+    local src = P.join({ cache, key .. "." .. kind })
+    local o = io.open(src, "w"); o:write(b.text); o:close()
+    local cmd = render(src, svg)
+    local ok, err = pcall(pandoc.pipe, cmd[1], { table.unpack(cmd, 2) }, "")
+    f = io.open(svg, "rb")
+    if not ok or not f then
+      fail(file .. ": cannot draw the " .. kind .. " diagram: " .. tostring(err))
+    end
+  end
+  local data = f:read("a"); f:close()
+  nimg = nimg + 1
+  local name = string.format("%03d_%s.svg", nimg, kind)
+  local o = io.open(P.join({ imgdir, name }), "wb"); o:write(data); o:close()
+  return pandoc.Para({ pandoc.Image({ pandoc.Str(kind .. " diagram") }, "img/" .. name) })
+end
+
 local CMD = { "@chapter", "@section", "@subsection", "@subsubsection" }
 
 local function convert(file, blocks, out, min_level)
@@ -134,6 +168,9 @@ local function convert(file, blocks, out, min_level)
     if b.t == "Header" then
       local level = b.level - min_level + 1
       local text = stringify(b.content)
+      -- "2. How it works", "03 Export", "Chapter 4. The app": the book numbers
+      -- chapters itself, so a title's own leading number goes.
+      text = text:gsub("^[Cc]hapter%s+%d+[%.:]?%s+", ""):gsub("^%d+[%.:]?%s+(%S)", "%1")
       local lines = {}
       if level <= #CMD then
         lines[#lines + 1] = "@node " .. tex(node_name(text))
@@ -143,8 +180,13 @@ local function convert(file, blocks, out, min_level)
       end
       lines[#lines + 1] = "@anchor{" .. anchor(entry.prefix, b.identifier) .. "}"
       out[#out + 1] = pandoc.RawBlock("texinfo", table.concat(lines, "\n"))
+    elseif b.t == "CodeBlock" and b.classes[1] and RENDER[b.classes[1]] then
+      out[#out + 1] = diagram(file, b)
     else
-      out[#out + 1] = b:walk({ Inlines = function(inl) return fix_inlines(file, inl) end })
+      out[#out + 1] = b:walk({
+        CodeBlock = function(cb) return diagram(file, cb) end,
+        Inlines = function(inl) return fix_inlines(file, inl) end,
+      })
     end
   end
 end

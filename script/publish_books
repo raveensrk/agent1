@@ -12,7 +12,9 @@ In each folder README.md comes first, then the other .md files by name,
 then its subfolders the same way.
 
 How: pandoc reads each chapter (publish_books.lua) and writes one Texinfo
-file, books/<repo>.texi; GNU texi2any turns it into HTML. The first error
+file, books/<repo>.texi; GNU texi2any turns it into HTML. Mermaid, D2 and
+Graphviz code blocks are drawn to SVG (mmdc, d2, dot), cached in
+books/.diagrams/. The first error
 (a broken link, a missing image, a texi2any error) stops the run.
 
 Usage:
@@ -24,7 +26,8 @@ Options:
   --repos DIR   where the repos live (default ~/repos)
   --out DIR     where the books go (default agent1/books)
 
-Needs pandoc 3 and texi2any 7 (GNU Texinfo) on PATH.
+Needs pandoc 3 and texi2any 7 (GNU Texinfo) on PATH; mmdc, d2 and dot for
+diagrams.
 Exit codes: 0 built, 1 a build failed, 2 usage error.
 """
 import argparse
@@ -41,6 +44,7 @@ HERE = Path(__file__).resolve().parent
 AGENT1 = HERE.parent
 LUA = HERE / "publish_books.lua"
 CSS = HERE / "gnu_manual.css"
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PARTS = [("manual", "Manual"), ("design", "Design"), ("notes", "Notes")]
 
 SHORT = """usage: publish_books [--repos DIR] [--out DIR] [REPO...]
@@ -106,13 +110,19 @@ def build(repo, out):
     if dest.exists():
         shutil.rmtree(dest)
     (dest / "img").mkdir(parents=True)
+    cache = out / ".diagrams"
+    cache.mkdir(exist_ok=True)
+    plan["cache"] = str(cache)
     plan_file = out / f"{repo.name}.plan.json"
     plan_file.write_text(json.dumps(plan), encoding="utf-8")
 
+    env = dict(os.environ)
+    if "PUPPETEER_EXECUTABLE_PATH" not in env and Path(CHROME).exists():
+        env["PUPPETEER_EXECUTABLE_PATH"] = CHROME  # mmdc draws Mermaid in Chrome
     run = subprocess.run(
         ["pandoc", "-f", "markdown", "-t", "texinfo", "--lua-filter", str(LUA),
          "-M", f"plan={plan_file}", "-M", f"images={dest / 'img'}", "/dev/null"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, env=env)
     if run.returncode:
         err = run.stderr.split("stack traceback")[0].strip()
         msg = err.splitlines()[-1] if err else "pandoc failed"
