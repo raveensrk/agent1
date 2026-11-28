@@ -31,7 +31,7 @@ python3 scripts/pinned.py [DIR]
 Read-only. Prints each pinned path and the reason:
 
 1. Outside use: another repo, a dotfile or a setting points to it. Example:
-   the global `CLAUDE.md` reads `agent1/common.md`.
+   the global `CLAUDE.md` reads `agent1/docs/rules/README.md`.
 2. Tool-required: a place a tool looks for, like Cargo's `src/`, SwiftPM's
    `Sources/`, a Claude plugin's `skills/` and `.claude-plugin/`.
 3. Root files: `README.md`, `AGENTS.md`, build and config files.

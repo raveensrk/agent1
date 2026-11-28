@@ -99,7 +99,7 @@ Based on this session,
 
 ### Review requirements
 
-Read the [Requirements](~/repos/agent1/rules/agent1.md) throughly and report me if anything can be improved from this repo based on it.
+Read the [Requirements](~/repos/agent1/docs/rules/agent1.md) throughly and report me if anything can be improved from this repo based on it.
 
 ### Critic
 
