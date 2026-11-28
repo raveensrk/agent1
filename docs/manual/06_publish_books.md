@@ -17,7 +17,7 @@ together is in [Publishing](../design/08_publishing.md).
 cd ~/repos/agent1 && make html
 ```
 
-This needs pandoc and writes `dist/agent1.html`, one page of model and harness
+This needs pandoc and writes `books/model_reviews.html`, one page of model and harness
 reviews you can send to someone.
 
 ______________________________________________________________________

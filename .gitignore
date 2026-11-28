@@ -1,6 +1,5 @@
 __pycache__/
 *.pyc
-/dist/
 .DS_Store
 /policies/ai_policy.html
 # Emacs auto-save and lock files

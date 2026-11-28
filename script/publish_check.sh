@@ -1,7 +1,7 @@
 #!/bin/bash
 # publish_check.sh - fail when the built page lost a section or gained a leak.
 #
-#   publish_check.sh PAGE      check PAGE (make html runs it on dist/agent1.html)
+#   publish_check.sh PAGE      check PAGE (make html runs it on books/model_reviews.html)
 #   publish_check.sh -h|--help
 #
 # The page must be one standalone file: its title, the inlined publish.css, and

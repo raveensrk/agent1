@@ -1,6 +1,6 @@
 # Models and harnesses: recommendations and dated reviews of the AI models and
 # agent harnesses I use. Model usage records: model_usage_history.md.
-# `make html` renders this file into dist/agent1.html with publish.lua.
+# `make html` renders this file into books/model_reviews.html with script/publish.lua.
 #
 # Text fields are markdown: links and blank-line paragraphs carry through.
 
