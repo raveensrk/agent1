@@ -1,54 +1,32 @@
 #!/usr/bin/env python3
 """post-commit: run the repo's own post-commit hook, which the global path hides.
 
-No check of its own: a commit is already made, so nothing here can refuse it.
-A repo that wants work after each commit puts an executable .git/hooks/post-commit,
-and this runs it. Failing that, on macOS, it runs the repo's tracked
-script/post-commit, so an older app repo, if any is left, rebuilds and
-installs its app into its ~/Applications/My_Apps/<Category> folder on every commit, in every clone,
-with nothing to set up per clone (rules/macos.md: Apps from ~/repos).
-
-A build there fails after the commit, unseen. New app hooks build in
-pre-commit and refuse the commit on a failed build (rules/experimental.md:
-Auto build and install hooks); task-router-2, find_link, sync2,
-ai_model_and_harness_journal, bookmark2, diet_tracker, elimination_tracker,
-journal, Library, medicine_tracker, symptoms_tracker and
-tatami do, from their own .githooks with core.hooksPath set to it.
+Nothing of its own: hooks only lint, never build, install or test
+(rules/git.md: Git hooks lint only). Apps install by hand with
+~/dot/script/install_all_my_apps_from_repos.sh.
 
 Runs for every repo through the global core.hooksPath, which points here:
   git config --global core.hooksPath ~/repos/agent1/harness/githooks
 A global hooksPath hides each repo's .git/hooks, so a repo's own
-.git/hooks/post-commit, when there is one, is run from here.
+.git/hooks/post-commit, when there is one, is run from here with the same
+arguments and input.
 
-  post-commit            (git passes no arguments)
+  post-commit [ARGS]    (as git passes them)
   post-commit -h | --help | help
-Skip once, deliberately: git commit --no-verify does not skip post-commit;
-the repo's own hook decides (requirements_graph: REQGRAPH_NO_INSTALL=1).
 """
 import os
-import platform
 import subprocess
 import sys
-
-# The tracked hook an app repo ships; run only on macOS, where the apps live.
-TRACKED = os.path.join("script", "post-commit")
 
 
 def main(argv):
     if argv[:1] in (["-h"], ["--help"], ["help"]):
         print(__doc__.strip() if argv[0] == "help" else __doc__.split("\n\n")[0])
         return 0
-    # Chain to the repo's own post-commit hook, which the global path hides.
     git_dir = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
     local = os.path.join(git_dir, "hooks", "post-commit") if git_dir else ""
     if local and os.access(local, os.X_OK) and os.path.realpath(local) != os.path.realpath(__file__):
-        return subprocess.run([local]).returncode
-
-    # No local hook: on macOS, the repo's tracked script/post-commit installs its app.
-    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
-    tracked = os.path.join(top, TRACKED) if top else ""
-    if platform.system() == "Darwin" and tracked and os.access(tracked, os.X_OK):
-        return subprocess.run([tracked]).returncode
+        return subprocess.run([local, *argv], stdin=sys.stdin).returncode
     return 0
 
 

@@ -52,3 +52,15 @@ Open a PR only when asked. PR descriptions should explain what changed, why the 
 ## Push and Pull Rhythm
 
 Commit freely; do not ask to push after each commit. Pushing is batched at the end of the day (about 23:00) and pulling at the start (about 07:00). Nothing pulls or pushes on its own. Push only when I say so, and name any commit another session made before pushing it.
+
+## Git hooks lint only
+
+A git hook, any kind (pre-commit, commit-msg, post-commit, pre-push and the
+rest), may lint and guard: format and lint checks, the AI-trailer check, the
+private-remote check. It never runs tests, never builds and never installs an
+app.
+
+- Tests run only when the user asks for them.
+- Apps are built and installed by hand: each app repo's `./install.sh` builds
+  and installs it, with no tests, and
+  `~/dot/script/install_all_my_apps_from_repos.sh` runs every changed one.
