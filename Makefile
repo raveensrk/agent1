@@ -2,8 +2,8 @@
 
 html: books/model_reviews.html
 
-books/model_reviews.html: docs/notes/model_and_harness.yaml script/publish.lua script/publish.css script/publish_check.sh
+books/model_reviews.html: docs/notes/model_and_harness.yaml scripts/publish.lua scripts/publish.css scripts/publish_check.sh
 	@mkdir -p $(@D)
-	pandoc -f markdown -t html5 -s --embed-resources --css script/publish.css \
-	  --metadata-file docs/notes/model_and_harness.yaml --lua-filter script/publish.lua /dev/null -o $@
-	script/publish_check.sh $@
+	pandoc -f markdown -t html5 -s --embed-resources --css scripts/publish.css \
+	  --metadata-file docs/notes/model_and_harness.yaml --lua-filter scripts/publish.lua /dev/null -o $@
+	scripts/publish_check.sh $@

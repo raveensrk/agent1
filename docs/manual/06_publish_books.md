@@ -1,8 +1,8 @@
 # Publish the books
 
 ```bash
-~/repos/agent1/script/publish_books          # every repo with a docs/ folder
-~/repos/agent1/script/publish_books agent1   # only agent1
+~/repos/agent1/scripts/publish_books          # every repo with a docs/ folder
+~/repos/agent1/scripts/publish_books agent1   # only agent1
 ```
 
 Open `~/repos/agent1/books/index.html`. The books folder is not committed. It

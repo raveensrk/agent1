@@ -37,7 +37,7 @@ cljfx and web demos the rules point at), `prompts/`, `notes/`, `design/` and
 `manual/`. The root holds code and configuration: the skills, the harness and
 its git hooks, the Claude Code plugin manifest and hook wiring, the pi package
 manifest, a shell snippet under `config/`, the publishing scripts under
-`script/`, the install and uninstall entry points, and `archive/`, where
+`scripts/`, the install and uninstall entry points, and `archive/`, where
 retired skills, commands, personas, prompts and rules are kept out of every load
 path.
 

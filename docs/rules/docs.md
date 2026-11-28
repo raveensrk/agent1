@@ -89,7 +89,7 @@ Write `docs/` like a book, all three folders:
 - Prose first, in plain words: a chapter explains, then lists. One fact lives
   in one place; other chapters link to it.
 
-[publish_books](../../script/publish_books) publishes every repo's `docs/` as an
+[publish_books](../../scripts/publish_books) publishes every repo's `docs/` as an
 HTML book in the GNU manual style, into `agent1/books/` (git ignored).
 
 What goes where:
