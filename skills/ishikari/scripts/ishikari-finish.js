@@ -101,7 +101,7 @@ async function twice(fn) {
 // One rule for "this upkeep work landed", used by the code and the logbook:
 // the ant says landed, its checks passed and it names the new commit. The docs
 // ant must also show it touched docs only.
-const DOC_FILE = f => typeof f === 'string' && !f.includes('..') && (/^docs?\//.test(f) || /\.(md|org)$/.test(f))
+const DOC_FILE = f => typeof f === 'string' && !f.includes('..') && (/^(design_docs|docs?)\//.test(f) || /\.(md|org)$/.test(f))
 const accepted = (kind, r) => Boolean(r && r.changed === true && r.landed === true && r.testsPassed === true && isSha(r.sha) &&
   (kind !== 'docs-ant' || (Array.isArray(r.files) && r.files.length > 0 && r.files.every(DOC_FILE))))
 const summarize = (kind, r) => {
@@ -340,18 +340,18 @@ ${planDir}/product_spec.md and the tech spec ${planDir}/tech_spec.md. If the bri
 does not exist, work from the two specs and the code.
 1. If the worktree ${docsTree} or the branch ${docsBranch} exists, remove them first. Then
    \`git -C ${env.repo} worktree add -b ${docsBranch} ${docsTree} ${sha}\`.
-2. In ${docsTree}: with a docs/ or doc/ folder, use the /docs skill in update mode,
+2. In ${docsTree}: with a design_docs/ folder (or an old docs/ or doc/), use the /docs skill in update mode,
    scoped to the commits from ${env.main} to ${sha}. With neither folder, use the
-   /docs skill in create mode and write docs/ from scratch: the brief stands in
+   /docs skill in create mode and write design_docs/ from scratch: the brief stands in
    for the skill's interview and for its OK on the outline, so decide the
    outline yourself and go on. Work on ${docsBranch}, never on a docs-book branch.
    Never ask the user: put open questions in the docs'
    Open questions chapter, or leave them out if it has none. Skip the docs-only
    rebuild test. Never install a tool: use what is installed and name each
-   skipped step in reason. Move or delete a root note only where the brief says so. Change only files under docs/ or doc/, and Markdown or Org files
+   skipped step in reason. Move or delete a root note only where the brief says so. Change only files under design_docs/, docs/ or doc/, and Markdown or Org files
    elsewhere; never code, tests or data. If something else needs a change, say so
    in reason and leave it.
-3. If docs/build.sh or doc/build.sh exists, run its \`diagrams\` and \`check\` commands;
+3. If design_docs/build.sh, docs/build.sh or doc/build.sh exists, run its \`diagrams\` and \`check\` commands;
    then ${tests} inside ${docsTree}.
 4. Commit on ${docsBranch} in small commits, no merge commits. Return every changed
    path in files: the output of \`git -C ${docsTree} diff --name-only ${sha} ${docsBranch}\`.

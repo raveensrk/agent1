@@ -337,8 +337,8 @@ The investigator judged the task trivial (`trivialWhy`). It waits, alive.
   - last, the docs ant runs `/docs` in update mode on the final code (or updates
     the documentation directly if `/docs` is unavailable), in its
     own worktree; it lands only if the docs' own `build.sh check` (when
-    present) and the tests pass and it changed docs only. No `docs/` or
-    `doc/`: it runs `/docs` in create mode and writes `docs/` from scratch,
+    present) and the tests pass and it changed docs only. No `design_docs/`
+    (or old `docs/` or `doc/`): it runs `/docs` in create mode and writes `design_docs/` from scratch,
     taking the user's answers from `docs_brief.md`; it never asks. Dropped: its
     branch `ishikari/<run>/_docs` is kept, `docs.reason` says why, main still
     moves.

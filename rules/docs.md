@@ -34,7 +34,7 @@ Pick the row that matches what you are building.
 | -------- | --------------------------- | ---------------- |
 | Script   | Header comment or docstring | Any separate doc |
 | Program  | `README.md`                 | Usage            |
-| Project  | `README.md` and `docs/`     | Usage            |
+| Project  | `README.md` and the bible   | Usage            |
 
 What each one means:
 
@@ -50,11 +50,24 @@ What each doc holds:
   over the comment block in shell).
 - Program `README.md`: install, then "run `x --help`".
 - Project `README.md`: what it is, install, list of programs.
-- `docs/`: architecture, design decisions, workflows across programs, config
-  schema, tutorials.
+- The bible: see below.
 
 When you create a program or project, or change one missing its `README.md` or
-`docs/`, create the missing file without asking and tell me you did.
+bible, create the missing file without asking and tell me you did.
+
+## The bible
+
+Every app repo has one design document, its bible: either `<repo>.md` at the
+root, or a `design_docs/` folder of Markdown chapters for a big project. Never
+both, and never `docs/`.
+
+- From the bible alone, any AI agent can rebuild the project from scratch.
+- It is language agnostic: what the project does, its rules, data, behaviour,
+  screens, commands and design decisions. No source paths, line numbers,
+  test names, function names or language-specific build steps.
+- `README.md` holds what a person needs: what it is, install, run.
+- `AGENTS.md` holds the code details: layout, build and test commands, test
+  names and which rule each checks, evidence with file and line.
 
 ## What is exempt from help
 
