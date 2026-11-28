@@ -2,7 +2,7 @@
 name: ask-simple
 metadata:
   scope: global
-description: Ask the user clear questions in simple language, as if they are new to the topic, so each one is easy to answer. Use when the user says ask simple questions, assume I am a newbie, keep it simple, explain like I am new, I do not understand your question, or runs /ask-simple. Also use whenever a task needs the user's decision and they have asked for plain words. When run also ask about any open decisions remains to be answered. When invoked manually review the previous response and ask questions based on that.
+description: Ask the user clear questions in simple language, as if they are new to the topic, so each one is easy to answer. Use when the user says ask simple questions, assume I am a newbie, keep it simple, explain like I am new, I do not understand your question, I do not know what you mean, idkwym, I do not understand your last response, or runs /ask-simple. Also use whenever a task needs the user's decision and they have asked for plain words. When run also ask about any open decisions remains to be answered. When invoked manually review the previous response and ask questions based on that.
 argument-hint: "[topic to ask about]"
 ---
 
@@ -11,13 +11,21 @@ argument-hint: "[topic to ask about]"
 The user is new to the topic.
 Every question must be easy to read and easy to answer.
 
-## 1. Look first
+## 1. Explain the last reply again
+
+Before any question, say your last reply again in plain words:
+
+- 5 lines or fewer: the main point, and what you need from the user.
+- Everyday words. No jargon, no tool names the user did not use first.
+- Add one everyday example, or a small table if it is clearer.
+
+## 2. Look first
 
 Find what you can on your own before you ask: read the files, the docs and
 the conversation. Never ask what you can look up, or what the user already
 said.
 
-## 2. Write each question
+## 3. Write each question
 
 - One question asks one thing. Never two in one.
 - One short sentence. Aim for 15 words or fewer.
@@ -42,7 +50,7 @@ Good: "How should people start the tool?"
 - Pick from a menu - no commands to remember.
 - Not sure - you pick.
 
-## 3. Ask
+## 4. Ask
 
 - Use the harness's question tool when it has one (Claude Code:
   `AskUserQuestion`).
@@ -51,7 +59,7 @@ Good: "How should people start the tool?"
 - Ask at most four at once. Ask the next round once those are answered.
 - Ask the most important question first.
 
-## 4. After the answers
+## 5. After the answers
 
 - Repeat the answers back, one plain line each.
 - If an answer is unclear, ask again in simpler words. Do not guess.
